@@ -48,14 +48,14 @@ const CombatantRow = ({
             {/* Slot santé slug + actions */}
             <div className="flex items-center gap-3 shrink-0">
                 {/* Santé — rendu délégué au slug */}
-                {renderHealthDisplay && (
+                {renderHealthDisplay && isMe && (
                     <div className="text-xs">
                         {renderHealthDisplay(combatant)}
                     </div>
                 )}
 
                 {/* Actions restantes — champ générique, masqué si actionsMax = 0 */}
-                {combatant.actionsMax > 0 && (
+                {combatant.actionsMax > 0 && isMe && (
                     <div className="text-xs text-viking-leather dark:text-viking-bronze whitespace-nowrap">
                         {combatant.actionsRemaining}/{combatant.actionsMax} ⚡
                     </div>

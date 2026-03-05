@@ -343,7 +343,163 @@ const vikingsConfig = {
             },
 
             defenseOpportunity: null,
+
+            getNPCRollContext: (npc, attack) => {
+                // Pool de base = 3 dés, réduit par les blessures du NPC
+                const malus     = getBlessureMalus(npc.healthData?.tokensBlessure ?? 0);
+                const basePool  = 3;
+                const pool      = Math.max(1, basePool + malus); // malus est négatif
+
+                return {
+                    characterId:   npc.id,
+                    characterName: npc.name,
+                    sessionId:     null,
+                    systemSlug:    'vikings',
+                    label:         attack.name ?? 'Attaque NPC',
+                    systemData: {
+                        // Pas de compétence ni de carac — valeurs directes depuis l'attaque
+                        pool,
+                        caracLevel:  null,
+                        threshold:   attack.succes    ?? 6,
+                        explosionThresholds: [attack.explosion ?? 10],
+                        autoSuccesses: 0,
+                        activeConditionalBonuses: [],
+                        traitAutoBonus: 0,
+                    },
+                };
+            },
         },
+
+        renderNPCForm: (formData, onChange) => {
+            const { attaques = [] } = formData;
+
+            const addAttaque = () => onChange('attaques', [
+                ...attaques,
+                { name: 'Nouvelle attaque', succes: 6, explosion: 10, degats: 2 },
+            ]);
+
+            const removeAttaque = (i) => onChange('attaques', attaques.filter((_, idx) => idx !== i));
+
+            const updateAttaque = (i, field, raw) => {
+                const next = [...attaques];
+                next[i] = { ...next[i], [field]: field === 'name' ? raw : parseInt(raw) || 0 };
+                onChange('attaques', next);
+            };
+
+            return (
+                <>
+                    <div className="grid grid-cols-3 gap-2 mb-3">
+                        <div>
+                            <label className="block text-xs font-semibold text-viking-brown dark:text-viking-parchment mb-1">PV Max</label>
+                            <input type="number" min="1" max="20"
+                                   value={formData.blessureMax ?? 5}
+                                   onChange={e => onChange('blessureMax', parseInt(e.target.value) || 1)}
+                                   className="w-full px-2 py-1 border rounded text-sm text-viking-brown dark:text-viking-parchment dark:bg-gray-800"
+                            />
+                        </div>
+                        <div>
+                            <label className="block text-xs font-semibold text-viking-brown dark:text-viking-parchment mb-1">Armure</label>
+                            <input type="number" min="0" max="10"
+                                   value={formData.armure ?? 0}
+                                   onChange={e => onChange('armure', parseInt(e.target.value) || 0)}
+                                   className="w-full px-2 py-1 border rounded text-sm text-viking-brown dark:text-viking-parchment dark:bg-gray-800"
+                            />
+                        </div>
+                        <div>
+                            <label className="block text-xs font-semibold text-viking-brown dark:text-viking-parchment mb-1">Seuil</label>
+                            <input type="number" min="1" max="10"
+                                   value={formData.seuil ?? 1}
+                                   onChange={e => onChange('seuil', parseInt(e.target.value) || 1)}
+                                   className="w-full px-2 py-1 border rounded text-sm text-viking-brown dark:text-viking-parchment dark:bg-gray-800"
+                            />
+                        </div>
+                    </div>
+
+                    <div className="mb-2">
+                        <div className="flex justify-between items-center mb-2">
+                            <label className="text-xs font-semibold text-viking-brown dark:text-viking-parchment">Attaques</label>
+                            <button type="button" onClick={addAttaque}
+                                    className="px-2 py-1 bg-viking-bronze text-viking-brown rounded text-xs font-semibold hover:bg-viking-leather"
+                            >+ Attaque</button>
+                        </div>
+                        {attaques.map((att, i) => (
+                            <div key={i} className="p-2 border border-viking-bronze/40 rounded mb-2 bg-viking-parchment/50 dark:bg-gray-900/30">
+                                <div className="flex gap-1 mb-1">
+                                    <input type="text"
+                                           value={att.name}
+                                           onChange={e => updateAttaque(i, 'name', e.target.value)}
+                                           placeholder="Nom attaque"
+                                           className="flex-1 px-2 py-1 border rounded text-xs text-viking-brown dark:text-viking-parchment dark:bg-gray-800"
+                                    />
+                                    {attaques.length > 1 && (
+                                        <button type="button" onClick={() => removeAttaque(i)}
+                                                className="px-2 py-1 bg-red-500 text-white rounded text-xs hover:bg-red-600"
+                                        >✕</button>
+                                    )}
+                                </div>
+                                <div className="grid grid-cols-3 gap-1">
+                                    <div>
+                                        <label className="block text-xs text-viking-leather dark:text-viking-bronze mb-0.5">Succès</label>
+                                        <input type="number" min="1" max="10"
+                                               value={att.succes}
+                                               onChange={e => updateAttaque(i, 'succes', e.target.value)}
+                                               className="w-full px-1 py-1 border rounded text-xs text-viking-brown dark:text-viking-parchment dark:bg-gray-800"
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block text-xs text-viking-leather dark:text-viking-bronze mb-0.5">Explosion</label>
+                                        <input type="number" min="2" max="10"
+                                               value={att.explosion}
+                                               onChange={e => updateAttaque(i, 'explosion', e.target.value)}
+                                               className="w-full px-1 py-1 border rounded text-xs text-viking-brown dark:text-viking-parchment dark:bg-gray-800"
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block text-xs text-viking-leather dark:text-viking-bronze mb-0.5">Dégâts</label>
+                                        <input type="number" min="0" max="20"
+                                               value={att.degats}
+                                               onChange={e => updateAttaque(i, 'degats', e.target.value)}
+                                               className="w-full px-1 py-1 border rounded text-xs text-viking-brown dark:text-viking-parchment dark:bg-gray-800"
+                                        />
+                                    </div>
+                                </div>
+                            </div>
+                        ))}
+                        {attaques.length === 0 && (
+                            <div className="text-xs text-viking-leather dark:text-viking-bronze italic p-2 text-center">
+                                Aucune attaque — cliquez sur "+ Attaque"
+                            </div>
+                        )}
+                    </div>
+                </>
+            );
+        },
+
+        // ── Sérialise formData → combat_stats pour POST/PUT BDD ───────────────────────
+        buildNPCCombatStats: (formData) => ({
+            blessureMax: parseInt(formData.blessureMax) || 5,
+            armure:      parseInt(formData.armure)      || 0,
+            seuil:       parseInt(formData.seuil)       || 1,
+            actionsMax:  parseInt(formData.actionsMax)  || 1,
+            attaques:    formData.attaques ?? [{ name: 'Attaque', succes: 6, explosion: 10, degats: 2 }],
+        }),
+
+        // ── Désérialise combat_stats → formData (mode edit) ───────────────────────────
+        parseNPCCombatStats: (combat_stats) => ({
+            blessureMax: combat_stats?.blessureMax ?? 5,
+            armure:      combat_stats?.armure      ?? 0,
+            seuil:       combat_stats?.seuil       ?? 1,
+            actionsMax:  combat_stats?.actionsMax  ?? 1,
+            attaques:    combat_stats?.attaques    ?? [{ name: 'Attaque', succes: 6, explosion: 10, degats: 2 }],
+        }),
+
+        // ── Instancie le healthData runtime depuis combat_stats ───────────────────────
+        buildNPCHealthData: (combat_stats) => ({
+            tokensBlessure: 0,
+            blessureMax:    combat_stats?.blessureMax ?? 5,
+            armure:         combat_stats?.armure      ?? 0,
+            seuil:          combat_stats?.seuil       ?? 1,
+        }),
 
         // ── Callbacks lifecycle ────────────────────────────────────────────────
         onBeforeDamage: (ctx) => ctx.damage,

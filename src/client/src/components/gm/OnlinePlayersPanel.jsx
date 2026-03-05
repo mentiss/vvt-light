@@ -3,13 +3,13 @@ import React from 'react';
 
 const OnlinePlayersPanel = ({
                                 onlineCharacters,
-                                combatants,
+                                combatState,
                                 onAddPlayerToCombat,
-                                combatActive
                             }) => {
-    if (onlineCharacters.length === 0 || combatActive) {
+    if (onlineCharacters.length === 0 || combatState.active) {
         return null;
     }
+    const combatants = combatState.combatants ?? [];
 
     return (
         <div className="bg-white dark:bg-viking-brown rounded-lg shadow-lg border-2 border-viking-bronze p-4 mb-4">

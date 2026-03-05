@@ -42,8 +42,7 @@ const GMView = ({ activeSession, onSessionChange, onlineCharacters, darkMode, on
     });
 
     // --- State modals combat ---
-    const [showAddNPC, setShowAddNPC] = useState(false);
-    const [editingNPC, setEditingNPC] = useState(null);
+    const [showNPCModal, setShowNPCModal] = useState(false);
     const [attackingNPC, setAttackingNPC] = useState(null);
     const [showEndCombatConfirm, setShowEndCombatConfirm] = useState(false);
     const [draggedIndex, setDraggedIndex] = useState(null);
@@ -432,15 +431,9 @@ const GMView = ({ activeSession, onSessionChange, onlineCharacters, darkMode, on
                         onDragStart={handleDragStart}
                         onDragOver={handleDragOver}
                         onDragEnd={handleDragEnd}
-                        showAddNPC={showAddNPC}
-                        onShowAddNPC={() => setShowAddNPC(true)}
-                        onCloseAddNPC={() => setShowAddNPC(false)}
-                        editingNPC={editingNPC}
-                        onCloseEditNPC={setEditingNPC}
-                        onUpdateEditingNPC={(updates) => {
-                            updateCombatant(editingNPC.id, updates);
-                            setEditingNPC(null);
-                        }}
+                        showNPCModal={showNPCModal}
+                        onShowNPCModal={() => setShowNPCModal(true)}
+                        onCloseNPCModal={() => setShowNPCModal(false)}
                         showEndCombatConfirm={showEndCombatConfirm}
                         onShowEndCombatConfirm={() => setShowEndCombatConfirm(true)}
                         onCloseEndCombatConfirm={() => setShowEndCombatConfirm(false)}

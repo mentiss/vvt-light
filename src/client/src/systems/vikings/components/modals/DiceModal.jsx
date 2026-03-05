@@ -399,6 +399,29 @@ const DiceModal = ({ character, isBerserk, context, onClose, onUpdate, sessionId
                         </div>
                     )}
 
+                    {/* Bonus automatiques */}
+                    {traitAutoBonus !== 0 && (
+                        <div>
+                            <label className="block text-sm font-semibold text-viking-brown dark:text-viking-parchment mb-2">
+                                Bonus automatiques (traits)
+                            </label>
+                            <div className={`p-3 rounded border-2 ${
+                                traitAutoBonus > 0
+                                    ? 'bg-viking-success/10 border-viking-success'
+                                    : 'bg-viking-danger/10 border-viking-danger'
+                            }`}>
+                                <div className={`text-sm font-semibold ${
+                                    traitAutoBonus > 0 ? 'text-viking-success' : 'text-viking-danger'
+                                }`}>
+                                    {traitAutoBonus > 0 ? '✓' : '✕'} {traitAutoBonus > 0 ? '+' : ''}{traitAutoBonus} succès
+                                </div>
+                                <div className="text-xs text-viking-text dark:text-viking-parchment opacity-75 mt-1">
+                                    Appliqué automatiquement selon vos traits/backgrounds
+                                </div>
+                            </div>
+                        </div>
+                    )}
+
                     {/* Bonus conditionnels traits */}
                     {conditionalBonuses.length > 0 && (
                         <div>
@@ -460,26 +483,34 @@ const DiceModal = ({ character, isBerserk, context, onClose, onUpdate, sessionId
                         )}
                     </div>
 
-                    {/* Bouton lancer */}
-                    <div className="pt-2">
-                        {diceResults?.error && (
-                            <div className="mb-3 p-3 bg-viking-danger/20 border border-viking-danger rounded text-sm text-viking-danger font-semibold">
-                                {diceResults.message}
-                            </div>
-                        )}
-                        <button
-                            onClick={handleRoll}
-                            disabled={rolling || (rollType === 'skill' && !selectedSkill)}
-                            className={`w-full py-3 rounded-lg font-bold text-lg ${rolling || (rollType === 'skill' && !selectedSkill) ? 'bg-gray-400 cursor-not-allowed' : 'bg-viking-bronze hover:bg-viking-leather text-viking-brown'}`}
-                        >
-                            {rolling ? '🎲 Lancer...' : '🎲 Lancer !'}
-                        </button>
-                    </div>
-
                     {/* Résultats */}
                     {diceResults && !diceResults.error && (
                         <DiceResults results={diceResults} />
                     )}
+
+                    {/* Bouton lancer */}
+                    <div className="pt-2">
+                        {(!diceResults || diceResults.error || !context?.proceedButton) ? (
+                            <button
+                                onClick={handleRoll}
+                                disabled={rolling || (rollType === 'skill' && !selectedSkill)}
+                                className={`w-full py-3 rounded-lg font-bold text-lg ${
+                                    rolling || (rollType === 'skill' && !selectedSkill)
+                                        ? 'bg-gray-400 cursor-not-allowed'
+                                        : 'bg-viking-bronze hover:bg-viking-leather text-viking-brown'
+                                }`}
+                            >
+                                {rolling ? '🎲 Lancer...' : '🎲 Lancer !'}
+                            </button>
+                        ) : context?.proceedButton ? (
+                            <button
+                                onClick={context.proceedButton.onClick}
+                                className="w-full py-3 rounded-lg font-bold text-lg bg-viking-danger hover:bg-red-700 text-white"
+                            >
+                                {context.proceedButton.label}
+                            </button>
+                        ) : null}
+                    </div>
                     {context?.proceedButton && diceResults && (
                         <button
                             onClick={context.proceedButton.onClick}

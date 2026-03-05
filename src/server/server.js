@@ -61,7 +61,7 @@ io.on('connection', (socket) => {
 
     socket.on('gm-set-active-session', ({ sessionId, system = 'vikings' } = {}) => {
         activeSessionId = sessionId;
-        if (activeSessionId) io.emit('gm-session-active', activeSessionId);
+        if (activeSessionId) socket.emit('gm-session-active', activeSessionId);
     });
 
     socket.on('join-session', ({ sessionId, system = 'vikings' } = {}) => {
@@ -117,6 +117,7 @@ for (const [slug] of getAllSystems()) {
     app.use(`${prefix}/auth`,       resolver, authRouter);
     app.use(`${prefix}/characters`, resolver, getSystemRoute(slug, 'characters'));
     app.use(`${prefix}/combat`,     resolver, getSharedRoute('combat'));
+    app.use(`${prefix}/npc`,        resolver, getSharedRoute('npc'));
     app.use(`${prefix}/sessions`,   resolver, getSharedRoute('sessions'));
     app.use(`${prefix}/journal`,    resolver, getSharedRoute('journal'));
     app.use(`${prefix}/dice`,       resolver, getSharedRoute('dice'));

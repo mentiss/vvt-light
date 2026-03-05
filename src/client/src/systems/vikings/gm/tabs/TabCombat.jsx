@@ -1,14 +1,19 @@
-// components/GMView/tabs/TabCombat.jsx - Onglet Combat (extrait de GMView)
+// src/client/src/systems/vikings/gm/tabs/TabCombat.jsx
+// ─────────────────────────────────────────────────────────────────────────────
+// Onglet Combat — extrait de GMView.
+// Step 11 : AddNPCModal + EditNPCModal remplacées par NPCModal.
+//           NPCModal reçoit combatConfig pour les callbacks slug.
+// ─────────────────────────────────────────────────────────────────────────────
+
 import React from 'react';
-import CombatControls from '../../../../components/gm/pj/CombatantControls.jsx';
-import OnlinePlayersPanel from '../../../../components/gm/OnlinePlayersPanel.jsx';
-import CombatantCard from '../../../../components/gm/pj/CombatantCard.jsx';
-import RulesReference from '../../../../components/gm/RulesReference.jsx';
-import AddNPCModal from '../../../../components/gm/npc/AddNPCModal.jsx';
-import EditNPCModal from '../../../../components/gm/npc/EditNPCModal.jsx';
-import NPCAttackModal from '../../../../components/gm/npc/NPCAttackModal.jsx';
-import AttackValidationQueue from '../../../../components/gm/pj/AttackValidationQueue.jsx';
-import ConfirmModal from '../../../../components/modals/ConfirmModal.jsx';
+import CombatControls         from '../../../../components/gm/pj/CombatantControls.jsx';
+import OnlinePlayersPanel     from '../../../../components/gm/OnlinePlayersPanel.jsx';
+import CombatantCard          from '../../../../components/gm/pj/CombatantCard.jsx';
+import RulesReference         from '../../../../components/gm/RulesReference.jsx';
+import NPCModal               from '../../../../components/gm/npc/NPCModal.jsx';
+import NPCAttackModal         from '../../../../components/gm/npc/NPCAttackModal.jsx';
+import AttackValidationQueue  from '../../../../components/gm/pj/AttackValidationQueue.jsx';
+import ConfirmModal           from '../../../../components/modals/ConfirmModal.jsx';
 
 const TabCombat = ({
                        // State combat
@@ -26,7 +31,7 @@ const TabCombat = ({
                        onAddPlayerToCombat,
                        onValidateAttack,
                        onRejectAttack,
-                       // NPC
+                       // NPC attaque
                        onNPCAttack,
                        attackingNPC,
                        onNPCAttackSubmitted,
@@ -35,13 +40,11 @@ const TabCombat = ({
                        onDragStart,
                        onDragOver,
                        onDragEnd,
-                       // Modals state
-                       showAddNPC,
-                       onShowAddNPC,
-                       onCloseAddNPC,
-                       editingNPC,
-                       onCloseEditNPC,
-                       onUpdateEditingNPC,
+                       // Modal NPC (bibliothèque)
+                       showNPCModal,
+                       onShowNPCModal,
+                       onCloseNPCModal,
+                       // Confirmation fin combat
                        showEndCombatConfirm,
                        onShowEndCombatConfirm,
                        onCloseEndCombatConfirm,
@@ -54,32 +57,30 @@ const TabCombat = ({
                 onStartCombat={onStartCombat}
                 onNextTurn={onNextTurn}
                 onEndCombat={onShowEndCombatConfirm}
-                canStartCombat={combatState.combatants.length > 0}
+                canStartCombat={combatState.combatants?.length > 0}
             />
 
             {/* Joueurs en ligne */}
             <OnlinePlayersPanel
                 onlineCharacters={onlineCharacters}
-                combatants={combatState.combatants}
+                combatState={combatState}
                 onAddPlayerToCombat={onAddPlayerToCombat}
-                combatActive={combatState.active}
             />
 
-            {/* Liste Combattants */}
+            {/* Liste combattants */}
             <div className="bg-white dark:bg-viking-brown rounded-lg shadow-lg border-2 border-viking-bronze p-4 mb-4">
                 <div className="flex justify-between items-center mb-4">
                     <h2 className="text-xl font-bold text-viking-brown dark:text-viking-parchment">
-                        Combattants {combatState.combatants.length > 0 && `(${combatState.combatants.length})`}
+                        Combattants {combatState.combatants?.length > 0 && `(${combatState.combatants.length})`}
                     </h2>
                     <button
-                        onClick={onShowAddNPC}
+                        onClick={(e) => { e.stopPropagation(); onShowNPCModal(); }}
                         className="px-3 py-1 bg-viking-bronze text-viking-brown rounded text-sm font-semibold hover:bg-viking-leather"
                     >
                         ➕ Ajouter
                     </button>
                 </div>
-
-                {combatState.combatants.length === 0 ? (
+                {!combatState.combatants?.length ? (
                     <div className="text-center p-8 text-viking-leather dark:text-viking-bronze">
                         Aucun combattant. Ajoutez des adversaires pour commencer.
                     </div>
@@ -92,12 +93,13 @@ const TabCombat = ({
                                 isActive={index === combatState.currentTurnIndex}
                                 onUpdate={(updates) => onUpdateCombatant(combatant.id, updates)}
                                 onRemove={(id) => onRemoveCombatant(id)}
-                                onEdit={(npc) => onCloseEditNPC(npc)}
+                                onEdit={() => {}}          // édition inline — plus d'EditNPCModal
                                 onDragStart={() => onDragStart(index)}
                                 onDragOver={(e) => onDragOver(e, index)}
                                 onDragEnd={onDragEnd}
                                 combatActive={combatState.active}
                                 onNPCAttack={(npc) => onNPCAttack(npc)}
+                                combatConfig={combatConfig}
                             />
                         ))}
                     </div>
@@ -107,24 +109,18 @@ const TabCombat = ({
             {/* Règles Référence */}
             <RulesReference />
 
-            {/* --- Modals combat-only --- */}
+            {/* ── Modals ─────────────────────────────────────────────────── */}
 
-            {showAddNPC && (
-                <AddNPCModal
-                    onClose={onCloseAddNPC}
-                    onAdd={onAddCombatant}
+            {/* Bibliothèque NPC — remplace AddNPCModal + EditNPCModal */}
+            {showNPCModal && (
+                <NPCModal
+                    onClose={onCloseNPCModal}
+                    onAddCombatant={onAddCombatant}
+                    combatConfig={combatConfig}
                 />
             )}
 
-            {editingNPC && (
-                <EditNPCModal
-                    npc={editingNPC}
-                    onClose={() => onCloseEditNPC(null)}
-                    onUpdate={(updates) => onUpdateEditingNPC(updates)}
-                />
-            )}
-
-            {/* File validation attaques */}
+            {/* File validation attaques joueurs */}
             <AttackValidationQueue
                 pendingAttacks={pendingAttacks}
                 combatState={combatState}
@@ -151,9 +147,6 @@ const TabCombat = ({
                     message="Êtes-vous sûr de vouloir terminer le combat ? Les actions restantes seront perdues."
                     onConfirm={onEndCombat}
                     onCancel={onCloseEndCombatConfirm}
-                    confirmText="Terminer"
-                    cancelText="Annuler"
-                    danger={true}
                 />
             )}
         </>

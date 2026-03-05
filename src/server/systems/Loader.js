@@ -22,6 +22,7 @@ const SHARED_ROUTES = {
     journal:  path.join(__dirname, '../routes/journal.js'),
     dice:     path.join(__dirname, '../routes/dice.js'),
     combat:   path.join(__dirname, '../routes/combat.js'),
+    npc:      path.join(__dirname, '../routes/npc.js'),
 };
 // Routes obligatoires que chaque système doit fournir
 const REQUIRED_ROUTES = ['characters'];
@@ -92,7 +93,7 @@ function getSystemRoute(slug, routeName) {
 
 /**
  * Retourne le router Express d'une route générique partagée.
- * @param {'sessions'|'journal'|'dice'|'combat'} routeName
+ * @param {'sessions'|'journal'|'dice'|'npc'|'combat'} routeName
  * @returns {Router}
  */
 function getSharedRoute(routeName) {

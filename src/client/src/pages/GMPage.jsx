@@ -10,6 +10,14 @@ import CodeModal from '../components/modals/CodeModal.jsx';
 
 const SYSTEM_GM_APPS = import.meta.glob('../systems/*/GMApp.jsx');
 
+const gmLazyCache = {};
+const getGMLazyComponent = (key) => {
+    if (!gmLazyCache[key]) {
+        gmLazyCache[key] = React.lazy(SYSTEM_GM_APPS[key]);
+    }
+    return gmLazyCache[key];
+};
+
 const GMPage = () => {
     const { system }                     = useParams();
     const { darkMode, onToggleDarkMode } = useOutletContext();
@@ -48,7 +56,7 @@ const GMPage = () => {
         );
     }
 
-    const SystemGMApp = React.lazy(loader);
+    const SystemGMApp = getGMLazyComponent(moduleKey);
 
     if (user?.isGM) {
         return (

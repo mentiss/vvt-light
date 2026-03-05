@@ -1,231 +1,327 @@
-// NPCAttackModal.js - Modal attaque NPC avec sélection attaque
-import React, { useState, useEffect } from "react";
-import TargetSelectionModal from "../../modals/TargetSelectionModal.jsx";
-import {getBlessureMalus} from "../../../tools/utils.js";
-import {useFetch} from "../../../hooks/useFetch.js";
+// src/client/src/components/gm/npc/NPCAttackModal.jsx
+// ─────────────────────────────────────────────────────────────────────────────
+// Modal d'attaque NPC — entièrement générique via combatConfig.
+//
+// Machine à états : select → roll → rolled → target
+//   select  — si npc.attaques.length > 1, sinon skip vers roll
+//   roll    — bouton "Lancer" + checkbox broadcast
+//   rolled  — résultat + bouton "Choisir la cible"
+//   target  — TargetSelectionModal générique
+//
+// Jet de dés :
+//   const ctx    = combatConfig.attack.getNPCRollContext(npc, selectedAttack)
+//   const result = roll(ctx, combatConfig.dice)
+//
+// Props :
+//   npc                — combattant NPC depuis combatState
+//   combatState        — état combat complet
+//   combatConfig       — config slug (attack.getNPCRollContext, attack.calculateDamage,
+//                        attack.renderTargetInfo, dice)
+//   onClose
+//   onAttackSubmitted(attackData)
+// ─────────────────────────────────────────────────────────────────────────────
 
-const NPCAttackModal = ({ npc, combatState, onClose, onAttackSubmitted }) => {
-    const { useState } = React;
-    
-    const hasMultipleAttacks = npc.attaques && npc.attaques.length > 1;
-    const [selectedAttack, setSelectedAttack] = useState(npc.attaques?.[0] || null);
-    const [step, setStep] = useState(hasMultipleAttacks ? 'select' : 'roll'); // Skip select si 1 attaque
-    const [rollResult, setRollResult] = useState(null);
-    
-    if (!selectedAttack) {
-        return null;
-    }
-    
-    const handleAttackSelect = () => {
-        setStep('roll');
+import React, { useState, useRef, useCallback } from 'react';
+import { roll }                 from '../../../tools/diceEngine.js';
+import DiceAnimationOverlay     from '../../shared/DiceAnimationOverlay.jsx';
+import TargetSelectionModal     from '../../combat/TargetSelectionModal.jsx';
+import { readDiceConfig }       from '../../modals/DiceConfigModal.jsx';
+import { useFetch }             from '../../../hooks/useFetch.js';
+import { useSystem }            from '../../../hooks/useSystem.js';
+
+const NPCAttackModal = ({ npc, combatState, combatConfig, onClose, onAttackSubmitted }) => {
+    const fetchWithAuth = useFetch();
+    const { apiBase }   = useSystem();
+
+    // ── Attaque sélectionnée ──────────────────────────────────────────────────
+    const attaques         = npc.attaques ?? [];
+    const hasMultipleAttacks = attaques.length > 1;
+
+    const [selectedAttack, setSelectedAttack] = useState(
+        hasMultipleAttacks ? null : (attaques[0] ?? null)
+    );
+
+    // ── Machine à états ───────────────────────────────────────────────────────
+    // select → roll → rolled → target
+    const [step, setStep] = useState(hasMultipleAttacks ? 'select' : 'roll');
+
+    // ── Dés ───────────────────────────────────────────────────────────────────
+    const [rolling,       setRolling]       = useState(false);
+    const [animationData, setAnimationData] = useState(null);
+    const [rollResult,    setRollResult]    = useState(null);
+    const [broadcast,     setBroadcast]     = useState(false);
+
+    const pendingResultRef = useRef(null);
+
+    // ─── Envoi historique optionnel ──────────────────────────────────────────
+
+    const sendToHistory = useCallback(async (result, notation) => {
+        try {
+            await fetchWithAuth(`${apiBase}/dice/roll`, {
+                method:  'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    character_id:   null,
+                    character_name: npc.name,
+                    session_id:     combatState?.sessionId ?? null,
+                    notation,
+                    roll_result: result,
+                }),
+            });
+        } catch (err) {
+            console.error('[NPCAttackModal] sendToHistory error:', err);
+        }
+    }, [fetchWithAuth, apiBase, npc.name, combatState?.sessionId]);
+
+    // ─── Fin d'animation ────────────────────────────────────────────────────
+
+    const handleAnimationComplete = useCallback(() => {
+        const pending = pendingResultRef.current;
+        if (!pending) return;
+        pendingResultRef.current = null;
+
+        setRollResult(pending.result);
+        setAnimationData(null);
+        setRolling(false);
+        setStep('rolled');
+
+        if (broadcast) {
+            sendToHistory(pending.result, pending.notation);
+        }
+    }, [broadcast, sendToHistory]);
+
+    const handleAnimationSkip = useCallback(() => {
+        handleAnimationComplete();
+    }, [handleAnimationComplete]);
+
+    // ─── Lancer le dé ────────────────────────────────────────────────────────
+
+    const handleRoll = () => {
+        if (!selectedAttack || !combatConfig?.attack?.getNPCRollContext) return;
+
+        setRolling(true);
+        setRollResult(null);
+
+        try {
+            const ctx    = combatConfig.attack.getNPCRollContext(npc, selectedAttack);
+            const engine = roll(ctx, combatConfig.dice);
+
+            const { animationEnabled } = readDiceConfig();
+
+            if (animationEnabled !== false && engine.animationSequence) {
+                pendingResultRef.current = {
+                    result:   engine.result,
+                    notation: engine.notation,
+                };
+                setAnimationData({ animationSequence: engine.animationSequence });
+            } else {
+                setRollResult(engine.result);
+                setRolling(false);
+                setStep('rolled');
+                if (broadcast) sendToHistory(engine.result, engine.notation);
+            }
+        } catch (err) {
+            console.error('[NPCAttackModal] roll error:', err);
+            setRolling(false);
+        }
     };
-    
-    const handleRollComplete = (result) => {
-        setRollResult(result);
-        setStep('target');
-    };
-    
-    const handleTargetConfirm = (targetData) => {
+
+    // ─── Sélection cible ─────────────────────────────────────────────────────
+
+    const handleTargetConfirm = (target, finalDamage) => {
         onAttackSubmitted({
-            attackerId: npc.id,
+            attackerId:   npc.id,
             attackerName: npc.name,
-            ...targetData
+            targetId:     target.id,
+            targetName:   target.name,
+            weapon:       {
+                nom:    selectedAttack?.name  ?? 'Attaque',
+                degats: selectedAttack?.degats ?? 0,
+            },
+            damage:     finalDamage,
+            rollResult,
         });
         onClose();
     };
-    
-    // Step 1: Sélection attaque (si plusieurs)
-    if (step === 'select' && npc.attaques && npc.attaques.length > 1) {
+
+    // ─── Cibles disponibles (tous sauf le NPC attaquant) ─────────────────────
+
+    const availableTargets = (combatState?.combatants ?? []).filter(
+        c => c.id !== npc.id
+    );
+
+    // ─── Succès pour affichage ────────────────────────────────────────────────
+
+    const successes = rollResult?.totalSuccesses
+        ?? rollResult?.baseSuccesses
+        ?? rollResult?.successes
+        ?? 0;
+
+    // ─────────────────────────────────────────────────────────────────────────
+    // Rendu
+    // ─────────────────────────────────────────────────────────────────────────
+
+    // Overlay animation (prioritaire)
+    if (animationData) {
         return (
-            <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50" onClick={onClose}>
-                <div className="bg-white dark:bg-viking-brown rounded-lg shadow-2xl max-w-md w-full border-4 border-viking-bronze p-4" onClick={e => e.stopPropagation()}>
-                    <div className="flex justify-between items-center mb-4">
-                        <h3 className="text-lg font-bold text-viking-brown dark:text-viking-parchment">
-                            ⚔️ Choisir l'attaque
-                        </h3>
-                        <button onClick={onClose} className="text-2xl text-viking-leather dark:text-viking-bronze hover:text-viking-danger">✕</button>
-                    </div>
-                    
-                    <div className="space-y-2 mb-4">
-                        {npc.attaques.map((attack, i) => (
-                            <button
-                                key={i}
-                                onClick={() => {
-                                    setSelectedAttack(attack);
-                                    setStep('roll');
-                                }}
-                                className={`w-full p-3 rounded border-2 text-left ${
-                                    selectedAttack === attack
-                                        ? 'border-viking-bronze bg-viking-bronze/20'
-                                        : 'border-viking-leather dark:border-viking-bronze hover:bg-viking-parchment dark:hover:bg-gray-800'
-                                }`}
-                            >
-                                <div className="font-bold text-viking-brown dark:text-viking-parchment">
-                                    {attack.name}
-                                </div>
-                                <div className="text-xs text-viking-leather dark:text-viking-bronze">
-                                    Succès {attack.succes}+ | Explosion {attack.explosion}+ | Dégâts {attack.degats}
-                                </div>
-                            </button>
-                        ))}
-                    </div>
-                    
-                    <button
-                        onClick={handleAttackSelect}
-                        className="w-full px-4 py-2 bg-viking-danger text-white rounded font-semibold hover:bg-red-700"
-                    >
-                        Continuer
-                    </button>
-                </div>
-            </div>
+            <DiceAnimationOverlay
+                animationSequence={animationData.animationSequence}
+                onComplete={handleAnimationComplete}
+                onSkip={handleAnimationSkip}
+            />
         );
     }
-    
-    // Step 2: Jet de dés custom
-    if (step === 'roll') {
-        return <NPCDiceRoll attack={selectedAttack} npc={npc} onClose={onClose} onRollComplete={handleRollComplete} />;
-    }
-    
-    // Step 3: Sélection cible
+
+    // Modal cible
     if (step === 'target' && rollResult) {
         return (
             <TargetSelectionModal
                 combatState={combatState}
-                attackerCombatant={npc}
+                attacker={npc}
+                selectedWeapon={{ nom: selectedAttack?.name ?? 'Attaque', degats: selectedAttack?.degats ?? 0 }}
+                onWeaponChange={() => {}}
+                calculateDamage={combatConfig?.attack?.calculateDamage}
+                renderTargetInfo={combatConfig?.attack?.renderTargetInfo}
                 rollResult={rollResult}
-                character={null}
+                allowDamageEdit={true}
                 onConfirm={handleTargetConfirm}
                 onClose={onClose}
             />
         );
     }
-    
-    return null;
-};
 
-// Sous-composant : Jet de dés NPC custom
-const NPCDiceRoll = ({ attack, onClose, onRollComplete, npc }) => {
-    const { useState } = React;
-    const [rolling, setRolling] = useState(false);
-    const [result, setResult] = useState(null);
-    const [broadcast, setBroadcast] = useState(false);
-    const fetchWithAuth = useFetch();
-    
-    const rollDice = () => {
-        setRolling(true);
-
-        let pool = 3;
-        const blessureMalus = getBlessureMalus(npc.blessure);
-        // if (npc.blessure === npc.blessureMax) {
-        //     //setDiceResults({ error: true, message: 'Impossible : KO / Mourant !' });
-        //     setRolling(false);
-        //     return;
-        // }
-        pool = Math.max(0, pool - blessureMalus);
-        console.log(npc, blessureMalus, pool);
-        // Jet 3d10
-        const rolls = [];
-        for (let i = 0; i < pool; i++) {
-            let currentRoll = Math.floor(Math.random() * 10) + 1;
-            rolls.push(currentRoll);
-            
-            // Explosion
-            while (currentRoll >= attack.explosion) {
-                currentRoll = Math.floor(Math.random() * 10) + 1;
-                rolls.push(currentRoll);
-            }
-        }
-        
-        // Compter succès
-        const successes = rolls.filter(d => d >= attack.succes).length;
-        
-        const rollResult = {
-            rolls,
-            threshold: attack.succes,
-            explosionThresholds: [attack.explosion],
-            baseSuccesses: successes,
-            totalSuccesses: successes
-        };
-        
-        setResult(rollResult);
-        setRolling(false);
-        
-        // Si broadcast, envoyer à l'API pour historiser
-        if (broadcast) {
-            fetchWithAuth('/api/dice/roll', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    character_id: -1,
-                    character_name: npc.name || 'PNJ',
-                    roll_type: 'combat',
-                    roll_target: attack.name,
-                    pool: pool,
-                    threshold: attack.succes,
-                    results: rolls,
-                    successes,
-                    saga_spent: 0,
-                    saga_recovered: 0
-                })
-            }).catch(err => console.error('Error broadcasting roll:', err));
-        }
-    };
-    
     return (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50" onClick={onClose}>
-            <div className="bg-white dark:bg-viking-brown rounded-lg shadow-2xl max-w-md w-full border-4 border-viking-bronze p-4" onClick={e => e.stopPropagation()}>
+        <div
+            className="fixed inset-0 bg-black/50 flex items-center justify-center z-50"
+            onClick={onClose}
+        >
+            <div
+                className="bg-white dark:bg-viking-brown rounded-lg shadow-2xl max-w-md w-full border-4 border-viking-bronze p-4"
+                onClick={e => e.stopPropagation()}
+            >
+                {/* Header */}
                 <div className="flex justify-between items-center mb-4">
                     <h3 className="text-lg font-bold text-viking-brown dark:text-viking-parchment">
-                        🎲 {attack.name}
+                        ⚔️ {npc.name}
                     </h3>
-                    <button onClick={onClose} className="text-2xl text-viking-leather dark:text-viking-bronze hover:text-viking-danger">✕</button>
+                    <button
+                        onClick={onClose}
+                        className="text-2xl text-viking-leather dark:text-viking-bronze hover:text-viking-danger"
+                    >✕</button>
                 </div>
-                
-                <div className="mb-4 p-3 bg-viking-parchment dark:bg-gray-800 rounded text-sm text-viking-brown dark:text-viking-parchment">
-                    <div>Succès sur : {attack.succes}+</div>
-                    <div>Explosion sur : {attack.explosion}+</div>
-                    <div>Dégâts : {attack.degats}</div>
-                </div>
-                
-                <div className="mb-4 flex items-center gap-2">
-                    <input
-                        type="checkbox"
-                        id="broadcast-npc"
-                        checked={broadcast}
-                        onChange={(e) => setBroadcast(e.target.checked)}
-                        className="w-4 h-4"
-                    />
-                    <label htmlFor="broadcast-npc" className="text-sm text-viking-brown dark:text-viking-parchment cursor-pointer">
-                        📢 Partager le jet (historique visible par tous)
-                    </label>
-                </div>
-                
-                {result ? (
+
+                {/* ── STEP : select ─────────────────────────────────────── */}
+                {step === 'select' && (
                     <>
-                        <div className="mb-4 p-4 bg-viking-bronze/20 rounded">
-                            <div className="text-sm font-semibold text-viking-brown dark:text-viking-parchment mb-2">
-                                Dés : {result.rolls.join(', ')}
+                        <p className="text-sm text-viking-leather dark:text-viking-bronze mb-3">
+                            Choisir l'attaque :
+                        </p>
+                        <div className="space-y-2 mb-4">
+                            {attaques.map((attack, i) => (
+                                <button
+                                    key={i}
+                                    onClick={() => {
+                                        setSelectedAttack(attack);
+                                        setStep('roll');
+                                    }}
+                                    className="w-full p-3 rounded border-2 border-viking-bronze/50 text-left hover:border-viking-bronze hover:bg-viking-parchment/30 dark:hover:bg-gray-800/30 transition-colors"
+                                >
+                                    <div className="font-semibold text-viking-brown dark:text-viking-parchment text-sm">
+                                        {attack.name}
+                                    </div>
+                                    <div className="text-xs text-viking-leather dark:text-viking-bronze mt-0.5">
+                                        Seuil {attack.succes} · Expl. {attack.explosion} · {attack.degats} dég.
+                                    </div>
+                                </button>
+                            ))}
+                        </div>
+                        <button
+                            onClick={onClose}
+                            className="w-full px-4 py-2 bg-gray-300 dark:bg-gray-700 text-viking-brown dark:text-viking-parchment rounded font-semibold"
+                        >Annuler</button>
+                    </>
+                )}
+
+                {/* ── STEP : roll ───────────────────────────────────────── */}
+                {step === 'roll' && selectedAttack && (
+                    <>
+                        <div className="mb-4 p-3 bg-viking-parchment/50 dark:bg-gray-800/50 rounded border border-viking-bronze/40">
+                            <div className="font-semibold text-viking-brown dark:text-viking-parchment text-sm mb-1">
+                                {selectedAttack.name}
                             </div>
-                            <div className="text-lg font-bold text-viking-brown dark:text-viking-parchment">
-                                {result.totalSuccesses} succès
+                            <div className="text-xs text-viking-leather dark:text-viking-bronze">
+                                Seuil {selectedAttack.succes} · Explosion {selectedAttack.explosion} · {selectedAttack.degats} dégâts
                             </div>
                         </div>
-                        
-                        <button
-                            onClick={() => onRollComplete(result)}
-                            className="w-full px-4 py-2 bg-viking-success text-white rounded font-semibold hover:bg-green-700"
-                        >
-                            Continuer
-                        </button>
+
+                        {/* Checkbox broadcast */}
+                        <label className="flex items-center gap-2 mb-4 cursor-pointer text-sm text-viking-brown dark:text-viking-parchment">
+                            <input
+                                type="checkbox"
+                                checked={broadcast}
+                                onChange={e => setBroadcast(e.target.checked)}
+                                className="rounded"
+                            />
+                            Diffuser dans l'historique
+                        </label>
+
+                        <div className="flex gap-2">
+                            {hasMultipleAttacks && (
+                                <button
+                                    onClick={() => setStep('select')}
+                                    className="px-4 py-2 bg-gray-300 dark:bg-gray-700 text-viking-brown dark:text-viking-parchment rounded font-semibold hover:bg-gray-400"
+                                >← Retour</button>
+                            )}
+                            <button
+                                onClick={handleRoll}
+                                disabled={rolling}
+                                className="flex-1 px-4 py-2 bg-viking-bronze text-viking-brown rounded font-semibold hover:bg-viking-leather disabled:opacity-60"
+                            >
+                                {rolling ? 'Jet en cours…' : '🎲 Lancer'}
+                            </button>
+                        </div>
                     </>
-                ) : (
-                    <button
-                        onClick={rollDice}
-                        disabled={rolling}
-                        className="w-full px-4 py-2 bg-viking-bronze text-viking-brown rounded font-semibold hover:bg-viking-leather disabled:opacity-50"
-                    >
-                        {rolling ? 'Lancement...' : '🎲 Lancer les dés'}
-                    </button>
+                )}
+
+                {/* ── STEP : rolled ─────────────────────────────────────── */}
+                {step === 'rolled' && rollResult && (
+                    <>
+                        <div className="mb-4 p-4 bg-viking-parchment/50 dark:bg-gray-800/50 rounded border-2 border-viking-bronze text-center">
+                            <div className="text-3xl font-bold text-viking-brown dark:text-viking-parchment mb-1">
+                                {successes}
+                            </div>
+                            <div className="text-sm text-viking-leather dark:text-viking-bronze">
+                                succès
+                            </div>
+                            {rollResult.allDice?.length > 0 && (
+                                <div className="flex justify-center gap-1 mt-2 flex-wrap">
+                                    {rollResult.allDice.map((d, i) => (
+                                        <span
+                                            key={i}
+                                            className={`inline-flex items-center justify-center w-7 h-7 rounded text-xs font-bold border-2 ${
+                                                d >= (selectedAttack?.explosion ?? 10)
+                                                    ? 'border-yellow-400 bg-yellow-100 dark:bg-yellow-900 text-yellow-800 dark:text-yellow-200'
+                                                    : d >= (selectedAttack?.succes ?? 6)
+                                                        ? 'border-green-400 bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200'
+                                                        : 'border-gray-400 bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400'
+                                            }`}
+                                        >{d}</span>
+                                    ))}
+                                </div>
+                            )}
+                        </div>
+
+                        <div className="flex gap-2">
+                            <button
+                                onClick={() => { setRollResult(null); setStep('roll'); }}
+                                className="px-4 py-2 bg-gray-300 dark:bg-gray-700 text-viking-brown dark:text-viking-parchment rounded font-semibold hover:bg-gray-400"
+                            >Relancer</button>
+                            <button
+                                onClick={() => setStep('target')}
+                                className="flex-1 px-4 py-2 bg-viking-bronze text-viking-brown rounded font-semibold hover:bg-viking-leather"
+                            >Choisir la cible →</button>
+                        </div>
+                    </>
                 )}
             </div>
         </div>
