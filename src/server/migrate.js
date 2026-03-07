@@ -21,7 +21,7 @@
 const fs   = require('fs');
 const path = require('path');
 
-const { loadAllSystems, getAllSystems } = require('./systems/loader');
+const { loadAllSystems, getAllSystems } = require('./systems/Loader');
 const { getDbForSystem }               = require('./db/index');
 
 const MIGRATIONS_DIR = path.join(__dirname, '../../database-template/migrations');
@@ -29,9 +29,17 @@ const MIGRATIONS_DIR = path.join(__dirname, '../../database-template/migrations'
 // ─── Parse --system=xxx depuis argv ──────────────────────────────────────────
 
 function parseSystemFilter() {
-    const arg = process.argv.find(a => a.startsWith('--system='));
-    if (!arg) return null; // null = tous les systèmes
-    return arg.replace('--system=', '').split(',').map(s => s.trim()).filter(Boolean);
+    // Cherche d'abord --system= (si appelé avec --)
+    const flagArg = process.argv.find(a => a.startsWith('--system='));
+    if (flagArg) return flagArg.replace('--system=', '').split(',').map(s => s.trim()).filter(Boolean);
+
+    // Sinon, 3e argument positionnel (npm run migrate file.sql vikings)
+    const positional = process.argv[3];
+    if (positional && !positional.startsWith('-')) {
+        return positional.split(',').map(s => s.trim()).filter(Boolean);
+    }
+
+    return null;
 }
 
 // ─── Applique une migration sur un système précis ────────────────────────────

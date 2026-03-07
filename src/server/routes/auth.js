@@ -17,7 +17,7 @@ const {
 // ─── Helper : loadFullCharacter dynamique selon le système ──────────────────
 // On charge le controller du système pour avoir le bon loadFullCharacter.
 function getController(req) {
-    const { loadFullCharacter } = require(`../systems/${req.system.slug}/characterController`);
+    const { loadFullCharacter } = require(`../systems/${req.system.slug}/CharacterController`);
     return { loadFullCharacter };
 }
 

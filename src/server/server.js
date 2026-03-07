@@ -11,7 +11,7 @@ const { Server }  = require('socket.io');
 const compression = require('compression');
 const cookieParser = require('cookie-parser');
 
-const { loadAllSystems, getAllSystems, getSystemRoute, getSharedRoute, getSystemExtraRoutes, getSystemSocketHandlers } = require('./systems/loader');
+const { loadAllSystems, getAllSystems, getSystemRoute, getSharedRoute, getSystemExtraRoutes, getSystemSocketHandlers } = require('./systems/Loader');
 const systemResolver       = require('./middlewares/systemResolver');
 const { closeAllDatabases } = require('./db/index');
 const authRouter           = require('./routes/auth');

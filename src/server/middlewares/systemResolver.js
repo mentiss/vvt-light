@@ -4,7 +4,7 @@
 //   - Ouvre (ou récupère) la connexion BDD lazy → injecte req.db
 //   - Injecte req.system (la config complète)
 
-const { getSystem } = require('../systems/loader');
+const { getSystem } = require('../systems/Loader');
 const { getDbForSystem } = require('../db/index');
 
 function systemResolver(req, res, next) {

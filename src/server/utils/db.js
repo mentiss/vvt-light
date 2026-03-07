@@ -4,7 +4,7 @@
 // getDb() retourne la connexion Vikings via le pool lazy.
 
 const { getDbForSystem } = require('../db/index');
-const { getSystem }      = require('../systems/loader');
+const { getSystem }      = require('../systems/Loader');
 const { ensureUniqueCode } = require('./characters');
 
 function getDb() {
@@ -17,7 +17,7 @@ function getDb() {
 function initDatabase() {
     // Le chargement des systèmes est fait dans server.js via loadAllSystems()
     // Cette fonction est conservée pour compatibilité avec init-db.js
-    const { loadAllSystems } = require('../systems/loader');
+    const { loadAllSystems } = require('../systems/Loader');
     loadAllSystems();
 }
 
