@@ -97,6 +97,7 @@ function loadFullCharacter(db, id) {
         accessCode:  row.access_code,
         accessUrl:   row.access_url,
         playerName:  row.player_name,
+        avatar:      row.avatar,
 
         // Identité
         nom:          row.nom          ?? '',
@@ -144,7 +145,7 @@ function saveFullCharacter(db, id, data) {
         playerName, nom, statutSocial, description,
         determination, determinationMax,
         competences, principes,
-        talents, items,
+        talents, items, avatar,
     } = data;
 
     const competenceCols = _flattenCompetences(competences);
@@ -161,6 +162,7 @@ function saveFullCharacter(db, id, data) {
                 description       = COALESCE(?, description),
                 determination     = COALESCE(?, determination),
                 determination_max = COALESCE(?, determination_max),
+                avatar            = COALESCE(?, avatar),
 
                 -- Compétences
                 analyse_rang              = COALESCE(?, analyse_rang),
@@ -195,6 +197,7 @@ function saveFullCharacter(db, id, data) {
             description   ?? null,
             determination    != null ? Number(determination)    : null,
             determinationMax != null ? Number(determinationMax) : null,
+            avatar   ?? null,
 
             competenceCols.analyse_rang              ?? null,
             competenceCols.analyse_specialisation    ?? null,

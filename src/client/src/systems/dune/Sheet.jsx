@@ -516,6 +516,11 @@ const Sheet = ({
                                                         )}
                                                     </div>
 
+                                                </div>
+
+                                                {/* ── Colonne droite ─────────────────────── */}
+                                                <div className="space-y-4">
+
                                                     {/* Détermination */}
                                                     <DeterminationTracker
                                                         determination={char.determination}
@@ -528,7 +533,28 @@ const Sheet = ({
                                                             }
                                                         }}
                                                     />
+                                                </div>
+                                            </div>
+                                            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mt-2">
+                                                {/* ── Colonne gauche ─────────────────────── */}
+                                                <div className="space-y-4">
+                                                    {/* Principes */}
+                                                    <div className="dune-card">
+                                                        <div className="dune-label mb-2">Principes</div>
+                                                        {(char.principes ?? []).map(p => (
+                                                            <PrincipleRow
+                                                                key={p.key}
+                                                                principe={p}
+                                                                editMode={editMode}
+                                                                onChange={updatePrincipe}
+                                                                onRoll={p => setDiceModal({ type: 'principe', key: p.key })}
+                                                            />
+                                                        ))}
+                                                    </div>
+                                                </div>
 
+                                                {/* ── Colonne droite ─────────────────────── */}
+                                                <div className="space-y-4">
                                                     {/* Compétences */}
                                                     <div className="dune-card">
                                                         <div className="dune-label mb-2">Compétences</div>
@@ -543,31 +569,14 @@ const Sheet = ({
                                                         ))}
                                                     </div>
                                                 </div>
-
-                                                {/* ── Colonne droite ─────────────────────── */}
-                                                <div className="space-y-4">
-
-                                                    {/* Principes */}
-                                                    <div className="dune-card">
-                                                        <div className="dune-label mb-2">Principes</div>
-                                                        {(char.principes ?? []).map(p => (
-                                                            <PrincipleRow
-                                                                key={p.key}
-                                                                principe={p}
-                                                                editMode={editMode}
-                                                                onChange={updatePrincipe}
-                                                                onRoll={p => setDiceModal({ type: 'principe', key: p.key })}
-                                                            />
-                                                        ))}
-                                                    </div>
-
-                                                    {/* Talents */}
-                                                    <TalentsList
-                                                        talents={char.talents}
-                                                        editMode={editMode}
-                                                        onChange={v => updateField('talents', v)}
-                                                    />
-                                                </div>
+                                            </div>
+                                            <div className="gap-4 mt-2">
+                                                {/* Talents */}
+                                                <TalentsList
+                                                    talents={char.talents}
+                                                    editMode={editMode}
+                                                    onChange={v => updateField('talents', v)}
+                                                />
                                             </div>
                                         </>
                                     )}
@@ -616,7 +625,7 @@ const Sheet = ({
                                 {/* Jauge Menace — à droite du contenu */}
                                 {activeGMSession && (
                                     <div
-                                        className="flex-shrink-0 flex flex-col items-center px-2 py-4 sticky top-14 self-start"
+                                        className="shrink-0 flex items-stretch px-2 py-4 sticky top-14 self-start h-100 "
                                         style={{
                                             width: 60,
                                             borderLeft: '1px solid var(--dune-border)',

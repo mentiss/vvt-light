@@ -9,6 +9,8 @@
 //   session-resources-update      → tous (sans complications)
 //   session-resources-gm-update   → tous (avec complications — le client GM filtre)
 
+const {getDbForSystem} = require("../../../db");
+const {getConfigForSystem} = require("../../Loader");
 const SLUG = 'dune';
 
 const ALLOWED = ['impulsions', 'menace', 'complications'];
@@ -21,9 +23,8 @@ const CLAMP   = {
 /**
  * @param {import('socket.io').Server} io
  * @param {import('socket.io').Socket} socket
- * @param {import('better-sqlite3').Database} db
  */
-module.exports = function register(io, socket, db) {
+module.exports = function register(io, socket) {
 
     socket.on('update-session-resources', ({ sessionId, field, delta } = {}) => {
         if (!sessionId || !ALLOWED.includes(field) || typeof delta !== 'number' || !Number.isInteger(delta)) {
@@ -32,6 +33,7 @@ module.exports = function register(io, socket, db) {
         }
 
         try {
+            const db = getDbForSystem(getConfigForSystem(SLUG));
             // Initialise la ligne si absente
             db.prepare('INSERT OR IGNORE INTO session_resources (session_id) VALUES (?)').run(sessionId);
 

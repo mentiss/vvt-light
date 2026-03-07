@@ -160,6 +160,23 @@ function getSystemSocketHandlers(slug) {
         .filter(Boolean);
 }
 
+/**
+ *
+ * @param slug
+ * @returns {any|boolean}
+ */
+function getConfigForSystem(slug) {
+    if (_registry.size === 0) {
+        loadAllSystems();
+    }
+
+    if(_registry.has(slug)) {
+        return _registry.get(slug);
+    }
+
+    return false;
+}
+
 // ─── Privé ──────────────────────────────────────────────────────────────────
 
 function _validateConfig(config, systemDir) {
@@ -184,4 +201,5 @@ module.exports = {
     getSharedRoute,
     getSystemExtraRoutes,
     getSystemSocketHandlers,
+    getConfigForSystem,
 };

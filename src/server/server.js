@@ -103,9 +103,8 @@ io.on('connection', (socket) => {
         const handlers = getSystemSocketHandlers(slug);
         if (handlers.length === 0) continue;
 
-        const db = getDbForSystem(config);
         for (const register of handlers) {
-            register(io, socket, db);
+            register(io, socket);
         }
     }
 });
