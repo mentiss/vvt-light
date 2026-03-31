@@ -1,4 +1,4 @@
-import {STAT_LABELS} from "../../config.jsx";
+import {STAT_LABELS, STATS} from "../../config.jsx";
 import {useFetch} from "../../../../hooks/useFetch.js";
 import React, {useEffect, useState} from "react";
 import useSystem from "../../../../hooks/useSystem.js";

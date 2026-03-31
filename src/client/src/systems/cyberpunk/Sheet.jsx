@@ -41,6 +41,7 @@ import {XPPanel} from "./components/modals/XPPanel.jsx";
 import {MoveCard} from "./components/layout/MoveCard.jsx";
 import {ResourceCounter} from "./components/layout/ResourceCounter.jsx";
 import cyberpunkConfig from "./config.jsx";
+import DiceEntryHistory from "./components/layout/DiceEntryHistory.jsx";
 
 // ── Onglets ───────────────────────────────────────────────────────────────────
 
@@ -251,7 +252,12 @@ const Sheet = ({
             style={{ background: 'var(--color-bg)', color: 'var(--color-text)' }}
             data-theme={darkMode ? 'dark' : undefined}
         >
-            <ToastNotifications />
+            <ToastNotifications
+                sessionId={activeGMSession}
+                renderDiceToast={(entry) => {
+                    return (<DiceEntryHistory roll={entry}  />)
+                }}
+            />
 
             {/* ── SessionPlayersBar ─────────────────────────────────────── */}
             {activeGMSession && (
