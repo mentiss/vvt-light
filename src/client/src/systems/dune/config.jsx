@@ -11,6 +11,7 @@ import DuneHistoryEntry from "./components/DuneHistoryEntry.jsx";
 import DuneNPCForm from "./gm/npc/DuneNPCForm.jsx";
 import DuneNPCSummary from "./gm/npc/DuneNPCSummary.jsx";
 import DuneNPCDetail from "./gm/npc/DuneNPCDetail.jsx";
+import {RollError} from "../../tools/diceEngine.js";
 
 const IMPULSION_COST = [0, 1, 3, 6];
 
@@ -97,7 +98,6 @@ const duneConfig = {
 
             const reussite = succesTotal >= difficulte;
             const excedent = Math.max(0, succesTotal - difficulte);
-            console.log(ctx);
             return {
                 results,
                 rang,

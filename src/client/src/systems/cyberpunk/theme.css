@@ -1,0 +1,301 @@
+/* src/client/src/systems/cyberpunk/theme.css */
+/* ─────────────────────────────────────────────────────────────────────────────
+   Thème Cyberpunk — The Sprawl (adaptation 2d10)
+   Mode jour : noir urbain, contrastes doux, neons atténués
+   Mode nuit  : bitume pur, neons électriques, glow agressif
+   ─────────────────────────────────────────────────────────────────────────── */
+
+/* Safelist Tailwind v4 — classes dynamiques utilisées dans les composants */
+@source inline("bg-health-{0,1,2,3,4,5} text-health-{0,1,2,3,4,5} border-health-{0,1,2,3,4,5}");
+
+/* ── Mode JOUR (par défaut) ─────────────────────────────────────────────── */
+:root {
+    /* Couleurs principales */
+    --color-primary:        #00c4d8;   /* Cyan urbain — neon atténué */
+    --color-secondary:      #d42060;   /* Magenta sombre */
+    --color-accent:         #e8a020;   /* Ambre — clin d'œil au chrome */
+    --color-danger:         #e03030;   /* Rouge alarme */
+    --color-success:        #20c060;   /* Vert terminal */
+
+    /* Surfaces — bitume de jour */
+    --color-bg:             #111118;   /* Asphalte nuit américaine */
+    --color-surface:        #1a1a28;   /* Carbone foncé */
+    --color-surface-alt:    #222235;   /* Carbone légèrement plus clair */
+
+    /* Texte */
+    --color-text:           #d8d8f0;   /* Blanc froid légèrement bleuté */
+    --color-text-muted:     #6a6a90;   /* Gris bleuté — textes secondaires */
+
+    /* Bordure */
+    --color-border:         #2a2a45;   /* Bordure subtile, pas agressive */
+
+    /* ── Variables slug-spécifiques (hex stats, glows, etc.) ── */
+    --cp-neon-cyan:         #00e5ff;
+    --cp-neon-magenta:      #ff2d78;
+    --cp-neon-amber:        #ffaa00;
+    --cp-glow-cyan:         0 0 8px rgba(0, 229, 255, 0.35), 0 0 20px rgba(0, 229, 255, 0.15);
+    --cp-glow-magenta:      0 0 8px rgba(255, 45, 120, 0.35), 0 0 20px rgba(255, 45, 120, 0.15);
+    --cp-glow-amber:        0 0 8px rgba(255, 170, 0, 0.35), 0 0 20px rgba(255, 170, 0, 0.15);
+    --cp-glow-active:       0 0 12px rgba(0, 229, 255, 0.5), 0 0 30px rgba(0, 229, 255, 0.2);
+
+    /* Hexagones — stats */
+    --cp-hex-bg:            #34344a;
+    --cp-hex-border:        #00c4d8;
+    --cp-hex-text:          #00e5ff;
+    --cp-hex-hover-bg:      #0d2a30;
+
+    /* Moves — colonne droite */
+    --cp-move-bg:           #15151f;
+    --cp-move-border:       #2a2a45;
+    --cp-move-hover:        #1e1e30;
+
+    /* Ressources (Cred, info, matos, retenue) */
+    --cp-cred-color:        #ffaa00;
+    --cp-info-color:        #00e5ff;
+    --cp-matos-color:       #ff2d78;
+    --cp-retenue-color:     #a070ff;
+    --cp-xp-color: #b647c5;
+
+    /* Tags narratifs */
+    --cp-tag-positive-bg:   rgba(32, 192, 96, 0.15);
+    --cp-tag-positive-text: #20c060;
+    --cp-tag-negative-bg:   rgba(224, 48, 48, 0.15);
+    --cp-tag-negative-text: #e03030;
+    --cp-tag-neutral-bg:    rgba(106, 106, 144, 0.2);
+    --cp-tag-neutral-text:  #9090b8;
+}
+
+/* ── Mode NUIT ──────────────────────────────────────────────────────────── */
+[data-theme="dark"] {
+    /* Couleurs principales — neons pleine puissance */
+    --color-primary:        #00e5ff;   /* Cyan électrique */
+    --color-secondary:      #ff2d78;   /* Magenta vif */
+    --color-accent:         #ffaa00;   /* Ambre brûlant */
+    --color-danger:         #ff4444;
+    --color-success:        #00ff88;
+
+    /* Surfaces — bitume pur */
+    --color-bg:             #050508;   /* Noir presque absolu */
+    --color-surface:        #0d0d18;   /* Nuit profonde */
+    --color-surface-alt:    #141428;   /* Carbone bleu nuit */
+
+    /* Texte */
+    --color-text:           #f0f0ff;   /* Blanc pur légèrement bleuté */
+    --color-text-muted:     #5050780;  /* Gris bleuté profond */
+
+    /* Bordure — quasi invisible sauf au hover */
+    --color-border:         #1e1e38;
+
+    /* ── Variables slug-spécifiques — mode nuit agressif ── */
+    --cp-glow-cyan:         0 0 12px rgba(0, 229, 255, 0.6), 0 0 30px rgba(0, 229, 255, 0.25);
+    --cp-glow-magenta:      0 0 12px rgba(255, 45, 120, 0.6), 0 0 30px rgba(255, 45, 120, 0.25);
+    --cp-glow-amber:        0 0 12px rgba(255, 170, 0, 0.6), 0 0 30px rgba(255, 170, 0, 0.25);
+    --cp-glow-active:       0 0 16px rgba(0, 229, 255, 0.7), 0 0 40px rgba(0, 229, 255, 0.3);
+
+    /* Hexagones */
+    --cp-hex-bg:            #141428;
+    --cp-hex-border:        #00e5ff;
+    --cp-hex-text:          #00e5ff;
+    --cp-hex-hover-bg:      #001a22;
+
+    /* Moves */
+    --cp-move-bg:           #080812;
+    --cp-move-border:       #1e1e38;
+    --cp-move-hover:        #101025;
+
+    /* Ressources */
+    --cp-cred-color:        #ffaa00;
+    --cp-info-color:        #00e5ff;
+    --cp-matos-color:       #ff2d78;
+    --cp-retenue-color:     #c090ff;
+
+    /* Tags narratifs */
+    --cp-tag-positive-bg:   rgba(0, 255, 136, 0.12);
+    --cp-tag-positive-text: #00ff88;
+    --cp-tag-negative-bg:   rgba(255, 68, 68, 0.12);
+    --cp-tag-negative-text: #ff4444;
+    --cp-tag-neutral-bg:    rgba(80, 80, 120, 0.25);
+    --cp-tag-neutral-text:  #8080b0;
+}
+
+/* ── Typographie slug ────────────────────────────────────────────────────── */
+/* Police condensée/technique pour les labels de stats et titres */
+.cp-font-ui {
+    font-family: 'Rajdhani', 'Orbitron', 'Share Tech Mono', ui-monospace, monospace;
+    letter-spacing: 0.05em;
+}
+
+.cp-font-mono {
+    font-family: 'CyberConsole', 'Share Tech Mono', 'JetBrains Mono', ui-monospace, monospace;
+    letter-spacing: 0.03em;
+}
+
+.cp-font-title {
+    font-family: 'Cyberpunk', ui-monospace, monospace;
+
+}
+
+/* ── Utilitaires slug-spécifiques ────────────────────────────────────────── */
+
+/* Glow sur les éléments actifs / neons */
+.cp-glow-cyan    { box-shadow: var(--cp-glow-cyan); }
+.cp-glow-magenta { box-shadow: var(--cp-glow-magenta); }
+.cp-glow-amber   { box-shadow: var(--cp-glow-amber); }
+.cp-glow-active  { box-shadow: var(--cp-glow-active); }
+
+.hover\:cp-glow-cyan:hover   { box-shadow: var(--cp-glow-cyan); }
+.hover\:cp-glow-magenta:hover { box-shadow: var(--cp-glow-magenta); }
+.hover\:cp-glow-amber:hover   { box-shadow: var(--cp-glow-amber); }
+.hover\:cp-glow-active:hover  { box-shadow: var(--cp-glow-active); }
+
+.cp-neon-glow {
+    text-shadow:    0 0 7px #fff,
+                    0 0 10px var(--cp-neon-cyan),
+                    0 0 21px var(--cp-neon-cyan),
+                    0 0 42px rgba(0, 229, 255, 0.8),
+                    0 0 82px rgba(247, 255, 0, 0.5),
+                    0 0 100px rgba(0, 229, 255, 0.2);
+}
+.cp-neon-glow-el {
+    box-shadow:     0 0 7px #fff,
+                    0 0 10px var(--cp-neon-cyan),
+                    0 0 21px var(--cp-neon-cyan),
+                    0 0 42px rgba(0, 229, 255, 0.8),
+                    0 0 82px rgba(247, 255, 0, 0.5),
+                    0 0 100px rgba(0, 229, 255, 0.2);
+}
+.hover\:cp-neon-glow:hover {
+    text-shadow:    0 0 7px #fff,
+                    0 0 10px var(--cp-neon-cyan),
+                    0 0 21px var(--cp-neon-cyan),
+                    0 0 42px rgba(0, 229, 255, 0.8),
+                    0 0 82px rgba(247, 255, 0, 0.5),
+                    0 0 100px rgba(0, 229, 255, 0.2);
+}
+.hover\:cp-neon-glow-el:hover {
+    box-shadow:     0 0 7px #fff,
+    0 0 10px var(--cp-neon-cyan),
+    0 0 21px var(--cp-neon-cyan),
+    0 0 42px rgba(0, 229, 255, 0.8),
+    0 0 82px rgba(247, 255, 0, 0.5),
+    0 0 100px rgba(0, 229, 255, 0.2);
+}
+
+.cp-text-glow-cyan {
+    color: var(--cp-neon-cyan);
+    text-shadow: 0 0 8px rgba(0, 229, 255, 0.7);
+}
+.cp-text-glow-magenta {
+    color: var(--cp-neon-magenta);
+    text-shadow: 0 0 8px rgba(255, 45, 120, 0.7);
+}
+.cp-text-glow-amber {
+    color: var(--cp-neon-amber);
+    text-shadow: 0 0 8px rgba(255, 170, 0, 0.7);
+}
+
+/* Ligne de séparation néon */
+.cp-divider {
+    height: 1px;
+    background: linear-gradient(
+            to right,
+            transparent,
+            var(--color-primary) 30%,
+            var(--color-primary) 70%,
+            transparent
+    );
+    opacity: 0.4;
+}
+
+.cp-divider-h {
+    height: 100%;
+    background: linear-gradient(
+            to bottom,
+            transparent,
+            var(--color-primary) 30%,
+            var(--color-primary) 70%,
+            transparent
+    );
+    opacity: 0.4;
+}
+
+/* Bordure néon sur les cards actives */
+.cp-border-neon {
+    border: 1px solid var(--color-primary);
+    box-shadow: inset 0 0 8px rgba(0, 229, 255, 0.05), var(--cp-glow-cyan);
+}
+
+/* Badge de stat (Cran, Pro, etc.) */
+.cp-stat-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.65rem;
+    font-weight: 700;
+    padding: 1px 6px;
+    border-radius: 3px;
+    background: rgba(0, 229, 255, 0.12);
+    color: var(--cp-neon-cyan);
+    border: 1px solid rgba(0, 229, 255, 0.3);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+}
+
+/* Badge stat par couleur de stat */
+.cp-stat-badge-cran    { background: rgba(255, 45, 120, 0.12); color: #ff6090; border-color: rgba(255, 45, 120, 0.3); }
+.cp-stat-badge-pro     { background: rgba(0, 229, 255, 0.12);  color: #00e5ff; border-color: rgba(0, 229, 255, 0.3); }
+.cp-stat-badge-chair   { background: rgba(255, 100, 0, 0.12);  color: #ff8040; border-color: rgba(255, 100, 0, 0.3); }
+.cp-stat-badge-esprit  { background: rgba(160, 112, 255, 0.12);color: #c090ff; border-color: rgba(160, 112, 255, 0.3); }
+.cp-stat-badge-style   { background: rgba(255, 170, 0, 0.12);  color: #ffaa00; border-color: rgba(255, 170, 0, 0.3); }
+.cp-stat-badge-synth   { background: rgba(32, 192, 96, 0.12);  color: #20c060; border-color: rgba(32, 192, 96, 0.3); }
+.cp-stat-badge-cred    { background: rgba(255, 200, 0, 0.12);  color: #ffc800; border-color: rgba(255, 200, 0, 0.3); }
+
+/* Tag narratif */
+.cp-tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 0.7rem;
+    font-weight: 600;
+    padding: 2px 8px;
+    border-radius: 4px;
+    letter-spacing: 0.04em;
+    cursor: default;
+    user-select: none;
+}
+.cp-tag-positive { background: var(--cp-tag-positive-bg); color: var(--cp-tag-positive-text); }
+.cp-tag-negative { background: var(--cp-tag-negative-bg); color: var(--cp-tag-negative-text); }
+.cp-tag-neutral  { background: var(--cp-tag-neutral-bg);  color: var(--cp-tag-neutral-text); }
+
+/* Hexagone — clip-path */
+.cp-hex {
+    clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);
+}
+
+/* Ressource counter */
+.cp-resource-pill {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 12px;
+    border-radius: 6px;
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    font-size: 0.85rem;
+    font-weight: 600;
+    transition: border-color 0.15s;
+}
+.cp-resource-pill:hover {
+    border-color: var(--color-primary);
+}
+
+/* Scrollbar slug */
+.cp-scroll::-webkit-scrollbar { width: 4px; }
+.cp-scroll::-webkit-scrollbar-track { background: transparent; }
+.cp-scroll::-webkit-scrollbar-thumb { background: var(--color-border); border-radius: 2px; }
+.cp-scroll::-webkit-scrollbar-thumb:hover { background: var(--color-primary); }
+
+/* Outcome pills — résultats de jets */
+.cp-outcome-success { background: rgba(0, 229, 255, 0.15); color: var(--cp-neon-cyan);    border: 1px solid rgba(0, 229, 255, 0.4); }
+.cp-outcome-partial { background: rgba(255, 170, 0, 0.15); color: var(--cp-neon-amber);   border: 1px solid rgba(255, 170, 0, 0.4); }
+.cp-outcome-failure { background: rgba(255, 45, 120, 0.15); color: var(--cp-neon-magenta); border: 1px solid rgba(255, 45, 120, 0.4); }

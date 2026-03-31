@@ -7,7 +7,7 @@ import React, { useState, useEffect } from 'react';
 import { useSocket }         from '../../context/SocketContext.jsx';
 import { toSystemUrl, useFetch } from '../../hooks/useFetch.js';
 
-const SessionPlayersBar = ({ character, sessionId, sessionName, headerHeight = null }) => {
+const SessionPlayersBar = ({ character, sessionId, sessionName, headerHeight = null, noWidthWhenCollapsed = false }) => {
     const [sessionCharacters, setSessionCharacters] = useState([]);
     const [onlineCharacters,  setOnlineCharacters]  = useState([]);
     const [isCollapsed,       setIsCollapsed]        = useState(false);
@@ -199,10 +199,13 @@ const SessionPlayersBar = ({ character, sessionId, sessionName, headerHeight = n
             </div>
 
             {/* Spacer pour garder la marge en mode collapsed */}
-            <div
-                className="flex-shrink-0 transition-all duration-300"
-                style={{ width: isCollapsed ? '3rem' : 0 }}
-            />
+            {!noWidthWhenCollapsed && (
+                <div
+                    className="flex-shrink-0 transition-all duration-300"
+                    style={{ width: isCollapsed ? '3rem' : 0 }}
+                />
+            )}
+
 
             {/* Bouton flottant pour rouvrir */}
             {isCollapsed && (
