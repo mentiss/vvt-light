@@ -14,6 +14,7 @@ import DiceAnimationOverlay from "../components/shared/DiceAnimationOverlay.jsx"
 import LoadingScreen from "../components/gm/layout/LoadingScreen.jsx";
 
 const SHEETS    = import.meta.glob('../systems/*/Sheet.jsx');
+const THEMES    = import.meta.glob('../systems/*/theme.css');
 
 const lazyCache = {};
 const getLazyComponent = (glob, key) => {
@@ -40,6 +41,11 @@ const PlayerPage = () => {
     const [showCharacterList,  setShowCharacterList]  = useState(false);
     const [selectedCharForCode, setSelectedCharForCode] = useState(null);
     const [showCodeModal,       setShowCodeModal]       = useState(false);
+
+    useEffect(() => {
+        const key = `../systems/${system}/theme.css`;
+        if (THEMES[key]) THEMES[key]();
+    }, [system]);
 
     // ── Résolution initiale (auth + accessUrl) ───────────────────────────────
     useEffect(() => {

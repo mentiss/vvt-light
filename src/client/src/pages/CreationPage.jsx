@@ -1,9 +1,10 @@
 // src/client/src/pages/CreationPage.jsx
-import React, { Suspense } from 'react';
+import React, {Suspense, useEffect} from 'react';
 import { useParams, useNavigate, useOutletContext } from 'react-router-dom';
 import LoadingScreen from "../components/gm/layout/LoadingScreen.jsx";
 
 const CREATIONS = import.meta.glob('../systems/*/Creation.jsx');
+const THEMES    = import.meta.glob('../systems/*/theme.css');
 const lazyCache = {};
 const getLazyComponent = (glob, key) => {
     if (!lazyCache[key]) lazyCache[key] = React.lazy(glob[key]);
@@ -30,6 +31,11 @@ const CreationPage = () => {
     const handleCancel = () => {
         navigate(`/${system}/`);
     };
+
+    useEffect(() => {
+        const key = `../systems/${system}/theme.css`;
+        if (THEMES[key]) THEMES[key]();
+    }, [system]);
 
     return (
         <Suspense fallback={<LoadingScreen />}>

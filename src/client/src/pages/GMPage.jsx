@@ -11,6 +11,7 @@ import DiceAnimationOverlay from "../components/shared/DiceAnimationOverlay.jsx"
 import LoadingScreen from "../components/gm/layout/LoadingScreen.jsx";
 
 const SYSTEM_GM_APPS = import.meta.glob('../systems/*/GMApp.jsx');
+const THEMES    = import.meta.glob('../systems/*/theme.css');
 
 const gmLazyCache = {};
 const getGMLazyComponent = (key) => {
@@ -33,6 +34,11 @@ const GMPage = () => {
 
     // ── Sockets génériques GM ────────────────────────────────────────────────
     const { activeSession, setActiveSession, onlineCharacters } = useGMSession({ apiBase });
+
+    useEffect(() => {
+        const key = `../systems/${system}/theme.css`;
+        if (THEMES[key]) THEMES[key]();
+    }, [system]);
 
     // ── Chargement du personnage GM pour l'auth ──────────────────────────────
     useEffect(() => {
