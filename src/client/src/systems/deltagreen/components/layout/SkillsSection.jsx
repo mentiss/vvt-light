@@ -75,13 +75,15 @@ const SkillRow = ({ skill, baseScore, label, editMode, onScoreChange, onRoll, on
             )}
 
             {/* Bouton jet */}
-            <button
-                onClick={handleRoll}
-                className="text-xs font-mono border border-default/40 px-1.5 py-0.5 hover:border-accent hover:text-accent transition-colors flex-shrink-0"
-                title={`Jet ${label} (${skill.score}%)`}
-            >
-                ⊕
-            </button>
+            {onRoll !== null && (
+                <button
+                    onClick={handleRoll}
+                    className="text-xs font-mono border border-default/40 px-1.5 py-0.5 hover:border-accent hover:text-accent transition-colors shrink-0"
+                    title={`Jet ${label} (${skill.score}%)`}
+                >
+                    ⊕
+                </button>
+            )}
         </div>
     );
 };

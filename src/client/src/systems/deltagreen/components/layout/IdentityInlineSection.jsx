@@ -26,7 +26,7 @@ const InlineField = ({ label, editMode, value, children }) => (
 
 const IdentityInlineSection = ({ char, editMode, set, onAvatarClick }) => (
     <div
-        className="grid gap-x-4 gap-y-1.5 items-center border-b border-default pb-3"
+        className="grid gap-x-4 gap-y-1.5 items-center pb-3"
         style={{ gridTemplateColumns: 'auto 1fr 1fr', gridTemplateRows: 'auto auto' }}
     >
         {/* Avatar — couvre 2 lignes */}

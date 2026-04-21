@@ -348,8 +348,14 @@
     background: var(--dg-field-bg);
     border: 1px solid var(--dg-field-border);
     color: var(--color-text);
+    caret-color: var(--color-text);
     font-family: var(--dg-font-body);
     font-size: 0.85rem;
+}
+
+.dg-sheet-wrapper input,
+.dg-sheet-wrapper textarea {
+    caret-color: var(--color-text);
 }
 
 /* Pied de page formulaire */
@@ -396,4 +402,99 @@
 .dg-skill-row.dg-failed .dg-skill-label {
     color: var(--dg-skill-checked);
     font-weight: 700;
+}
+
+/* ══════════════════════════════════════════════════════════════════════════
+   FEUILLETS ADMINISTRATIFS
+   Chaque colonne de la grille est enveloppée dans un feuillet distinct.
+   Les rotations sont volontairement très faibles pour se distinguer
+   clairement du palier 3 de dégradation (rotate 0.5deg global).
+   ══════════════════════════════════════════════════════════════════════════ */
+.dg-feuillet {
+    /* 1. Fond Papier avec grain d'impression */
+    background-color: #f5f1e8;
+    position: relative;
+    padding: 1.25rem;
+    padding-bottom: 1.8rem;
+
+    /* Mix de textures :
+       - Un grain de bruit fractal (plus visible pour simuler le papier recyclé)
+       - Les lignes de fond simulant le papier continu
+    */
+    background-image:
+            url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.1'/%3E%3C/svg%3E"),
+            repeating-linear-gradient(
+                    to bottom,
+                    rgba(0, 0, 0, 0.03) 0px,
+                    rgba(0, 0, 0, 0.03) 1px,
+                    transparent 1px,
+                    transparent 28px
+            );
+
+    /* 2. Bordure typique formulaire (Double ligne fine) */
+    /* On utilise outline + border pour simuler les lignes de cadre fédéral */
+    border: 1px solid #777060;
+    border-left: 1px dashed rgba(0,0,0,0.1);
+    outline: 3px solid #f5f1e8; /* Marge interne blanche/crème */
+    box-shadow:
+            0 0 0 4px #999080, /* Deuxième ligne fine externe */
+            3px 3px 0px rgba(0, 0, 0, 0.15); /* Ombre portée "sèche" sans flou */
+
+    /* Empêcher tout flou de rendu */
+    image-rendering: pixelated;
+    backface-visibility: hidden;
+}
+
+/* 3. L'effet "Perforation" sur les côtés (Optionnel mais très années 90) */
+/* Simule les bandes détachables des imprimantes à aiguilles */
+.dg-feuillet::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: -8px;
+    bottom: 0;
+    width: 4px;
+    background-image: radial-gradient(#999080 1px, transparent 1px);
+    background-size: 4px 12px;
+    opacity: 0.3;
+}
+
+/* Référence formulaire — coin bas droit, style formulaire fédéral */
+.dg-feuillet::after {
+    content: attr(data-form-ref);
+    position: absolute;
+    bottom: 0.35rem;
+    right: 0.5rem;
+    font-size: 7px;
+    font-family: 'Courier New', monospace;
+    letter-spacing: 0.06em;
+    color: var(--dg-field-border);
+    opacity: 0.55;
+    pointer-events: none;
+    white-space: nowrap;
+}
+
+
+/* ── Dark mode — microfilm ───────────────────────────────────────────── */
+
+[data-theme="dark"] .dg-feuillet {
+    background-color: #0d120e;
+    border-color: #2a352b;
+    outline-color: #0d120e;
+    box-shadow:
+            0 0 0 4px #1a251b,
+            4px 4px 0px rgba(0, 0, 0, 0.5);
+    background-image:
+            url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.99' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.15'/%3E%3C/svg%3E"),
+            repeating-linear-gradient(
+                    to bottom,
+                    rgba(0, 255, 0, 0.02) 0px,
+                    rgba(0, 255, 0, 0.02) 1px,
+                    transparent 1px,
+                    transparent 28px
+            );
+}
+
+[data-theme="dark"] .dg-feuillet::after {
+    color: rgba(160, 200, 160, 0.2);
 }

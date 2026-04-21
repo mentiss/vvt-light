@@ -12,6 +12,7 @@
 
 import { useAuth } from '../context/AuthContext';
 import { getSystemFromPath } from './useSystem';
+import {useEffect, useRef} from "react";
 
 // Routes montées sans préfixe système dans server.js
 const GLOBAL_ROUTES = [
@@ -50,13 +51,18 @@ function buildHeaders(options, token) {
 export const useFetch = () => {
     const { accessToken, refreshAccessToken } = useAuth();
 
+    const tokenRef = useRef(accessToken);
+    useEffect(() => {
+        tokenRef.current = accessToken;
+    }, [accessToken]);
+
     const fetchWithAuth = async (url, options = {}) => {
         const finalUrl = toSystemUrl(url);
 
         // Premier essai avec le token courant
         let response = await fetch(finalUrl, {
             ...options,
-            headers: buildHeaders(options, accessToken),
+            headers: buildHeaders(options, tokenRef.current),
         });
 
         // Token expiré → refresh, puis retry avec le NOUVEAU token
@@ -68,6 +74,8 @@ export const useFetch = () => {
                     // Refresh échoué (session expirée côté serveur) → on laisse remonter
                     throw new Error('Session expired, please login again');
                 }
+
+                tokenRef.current = newToken;
 
                 // Retry avec le nouveau token — pas de setTimeout, on a le token en main
                 response = await fetch(finalUrl, {

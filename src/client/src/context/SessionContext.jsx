@@ -31,8 +31,10 @@ export const SessionProvider = ({ children }) => {
 
     useEffect(() => {
         if (!socket || !pendingSessionId) return;
+        if (!characterSessions.length) return; // ← attendre que les sessions soient chargées
+
         const system   = getSystemFromPath();
-        const isGM = characterSessions.some(s => s.id === -1);
+        const isGM     = characterSessions.some(s => s.id === -1);
         const isMember = isGM || characterSessions.some(s => s.id === pendingSessionId);
 
         if (!isMember) {
@@ -44,15 +46,12 @@ export const SessionProvider = ({ children }) => {
             return;
         }
 
-        // Quitter l'ancienne room
         if (activeGMSession && activeGMSession !== pendingSessionId) {
             socket.emit('leave-session', { sessionId: activeGMSession, system });
         }
 
-        // Rejoindre la nouvelle room
         socket.emit('join-session', { sessionId: pendingSessionId, system });
         setActiveGMSession(pendingSessionId);
-        console.log('[SessionContext] Joined session:', pendingSessionId);
     }, [socket, pendingSessionId, characterSessions]);
 
     useEffect(() => {

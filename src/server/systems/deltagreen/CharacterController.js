@@ -429,6 +429,16 @@ function saveFullCharacter(db, id, data) {
             }
         });
 
+        if (Array.isArray(data.sanLog)) {
+            const updateNote = db.prepare(`
+                UPDATE character_san_log SET notes = ?
+                WHERE id = ? AND character_id = ?
+            `);
+            for (const e of data.sanLog) {
+                if (e.id) updateNote.run(e.notes ?? '', e.id, id);
+            }
+        }
+
         db.prepare('COMMIT').run();
     } catch (err) {
         db.prepare('ROLLBACK').run();

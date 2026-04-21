@@ -145,7 +145,7 @@ const WeaponsSection = ({ char, editMode, setArr, onRoll, onPatchImmediate  }) =
                 <span className="text-xs font-mono truncate" title={w?.name}>{w?.name || '—'}</span>
 
                 {/* COMP. % */}
-                {!editMode && resolved ? (
+                {!editMode && resolved && onRoll !== null ? (
                     <button
                         onClick={() => rollSkill(w)}
                         className="text-xs font-mono text-center hover:text-accent hover:underline transition-colors tabular-nums"
@@ -161,7 +161,7 @@ const WeaponsSection = ({ char, editMode, setArr, onRoll, onPatchImmediate  }) =
                 <span className="text-xs font-mono text-center text-muted">{d.range || '—'}</span>
 
                 {/* Dégâts */}
-                {!editMode && notation ? (
+                {!editMode && notation && onRoll !== null ? (
                     <button
                         onClick={() => rollDamage(w)}
                         className="text-xs font-mono text-center hover:text-accent hover:underline transition-colors"
@@ -177,7 +177,7 @@ const WeaponsSection = ({ char, editMode, setArr, onRoll, onPatchImmediate  }) =
                 </span>
 
                 {/* Létalité */}
-                {!editMode && lethalNum != null ? (
+                {!editMode && lethalNum != null && onRoll !== null ? (
                     <button
                         onClick={() => rollLethality(w)}
                         className="text-xs font-mono text-center hover:text-accent hover:underline transition-colors tabular-nums"
@@ -260,7 +260,7 @@ const WeaponsSection = ({ char, editMode, setArr, onRoll, onPatchImmediate  }) =
                 <span className="text-xs font-mono italic text-muted">Mains nues</span>
 
                 {/* COMP. % */}
-                {!editMode ? (
+                {!editMode && onRoll !== null ? (
                     <button
                         onClick={() => onRoll({ diceType: 'd100', targetScore: unarmedScore, rollLabel: 'Mains nues — Combat à mains nues' })}
                         className="text-xs font-mono text-center text-muted hover:text-accent hover:underline transition-colors tabular-nums"
@@ -272,7 +272,7 @@ const WeaponsSection = ({ char, editMode, setArr, onRoll, onPatchImmediate  }) =
                 <span className="text-xs font-mono text-center text-muted">—</span>
 
                 {/* Dégâts */}
-                {!editMode ? (
+                {!editMode && onRoll !== null ? (
                     <button
                         onClick={() => onRoll({ diceType: '1d4-1', rollLabel: 'Dégâts — Mains nues' })}
                         className="text-xs font-mono text-center text-muted hover:text-accent hover:underline transition-colors"

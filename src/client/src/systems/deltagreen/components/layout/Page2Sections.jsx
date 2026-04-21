@@ -413,11 +413,13 @@ const SpecialTrainingSection = ({ char, editMode, set, onRoll }) => {
                         <>
                             <span className="text-xs font-mono">{entry.intitule || '—'}</span>
                             <span className="text-xs font-mono text-muted">{entry.carac_ou_competence || '—'}</span>
-                            <button
-                                onClick={() => handleRoll(entry)}
-                                className="text-xs font-mono border border-default/40 px-1.5 py-0.5 hover:border-accent hover:text-accent">
-                                ⊕
-                            </button>
+                            {onRoll !== null && (
+                                <button
+                                    onClick={() => handleRoll(entry)}
+                                    className="text-xs font-mono border border-default/40 px-1.5 py-0.5 hover:border-accent hover:text-accent">
+                                    ⊕
+                                </button>
+                            )}
                         </>
                     )}
                 </div>

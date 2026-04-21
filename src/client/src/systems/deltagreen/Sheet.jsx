@@ -56,6 +56,7 @@ import WeaponsSection from "./components/layout/WeaponsSection.jsx";
 import EquipmentSection from "./components/layout/EquipmentSection.jsx";
 import IdentityInlineSection from "./components/layout/IdentityInlineSection.jsx";
 import PhysicalDescriptionSection from "./components/layout/PhysicalDescriotionSection.jsx";
+import FreeDiceModal from "../../components/modals/FreeDiceModal.jsx";
 
 // ── Onglets ──────────────────────────────────────────────────────────────────
 
@@ -100,7 +101,7 @@ const Sheet = ({
     const [showEvolve,     setShowEvolve]     = useState(false);
     const [showCharList,   setShowCharList]   = useState(false);
     const [diceModal,      setDiceModal]      = useState(null);
-    // diceModal : { diceType, targetScore, rollLabel, onSuccess? }
+    const [showFreeDice, setShowFreeDice] = useState(false);
 
     // ── Sync character → editable (push serveur reçu) ─────────────────────────
     // Si editMode actif, on ne réinitialise pas — le joueur est en train d'éditer.
@@ -414,12 +415,35 @@ const Sheet = ({
 
                         {/* Bouton jet de SAN */}
                         {!isLocked && (
-                            <button
-                                onClick={() => setShowSanModal(true)}
-                                className="px-4 py-1 bg-danger text-white text-xs font-mono uppercase tracking-wider hover:opacity-90"
-                            >
-                                Jet de SAN
-                            </button>
+                            <>
+                                <button
+                                    onClick={() => setShowFreeDice(true)}
+                                    className="text-default hover:text-accent transition-colors p-1"
+                                    title="Lancer des dés"
+                                >
+                                    <svg viewBox="0 0 48 48" width="18" height="18" xmlns="http://www.w3.org/2000/svg">
+                                        {/* Contour hexagonal du d20 vu de face */}
+                                        <polygon
+                                            points="24,2 42,13 42,35 24,46 6,35 6,13"
+                                            fill="none" stroke="currentColor" strokeWidth="2" strokeLinejoin="round"
+                                        />
+                                        {/* Triangles intérieurs caractéristiques du d20 */}
+                                        <polygon
+                                            points="24,2 42,13 6,13"
+                                            fill="none" stroke="currentColor" strokeWidth="1.2" strokeLinejoin="round" opacity="0.7"
+                                        />
+                                        <line x1="24" y1="2"  x2="24" y2="46" stroke="currentColor" strokeWidth="1.2" opacity="0.5" />
+                                        <line x1="6"  y1="13" x2="42" y2="35" stroke="currentColor" strokeWidth="1.2" opacity="0.5" />
+                                        <line x1="42" y1="13" x2="6"  y2="35" stroke="currentColor" strokeWidth="1.2" opacity="0.5" />
+                                    </svg>
+                                </button>
+                                <button
+                                    onClick={() => setShowSanModal(true)}
+                                    className="px-4 py-1 bg-danger text-white text-xs font-mono uppercase tracking-wider hover:opacity-90"
+                                >
+                                    Jet de SAN
+                                </button>
+                            </>
                         )}
                     </div>
                 </nav>
@@ -477,14 +501,22 @@ const Sheet = ({
                         )}
                         {char.degradationPalier < 4 && (
                             <>
-                                <IdentityInlineSection
-                                    char={char}
-                                    editMode={editMode && !isLocked}
-                                    set={set}
-                                    onAvatarClick={() => !isLocked && setShowAvatar(true)}
-                                />
-                                <div className="grid grid-cols-8 gap-4">
-                                    <div className="col-span-2">
+                                <div
+                                    className="dg-feuillet dg-feuillet-chapeau"
+                                    data-form-ref="DD FORM 315-A — IDENTIFICATION"
+                                >
+                                    <IdentityInlineSection
+                                        char={char}
+                                        editMode={editMode && !isLocked}
+                                        set={set}
+                                        onAvatarClick={() => !isLocked && setShowAvatar(true)}
+                                    />
+                                </div>
+                                <div className="grid grid-cols-8 gap-4 items-start">
+                                    <div
+                                        className={`col-span-2 dg-feuillet ${editMode ? '' : 'dg-feuillet-col1'}`}
+                                        data-form-ref="DD FORM 315-B — ÉVALUATION PHYSIQUE"
+                                    >
                                         {/* Caractéristiques + attributs dérivés */}
                                         <StatsSection
                                             char={char}
@@ -511,7 +543,10 @@ const Sheet = ({
                                             onPatchImmediate={patchImmediate}
                                         />
                                     </div>
-                                    <div className="col-span-3">
+                                    <div
+                                        className={`col-span-3 dg-feuillet ${editMode ? '' : 'dg-feuillet-col2'}`}
+                                        data-form-ref="DD FORM 315-C — COMPÉTENCES OPÉRATIONNELLES"
+                                    >
                                         {/* Compétences */}
                                         <SkillsSection
                                             char={char}
@@ -540,31 +575,10 @@ const Sheet = ({
                                             onPatchImmediate={patchImmediate}
                                         />
                                     </div>
-                                    <div className="col-span-3">
-                                        {/* Avatar + identité */}
-                                        {/*<div className="flex gap-4">*/}
-                                        {/*    /!* Avatar *!/*/}
-                                        {/*    <div*/}
-                                        {/*        className="shrink-0 w-24 h-24 border border-default cursor-pointer overflow-hidden bg-surface-alt"*/}
-                                        {/*        onClick={() => !isLocked && setShowAvatar(true)}*/}
-                                        {/*        title="Changer l'avatar"*/}
-                                        {/*    >*/}
-                                        {/*        {char.avatar*/}
-                                        {/*            ? <img src={char.avatar} alt="Avatar" className="w-full h-full object-cover" />*/}
-                                        {/*            : <div className="w-full h-full flex items-center justify-center text-muted text-3xl">☰</div>*/}
-                                        {/*        }*/}
-                                        {/*    </div>*/}
-
-                                        {/*    /!* Section identité *!/*/}
-                                        {/*    <div className="flex-1 dg-identity-section">*/}
-                                        {/*        <IdentitySection*/}
-                                        {/*            char={char}*/}
-                                        {/*            editMode={editMode && !isLocked}*/}
-                                        {/*            set={set}*/}
-                                        {/*        />*/}
-                                        {/*    </div>*/}
-                                        {/*</div>*/}
-                                        {/*<hr className="dg-divider" />*/}
+                                    <div
+                                        className={`col-span-3 dg-feuillet ${editMode ? '' : 'dg-feuillet-col3'}`}
+                                        data-form-ref="DD FORM 315-D — PROFIL PSYCHOLOGIQUE"
+                                    >
 
                                         {/* Données psychologiques */}
                                         <div className="dg-bonds-section">
@@ -590,6 +604,11 @@ const Sheet = ({
                                             <SanLogSection
                                                 sanLog={char.sanLog ?? []}
                                                 editMode={editMode && !isLocked}
+                                                onNotesChange={(entryId, notes) => {
+                                                    setArr('sanLog', (char.sanLog ?? []).map(e =>
+                                                        e.id === entryId ? { ...e, notes } : e
+                                                    ));
+                                                }}
                                             />
                                         </div>
 
@@ -624,10 +643,12 @@ const Sheet = ({
                             </>
                         )}
 
-                        <hr className="dg-divider" />
-
                         {/* Sections 20-21 — Officier responsable / Signature */}
-                        <div className="grid grid-cols-2 gap-6">
+                        <div
+                            className={`dg-feuillet ${editMode ? '' : 'dg-feuillet-bas'}`}
+                            data-form-ref="DD FORM 315-E — AUTORISATION OPÉRATIONNELLE"
+                        >
+                            <div className="grid grid-cols-2 gap-6">
                             <div>
                                 <p className="dg-section-label mb-1">21. Officier responsable</p>
                                 {editMode && !isLocked
@@ -655,7 +676,7 @@ const Sheet = ({
                                 }
                             </div>
                         </div>
-
+                        </div>
 
                         {/* Pied de page formulaire */}
                         <footer className="dg-footer text-center py-3 m-0 mt-8 sticky-footer bottom-0">
@@ -769,6 +790,14 @@ const Sheet = ({
                 onClose={() => setShowCharList(false)}
                 onSelect={handleSelectChar}
             />}
+            {showFreeDice && (
+                <FreeDiceModal
+                    characterId={character.id}
+                    characterName={`${character.nom ?? ''} ${character.prenom ?? ''}`.trim()}
+                    sessionId={activeGMSession}
+                    onClose={() => setShowFreeDice(false)}
+                />
+            )}
         </div>
     );
 };

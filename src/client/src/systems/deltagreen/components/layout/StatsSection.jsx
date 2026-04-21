@@ -51,7 +51,9 @@ const StatsSection = ({ char, editMode, set, onRoll }) => {
                 <span className="dg-section-label text-center">Score</span>
                 <span className="dg-section-label text-center">×5</span>
                 <span className="dg-section-label text-center">Traits</span>
-                <span className="dg-section-label text-center">Jet</span>
+                {onRoll !== null && (
+                    <span className="dg-section-label text-center">Jet</span>
+                )}
             </div>
 
             <div className="space-y-1">
@@ -102,13 +104,15 @@ const StatsSection = ({ char, editMode, set, onRoll }) => {
                             </div>
 
                             {/* Bouton jet */}
-                            <button
-                                onClick={() => handleRollCarac(carac)}
-                                className="text-xs font-mono border border-default px-2 py-0.5 hover:border-accent hover:text-accent transition-colors"
-                                title={`Jet ${carac.label} (${times5}%)`}
-                            >
-                                D100
-                            </button>
+                            {onRoll !== null && (
+                                <button
+                                    onClick={() => handleRollCarac(carac)}
+                                    className="text-xs font-mono border border-default px-2 py-0.5 hover:border-accent hover:text-accent transition-colors"
+                                    title={`Jet ${carac.label} (${times5}%)`}
+                                >
+                                    D100
+                                </button>
+                            )}
                         </div>
                     );
                 })}

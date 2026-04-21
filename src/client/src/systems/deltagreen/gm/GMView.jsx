@@ -17,6 +17,7 @@ import deltgreenConfig from "../config.jsx";
 import useSystem from "../../../hooks/useSystem.js";
 import DiceConfigModal from "../../../components/modals/DiceConfigModal.jsx";
 import CharacterListModal from "../../../components/modals/CharacterListModal.jsx";
+import FreeDiceModal from "../../../components/modals/FreeDiceModal.jsx";
 
 const GM_TABS = [
     { id: 'session', label: 'Agents'   },
@@ -27,6 +28,7 @@ const GM_TABS = [
 const GMView = ({ activeSession, onSessionChange, onlineCharacters, darkMode, onToggleDarkMode }) => {
     const [showMenu, setShowMenu] = useState(false);
     const [showDiceConfig, setShowDiceConfig] = useState(false);
+    const [showFreeDice, setShowFreeDice] = useState(false);
 
     const { slug } = useSystem();
     const { logout }    = useAuth();
@@ -77,6 +79,26 @@ const GMView = ({ activeSession, onSessionChange, onlineCharacters, darkMode, on
                             {activeSession.name}
                         </span>
                     )}
+                    <button
+                        onClick={() => setShowFreeDice(true)}
+                        className="text-xs font-mono text-muted hover:text-accent px-1 py-1 transition-colors"
+                    >
+                        <svg viewBox="0 0 48 48" width="18" height="18" xmlns="http://www.w3.org/2000/svg">
+                            {/* Contour hexagonal du d20 vu de face */}
+                            <polygon
+                                points="24,2 42,13 42,35 24,46 6,35 6,13"
+                                fill="none" stroke="currentColor" strokeWidth="2" strokeLinejoin="round"
+                            />
+                            {/* Triangles intérieurs caractéristiques du d20 */}
+                            <polygon
+                                points="24,2 42,13 6,13"
+                                fill="none" stroke="currentColor" strokeWidth="1.2" strokeLinejoin="round" opacity="0.7"
+                            />
+                            <line x1="24" y1="2"  x2="24" y2="46" stroke="currentColor" strokeWidth="1.2" opacity="0.5" />
+                            <line x1="6"  y1="13" x2="42" y2="35" stroke="currentColor" strokeWidth="1.2" opacity="0.5" />
+                            <line x1="42" y1="13" x2="6"  y2="35" stroke="currentColor" strokeWidth="1.2" opacity="0.5" />
+                        </svg>
+                    </button>
                     <button
                         onClick={() => setShowTableModal(true)}
                         className="text-xs font-mono border border-gray-700 hover:border-gray-500 text-gray-400 hover:text-white px-3 py-1 transition-colors"
@@ -151,7 +173,7 @@ const GMView = ({ activeSession, onSessionChange, onlineCharacters, darkMode, on
             </nav>
 
             {/* ── Contenu ─────────────────────────────────────────────────── */}
-            <main className="flex-1 overflow-y-auto">
+            <main className="flex-1 flex overflow-y-auto">
                 {activeTab === 'session' && (
                     <TabSession
                         activeSession={activeSession}
@@ -159,16 +181,20 @@ const GMView = ({ activeSession, onSessionChange, onlineCharacters, darkMode, on
                     />
                 )}
                 {activeTab === 'journal' && (
-                    <div className="max-w-4xl mx-auto px-4 py-6">
-                        <TabJournal characterId={-1} />
+                    <div className="flex-1 overflow-y-auto">
+                        <div className="max-w-full mx-auto px-4 py-6">
+                            <TabJournal characterId={-1} />
+                        </div>
                     </div>
                 )}
                 {activeTab === 'historique' && (
-                    <div className="max-w-4xl mx-auto px-4 py-6">
-                        <DiceHistoryPage
-                            sessionId={activeSession?.id || null}
-                            renderHistoryEntry={deltgreenConfig.dice.renderHistoryEntry}
-                        />
+                    <div className="flex-1 overflow-y-auto">
+                        <div className="max-w-4xl mx-auto px-4 py-6">
+                            <DiceHistoryPage
+                                sessionId={activeSession?.id || null}
+                                renderHistoryEntry={deltgreenConfig.dice.renderHistoryEntry}
+                            />
+                        </div>
                     </div>
                 )}
             </main>
@@ -186,6 +212,13 @@ const GMView = ({ activeSession, onSessionChange, onlineCharacters, darkMode, on
             {/* Configuration dés */}
             {showDiceConfig && (
                 <DiceConfigModal onClose={() => setShowDiceConfig(false)} />
+            )}
+            {showFreeDice && (
+                <FreeDiceModal
+                    sessionId={activeSession || null}
+                    isGM={true}
+                    onClose={() => setShowFreeDice(false)}
+                />
             )}
         </div>
     );
