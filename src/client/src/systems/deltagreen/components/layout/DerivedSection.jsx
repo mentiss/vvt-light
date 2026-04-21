@@ -104,25 +104,49 @@ const DerivedSection = ({ char, editMode, set, onPatchImmediate }) => {
             </div>
 
             {/* Accoutumance */}
-            <div className="flex gap-6 mt-2">
-                <label className="flex items-center gap-2 cursor-pointer">
-                    <input
-                        type="checkbox"
-                        className="dg-checkbox"
-                        checked={!!char.adaptedViolence}
-                        onChange={e => onPatchImmediate({ adaptedViolence: e.target.checked })}
-                    />
-                    <span className="text-sm font-mono">Violence — <span className="italic">accoutumé</span></span>
-                </label>
-                <label className="flex items-center gap-2 cursor-pointer">
-                    <input
-                        type="checkbox"
-                        className="dg-checkbox"
-                        checked={!!char.adaptedHelplessness}
-                        onChange={e => onPatchImmediate({ adaptedHelplessness: e.target.checked })}
-                    />
-                    <span className="text-sm font-mono">Impuissance — <span className="italic">accoutumé</span></span>
-                </label>
+            <div className="mt-3 space-y-2">
+                {[
+                    { label: 'Violence',    field: 'adaptedViolence'     },
+                    { label: 'Impuissance', field: 'adaptedHelplessness' },
+                ].map(({ label, field }) => {
+                    const count   = char[field] ?? 0;
+                    const adapted = count >= 3;
+
+                    const toggle = (idx) => {
+                        // Clic sur case i :
+                        //   - si toutes les cases jusqu'à i sont cochées → décoche i (count = i)
+                        //   - sinon → coche jusqu'à i+1 (count = i+1)
+                        const next = count === idx + 1 ? idx : idx + 1;
+                        onPatchImmediate({ [field]: next });
+                    };
+
+                    return (
+                        <div key={field} className="flex items-center gap-3">
+                            <span className="text-xs font-mono w-20 shrink-0">{label}</span>
+
+                            {/* 3 cases */}
+                            <div className="flex items-center gap-1.5">
+                                {[0, 1, 2].map(idx => (
+                                    <input
+                                        key={idx}
+                                        type="checkbox"
+                                        className="dg-checkbox"
+                                        checked={count > idx}
+                                        onChange={() => toggle(idx)}
+                                        title={`Case ${idx + 1}/3`}
+                                    />
+                                ))}
+                            </div>
+
+                            {/* Badge accoutumé — visible seulement quand les 3 sont cochées */}
+                            {adapted && (
+                                <span className="dg-stamp dg-stamp-red text-[9px] tracking-widest">
+                                    ACCOUTUMÉ
+                                </span>
+                            )}
+                        </div>
+                    );
+                })}
             </div>
         </div>
     );

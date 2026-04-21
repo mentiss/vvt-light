@@ -1,9 +1,3 @@
-// src/client/src/systems/cyberpunk/GMApp.jsx
-// ─────────────────────────────────────────────────────────────────────────────
-// Shell GM cyberpunk — point d'entrée détecté par auto-discovery.
-// Contrat props imposé par GMPage.jsx.
-// ─────────────────────────────────────────────────────────────────────────────
-
 import React from 'react';
 import './theme.css';
 import GMView from './gm/GMView.jsx';

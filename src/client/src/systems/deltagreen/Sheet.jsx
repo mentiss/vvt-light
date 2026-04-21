@@ -28,7 +28,6 @@ import { useSocket }  from '../../context/SocketContext.jsx';
 import { useSession } from '../../context/SessionContext.jsx';
 import { useFetch } from '../../hooks/useFetch.js';
 
-
 import './theme.css';
 import {useAuth} from "../../context/AuthContext.jsx";
 import IdentitySection from "./components/layout/IdentitySection.jsx";
@@ -39,10 +38,8 @@ import MotivationsSection from "./components/layout/MotivationsSection.jsx";
 import SanLogSection from "./components/layout/SanLogSection.jsx";
 import SkillsSection from "./components/layout/SkillsSection.jsx";
 import InjuriesSection, {
-    EquipmentSection,
     NotesSection,
-    SpecialTrainingSection,
-    WeaponsSection
+    SpecialTrainingSection
 } from "./components/layout/Page2Sections.jsx";
 import JournalTab from "../../components/tabs/JournalTab.jsx";
 import AvatarUploader from "../../components/AvatarUploader.jsx";
@@ -55,6 +52,10 @@ import deltgreenConfig from "./config.jsx";
 import ToastNotifications from "../../components/layout/ToastNotifications.jsx";
 import SessionPlayersBar from "../../components/layout/SessionPlayersBar.jsx";
 import CharacterListModal from "../../components/modals/CharacterListModal.jsx";
+import WeaponsSection from "./components/layout/WeaponsSection.jsx";
+import EquipmentSection from "./components/layout/EquipmentSection.jsx";
+import IdentityInlineSection from "./components/layout/IdentityInlineSection.jsx";
+import PhysicalDescriptionSection from "./components/layout/PhysicalDescriotionSection.jsx";
 
 // ── Onglets ──────────────────────────────────────────────────────────────────
 
@@ -204,6 +205,7 @@ const Sheet = ({
 
     // ── Évolution post-session ────────────────────────────────────────────────
 
+    // eslint-disable-next-line react-hooks/preserve-manual-memoization
     const handleEvolveSubmit = useCallback(async (results) => {
         try {
             const res = await fetchWithAuth(`${apiBase}/characters/${character.id}/evolve`, {
@@ -315,7 +317,7 @@ const Sheet = ({
                                         <hr className="border-default my-1" />
                                         {/* Créer un personnage */}
                                         <button
-                                            onClick={() => { setShowMenu(false); window.location.href = `/${system}/creation`; }}
+                                            onClick={() => { setShowMenu(false); window.location.href = `/${slug}/creation`; }}
                                             className="w-full text-left px-4 py-2 text-sm hover:bg-surface-alt text-default font-mono"
                                         >
                                             Créer un personnage
@@ -329,7 +331,7 @@ const Sheet = ({
                                             Changer de personnage
                                         </button>
                                         <button
-                                            onClick={() => { setShowMenu(false); window.location.href = `/${system}/gm`; }}
+                                            onClick={() => { setShowMenu(false); window.location.href = `/${slug}/gm`; }}
                                             className="w-full text-left px-4 py-2 text-sm hover:bg-surface-alt text-default font-mono"
                                         >
                                             Interface GM
@@ -474,137 +476,152 @@ const Sheet = ({
                             </>
                         )}
                         {char.degradationPalier < 4 && (
-                            <div className="grid grid-cols-8 gap-4">
-                                <div className="col-span-2">
-                                    {/* Caractéristiques + attributs dérivés */}
-                                    <StatsSection
-                                        char={char}
-                                        editMode={editMode && !isLocked}
-                                        set={set}
-                                        onRoll={(ctx) => setDiceModal(ctx)}
-                                    />
-
-                                    <hr className="dg-divider" />
-
-                                    <DerivedSection
-                                        char={char}
-                                        editMode={editMode && !isLocked}
-                                        set={set}
-                                        onPatchImmediate={patchImmediate}
-                                    />
-
-                                    <hr className="dg-divider" />
-                                    {/* Section 14 — Blessures et maladies */}
-                                    <InjuriesSection
-                                        char={char}
-                                        editMode={editMode && !isLocked}
-                                        set={set}
-                                        onPatchImmediate={patchImmediate}
-                                    />
-                                </div>
-                                <div className="col-span-3">
-                                    {/* Compétences */}
-                                    <SkillsSection
-                                        char={char}
-                                        editMode={editMode && !isLocked}
-                                        setArr={setArr}
-                                        onRoll={(ctx) => setDiceModal(ctx)}
-                                        onPatchImmediate={patchImmediate}
-                                    />
-                                    <hr className="dg-divider" />
-
-                                    {/* Section 15 — Armure et matériel (inventaire libre) */}
-                                    <EquipmentSection
-                                        char={char}
-                                        editMode={editMode && !isLocked}
-                                        setArr={setArr}
-                                    />
-
-                                    <hr className="dg-divider" />
-
-                                    {/* Section 16 — Tableau d'armes (slots a→g) */}
-                                    <WeaponsSection
-                                        char={char}
-                                        editMode={editMode && !isLocked}
-                                        setArr={setArr}
-                                        onRoll={(ctx) => setDiceModal(ctx)}
-                                    />
-                                </div>
-
-                                <div className="col-span-3">
-                                    {/* Avatar + identité */}
-                                    <div className="flex gap-4">
-                                        {/* Avatar */}
-                                        <div
-                                            className="shrink-0 w-24 h-24 border border-default cursor-pointer overflow-hidden bg-surface-alt"
-                                            onClick={() => !isLocked && setShowAvatar(true)}
-                                            title="Changer l'avatar"
-                                        >
-                                            {char.avatar
-                                                ? <img src={char.avatar} alt="Avatar" className="w-full h-full object-cover" />
-                                                : <div className="w-full h-full flex items-center justify-center text-muted text-3xl">☰</div>
-                                            }
-                                        </div>
-
-                                        {/* Section identité */}
-                                        <div className="flex-1 dg-identity-section">
-                                            <IdentitySection
-                                                char={char}
-                                                editMode={editMode && !isLocked}
-                                                set={set}
-                                            />
-                                        </div>
-                                    </div>
-                                    <hr className="dg-divider" />
-
-                                    {/* Données psychologiques */}
-                                    <div className="dg-bonds-section">
-                                        <BondsSection
+                            <>
+                                <IdentityInlineSection
+                                    char={char}
+                                    editMode={editMode && !isLocked}
+                                    set={set}
+                                    onAvatarClick={() => !isLocked && setShowAvatar(true)}
+                                />
+                                <div className="grid grid-cols-8 gap-4">
+                                    <div className="col-span-2">
+                                        {/* Caractéristiques + attributs dérivés */}
+                                        <StatsSection
                                             char={char}
                                             editMode={editMode && !isLocked}
-                                            setArr={setArr}
+                                            set={set}
+                                            onRoll={(ctx) => setDiceModal(ctx)}
+                                        />
+
+                                        <hr className="dg-divider" />
+
+                                        <DerivedSection
+                                            char={char}
+                                            editMode={editMode && !isLocked}
+                                            set={set}
+                                            onPatchImmediate={patchImmediate}
+                                        />
+
+                                        <hr className="dg-divider" />
+                                        {/* Section 14 — Blessures et maladies */}
+                                        <InjuriesSection
+                                            char={char}
+                                            editMode={editMode && !isLocked}
+                                            set={set}
                                             onPatchImmediate={patchImmediate}
                                         />
                                     </div>
-
-                                    <hr className="dg-divider" />
-                                    <MotivationsSection
-                                        char={char}
-                                        editMode={editMode && !isLocked}
-                                        setArr={setArr}
-                                    />
-
-                                    <hr className="dg-divider" />
-
-                                    {/* Log SAN — Section 13 */}
-                                    <div className="dg-san-section">
-                                        <SanLogSection
-                                            sanLog={char.sanLog ?? []}
+                                    <div className="col-span-3">
+                                        {/* Compétences */}
+                                        <SkillsSection
+                                            char={char}
                                             editMode={editMode && !isLocked}
+                                            setArr={setArr}
+                                            onRoll={(ctx) => setDiceModal(ctx)}
+                                            onPatchImmediate={patchImmediate}
+                                        />
+                                        <hr className="dg-divider" />
+
+                                        {/* Section 15 — Armure et matériel (inventaire libre) */}
+                                        <EquipmentSection
+                                            char={char}
+                                            editMode={editMode && !isLocked}
+                                            setArr={setArr}
+                                        />
+
+                                        <hr className="dg-divider" />
+
+                                        {/* Section 16 — Tableau d'armes (slots a→g) */}
+                                        <WeaponsSection
+                                            char={char}
+                                            editMode={editMode && !isLocked}
+                                            setArr={setArr}
+                                            onRoll={(ctx) => setDiceModal(ctx)}
+                                            onPatchImmediate={patchImmediate}
                                         />
                                     </div>
+                                    <div className="col-span-3">
+                                        {/* Avatar + identité */}
+                                        {/*<div className="flex gap-4">*/}
+                                        {/*    /!* Avatar *!/*/}
+                                        {/*    <div*/}
+                                        {/*        className="shrink-0 w-24 h-24 border border-default cursor-pointer overflow-hidden bg-surface-alt"*/}
+                                        {/*        onClick={() => !isLocked && setShowAvatar(true)}*/}
+                                        {/*        title="Changer l'avatar"*/}
+                                        {/*    >*/}
+                                        {/*        {char.avatar*/}
+                                        {/*            ? <img src={char.avatar} alt="Avatar" className="w-full h-full object-cover" />*/}
+                                        {/*            : <div className="w-full h-full flex items-center justify-center text-muted text-3xl">☰</div>*/}
+                                        {/*        }*/}
+                                        {/*    </div>*/}
+
+                                        {/*    /!* Section identité *!/*/}
+                                        {/*    <div className="flex-1 dg-identity-section">*/}
+                                        {/*        <IdentitySection*/}
+                                        {/*            char={char}*/}
+                                        {/*            editMode={editMode && !isLocked}*/}
+                                        {/*            set={set}*/}
+                                        {/*        />*/}
+                                        {/*    </div>*/}
+                                        {/*</div>*/}
+                                        {/*<hr className="dg-divider" />*/}
+
+                                        {/* Données psychologiques */}
+                                        <div className="dg-bonds-section">
+                                            <BondsSection
+                                                char={char}
+                                                editMode={editMode && !isLocked}
+                                                setArr={setArr}
+                                                onPatchImmediate={patchImmediate}
+                                            />
+                                        </div>
+
+                                        <hr className="dg-divider" />
+                                        <MotivationsSection
+                                            char={char}
+                                            editMode={editMode && !isLocked}
+                                            setArr={setArr}
+                                        />
+
+                                        <hr className="dg-divider" />
+
+                                        {/* Log SAN — Section 13 */}
+                                        <div className="dg-san-section">
+                                            <SanLogSection
+                                                sanLog={char.sanLog ?? []}
+                                                editMode={editMode && !isLocked}
+                                            />
+                                        </div>
 
 
-                                    <hr className="dg-divider" />
+                                        <hr className="dg-divider" />
 
-                                    {/* Sections 17-18 — Notes TipTap */}
-                                    <NotesSection
-                                        char={char}
-                                        editMode={editMode && !isLocked}
-                                        set={set}
-                                    />
+                                        {/* Sections 17-18 — Notes TipTap */}
+                                        <NotesSection
+                                            char={char}
+                                            editMode={editMode && !isLocked}
+                                            set={set}
+                                        />
 
-                                    <hr className="dg-divider" />
+                                        <hr className="dg-divider" />
 
-                                    {/* Section 19 — Entraînement spécial */}
-                                    <SpecialTrainingSection
-                                        char={char}
-                                        editMode={editMode && !isLocked}
-                                        set={set}
-                                        onRoll={(ctx) => setDiceModal(ctx)}
-                                    />
+                                        {/* Section 19 — Entraînement spécial */}
+                                        <SpecialTrainingSection
+                                            char={char}
+                                            editMode={editMode && !isLocked}
+                                            set={set}
+                                            onRoll={(ctx) => setDiceModal(ctx)}
+                                        />
+                                        <hr className="dg-divider" />
+                                        {/* Description physique — en bas de colonne droite */}
+                                        <PhysicalDescriptionSection
+                                            char={char}
+                                            editMode={editMode && !isLocked}
+                                            set={set}
+                                        />
+                                    </div>
                                 </div>
-                            </div>
+                            </>
                         )}
 
                         <hr className="dg-divider" />

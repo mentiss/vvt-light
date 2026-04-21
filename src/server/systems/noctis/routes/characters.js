@@ -3,7 +3,7 @@ const router  = express.Router();
 
 const { authenticate, requireOwnerOrGM, requireGM } = require('../../../middlewares/auth');
 const { ensureUniqueCode }                           = require('../../../utils/characters');
-const { loadFullCharacter, saveFullCharacter, computeReserveMax } = require('../characterController');
+const { loadFullCharacter, saveFullCharacter, computeReserveMax } = require('../CharacterController');
 const { generateAccessUrl }                          = require('../config');
 
 // ── GET / — Liste résumée, publique (sélection de personnage côté joueur) ─────

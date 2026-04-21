@@ -590,6 +590,322 @@ export const GM_TAGS = [
     { key: 'surveille',      label: 'Surveillé',          color: '#78350f', bgColor: '#fff7ed' },
 ];
 
+// ── Catalogue d'armement ──────────────────────────────────────────────────────
+// Source : Delta Green Agent's Handbook (Arc Dream Publishing).
+// skill_ref : clé de compétence ou de stat (str/dex/…) pour resolveSkillRef.
+// damage    : notation rpg-dice-roller complète, ou null si létalité seule.
+// lethality : entier (10 = 10%), null si N/A.
+export const WEAPON_CATALOG = [
+    {
+        key: 'melee', label: 'Corps à corps',
+        items: [
+            { name: 'Attaque à mains nues',               skill_ref: 'combat_mains_nues', skill_label: 'Combat mains nues', range: 'Contact', damage: '1d4-1', armor_piercing: null,  lethality: null, ammo_capacity: null, expense: 'Incidental', is_restricted: false, notes: '' },
+            { name: 'Poing américain / matraque légère',   skill_ref: 'combat_mains_nues', skill_label: 'Combat mains nues', range: 'Contact', damage: '1d4',   armor_piercing: null,  lethality: null, ammo_capacity: null, expense: 'Incidental', is_restricted: false, notes: '' },
+            { name: 'Garrot',                             skill_ref: 'combat_mains_nues', skill_label: 'Combat mains nues', range: 'Contact', damage: null,    armor_piercing: null,  lethality: null, ammo_capacity: null, expense: 'Incidental', is_restricted: false, notes: 'Depuis la surprise. 1D6 dgts/round, cible immobilisée et silencieuse.' },
+            { name: 'Couteau',                            skill_ref: 'armes_melee',       skill_label: 'Armes de mêlée',    range: 'Contact', damage: '1d4',   armor_piercing: '3',   lethality: null, ammo_capacity: null, expense: 'Incidental', is_restricted: false, notes: '' },
+            { name: 'Hachette',                           skill_ref: 'armes_melee',       skill_label: 'Armes de mêlée',    range: 'Contact', damage: '1d4',   armor_piercing: null,  lethality: null, ammo_capacity: null, expense: 'Incidental', is_restricted: false, notes: '' },
+            { name: 'Grand couteau / dague de combat',    skill_ref: 'armes_melee',       skill_label: 'Armes de mêlée',    range: 'Contact', damage: '1d6',   armor_piercing: '3',   lethality: null, ammo_capacity: null, expense: 'Incidental', is_restricted: false, notes: '' },
+            { name: 'Matraque / bâton / bâton télescopique', skill_ref: 'armes_melee',   skill_label: 'Armes de mêlée',    range: 'Contact', damage: '1d6',   armor_piercing: null,  lethality: null, ammo_capacity: null, expense: 'Incidental', is_restricted: false, notes: '' },
+            { name: 'Machette / tomahawk / épée courte',  skill_ref: 'armes_melee',       skill_label: 'Armes de mêlée',    range: 'Contact', damage: '1d8',   armor_piercing: null,  lethality: null, ammo_capacity: null, expense: 'Incidental', is_restricted: false, notes: '' },
+            { name: 'Crosse / batte de baseball',         skill_ref: 'armes_melee',       skill_label: 'Armes de mêlée',    range: 'Contact', damage: '1d8',   armor_piercing: null,  lethality: null, ammo_capacity: null, expense: 'Incidental', is_restricted: false, notes: '' },
+            { name: 'Lance / baïonnette',                 skill_ref: 'armes_melee',       skill_label: 'Armes de mêlée',    range: 'Contact', damage: '1d8',   armor_piercing: '3',   lethality: null, ammo_capacity: null, expense: 'Incidental', is_restricted: false, notes: '' },
+            { name: 'Hache',                              skill_ref: 'armes_melee',       skill_label: 'Armes de mêlée',    range: 'Contact', damage: '1d10',  armor_piercing: null,  lethality: null, ammo_capacity: null, expense: 'Incidental', is_restricted: false, notes: '' },
+            { name: 'Grande épée',                        skill_ref: 'armes_melee',       skill_label: 'Armes de mêlée',    range: 'Contact', damage: '1d10',  armor_piercing: null,  lethality: null, ammo_capacity: null, expense: 'Standard',   is_restricted: false, notes: '' },
+            { name: 'Épée à deux mains',                  skill_ref: 'armes_melee',       skill_label: 'Armes de mêlée',    range: 'Contact', damage: '1d12',  armor_piercing: null,  lethality: null, ammo_capacity: null, expense: 'Standard',   is_restricted: false, notes: 'Entraînement spécial requis.' },
+        ],
+    },
+    {
+        key: 'less_lethal', label: 'Moins létales',
+        items: [
+            { name: 'Spray poivre (petit)',               skill_ref: 'dex',               skill_label: 'DEX×5',             range: '1 m.',   damage: null,    armor_piercing: null,  lethality: null, ammo_capacity: 1,  expense: 'Incidental', is_restricted: false, notes: 'Pénalité −20% à la cible.' },
+            { name: 'Spray poivre (bombe)',               skill_ref: 'dex',               skill_label: 'DEX×5',             range: '3 m.',   damage: null,    armor_piercing: null,  lethality: null, ammo_capacity: 12, expense: 'Incidental', is_restricted: false, notes: 'Jusqu\'à 2 cibles, pénalité −20%.' },
+            { name: 'Pistolet à aiguillon (CEDeux)',      skill_ref: 'armes_feu',         skill_label: 'Armes à feu',        range: '4 m.',   damage: null,    armor_piercing: null,  lethality: null, ammo_capacity: 4,  expense: 'Standard',   is_restricted: false, notes: 'Pénalité −20%. Entraînement requis.' },
+            { name: 'Pistolet incapacitant',              skill_ref: 'dex',               skill_label: 'DEX×5',             range: '1 m.',   damage: null,    armor_piercing: null,  lethality: null, ammo_capacity: 10, expense: 'Incidental', is_restricted: false, notes: 'Pénalité −20% à la cible.' },
+            { name: 'Fusil à pompe (non létal)',          skill_ref: 'armes_feu',         skill_label: 'Armes à feu',        range: '10 m.',  damage: '1d6',   armor_piercing: null,  lethality: null, ammo_capacity: 5,  expense: 'Standard',   is_restricted: false, notes: 'Cible étourdie.' },
+        ],
+    },
+    {
+        key: 'grenades', label: 'Grenades',
+        items: [
+            { name: 'Grenade à main',                     skill_ref: 'athletisme',        skill_label: 'Athlétisme',         range: '20 m.',  damage: null,    armor_piercing: null,  lethality: 15, ammo_capacity: null, expense: 'Incidental',  is_restricted: true,  notes: 'Rayon 10 m.' },
+            { name: 'Grenade lacrymogène (lancée)',        skill_ref: 'athletisme',        skill_label: 'Athlétisme',         range: '20 m.',  damage: null,    armor_piercing: null,  lethality: null, ammo_capacity: null, expense: 'Incidental', is_restricted: true,  notes: 'Rayon 10 m. Pénalité −40%.' },
+            { name: 'Grenade flash-bang (lancée)',         skill_ref: 'athletisme',        skill_label: 'Athlétisme',         range: '20 m.',  damage: null,    armor_piercing: null,  lethality: null, ammo_capacity: null, expense: 'Incidental', is_restricted: true,  notes: 'Rayon 10 m. Pénalité −40%. Rayon ÷2 en extérieur.' },
+            { name: 'Grenade lacrymogène (lanceur)',       skill_ref: 'armes_lourdes',     skill_label: 'Armes lourdes',      range: '50 m.',  damage: null,    armor_piercing: null,  lethality: null, ammo_capacity: 1,  expense: 'Unusual',    is_restricted: true,  notes: 'Rayon 10 m. Pénalité −40%.' },
+            { name: 'Grenade flash-bang (lanceur)',        skill_ref: 'armes_lourdes',     skill_label: 'Armes lourdes',      range: '50 m.',  damage: null,    armor_piercing: null,  lethality: null, ammo_capacity: 1,  expense: 'Unusual',    is_restricted: true,  notes: 'Rayon 10 m. Pénalité −40%.' },
+        ],
+    },
+    {
+        key: 'firearms', label: 'Armes à feu',
+        items: [
+            { name: 'Pistolet léger',                     skill_ref: 'armes_feu',         skill_label: 'Armes à feu',        range: '10 m.',  damage: '1d8',   armor_piercing: null,  lethality: null, ammo_capacity: 12, expense: 'Standard',   is_restricted: false, notes: 'Ex : Walther PPK, .38 Special.' },
+            { name: 'Pistolet moyen',                     skill_ref: 'armes_feu',         skill_label: 'Armes à feu',        range: '15 m.',  damage: '1d10',  armor_piercing: null,  lethality: null, ammo_capacity: 15, expense: 'Standard',   is_restricted: false, notes: 'Ex : Glock 17, Beretta M92FS, Colt M1911.' },
+            { name: 'Pistolet lourd',                     skill_ref: 'armes_feu',         skill_label: 'Armes à feu',        range: '20 m.',  damage: '1d12',  armor_piercing: null,  lethality: null, ammo_capacity: 10, expense: 'Standard',   is_restricted: false, notes: 'Ex : Glock 20, .44 Magnum, .357 Magnum.' },
+            { name: 'Fusil à pompe (balle)',              skill_ref: 'armes_feu',         skill_label: 'Armes à feu',        range: '75 m.',  damage: '2d6',   armor_piercing: null,  lethality: null, ammo_capacity: 5,  expense: 'Standard',   is_restricted: false, notes: 'Ex : Mossberg 500, Remington 870.' },
+            { name: 'Fusil à pompe (chevrotine)',         skill_ref: 'armes_feu',         skill_label: 'Armes à feu',        range: '50 m.',  damage: '2d10',  armor_piercing: null,  lethality: null, ammo_capacity: 5,  expense: 'Standard',   is_restricted: false, notes: 'Dégâts complets ≤10 m. ; 1D10 ≤20 m. ; 1D6 au-delà.' },
+            { name: 'Pistolet-mitrailleur (SMG)',         skill_ref: 'armes_feu',         skill_label: 'Armes à feu',        range: '50 m.',  damage: '1d10',  armor_piercing: null,  lethality: 10,  ammo_capacity: 30, expense: 'Unusual',    is_restricted: true,  notes: 'Ex : H&K MP5, FN P90. Rafale : utiliser Létalité.' },
+            { name: 'Fusil léger / carabine',             skill_ref: 'armes_feu',         skill_label: 'Armes à feu',        range: '100 m.', damage: '1d12',  armor_piercing: '3',   lethality: 10,  ammo_capacity: 30, expense: 'Standard',   is_restricted: true,  notes: 'Ex : AR-15, AK-47, M4. Rafale : utiliser Létalité.' },
+            { name: 'Fusil lourd',                        skill_ref: 'armes_feu',         skill_label: 'Armes à feu',        range: '150 m.', damage: '1d12+2', armor_piercing: '5',  lethality: 10,  ammo_capacity: 20, expense: 'Unusual',    is_restricted: true,  notes: 'Ex : H&K G3, FN FAL, Rem. 700. Rafale : Létalité.' },
+            { name: 'Fusil très lourd',                   skill_ref: 'armes_feu',         skill_label: 'Armes à feu',        range: '250 m.', damage: null,    armor_piercing: '5',   lethality: 20,  ammo_capacity: 10, expense: 'Major',      is_restricted: false, notes: 'Ex : Barrett M82A1, .50 BMG.' },
+        ],
+    },
+    {
+        key: 'heavy', label: 'Armes lourdes',
+        items: [
+            { name: 'Lance-grenades',                     skill_ref: 'armes_lourdes',     skill_label: 'Armes lourdes',      range: '150 m.', damage: null,    armor_piercing: null,  lethality: 15,  ammo_capacity: 1,  expense: 'Major',      is_restricted: true,  notes: 'Rayon 10 m. Ex : M203, M320.' },
+            { name: 'Roquette RPG',                       skill_ref: 'armes_lourdes',     skill_label: 'Armes lourdes',      range: '200 m.', damage: null,    armor_piercing: '20',  lethality: 30,  ammo_capacity: 1,  expense: 'Standard',   is_restricted: true,  notes: 'Rayon 10 m. Ex : RPG-7, M72 LAW.' },
+            { name: 'Mitrailleuse légère (LMG)',          skill_ref: 'armes_lourdes',     skill_label: 'Armes lourdes',      range: '200 m.', damage: null,    armor_piercing: '3',   lethality: 10,  ammo_capacity: 200, expense: 'Major',    is_restricted: true,  notes: 'Ex : FN MINIMI (M249 SAW).' },
+            { name: 'Mitrailleuse polyvalente (GPMG)',    skill_ref: 'armes_lourdes',     skill_label: 'Armes lourdes',      range: '300 m.', damage: null,    armor_piercing: '3',   lethality: 15,  ammo_capacity: 100, expense: 'Major',    is_restricted: true,  notes: 'Ex : FN MAG (M240), PKM.' },
+            { name: 'Lance-flammes portatif',             skill_ref: 'armes_lourdes',     skill_label: 'Armes lourdes',      range: '5 m.',   damage: null,    armor_piercing: null,  lethality: 10,  ammo_capacity: 20, expense: 'Unusual',    is_restricted: true,  notes: 'Rayon 1 m. Ex : Ion XM42.' },
+        ],
+    },
+    {
+        key: 'demolitions', label: 'Démolitions',
+        items: [
+            { name: 'Cordeau détonant / explosif (500 g)', skill_ref: 'explosifs',        skill_label: 'Explosifs',          range: null,     damage: null,    armor_piercing: null,  lethality: 10,  ammo_capacity: null, expense: 'Incidental', is_restricted: true,  notes: 'Rayon 5 m.' },
+            { name: 'Engin explosif improvisé (IED)',      skill_ref: 'explosifs',         skill_label: 'Explosifs',          range: null,     damage: null,    armor_piercing: null,  lethality: 15,  ammo_capacity: null, expense: 'Incidental', is_restricted: true,  notes: 'Rayon 10 m. Ex : bombe artisanale.' },
+            { name: 'IED groupé',                         skill_ref: 'explosifs',         skill_label: 'Explosifs',          range: null,     damage: null,    armor_piercing: null,  lethality: 30,  ammo_capacity: null, expense: 'Incidental', is_restricted: true,  notes: 'Rayon 20 m.' },
+            { name: 'Mine à pénétrateur formé',           skill_ref: 'explosifs',         skill_label: 'Explosifs',          range: null,     damage: null,    armor_piercing: '20',  lethality: 25,  ammo_capacity: null, expense: 'Standard',   is_restricted: true,  notes: 'Rayon 10 m. Ex : M21.' },
+            { name: 'Explosif ANFO',                      skill_ref: 'explosifs',         skill_label: 'Explosifs',          range: null,     damage: null,    armor_piercing: null,  lethality: 30,  ammo_capacity: null, expense: 'Incidental', is_restricted: true,  notes: 'Rayon 20 m. Nitrate + diesel. Nécessite Science (Chimie) + Explosifs.' },
+        ],
+    },
+    {
+        key: 'artillery', label: 'Artillerie',
+        items: [
+            { name: 'Mortier léger',                      skill_ref: 'artillerie',        skill_label: 'Artillerie',         range: '2 km.',  damage: null,    armor_piercing: null,  lethality: 20,  ammo_capacity: null, expense: 'Major',      is_restricted: true,  notes: 'Rayon 25 m. Ex : M224.' },
+            { name: 'Mortier lourd',                      skill_ref: 'artillerie',        skill_label: 'Artillerie',         range: '4 km.',  damage: null,    armor_piercing: '5',   lethality: 35,  ammo_capacity: null, expense: 'Major',      is_restricted: true,  notes: 'Rayon 50 m. Ex : M120.' },
+            { name: 'Artillerie',                         skill_ref: 'artillerie',        skill_label: 'Artillerie',         range: '5 km.',  damage: null,    armor_piercing: '10',  lethality: 50,  ammo_capacity: null, expense: 'Extreme',    is_restricted: true,  notes: 'Rayon 100 m. Ex : M109, M777.' },
+            { name: 'Missile antichar (ATGM)',            skill_ref: 'artillerie',        skill_label: 'Artillerie',         range: '4 km.',  damage: null,    armor_piercing: '25',  lethality: 45,  ammo_capacity: null, expense: 'Extreme',    is_restricted: true,  notes: 'Rayon 50 m. Ex : AGM-114 Hellfire.' },
+            { name: 'Bombe polyvalente',                  skill_ref: 'artillerie',        skill_label: 'Artillerie',         range: 'Largage aérien', damage: null, armor_piercing: '10', lethality: 70, ammo_capacity: null, expense: 'Unusual', is_restricted: true,  notes: 'Rayon 100 m. Entraînement requis. Ex : Mk 82.' },
+            { name: 'Missile de croisière',               skill_ref: 'artillerie',        skill_label: 'Artillerie',         range: '100 km.', damage: null,   armor_piercing: '15',  lethality: 80,  ammo_capacity: null, expense: 'Extreme',    is_restricted: true,  notes: 'Rayon 150 m. Ex : BGM-109 Tomahawk.' },
+        ],
+    },
+];
+
+// ── Catalogue équipement ──────────────────────────────────────────────────────
+export const EQUIPMENT_CATALOG = [
+    {
+        key: 'armor', label: 'Armure',
+        items: [
+            { name: 'Casque anti-émeute',       notes: 'S\'ajoute à toute autre armure. Efficace uniquement contre mêlée/jet/mains nues. Non dissimulable.',   expense: 'Standard', is_restricted: false, jsonDetails: { rating: 1  } },
+            { name: 'Casque Kevlar',             notes: 'S\'ajoute à toute autre armure. Non dissimulable.',                                                    expense: 'Standard', is_restricted: false, jsonDetails: { rating: 1  } },
+            { name: 'Gilet Kevlar',              notes: 'Sous les vêtements : repérage nécessite un test de Vigilance.',                                        expense: 'Standard', is_restricted: false, jsonDetails: { rating: 3  } },
+            { name: 'Gilet Kevlar renforcé',     notes: 'Test de Vigilance à −20%.',                                                                            expense: 'Unusual',  is_restricted: false, jsonDetails: { rating: 4  } },
+            { name: 'Armure tactique',           notes: 'Non dissimulable.',                                                                                    expense: 'Unusual',  is_restricted: false, jsonDetails: { rating: 5  } },
+            { name: 'Combinaison anti-bombe',    notes: 'Inclut casque. Non dissimulable.',                                                                     expense: 'Extreme',  is_restricted: false, jsonDetails: { rating: 10 } },
+        ],
+    },
+    {
+        key: 'vehicle_ground', label: 'Véhicules terrestres',
+        items: [
+            { name: 'Moto',                      notes: '',                                expense: 'Major',   is_restricted: false, jsonDetails: { hp: '15-20', armor_rating: 0,  speed: 'Rapide'  } },
+            { name: 'Berline',                   notes: '',                                expense: 'Major',   is_restricted: false, jsonDetails: { hp: '25-30', armor_rating: 3,  speed: 'Moyenne' } },
+            { name: 'Pick-up / SUV',             notes: '',                                expense: 'Major',   is_restricted: false, jsonDetails: { hp: '30-35', armor_rating: 3,  speed: 'Moyenne' } },
+            { name: 'SUV blindé',                notes: '',                                expense: 'Extreme', is_restricted: false, jsonDetails: { hp: 35,      armor_rating: 10, speed: 'Moyenne' } },
+            { name: 'Humvee',                    notes: '',                                expense: 'Extreme', is_restricted: false, jsonDetails: { hp: 40,      armor_rating: 3,  speed: 'Moyenne' } },
+            { name: 'Humvee blindé',             notes: '',                                expense: 'Extreme', is_restricted: false, jsonDetails: { hp: 40,      armor_rating: 10, speed: 'Lente'   } },
+            { name: 'Semi-remorque',             notes: '',                                expense: 'Extreme', is_restricted: false, jsonDetails: { hp: 45,      armor_rating: 3,  speed: 'Lente'   } },
+            { name: 'MRAP',                      notes: 'Véhicule blindé anti-mines.',     expense: 'Extreme', is_restricted: false, jsonDetails: { hp: 60,      armor_rating: 20, speed: 'Lente'   } },
+            { name: 'Transporteur blindé (APC)', notes: '',                                expense: 'Extreme', is_restricted: false, jsonDetails: { hp: 80,      armor_rating: 20, speed: 'Lente'   } },
+            { name: 'Tank (milieu XXe)',          notes: '',                                expense: 'Extreme', is_restricted: false, jsonDetails: { hp: 90,      armor_rating: 20, speed: 'Lente'   } },
+            { name: 'Tank moderne',              notes: '',                                expense: 'Extreme', is_restricted: false, jsonDetails: { hp: 100,     armor_rating: 25, speed: 'Lente'   } },
+        ],
+    },
+    {
+        key: 'vehicle_water', label: 'Véhicules nautiques',
+        items: [
+            { name: 'Embarcation caoutchouc de combat', notes: '',  expense: 'Unusual', is_restricted: false, jsonDetails: { hp: 10, armor_rating: 0, speed: 'Lente'   } },
+            { name: 'Bateau pneumatique rigide',        notes: '',  expense: 'Major',   is_restricted: false, jsonDetails: { hp: 20, armor_rating: 0, speed: 'Lente'   } },
+            { name: 'Patrouilleur fluvial',             notes: '',  expense: 'Extreme', is_restricted: false, jsonDetails: { hp: 30, armor_rating: 0, speed: 'Lente'   } },
+            { name: 'Hors-bord',                        notes: '',  expense: 'Extreme', is_restricted: false, jsonDetails: { hp: 25, armor_rating: 0, speed: 'Moyenne' } },
+        ],
+    },
+    {
+        key: 'vehicle_air', label: 'Véhicules aériens',
+        items: [
+            { name: 'Hélicoptère civil',           notes: '', expense: 'Extreme', is_restricted: false, jsonDetails: { armor_rating: 0,  speed: 'Moyenne'  } },
+            { name: 'Avion de ligne régionale',    notes: '', expense: 'Extreme', is_restricted: false, jsonDetails: { armor_rating: 0,  speed: 'Moyenne'  } },
+            { name: 'Hélicoptère de police',       notes: '', expense: 'Extreme', is_restricted: false, jsonDetails: { armor_rating: 0,  speed: 'Rapide'   } },
+            { name: 'Hélicoptère d\'attaque',      notes: '', expense: 'Extreme', is_restricted: false, jsonDetails: { armor_rating: 10, speed: 'Rapide'   } },
+            { name: 'Avion de ligne (passagers)',  notes: '', expense: 'Extreme', is_restricted: false, jsonDetails: { armor_rating: 0,  speed: 'Spéciale' } },
+            { name: 'Avion de chasse',             notes: '', expense: 'Extreme', is_restricted: false, jsonDetails: { armor_rating: 0,  speed: 'Spéciale' } },
+        ],
+    },
+    {
+        key: 'weapon_accessory', label: 'Accessoires armes',
+        items: [
+            { name: 'Visée holographique',         notes: '+20% si aucun dégât reçu depuis dernière action.',                                          expense: 'Standard', is_restricted: false, jsonDetails: { bonus: '+20% à toucher' } },
+            { name: 'Visée nocturne',              notes: 'Double la portée de base la nuit si action Viser la fois précédente. 100h. Portée 400 m.', expense: 'Standard', is_restricted: false, jsonDetails: { bonus: 'Portée ×2 nuit' } },
+            { name: 'Silencieux',                  notes: 'Test de Vigilance pour entendre à travers une cloison.',                                    expense: 'Standard', is_restricted: true,  jsonDetails: { bonus: 'Tir discret'    } },
+            { name: 'Laser de pointage',           notes: '+20% si aucun dégât reçu. Pas besoin d\'épaule. 200 m. 100h.',                             expense: 'Standard', is_restricted: false, jsonDetails: { bonus: '+20% à toucher' } },
+            { name: 'Lunette de visée télescopique', notes: 'Double la portée si action Viser la fois précédente.',                                   expense: 'Standard', is_restricted: false, jsonDetails: { bonus: 'Portée ×2'      } },
+            { name: 'ACOG',                        notes: 'Combine holographique + télescopique.',                                                      expense: 'Unusual',  is_restricted: false, jsonDetails: { bonus: 'Holo + Télescopique' } },
+            { name: 'Visée thermique (TWS)',        notes: 'Obscurité totale. 400 m. 2h. Portée ×2 si Viser.',                                        expense: 'Unusual',  is_restricted: false, jsonDetails: { bonus: 'Vision thermique' } },
+            { name: 'Machine "ghost gun"',         notes: 'Fraiseuse 3D lourde. Nécessite INT×5 + entraînement ou Artisanat (Armurerie).',            expense: 'Major',    is_restricted: false, jsonDetails: { bonus: 'Fabrication arme' } },
+        ],
+    },
+    {
+        key: 'comms', label: 'Communications & Informatique',
+        items: [
+            { name: 'Téléphone jetable',                   notes: '',                                                                       expense: 'Incidental', is_restricted: false, jsonDetails: {} },
+            { name: 'Talkie-walkie / téléphone basique',   notes: '',                                                                       expense: 'Incidental', is_restricted: false, jsonDetails: {} },
+            { name: 'Logiciel de hacking basique',         notes: 'Nécessite Informatique.',                                                expense: 'Incidental', is_restricted: false, jsonDetails: {} },
+            { name: 'Kit oreillette communicateur',        notes: '',                                                                       expense: 'Standard',   is_restricted: false, jsonDetails: {} },
+            { name: 'Ordinateur standard',                 notes: '',                                                                       expense: 'Standard',   is_restricted: false, jsonDetails: {} },
+            { name: 'Tablette / smartphone récent',        notes: '',                                                                       expense: 'Standard',   is_restricted: false, jsonDetails: {} },
+            { name: 'Imprimante 3D (plastique)',           notes: '',                                                                       expense: 'Standard',   is_restricted: false, jsonDetails: {} },
+            { name: 'Téléphone satellite',                 notes: '',                                                                       expense: 'Unusual',    is_restricted: false, jsonDetails: {} },
+            { name: 'Embaucher un hacker (chiffrement basique)', notes: 'Trouver via Criminologie si tâche illégale.',                      expense: 'Unusual',    is_restricted: false, jsonDetails: {} },
+            { name: 'Ordinateur puissant',                 notes: '',                                                                       expense: 'Major',      is_restricted: false, jsonDetails: {} },
+            { name: 'Logiciel chiffrement / data-mining',  notes: 'Nécessite Informatique ou entraînement spécial.',                        expense: 'Major',      is_restricted: true,  jsonDetails: {} },
+            { name: 'Logiciel d\'analyse avancée',         notes: 'Nécessite Informatique ou entraînement spécial.',                        expense: 'Major',      is_restricted: true,  jsonDetails: {} },
+            { name: 'Imprimante 3D (métal)',               notes: '',                                                                       expense: 'Major',      is_restricted: false, jsonDetails: {} },
+            { name: 'Embaucher un hacker (chiffrement avancé)', notes: 'Trouver via Criminologie si tâche illégale.',                       expense: 'Major',      is_restricted: false, jsonDetails: {} },
+            { name: 'Satellite dédié (usage exclusif)',    notes: 'Nécessite Informatique.',                                                expense: 'Extreme',    is_restricted: true,  jsonDetails: {} },
+        ],
+    },
+    {
+        key: 'surveillance', label: 'Surveillance & Effraction',
+        items: [
+            { name: 'Micro directionnel simple',             notes: 'Portée 10 m. en milieu urbain.',                                       expense: 'Incidental', is_restricted: false, jsonDetails: {} },
+            { name: 'Grande lampe torche',                   notes: 'Portée utile 100 m. Durée 10h.',                                      expense: 'Incidental', is_restricted: false, jsonDetails: {} },
+            { name: 'Lampe tactique / arme',                 notes: 'Portée 50 m. 1h. Options IR ou UV disponibles.',                      expense: 'Incidental', is_restricted: false, jsonDetails: {} },
+            { name: 'Jumelles ordinaires',                   notes: '×10. Permet tests de Vigilance à distance.',                          expense: 'Incidental', is_restricted: false, jsonDetails: {} },
+            { name: 'Kit de crochetage',                     notes: 'Nécessite entraînement spécial (DEX).',                               expense: 'Incidental', is_restricted: false, jsonDetails: {} },
+            { name: 'Détecteur de bugs',                     notes: '',                                                                    expense: 'Standard',   is_restricted: false, jsonDetails: {} },
+            { name: 'Fibroscope',                            notes: '',                                                                    expense: 'Standard',   is_restricted: false, jsonDetails: {} },
+            { name: 'Brouilleur GPS',                        notes: '',                                                                    expense: 'Standard',   is_restricted: false, jsonDetails: {} },
+            { name: 'Enregistreur vocal (activation vocale)', notes: '',                                                                   expense: 'Standard',   is_restricted: false, jsonDetails: {} },
+            { name: 'Micro directionnel + logiciel',         notes: 'Portée 20 m. en milieu urbain.',                                      expense: 'Standard',   is_restricted: false, jsonDetails: {} },
+            { name: 'Drone civil basique',                   notes: 'Nécessite entraînement spécial (DEX).',                              expense: 'Standard',   is_restricted: false, jsonDetails: {} },
+            { name: 'Jumelles de vision nocturne civiles',   notes: 'Durée 100h. Tests conduite/pilotage/attaque à −20%.',                expense: 'Standard',   is_restricted: false, jsonDetails: {} },
+            { name: 'Jumelles / télescope avancés',          notes: '×20.',                                                               expense: 'Standard',   is_restricted: false, jsonDetails: {} },
+            { name: 'Outil Halligan (forçage)',              notes: 'Permet un test de FOR pour forcer une barrière.',                     expense: 'Standard',   is_restricted: false, jsonDetails: {} },
+            { name: 'Pistolet à crochets',                   notes: 'Fonctionne uniquement sur serrures à barillet simple.',              expense: 'Standard',   is_restricted: false, jsonDetails: {} },
+            { name: 'Brouilleur audio (RF/cellulaire)',      notes: '',                                                                    expense: 'Unusual',    is_restricted: false, jsonDetails: {} },
+            { name: 'Dispositif de tracking GPS',            notes: '',                                                                    expense: 'Unusual',    is_restricted: false, jsonDetails: {} },
+            { name: 'Micro directionnel avancé + logiciel',  notes: 'Portée 50 m. en milieu urbain.',                                     expense: 'Unusual',    is_restricted: false, jsonDetails: {} },
+            { name: 'Drone avancé',                          notes: 'Nécessite compétence Pilote (Drone).',                               expense: 'Unusual',    is_restricted: false, jsonDetails: {} },
+            { name: 'Télescope puissant',                    notes: '×50.',                                                               expense: 'Unusual',    is_restricted: false, jsonDetails: {} },
+            { name: 'Radar à pénétration de sol',            notes: 'Taille tondeuse. Entraînement spécial (INT) requis.',                expense: 'Major',      is_restricted: false, jsonDetails: {} },
+            { name: 'Jumelles de vision nocturne militaires', notes: 'Pénalité −20% si perception fine requise.',                          expense: 'Major',      is_restricted: true,  jsonDetails: {} },
+            { name: 'Drone militaire',                       notes: '',                                                                    expense: 'Extreme',    is_restricted: false, jsonDetails: {} },
+        ],
+    },
+    {
+        key: 'medical', label: 'Médical',
+        items: [
+            { name: 'Kit de premiers secours individuel',    notes: '+20% à un jet de Premiers secours.',                                  expense: 'Incidental', is_restricted: false, jsonDetails: {} },
+            { name: 'Petit extincteur CO2',                  notes: 'Éteint un petit feu. Peut repousser un animal (DEX×5).',             expense: 'Incidental', is_restricted: false, jsonDetails: {} },
+            { name: 'Équipement de protection individuelle (PPE)', notes: 'Armure 2 contre projections chimiques/acide.',                 expense: 'Incidental', is_restricted: false, jsonDetails: { rating: 2 } },
+            { name: 'Extincteur industriel',                 notes: 'Éteint un feu de la taille d\'une pièce.',                          expense: 'Standard',   is_restricted: false, jsonDetails: {} },
+            { name: 'Masque à gaz',                          notes: 'Efficace contre les dangers en suspension dans l\'air.',             expense: 'Standard',   is_restricted: false, jsonDetails: {} },
+            { name: 'Combinaison HAZMAT',                    notes: 'Dangers aériens et par contact. 30 min pour enfiler.',               expense: 'Standard',   is_restricted: false, jsonDetails: {} },
+            { name: 'Kit médical premier répondant',         notes: '+20% à quatre jets de Premiers secours.',                            expense: 'Standard',   is_restricted: false, jsonDetails: {} },
+            { name: 'Équipement SCUBA',                      notes: 'Nécessite entraînement spécial (Natation).',                        expense: 'Unusual',    is_restricted: false, jsonDetails: {} },
+            { name: 'Soins off-the-books (premiers secours)', notes: 'Trouver via Criminologie.',                                         expense: 'Standard',   is_restricted: false, jsonDetails: {} },
+            { name: 'Médicaments / chirurgie mineure off-the-books', notes: 'Trouver via Criminologie.',                                  expense: 'Unusual',    is_restricted: false, jsonDetails: {} },
+            { name: 'Chirurgie majeure off-the-books',       notes: 'Trouver via Criminologie.',                                          expense: 'Major',      is_restricted: false, jsonDetails: {} },
+            { name: 'Incinération discrète d\'un corps',     notes: 'Trouver via Criminologie.',                                          expense: 'Major',      is_restricted: false, jsonDetails: {} },
+        ],
+    },
+    {
+        key: 'survival', label: 'Survie',
+        items: [
+            { name: 'GPS portable',                          notes: 'Pas de signal radio requis. Batterie 14-25h.',                       expense: 'Incidental', is_restricted: false, jsonDetails: {} },
+            { name: 'Équipement de camping basique',         notes: '+20% à Survie pendant 3 jours.',                                    expense: 'Incidental', is_restricted: false, jsonDetails: {} },
+            { name: 'Équipement de camping étendu',          notes: '+20% à Survie pendant 14 jours.',                                   expense: 'Standard',   is_restricted: false, jsonDetails: {} },
+        ],
+    },
+    {
+        key: 'requisition', label: 'Réquisitions officielles',
+        items: [
+            // Law enforcement
+            { name: 'Accès fichiers restreints (non classifiés)',       notes: 'Forces de l\'ordre. Doit concerner une enquête officielle.',          expense: 'Incidental', is_restricted: false, jsonDetails: {} },
+            { name: 'Garde à vue 24h sans questions',                   notes: 'Forces de l\'ordre. Enquête officielle requise.',                      expense: 'Standard',   is_restricted: false, jsonDetails: {} },
+            { name: 'Usage d\'un véhicule d\'agence pour la journée',  notes: 'Forces de l\'ordre.',                                                  expense: 'Standard',   is_restricted: false, jsonDetails: {} },
+            { name: 'Acquisition données d\'une autre affaire',         notes: 'Forces de l\'ordre.',                                                  expense: 'Standard',   is_restricted: false, jsonDetails: {} },
+            { name: 'Surveillance drone d\'un suspect (1-2 jours)',     notes: 'Forces de l\'ordre. Revue officielle automatique.',                    expense: 'Unusual',    is_restricted: false, jsonDetails: {} },
+            { name: 'Déploiement de 2 à 5 policiers',                  notes: 'Forces de l\'ordre. Revue officielle automatique.',                    expense: 'Unusual',    is_restricted: false, jsonDetails: {} },
+            { name: 'SUV blindé réquisitionné (1 semaine)',             notes: 'Forces de l\'ordre.',                                                  expense: 'Unusual',    is_restricted: false, jsonDetails: {} },
+            { name: 'Intervention SWAT régional',                       notes: 'Forces de l\'ordre. Revue officielle automatique.',                    expense: 'Extreme',    is_restricted: false, jsonDetails: {} },
+            // Intelligence
+            { name: 'Accès fichiers classifiés (hors sécurité nationale)', notes: 'Renseignement.',                                                   expense: 'Unusual',    is_restricted: false, jsonDetails: {} },
+            { name: 'Surveillance drone d\'un site (courte durée)',     notes: 'Renseignement. Revue officielle automatique.',                         expense: 'Unusual',    is_restricted: false, jsonDetails: {} },
+            { name: 'Accès fichiers de sécurité nationale',             notes: 'Renseignement. Techniquement de l\'espionnage.',                       expense: 'Major',      is_restricted: true,  jsonDetails: {} },
+            { name: 'Surveillance drone/satellite étendue',             notes: 'Renseignement. Revue officielle automatique.',                         expense: 'Extreme',    is_restricted: false, jsonDetails: {} },
+            // Military
+            { name: 'Place sur vol de soutien programmé',              notes: 'Militaire.',                                                           expense: 'Incidental', is_restricted: false, jsonDetails: {} },
+            { name: 'Appui hélicoptère (transport/surveillance)',       notes: 'Militaire. Revue officielle automatique.',                             expense: 'Extreme',    is_restricted: false, jsonDetails: {} },
+            { name: 'Frappe missile',                                   notes: 'Militaire. Revue officielle auto. Jamais sur sol américain.',          expense: 'Extreme',    is_restricted: true,  jsonDetails: {} },
+        ],
+    },
+    {
+        key: 'misc', label: 'Divers',
+        items: [
+            { name: 'Billet de bus (jour même)',                        notes: 'Transport.',                                                           expense: 'Incidental', is_restricted: false, jsonDetails: {} },
+            { name: 'Location voiture / SUV (1 semaine)',               notes: 'Transport.',                                                           expense: 'Standard',   is_restricted: false, jsonDetails: {} },
+            { name: 'Billet train/avion interurbain (jour même)',       notes: 'Transport.',                                                           expense: 'Standard',   is_restricted: false, jsonDetails: {} },
+            { name: 'Billet avion international — pays développé',      notes: 'Transport.',                                                           expense: 'Unusual',    is_restricted: false, jsonDetails: {} },
+            { name: 'Hélicoptère affrété (aller simple)',               notes: 'Transport.',                                                           expense: 'Unusual',    is_restricted: false, jsonDetails: {} },
+            { name: 'Billet avion international — pays en développement', notes: 'Transport.',                                                         expense: 'Major',      is_restricted: false, jsonDetails: {} },
+            { name: 'Nuit(s) dans un motel bon marché',                 notes: 'Hébergement.',                                                        expense: 'Incidental', is_restricted: false, jsonDetails: {} },
+            { name: 'Semaine motel / appartement court terme',          notes: 'Hébergement.',                                                        expense: 'Standard',   is_restricted: false, jsonDetails: {} },
+            { name: 'Semaine hôtel de standing',                        notes: 'Hébergement.',                                                        expense: 'Unusual',    is_restricted: false, jsonDetails: {} },
+            { name: 'Faux passeport / documents d\'identité',           notes: 'Légendes. Nécessite réquisition ou Criminologie.',                    expense: 'Unusual',    is_restricted: true,  jsonDetails: {} },
+            { name: 'Faux passeport pays G-7',                          notes: 'Légendes. Nécessite réquisition ou Criminologie.',                    expense: 'Major',      is_restricted: true,  jsonDetails: {} },
+            { name: 'Nouvelle identité complète',                       notes: 'Légendes. Nécessite réquisition ou Criminologie.',                    expense: 'Extreme',    is_restricted: true,  jsonDetails: {} },
+            { name: 'Box de stockage (1 mois)',                         notes: 'Stockage.',                                                           expense: 'Incidental', is_restricted: false, jsonDetails: {} },
+            { name: 'Box de stockage (1 an)',                           notes: 'Stockage.',                                                           expense: 'Standard',   is_restricted: false, jsonDetails: {} },
+            { name: 'Grand box de stockage (1 an)',                     notes: 'Stockage.',                                                           expense: 'Unusual',    is_restricted: false, jsonDetails: {} },
+            { name: 'Menottes / liens flexibles',                       notes: 'Nécessite lame/ciseaux ou test FOR×5 +20% pour liens flexibles.',     expense: 'Incidental', is_restricted: false, jsonDetails: {} },
+            { name: 'Accès publications scientifiques',                 notes: 'Recherche.',                                                          expense: 'Incidental', is_restricted: false, jsonDetails: {} },
+            { name: 'Conseil d\'expert professionnel/académique',       notes: 'Recherche.',                                                          expense: 'Standard',   is_restricted: false, jsonDetails: {} },
+        ],
+    },
+];
+
+export const EQUIPMENT_CATEGORY_ORDER = [
+    'armor', 'vehicle_ground', 'vehicle_water', 'vehicle_air',
+    'weapon_accessory', 'comms', 'surveillance',
+    'medical', 'survival', 'requisition', 'misc',
+];
+
+export const EQUIPMENT_CATEGORY_LABELS = {
+    armor:            'Armure',
+    vehicle_ground:   'Véhicules terrestres',
+    vehicle_water:    'Véhicules nautiques',
+    vehicle_air:      'Véhicules aériens',
+    comms:            'Communications & Informatique',
+    surveillance:     'Surveillance & Effraction',
+    medical:          'Médical',
+    survival:         'Survie',
+    weapon_accessory: 'Accessoires armes',
+    requisition:      'Réquisitions officielles',
+    misc:             'Divers',
+};
+
+export const CARAC_KEYS  = new Set(['str', 'con', 'dex', 'int', 'pow', 'cha']);
+const CARAC_LABELS = { str: 'FOR', con: 'CON', dex: 'DEX', int: 'INT', pow: 'POU', cha: 'CHA' };
+
+/**
+ * Résout une skill_ref vers { score, label }.
+ *   stat (str/dex/…) → score = char[stat] × 5
+ *   skill key        → score depuis char.skills
+ */
+export function resolveSkillRef(char, ref) {
+    if (!ref) return null;
+    const key = ref.toLowerCase();
+    if (CARAC_KEYS.has(key)) {
+        return { score: (char[key] ?? 10) * 5, label: `${CARAC_LABELS[key]}×5` };
+    }
+    const skill = (char.skills ?? []).find(s => s.skillKey === key);
+    if (skill) {
+        const base = BASE_SKILLS.find(b => b.key === key);
+        return { score: skill.score, label: base?.label ?? key };
+    }
+    return null;
+}
+
 // ══════════════════════════════════════════════════════════════════════════════
 // CONFIGURATION DU SYSTÈME
 // ══════════════════════════════════════════════════════════════════════════════
@@ -607,16 +923,18 @@ const deltgreenConfig = {
         buildNotation: (ctx) => {
             const { diceType } = ctx.systemData;
             if (!diceType) throw new RollError('NO_DICE', 'Type de dé non spécifié');
-            return `1${diceType}`;
-            // Ex: '1d100' pour compétence/carac, '1d6' pour dommages
+            const n = diceType.toLowerCase().replace(/\s/g, '');
+            // Notation complète (commence par un chiffre) → passée telle quelle
+            // Notation simple (d10) → préfixée par 1
+            return /^\d/.test(n) ? n : `1${n}`;
         },
 
         // 2. beforeRoll(ctx) → ctx
         //    Validation légère — le score cible est dans ctx.systemData.
         beforeRoll: (ctx) => {
             const { diceType } = ctx.systemData;
-            const allowed = ['d100', 'd4', 'd6', 'd8', 'd10', 'd12'];
-            if (!allowed.includes(diceType)) {
+            // Accepte toute notation contenant d+chiffres : d100, 2d6, 1d4-1, 1d12+2…
+            if (!diceType || !/d\d+/i.test(diceType)) {
                 throw new RollError('INVALID_DICE', `Type de dé invalide : ${diceType}`);
             }
             return ctx;
@@ -627,7 +945,7 @@ const deltgreenConfig = {
         //    Jets de dommages : retourne le total brut.
         // config.jsx — afterRoll corrigé
         afterRoll: (raw, ctx) => {
-            const { diceType, targetScore, rollLabel } = ctx.systemData;
+            const { diceType, targetScore, rollLabel, modifier } = ctx.systemData;
             const value = raw.groups[0].total;
 
             if (diceType === 'd100') {
@@ -644,6 +962,7 @@ const deltgreenConfig = {
                     value:       computed,
                     allDice:     [computed],          // ← pour le renderer générique
                     targetScore: targetScore ?? 0,
+                    modifier:    modifier ?? 0,
                     success,
                     critical:    critical && success,
                     fumble,

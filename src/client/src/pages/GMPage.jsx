@@ -70,6 +70,7 @@ const GMPage = () => {
         return (
             <>
                 <Suspense fallback={<LoadingScreen />}>
+                    {/* eslint-disable-next-line react-hooks/static-components */}
                     <SystemGMApp
                         activeSession={activeSession}
                         onSessionChange={setActiveSession}

@@ -8,9 +8,8 @@
 //   Journal   → journal GM (générique TabJournal)
 // ─────────────────────────────────────────────────────────────────────────────
 
-import React, {useState, useEffect, useCallback, useRef} from 'react';
+import React, {useState, useRef} from 'react';
 import { useAuth }    from '../../../context/AuthContext.jsx';
-import { useSocket }  from '../../../context/SocketContext.jsx';
 import { useFetch }   from '../../../hooks/useFetch.js';
 import { useSystem }  from '../../../hooks/useSystem.js';
 
@@ -50,7 +49,6 @@ const GMView = ({ activeSession, onSessionChange, onlineCharacters, darkMode, on
     const { logout }    = useAuth();
     const fetchWithAuth = useFetch();
     const { apiBase }   = useSystem();
-    const socket        = useSocket();
 
     const [activeTab,          setActiveTab]          = useState(() => {
         const hash = window.location.hash.replace('#', '');
@@ -64,6 +62,7 @@ const GMView = ({ activeSession, onSessionChange, onlineCharacters, darkMode, on
 
     const changeTab = (id) => {
         setActiveTab(id);
+        // eslint-disable-next-line react-hooks/immutability
         window.location.hash = id;
         setShowMenu(false);
     };

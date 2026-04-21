@@ -50,8 +50,8 @@ const StatsSection = ({ char, editMode, set, onRoll }) => {
                 <span className="dg-section-label">Désignation</span>
                 <span className="dg-section-label text-center">Score</span>
                 <span className="dg-section-label text-center">×5</span>
-                <span className="dg-section-label">Traits</span>
-                <span className="dg-section-label">Jet</span>
+                <span className="dg-section-label text-center">Traits</span>
+                <span className="dg-section-label text-center">Jet</span>
             </div>
 
             <div className="space-y-1">

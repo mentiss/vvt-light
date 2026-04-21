@@ -231,10 +231,10 @@ module.exports = {
 };
 ```
 
-### 4.2 `CharacterController.js`
+### 4.2 `characterController.js`
 
 ```js
-// src/server/systems/:slug/CharacterController.js
+// src/server/systems/:slug/characterController.js
 const loadFullCharacter = async (db, id) => {
     const char = await db.get('SELECT * FROM characters WHERE id = ?', [id]);
     if (!char) return null;
@@ -1137,7 +1137,7 @@ const MyModal = () => {
 
 - [ ] `src/server/systems/:slug/config.js` — `slug`, `label`, `dbPath`, `schemaPath`
 - [ ] `database-template/:slug-schema.sql` — toutes les tables + INSERT GM id=-1
-- [ ] `CharacterController.js` — `loadFullCharacter` / `saveFullCharacter`
+- [ ] `characterController.js` — `loadFullCharacter` / `saveFullCharacter`
 - [ ] `routes/characters.js` — POST public, GET et PUT authentifiés
 - [ ] Routes supplémentaires si nécessaire (auto-montées)
 - [ ] Sockets slug-spécifiques si nécessaire (auto-découverts)
@@ -1176,7 +1176,7 @@ src/
 │   └── systems/
 │       └── :slug/
 │           ├── config.js                    ← slug, label, dbPath, schemaPath
-│           ├── CharacterController.js
+│           ├── characterController.js
 │           ├── routes/
 │           │   ├── characters.js            ← seul fichier obligatoire
 │           │   ├── [extra-route].js         ← auto-monté sur /api/:slug/[extra-route]

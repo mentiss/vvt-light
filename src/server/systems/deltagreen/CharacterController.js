@@ -141,8 +141,8 @@ function loadFullCharacter(db, id) {
         sr:         row.sr          ?? 40,
 
         // Accoutumance
-        adaptedViolence:     !!row.adapted_violence,
-        adaptedHelplessness: !!row.adapted_helplessness,
+        adaptedViolence:     row.adapted_violence ?? 0,
+        adaptedHelplessness: row.adapted_helplessness ?? 0,
 
         // Contrôles GM (transmis au joueur — le front décide de l'affichage)
         degradationPalier: row.degradation_palier ?? 0,
