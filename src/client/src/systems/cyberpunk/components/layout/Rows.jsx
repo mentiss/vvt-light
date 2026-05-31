@@ -3,7 +3,7 @@ import {Tag, TagAdder} from "./TagManager.jsx";
 import {CYBERWARE_ALL, ITEM_AND_CYBERWARE_CATEGORY_LABEL, ITEMS_ALL} from "../../config.jsx";
 import {useState} from "react";
 
-export const DirectiveRow = ({ directive, editMode, onChange }) => (
+export const DirectiveRow = ({ directive, editMode, onChange, onRemove }) => (
     <div
         className="flex items-start gap-2 rounded-lg px-3 py-2"
         style={{
@@ -11,37 +11,58 @@ export const DirectiveRow = ({ directive, editMode, onChange }) => (
             border:     `1px solid ${directive.completed ? 'var(--color-success)' : 'var(--color-border)'}`,
         }}
     >
-        <input
-            type="checkbox"
-            checked={!!directive.completed}
-            onChange={e => onChange({ completed: e.target.checked })}
-            className="mt-0.5 flex-shrink-0"
-            style={{ accentColor: 'var(--color-success)' }}
-        />
-        {editMode ? (
-            <input
-                type="text"
-                value={directive.text ?? ''}
-                onChange={e => onChange({ text: e.target.value })}
-                placeholder="Directive…"
-                className="flex-1 bg-transparent text-sm outline-none"
-                style={{ color: 'var(--color-text)' }}
-            />
-        ) : (
-            <span
-                className="text-sm flex-1"
+        <div className="flex-1 flex flex-col gap-1">
+            {editMode ? (
+                <>
+                    <input
+                        type="text"
+                        value={directive.text ?? ''}
+                        onChange={e => onChange({ text: e.target.value })}
+                        placeholder="Directive…"
+                        className="flex-1 bg-transparent text-sm outline-none"
+                        style={{ color: 'var(--color-text)' }}
+                    />
+                    <input
+                        type="text"
+                        value={directive.blankValue ?? ''}
+                        onChange={e => onChange({ blankValue: e.target.value })}
+                        placeholder="Valeur / description…"
+                        className="flex-1 bg-transparent text-xs outline-none"
+                        style={{ color: 'var(--color-text-muted)' }}
+                    />
+                </>
+            ) : (
+                <span
+                    className="text-sm flex-1"
+                    style={{
+                        color:          directive.completed ? 'var(--color-success)' : 'var(--color-text)',
+                        textDecoration: directive.completed ? 'line-through' : 'none',
+                    }}
+                >
+                    {directive.text || '—'}
+                    {directive.blankValue && (
+                        <span className="ml-1 font-semibold" style={{ color: 'var(--color-primary)' }}>
+                            {directive.blankValue}
+                        </span>
+                    )}
+                </span>
+            )}
+        </div>
+
+        {editMode && (
+            <button
+                onClick={onRemove}
+                title="Supprimer cette directive"
+                className="w-6 h-6 rounded flex items-center justify-center text-xs flex-shrink-0"
                 style={{
-                    color:          directive.completed ? 'var(--color-success)' : 'var(--color-text)',
-                    textDecoration: directive.completed ? 'line-through' : 'none',
+                    color:      'var(--color-danger)',
+                    background: 'var(--color-surface)',
+                    border:     '1px solid var(--color-danger)',
+                    cursor:     'pointer',
                 }}
             >
-                {directive.text || '—'}
-                {directive.blankValue && (
-                    <span className="ml-1 font-semibold" style={{ color: 'var(--color-primary)' }}>
-                        {directive.blankValue}
-                    </span>
-                )}
-            </span>
+                ✕
+            </button>
         )}
     </div>
 );

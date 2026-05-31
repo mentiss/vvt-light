@@ -885,3 +885,243 @@ input[type="number"].ns-input {
     text-shadow: none;
     color: var(--ns-ornament); /* déjà #7a5820 en jour → bon contraste */
 }
+
+/* ══════════════════════════════════════════════════════════════════════════════
+   CLASSES GM — à ajouter à la fin de theme.css
+   ══════════════════════════════════════════════════════════════════════════════ */
+
+/* ── Sticky header + tabbar groupés ──────────────────────────────────────── */
+/* Enveloppe les deux pour éviter le gap dû au décalage de hauteur */
+.ns-header-group {
+    position: sticky;
+    top:      0;
+    z-index:  40;
+}
+
+/* ── Badge session active (header GM) ────────────────────────────────────── */
+.ns-session-badge {
+    font-family:    var(--ns-font-tech);
+    font-size:      0.65rem;
+    font-weight:    600;
+    letter-spacing: 0.08em;
+    color:          var(--color-success);
+    border:         1px solid color-mix(in srgb, var(--color-success) 40%, transparent);
+    background:     color-mix(in srgb, var(--color-success) 8%, transparent);
+    padding:        0.15rem 0.5rem;
+    border-radius:  2px;
+    white-space:    nowrap;
+}
+
+.ns-no-session-label {
+    font-family:    var(--ns-font-tech);
+    font-size:      0.6rem;
+    color:          var(--color-muted);
+    letter-spacing: 0.08em;
+}
+
+/* ── Séparateur vertical header ──────────────────────────────────────────── */
+.ns-header-sep {
+    width:      1px;
+    height:     1.25rem;
+    flex-shrink: 0;
+    background: color-mix(in srgb, var(--ns-ornament) 30%, transparent);
+}
+
+/* ── Sidebar personnages ──────────────────────────────────────────────────── */
+.ns-gm-sidebar {
+    width:           13rem;
+    flex-shrink:     0;
+    border-right:    1px solid var(--color-border);
+    background:      var(--color-surface-alt);
+    overflow-y:      auto;
+    display:         flex;
+    flex-direction:  column;
+}
+
+.ns-gm-sidebar-header {
+    padding:      0.5rem 0.75rem;
+    border-bottom: 1px solid var(--color-border);
+}
+
+/* ── Bouton personnage dans la sidebar ───────────────────────────────────── */
+.ns-char-btn {
+    width:        100%;
+    text-align:   left;
+    padding:      0.6rem 0.75rem;
+    border-bottom: 1px solid var(--color-border);
+    border-left:  3px solid transparent;
+    background:   transparent;
+    display:      flex;
+    align-items:  center;
+    gap:          0.5rem;
+    cursor:       pointer;
+    transition:   background 0.15s, border-color 0.15s;
+}
+
+.ns-char-btn:hover {
+    background: color-mix(in srgb, var(--ns-ornament) 5%, transparent);
+}
+
+.ns-char-btn.active {
+    border-left-color: var(--ns-ornament);
+    background:        color-mix(in srgb, var(--ns-ornament) 8%, transparent);
+}
+
+/* ── Indicateur online ────────────────────────────────────────────────────── */
+.ns-online-dot {
+    width:        0.5rem;
+    height:       0.5rem;
+    border-radius: 50%;
+    flex-shrink:  0;
+    background:   color-mix(in srgb, var(--color-muted) 40%, transparent);
+    transition:   background 0.3s;
+}
+
+.ns-online-dot.online {
+    background: var(--color-success);
+}
+
+/* ── Nom du personnage dans la sidebar ───────────────────────────────────── */
+.ns-char-name {
+    font-family:  var(--ns-font-body);
+    font-size:    0.9rem;
+    color:        var(--color-default);
+    overflow:     hidden;
+    text-overflow: ellipsis;
+    white-space:  nowrap;
+    transition:   color 0.15s;
+}
+
+.ns-char-btn.active .ns-char-name {
+    font-weight: 600;
+    color:       var(--ns-ornament);
+}
+
+/* ── Joueur (sous le nom) ─────────────────────────────────────────────────── */
+.ns-char-player {
+    font-family:  var(--ns-font-tech);
+    font-size:    0.65rem;
+    color:        var(--color-muted);
+    overflow:     hidden;
+    text-overflow: ellipsis;
+    white-space:  nowrap;
+}
+
+/* ── Mini éclats sidebar ──────────────────────────────────────────────────── */
+.ns-char-eclats-mini {
+    font-family: var(--ns-font-tech);
+    font-size:   0.6rem;
+    color:       var(--ns-ornament);
+    flex-shrink: 0;
+}
+
+/* ── Mini badge Fracturé ──────────────────────────────────────────────────── */
+.ns-fracture-badge-mini {
+    font-family:    var(--ns-font-tech);
+    font-size:      0.52rem;
+    color:          var(--ns-fracture);
+    border:         1px solid var(--ns-fracture);
+    border-radius:  1px;
+    padding:        0 0.25rem;
+    flex-shrink:    0;
+    letter-spacing: 0.05em;
+}
+
+/* ── Barre d'actions GM (au-dessus de la fiche) ─────────────────────────── */
+.ns-gm-actions-bar {
+    display:       flex;
+    align-items:   center;
+    gap:           0.5rem;
+    padding:       0.5rem 1rem;
+    border-bottom: 1px solid var(--color-border);
+    background:    var(--color-surface-alt);
+    flex-wrap:     wrap;
+}
+
+.ns-gm-char-title {
+    font-family:    var(--ns-font-title);
+    font-size:      0.75rem;
+    color:          var(--ns-ornament);
+    letter-spacing: 0.06em;
+    margin-right:   0.5rem;
+}
+
+.ns-gm-malus {
+    font-family: var(--ns-font-tech);
+    font-size:   0.65rem;
+    color:       var(--color-danger);
+    font-weight: 700;
+}
+
+/* ── Bouton toggle Fracturé — variante colorée ───────────────────────────── */
+.ns-btn-fracture {
+    font-family:    var(--ns-font-title);
+    font-size:      0.6rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    padding:        0.375rem 0.875rem;
+    border-radius:  2px;
+    background:     transparent;
+    color:          var(--ns-fracture);
+    border:         1px solid var(--ns-fracture);
+    cursor:         pointer;
+    transition:     background 0.15s;
+}
+
+.ns-btn-fracture:hover {
+    background: color-mix(in srgb, var(--ns-fracture) 10%, transparent);
+}
+
+/* ── Zone vide (état sans sélection / sans session) ─────────────────────── */
+.ns-gm-empty {
+    display:         flex;
+    align-items:     center;
+    justify-content: center;
+    height:          16rem;
+    font-family:     var(--ns-font-body);
+    font-style:      italic;
+    color:           var(--color-muted);
+    font-size:       0.9rem;
+}
+
+/* ── Menu déroulant header ────────────────────────────────────────────────── */
+.ns-header-menu {
+    position:   absolute;
+    right:      0;
+    top:        calc(100% + 0.25rem);
+    min-width:  10rem;
+    z-index:    50;
+}
+
+.ns-header-menu-item {
+    width:       100%;
+    text-align:  left;
+    padding:     0.6rem 0.75rem;
+    font-family: var(--ns-font-body);
+    font-size:   0.9rem;
+    color:       var(--color-danger);
+    background:  transparent;
+    cursor:      pointer;
+    transition:  background 0.15s;
+}
+
+.ns-header-menu-item:hover {
+    background: var(--color-surface-alt);
+}
+
+/* ── Section XP (dans la sidebar fiche GM) ───────────────────────────────── */
+.ns-xp-value {
+    font-family: var(--ns-font-tech);
+    font-weight: 700;
+    font-size:   1.4rem;
+    min-width:   2rem;
+    text-align:  center;
+}
+
+.ns-xp-available {
+    font-family:    var(--ns-font-tech);
+    font-size:      0.65rem;
+    color:          var(--color-success);
+    text-align:     right;
+    letter-spacing: 0.04em;
+}

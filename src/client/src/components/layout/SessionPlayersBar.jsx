@@ -150,13 +150,18 @@ const SessionPlayersBar = ({ character, sessionId, sessionName, headerHeight = n
                         {charactersWithStatus.map(char => (
                             <div key={char.id} className="flex flex-col items-center gap-1">
                                 {/* Avatar */}
-                                <div className="relative">
+                                <div
+                                    className="relative"
+                                    style={{ transition: 'transform 0.2s ease, z-index 0s', zIndex: 1 }}
+                                    onMouseEnter={e => { e.currentTarget.style.transform = 'scale(2.5)'; e.currentTarget.style.zIndex = 50; }}
+                                    onMouseLeave={e => { e.currentTarget.style.transform = 'scale(1)';   e.currentTarget.style.zIndex = 1;  }}
+                                >
                                     {char.avatar ? (
                                         <img
                                             src={char.avatar}
                                             alt={char.name}
                                             className={`w-12 h-12 rounded-full object-cover ${!char.isOnline && !char.isMe ? 'grayscale opacity-60' : ''}`}
-                                            style={{ border: getAvatarBorderStyle(char) }}
+                                            style={{ border: getAvatarBorderStyle(char)}}
                                             title={char.name}
                                         />
                                     ) : (

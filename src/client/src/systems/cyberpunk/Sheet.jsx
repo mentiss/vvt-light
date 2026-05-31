@@ -42,6 +42,7 @@ import cyberpunkConfig, {CYBERWARE_ALL, ITEMS_ALL} from "./config.jsx";
 import DiceEntryHistory from "./components/layout/DiceEntryHistory.jsx";
 import BoltFarm from "./components/ui/BoltFarm.jsx";
 import BrowseModal from "./components/modals/BrowseModal.jsx";
+import ReferenceTab from "./components/ReferenceTab.jsx";
 
 // ── Onglets ───────────────────────────────────────────────────────────────────
 
@@ -49,6 +50,7 @@ const TABS = [
     { id: 'fiche',      label: '⬡ Fiche'      },
     { id: 'journal',    label: '⧉ Journal'    },
     { id: 'historique', label: '▤ Historique' },
+    { id: 'reference',  label: '◈ Référence'  },
 ];
 
 const AccessKeyBadge = ({ code }) => {
@@ -776,6 +778,12 @@ const Sheet = ({
                                                                 ),
                                                             }));
                                                         }}
+                                                        onRemove={() => setEditableChar(prev => ({
+                                                            ...prev,
+                                                            directives: prev.directives.filter(x =>
+                                                                (x._tempId ?? x.id) !== (d._tempId ?? d.id)
+                                                            ),
+                                                        }))}
                                                     />
                                                 ))
                                             }
@@ -783,7 +791,10 @@ const Sheet = ({
                                                 <button
                                                     onClick={() => setEditableChar(prev => ({
                                                         ...prev,
-                                                        directives: [...(prev.directives ?? []), { type: 'personal', text: '', blankValue: '', completed: false }],
+                                                        directives: [...(prev.directives ?? []), {
+                                                            _tempId: `tmp_${Date.now()}_${Math.random()}`,
+                                                            type: 'personal', text: '', blankValue: '', completed: false,
+                                                        }],
                                                     }))}
                                                     className="text-xs py-1"
                                                     style={{ color: 'var(--color-primary)', background: 'none', border: 'none', cursor: 'pointer' }}
@@ -815,6 +826,12 @@ const Sheet = ({
                                                                 ),
                                                             }));
                                                         }}
+                                                        onRemove={() => setEditableChar(prev => ({
+                                                            ...prev,
+                                                            directives: prev.directives.filter(x =>
+                                                                (x._tempId ?? x.id) !== (d._tempId ?? d.id)
+                                                            ),
+                                                        }))}
                                                     />
                                                 ))
                                             }
@@ -822,7 +839,10 @@ const Sheet = ({
                                                 <button
                                                     onClick={() => setEditableChar(prev => ({
                                                         ...prev,
-                                                        directives: [...(prev.directives ?? []), { type: 'mission', text: '', blankValue: '', completed: false }],
+                                                        directives: [...(prev.directives ?? []), {
+                                                            _tempId: `tmp_${Date.now()}_${Math.random()}`,
+                                                            type: 'mission', text: '', blankValue: '', completed: false,
+                                                        }],
                                                     }))}
                                                     className="text-xs py-1"
                                                     style={{ color: 'var(--color-primary)', background: 'none', border: 'none', cursor: 'pointer' }}
@@ -846,31 +866,39 @@ const Sheet = ({
                                             </button>
                                         }
                                     >
-                                        {(char?.relations ?? []).map((r, i) => (
+                                        {(char?.relations ?? []).map((r) => {
+                                            const rKey = r._tempId ?? r.id;
+                                            return (
                                             <RelationRow
-                                                key={r.id ?? i}
+                                                key={rKey}
                                                 relation={r}
                                                 editMode={editMode}
                                                 onChange={(updated) => {
                                                     setEditableChar(prev => ({
                                                         ...prev,
-                                                        relations: prev.relations.map(x => x.id === r.id ? { ...x, ...updated } : x),
+                                                        relations: prev.relations.map(x =>
+                                                            (x._tempId ?? x.id) === rKey ? { ...x, ...updated } : x
+                                                        ),
                                                     }));
                                                 }}
                                                 onRemoveTag={(tagIdx) => removeTag('relation', r.id, tagIdx)}
                                                 onAddTag={(text, variant) => addTag('relation', r.id, text, variant)}
                                                 onRemove={() => setEditableChar(prev => ({
                                                     ...prev,
-                                                    relations: prev.relations.filter(x => (x.id ?? x) !== (r.id ?? r)),
+                                                    relations: prev.relations.filter(x => (x._tempId ?? x.id) !== rKey),
                                                 }))}
                                                 toggleTagAdder={tagAdderToggleRelation}
                                             />
-                                        ))}
+                                            );
+                                        })}
                                         {editMode && (
                                             <button
                                                 onClick={() => setEditableChar(prev => ({
                                                     ...prev,
-                                                    relations: [...(prev.relations ?? []), { name: '', description: '', link_score: 1, tags: [] }],
+                                                    relations: [...(prev.relations ?? []), {
+                                                        _tempId: `tmp_${Date.now()}_${Math.random()}`,
+                                                        name: '', description: '', link_score: 1, tags: [],
+                                                    }],
                                                 }))}
                                                 className="text-sm py-1.5 w-full rounded-lg"
                                                 style={{
@@ -1027,6 +1055,10 @@ const Sheet = ({
                                 renderHistoryEntry={cyberpunkConfig.dice.renderHistoryEntry}
                             />
                         </div>
+                    )}
+
+                    {activeTab === 'reference' && (
+                        <ReferenceTab characterPlaybook={character?.playbook} />
                     )}
                 </div>
 

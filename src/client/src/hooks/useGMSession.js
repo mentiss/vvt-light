@@ -60,6 +60,19 @@ export function useGMSession({ apiBase }) {
         return () => socket.off('online-characters-update', handleOnlineUpdate);
     }, [socket]);
 
+    useEffect(() => {
+        if (!socket) return;
+
+        const onCharacterUpdate = ({ characterId, updates }) => {
+            // Callback à exposer en retour du hook pour que GMView/TabSession
+            // puisse mettre à jour son state local
+            onCharacterUpdate?.({ characterId, updates });
+        };
+
+        socket.on('character-update', onCharacterUpdate);
+        return () => socket.off('character-update', onCharacterUpdate);
+    }, [socket]);
+
     // ── Broadcast session active + join/leave room ──────────────────────────
     useEffect(() => {
         if (!socket) return;
@@ -67,14 +80,13 @@ export function useGMSession({ apiBase }) {
         if (activeSession) {
             socket.emit('gm-set-active-session', { sessionId: activeSession.id, system: slug });
             socket.emit('join-session',           { sessionId: activeSession.id, system: slug });
-        } else {
-            // Informer les joueurs qu'il n'y a plus de session active
-            socket.emit('gm-set-active-session', { sessionId: null, system: slug });
         }
 
         return () => {
             if (activeSession) {
-                socket.emit('leave-session', { sessionId: activeSession.id, system: slug });
+                // Désactivation explicite à la sortie (changement ou démontage)
+                socket.emit('gm-clear-session', { sessionId: activeSession.id, system: slug });
+                socket.emit('leave-session',    { sessionId: activeSession.id, system: slug });
             }
         };
     }, [socket, activeSession?.id]);

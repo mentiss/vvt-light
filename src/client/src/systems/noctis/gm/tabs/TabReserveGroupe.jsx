@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useGroupReserve } from '../../hooks/useGroupReserve.js';
+import {useGroupReserve} from "../../hooks/useGroupReserve.jsx";
 
 const REGLE_OPTIONS = [
     { value: 'libre',     label: 'Libre — tout joueur peut puiser à tout moment' },

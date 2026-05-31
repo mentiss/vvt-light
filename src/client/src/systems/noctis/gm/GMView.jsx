@@ -1,32 +1,39 @@
 import { useState } from 'react';
 import { useAuth }   from '../../../context/AuthContext.jsx';
-import { useSocket } from '../../../context/SocketContext.jsx';
 import { useSystem } from '../../../hooks/useSystem.js';
-import ThemeToggle           from '../../../components/ui/ThemeToggle.jsx';
-import ToastNotifications    from '../../../components/layout/ToastNotifications.jsx';
-import DiceHistoryPage       from '../../../components/layout/DiceHistoryPage.jsx';
-import TableManagementModal  from '../../../components/gm/modals/TableManagementModal.jsx';
-import TabJournal            from '../../../components/gm/tabs/TabJournal.jsx';
-import TabSession            from './tabs/TabSession.jsx';
-import TabReserveGroupe      from './tabs/TabReserveGroupe.jsx';
 
+import ThemeToggle          from '../../../components/ui/ThemeToggle.jsx';
+import ToastNotifications   from '../../../components/layout/ToastNotifications.jsx';
+import DiceHistoryPage      from '../../../components/layout/DiceHistoryPage.jsx';
+import TableManagementModal from '../../../components/gm/modals/TableManagementModal.jsx';
+import FreeDiceModal        from '../../../components/modals/FreeDiceModal.jsx';
+import TabJournal           from '../../../components/gm/tabs/TabJournal.jsx';
+
+import GearBackground   from '../components/ui/GearBackground.jsx';
+import NoctisLogo       from '../components/ui/NoctisLogo.jsx';
+import TabSession       from './tabs/TabSession.jsx';
+import TabReserveGroupe from './tabs/TabReserveGroupe.jsx';
+import noctisConfig     from '../config.jsx';
+
+/* ── Onglets ─────────────────────────────────────────────────────────────── */
 const GM_TABS = [
-    { id: 'session',   label: '⛶ Session'    },
-    { id: 'groupe',    label: '✦ Réserve'    },
-    { id: 'journal',   label: '⧉ Journal'    },
-    { id: 'historique',label: '🎲 Historique' },
+    { id: 'session',    label: '◆ Session'    },
+    { id: 'groupe',     label: '✦ Compagnie'  },
+    { id: 'journal',    label: '⧉ Journal'    },
+    { id: 'historique', label: '⬡ Historique' },
 ];
 
+/* ══════════════════════════════════════════════════════════════════════════ */
 const GMView = ({ activeSession, onSessionChange, onlineCharacters, darkMode, onToggleDarkMode }) => {
     const { logout }  = useAuth();
     const { apiBase } = useSystem();
-    const socket      = useSocket();
 
-    const [activeTab,  setActiveTab]  = useState(() => {
+    const [activeTab,      setActiveTab]      = useState(() => {
         const hash = window.location.hash.replace('#', '');
         return GM_TABS.some(t => t.id === hash) ? hash : 'session';
     });
     const [showTableModal, setShowTableModal] = useState(false);
+    const [showFreeDice,   setShowFreeDice]   = useState(false);
     const [showMenu,       setShowMenu]       = useState(false);
 
     const changeTab = (id) => {
@@ -40,77 +47,67 @@ const GMView = ({ activeSession, onSessionChange, onlineCharacters, darkMode, on
     };
 
     return (
-        <div
-            className="min-h-screen bg-bg text-default flex flex-col"
-            data-theme={darkMode ? 'dark' : ''}
-        >
-            {/* ── Header ───────────────────────────────────────────────── */}
-            <header className="sticky top-0 z-40 bg-surface border-b border-default px-4 py-2 flex items-center justify-between gap-2">
-                <div className="flex items-center gap-3">
-                    <span className="text-primary font-bold tracking-wide">
-                        ✦ Noctis Solis — GM
-                    </span>
-                    {activeSession && (
-                        <span className="text-xs text-success bg-success/10 px-2 py-0.5 rounded-full border border-success/30">
-                            {activeSession.name}
-                        </span>
-                    )}
-                </div>
+        <div className="ns-page min-h-screen flex flex-col" data-theme={darkMode ? 'dark' : ''}>
 
-                <div className="flex items-center gap-2">
-                    <button
-                        onClick={() => setShowTableModal(true)}
-                        className="px-3 py-1.5 rounded border border-default text-muted text-sm"
-                        title="Gérer la table"
-                    >
-                        ⚙ Table
-                    </button>
+            <GearBackground />
 
-                    <ThemeToggle darkMode={darkMode} onToggle={onToggleDarkMode} />
+            {/* ── Header + Tabbar dans un seul bloc sticky ─────────────────
+                Regroupés pour éviter le gap lié au décalage de hauteur entre
+                les deux éléments sticky indépendants.                          */}
+            <div className="ns-header-group">
 
-                    <div className="relative">
-                        <button
-                            onClick={() => setShowMenu(m => !m)}
-                            className="px-3 py-1.5 rounded border border-default text-muted text-lg"
-                        >
-                            ⋮
-                        </button>
-                        {showMenu && (
-                            <>
-                                <div className="fixed inset-0 z-10" onClick={() => setShowMenu(false)} />
-                                <div className="absolute right-0 mt-2 w-48 bg-surface border border-default rounded-lg shadow-2xl z-20 overflow-hidden">
-                                    <button
-                                        onClick={handleLogout}
-                                        className="w-full px-4 py-2.5 text-left text-sm text-danger hover:bg-surface-alt flex items-center gap-2"
-                                    >
-                                        🚪 Déconnexion
-                                    </button>
-                                </div>
-                            </>
-                        )}
+                <header className="ns-header px-4 flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                        <NoctisLogo />
+                        <div className="ns-header-sep" />
+                        {activeSession
+                            ? <span className="ns-session-badge">● {activeSession.name}</span>
+                            : <span className="ns-no-session-label">Aucune session</span>
+                        }
                     </div>
-                </div>
-            </header>
 
-            {/* ── Tabs ─────────────────────────────────────────────────── */}
-            <nav className="flex border-b border-default bg-surface px-4 overflow-x-auto">
-                {GM_TABS.map(tab => (
-                    <button
-                        key={tab.id}
-                        onClick={() => changeTab(tab.id)}
-                        className={`px-4 py-2.5 text-sm font-medium border-b-2 transition-colors shrink-0 ${
-                            activeTab === tab.id
-                                ? 'border-primary text-primary'
-                                : 'border-transparent text-muted hover:text-default'
-                        }`}
-                    >
-                        {tab.label}
-                    </button>
-                ))}
-            </nav>
+                    <div className="flex items-center gap-2">
+                        <button onClick={() => setShowFreeDice(true)} className="ns-btn-ghost">
+                            ⬡ Dés
+                        </button>
+                        <button onClick={() => setShowTableModal(true)} className="ns-btn-ghost">
+                            ⚙ Table
+                        </button>
+                        <ThemeToggle darkMode={darkMode} onToggle={onToggleDarkMode} />
+
+                        <div className="relative">
+                            <button onClick={() => setShowMenu(v => !v)} className="ns-btn-ghost">
+                                ☰
+                            </button>
+                            {showMenu && (
+                                <>
+                                    <div className="fixed inset-0 z-40" onClick={() => setShowMenu(false)} />
+                                    <div className="ns-card ns-header-menu">
+                                        <button onClick={handleLogout} className="ns-header-menu-item">
+                                            Déconnexion
+                                        </button>
+                                    </div>
+                                </>
+                            )}
+                        </div>
+                    </div>
+                </header>
+
+                <nav className="ns-tabbar" style={{ position: 'static' }}>
+                    {GM_TABS.map(tab => (
+                        <button
+                            key={tab.id}
+                            onClick={() => changeTab(tab.id)}
+                            className={`ns-tab ${activeTab === tab.id ? 'active' : ''}`}
+                        >
+                            {tab.label}
+                        </button>
+                    ))}
+                </nav>
+            </div>
 
             {/* ── Contenu ──────────────────────────────────────────────── */}
-            <main className="flex-1 overflow-auto">
+            <main className="flex-1 overflow-auto" style={{ zIndex: 1, position: 'relative' }}>
 
                 {activeTab === 'session' && (
                     <TabSession
@@ -120,7 +117,9 @@ const GMView = ({ activeSession, onSessionChange, onlineCharacters, darkMode, on
                 )}
 
                 {activeTab === 'groupe' && (
-                    <TabReserveGroupe socket={socket} />
+                    <div className="max-w-2xl mx-auto p-4">
+                        <TabReserveGroupe />
+                    </div>
                 )}
 
                 {activeTab === 'journal' && (
@@ -132,22 +131,28 @@ const GMView = ({ activeSession, onSessionChange, onlineCharacters, darkMode, on
                 {activeTab === 'historique' && (
                     <div className="max-w-4xl mx-auto p-4">
                         <DiceHistoryPage
-                            character={{ id: -1 }}
-                            renderHistoryEntry={null}
                             sessionId={activeSession?.id ?? null}
+                            renderHistoryEntry={noctisConfig.dice.renderHistoryEntry}
                         />
                     </div>
                 )}
-
             </main>
 
-            {/* ── Overlays ─────────────────────────────────────────────── */}
             <ToastNotifications sessionId={activeSession?.id} />
+
+            {showFreeDice && (
+                <FreeDiceModal
+                    sessionId={activeSession?.id ?? null}
+                    isGM={true}
+                    onClose={() => setShowFreeDice(false)}
+                />
+            )}
 
             {showTableModal && (
                 <TableManagementModal
-                    activeSession={activeSession}
-                    onSessionChange={onSessionChange}
+                    isOpen={true}
+                    activeSessionId={activeSession?.id ?? null}
+                    onSelectTable={(session) => { onSessionChange?.(session); setShowTableModal(false); }}
                     onClose={() => setShowTableModal(false)}
                 />
             )}

@@ -28,6 +28,7 @@ import TabMoves from "./tabs/TabMoves.jsx";
 import DiceEntryHistory from "../components/layout/DiceEntryHistory.jsx";
 import DiceHistoryPage from "../../../components/layout/DiceHistoryPage.jsx";
 import BoltFarm from "../components/ui/BoltFarm.jsx";
+import ReferenceTab from "../components/ReferenceTab.jsx";
 
 // ── Onglets GM ────────────────────────────────────────────────────────────────
 
@@ -38,6 +39,7 @@ const GM_TABS = [
     { id: 'moves',     label: '⬡ Manœuvres'  },
     { id: 'history',   label: '▤ Historique'  },
     { id: 'journal',   label: '⧉ Journal'   },
+    { id: 'reference',  label: '◈ Référence' },
 ];
 
 
@@ -259,6 +261,10 @@ const GMView = ({ activeSession, onSessionChange, onlineCharacters, darkMode, on
                             renderHistoryEntry={cyberpunkConfig.dice.renderHistoryEntry}
                         />
                     </div>
+                )}
+
+                {activeTab === 'reference' && (
+                    <ReferenceTab />
                 )}
             </main>
 

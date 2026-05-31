@@ -16,6 +16,7 @@ const systemResolver       = require('./middlewares/systemResolver');
 const { closeAllDatabases } = require('./db/index');
 const authRouter           = require('./routes/auth');
 const {getDbForSystem} = require("./db");
+const {initSocket} = require("./socket/index");
 
 // ─── App & Server ────────────────────────────────────────────────────────────
 
@@ -53,65 +54,11 @@ console.log('🎲 Loading game systems...');
 loadAllSystems();
 
 // ─── Socket.io ───────────────────────────────────────────────────────────────
-
-let onlineCharacters = new Map();
-let activeSessionId  = null;
-
-io.on('connection', (socket) => {
-    console.log('🔌 Client connected:', socket.id);
-
-    socket.on('gm-set-active-session', ({ sessionId, system = 'vikings' } = {}) => {
-        activeSessionId = sessionId;
-        if (activeSessionId) io.emit('gm-session-active', activeSessionId);
-
-    });
-
-    socket.on('join-session', ({ sessionId, system = 'vikings' } = {}) => {
-        const room = `${system}_session_${sessionId}`;
-        socket.join(room);
-        console.log(`[Socket ${socket.id}] Joined room: ${room}`);
-    });
-
-    socket.on('leave-session', ({ sessionId, system = 'vikings' } = {}) => {
-        socket.leave(`${system}_session_${sessionId}`);
-    });
-
-    socket.on('character-loaded', (data) => {
-        if (data?.characterId) {
-            onlineCharacters.set(data.characterId, { ...data, socketId: socket.id });
-        }
-        io.emit('online-characters-update', Array.from(onlineCharacters.values()));
-        if (activeSessionId) io.emit('gm-session-active', activeSessionId);
-    });
-
-    socket.on('character-left', (charId) => {
-        if (charId) onlineCharacters.delete(charId);
-        io.emit('online-characters-update', Array.from(onlineCharacters.values()));
-    });
-
-    socket.on('disconnect', () => {
-        for (const [charId, char] of onlineCharacters.entries()) {
-            if (char.socketId === socket.id) onlineCharacters.delete(charId);
-        }
-        io.emit('online-characters-update', Array.from(onlineCharacters.values()));
-        console.log('🔌 Client disconnected:', socket.id);
-    });
-
-    // ── Handlers slug-spécifiques (auto-découverte) ──────────────────────────
-    // Pour chaque système chargé, on enregistre les handlers définis dans socket/*.js.
-    // La db est ouverte en lazy — pas d'impact sur les connexions sans activité.
-    for (const [slug, config] of getAllSystems()) {
-        const handlers = getSystemSocketHandlers(slug);
-        if (handlers.length === 0) continue;
-
-        for (const register of handlers) {
-            register(io, socket);
-        }
-    }
-});
+initSocket(io);
 
 app.get('/api/online-characters', (req, res) => {
-    res.json(Array.from(onlineCharacters.values()));
+    const { sharedState } = require('./socket/index');
+    res.json(Array.from(sharedState.onlineCharacters.values()));
 });
 
 app.set('io', io);

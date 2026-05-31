@@ -1,5 +1,6 @@
 import React from "react";
 import {Card} from "./Card.jsx";
+import ExpandableText from "../../../../components/ui/ExpandableText.jsx";
 
 /**
  *
@@ -103,7 +104,7 @@ export const IdentityCard = ({ char, editMode, set, showAvatar, setShowAvatar })
                 />
             </>
         ) : char?.apparence ? (
-            <p className="text-xs leading-relaxed" style={{ color: 'var(--color-text-muted)' }}>{char.apparence}</p>
+            <p className="text-xs leading-relaxed" style={{ color: 'var(--color-text-muted)' }}><ExpandableText text={char.apparence} /></p>
         ) : null}
     </div>
     </Card>

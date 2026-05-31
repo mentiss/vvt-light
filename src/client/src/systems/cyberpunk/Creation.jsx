@@ -1318,7 +1318,10 @@ const Creation = ({ darkMode, onToggleDarkMode, onCreated, onCancel }) => {
                 darkSecret,
                 directives: selectedDirs,
                 relations:  relations.map(r => ({ ...r })),
-                cyberware:  cyberware.map(name => ({ name, option_text: '', notes: '', tags: [] })),
+                cyberware:  cyberware.map(name => {
+                    const cwDef = CYBERWARE_ALL.find(cw => cw.name === name);
+                    return { name, option_text: '', notes: '', tags: cwDef?.tags ?? [] };
+                }),
                 moves:      selectedMoveIds.map(id => ({ id })),
             };
 

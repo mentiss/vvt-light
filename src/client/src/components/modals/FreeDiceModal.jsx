@@ -74,34 +74,44 @@ const DieSVG = ({ type, active }) => {
 
     const shapes = {
         d4: (
-            <polygon
-                points="24,4 44,40 4,40"
-                fill="none" stroke={color} strokeWidth="2" strokeLinejoin="round"
-            />
+            <>
+                <polygon points="24,6 44,40 4,40" fill="none" stroke="currentColor" strokeWidth="2" strokeLinejoin="round" />
+                <line x1="24" y1="6" x2="24" y2="40" stroke="currentColor" strokeWidth="1.2" opacity="0.6" />
+                <line x1="4" y1="40" x2="24" y2="22" stroke="currentColor" strokeWidth="1.2" opacity="0.6" />
+                <line x1="44" y1="40" x2="24" y2="22" stroke="currentColor" strokeWidth="1.2" opacity="0.6" />
+            </>
         ),
         d6: (
-            <rect
-                x="6" y="6" width="36" height="36" rx="4"
-                fill="none" stroke={color} strokeWidth="2"
-            />
+            <>
+                <rect x="6" y="6" width="36" height="36" rx="2" fill="none" stroke="currentColor" strokeWidth="2" />
+                <path d="M6 6 L20 20 L42 20 M20 20 L20 42" fill="none" stroke="currentColor" strokeWidth="1.2" opacity="0.6" />
+            </>
         ),
         d8: (
-            <polygon
-                points="24,4 44,24 24,44 4,24"
-                fill="none" stroke={color} strokeWidth="2" strokeLinejoin="round"
-            />
+            <>
+                <polygon points="24,4 44,24 24,44 4,24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinejoin="round" />
+                <line x1="4" y1="24" x2="44" y2="24" stroke="currentColor" strokeWidth="1.2" opacity="0.7" />
+                <line x1="24" y1="4" x2="24" y2="44" stroke="currentColor" strokeWidth="1.2" opacity="0.5" />
+            </>
         ),
         d10: (
-            <polygon
-                points="24,4 42,18 36,40 12,40 6,18"
-                fill="none" stroke={color} strokeWidth="2" strokeLinejoin="round"
-            />
+            <>
+                <path d="M24 4 L42 20 L24 44 L6 20 Z" fill="none" stroke="currentColor" strokeWidth="2" strokeLinejoin="round" />
+                <line x1="24" y1="4" x2="24" y2="44" stroke="currentColor" strokeWidth="1.2" opacity="0.7" />
+                <line x1="6" y1="20" x2="24" y2="28" stroke="currentColor" strokeWidth="1.2" opacity="0.6" />
+                <line x1="42" y1="20" x2="24" y2="28" stroke="currentColor" strokeWidth="1.2" opacity="0.6" />
+            </>
         ),
         d12: (
-            <polygon
-                points="24,4 40,13 44,30 32,44 16,44 4,30 8,13"
-                fill="none" stroke={color} strokeWidth="2" strokeLinejoin="round"
-            />
+            <>
+                <polygon points="24,4 40,13 44,30 32,44 16,44 4,30 8,13" fill="none" stroke="currentColor" strokeWidth="2" strokeLinejoin="round" />
+                <polygon points="24,14 34,22 30,34 18,34 14,22" fill="none" stroke="currentColor" strokeWidth="1.2" opacity="0.7" />
+                <line x1="24" y1="4" x2="24" y2="14" stroke="currentColor" strokeWidth="1.2" opacity="0.5" />
+                <line x1="40" y1="13" x2="34" y2="22" stroke="currentColor" strokeWidth="1.2" opacity="0.5" />
+                <line x1="44" y1="30" x2="34" y2="22" stroke="currentColor" strokeWidth="1.2" opacity="0.5" />
+                <line x1="32" y1="44" x2="30" y2="34" stroke="currentColor" strokeWidth="1.2" opacity="0.5" />
+                {/* ... etc pour les autres sommets pour un rendu complet */}
+            </>
         ),
         d20: (
             <>
@@ -120,10 +130,33 @@ const DieSVG = ({ type, active }) => {
         ),
         d100: (
             <>
-                <circle cx="24" cy="24" r="20" fill="none" stroke={color} strokeWidth="2" />
-                <text x="24" y="29" textAnchor="middle"
-                      fontSize="11" fill={color} fontFamily="monospace" fontWeight="bold">
-                    %
+                {/* Face principale (le corps du dé) */}
+                <path
+                    d="M24 4 L42 20 L24 44 L6 20 Z"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinejoin="round"
+                />
+                {/* Ligne de crête pour l'effet 3D */}
+                <path
+                    d="M6 20 L42 20"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="1"
+                    strokeDasharray="2 1"
+                    opacity="0.6"
+                />
+                {/* Le texte, légèrement remonté pour l'équilibre visuel */}
+                <text
+                    x="24" y="26"
+                    textAnchor="middle"
+                    fontSize="10"
+                    fill="currentColor"
+                    fontFamily="monospace"
+                    fontWeight="bold"
+                >
+                    00
                 </text>
             </>
         ),
