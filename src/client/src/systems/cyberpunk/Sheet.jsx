@@ -887,6 +887,15 @@ const Sheet = ({
                                                     ...prev,
                                                     relations: prev.relations.filter(x => (x._tempId ?? x.id) !== rKey),
                                                 }))}
+                                                onRoll={(linkScore) => setMoveModal({
+                                                    mode: 'move',
+                                                    move: {
+                                                        name:        'Aider ou Interférer',
+                                                        description: 'Sur un succès en aide : +1 au jet. Sur un succès en interférence : -2 au jet. Tu t\'exposes aux mêmes conséquences.',
+                                                        stat:        'link',
+                                                        statValue:   linkScore,
+                                                    },
+                                                })}
                                                 toggleTagAdder={tagAdderToggleRelation}
                                             />
                                             );

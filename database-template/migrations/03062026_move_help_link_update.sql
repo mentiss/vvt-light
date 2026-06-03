@@ -1,0 +1,1 @@
+UPDATE moves set stat = 'link' where id = 9;

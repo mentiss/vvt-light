@@ -68,7 +68,7 @@ export const DirectiveRow = ({ directive, editMode, onChange, onRemove }) => (
 );
 
 // Ligne relation avec score de lien et tags
-export const RelationRow = ({ relation, editMode, onChange, onRemove, onRemoveTag, onAddTag, toggleTagAdder = true, }) => {
+export const RelationRow = ({ relation, editMode, onChange, onRemove, onRemoveTag, onAddTag, onRoll, toggleTagAdder = true, }) => {
     const score = relation.link_score ?? 1;
     const scoreColor = score > 0
         ? 'var(--color-success)'
@@ -124,6 +124,15 @@ export const RelationRow = ({ relation, editMode, onChange, onRemove, onRemoveTa
                     <span className="font-semibold text-sm flex-1" style={{ color: 'var(--color-text)' }}>
                         {relation.name || 'Relation'}
                     </span>
+                )}
+                {!editMode && onRoll && (
+                    <button
+                        onClick={() => onRoll(score)}
+                        title="Aider ou Interférer"
+                        className="w-7 h-7 rounded flex items-center justify-center text-xs shrink-0 bg-surface border border-default text-primary cursor-pointer hover:text-accent hover:bg-surface-alt"
+                    >
+                        ⬡
+                    </button>
                 )}
             </div>
 

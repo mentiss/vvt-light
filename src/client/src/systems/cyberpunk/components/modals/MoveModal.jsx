@@ -71,7 +71,8 @@ const MoveModal = ({ mode, move, statKey, character, sessionId, onClose }) => {
 
     // Stat active : celle du move, ou celle cliquée en mode stat
     const activeStat = move?.stat ?? statKey ?? null;
-    const statValue  = activeStat ? (character?.[activeStat] ?? 0) : 0;
+    const statValue = move?.statValue ?? (activeStat ? (character?.[activeStat] ?? 0) : 0);
+    console.log(activeStat);
     const hasCyberware = (character?.cyberware?.length ?? 0) > 0;
 
     // ── État local ────────────────────────────────────────────────────────────
@@ -83,6 +84,7 @@ const MoveModal = ({ mode, move, statKey, character, sessionId, onClose }) => {
 
     // Stat effective après switch Synth
     const effectiveStat  = useSynth ? 'synth' : activeStat;
+    console.log(effectiveStat);
     const effectiveValue = useSynth
         ? (character?.synth ?? 0)
         : statValue;
@@ -179,7 +181,7 @@ const MoveModal = ({ mode, move, statKey, character, sessionId, onClose }) => {
                                         </span>
                                     )}
                                 </span>
-                                {useSynth && activeStat !== 'synth' && (
+                                {useSynth && (activeStat !== 'synth' && activeStat !== 'link') && (
                                     <span className="text-xs" style={{ color: 'var(--color-text-muted)' }}>
                                         (substitution Synth)
                                     </span>
@@ -217,7 +219,7 @@ const MoveModal = ({ mode, move, statKey, character, sessionId, onClose }) => {
                     {!result ? (
                         <>
                             {/* Switch Synth */}
-                            {hasCyberware && activeStat && activeStat !== 'synth' && (
+                            {hasCyberware && activeStat && activeStat !== 'synth' && activeStat !== 'link' && (
                                 <label
                                     className="flex items-center gap-3 cursor-pointer select-none"
                                     style={{

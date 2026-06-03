@@ -44,6 +44,7 @@ const STAT_LABEL = {
     style:  'Style',
     synth:  'Synth',
     cred:   'Cred',
+    link:   'Lien',
 };
 
 export const OUTCOME_LABEL = {
