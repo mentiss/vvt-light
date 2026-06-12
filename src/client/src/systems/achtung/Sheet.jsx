@@ -166,7 +166,7 @@ const Sheet = ({
                             <>
                                 <div className="fixed inset-0 z-40" onClick={() => setShowMenu(false)} />
                                 <div className="ac-menu-dropdown">
-                                    <button className="ac-menu-item" onClick={() => { setShowMenu(false); window.location.href = `/${slug}/`; }}>✨ Créer un personnage</button>
+                                    <button className="ac-menu-item" onClick={() => { setShowMenu(false); window.location.href = `/${slug}/creation`; }}>✨ Créer un personnage</button>
                                     <button className="ac-menu-item" onClick={() => { setShowMenu(false); setShowCharList(true); }}>🔄 Changer de personnage</button>
                                     <button className="ac-menu-item" onClick={() => { setShowMenu(false); setShowAvatar(true); }}>🖼️ Changer l'avatar</button>
                                     <button className="ac-menu-item" onClick={() => { setShowMenu(false); setShowDiceConfig(true); }}>🎲 Config animations dés</button>

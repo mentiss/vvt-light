@@ -2,775 +2,1131 @@
 // ─────────────────────────────────────────────────────────────────────────────
 // Wizard de création de personnage Achtung! Cthulhu — PUBLIC, sans auth.
 //
-// 6 étapes :
-//   1 — Identité       (playerName, nom, nationality, rank, sexe, age, taille, biography)
-//   2 — Archétype      (bonus attributs + compétences + 2 focuses + 1 talent + belongings)
-//   3 — Background     (bonus attributs + compétences + 2 focuses + 1 talent + 1 truth + belongings)
-//   4 — Characteristic (bonus attributs + compétences + 1 talent)
-//   5 — Truths + Langues
-//   6 — Récapitulatif + création
+// Ordre canonique :
+//   1 — Attributs de départ   (informatif)
+//   2 — Archétype
+//   3 — Nationalité
+//   4 — Background
+//   5 — Caractéristique
+//   6 — Magie (conditionnelle — si talent Lanceur de sorts)
+//   7 — Identité + Finishing Touches
+// ─────────────────────────────────────────────────────────────────────────────
 
 import React, { useState, useCallback, useMemo } from 'react';
 import './theme.css';
 import { useSystem }   from '../../hooks/useSystem.js';
 import { useNavigate } from 'react-router-dom';
+import ThemeToggle from '../../components/ui/ThemeToggle.jsx';
 import {
-    ATTRIBUTES, SKILLS, ARCHETYPES, BACKGROUNDS, CHARACTERISTICS,
+    ATTRIBUTES, SKILLS, ATTR_LABEL, SKILL_LABEL,
+    ARCHETYPE_DATA, BACKGROUND_DATA, CHARACTERISTIC_DATA,
+    NATIONALITIES, TALENTS, SPELLS,
+    getBonusDamage, computeStress, computeArmour, computeCourage, getBonusLanguages,
+    getSpellcasterType, getPowerRating, getBonusPowerDice, getCastAttribute, getStartingSpellCount,
 } from './config.jsx';
 
-// ─────────────────────────────────────────────────────────────────────────────
-// DONNÉES DE CRÉATION — Archetypes
-// Source : PDFs archetypes.pdf
-// ─────────────────────────────────────────────────────────────────────────────
-
-const ARCHETYPE_DATA = {
-    boffin: {
-        label: 'Boffin',
-        description: 'Vast technical and practical knowledge. If a Boffin doesn\'t know something, they can probably figure it out.',
-        attrBonus:   { brawn: 1, coordination: 2, insight: 1, reason: 2 },
-        skillBonus:  { academia: 1, engineering: 2, medicine: 2, observation: 1, stealth: 1, vehicles: 2 },
-        focusPool:   ['engineering', 'medicine', 'vehicles'], // choisir 2
-        talentPool:  ['Prototype', 'Lifesaver', 'Push the Limits'],
-        belongings:  [
-            'Mechanic\'s tools or a contact (mechanic)',
-            'Electrician\'s tools or a contact (electrician)',
-            'Demolition kit or a contact (demolitions)',
-            'Medic\'s bag or a contact (medicine)',
-        ],
-        belongingsNote: 'Choose two sets of tools, two contacts, or one set of tools and a contact.',
-    },
-    commander: {
-        label: 'Commander',
-        description: 'A master at marshalling troops and resources. Able to see the bigger picture.',
-        attrBonus:   { coordination: 2, insight: 1, reason: 2, will: 1 },
-        skillBonus:  { academia: 1, fighting: 2, persuasion: 1, survival: 2, stealth: 1, tactics: 2 },
-        focusPool:   ['fighting', 'survival', 'tactics'],
-        talentPool:  ['Opportunist', 'Wilderness Guide', 'Born Leader'],
-        belongings:  [],
-        belongingsNote: 'At the start of each adventure, you may requisition one item up to Restriction 2 for free.',
-    },
-    con_artist: {
-        label: 'Con Artist',
-        description: 'Skilled manipulators, able to intimidate, seduce, persuade and deceive their way through life.',
-        attrBonus:   { coordination: 1, insight: 2, reason: 1, will: 2 },
-        skillBonus:  { academia: 1, observation: 2, persuasion: 2, resilience: 1, stealth: 2, tactics: 1 },
-        focusPool:   ['observation', 'persuasion', 'stealth'],
-        talentPool:  ['Cold Reading', 'A Way with Words', 'Chameleon'],
-        belongings:  ['Disguise Kit', 'One contact, for any one skill or focus'],
-        belongingsNote: '',
-    },
-    grease_monkey: {
-        label: 'Grease Monkey',
-        description: 'Expert in getting people and supplies where they need to be. Invaluable during dangerous missions.',
-        attrBonus:   { brawn: 1, coordination: 2, insight: 1, reason: 2 },
-        skillBonus:  { athletics: 1, engineering: 2, persuasion: 2, resilience: 1, survival: 1, vehicles: 2 },
-        focusPool:   ['engineering', 'persuasion', 'vehicles'],
-        talentPool:  ['Keep it Steady', 'Quartermaster', 'Born to Drive'],
-        belongings:  ['Mechanic\'s Tools', 'A contact (Vehicles)'],
-        belongingsNote: '',
-    },
-    infiltrator: {
-        label: 'Infiltrator',
-        description: 'Talented at getting into places they shouldn\'t. Excel at evading detection and bypassing security.',
-        attrBonus:   { agility: 2, brawn: 1, coordination: 2, insight: 1 },
-        skillBonus:  { athletics: 2, engineering: 1, fighting: 2, observation: 1, stealth: 2, survival: 1 },
-        focusPool:   ['athletics', 'fighting', 'stealth'],
-        talentPool:  ['Acrobatic', 'Assassination', 'Silent Step'],
-        belongings:  ['Camouflaged clothing', 'Climbing equipment', 'Burglar\'s tools'],
-        belongingsNote: '',
-    },
-    investigator: {
-        label: 'Investigator',
-        description: 'An insatiable appetite for the truth. Private investigators, military police, and journalists.',
-        attrBonus:   { agility: 1, coordination: 1, insight: 2, reason: 2 },
-        skillBonus:  { academia: 2, engineering: 1, medicine: 2, observation: 2, persuasion: 1, stealth: 1 },
-        focusPool:   ['academia', 'medicine', 'observation'],
-        talentPool:  ['Polymath', 'The Cutting Edge', 'Detailed Analysis'],
-        belongings:  [
-            'Analytical tools or a contact (science)',
-            'A first aid kit or a contact (medicine)',
-            'A handgun or a contact (Academia)',
-        ],
-        belongingsNote: 'Choose one set of tools or a contact.',
-    },
-    occultist: {
-        label: 'Occultist',
-        description: 'Delved into the deeper, stranger forces of the universe. Gleaned secrets of how to bend such forces.',
-        // Deux variantes — A ou B, choisies dans le wizard
-        variants: {
-            A: { attrBonus: { brawn: 1, will: 2, insight: 2, reason: 1 }, skillBonus: { academia: 2, survival: 1 } },
-            B: { attrBonus: { brawn: 1, will: 2, insight: 1, reason: 2 }, skillBonus: { academia: 1, survival: 2 } },
-        },
-        attrBonusBase:  { brawn: 1, will: 2 },
-        skillBonusBase: { observation: 1, persuasion: 2, resilience: 2, stealth: 1 },
-        focusPool:      ['academia', 'persuasion', 'resilience', 'survival'],
-        talentPool:     ['Occult Scholar', 'Summoner', 'A Price to Pay'],
-        talentNote:     'A character may only have one talent with the Spellcaster keyword.',
-        belongings:     ['Ritual tools', 'A contact with either the occultism or mysticism focus'],
-        belongingsNote: '',
-        isSpellcaster:  true, // les talents Occultist sont Spellcaster
-    },
-    soldier: {
-        label: 'Soldier',
-        description: 'Excels at combat, defeating their foes, and protecting others.',
-        attrBonus:   { agility: 1, brawn: 2, coordination: 2, insight: 1 },
-        skillBonus:  { athletics: 1, fighting: 2, observation: 1, resilience: 2, survival: 2, tactics: 1 },
-        focusPool:   ['fighting', 'resilience', 'survival'],
-        talentPool:  ['Army of One', 'Draw Their Fire!', 'Own the Battlefield'],
-        belongings:  ['One weapon with a restriction of 3 or lower', 'A handgun of restriction 1'],
-        belongingsNote: '',
-    },
-};
-
-// ─────────────────────────────────────────────────────────────────────────────
-// DONNÉES DE CRÉATION — Backgrounds
-// Source : PDFs backgrounds.pdf
-// ─────────────────────────────────────────────────────────────────────────────
-
-const BACKGROUND_DATA = {
-    academic:         { label: 'Academic',         attrBonus: { coordination: 2, insight: 1, reason: 2, will: 1 }, skillBonus: { academia: 2, observation: 1, persuasion: 1 }, focusPool: ['academia'], talentKeyword: 'Academia', truths: ['Doctor of (subject)', 'Museum Curator', 'Professor of (subject)'], belongings: 'A contact (Academia)' },
-    air_force:        { label: 'Air Force',         attrBonus: { agility: 1, coordination: 2, insight: 2, reason: 1 }, skillBonus: { engineering: 1, tactics: 1, vehicles: 2 }, focusPool: ['vehicles'], talentKeyword: 'Vehicles', truths: ['Fighter Ace', 'Expert Navigator', 'Talented Mechanic'], belongings: 'Mechanic\'s tools or a contact with focuses: mechanics, heavy vehicles, or aircraft' },
-    army:             { label: 'Army',              attrBonus: { agility: 2, brawn: 2, coordination: 1, will: 1 }, skillBonus: { athletics: 1, fighting: 2, tactics: 1 }, focusPool: ['fighting'], talentKeyword: 'Fighting', truths: ['Trained Marksman', 'Paratrooper', 'Deadly Commando'], belongings: 'An ammo belt' },
-    athlete:          { label: 'Athlete',           attrBonus: { agility: 2, brawn: 2, coordination: 1, insight: 1 }, skillBonus: { athletics: 2, fighting: 1, resilience: 1 }, focusPool: ['athletics'], talentKeyword: 'Athletics', truths: ['Star Footballer (Soccer)', 'Baseball Champion', 'Olympic Boxer'], belongings: 'A baseball bat, cricket bat, or other piece of sporting equipment' },
-    covert_operative: { label: 'Covert Operative',  attrBonus: { agility: 2, coordination: 1, insight: 1, will: 2 }, skillBonus: { persuasion: 1, stealth: 2, tactics: 1 }, focusPool: ['stealth'], talentKeyword: 'Stealth', truths: ['Cover Identity', 'Silent Killer', 'Resistance Member'], belongings: 'Identity documents and 1 weapon of restriction 2 or less with the Hidden quality' },
-    criminal:         { label: 'Criminal',          attrBonus: { agility: 2, brawn: 1, insight: 2, will: 1 }, skillBonus: { persuasion: 2, stealth: 1, tactics: 1 }, focusPool: ['persuasion'], talentKeyword: 'Persuasion', truths: ['Shifty Bagman', 'Criminal Mastermind', 'Black Market Dealer'], belongings: 'Any 1 item with a restriction of 1 or lower' },
-    driver:           { label: 'Driver',            attrBonus: { brawn: 1, coordination: 2, insight: 2, reason: 1 }, skillBonus: { athletics: 1, engineering: 1, vehicles: 2 }, focusPool: ['vehicles'], talentKeyword: 'Vehicles', truths: ['Obsessive Motorist', 'Speed Freak', 'Aerobatic Daredevil'], belongings: 'A contact with focuses: cars, heavy vehicles, aircraft, or watercraft' },
-    engineer:         { label: 'Engineer',          attrBonus: { agility: 1, coordination: 2, insight: 1, reason: 2 }, skillBonus: { academia: 1, engineering: 2, observation: 1 }, focusPool: ['engineering'], talentKeyword: 'Engineering', truths: ['Diligent Mechanic', 'Experimental Genius', 'Bookish Technician'], belongings: 'Mechanic\'s tools, electrician\'s tools, or a contact (electronics or mechanics)' },
-    entertainer:      { label: 'Entertainer',       attrBonus: { agility: 2, coordination: 1, insight: 1, will: 2 }, skillBonus: { athletics: 1, observation: 1, persuasion: 2 }, focusPool: ['persuasion'], talentKeyword: 'Persuasion', truths: ['Star of Stage or Screen', 'One Act Wonder', 'Voice of a Generation'], belongings: 'A contact (persuasion)' },
-    journalist:       { label: 'Journalist',        attrBonus: { coordination: 1, insight: 2, reason: 1, will: 2 }, skillBonus: { academia: 1, observation: 2, persuasion: 1 }, focusPool: ['observation'], talentKeyword: 'Observation', truths: ['Investigative Reporter', 'Unhinged Conspiracy Theorist', 'Award-winning Journalist'], belongings: 'A camera or a portable radio set' },
-    labourer:         { label: 'Labourer',          attrBonus: { agility: 1, brawn: 2, coordination: 2, will: 1 }, skillBonus: { athletics: 1, resilience: 2, survival: 1 }, focusPool: ['resilience'], talentKeyword: 'Resilience', truths: ['Hardworking Farmhand', 'Jack of All Trades', 'Experienced Miner'], belongings: 'A contact with focuses: architecture, mechanics, animal handling, foraging, hunting, or orienteering' },
-    military_officer: { label: 'Military Officer',  attrBonus: { agility: 1, insight: 1, reason: 2, will: 2 }, skillBonus: { fighting: 1, persuasion: 1, tactics: 2 }, focusPool: ['tactics'], talentKeyword: 'Tactics', truths: ['Calculating Strategist', 'Inspirational Leader', 'Frontline Commander'], belongings: 'Once per adventure reduce difficulty of special requisition requests by 1' },
-    navy:             { label: 'Navy',              attrBonus: { agility: 2, brawn: 1, coordination: 2, reason: 1 }, skillBonus: { engineering: 1, tactics: 1, vehicles: 2 }, focusPool: ['vehicles'], talentKeyword: 'Vehicles', truths: ['Salty Sea Dog', 'Eager Ship\'s Mate', 'Experienced Submariner'], belongings: 'Mechanic\'s tools or engineer\'s tools' },
-    physician:        { label: 'Physician',         attrBonus: { coordination: 2, insight: 1, reason: 2, will: 1 }, skillBonus: { academia: 1, medicine: 2, resilience: 1 }, focusPool: ['medicine'], talentKeyword: 'Medicine', truths: ['Caring Nurse', 'Probing Psychologist', 'Driven Frontline Medic'], belongings: 'First aid kit or a contact (medicine)' },
-    police:           { label: 'Police',            attrBonus: { agility: 1, brawn: 1, coordination: 2, insight: 2 }, skillBonus: { fighting: 1, observation: 2, persuasion: 1 }, focusPool: ['observation'], talentKeyword: 'Observation', truths: ['Busy Beat Cop', 'Intimidating Military Policeman', 'Hard-Boiled Private Investigator'], belongings: 'One melee weapon of restriction 2 or lower, or one handgun' },
-    politician:       { label: 'Politician',        attrBonus: { coordination: 1, insight: 2, reason: 1, will: 2 }, skillBonus: { academia: 1, persuasion: 2, tactics: 1 }, focusPool: ['persuasion'], talentKeyword: 'Persuasion', truths: ['Charismatic Public Figure', 'Devious Cabinet Minister', 'Overworked Public Servant'], belongings: 'At start of every adventure gain 2 more Requisition points for the group' },
-    resistance:       { label: 'Resistance',        attrBonus: { agility: 1, coordination: 1, reason: 2, will: 2 }, skillBonus: { persuasion: 1, stealth: 2, tactics: 1 }, focusPool: ['stealth'], talentKeyword: 'Stealth', truths: ['Confident Saboteur', 'Émigré Allied Agent', 'Valiant Cell Leader'], belongings: 'Covert comms equipment, saboteur\'s kit, a weapon of restriction 2 or lower, or a contact (stealth)' },
-    spiritual_leader: { label: 'Spiritual Leader',  attrBonus: { agility: 1, insight: 2, reason: 1, will: 2 }, skillBonus: { academia: 2, persuasion: 1, resilience: 1 }, focusPool: ['academia'], talentKeyword: 'Academia', truths: ['Mesmerising Cult Leader', 'Holy Person', 'Insightful Medium'], belongings: 'Appropriate clothing and insignia, plus a contact (occultism, invocation, mysticism)' },
-};
-
-// ─────────────────────────────────────────────────────────────────────────────
-// DONNÉES DE CRÉATION — Characteristics
-// ─────────────────────────────────────────────────────────────────────────────
-
-const CHARACTERISTIC_DATA = {
-    bookworm:               { label: 'Bookworm',                   attrBonus: { insight: 1, reason: 1 }, attrChoiceExtra: 1, skillBonus: { academia: 1 }, skillChoiceExtra: 3, talentKeyword: 'Academia' },
-    born_behind_wheel:      { label: 'Born Behind the Wheel',      attrBonus: { coordination: 1, reason: 1 }, attrChoiceExtra: 1, skillBonus: { engineering: 1, vehicles: 1 }, skillChoiceExtra: 2, talentKeyword: 'Vehicles' },
-    built_brick_outhouse:   { label: 'Built Like a Brick Outhouse', attrBonus: { brawn: 1, coordination: 1 }, attrChoiceExtra: 1, skillBonus: { athletics: 1, fighting: 1, resilience: 1 }, skillChoiceExtra: 1, talentKeyword: 'Athletics or Resilience' },
-    conscientious_objector: { label: 'Conscientious Objector',     attrBonus: { reason: 1, will: 1 }, attrChoiceExtra: 1, skillBonus: { resilience: 1 }, skillChoiceExtra: 3, talentKeyword: 'Resilience', skillExclude: ['fighting', 'tactics'] },
-    criminal_mindset:       { label: 'Criminal Mindset',           attrBonus: { insight: 1, agility: 1 }, attrChoiceExtra: 1, skillBonus: { observation: 1, stealth: 1 }, skillChoiceExtra: 2, talentKeyword: 'Stealth or Persuasion' },
-    dilettante:             { label: 'Dilettante',                  attrBonus: { coordination: 1, insight: 1 }, attrChoiceExtra: 1, skillBonus: {}, skillChoiceExtra: 0, specialRule: 'Gain +1 to each skill currently at 0 ranks.', talentKeyword: 'Any' },
-    dreamwalker:            { label: 'Dreamwalker',                attrBonus: { insight: 1, will: 1 }, attrChoiceExtra: 1, skillBonus: { resilience: 1, observation: 1 }, skillChoiceExtra: 2, talentKeyword: 'Observation or Weird' },
-    escaped_europe:         { label: 'Escaped from Europe',        attrBonus: { insight: 1, will: 1 }, attrChoiceExtra: 1, skillBonus: { academia: 1, athletics: 1, persuasion: 1, survival: 1 }, skillChoiceExtra: 0, talentKeyword: 'Persuasion or Survival' },
-    experimental_subject:   { label: 'Experimental Subject',       attrBonus: { agility: 1, brawn: 1 }, attrChoiceExtra: 1, skillBonus: {}, skillChoiceExtra: 4, talentKeyword: 'Weird' },
-    my_war_started_early:   { label: 'My War Started Early',       attrBonus: { agility: 1, brawn: 1, coordination: 1 }, attrChoiceExtra: 0, skillBonus: { fighting: 1, medicine: 1 }, skillChoiceExtra: 2, talentKeyword: 'Fighting or Medicine' },
-    nomadic:                { label: 'Nomadic',                    attrBonus: { brawn: 1, coordination: 1, reason: 1 }, attrChoiceExtra: 0, skillBonus: { survival: 1, vehicles: 1 }, skillChoiceExtra: 2, talentKeyword: 'Survival or Vehicles' },
-    own_occult_artefact:    { label: 'Own an Occult Artefact',     attrBonus: { reason: 1, will: 1 }, attrChoiceExtra: 1, skillBonus: {}, skillChoiceExtra: 3, talentKeyword: 'Weird', specialRule: 'You own an Occult artefact — discuss with GM.' },
-    raised_by_cult:         { label: 'Raised by a Cult',           attrBonus: { brawn: 1, insight: 1 }, attrChoiceExtra: 1, skillBonus: { academia: 1, resilience: 1, stealth: 1 }, skillChoiceExtra: 1, talentKeyword: 'Stealth, Resilience, or Weird' },
-    raised_colonies:        { label: 'Raised in the Colonies',     attrBonus: { agility: 1, brawn: 1, will: 1 }, attrChoiceExtra: 0, skillBonus: { athletics: 1, survival: 1 }, skillChoiceExtra: 2, talentKeyword: 'Athletics or Survival' },
-    read_occult_book:       { label: 'Read from an Occult Book',   attrBonus: { insight: 1, will: 1 }, attrChoiceExtra: 1, skillBonus: { observation: 1, resilience: 1 }, skillChoiceExtra: 2, talentKeyword: 'Weird' },
-    scientific_visionary:   { label: 'Scientific Visionary',       attrBonus: { insight: 1, reason: 1 }, attrChoiceExtra: 1, skillBonus: { academia: 1, engineering: 1 }, skillChoiceExtra: 2, talentKeyword: 'Academia or Engineering' },
-    street_kid:             { label: 'Street Kid',                 attrBonus: { brawn: 1, coordination: 1, reason: 1 }, attrChoiceExtra: 0, skillBonus: { resilience: 1, stealth: 1 }, skillChoiceExtra: 2, talentKeyword: 'Survival' },
-    the_lucky_one:          { label: 'The Lucky One',              attrBonus: { agility: 1, brawn: 1, will: 1 }, attrChoiceExtra: 0, skillBonus: { athletics: 1, tactics: 1 }, skillChoiceExtra: 2, talentKeyword: 'Fortune' },
-    veteran_great_war:      { label: 'Veteran of the Great War',   attrBonus: { brawn: 1, coordination: 1, will: 1 }, attrChoiceExtra: 0, skillBonus: { fighting: 1, survival: 1 }, skillChoiceExtra: 2, talentKeyword: 'Fighting or Survival' },
-    wanted_authorities:     { label: 'Wanted by the Authorities',  attrBonus: { agility: 1, insight: 1 }, attrChoiceExtra: 1, skillBonus: { persuasion: 1, stealth: 1 }, skillChoiceExtra: 2, talentKeyword: 'Persuasion or Stealth' },
-    young_at_heart:         { label: 'Young at Heart',             attrBonus: { agility: 1, reason: 1 }, attrChoiceExtra: 1, skillBonus: { athletics: 1, stealth: 1 }, skillChoiceExtra: 2, talentKeyword: 'Any', specialRule: '+2 to any one skill you have 0 or 1 ranks in.' },
-};
-
-// ─────────────────────────────────────────────────────────────────────────────
+// ══════════════════════════════════════════════════════════════════════════════
 // CONSTANTES
-// ─────────────────────────────────────────────────────────────────────────────
+// ══════════════════════════════════════════════════════════════════════════════
 
-const ATTR_BASE  = 7;
-const SKILL_BASE = 0;
+const ATTR_BASE        = 6;
+const ATTR_MAX         = 11;
+const ATTR_MIN         = 6;
+const TARGET_ATTR_SUM  = 51;
+const TARGET_SKILL_SUM = 17;
 
-const STEPS = [
-    { id: 1, label: 'Identité' },
-    { id: 2, label: 'Archétype' },
-    { id: 3, label: 'Background' },
-    { id: 4, label: 'Characteristic' },
-    { id: 5, label: 'Truths & Langues' },
-    { id: 6, label: 'Finalisation' },
+const BASE_STEPS = [
+    { id: 1, label: 'Attributs'       },
+    { id: 2, label: 'Archétype'       },
+    { id: 3, label: 'Nationalité'     },
+    { id: 4, label: 'Background'      },
+    { id: 5, label: 'Caractéristique' },
+    { id: 6, label: 'Magie'           }, // conditionnelle — insérée dynamiquement
+    { id: 7, label: 'Identité'        },
 ];
 
-// ─────────────────────────────────────────────────────────────────────────────
-// HELPERS
-// ─────────────────────────────────────────────────────────────────────────────
+// ══════════════════════════════════════════════════════════════════════════════
+// HELPERS DE CALCUL
+// ══════════════════════════════════════════════════════════════════════════════
 
-function applyAttrBonus(base, bonus) {
-    const result = { ...base };
-    for (const [k, v] of Object.entries(bonus ?? {})) {
-        result[k] = (result[k] ?? ATTR_BASE) + v;
+function applyBonusToAttrs(base, bonus) {
+    if (!bonus) return { ...base };
+    const out = { ...base };
+    for (const [k, v] of Object.entries(bonus)) out[k] = (out[k] ?? ATTR_BASE) + v;
+    return out;
+}
+
+function applyBonusToSkills(base, bonus) {
+    if (!bonus) return { ...base };
+    const out = { ...base };
+    for (const [k, v] of Object.entries(bonus)) out[k] = (out[k] ?? 0) + v;
+    return out;
+}
+
+function computeFinalValues(ws) {
+    let attrs  = {};
+    let skills = {};
+    ATTRIBUTES.forEach(a => { attrs[a.key]  = ATTR_BASE; });
+    SKILLS.forEach(s     => { skills[s.key] = 0; });
+
+    if (ws.archetype) {
+        const ad = ARCHETYPE_DATA[ws.archetype];
+        if (ad) {
+            const attrB  = ad.variants ? ad.variants[ws.occultistVariant ?? 'A'].attrBonus  : ad.attrBonus;
+            const skillB = ad.variants ? ad.variants[ws.occultistVariant ?? 'A'].skillBonus : ad.skillBonus;
+            attrs  = applyBonusToAttrs(attrs, attrB);
+            skills = applyBonusToSkills(skills, skillB);
+        }
     }
-    return result;
+    if (ws.background) {
+        const bd = BACKGROUND_DATA[ws.background];
+        if (bd) {
+            attrs  = applyBonusToAttrs(attrs, bd.attrBonus);
+            skills = applyBonusToSkills(skills, bd.skillBonus);
+            if (bd.attrBonusFree && ws.bgAttrFree) attrs[ws.bgAttrFree] = (attrs[ws.bgAttrFree] ?? ATTR_BASE) + 1;
+            if (bd.skillBonusFree && ws.bgSkillsFree?.length) {
+                for (const sk of ws.bgSkillsFree) skills[sk] = (skills[sk] ?? 0) + 1;
+            }
+        }
+    }
+    if (ws.characteristic) {
+        const cd = CHARACTERISTIC_DATA[ws.characteristic];
+        if (cd) {
+            const charData = cd.isChoice ? cd.options[ws.charVariant] : cd;
+            if (charData) {
+                attrs  = applyBonusToAttrs(attrs, charData.attrBonus);
+                skills = applyBonusToSkills(skills, charData.skillBonus);
+                if (charData.attrBonusFree && ws.charAttrFree) attrs[ws.charAttrFree] = (attrs[ws.charAttrFree] ?? ATTR_BASE) + 1;
+                if (ws.charSkillsFree?.length) for (const sk of ws.charSkillsFree) skills[sk] = (skills[sk] ?? 0) + 1;
+                if (charData.specialRule === 'dilettante') SKILLS.forEach(s => { if ((skills[s.key] ?? 0) === 0) skills[s.key] = 1; });
+            }
+        }
+    }
+    for (const k of Object.keys(attrs)) attrs[k] = Math.max(ATTR_MIN, Math.min(ATTR_MAX, attrs[k]));
+    return { attrs, skills };
 }
 
-function initAttrs() {
-    return Object.fromEntries(ATTRIBUTES.map(a => [a.key, ATTR_BASE]));
+// Détecte le talent Lanceur de sorts parmi les 3 talents choisis
+function detectSpellcasterTalent(ws) {
+    for (const tk of [ws.archTalent, ws.bgTalent, ws.charTalent]) {
+        if (tk && TALENTS[tk]?.keywords.includes('Lanceur de sorts')) return tk;
+    }
+    return null;
 }
 
-function initSkills() {
-    return Object.fromEntries(SKILLS.map(s => [s.key, { rank: SKILL_BASE, focus: '' }]));
-}
+// ══════════════════════════════════════════════════════════════════════════════
+// COMPOSANTS UTILITAIRES — niveau module (évite remount)
+// ══════════════════════════════════════════════════════════════════════════════
 
-// ─────────────────────────────────────────────────────────────────────────────
-// SOUS-COMPOSANTS
-// ─────────────────────────────────────────────────────────────────────────────
-
-const StepBar = ({ current }) => (
-    <div className="flex items-center gap-0.5 mb-6 overflow-x-auto pb-1">
-        {STEPS.map((s, i) => (
+const StepBar = ({ steps, current }) => (
+    <div className="flex items-center gap-0 mb-8 select-none">
+        {steps.map((s, i) => (
             <React.Fragment key={s.id}>
-                <div className="flex flex-col items-center shrink-0">
-                    <div
-                        className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold${
-                            s.id < current ? ' bg-success text-white' :
-                                s.id === current ? ' bg-primary text-white' :
-                                    ' bg-surface-alt text-muted'
-                        }`}
-                    >
+                <div className="flex flex-col items-center" style={{ minWidth: 0, flex: 1 }}>
+                    <div style={{
+                        width: 28, height: 28, borderRadius: '50%',
+                        background: s.id < current ? 'var(--ac-primary)' : s.id === current ? 'var(--ac-secondary)' : 'var(--ac-surface-alt)',
+                        border: `2px solid ${s.id <= current ? 'var(--ac-primary)' : 'var(--ac-border)'}`,
+                        display: 'flex', alignItems: 'center', justifyContent: 'center',
+                        color: s.id <= current ? 'var(--ac-bg)' : 'var(--ac-muted)',
+                        fontFamily: 'var(--ac-font-heading)', fontWeight: 700, fontSize: '0.7rem',
+                        transition: 'all 0.2s', flexShrink: 0,
+                    }}>
                         {s.id < current ? '✓' : s.id}
                     </div>
-                    <span className={`text-[8px] mt-0.5 hidden sm:block${s.id === current ? ' text-primary' : ' text-muted'}`}>
-                        {s.label}
-                    </span>
+                    <span style={{
+                        fontSize: '0.6rem', fontFamily: 'var(--ac-font-heading)', fontWeight: 600,
+                        letterSpacing: '0.06em', textTransform: 'uppercase',
+                        color: s.id === current ? 'var(--ac-secondary)' : 'var(--ac-muted)',
+                        marginTop: 3, textAlign: 'center', whiteSpace: 'nowrap',
+                    }}>{s.label}</span>
                 </div>
-                {i < STEPS.length - 1 && (
-                    <div className={`flex-1 h-0.5 mb-3${s.id < current ? ' bg-success' : ' bg-border'}`} />
+                {i < steps.length - 1 && (
+                    <div style={{
+                        flex: '0 0 auto', width: 24, height: 2,
+                        background: s.id < current ? 'var(--ac-primary)' : 'var(--ac-border)',
+                        marginBottom: 16, transition: 'background 0.2s',
+                    }} />
                 )}
             </React.Fragment>
         ))}
     </div>
 );
 
-const FieldRow = ({ label, children }) => (
-    <div className="flex flex-col gap-0.5">
-        <label className="ac-label">{label}</label>
-        {children}
-    </div>
-);
+const TalentCard = ({ talentKey, selected, onSelect }) => {
+    const t = TALENTS[talentKey];
+    if (!t) return null;
+    return (
+        <button onClick={() => onSelect(talentKey)} className="ac-card text-left w-full transition-all"
+                style={{ borderLeft: `3px solid ${selected ? 'var(--ac-secondary)' : 'var(--ac-border)'}`, cursor: 'pointer', background: selected ? 'var(--ac-surface-alt)' : 'var(--ac-surface)' }}>
+            <div className="flex items-start justify-between gap-2">
+                <span style={{ fontFamily: 'var(--ac-font-heading)', fontWeight: 700, fontSize: '0.78rem', color: 'var(--ac-text)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>{t.label}</span>
+                {selected && <span style={{ color: 'var(--ac-secondary)', fontSize: '0.8rem', flexShrink: 0 }}>✓</span>}
+            </div>
+            <div className="flex flex-wrap gap-1 mt-1 mb-2">
+                {t.keywords.map(kw => (
+                    <span key={kw} style={{ fontSize: '0.6rem', fontFamily: 'var(--ac-font-heading)', fontWeight: 600, letterSpacing: '0.08em', textTransform: 'uppercase', background: 'var(--ac-primary)', color: 'var(--ac-bg)', borderRadius: 3, padding: '1px 5px' }}>{kw}</span>
+                ))}
+            </div>
+            <p style={{ fontSize: '0.76rem', color: 'var(--ac-text-muted)', lineHeight: 1.5, margin: 0 }}>{t.description}</p>
+        </button>
+    );
+};
 
-const CardButton = ({ selected, onClick, children, className = '' }) => (
-    <button
-        onClick={onClick}
-        className={`ac-select-btn${selected ? ' selected' : ''} p-3 text-left w-full ${className}`}
-    >
-        {children}
+const FocusPill = ({ label, selected, onToggle, disabled }) => (
+    <button onClick={onToggle} disabled={disabled && !selected}
+            style={{ padding: '3px 10px', borderRadius: 20, border: `1px solid ${selected ? 'var(--ac-secondary)' : 'var(--ac-border)'}`, background: selected ? 'var(--ac-secondary)' : 'transparent', color: selected ? 'var(--ac-bg)' : disabled ? 'var(--ac-muted)' : 'var(--ac-text)', fontSize: '0.72rem', fontFamily: 'var(--ac-font-heading)', fontWeight: 600, letterSpacing: '0.06em', cursor: disabled && !selected ? 'not-allowed' : 'pointer', transition: 'all 0.15s' }}>
+        {label}
     </button>
 );
 
-// Affichage des bonus d'un archétype/background
-const BonusBadges = ({ attrBonus = {}, skillBonus = {} }) => (
-    <div className="flex flex-wrap gap-1 mt-1">
-        {Object.entries(attrBonus).map(([k, v]) => (
-            <span key={k} className="ac-pill" style={{ fontSize: '0.65rem' }}>
-                {ATTRIBUTES.find(a => a.key === k)?.label ?? k} +{v}
-            </span>
-        ))}
-        {Object.entries(skillBonus).map(([k, v]) => (
-            <span key={k} className="ac-pill" style={{ fontSize: '0.65rem', color: 'var(--ac-primary)' }}>
-                {SKILLS.find(s => s.key === k)?.label ?? k} +{v}
-            </span>
-        ))}
+const BonusDisplay = ({ attrBonus, skillBonus }) => {
+    const attrs  = attrBonus  ? Object.entries(attrBonus).filter(([,v]) => v)  : [];
+    const skills = skillBonus ? Object.entries(skillBonus).filter(([,v]) => v) : [];
+    if (!attrs.length && !skills.length) return null;
+    return (
+        <div className="grid grid-cols-2 gap-3 mt-3">
+            {attrs.length > 0 && (
+                <div>
+                    <div className="ac-label mb-1">Attributs</div>
+                    <div className="flex flex-wrap gap-1">
+                        {attrs.map(([k, v]) => (
+                            <span key={k} style={{ fontSize: '0.72rem', fontFamily: 'var(--ac-font-heading)', background: 'var(--ac-surface-alt)', border: '1px solid var(--ac-border)', borderRadius: 4, padding: '2px 8px', color: 'var(--ac-text)' }}>
+                                {ATTR_LABEL[k] ?? k} <span style={{ color: 'var(--ac-secondary)', fontWeight: 700 }}>+{v}</span>
+                            </span>
+                        ))}
+                    </div>
+                </div>
+            )}
+            {skills.length > 0 && (
+                <div>
+                    <div className="ac-label mb-1">Compétences</div>
+                    <div className="flex flex-wrap gap-1">
+                        {skills.map(([k, v]) => (
+                            <span key={k} style={{ fontSize: '0.72rem', fontFamily: 'var(--ac-font-heading)', background: 'var(--ac-surface-alt)', border: '1px solid var(--ac-border)', borderRadius: 4, padding: '2px 8px', color: 'var(--ac-text)' }}>
+                                {SKILL_LABEL[k] ?? k} <span style={{ color: 'var(--ac-secondary)', fontWeight: 700 }}>+{v}</span>
+                            </span>
+                        ))}
+                    </div>
+                </div>
+            )}
+        </div>
+    );
+};
+
+const AttrFreeSelect = ({ value, onChange, label = '+1 attribut libre' }) => (
+    <div>
+        <div className="ac-label mb-1">{label}</div>
+        <select value={value ?? ''} onChange={e => onChange(e.target.value || null)} className="ac-input" style={{ fontSize: '0.8rem' }}>
+            <option value=''>— Choisir un attribut —</option>
+            {ATTRIBUTES.map(a => <option key={a.key} value={a.key}>{a.label}</option>)}
+        </select>
     </div>
 );
 
-// ─────────────────────────────────────────────────────────────────────────────
-// ÉTAPE 2 — Archétype
-// ─────────────────────────────────────────────────────────────────────────────
-
-const StepArchetype = ({ value, occultistVariant, selectedFocuses, focusTexts, selectedTalent, onChange }) => {
-    const data = value ? ARCHETYPE_DATA[value] : null;
-
-    // Focuses sélectionnés — doit en choisir 2
-    const handleFocusToggle = (skillKey) => {
-        const current = selectedFocuses ?? [];
-        if (current.includes(skillKey)) {
-            onChange({ selectedFocuses: current.filter(f => f !== skillKey) });
-        } else if (current.length < 2) {
-            onChange({ selectedFocuses: [...current, skillKey] });
-        }
-    };
-
+const SkillFreeSelect = ({ count, selected, onChange, exclude = [], label, noDouble = true }) => {
+    const available = SKILLS.filter(s => !exclude.includes(s.key));
     return (
-        <div className="flex flex-col gap-4">
-            <div>
-                <div className="ac-section-header">Choisissez votre Archétype</div>
-                <div className="grid grid-cols-1 gap-2">
-                    {Object.entries(ARCHETYPE_DATA).map(([key, arch]) => (
-                        <CardButton
-                            key={key}
-                            selected={value === key}
-                            onClick={() => onChange({ archetype: key, selectedFocuses: [], selectedTalent: null, occultistVariant: 'A' })}
-                        >
-                            <div className="ac-font-title text-sm">{arch.label}</div>
-                            <div className="ac-text-muted mt-0.5" style={{ fontSize: '0.72rem' }}>{arch.description}</div>
-                            <BonusBadges
-                                attrBonus={arch.variants ? { ...arch.attrBonusBase, ...arch.variants.A.attrBonus } : arch.attrBonus}
-                                skillBonus={arch.variants ? { ...arch.skillBonusBase, ...arch.variants.A.skillBonus } : arch.skillBonus}
-                            />
-                        </CardButton>
-                    ))}
-                </div>
+        <div>
+            <div className="ac-label mb-1">{label ?? `+1 à ${count} compétence${count > 1 ? 's' : ''} libre${count > 1 ? 's' : ''}`}</div>
+            <div className="flex flex-col gap-1">
+                {Array.from({ length: count }).map((_, i) => (
+                    <select key={i} value={selected[i] ?? ''} onChange={e => { const next = [...selected]; next[i] = e.target.value || null; onChange(next.slice(0, count)); }} className="ac-input" style={{ fontSize: '0.8rem' }}>
+                        <option value=''>— Choisir —</option>
+                        {available.filter(s => !noDouble || !selected.includes(s.key) || selected[i] === s.key).map(s => <option key={s.key} value={s.key}>{s.label}</option>)}
+                    </select>
+                ))}
             </div>
-
-            {/* Variante Occultist */}
-            {value === 'occultist' && (
-                <div>
-                    <div className="ac-section-header">Variante Occultist</div>
-                    <div className="flex gap-2">
-                        {['A', 'B'].map(v => {
-                            const variant = ARCHETYPE_DATA.occultist.variants[v];
-                            return (
-                                <CardButton
-                                    key={v}
-                                    selected={occultistVariant === v}
-                                    onClick={() => onChange({ occultistVariant: v })}
-                                    className="flex-1"
-                                >
-                                    <div className="ac-font-title text-sm">Variante {v}</div>
-                                    <BonusBadges
-                                        attrBonus={{ ...ARCHETYPE_DATA.occultist.attrBonusBase, ...variant.attrBonus }}
-                                        skillBonus={{ ...ARCHETYPE_DATA.occultist.skillBonusBase, ...variant.skillBonus }}
-                                    />
-                                </CardButton>
-                            );
-                        })}
-                    </div>
-                </div>
-            )}
-
-            {/* Sélection focuses */}
-            {data && (
-                <div>
-                    <div className="ac-section-header">Choisissez 2 Focuses ({(selectedFocuses ?? []).length}/2)</div>
-                    <div className="grid grid-cols-2 gap-1">
-                        {data.focusPool.map(skillKey => {
-                            const skillDef = SKILLS.find(s => s.key === skillKey);
-                            const isSelected = (selectedFocuses ?? []).includes(skillKey);
-                            return (
-                                <CardButton
-                                    key={skillKey}
-                                    selected={isSelected}
-                                    onClick={() => handleFocusToggle(skillKey)}
-                                >
-                                    <span style={{ fontSize: '0.8rem' }}>{skillDef?.label ?? skillKey}</span>
-                                    <div className="ac-text-muted" style={{ fontSize: '0.65rem' }}>
-                                        {skillDef?.focuses?.join(', ')}
-                                    </div>
-                                </CardButton>
-                            );
-                        })}
-                    </div>
-                    {(selectedFocuses ?? []).length > 0 && (
-                        <div className="mt-2 flex flex-col gap-1">
-                            {(selectedFocuses ?? []).map(skillKey => {
-                                const skillDef = SKILLS.find(s => s.key === skillKey);
-                                return (
-                                    <div key={skillKey}>
-                                        <div className="ac-label">{skillDef?.label} — focus spécifique</div>
-                                        <input
-                                            className="ac-input"
-                                            placeholder={`Ex: ${skillDef?.focuses?.[0] ?? 'Focus...'}`}
-                                            value={(focusTexts ?? {})[skillKey] ?? ''}
-                                            onChange={e => onChange({
-                                                focusTexts: { ...(focusTexts ?? {}), [skillKey]: e.target.value },
-                                            })}
-                                        />
-                                        <div className="ac-text-muted mt-0.5" style={{ fontSize: '0.65rem' }}>
-                                            Suggestions : {skillDef?.focuses?.join(', ')}
-                                        </div>
-                                    </div>
-                                );
-                            })}
-                        </div>
-                    )}
-                </div>
-            )}
-
-            {/* Sélection talent */}
-            {data && (
-                <div>
-                    <div className="ac-section-header">Choisissez 1 Talent</div>
-                    {data.talentNote && <div className="ac-text-muted mb-2" style={{ fontSize: '0.72rem' }}>{data.talentNote}</div>}
-                    <div className="flex flex-col gap-1">
-                        {data.talentPool.map(talent => (
-                            <CardButton
-                                key={talent}
-                                selected={selectedTalent === talent}
-                                onClick={() => onChange({ selectedTalent: talent })}
-                            >
-                                <span style={{ fontSize: '0.82rem' }}>{talent}</span>
-                            </CardButton>
-                        ))}
-                    </div>
-                </div>
-            )}
-
-            {/* Belongings */}
-            {data?.belongings?.length > 0 && (
-                <div className="ac-card-alt">
-                    <div className="ac-label mb-1">Belongings</div>
-                    {data.belongingsNote && <div className="ac-text-muted" style={{ fontSize: '0.72rem' }}>{data.belongingsNote}</div>}
-                    <ul className="mt-1 flex flex-col gap-0.5">
-                        {data.belongings.map((b, i) => (
-                            <li key={i} className="text-default" style={{ fontSize: '0.8rem' }}>· {b}</li>
-                        ))}
-                    </ul>
-                </div>
-            )}
         </div>
     );
 };
 
-// ─────────────────────────────────────────────────────────────────────────────
-// ÉTAPE 3 — Background
-// ─────────────────────────────────────────────────────────────────────────────
+const FocusSelector = ({ focusPool, count, selected, onChange, label = 'Choisissez vos focuses', takenElsewhere = new Set() }) => (
+    <div>
+        <div className="ac-section-header" style={{ marginTop: '0.75rem' }}>
+            {label} <span style={{ color: 'var(--ac-muted)', fontWeight: 400 }}>({selected.length}/{count})</span>
+        </div>
+        <p style={{ fontSize: '0.74rem', color: 'var(--ac-text-muted)', margin: '0.25rem 0 0.5rem' }}>
+            Vous pouvez prendre deux focuses parmi les compétences suivantes. Deux focuses peuvent être sur la même compétence, mais un focus déjà acquis ne peut pas être repris.
+        </p>
+        {focusPool.map(skillKey => {
+            const skill = SKILLS.find(s => s.key === skillKey);
+            if (!skill) return null;
+            return (
+                <div key={skillKey} className="mb-3">
+                    <div className="ac-label mb-1">{skill.label}</div>
+                    <div className="flex flex-wrap gap-1">
+                        {skill.focuses.map(f => {
+                            const focusId   = `${skillKey}:${f}`;
+                            const isSelected      = selected.includes(focusId);
+                            const atMax           = selected.length >= count;
+                            const alreadyTaken    = takenElsewhere.has(focusId);
+                            const isDisabled      = (!isSelected && atMax) || alreadyTaken;
+                            return (
+                                <FocusPill key={focusId} label={f} selected={isSelected}
+                                           disabled={isDisabled}
+                                           onToggle={() => {
+                                               if (alreadyTaken) return;
+                                               if (isSelected) onChange(selected.filter(x => x !== focusId));
+                                               else if (!atMax) onChange([...selected, focusId]);
+                                           }} />
+                            );
+                        })}
+                    </div>
+                </div>
+            );
+        })}
+    </div>
+);
 
-const StepBackground = ({ value, selectedFocus, selectedTalentKeyword, selectedTruth, selectedTalent, onChange, allTalents }) => {
-    const data = value ? BACKGROUND_DATA[value] : null;
+// ── Focuses déjà pris toutes étapes confondues ───────────────────────────────
+function getAllTakenFocuses(ws) {
+    return new Set([
+        ...(ws.archFocuses ?? []),
+        ...(ws.bgFocus     ? [ws.bgFocus]     : []),
+        ...(ws.bgFocusFree ? [ws.bgFocusFree] : []),
+    ].filter(Boolean));
+}
+
+// ── FieldRow — niveau module (évite remount au render) ───────────────────────
+const FieldRow = ({ label, children }) => (
+    <div>
+        <div className="ac-label mb-0.5">{label}</div>
+        {children}
+    </div>
+);
+
+// ── SpellCard — carte de sort sélectionnable ──────────────────────────────────
+const SpellCard = ({ spell, selected, onSelect, flawed = false }) => {
+    const skillLabel = SKILL_LABEL[spell.skill] ?? spell.skill;
+    return (
+        <button onClick={() => onSelect(spell.key)} className="ac-card text-left w-full transition-all"
+                style={{ borderLeft: `3px solid ${selected ? 'var(--ac-secondary)' : 'var(--ac-border)'}`, cursor: 'pointer', background: selected ? 'var(--ac-surface-alt)' : 'var(--ac-surface)' }}>
+            <div className="flex items-start justify-between gap-2">
+                <div>
+                    <span style={{ fontFamily: 'var(--ac-font-heading)', fontWeight: 700, fontSize: '0.78rem', color: 'var(--ac-text)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>{spell.label}</span>
+                    {flawed && <span style={{ marginLeft: 6, fontSize: '0.6rem', fontFamily: 'var(--ac-font-heading)', fontWeight: 700, background: 'var(--ac-accent)', color: '#fff', borderRadius: 3, padding: '1px 5px', textTransform: 'uppercase' }}>Imparfait</span>}
+                </div>
+                {selected && <span style={{ color: 'var(--ac-secondary)', fontSize: '0.8rem', flexShrink: 0 }}>✓</span>}
+            </div>
+            <div className="flex flex-wrap gap-2 mt-1 mb-2" style={{ fontSize: '0.68rem', fontFamily: 'var(--ac-font-heading)', color: 'var(--ac-muted)' }}>
+                <span>Comp. : <strong style={{ color: 'var(--ac-text)' }}>{skillLabel}</strong></span>
+                <span>Diff. : <strong style={{ color: 'var(--ac-text)' }}>{spell.difficulty}</strong></span>
+                <span>Coût : <strong style={{ color: 'var(--ac-accent)' }}>{spell.cost}</strong></span>
+                <span>Durée : <strong style={{ color: 'var(--ac-text)' }}>{spell.duration}</strong></span>
+            </div>
+            <p style={{ fontSize: '0.75rem', color: 'var(--ac-text-muted)', lineHeight: 1.5, margin: 0 }}>{spell.effect}</p>
+        </button>
+    );
+};
+
+// ══════════════════════════════════════════════════════════════════════════════
+// ÉTAPE 1 — Attributs (informatif)
+// ══════════════════════════════════════════════════════════════════════════════
+
+const Step1Attributes = () => (
+    <div className="grid grid-cols-1 gap-6">
+        <div className="ac-card" style={{ borderLeft: '3px solid var(--ac-secondary)' }}>
+            <div className="ac-section-header">Briefing de recrutement</div>
+            <p style={{ fontSize: '0.85rem', color: 'var(--ac-text-muted)', fontFamily: 'var(--ac-font-title)', lineHeight: 1.7, margin: '0.5rem 0' }}>
+                "La Guerre Secrète fait appel à des individus audacieux venus de tous les pays et de toutes les conditions.
+                Ces héros sont tirés des rangs de la Section M britannique, des agents inexpérimentés mais bien équipés de
+                Majestic américaine, ou des nombreux résistants courageux qui défient les occupations nazies dans toute l'Europe."
+            </p>
+            <div style={{ fontSize: '0.75rem', color: 'var(--ac-muted)', textAlign: 'right', fontFamily: 'var(--ac-font-heading)' }}>— Briefing d'intégration, Section M</div>
+        </div>
+        <div className="ac-card">
+            <div className="ac-section-header">Valeurs de départ</div>
+            <p style={{ fontSize: '0.8rem', color: 'var(--ac-text-muted)', marginBottom: '0.75rem' }}>
+                Tous les personnages commencent avec les mêmes aptitudes de base. C'est votre archétype, votre histoire et votre personnalité qui vous distingueront.
+            </p>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '0.75rem' }}>
+                {ATTRIBUTES.map(a => (
+                    <div key={a.key} className="ac-card-alt" style={{ padding: '0.6rem' }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.25rem' }}>
+                            <span className="ac-label">{a.label}</span>
+                            <span style={{ fontFamily: 'var(--ac-font-title)', fontSize: '1.3rem', color: 'var(--ac-secondary)', fontWeight: 700 }}>6</span>
+                        </div>
+                        <p style={{ fontSize: '0.72rem', color: 'var(--ac-text-muted)', margin: 0, lineHeight: 1.5 }}>{a.description}</p>
+                    </div>
+                ))}
+            </div>
+        </div>
+        <div className="ac-card">
+            <div className="ac-section-header">Compétences</div>
+            <p style={{ fontSize: '0.8rem', color: 'var(--ac-text-muted)', marginBottom: '0.75rem' }}>
+                Toutes les compétences commencent à <strong style={{ color: 'var(--ac-text)' }}>rang 0</strong>.
+                Votre archétype et votre background y ajouteront des points. Total visé à la création : <strong style={{ color: 'var(--ac-secondary)' }}>17 rangs</strong>.
+            </p>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '0.5rem' }}>
+                {SKILLS.map(s => (
+                    <div key={s.key} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.35rem 0.6rem', background: 'var(--ac-surface-alt)', borderRadius: 4 }}>
+                        <span style={{ fontSize: '0.78rem', fontFamily: 'var(--ac-font-heading)', color: 'var(--ac-text)' }}>{s.label}</span>
+                        <span style={{ fontSize: '0.72rem', color: 'var(--ac-muted)', fontFamily: 'var(--ac-font-heading)' }}>
+                            {s.focuses.slice(0, 3).join(', ')}{s.focuses.length > 3 ? '…' : ''}
+                        </span>
+                    </div>
+                ))}
+            </div>
+        </div>
+    </div>
+);
+
+// ══════════════════════════════════════════════════════════════════════════════
+// ÉTAPE 2 — Archétype
+// ══════════════════════════════════════════════════════════════════════════════
+
+const Step2Archetype = ({ ws, patch }) => {
+    const archetypeKeys = Object.keys(ARCHETYPE_DATA);
+    const selected = ws.archetype;
+    const ad = selected ? ARCHETYPE_DATA[selected] : null;
+    const attrBonus  = ad ? (ad.variants ? ad.variants[ws.occultistVariant ?? 'A'].attrBonus  : ad.attrBonus)  : null;
+    const skillBonus = ad ? (ad.variants ? ad.variants[ws.occultistVariant ?? 'A'].skillBonus : ad.skillBonus) : null;
 
     return (
-        <div className="flex flex-col gap-4">
+        <div style={{ display: 'grid', gridTemplateColumns: '280px 1fr', gap: '1.5rem', alignItems: 'start' }}>
+            <div className="flex flex-col gap-2" style={{ position: 'sticky', top: '1rem' }}>
+                <div className="ac-section-header">Choisissez votre archétype</div>
+                {archetypeKeys.map(key => {
+                    const a = ARCHETYPE_DATA[key];
+                    return (
+                        <button key={key} onClick={() => patch({ archetype: key, archFocuses: [], archTalent: null, occultistVariant: 'A' })} className="text-left transition-all"
+                                style={{ padding: '0.6rem 0.75rem', borderRadius: 6, border: `1px solid ${key === selected ? 'var(--ac-secondary)' : 'var(--ac-border)'}`, background: key === selected ? 'var(--ac-surface-alt)' : 'var(--ac-surface)', cursor: 'pointer' }}>
+                            <div style={{ fontFamily: 'var(--ac-font-heading)', fontWeight: 700, fontSize: '0.8rem', color: key === selected ? 'var(--ac-secondary)' : 'var(--ac-text)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>{a.labelFr}</div>
+                            <div style={{ fontSize: '0.7rem', color: 'var(--ac-text-muted)', marginTop: 2 }}>{a.tagline}</div>
+                        </button>
+                    );
+                })}
+            </div>
             <div>
-                <div className="ac-section-header">Choisissez votre Background</div>
-                <div className="grid grid-cols-1 gap-2">
-                    {Object.entries(BACKGROUND_DATA).map(([key, bg]) => (
-                        <CardButton
-                            key={key}
-                            selected={value === key}
-                            onClick={() => onChange({ background: key, bgFocus: '', bgTalent: null, bgTruth: '' })}
-                        >
-                            <div className="ac-font-title text-sm">{bg.label}</div>
-                            <BonusBadges attrBonus={bg.attrBonus} skillBonus={bg.skillBonus} />
-                            {bg.truths?.length > 0 && (
-                                <div className="ac-text-muted mt-0.5" style={{ fontSize: '0.65rem' }}>
-                                    Truths : {bg.truths.join(', ')}
+                {!ad ? (
+                    <div className="ac-card" style={{ opacity: 0.5 }}>
+                        <p style={{ color: 'var(--ac-text-muted)', fontSize: '0.85rem', textAlign: 'center', padding: '2rem 0' }}>← Sélectionnez un archétype pour voir ses détails</p>
+                    </div>
+                ) : (
+                    <div className="flex flex-col gap-4">
+                        <div className="ac-card" style={{ borderLeft: '4px solid var(--ac-secondary)' }}>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '1rem' }}>
+                                <div>
+                                    <h2 style={{ fontFamily: 'var(--ac-font-heading)', fontWeight: 700, fontSize: '1.1rem', textTransform: 'uppercase', letterSpacing: '0.1em', color: 'var(--ac-secondary)', margin: 0 }}>{ad.labelFr}</h2>
+                                    <p style={{ fontSize: '0.82rem', color: 'var(--ac-text-muted)', margin: '0.5rem 0 0', lineHeight: 1.6 }}>{ad.description}</p>
+                                </div>
+                                <div style={{ flexShrink: 0, background: '#000', color: '#fff', fontFamily: 'var(--ac-font-heading)', fontWeight: 900, fontSize: '0.65rem', letterSpacing: '0.15em', padding: '4px 10px', textTransform: 'uppercase', borderRadius: 2 }}>CLASSIFIÉ</div>
+                            </div>
+                            {ad.playIf?.length > 0 && (
+                                <div style={{ marginTop: '0.75rem', borderTop: '1px solid var(--ac-border)', paddingTop: '0.5rem' }}>
+                                    <div className="ac-label mb-1">Jouez cet archétype si vous voulez…</div>
+                                    <ul style={{ margin: 0, paddingLeft: '1.25rem', listStyle: 'disc' }}>
+                                        {ad.playIf.map((item, i) => <li key={i} style={{ fontSize: '0.78rem', color: 'var(--ac-text)', marginBottom: 2 }}>{item}</li>)}
+                                    </ul>
                                 </div>
                             )}
-                        </CardButton>
-                    ))}
-                </div>
-            </div>
-
-            {data && (
-                <>
-                    {/* Focus */}
-                    <div>
-                        <div className="ac-section-header">Choisissez 1 Focus ({data.focusPool[0]})</div>
-                        <div>
-                            <div className="ac-label mb-1">Focus spécifique</div>
-                            <input
-                                className="ac-input"
-                                value={selectedFocus ?? ''}
-                                onChange={e => onChange({ bgFocus: e.target.value })}
-                                placeholder={`Focus pour ${SKILLS.find(s => s.key === data.focusPool[0])?.label}…`}
-                            />
-                            <div className="ac-text-muted mt-1" style={{ fontSize: '0.7rem' }}>
-                                Suggestions : {SKILLS.find(s => s.key === data.focusPool[0])?.focuses?.join(', ')}
+                        </div>
+                        {selected === 'occultist' && (
+                            <div className="ac-card">
+                                <div className="ac-section-header">Choisissez votre orientation</div>
+                                <div className="grid grid-cols-2 gap-3 mt-2">
+                                    {Object.entries(ad.variants).map(([vKey, v]) => (
+                                        <button key={vKey} onClick={() => patch({ occultistVariant: vKey })} className="ac-card-alt text-left transition-all"
+                                                style={{ border: `1px solid ${ws.occultistVariant === vKey ? 'var(--ac-secondary)' : 'var(--ac-border)'}`, cursor: 'pointer' }}>
+                                            <div style={{ fontFamily: 'var(--ac-font-heading)', fontWeight: 700, fontSize: '0.78rem', color: ws.occultistVariant === vKey ? 'var(--ac-secondary)' : 'var(--ac-text)' }}>{v.label}</div>
+                                            <BonusDisplay attrBonus={v.attrBonus} skillBonus={v.skillBonus} />
+                                        </button>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
+                        <div className="ac-card">
+                            <div className="ac-section-header">Bonus accordés</div>
+                            <BonusDisplay attrBonus={attrBonus} skillBonus={skillBonus} />
+                        </div>
+                        <div className="ac-card">
+                            <FocusSelector focusPool={ad.focusPool} count={ad.focusCount ?? 2} selected={ws.archFocuses ?? []}
+                                           onChange={val => patch({ archFocuses: val })}
+                                           label="Choisissez vos 2 focuses d'archétype"
+                                           takenElsewhere={new Set()} />
+                        </div>
+                        <div className="ac-card">
+                            <div className="ac-section-header">Choisissez 1 talent</div>
+                            {ad.talentNote && <p style={{ fontSize: '0.74rem', color: 'var(--ac-muted)', marginBottom: '0.5rem', fontStyle: 'italic' }}>{ad.talentNote}</p>}
+                            <div className="flex flex-col gap-3 mt-2">
+                                {ad.talentPool.map(tk => (
+                                    <TalentCard key={tk} talentKey={tk} selected={ws.archTalent === tk}
+                                                onSelect={val => patch({ archTalent: ws.archTalent === val ? null : val })} />
+                                ))}
                             </div>
                         </div>
-                        <div className="mt-2">
-                            <div className="ac-label mb-1">Focus libre (compétence au choix)</div>
-                            <input
-                                className="ac-input"
-                                placeholder="Ex: Jungle (Survival), Hand-to-Hand (Fighting)…"
-                            />
-                        </div>
+                        {(ad.belongings?.length > 0 || ad.belongingsNote) && (
+                            <div className="ac-card">
+                                <div className="ac-section-header">Équipement de départ</div>
+                                {ad.belongingsNote && <p style={{ fontSize: '0.76rem', color: 'var(--ac-text-muted)', marginBottom: '0.5rem', fontStyle: 'italic' }}>{ad.belongingsNote}</p>}
+                                <ul style={{ margin: 0, paddingLeft: '1.25rem' }}>
+                                    {ad.belongings.map((item, i) => <li key={i} style={{ fontSize: '0.78rem', color: 'var(--ac-text)', marginBottom: 2 }}>{item}</li>)}
+                                </ul>
+                            </div>
+                        )}
                     </div>
-
-                    {/* Talent */}
-                    <div>
-                        <div className="ac-section-header">Talent avec keyword : {data.talentKeyword}</div>
-                        <input
-                            className="ac-input"
-                            value={selectedTalent ?? ''}
-                            onChange={e => onChange({ bgTalent: e.target.value })}
-                            placeholder={`Talent avec keyword ${data.talentKeyword}…`}
-                        />
-                    </div>
-
-                    {/* Truth */}
-                    <div>
-                        <div className="ac-section-header">Personal Truth</div>
-                        <div className="flex flex-col gap-1 mb-2">
-                            {data.truths.map(t => (
-                                <CardButton
-                                    key={t}
-                                    selected={selectedTruth === t}
-                                    onClick={() => onChange({ bgTruth: t })}
-                                >
-                                    <span style={{ fontSize: '0.82rem' }}>{t}</span>
-                                </CardButton>
-                            ))}
-                        </div>
-                        <input
-                            className="ac-input"
-                            value={selectedTruth ?? ''}
-                            onChange={e => onChange({ bgTruth: e.target.value })}
-                            placeholder="Ou créez votre propre truth…"
-                        />
-                    </div>
-
-                    {/* Belongings */}
-                    {data.belongings && (
-                        <div className="ac-card-alt">
-                            <div className="ac-label mb-1">Belongings</div>
-                            <div className="text-default" style={{ fontSize: '0.8rem' }}>· {data.belongings}</div>
-                        </div>
-                    )}
-                </>
-            )}
+                )}
+            </div>
         </div>
     );
 };
 
-// ─────────────────────────────────────────────────────────────────────────────
-// ÉTAPE 4 — Characteristic
-// ─────────────────────────────────────────────────────────────────────────────
+// ══════════════════════════════════════════════════════════════════════════════
+// ÉTAPE 3 — Nationalité
+// ══════════════════════════════════════════════════════════════════════════════
 
-const StepCharacteristic = ({ value, selectedTalent, onChange }) => {
-    const data = value ? CHARACTERISTIC_DATA[value] : null;
+const Step3Nationality = ({ ws, patch }) => {
+    const selected = ws.nationality;
+    const nd = selected ? NATIONALITIES.find(n => n.key === selected) : null;
+    return (
+        <div style={{ display: 'grid', gridTemplateColumns: '260px 1fr', gap: '1.5rem', alignItems: 'start' }}>
+            <div className="flex flex-col gap-2" style={{ position: 'sticky', top: '1rem' }}>
+                <div className="ac-section-header">Nationalité</div>
+                {NATIONALITIES.map(n => (
+                    <button key={n.key} onClick={() => patch({ nationality: n.key, nationalityCustom: '', nationalityLangs: n.languages })} className="text-left transition-all"
+                            style={{ padding: '0.5rem 0.75rem', borderRadius: 6, border: `1px solid ${n.key === selected ? 'var(--ac-secondary)' : 'var(--ac-border)'}`, background: n.key === selected ? 'var(--ac-surface-alt)' : 'var(--ac-surface)', cursor: 'pointer' }}>
+                        <div style={{ fontFamily: 'var(--ac-font-heading)', fontWeight: 700, fontSize: '0.78rem', color: n.key === selected ? 'var(--ac-secondary)' : 'var(--ac-text)', textTransform: 'uppercase' }}>{n.label}</div>
+                        {n.languages.length > 0 && <div style={{ fontSize: '0.67rem', color: 'var(--ac-muted)', marginTop: 1 }}>{n.languages.join(', ')}</div>}
+                    </button>
+                ))}
+            </div>
+            <div>
+                {!nd ? (
+                    <div className="ac-card" style={{ opacity: 0.5 }}><p style={{ color: 'var(--ac-text-muted)', fontSize: '0.85rem', textAlign: 'center', padding: '2rem 0' }}>← Sélectionnez une nationalité</p></div>
+                ) : (
+                    <div className="flex flex-col gap-4">
+                        <div className="ac-card" style={{ borderLeft: '4px solid var(--ac-secondary)' }}>
+                            <h2 style={{ fontFamily: 'var(--ac-font-heading)', fontWeight: 700, fontSize: '1rem', textTransform: 'uppercase', letterSpacing: '0.1em', color: 'var(--ac-secondary)', margin: '0 0 0.5rem' }}>{nd.label}</h2>
+                            <p style={{ fontSize: '0.82rem', color: 'var(--ac-text-muted)', margin: 0, lineHeight: 1.6 }}>{nd.description}</p>
+                        </div>
+                        <div className="ac-card">
+                            <div className="ac-section-header">Langue(s) de départ</div>
+                            <p style={{ fontSize: '0.76rem', color: 'var(--ac-text-muted)', marginBottom: '0.5rem' }}>
+                                Votre nationalité et votre langue maternelle comptent comme vos deux premières vérités du personnage.
+                            </p>
+                            {nd.key === 'other' ? (
+                                <div className="flex flex-col gap-2">
+                                    <div>
+                                        <div className="ac-label mb-1">Nationalité personnalisée</div>
+                                        <input className="ac-input" value={ws.nationalityCustom ?? ''} onChange={e => patch({ nationalityCustom: e.target.value })} placeholder="Ex : Néo-Zélandais, Espagnol républicain…" />
+                                    </div>
+                                    <div>
+                                        <div className="ac-label mb-1">Langue de départ</div>
+                                        <input className="ac-input" value={ws.nationalityLangs?.[0] ?? ''} onChange={e => patch({ nationalityLangs: [e.target.value] })} placeholder="Ex : Anglais, Espagnol…" />
+                                    </div>
+                                </div>
+                            ) : (
+                                <div className="flex flex-wrap gap-2">
+                                    {nd.languages.map(lang => (
+                                        <span key={lang} style={{ padding: '3px 12px', borderRadius: 20, background: 'var(--ac-primary)', color: 'var(--ac-bg)', fontSize: '0.78rem', fontFamily: 'var(--ac-font-heading)', fontWeight: 600 }}>{lang}</span>
+                                    ))}
+                                </div>
+                            )}
+                            {nd.languageNote && <p style={{ fontSize: '0.72rem', color: 'var(--ac-muted)', marginTop: '0.5rem', fontStyle: 'italic' }}>{nd.languageNote}</p>}
+                        </div>
+                    </div>
+                )}
+            </div>
+        </div>
+    );
+};
+
+// ══════════════════════════════════════════════════════════════════════════════
+// ÉTAPE 4 — Background
+// ══════════════════════════════════════════════════════════════════════════════
+
+const TALENT_POOL_BY_KW = {
+    'érudition':  ['book_smart','deep_expertise','did_the_reading','dedication','library_dweller','polyglot','studious'],
+    'athlétisme': ['athletic_prodigy','fighting_fit','hail_mary','might_makes_right','sure_footed','serpentine'],
+    'ingénierie': ['demolitions','elbow_grease','gunsmith','jury_rig','saboteur','make_do_and_mend'],
+    'combat':     ['defensive','five_rounds_rapid','guardian','mean_right_hook','sharpshooter','they_dont_like_it_up_em'],
+    'médecine':   ['long_term_care','medic','out_of_harms_way','reassuring','seen_worse'],
+    'observation':['constantly_watching','forward_observer','lights_out','ransack','scout','scrutinise'],
+    'persuasion': ['an_answer_for_everything','hog_the_spotlight','imposing_presence','reasoned_discourse','rousing_speaker','subtle_cues'],
+    'résilience': ['a_stiff_drink','courageous','dauntless','extra_effort','hard_as_nails','second_wind','tough'],
+    'discrétion': ['all_the_best_hiding_spots','exploit_weakness','face_in_the_crowd','hit_and_run','like_a_shadow','perfect_timing'],
+    'survie':     ['companion','dig_for_victory','everything_i_need_is_here','fieldcraft','survive_and_thrive','tracker'],
+    'tactique':   ['band_of_brothers','call_to_action','convey_intent','decisive_plan','direct','teamwork'],
+    'véhicules':  ['combat_gunner','drive_all_night','off_road','smuggler','still_in_control','strafing_run'],
+    'étrange':    ['bizarre_insight','foreboding_survival','minor_pact','mystical_power','numb_to_the_horrors','occult_dabbler'],
+    'fortune':    ['second_wind','cool_under_pressure','born_leader','own_the_battlefield','minor_pact'],
+    'tout':       ['advisor','bold','cautious','cool_under_pressure'],
+};
+
+function getTalentPoolByKeyword(keyword) {
+    if (!keyword) return [];
+    const kw = keyword.toLowerCase();
+    for (const [mapKey, pool] of Object.entries(TALENT_POOL_BY_KW)) {
+        if (kw.includes(mapKey)) return pool;
+    }
+    return [];
+}
+
+const Step4Background = ({ ws, patch }) => {
+    const bgKeys   = Object.keys(BACKGROUND_DATA);
+    const selected = ws.background;
+    const bd       = selected ? BACKGROUND_DATA[selected] : null;
+    const talentPool = bd ? getTalentPoolByKeyword(bd.talentKeyword) : [];
+    const fixedFocusSkill = bd?.focusFixed ? SKILLS.find(s => s.key === bd.focusFixed) : null;
+    const focusChoiceSkills = bd?.focusFixedChoice?.map(k => SKILLS.find(s => s.key === k)).filter(Boolean) ?? [];
+    // Focuses déjà pris à l'étape archétype — ne peuvent pas être repris
+    const takenByArch = new Set(ws.archFocuses ?? []);
 
     return (
-        <div className="flex flex-col gap-4">
-            <div>
-                <div className="ac-section-header">Choisissez votre Characteristic</div>
-                <div className="ac-text-muted mb-2" style={{ fontSize: '0.72rem' }}>
-                    Les characteristics définissent pourquoi vous avez été recruté dans la Secret War.
-                </div>
-                <div className="grid grid-cols-1 gap-1.5">
-                    {Object.entries(CHARACTERISTIC_DATA).map(([key, ch]) => (
-                        <CardButton
-                            key={key}
-                            selected={value === key}
-                            onClick={() => onChange({ characteristic: key, charTalent: null })}
-                        >
-                            <div className="ac-font-title text-sm">{ch.label}</div>
-                            <BonusBadges attrBonus={ch.attrBonus} skillBonus={ch.skillBonus} />
-                            {ch.specialRule && (
-                                <div className="ac-text-muted mt-0.5" style={{ fontSize: '0.65rem' }}>★ {ch.specialRule}</div>
-                            )}
-                        </CardButton>
+        <div style={{ display: 'grid', gridTemplateColumns: '260px 1fr', gap: '1.5rem', alignItems: 'start' }}>
+            <div style={{ position: 'sticky', top: '1rem' }}>
+                <div className="ac-section-header mb-2">Background</div>
+                <div className="flex flex-col gap-1" style={{ maxHeight: '80vh', overflowY: 'auto' }}>
+                    {bgKeys.map(key => (
+                        <button key={key} onClick={() => patch({ background: key, bgFocus: '', bgFocusFree: '', bgTalent: null, bgAttrFree: null, bgSkillsFree: [] })} className="text-left transition-all"
+                                style={{ padding: '0.5rem 0.75rem', borderRadius: 6, border: `1px solid ${key === selected ? 'var(--ac-secondary)' : 'var(--ac-border)'}`, background: key === selected ? 'var(--ac-surface-alt)' : 'var(--ac-surface)', cursor: 'pointer' }}>
+                            <div style={{ fontFamily: 'var(--ac-font-heading)', fontWeight: 700, fontSize: '0.76rem', color: key === selected ? 'var(--ac-secondary)' : 'var(--ac-text)', textTransform: 'uppercase' }}>{BACKGROUND_DATA[key].label}</div>
+                        </button>
                     ))}
                 </div>
             </div>
-
-            {data && (
-                <div>
-                    <div className="ac-section-header">Talent avec keyword : {data.talentKeyword}</div>
-                    <input
-                        className="ac-input"
-                        value={selectedTalent ?? ''}
-                        onChange={e => onChange({ charTalent: e.target.value })}
-                        placeholder={`Talent avec keyword ${data.talentKeyword}…`}
-                    />
-                </div>
-            )}
+            <div>
+                {!bd ? (
+                    <div className="ac-card" style={{ opacity: 0.5 }}><p style={{ color: 'var(--ac-text-muted)', fontSize: '0.85rem', textAlign: 'center', padding: '2rem 0' }}>← Sélectionnez un background</p></div>
+                ) : (
+                    <div className="flex flex-col gap-4">
+                        <div className="ac-card" style={{ borderLeft: '4px solid var(--ac-secondary)' }}>
+                            <h2 style={{ fontFamily: 'var(--ac-font-heading)', fontWeight: 700, fontSize: '1rem', textTransform: 'uppercase', letterSpacing: '0.1em', color: 'var(--ac-secondary)', margin: '0 0 0.5rem' }}>{bd.label}</h2>
+                            <p style={{ fontSize: '0.82rem', color: 'var(--ac-text-muted)', margin: 0, lineHeight: 1.6 }}>{bd.description}</p>
+                        </div>
+                        <div className="ac-card">
+                            <div className="ac-section-header">Bonus accordés</div>
+                            <BonusDisplay attrBonus={bd.attrBonus} skillBonus={bd.skillBonus} />
+                            {bd.attrBonusFree > 0 && <div className="mt-3"><AttrFreeSelect value={ws.bgAttrFree} onChange={val => patch({ bgAttrFree: val })} /></div>}
+                            {bd.skillBonusFree > 0 && <div className="mt-3"><SkillFreeSelect count={bd.skillBonusFree} selected={ws.bgSkillsFree ?? []} onChange={val => patch({ bgSkillsFree: val })} noDouble /></div>}
+                        </div>
+                        <div className="ac-card">
+                            <div className="ac-section-header">Focuses de background</div>
+                            <div className="flex flex-col gap-3">
+                                {fixedFocusSkill && (
+                                    <div>
+                                        <div className="ac-label mb-1">Focus imposé — {fixedFocusSkill.label}</div>
+                                        <div className="flex flex-wrap gap-1">
+                                            {fixedFocusSkill.focuses.map(f => {
+                                                const fid = `${fixedFocusSkill.key}:${f}`;
+                                                const alreadyTaken = takenByArch.has(fid);
+                                                return <FocusPill key={fid} label={f} selected={ws.bgFocus === fid}
+                                                                  disabled={alreadyTaken && ws.bgFocus !== fid}
+                                                                  onToggle={() => { if (!alreadyTaken) patch({ bgFocus: ws.bgFocus === fid ? '' : fid }); }} />;
+                                            })}
+                                        </div>
+                                    </div>
+                                )}
+                                {focusChoiceSkills.length > 0 && (
+                                    <div>
+                                        <div className="ac-label mb-1">1er focus — {focusChoiceSkills.map(s => s.label).join(' ou ')}</div>
+                                        {focusChoiceSkills.map(skill => (
+                                            <div key={skill.key} className="mb-2">
+                                                <div style={{ fontSize: '0.7rem', color: 'var(--ac-muted)', marginBottom: 3 }}>{skill.label}</div>
+                                                <div className="flex flex-wrap gap-1">
+                                                    {skill.focuses.map(f => {
+                                                        const fid = `${skill.key}:${f}`;
+                                                        const alreadyTaken = takenByArch.has(fid);
+                                                        return <FocusPill key={fid} label={f} selected={ws.bgFocus === fid}
+                                                                          disabled={alreadyTaken && ws.bgFocus !== fid}
+                                                                          onToggle={() => { if (!alreadyTaken) patch({ bgFocus: ws.bgFocus === fid ? '' : fid }); }} />;
+                                                    })}
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                )}
+                                <div>
+                                    <div className="ac-label mb-1">Focus libre (n'importe quelle compétence)</div>
+                                    {SKILLS.map(skill => (
+                                        <div key={skill.key} className="mb-2">
+                                            <div style={{ fontSize: '0.7rem', color: 'var(--ac-muted)', marginBottom: 3 }}>{skill.label}</div>
+                                            <div className="flex flex-wrap gap-1">
+                                                {skill.focuses.map(f => {
+                                                    const fid = `${skill.key}:${f}`;
+                                                    const alreadyTaken = takenByArch.has(fid) || ws.bgFocus === fid;
+                                                    return <FocusPill key={fid} label={f} selected={ws.bgFocusFree === fid}
+                                                                      disabled={alreadyTaken && ws.bgFocusFree !== fid}
+                                                                      onToggle={() => { if (!alreadyTaken) patch({ bgFocusFree: ws.bgFocusFree === fid ? '' : fid }); }} />;
+                                                })}
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        </div>
+                        <div className="ac-card">
+                            <div className="ac-section-header">Choisissez 1 talent <span style={{ color: 'var(--ac-muted)', fontWeight: 400, textTransform: 'none', letterSpacing: 0 }}>(keyword : {bd.talentKeyword})</span></div>
+                            <div className="flex flex-col gap-3 mt-2">
+                                {talentPool.map(tk => (
+                                    <TalentCard key={tk} talentKey={tk} selected={ws.bgTalent === tk} onSelect={val => patch({ bgTalent: ws.bgTalent === val ? null : val })} />
+                                ))}
+                            </div>
+                        </div>
+                        <div className="ac-card">
+                            <div className="ac-section-header">Vérité de background</div>
+                            <div className="flex flex-wrap gap-2 mb-3">
+                                {bd.truthSuggestions?.map(t => (
+                                    <button key={t} onClick={() => patch({ bgTruth: t })}
+                                            style={{ padding: '3px 10px', borderRadius: 20, border: `1px solid ${ws.bgTruth === t ? 'var(--ac-secondary)' : 'var(--ac-border)'}`, background: ws.bgTruth === t ? 'var(--ac-secondary)' : 'transparent', color: ws.bgTruth === t ? 'var(--ac-bg)' : 'var(--ac-text)', fontSize: '0.74rem', cursor: 'pointer' }}
+                                    >{t}</button>
+                                ))}
+                            </div>
+                            <input className="ac-input" value={ws.bgTruth ?? ''} onChange={e => patch({ bgTruth: e.target.value })} placeholder="Votre vérité personnalisée…" />
+                        </div>
+                        {bd.belongings && (
+                            <div className="ac-card">
+                                <div className="ac-section-header">Équipement de départ</div>
+                                <p style={{ fontSize: '0.78rem', color: 'var(--ac-text)', marginTop: '0.25rem' }}>{bd.belongings}</p>
+                            </div>
+                        )}
+                    </div>
+                )}
+            </div>
         </div>
     );
 };
 
-// ─────────────────────────────────────────────────────────────────────────────
-// ÉTAPE 5 — Truths & Langues
-// ─────────────────────────────────────────────────────────────────────────────
+// ══════════════════════════════════════════════════════════════════════════════
+// ÉTAPE 5 — Caractéristique
+// ══════════════════════════════════════════════════════════════════════════════
 
-const StepTruths = ({ truths, languages, nationality, onChange }) => {
-    const [langInput, setLangInput] = useState('');
+const Step5Characteristic = ({ ws, patch }) => {
+    const charKeys = Object.keys(CHARACTERISTIC_DATA);
+    const selected = ws.characteristic;
+    const cd       = selected ? CHARACTERISTIC_DATA[selected] : null;
+    const activeChar = cd?.isChoice ? (cd.options[ws.charVariant] ?? null) : cd;
+    const talentPool = activeChar ? getTalentPoolByKeyword(activeChar.talentKeyword) : [];
 
-    const addLang = () => {
-        const val = langInput.trim();
-        if (!val || languages.includes(val)) return;
-        onChange({ languages: [...languages, val] });
-        setLangInput('');
+    return (
+        <div style={{ display: 'grid', gridTemplateColumns: '260px 1fr', gap: '1.5rem', alignItems: 'start' }}>
+            <div style={{ position: 'sticky', top: '1rem' }}>
+                <div className="ac-section-header mb-2">Caractéristique</div>
+                <div className="flex flex-col gap-1" style={{ maxHeight: '80vh', overflowY: 'auto' }}>
+                    {charKeys.map(key => (
+                        <button key={key} onClick={() => patch({ characteristic: key, charTalent: null, charAttrFree: null, charSkillsFree: [], charVariant: null, charSkillChoice: null })} className="text-left transition-all"
+                                style={{ padding: '0.5rem 0.75rem', borderRadius: 6, border: `1px solid ${key === selected ? 'var(--ac-secondary)' : 'var(--ac-border)'}`, background: key === selected ? 'var(--ac-surface-alt)' : 'var(--ac-surface)', cursor: 'pointer' }}>
+                            <div style={{ fontFamily: 'var(--ac-font-heading)', fontWeight: 700, fontSize: '0.76rem', color: key === selected ? 'var(--ac-secondary)' : 'var(--ac-text)', textTransform: 'uppercase' }}>{CHARACTERISTIC_DATA[key].label}</div>
+                        </button>
+                    ))}
+                </div>
+            </div>
+            <div>
+                {!cd ? (
+                    <div className="ac-card" style={{ opacity: 0.5 }}><p style={{ color: 'var(--ac-text-muted)', fontSize: '0.85rem', textAlign: 'center', padding: '2rem 0' }}>← Sélectionnez une caractéristique</p></div>
+                ) : (
+                    <div className="flex flex-col gap-4">
+                        {cd.isChoice && (
+                            <div className="ac-card" style={{ borderLeft: '4px solid var(--ac-secondary)' }}>
+                                <div className="ac-section-header">Choisissez une option</div>
+                                <div className="grid grid-cols-2 gap-3 mt-2">
+                                    {Object.entries(cd.options).map(([vKey, v]) => (
+                                        <button key={vKey} onClick={() => patch({ charVariant: vKey })} className="ac-card-alt text-left"
+                                                style={{ border: `1px solid ${ws.charVariant === vKey ? 'var(--ac-secondary)' : 'var(--ac-border)'}`, cursor: 'pointer' }}>
+                                            <div style={{ fontFamily: 'var(--ac-font-heading)', fontWeight: 700, fontSize: '0.78rem', color: ws.charVariant === vKey ? 'var(--ac-secondary)' : 'var(--ac-text)' }}>{v.label}</div>
+                                        </button>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
+                        <div className="ac-card" style={{ borderLeft: '4px solid var(--ac-secondary)' }}>
+                            <h2 style={{ fontFamily: 'var(--ac-font-heading)', fontWeight: 700, fontSize: '1rem', textTransform: 'uppercase', letterSpacing: '0.1em', color: 'var(--ac-secondary)', margin: '0 0 0.5rem' }}>{activeChar?.label ?? cd.label}</h2>
+                            <p style={{ fontSize: '0.82rem', color: 'var(--ac-text-muted)', margin: 0, lineHeight: 1.6 }}>{cd.description}</p>
+                        </div>
+                        {activeChar && (
+                            <>
+                                <div className="ac-card">
+                                    <div className="ac-section-header">Bonus accordés</div>
+                                    <BonusDisplay attrBonus={activeChar.attrBonus} skillBonus={activeChar.skillBonus} />
+                                    {activeChar.specialRule === 'dilettante' && <p style={{ fontSize: '0.76rem', color: 'var(--ac-secondary)', marginTop: '0.5rem', fontWeight: 600 }}>Règle spéciale : toutes les compétences actuellement à 0 passent à rang 1.</p>}
+                                    {activeChar.attrBonusFree > 0 && <div className="mt-3"><AttrFreeSelect value={ws.charAttrFree} onChange={val => patch({ charAttrFree: val })} /></div>}
+                                    {activeChar.skillBonusFree > 0 && !activeChar.specialRule && (
+                                        <div className="mt-3">
+                                            <SkillFreeSelect count={activeChar.skillBonusFree} selected={ws.charSkillsFree ?? []} onChange={val => patch({ charSkillsFree: val })} exclude={activeChar.skillExclude ?? []} noDouble />
+                                        </div>
+                                    )}
+                                    {activeChar.skillBonusChoice?.length > 0 && (
+                                        <div className="mt-3">
+                                            <div className="ac-label mb-1">+1 à l'une de ces compétences</div>
+                                            <div className="flex flex-wrap gap-2">
+                                                {activeChar.skillBonusChoice.map(sk => {
+                                                    const s = SKILLS.find(x => x.key === sk);
+                                                    return (
+                                                        <button key={sk} onClick={() => patch({ charSkillChoice: sk })}
+                                                                style={{ padding: '3px 10px', borderRadius: 20, cursor: 'pointer', border: `1px solid ${ws.charSkillChoice === sk ? 'var(--ac-secondary)' : 'var(--ac-border)'}`, background: ws.charSkillChoice === sk ? 'var(--ac-secondary)' : 'transparent', color: ws.charSkillChoice === sk ? 'var(--ac-bg)' : 'var(--ac-text)', fontSize: '0.74rem' }}
+                                                        >{s?.label ?? sk}</button>
+                                                    );
+                                                })}
+                                            </div>
+                                        </div>
+                                    )}
+                                </div>
+                                <div className="ac-card">
+                                    <div className="ac-section-header">Choisissez 1 talent <span style={{ color: 'var(--ac-muted)', fontWeight: 400, textTransform: 'none', letterSpacing: 0 }}>(keyword : {activeChar.talentKeyword})</span></div>
+                                    <div className="flex flex-col gap-3 mt-2">
+                                        {talentPool.slice(0, 6).map(tk => (
+                                            <TalentCard key={tk} talentKey={tk} selected={ws.charTalent === tk} onSelect={val => patch({ charTalent: ws.charTalent === val ? null : val })} />
+                                        ))}
+                                    </div>
+                                </div>
+                                <div className="ac-card">
+                                    <div className="ac-section-header">Vérité de caractéristique</div>
+                                    <div className="flex gap-2 mb-2">
+                                        <button onClick={() => patch({ charTruth: activeChar.truthDefault })}
+                                                style={{ padding: '3px 10px', borderRadius: 20, cursor: 'pointer', border: `1px solid ${ws.charTruth === activeChar.truthDefault ? 'var(--ac-secondary)' : 'var(--ac-border)'}`, background: ws.charTruth === activeChar.truthDefault ? 'var(--ac-secondary)' : 'transparent', color: ws.charTruth === activeChar.truthDefault ? 'var(--ac-bg)' : 'var(--ac-text)', fontSize: '0.74rem' }}
+                                        >{activeChar.truthDefault}</button>
+                                    </div>
+                                    <input className="ac-input" value={ws.charTruth ?? ''} onChange={e => patch({ charTruth: e.target.value })} placeholder="Votre vérité personnalisée…" />
+                                </div>
+                                {activeChar.belongings && (
+                                    <div className="ac-card">
+                                        <div className="ac-section-header">Équipement de départ</div>
+                                        <p style={{ fontSize: '0.78rem', color: 'var(--ac-text)', marginTop: '0.25rem' }}>{activeChar.belongings}</p>
+                                    </div>
+                                )}
+                            </>
+                        )}
+                    </div>
+                )}
+            </div>
+        </div>
+    );
+};
+
+// ══════════════════════════════════════════════════════════════════════════════
+// ÉTAPE 6 — Magie (conditionnelle)
+// ══════════════════════════════════════════════════════════════════════════════
+
+const Step6Magic = ({ ws, patch, attrs }) => {
+    const spellcasterTalentKey = detectSpellcasterTalent(ws);
+    const spellcasterType      = getSpellcasterType(spellcasterTalentKey);
+    const castAttr             = getCastAttribute(spellcasterType);
+    const castAttrValue        = attrs[castAttr] ?? ATTR_BASE;
+    const powerRating          = getPowerRating(spellcasterType);
+    const bonusDice            = getBonusPowerDice(castAttrValue);
+    const totalDice            = powerRating + bonusDice;
+    const startingSpells       = getStartingSpellCount(spellcasterType);
+    const isDabbler            = spellcasterType === 'dabbler';
+
+    // Sorts disponibles selon tradition sélectionnée ou tous (Bricoleur)
+    const availableSpells = useMemo(() => {
+        if (isDabbler) return [...SPELLS.celtic, ...SPELLS.runic, ...SPELLS.psychic];
+        if (!ws.spellTradition) return [];
+        return SPELLS[ws.spellTradition] ?? [];
+    }, [isDabbler, ws.spellTradition]);
+
+    const selectedSpells = ws.selectedSpells ?? [];
+
+    const toggleSpell = (key) => {
+        if (selectedSpells.includes(key)) {
+            patch({ selectedSpells: selectedSpells.filter(k => k !== key) });
+        } else {
+            const maxSpells = isDabbler && ws.dabblerMode === 'two_flawed' ? 2 : startingSpells;
+            if (selectedSpells.length < maxSpells) {
+                patch({ selectedSpells: [...selectedSpells, key] });
+            }
+        }
     };
 
+    const talentLabel = spellcasterTalentKey ? TALENTS[spellcasterTalentKey]?.label : '—';
+    const castAttrLabel = ATTR_LABEL[castAttr] ?? castAttr;
+
+    const maxSpells = isDabbler && ws.dabblerMode === 'two_flawed' ? 2 : startingSpells;
+
     return (
-        <div className="flex flex-col gap-4">
-            <div>
-                <div className="ac-section-header">Personal Truths & Scars</div>
-                <div className="ac-text-muted mb-2" style={{ fontSize: '0.72rem' }}>
-                    Vous devez avoir au moins 4 truths : nationality, language, background truth, et characteristic truth.
-                    Ajoutez vos truths personnelles ci-dessous.
-                </div>
-                <div className="flex flex-col gap-2">
-                    {Array.from({ length: 5 }).map((_, i) => (
-                        <div key={i}>
-                            <div className="ac-label">Truth {i + 1}</div>
-                            <input
-                                className="ac-input"
-                                value={truths[i] ?? ''}
-                                onChange={e => {
-                                    const next = [...truths];
-                                    next[i] = e.target.value;
-                                    onChange({ truths: next });
-                                }}
-                                placeholder={
-                                    i === 0 ? nationality ? `Nationalité : ${nationality}` : 'Nationalité…' :
-                                        i === 1 ? 'Langue maternelle…' :
-                                            'Truth personnelle…'
-                                }
-                            />
+        <div className="flex flex-col gap-6">
+            {/* ── Résumé du type ── */}
+            <div className="ac-card" style={{ borderLeft: '4px solid var(--ac-secondary)' }}>
+                <div className="ac-section-header">Profil de lanceur de sorts</div>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '0.75rem', marginTop: '0.5rem' }}>
+                    {[
+                        { label: 'Type', value: isDabbler ? 'Bricoleur' : 'Traditionnel' },
+                        { label: 'Attribut de cast', value: castAttrLabel },
+                        { label: 'Talent déclencheur', value: talentLabel },
+                    ].map(item => (
+                        <div key={item.label} className="ac-card-alt" style={{ padding: '0.5rem 0.75rem' }}>
+                            <div className="ac-label">{item.label}</div>
+                            <div style={{ fontFamily: 'var(--ac-font-heading)', fontWeight: 700, fontSize: '0.85rem', color: 'var(--ac-secondary)', marginTop: 2 }}>{item.value}</div>
                         </div>
                     ))}
                 </div>
             </div>
 
-            <div>
-                <div className="ac-section-header">Languages</div>
-                <div className="flex flex-wrap gap-1.5 mb-2">
-                    {languages.map(lang => (
-                        <span key={lang} className="ac-pill">
-                            {lang}
-                            <button className="ac-pill-remove" onClick={() => onChange({ languages: languages.filter(l => l !== lang) })}>✕</button>
-                        </span>
-                    ))}
-                </div>
-                <div className="flex gap-2">
-                    <input
-                        className="ac-input"
-                        value={langInput}
-                        onChange={e => setLangInput(e.target.value)}
-                        onKeyDown={e => e.key === 'Enter' && addLang()}
-                        placeholder="Ajouter une langue…"
-                    />
-                    <button onClick={addLang} className="ac-btn ac-btn-secondary">+</button>
+            {/* ── Puissance ── */}
+            <div className="ac-card">
+                <div className="ac-section-header">Puissance & Power Rating</div>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '0.75rem', marginTop: '0.5rem' }}>
+                    <div className="ac-card-alt" style={{ textAlign: 'center', padding: '0.75rem' }}>
+                        <div className="ac-label">Power Rating (manteau)</div>
+                        <div style={{ fontFamily: 'var(--ac-font-title)', fontSize: '2rem', fontWeight: 700, color: 'var(--ac-secondary)' }}>{powerRating}</div>
+                        <div style={{ fontSize: '0.65rem', color: 'var(--ac-muted)', fontFamily: 'var(--ac-font-heading)' }}>Sorts max dans le manteau</div>
+                    </div>
+                    <div className="ac-card-alt" style={{ textAlign: 'center', padding: '0.75rem' }}>
+                        <div className="ac-label">Dés de base</div>
+                        <div style={{ fontFamily: 'var(--ac-font-title)', fontSize: '2rem', fontWeight: 700, color: 'var(--ac-primary)' }}>{powerRating}⚄</div>
+                        <div style={{ fontSize: '0.65rem', color: 'var(--ac-muted)', fontFamily: 'var(--ac-font-heading)' }}>+ {bonusDice}⚄ bonus ({castAttrLabel} {castAttrValue})</div>
+                    </div>
+                    <div className="ac-card-alt" style={{ textAlign: 'center', padding: '0.75rem' }}>
+                        <div className="ac-label">Total dés Challenge</div>
+                        <div style={{ fontFamily: 'var(--ac-font-title)', fontSize: '2rem', fontWeight: 700, color: 'var(--ac-accent)' }}>{totalDice}⚄</div>
+                        <div style={{ fontSize: '0.65rem', color: 'var(--ac-muted)', fontFamily: 'var(--ac-font-heading)' }}>Coût du sort</div>
+                    </div>
                 </div>
             </div>
+
+            {/* ── Objet fétiche ── */}
+            <div className="ac-card">
+                <div className="ac-section-header">Manteau / Objet fétiche</div>
+                <p style={{ fontSize: '0.76rem', color: 'var(--ac-text-muted)', marginBottom: '0.5rem' }}>
+                    Tout lanceur de sorts possède un objet physique qui sert de focus pour ses sorts liés — baguette, pierre runique, sigil tatoué, poupée de tissu, bouteille de sorcière…
+                </p>
+                <input className="ac-input" value={ws.spellMantle ?? ''} onChange={e => patch({ spellMantle: e.target.value })} placeholder="Décrivez votre manteau ou objet fétiche (optionnel)…" />
+            </div>
+
+            {/* ── Tradition (si Traditionnel) ── */}
+            {!isDabbler && (
+                <div className="ac-card">
+                    <div className="ac-section-header">Tradition magique</div>
+                    <p style={{ fontSize: '0.76rem', color: 'var(--ac-text-muted)', marginBottom: '0.75rem' }}>
+                        Les lanceurs Traditionnels appartiennent à une tradition précise qui détermine leurs sorts accessibles.
+                    </p>
+                    <div className="flex gap-3">
+                        {[
+                            { key: 'celtic', label: 'Celtique', desc: 'Druides et femmes sages celtes. Magie animiste, protection et forces naturelles destructrices.' },
+                            { key: 'runic',  label: 'Runique',  desc: 'Voyants et tisserands de runes nordiques et germaniques. Magie de guerre et de divination.' },
+                        ].map(t => (
+                            <button key={t.key} onClick={() => patch({ spellTradition: t.key, selectedSpells: [] })}
+                                    className="ac-card-alt text-left flex-1 transition-all"
+                                    style={{ border: `2px solid ${ws.spellTradition === t.key ? 'var(--ac-secondary)' : 'var(--ac-border)'}`, cursor: 'pointer' }}>
+                                <div style={{ fontFamily: 'var(--ac-font-heading)', fontWeight: 700, fontSize: '0.85rem', color: ws.spellTradition === t.key ? 'var(--ac-secondary)' : 'var(--ac-text)', textTransform: 'uppercase', marginBottom: 4 }}>{t.label}</div>
+                                <p style={{ fontSize: '0.74rem', color: 'var(--ac-text-muted)', margin: 0, lineHeight: 1.5 }}>{t.desc}</p>
+                            </button>
+                        ))}
+                    </div>
+                </div>
+            )}
+
+            {/* ── Mode Bricoleur : 1 normal vs 2 imparfaits ── */}
+            {isDabbler && (
+                <div className="ac-card">
+                    <div className="ac-section-header">Mode d'apprentissage</div>
+                    <p style={{ fontSize: '0.76rem', color: 'var(--ac-text-muted)', marginBottom: '0.75rem' }}>
+                        Les Bricoleurs apprennent leurs sorts de sources douteuses. Vous pouvez choisir 1 sort maîtrisé ou 2 sorts imparfaits (plus dangereux, moins contrôlables).
+                    </p>
+                    <div className="flex gap-3">
+                        {[
+                            { key: 'one_normal',  label: '1 sort normal',    desc: 'Maîtrisé, pleinement sous contrôle.' },
+                            { key: 'two_flawed',  label: '2 sorts imparfaits', desc: 'Flawed — complication automatique à chaque lancer, pas de Momentum.' },
+                        ].map(m => (
+                            <button key={m.key} onClick={() => patch({ dabblerMode: m.key, selectedSpells: [] })}
+                                    className="ac-card-alt text-left flex-1 transition-all"
+                                    style={{ border: `2px solid ${ws.dabblerMode === m.key ? 'var(--ac-secondary)' : 'var(--ac-border)'}`, cursor: 'pointer' }}>
+                                <div style={{ fontFamily: 'var(--ac-font-heading)', fontWeight: 700, fontSize: '0.82rem', color: ws.dabblerMode === m.key ? 'var(--ac-secondary)' : 'var(--ac-text)', marginBottom: 4 }}>{m.label}</div>
+                                <p style={{ fontSize: '0.74rem', color: 'var(--ac-text-muted)', margin: 0 }}>{m.desc}</p>
+                            </button>
+                        ))}
+                    </div>
+                </div>
+            )}
+
+            {/* ── Sélection des sorts ── */}
+            {(isDabbler ? ws.dabblerMode : ws.spellTradition) && (
+                <div className="ac-card">
+                    <div className="ac-section-header">
+                        Sorts de départ
+                        <span style={{ marginLeft: '0.5rem', fontSize: '0.65rem', color: selectedSpells.length >= maxSpells ? 'var(--ac-success)' : 'var(--ac-muted)', fontWeight: 700 }}>
+                            {selectedSpells.length}/{maxSpells}
+                        </span>
+                    </div>
+                    {isDabbler && (
+                        <p style={{ fontSize: '0.74rem', color: 'var(--ac-text-muted)', marginBottom: '0.5rem' }}>
+                            Accès à tous les grimoires — choisissez parmi les traditions Celtique, Runique ou Psychique.
+                        </p>
+                    )}
+                    <div className="flex flex-col gap-3 mt-2">
+                        {availableSpells.map(spell => (
+                            <SpellCard key={spell.key} spell={spell}
+                                       selected={selectedSpells.includes(spell.key)}
+                                       flawed={isDabbler && ws.dabblerMode === 'two_flawed'}
+                                       onSelect={toggleSpell} />
+                        ))}
+                    </div>
+                </div>
+            )}
         </div>
     );
 };
 
-// ─────────────────────────────────────────────────────────────────────────────
-// RÉCAPITULATIF — calcul des valeurs finales
-// ─────────────────────────────────────────────────────────────────────────────
+// ══════════════════════════════════════════════════════════════════════════════
+// ÉTAPE 7 — Finishing Touches (identité + récap + validation)
+// ══════════════════════════════════════════════════════════════════════════════
 
-function computeFinalValues(wizardState) {
-    const { archetype, occultistVariant, background, characteristic } = wizardState;
-
-    let attrs  = initAttrs();
-    let skills = initSkills();
-
-    // Archétype
-    if (archetype && ARCHETYPE_DATA[archetype]) {
-        const arch = ARCHETYPE_DATA[archetype];
-        if (arch.variants) {
-            const v = arch.variants[occultistVariant ?? 'A'];
-            attrs  = applyAttrBonus(attrs,  { ...arch.attrBonusBase,  ...v.attrBonus  });
-            skills = applySkillBonus(skills, { ...arch.skillBonusBase, ...v.skillBonus }, true);
-        } else {
-            attrs  = applyAttrBonus(attrs,  arch.attrBonus);
-            skills = applySkillBonus(skills, arch.skillBonus, true);
-        }
-    }
-
-    // Background
-    if (background && BACKGROUND_DATA[background]) {
-        const bg = BACKGROUND_DATA[background];
-        attrs  = applyAttrBonus(attrs,  bg.attrBonus);
-        skills = applySkillBonus(skills, bg.skillBonus, true);
-    }
-
-    // Characteristic
-    if (characteristic && CHARACTERISTIC_DATA[characteristic]) {
-        const ch = CHARACTERISTIC_DATA[characteristic];
-        attrs  = applyAttrBonus(attrs,  ch.attrBonus);
-        if (ch.skillBonus) skills = applySkillBonus(skills, ch.skillBonus, true);
-    }
-
-    return { attrs, skills };
-}
-
-function applySkillBonus(base, bonus, asRank) {
-    const result = { ...base };
-    for (const [k, v] of Object.entries(bonus ?? {})) {
-        if (asRank) {
-            result[k] = { rank: (result[k]?.rank ?? SKILL_BASE) + v, focus: result[k]?.focus ?? '' };
-        } else {
-            result[k] = (result[k] ?? SKILL_BASE) + v;
-        }
-    }
-    return result;
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-// ÉTAPE 6 — Récapitulatif
-// ─────────────────────────────────────────────────────────────────────────────
-
-const StepRecap = ({ wizardState }) => {
-    const { attrs, skills } = useMemo(() => computeFinalValues(wizardState), [wizardState]);
+const Step7FinishingTouches = ({ ws, patch }) => {
+    const { attrs, skills } = useMemo(() => computeFinalValues(ws), [ws]);
+    const attrArray  = ATTRIBUTES.map(a => ({ key: a.key, value: attrs[a.key] ?? ATTR_BASE }));
+    const skillArray = SKILLS.map(s     => ({ key: s.key, rank: skills[s.key] ?? 0 }));
+    const attrSum    = attrArray.reduce((acc, a) => acc + a.value, 0);
+    const skillSum   = skillArray.reduce((acc, s) => acc + s.rank, 0);
+    const stress     = computeStress(attrArray, skillArray);
+    const armour     = computeArmour(attrArray);
+    const courage    = computeCourage(attrArray);
+    const bonusLang  = getBonusLanguages(attrArray);
+    const attrOk     = attrSum === TARGET_ATTR_SUM && attrArray.every(a => a.value >= ATTR_MIN && a.value <= ATTR_MAX);
+    const skillOk    = skillSum === TARGET_SKILL_SUM;
+    const baseLangs  = (ws.nationalityLangs ?? []).filter(Boolean);
 
     return (
-        <div className="flex flex-col gap-4">
-            <div className="ac-section-header">Récapitulatif du personnage</div>
-
-            {/* Identité */}
+        <div className="flex flex-col gap-6">
             <div className="ac-card">
-                <div className="ac-label mb-1">Identité</div>
-                <div className="grid grid-cols-2 gap-2" style={{ fontSize: '0.82rem' }}>
-                    <div><span className="ac-text-muted">Nom : </span>{wizardState.nom || '—'}</div>
-                    <div><span className="ac-text-muted">Joueur : </span>{wizardState.playerName || '—'}</div>
-                    <div><span className="ac-text-muted">Nationalité : </span>{wizardState.nationality || '—'}</div>
-                    <div><span className="ac-text-muted">Grade : </span>{wizardState.rank || '—'}</div>
-                    <div><span className="ac-text-muted">Archétype : </span>{wizardState.archetype ? ARCHETYPE_DATA[wizardState.archetype]?.label : '—'}</div>
-                    <div><span className="ac-text-muted">Background : </span>{wizardState.background ? BACKGROUND_DATA[wizardState.background]?.label : '—'}</div>
-                    <div><span className="ac-text-muted">Characteristic : </span>{wizardState.characteristic ? CHARACTERISTIC_DATA[wizardState.characteristic]?.label : '—'}</div>
+                <div className="ac-section-header">Identité du personnage</div>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '0.75rem', marginTop: '0.5rem' }}>
+                    <FieldRow label="Prénom *"><input className="ac-input" value={ws.prenom ?? ''} onChange={e => patch({ prenom: e.target.value })} placeholder="Prénom…" /></FieldRow>
+                    <FieldRow label="Nom *"><input className="ac-input" value={ws.nom ?? ''} onChange={e => patch({ nom: e.target.value })} placeholder="Nom…" /></FieldRow>
+                    <FieldRow label="Nom du joueur *"><input className="ac-input" value={ws.playerName ?? ''} onChange={e => patch({ playerName: e.target.value })} placeholder="Votre prénom…" /></FieldRow>
+                    <FieldRow label="Grade / Rang"><input className="ac-input" value={ws.rank ?? ''} onChange={e => patch({ rank: e.target.value })} placeholder="Ex : Sergeant, Dr., Agent…" /></FieldRow>
+                    <FieldRow label="Sexe"><input className="ac-input" value={ws.sexe ?? ''} onChange={e => patch({ sexe: e.target.value })} placeholder="Optionnel…" /></FieldRow>
+                    <FieldRow label="Âge"><input className="ac-input" type="number" min={16} max={80} value={ws.age ?? ''} onChange={e => patch({ age: e.target.value })} placeholder="Ex : 28" /></FieldRow>
+                </div>
+                <div style={{ marginTop: '0.75rem' }}>
+                    <FieldRow label="Biographie">
+                        <textarea className="ac-input" rows={4} value={ws.biography ?? ''} onChange={e => patch({ biography: e.target.value })}
+                                  placeholder="Qui êtes-vous ? Qu'est-ce qui vous a amené dans la Guerre Secrète ?"
+                                  style={{ resize: 'vertical', fontFamily: 'var(--ac-font-title)', fontSize: '0.82rem' }} />
+                    </FieldRow>
                 </div>
             </div>
 
-            {/* Attributs */}
+            <div className="grid grid-cols-2 gap-4">
+                <div className="ac-card">
+                    <div className="ac-section-header">
+                        Attributs finaux
+                        <span style={{ marginLeft: '0.5rem', fontSize: '0.65rem', color: attrOk ? 'var(--ac-success)' : 'var(--ac-accent)', fontWeight: 700 }}>
+                            {attrOk ? `✓ Total : ${attrSum}` : `⚠ Total : ${attrSum} / ${TARGET_ATTR_SUM}`}
+                        </span>
+                    </div>
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '0.5rem', marginTop: '0.5rem' }}>
+                        {attrArray.map(a => {
+                            const inRange = a.value >= ATTR_MIN && a.value <= ATTR_MAX;
+                            return (
+                                <div key={a.key} className="ac-card-alt" style={{ padding: '0.4rem 0.6rem', border: `1px solid ${!inRange ? 'var(--ac-accent)' : 'var(--ac-border)'}` }}>
+                                    <div className="ac-label">{ATTR_LABEL[a.key]}</div>
+                                    <div style={{ fontFamily: 'var(--ac-font-title)', fontSize: '1.3rem', fontWeight: 700, color: inRange ? 'var(--ac-secondary)' : 'var(--ac-accent)' }}>{a.value}</div>
+                                </div>
+                            );
+                        })}
+                    </div>
+                </div>
+                <div className="ac-card">
+                    <div className="ac-section-header">
+                        Compétences
+                        <span style={{ marginLeft: '0.5rem', fontSize: '0.65rem', color: skillOk ? 'var(--ac-success)' : 'var(--ac-accent)', fontWeight: 700 }}>
+                            {skillOk ? `✓ Total : ${skillSum}` : `⚠ Total : ${skillSum} / ${TARGET_SKILL_SUM}`}
+                        </span>
+                    </div>
+                    <div style={{ marginTop: '0.5rem' }}>
+                        {skillArray.filter(s => s.rank > 0).map(s => (
+                            <div key={s.key} style={{ display: 'flex', justifyContent: 'space-between', padding: '0.2rem 0.4rem', borderBottom: '1px solid var(--ac-border)' }}>
+                                <span style={{ fontSize: '0.78rem', fontFamily: 'var(--ac-font-heading)', color: 'var(--ac-text)' }}>{SKILL_LABEL[s.key]}</span>
+                                <span style={{ fontFamily: 'var(--ac-font-title)', fontWeight: 700, color: 'var(--ac-secondary)' }}>{s.rank}</span>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            </div>
+
             <div className="ac-card">
-                <div className="ac-label mb-2">Attributs finaux</div>
-                <div className="ac-attr-grid">
-                    {ATTRIBUTES.map(a => (
-                        <div key={a.key} className="ac-attr-cell">
-                            <span className="ac-label">{a.label}</span>
-                            <span className="ac-attr-value">{attrs[a.key] ?? ATTR_BASE}</span>
+                <div className="ac-section-header">Résistances calculées automatiquement</div>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '0.75rem', marginTop: '0.5rem' }}>
+                    {[
+                        { label: 'Stress',  value: stress,  note: 'max(Force, Volonté) + Résilience', color: 'var(--ac-accent)' },
+                        { label: 'Armure',  value: armour,  note: 'Basé sur Force',                   color: 'var(--ac-secondary)' },
+                        { label: 'Courage', value: courage, note: 'Basé sur Volonté',                 color: 'var(--ac-primary)' },
+                    ].map(item => (
+                        <div key={item.label} className="ac-card-alt" style={{ textAlign: 'center', padding: '0.75rem' }}>
+                            <div className="ac-label">{item.label}</div>
+                            <div style={{ fontFamily: 'var(--ac-font-title)', fontSize: '2rem', fontWeight: 700, color: item.color }}>{item.value}</div>
+                            <div style={{ fontSize: '0.65rem', color: 'var(--ac-muted)', fontFamily: 'var(--ac-font-heading)', marginTop: 2 }}>{item.note}</div>
                         </div>
                     ))}
                 </div>
             </div>
 
-            {/* Compétences */}
             <div className="ac-card">
-                <div className="ac-label mb-2">Compétences finales</div>
-                <table className="ac-table">
-                    <thead><tr><th>Compétence</th><th style={{ textAlign: 'center' }}>Rang</th><th>Focus</th></tr></thead>
-                    <tbody>
-                    {SKILLS.map(s => {
-                        const skill = skills[s.key];
-                        const rank  = typeof skill === 'object' ? skill.rank : 0;
-                        if (rank === 0) return null;
+                <div className="ac-section-header">Vérités personnelles & Cicatrices</div>
+                <p style={{ fontSize: '0.76rem', color: 'var(--ac-text-muted)', marginBottom: '0.5rem' }}>
+                    Vos vérités de background et de caractéristique sont pré-remplies. Les deux cases restantes sont libres.
+                </p>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '0.5rem' }}>
+                    {[
+                        { key: 'truth_bg',     label: 'Vérité — Background',       value: ws.bgTruth ?? '',    fixed: true  },
+                        { key: 'truth_char',   label: 'Vérité — Caractéristique',  value: ws.charTruth ?? '', fixed: true  },
+                        { key: 'truth_extra1', label: 'Vérité supplémentaire 1',   value: ws.truths?.[0] ?? '', fixed: false },
+                        { key: 'truth_extra2', label: 'Vérité supplémentaire 2',   value: ws.truths?.[1] ?? '', fixed: false },
+                    ].map(t => (
+                        <div key={t.key}>
+                            <div className="ac-label mb-0.5">{t.label}</div>
+                            <input className="ac-input" value={t.value} readOnly={t.fixed}
+                                   onChange={!t.fixed ? (e => { const next = [...(ws.truths ?? ['', ''])]; next[t.key === 'truth_extra1' ? 0 : 1] = e.target.value; patch({ truths: next }); }) : undefined}
+                                   style={{ opacity: t.fixed ? 0.7 : 1 }} />
+                        </div>
+                    ))}
+                </div>
+            </div>
+
+            <div className="ac-card">
+                <div className="ac-section-header">Langues</div>
+                <p style={{ fontSize: '0.74rem', color: 'var(--ac-text-muted)', marginBottom: '0.5rem' }}>
+                    Langue(s) de départ selon votre nationalité{bonusLang > 0 && <span style={{ color: 'var(--ac-secondary)', fontWeight: 600 }}> + {bonusLang} langue{bonusLang > 1 ? 's' : ''} bonus (Raisonnement {attrs['reason'] ?? 6})</span>}.
+                </p>
+                <div className="flex flex-wrap gap-2 mb-3">
+                    {baseLangs.map(lang => (
+                        <span key={lang} style={{ padding: '3px 12px', borderRadius: 20, background: 'var(--ac-primary)', color: 'var(--ac-bg)', fontSize: '0.78rem', fontFamily: 'var(--ac-font-heading)', fontWeight: 600 }}>{lang}</span>
+                    ))}
+                </div>
+                {Array.from({ length: Math.max(1, bonusLang + (ws.extraLangs?.length ?? 0) + 1) }).map((_, i) => (
+                    <div key={i} className="mb-1">
+                        <input className="ac-input" value={ws.extraLangs?.[i] ?? ''}
+                               onChange={e => { const next = [...(ws.extraLangs ?? [])]; next[i] = e.target.value; patch({ extraLangs: next }); }}
+                               placeholder={i < bonusLang ? `Langue bonus ${i + 1}…` : 'Langue supplémentaire…'} style={{ fontSize: '0.8rem' }} />
+                    </div>
+                ))}
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+                <div className="ac-card">
+                    <div className="ac-section-header">Talents (3)</div>
+                    {[ws.archTalent, ws.bgTalent, ws.charTalent].map((tk, i) => {
+                        const t = tk ? TALENTS[tk] : null;
                         return (
-                            <tr key={s.key}>
-                                <td className="ac-label">{s.label}</td>
-                                <td className="ac-value text-center">{rank}</td>
-                                <td className="ac-text-muted">{skill?.focus || '—'}</td>
-                            </tr>
+                            <div key={i} style={{ padding: '0.4rem 0', borderBottom: '1px solid var(--ac-border)' }}>
+                                {t ? (
+                                    <div>
+                                        <span style={{ fontFamily: 'var(--ac-font-heading)', fontWeight: 700, fontSize: '0.78rem', color: 'var(--ac-text)', textTransform: 'uppercase' }}>{t.label}</span>
+                                        <div style={{ fontSize: '0.67rem', color: 'var(--ac-muted)' }}>{t.keywords.join(', ')}</div>
+                                    </div>
+                                ) : <span style={{ fontSize: '0.78rem', color: 'var(--ac-muted)' }}>— Non sélectionné</span>}
+                            </div>
                         );
                     })}
-                    </tbody>
-                </table>
-            </div>
-
-            {/* Talents */}
-            <div className="ac-card">
-                <div className="ac-label mb-1">Talents</div>
-                <div className="flex flex-col gap-1">
-                    {[wizardState.archTalent, wizardState.bgTalent, wizardState.charTalent].filter(Boolean).map((t, i) => (
-                        <div key={i} className="text-default" style={{ fontSize: '0.82rem' }}>· {t}</div>
-                    ))}
-                    {![wizardState.archTalent, wizardState.bgTalent, wizardState.charTalent].some(Boolean) && (
-                        <div className="ac-text-muted">Aucun talent sélectionné</div>
-                    )}
+                </div>
+                <div className="ac-card">
+                    <div className="ac-section-header">Choix du wizard</div>
+                    <div style={{ fontSize: '0.78rem', lineHeight: 1.7 }}>
+                        <div><span className="ac-label">Archétype : </span>{ARCHETYPE_DATA[ws.archetype]?.labelFr ?? '—'}</div>
+                        <div><span className="ac-label">Nationalité : </span>{NATIONALITIES.find(n => n.key === ws.nationality)?.label ?? ws.nationalityCustom ?? '—'}</div>
+                        <div><span className="ac-label">Background : </span>{BACKGROUND_DATA[ws.background]?.label ?? '—'}</div>
+                        <div><span className="ac-label">Caractéristique : </span>{CHARACTERISTIC_DATA[ws.characteristic]?.label ?? '—'}</div>
+                    </div>
                 </div>
             </div>
         </div>
     );
 };
 
-// ─────────────────────────────────────────────────────────────────────────────
+// ══════════════════════════════════════════════════════════════════════════════
 // COMPOSANT PRINCIPAL
-// ─────────────────────────────────────────────────────────────────────────────
+// ══════════════════════════════════════════════════════════════════════════════
 
 const Creation = ({ darkMode, onToggleDarkMode }) => {
     const { apiBase, slug } = useSystem();
@@ -782,120 +1138,169 @@ const Creation = ({ darkMode, onToggleDarkMode }) => {
     const [accessCode, setAccessCode] = useState(null);
     const [accessUrl,  setAccessUrl]  = useState(null);
 
-    // État global du wizard
     const [ws, setWs] = useState({
-        // Étape 1 — Identité
-        playerName: '', nom: '', nationality: '', rank: '',
-        sexe: '', age: '', taille: '', biography: '',
-        // Étape 2 — Archétype
-        archetype: null, occultistVariant: 'A',
-        archFocuses: [], archFocusTexts: {}, archTalent: null,
-        // Étape 3 — Background
-        background: null, bgFocus: '', bgExtraFocus: '', bgTalent: null, bgTruth: '',
-        // Étape 4 — Characteristic
-        characteristic: null, charTalent: null,
-        // Étape 5 — Truths & Langues
-        truths: ['', '', '', '', ''],
-        languages: [],
+        archetype: null, occultistVariant: 'A', archFocuses: [], archTalent: null,
+        nationality: null, nationalityCustom: '', nationalityLangs: [],
+        background: null, bgFocus: '', bgFocusFree: '', bgTalent: null, bgTruth: '', bgAttrFree: null, bgSkillsFree: [],
+        characteristic: null, charVariant: null, charTalent: null, charTruth: '', charAttrFree: null, charSkillsFree: [], charSkillChoice: null,
+        // Magie
+        spellTradition: null, dabblerMode: 'one_normal', selectedSpells: [], spellMantle: '',
+        // Identité
+        playerName: '', prenom: '', nom: '', rank: '', sexe: '', age: '', biography: '',
+        truths: ['', ''], extraLangs: [],
     });
 
-    const patch = useCallback((partial) => {
-        setWs(prev => ({ ...prev, ...partial }));
-    }, []);
+    const patch = useCallback((partial) => setWs(prev => ({ ...prev, ...partial })), []);
 
-    // Validation par étape
+    // ── Steps dynamiques selon présence d'un talent Spellcaster ──────────────
+    const isSpellcaster = useMemo(() => !!detectSpellcasterTalent(ws), [ws.archTalent, ws.bgTalent, ws.charTalent]);
+
+    const steps = useMemo(() => {
+        if (isSpellcaster) return BASE_STEPS;
+        // Sans magie : on retire l'étape 6 et on renumérote
+        return BASE_STEPS
+            .filter(s => s.id !== 6)
+            .map((s, i) => ({ ...s, id: i + 1 }));
+    }, [isSpellcaster]);
+
+    // Mapping step visuel → step réel (avec ou sans magie)
+    // step 6 dans BASE_STEPS = Magie, step 7 = Identité
+    // Sans magie step 6 = Identité
+    const totalSteps = steps.length;
+
+    // Attrs calculés pour l'étape magie
+    const { attrs } = useMemo(() => computeFinalValues(ws), [ws.archetype, ws.occultistVariant, ws.background, ws.bgAttrFree, ws.bgSkillsFree, ws.characteristic, ws.charVariant, ws.charAttrFree, ws.charSkillsFree]);
+
+    // ── Validation par étape ─────────────────────────────────────────────────
     const canAdvance = useMemo(() => {
-        switch (step) {
-            case 1: return ws.playerName.trim() && ws.nom.trim();
+        // Retrouver le "vrai" id de l'étape courante
+        const currentStepDef = steps[step - 1];
+        const realId = currentStepDef?.id ?? step;
+
+        switch (realId) {
+            case 1: return true;
             case 2: return ws.archetype && (ws.archFocuses?.length ?? 0) >= 2 && ws.archTalent;
-            case 3: return ws.background && ws.bgTalent;
-            case 4: return ws.characteristic && ws.charTalent;
-            case 5: return true;
+            case 3: return ws.nationality && (ws.nationality !== 'other' || ws.nationalityCustom?.trim());
+            case 4: {
+                if (!ws.background || !ws.bgTalent) return false;
+                const bd = BACKGROUND_DATA[ws.background];
+                if (!bd) return false;
+                const hasPrimaryFocus = (bd.focusFixed || bd.focusFixedChoice) ? !!ws.bgFocus : true;
+                if (bd.attrBonusFree > 0 && !ws.bgAttrFree) return false;
+                if (bd.skillBonusFree > 0 && (ws.bgSkillsFree?.filter(Boolean).length ?? 0) < bd.skillBonusFree) return false;
+                return hasPrimaryFocus && !!ws.bgFocusFree && !!ws.bgTruth?.trim();
+            }
+            case 5: {
+                if (!ws.characteristic || !ws.charTalent) return false;
+                const cd = CHARACTERISTIC_DATA[ws.characteristic];
+                if (!cd) return false;
+                const activeChar = cd.isChoice ? cd.options[ws.charVariant] : cd;
+                if (!activeChar) return false;
+                if (cd.isChoice && !ws.charVariant) return false;
+                if (activeChar.attrBonusFree > 0 && !ws.charAttrFree) return false;
+                if (activeChar.skillBonusFree > 0 && !activeChar.specialRule && (ws.charSkillsFree?.filter(Boolean).length ?? 0) < activeChar.skillBonusFree) return false;
+                return !!ws.charTruth?.trim();
+            }
+            case 6: { // Magie (seulement si isSpellcaster)
+                const spellcasterTk = detectSpellcasterTalent(ws);
+                const sType = getSpellcasterType(spellcasterTk);
+                const isDabbler = sType === 'dabbler';
+                if (!isDabbler && !ws.spellTradition) return false;
+                if (isDabbler && !ws.dabblerMode) return false;
+                const maxSpells = isDabbler && ws.dabblerMode === 'two_flawed' ? 2 : getStartingSpellCount(sType);
+                return (ws.selectedSpells?.length ?? 0) >= maxSpells;
+            }
+            case 7: return ws.playerName?.trim() && ws.nom?.trim() && ws.prenom?.trim();
             default: return true;
         }
-    }, [step, ws]);
+    }, [step, steps, ws]);
 
-    // Soumission finale
+    // ── Soumission ────────────────────────────────────────────────────────────
     const handleSubmit = async () => {
         setSubmitting(true);
         setError('');
 
-        const { attrs, skills } = computeFinalValues(ws);
+        const { attrs: finalAttrs, skills: finalSkills } = computeFinalValues(ws);
 
-        // Construction du payload
         const attributes = ATTRIBUTES.map(a => ({
-            key: a.key, value: attrs[a.key] ?? ATTR_BASE,
+            key: a.key, value: finalAttrs[a.key] ?? ATTR_BASE,
+            bonusDamage: getBonusDamage(finalAttrs[a.key] ?? ATTR_BASE),
         }));
 
-        const skillsPayload = SKILLS.map(s => {
-            const sk = skills[s.key];
+        const skillArray = SKILLS.map(s => ({ key: s.key, rank: finalSkills[s.key] ?? 0, focus: '' }));
+        const allFocuses = [...(ws.archFocuses ?? []), ws.bgFocus ? [ws.bgFocus] : [], ws.bgFocusFree ? [ws.bgFocusFree] : []].flat().filter(Boolean);
+        const skillsWithFocuses = skillArray.map(s => {
+            const myFocuses = allFocuses.filter(f => f.startsWith(s.key + ':')).map(f => f.split(':')[1]);
+            return { ...s, focus: myFocuses.join(', ') };
+        });
+
+        const talents = [ws.archTalent, ws.bgTalent, ws.charTalent].filter(Boolean).map(tk => {
+            const t = TALENTS[tk] ?? {};
+            return { name: t.label ?? tk, keywords: (t.keywords ?? []).join(', '), effect: t.description ?? '' };
+        });
+
+        const adData     = ws.archetype      ? ARCHETYPE_DATA[ws.archetype]      : null;
+        const bdData     = ws.background     ? BACKGROUND_DATA[ws.background]    : null;
+        const activeChar = ws.characteristic
+            ? (CHARACTERISTIC_DATA[ws.characteristic]?.isChoice ? CHARACTERISTIC_DATA[ws.characteristic]?.options?.[ws.charVariant] : CHARACTERISTIC_DATA[ws.characteristic])
+            : null;
+
+        const items = [
+            ...(adData?.belongings ?? []).map(name => ({ name, description: 'Équipement d\'archétype', effect: '' })),
+            ...(bdData?.belongings  ? [{ name: bdData.belongings,  description: 'Équipement de background', effect: '' }] : []),
+            ...(activeChar?.belongings ? [{ name: activeChar.belongings, description: 'Équipement de caractéristique', effect: '' }] : []),
+        ];
+
+        // Sorts
+        const spellcasterTk = detectSpellcasterTalent(ws);
+        const sType         = getSpellcasterType(spellcasterTk);
+        const isDabbler     = sType === 'dabbler';
+        const isFlawed      = isDabbler && ws.dabblerMode === 'two_flawed';
+        const allSpellsList = [...(SPELLS.celtic ?? []), ...(SPELLS.runic ?? []), ...(SPELLS.psychic ?? [])];
+
+        // Calcul de la puissance (power rating) à persister
+        const castAttr      = getCastAttribute(sType);
+        const castAttrValue = finalAttrs[castAttr] ?? ATTR_BASE;
+        const powerValue    = spellcasterTk
+            ? getPowerRating(sType) + getBonusPowerDice(castAttrValue)
+            : 0;
+
+        const spells = (ws.selectedSpells ?? []).map(key => {
+            const sp = allSpellsList.find(s => s.key === key) ?? {};
             return {
-                key:   s.key,
-                rank:  typeof sk === 'object' ? sk.rank : 0,
-                focus: typeof sk === 'object' ? sk.focus : '',
+                name:           sp.label  ?? key,
+                skill_used:     sp.skill  ?? '',
+                difficulty:     sp.difficulty ?? 0,
+                cost:           sp.cost   ?? '',
+                duration:       sp.duration ?? '',
+                effect:         sp.effect ?? '',
+                momentum_spends: '',
+                flawed:         isFlawed,
             };
         });
 
-        // Focuses archétype — textes saisis par l'utilisateur
-        const skillsWithFocuses = skillsPayload.map(s => {
-            if ((ws.archFocuses ?? []).includes(s.key)) {
-                return { ...s, focus: (ws.archFocusTexts ?? {})[s.key] ?? s.focus };
-            }
-            if (ws.bgFocus && BACKGROUND_DATA[ws.background]?.focusPool?.includes(s.key)) {
-                return { ...s, focus: ws.bgFocus };
-            }
-            return s;
-        });
-
-        const talents = [
-            ws.archTalent  ? { name: ws.archTalent,  keywords: ws.archetype ? ARCHETYPE_DATA[ws.archetype]?.label : '',     effect: '' } : null,
-            ws.bgTalent    ? { name: ws.bgTalent,     keywords: ws.background ? BACKGROUND_DATA[ws.background]?.label : '',   effect: '' } : null,
-            ws.charTalent  ? { name: ws.charTalent,   keywords: ws.characteristic ? CHARACTERISTIC_DATA[ws.characteristic]?.label : '', effect: '' } : null,
-        ].filter(Boolean);
-
-        // Belongings → character_items
-        const archData = ws.archetype ? ARCHETYPE_DATA[ws.archetype] : null;
-        const bgData   = ws.background ? BACKGROUND_DATA[ws.background] : null;
-        const items = [
-            ...(archData?.belongings ?? []).map(name => ({ name, description: '', effect: '' })),
-            bgData?.belongings ? { name: bgData.belongings, description: '', effect: '' } : null,
-        ].filter(Boolean);
+        const languages = [...(ws.nationalityLangs ?? []).filter(Boolean), ...(ws.extraLangs ?? []).filter(Boolean)];
+        const nationalityLabel = ws.nationality === 'other' ? ws.nationalityCustom : NATIONALITIES.find(n => n.key === ws.nationality)?.label ?? '';
 
         const payload = {
-            playerName:     ws.playerName.trim(),
-            nom:            ws.nom.trim(),
-            nationality:    ws.nationality,
-            rank:           ws.rank,
-            sexe:           ws.sexe,
-            age:            ws.age ? parseInt(ws.age) : null,
-            taille:         ws.taille ? parseInt(ws.taille) : null,
-            biography:      ws.biography,
-            archetype:      ws.archetype ?? '',
-            background:     ws.background ?? '',
-            characteristic: ws.characteristic ?? '',
-            truths:         ws.truths,
-            languages:      ws.languages,
-            attributes:     attributes,
-            skills:         skillsWithFocuses,
-            talents,
-            items,
-            isSpellcaster:  ws.archetype === 'occultist',
-            weapons:        [],
-            spells:         [],
+            playerName: ws.playerName.trim(), nom: ws.nom.trim(), prenom: ws.prenom.trim(),
+            sexe: ws.sexe ?? '', age: ws.age ? parseInt(ws.age) : null,
+            rank: ws.rank ?? '', nationality: nationalityLabel, biography: ws.biography ?? '',
+            archetype: ws.archetype ?? '', background: ws.background ?? '', characteristic: ws.characteristic ?? '',
+            truths: [ws.bgTruth ?? '', ws.charTruth ?? '', ...(ws.truths ?? [])].filter(Boolean),
+            languages, attributes, skills: skillsWithFocuses, talents, items, weapons: [],
+            spells, isSpellcaster: !!spellcasterTk,
+            power:           powerValue,
+            spellcasterType: sType ?? null,
+            spellTradition:  isDabbler ? 'dabbler' : (ws.spellTradition ?? null),
+            spellMantle:     ws.spellMantle ?? '',
         };
 
         try {
             const res = await fetch(`${apiBase}/characters`, {
-                method:  'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body:    JSON.stringify(payload),
+                method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload),
             });
-
-            if (!res.ok) {
-                const err = await res.json().catch(() => ({}));
-                throw new Error(err.error ?? 'Erreur lors de la création du personnage');
-            }
-
+            if (!res.ok) { const err = await res.json().catch(() => ({})); throw new Error(err.error ?? 'Erreur lors de la création'); }
             const char = await res.json();
             setAccessCode(char.accessCode);
             setAccessUrl(char.accessUrl);
@@ -909,187 +1314,69 @@ const Creation = ({ darkMode, onToggleDarkMode }) => {
     // ── Écran post-création ───────────────────────────────────────────────────
     if (accessCode) {
         return (
-            <div className={`min-h-screen bg-bg text-default flex items-center justify-center p-4${darkMode ? ' dark' : ''}`}>
-                <div className="ac-card max-w-sm w-full text-center flex flex-col gap-4">
-                    <div className="ac-section-header text-center" style={{ border: 'none' }}>✓ Personnage créé</div>
-                    <div>
-                        <div className="ac-label mb-1">Votre code d'accès</div>
-                        <div className="ac-code-display text-2xl tracking-widest text-secondary">{accessCode}</div>
-                        <div className="ac-text-muted mt-1" style={{ fontSize: '0.72rem' }}>
-                            Notez ce code — il vous permettra de retrouver votre personnage.
-                        </div>
-                    </div>
+            <div className="min-h-screen bg-default text-default flex items-center justify-center p-4">
+                <div className="ac-card" style={{ maxWidth: 420, width: '100%', textAlign: 'center' }}>
+                    <div style={{ fontFamily: 'var(--ac-font-heading)', fontSize: '1.1rem', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--ac-secondary)', marginBottom: '1rem' }}>✓ Agent enregistré</div>
+                    <div className="ac-label mb-1">Code d'accès</div>
+                    <div style={{ fontFamily: 'var(--ac-font-heading)', fontWeight: 700, letterSpacing: '0.25em', color: 'var(--ac-secondary)', fontSize: '1.6rem', marginBottom: '0.5rem' }}>{accessCode}</div>
+                    <p style={{ fontSize: '0.76rem', color: 'var(--ac-text-muted)', marginBottom: '1.5rem' }}>Notez ce code — il est votre seule façon de retrouver votre fiche.</p>
                     <div className="flex flex-col gap-2">
-                        <button
-                            onClick={() => navigate(`/${slug}/${accessUrl}`)}
-                            className="ac-btn ac-btn-primary w-full"
-                        >
-                            Accéder à ma fiche →
-                        </button>
-                        <button
-                            onClick={() => navigate(`/${slug}/`)}
-                            className="ac-btn ac-btn-ghost w-full"
-                        >
-                            Retour à l'accueil
-                        </button>
+                        <button onClick={() => navigate(`/${slug}/${accessUrl}`)} className="ac-btn ac-btn-primary w-full">Accéder à ma fiche →</button>
+                        <button onClick={() => navigate(`/${slug}/`)} className="ac-btn ac-btn-ghost w-full">Retour à l'accueil</button>
                     </div>
                 </div>
             </div>
         );
     }
 
-    // ── Wizard ────────────────────────────────────────────────────────────────
+    // ── Rendu de l'étape courante ─────────────────────────────────────────────
+    const currentStepDef = steps[step - 1];
+    const realId = currentStepDef?.id ?? step;
+
+    const stepContent = {
+        1: <Step1Attributes />,
+        2: <Step2Archetype ws={ws} patch={patch} />,
+        3: <Step3Nationality ws={ws} patch={patch} />,
+        4: <Step4Background ws={ws} patch={patch} />,
+        5: <Step5Characteristic ws={ws} patch={patch} />,
+        6: isSpellcaster ? <Step6Magic ws={ws} patch={patch} attrs={attrs} /> : <Step7FinishingTouches ws={ws} patch={patch} />,
+        7: <Step7FinishingTouches ws={ws} patch={patch} />,
+    };
+
     return (
-        <div className={`min-h-screen bg-bg text-default${darkMode ? ' dark' : ''}`}>
-            <header className="ac-header justify-center">
-                <div className="ac-font-title text-primary" style={{ fontSize: '0.9rem', letterSpacing: '0.1em', textTransform: 'uppercase' }}>
-                    Création de Personnage
+        <div className="min-h-screen bg-default text-default" style={{ fontFamily: 'var(--ac-font-body)' }}>
+            <header className="ac-header">
+                <div className="ac-page-title">Achtung! Cthulhu</div>
+                <div style={{ fontFamily: 'var(--ac-font-heading)', fontSize: '0.65rem', fontWeight: 600, letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--ac-secondary)' }}>
+                    Création de personnage
                 </div>
+                <ThemeToggle darkMode={darkMode} onToggle={onToggleDarkMode} />
             </header>
 
-            <div className="max-w-2xl mx-auto px-4 py-6">
-                <StepBar current={step} />
+            <div style={{ maxWidth: '100%', padding: '1.5rem 2rem' }}>
+                <StepBar steps={steps} current={step} />
 
                 {error && (
-                    <div className="mb-4 px-3 py-2 rounded text-sm bg-danger text-white">{error}</div>
+                    <div className="mb-4 px-3 py-2 rounded" style={{ background: 'var(--ac-accent)', color: '#fff', fontSize: '0.85rem' }}>{error}</div>
                 )}
 
-                {/* ── ÉTAPE 1 — Identité ──────────────────────────────────── */}
-                {step === 1 && (
-                    <div className="ac-card flex flex-col gap-4">
-                        <div className="ac-section-header">Identité du personnage</div>
+                {stepContent[realId]}
 
-                        <div className="grid grid-cols-2 gap-3">
-                            <FieldRow label="Nom du personnage *">
-                                <input className="ac-input" value={ws.nom} onChange={e => patch({ nom: e.target.value })} placeholder="Nom…" />
-                            </FieldRow>
-                            <FieldRow label="Nom du joueur *">
-                                <input className="ac-input" value={ws.playerName} onChange={e => patch({ playerName: e.target.value })} placeholder="Joueur…" />
-                            </FieldRow>
-                            <FieldRow label="Nationalité">
-                                <input className="ac-input" value={ws.nationality} onChange={e => patch({ nationality: e.target.value })} placeholder="Ex: British, American…" />
-                            </FieldRow>
-                            <FieldRow label="Grade / Rank">
-                                <input className="ac-input" value={ws.rank} onChange={e => patch({ rank: e.target.value })} placeholder="Ex: Captain, Private…" />
-                            </FieldRow>
-                            <FieldRow label="Sexe">
-                                <input className="ac-input" value={ws.sexe} onChange={e => patch({ sexe: e.target.value })} placeholder="…" />
-                            </FieldRow>
-                            <FieldRow label="Âge">
-                                <input className="ac-input" type="number" value={ws.age} onChange={e => patch({ age: e.target.value })} placeholder="…" />
-                            </FieldRow>
-                        </div>
-
-                        <FieldRow label="Biographie">
-                            <textarea
-                                className="ac-input"
-                                rows={3}
-                                value={ws.biography}
-                                onChange={e => patch({ biography: e.target.value })}
-                                placeholder="Quelques mots sur votre personnage…"
-                            />
-                        </FieldRow>
-                    </div>
-                )}
-
-                {/* ── ÉTAPE 2 — Archétype ─────────────────────────────────── */}
-                {step === 2 && (
-                    <div className="ac-card">
-                        <StepArchetype
-                            value={ws.archetype}
-                            occultistVariant={ws.occultistVariant}
-                            selectedFocuses={ws.archFocuses}
-                            focusTexts={ws.archFocusTexts}
-                            selectedTalent={ws.archTalent}
-                            onChange={(partial) => patch({
-                                archetype:        partial.archetype        ?? ws.archetype,
-                                occultistVariant: partial.occultistVariant ?? ws.occultistVariant,
-                                archFocuses:      partial.selectedFocuses  ?? ws.archFocuses,
-                                archFocusTexts:   partial.focusTexts       ?? ws.archFocusTexts,
-                                archTalent:       partial.selectedTalent   ?? ws.archTalent,
-                            })}
-                        />
-                    </div>
-                )}
-
-                {/* ── ÉTAPE 3 — Background ────────────────────────────────── */}
-                {step === 3 && (
-                    <div className="ac-card">
-                        <StepBackground
-                            value={ws.background}
-                            selectedFocus={ws.bgFocus}
-                            selectedTalent={ws.bgTalent}
-                            selectedTruth={ws.bgTruth}
-                            onChange={(partial) => patch({
-                                background: partial.background ?? ws.background,
-                                bgFocus:    partial.bgFocus    ?? ws.bgFocus,
-                                bgTalent:   partial.bgTalent   ?? ws.bgTalent,
-                                bgTruth:    partial.bgTruth    ?? ws.bgTruth,
-                            })}
-                        />
-                    </div>
-                )}
-
-                {/* ── ÉTAPE 4 — Characteristic ────────────────────────────── */}
-                {step === 4 && (
-                    <div className="ac-card">
-                        <StepCharacteristic
-                            value={ws.characteristic}
-                            selectedTalent={ws.charTalent}
-                            onChange={(partial) => patch({
-                                characteristic: partial.characteristic ?? ws.characteristic,
-                                charTalent:     partial.charTalent     ?? ws.charTalent,
-                            })}
-                        />
-                    </div>
-                )}
-
-                {/* ── ÉTAPE 5 — Truths & Langues ──────────────────────────── */}
-                {step === 5 && (
-                    <div className="ac-card">
-                        <StepTruths
-                            truths={ws.truths}
-                            languages={ws.languages}
-                            nationality={ws.nationality}
-                            onChange={(partial) => patch({
-                                truths:    partial.truths    ?? ws.truths,
-                                languages: partial.languages ?? ws.languages,
-                            })}
-                        />
-                    </div>
-                )}
-
-                {/* ── ÉTAPE 6 — Récapitulatif ─────────────────────────────── */}
-                {step === 6 && (
-                    <StepRecap wizardState={ws} />
-                )}
-
-                {/* ── Navigation ──────────────────────────────────────────── */}
-                <div className="flex gap-3 mt-6">
+                <div className="flex gap-3 mt-8">
                     {step > 1 && (
-                        <button
-                            onClick={() => setStep(s => s - 1)}
-                            className="ac-btn ac-btn-ghost flex-1"
-                        >
-                            ← Retour
-                        </button>
+                        <button onClick={() => setStep(s => s - 1)} className="ac-btn ac-btn-ghost" style={{ minWidth: 120 }}>← Retour</button>
                     )}
-                    {step < 6 && (
-                        <button
-                            onClick={() => setStep(s => s + 1)}
-                            disabled={!canAdvance}
-                            className="ac-btn ac-btn-primary flex-1 disabled:opacity-30"
-                        >
+                    <div style={{ flex: 1 }} />
+                    {step < totalSteps && (
+                        <button onClick={() => setStep(s => s + 1)} disabled={!canAdvance} className="ac-btn ac-btn-primary"
+                                style={{ minWidth: 140, opacity: canAdvance ? 1 : 0.35, cursor: canAdvance ? 'pointer' : 'not-allowed' }}>
                             Suivant →
                         </button>
                     )}
-                    {step === 6 && (
-                        <button
-                            onClick={handleSubmit}
-                            disabled={submitting}
-                            className="ac-btn ac-btn-primary flex-1 disabled:opacity-30"
-                        >
-                            {submitting ? '⏳ Création…' : '✓ Créer mon personnage'}
+                    {step === totalSteps && (
+                        <button onClick={handleSubmit} disabled={submitting || !canAdvance} className="ac-btn ac-btn-primary"
+                                style={{ minWidth: 180, opacity: (submitting || !canAdvance) ? 0.35 : 1 }}>
+                            {submitting ? '⏳ Création en cours…' : '✓ Créer mon agent'}
                         </button>
                     )}
                 </div>
