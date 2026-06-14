@@ -19,26 +19,25 @@ import CharacterListModal from '../../components/modals/CharacterListModal.jsx';
 import AvatarUploader     from '../../components/AvatarUploader.jsx';
 
 import VerticalGauge from './components/VerticalGauge.jsx';
-import AttributeGrid       from './components/AttributeGrid.jsx';
-import SkillsSection       from './components/SkillsSection.jsx';
-import StressTracker       from './components/StressTracker.jsx';
-import FortuneAmmoTracker  from './components/FortuneAmmoTracker.jsx';
-import TalentsList         from './components/TalentsList.jsx';
-import WeaponsTable        from './components/WeaponsTable.jsx';
-import ItemsList           from './components/ItemsList.jsx';
-import LanguagePills       from './components/LanguagePills.jsx';
-import SpellsSection       from './components/SpellsSection.jsx';
+import AttributeGrid      from './components/AttributeGrid.jsx';
+import SkillsSection      from './components/SkillsSection.jsx';
+import StressTracker      from './components/StressTracker.jsx';
+import FortuneAmmoTracker from './components/FortuneAmmoTracker.jsx';
+import TalentsList        from './components/TalentsList.jsx';
+import WeaponsTable       from './components/WeaponsTable.jsx';
+import ItemsList          from './components/ItemsList.jsx';
+import LanguagePills      from './components/LanguagePills.jsx';
+import SpellsSection      from './components/SpellsSection.jsx';
+import IdentitySection    from './components/IdentitySection.jsx';
+import TruthsSection      from './components/TruthsSection.jsx';
 import AchtungHistoryEntry from './components/AchtungHistoryEntry.jsx';
 import AchtungDiceModal    from './dice/AchtungDiceModal.jsx';
-import {ARCHETYPES, BACKGROUNDS, CHARACTERISTICS} from "./config.jsx";
 
 const TABS = [
     { id: 'fiche',      label: '📋 Fiche' },
     { id: 'journal',    label: '📓 Journal' },
     { id: 'historique', label: '📜 Historique' },
 ];
-
-const resolveLabel = (list, key) => list.find(i => i.key === key)?.label ?? key;
 
 const Sheet = ({
                    character,
@@ -150,11 +149,6 @@ const Sheet = ({
                     </div>
                 </div>
 
-                <div className="hidden sm:block text-center shrink-0">
-                    <div className="ac-label" style={{ fontSize: '0.55rem' }}>Code d'accès</div>
-                    <div className="ac-code-display">{char.accessCode}</div>
-                </div>
-
                 <div className="flex items-center gap-2 shrink-0">
                     <button onClick={() => setDiceModal({ type: 'skill' })} className="ac-btn ac-btn-primary">
                         🎲 Lancer
@@ -241,124 +235,92 @@ const Sheet = ({
                             {/* ── Contenu principal ─────────────────────────── */}
                             <div className="flex-1 min-w-0">
                                 <div className="ac-sheet-layout">
-                                    {/* COLONNE PRINCIPALE */}
+
+                                    {/* ── COLONNE PRINCIPALE ────────────────── */}
                                     <div className="ac-sheet-main">
-                                        {/* 1. DASHBOARD : Identité + Attributs */}
-                                        <div className="ac-card">
-                                            <div className="ac-section-header">Identité</div>
-                                            <div className="flex gap-3">
-                                                <div
-                                                    className="w-20 h-24 rounded shrink-0 overflow-hidden"
-                                                    style={{ border: '2px solid var(--ac-primary)', background: 'var(--ac-surface-alt)', cursor: editMode ? 'pointer' : 'default' }}
-                                                    onClick={() => editMode && setShowAvatar(true)}
-                                                >
-                                                    {char.avatar
-                                                        ? <img src={char.avatar} alt="" className="w-full h-full object-cover" />
-                                                        : <div className="w-full h-full flex items-center justify-center text-muted text-2xl">👤</div>}
-                                                </div>
-                                                <div className="flex-1 flex flex-col gap-2">
-                                                    <div className="grid grid-cols-2 gap-2">
-                                                        {[
-                                                            { field: 'nom',         label: 'Nom' },
-                                                            { field: 'playerName',  label: 'Joueur' },
-                                                            { field: 'nationality', label: 'Nationalité' },
-                                                            { field: 'rank',        label: 'Grade' },
-                                                        ].map(({ field, label }) => (
-                                                            <div key={field}>
-                                                                <div className="ac-label">{label}</div>
-                                                                {editMode
-                                                                    ? <input value={char[field] ?? ''} onChange={e => set(field, e.target.value)} className="ac-input mt-0.5" />
-                                                                    : <div className="ac-value" style={{ fontFamily: 'var(--ac-font-title)', fontSize: '0.88rem' }}>{char[field] || '—'}</div>}
-                                                            </div>
-                                                        ))}
-                                                    </div>
-                                                    <div className="flex gap-2 flex-wrap">
-                                                        {[
-                                                            { field: 'archetype',      label: 'Archétype', list: ARCHETYPES },
-                                                            { field: 'background',     label: 'Background', list: BACKGROUNDS },
-                                                            { field: 'characteristic', label: 'Caractéristique', list: CHARACTERISTICS },
-                                                        ].map(({ field, label, list }) => (
-                                                            <div key={field} className="flex-1" style={{ minWidth: 100 }}>
-                                                                <div className="ac-label">{label}</div>
-                                                                {editMode
-                                                                    ? <input value={char[field] ?? ''} onChange={e => set(field, e.target.value)} className="ac-input mt-0.5" />
-                                                                    : <div style={{ fontSize: '0.78rem', color: 'var(--ac-secondary)', fontFamily: 'var(--ac-font-heading)', fontWeight: 600 }}>{resolveLabel(list, char[field])}</div>}
-                                                            </div>
-                                                        ))}
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </div>
-                                        <div className="ac-card">
-                                            <AttributeGrid attributes={char.attributes} editMode={editMode} onChange={val => set('attributes', val)} />
-                                        </div>
 
-                                        {/* 2. NARRATIF : Vérités + Talents (Réorganisés en grille) */}
-                                        <div className="ac-narrative-grid">
-                                            <div className="ac-card">
-                                                <div className="ac-section-header">Vérités & Cicatrices</div>
-                                                <div className="flex gap-2 flex-wrap">
-                                                    {Array.from({ length: 5 }).map((_, i) => {
-                                                        const val = char.truths?.[i] ?? '';
-                                                        return (
-                                                            <div key={i} style={{ flex: '1 1 140px' }}>
-                                                                {editMode
-                                                                    ? <input
-                                                                        value={val}
-                                                                        onChange={e => {
-                                                                            const next = [...(char.truths ?? ['','','','',''])];
-                                                                            next[i] = e.target.value;
-                                                                            set('truths', next);
-                                                                        }}
-                                                                        className="ac-input"
-                                                                        placeholder={`Vérité ${i + 1}`}
-                                                                    />
-                                                                    : <div
-                                                                        className="ac-input"
-                                                                        style={{ minHeight: '2rem', cursor: 'default', fontSize: '0.8rem', color: val ? 'var(--ac-text)' : 'var(--ac-muted)' }}
-                                                                    >{val || '—'}</div>}
-                                                            </div>
-                                                        );
-                                                    })}
-                                                </div>
-                                            </div>
-                                            <div className="ac-card">
-                                                <TalentsList talents={char.talents} editMode={editMode} onChange={val => set('talents', val)} />
-                                            </div>
-                                        </div>
+                                        {/* 1. IDENTITÉ */}
 
-                                        {/* 3. ACTION : Compétences + Armes */}
-                                        <div className="ac-card"><SkillsSection skills={char.skills} editMode={editMode} onChange={val => set('skills', val)} onRoll={(ctx) => setDiceModal({ type: 'skill', ...ctx })} /></div>
-                                        <div className="ac-card"><WeaponsTable weapons={char.weapons} editMode={editMode} onChange={val => set('weapons', val)} onRollDamage={(w) => setDiceModal({ type: 'damage', weapon: w })} /></div>
-                                        {/* ── Équipement notable ────────────────────── */}
-                                        <div className="ac-card">
-                                            <ItemsList
-                                                items={char.items}
-                                                editMode={editMode}
-                                                onChange={val => set('items', val)}
-                                            />
-                                        </div>
+                                        <div className="ac-gear-talents-grid">
 
-                                        {/* ── Sorts (spellcasters uniquement) ───────── */}
-                                        {(char.isSpellcaster || editMode) && (
                                             <div className="ac-card">
-                                                <SpellsSection
-                                                    isSpellcaster={char.isSpellcaster}
-                                                    power={char.power}
-                                                    spells={char.spells}
+                                                <IdentitySection
+                                                    char={char}
                                                     editMode={editMode}
-                                                    onChange={val => set('spells', val)}
-                                                    onChangePower={(field, value) => set(field === 'is_spellcaster' ? 'isSpellcaster' : field, value)}
+                                                    set={set}
+                                                    onAvatarClick={() => setShowAvatar(true)}
                                                 />
                                             </div>
+                                            <div className="ac-card">
+                                                <AttributeGrid attributes={char.attributes} editMode={editMode} onChange={val => set('attributes', val)} onRoll={(ctx) => setDiceModal({ type: 'skill', ...ctx })} />
+                                            </div>
+                                        </div>
+
+
+                                        {/* 2. ATTRIBUTS */}
+
+
+                                        {/* 3. COMPÉTENCES */}
+                                        <div className="ac-card">
+                                            <SkillsSection skills={char.skills} editMode={editMode} onChange={val => set('skills', val)} onRoll={(ctx) => setDiceModal({ type: 'skill', ...ctx })} />
+                                        </div>
+
+                                        {/* 4. WEAPONS */}
+                                        <div className="ac-card">
+                                            <WeaponsTable weapons={char.weapons} editMode={editMode} onChange={val => set('weapons', val)} onRollDamage={(w) => setDiceModal({ type: 'damage', weapon: w })} />
+                                        </div>
+
+                                        <div className="ac-card">
+                                            <ItemsList items={char.items} editMode={editMode} onChange={val => set('items', val)} />
+                                        </div>
+
+                                        {/* 6. SORTS */}
+                                        {(char.isSpellcaster || editMode) && (
+                                            <SpellsSection
+                                                isSpellcaster={char.isSpellcaster}
+                                                power={char.power}
+                                                spells={char.spells}
+                                                editMode={editMode}
+                                                onChange={val => set('spells', val)}
+                                                onChangePower={(field, value) => set(field === 'is_spellcaster' ? 'isSpellcaster' : field, value)}
+                                            />
                                         )}
                                     </div>
 
-                                    {/* SIDEBAR : Suivi rapide uniquement */}
+                                    {/* ── SIDEBAR ───────────────────────────── */}
                                     <aside className="ac-sheet-sidebar">
-                                        <div className="ac-card"><StressTracker stress={char.stress} injuries={char.injuries} courage={char.courage} armour={char.armour} editMode={editMode} onChange={handleDirectField} /></div>
-                                        <div className="ac-card"><FortuneAmmoTracker fortune={char.fortune} ammo={char.ammo} editMode={editMode} onChange={handleDirectField} /></div>
-                                        <div className="ac-card"><LanguagePills languages={char.languages} editMode={editMode} onChange={val => handleDirectField('languages', val)} /></div>
+
+                                        {/* Stress + Blessures */}
+                                        <div className="ac-card">
+                                            <StressTracker
+                                                character={char}
+                                                editMode={editMode}
+                                                onChange={handleDirectField}
+                                            />
+                                        </div>
+
+                                        {/* Fortune + Munitions */}
+                                        <div className="ac-card">
+                                            <FortuneAmmoTracker fortune={char.fortune} ammo={char.ammo} editMode={editMode} onChange={handleDirectField} />
+                                        </div>
+
+                                        {/* Vérités */}
+                                        <div className="ac-card">
+                                            <TruthsSection
+                                                truths={char.truths}
+                                                editMode={editMode}
+                                                onChange={val => editMode ? set('truths', val) : handleDirectField('truths', val)}
+                                            />
+                                        </div>
+
+                                        <div className="ac-card">
+                                            <TalentsList talents={char.talents} editMode={editMode} onChange={val => set('talents', val)} />
+                                        </div>
+
+                                        {/* Langues */}
+                                        <div className="ac-card">
+                                            <LanguagePills languages={char.languages} editMode={editMode} onChange={val => handleDirectField('languages', val)} />
+                                        </div>
                                     </aside>
                                 </div>
                             </div>{/* fin contenu principal */}
@@ -424,7 +386,7 @@ const Sheet = ({
                 <AchtungDiceModal
                     mode={diceModal.type === 'damage' ? 'damage' : 'skill'}
                     character={char}
-                    preselect={diceModal.type === 'skill' ? { skillKey: diceModal.skillKey } : null}
+                    preselect={diceModal.type === 'skill' ? { skillKey: diceModal.skillKey, attrKey: diceModal.attrKey } : null}
                     weapon={diceModal.type === 'damage' ? diceModal.weapon : null}
                     sessionResources={sessionResources}
                     onClose={() => setDiceModal(null)}

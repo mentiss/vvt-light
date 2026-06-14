@@ -1,10 +1,8 @@
 // src/client/src/systems/achtung/components/AttributeGrid.jsx
-// Grille 6 attributs avec Bonus Damage calculé automatiquement.
-
 import React from 'react';
 import { ATTRIBUTES, getBonusDamage } from '../config.jsx';
 
-const AttributeGrid = ({ attributes, editMode, onChange }) => {
+const AttributeGrid = ({ attributes, editMode, onChange, onRoll }) => {
     const getVal = (key) => attributes?.find(a => a.key === key)?.value ?? 0;
 
     const handleChange = (key, raw) => {
@@ -23,13 +21,19 @@ const AttributeGrid = ({ attributes, editMode, onChange }) => {
                     const value = getVal(key);
                     const bonus = getBonusDamage(value);
                     return (
-                        <div key={key} className="ac-attr-cell">
+                        <div
+                            key={key}
+                            className="ac-attr-cell"
+                            onClick={() => !editMode && onRoll?.({ attrKey: key })}
+                            style={{ cursor: !editMode && onRoll ? 'pointer' : 'default' }}
+                        >
                             <span className="ac-label">{label}</span>
                             {editMode ? (
                                 <input
                                     type="number"
                                     value={value}
                                     min={0} max={20}
+                                    onClick={e => e.stopPropagation()}
                                     onChange={e => handleChange(key, e.target.value)}
                                     className="ac-input-num mt-1"
                                 />

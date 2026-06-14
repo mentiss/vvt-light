@@ -119,7 +119,7 @@ const AchtungDiceModal = ({
     const [step, setStep] = useState(mode === 'damage' ? 4 : 1);
 
     // ── État étape 1 ──────────────────────────────────────────────────────────
-    const [selectedAttrKey,  setSelectedAttrKey]  = useState(null);
+    const [selectedAttrKey,  setSelectedAttrKey]  = useState(preselect?.attrKey ?? null);
     const [selectedSkillKey, setSelectedSkillKey] = useState(preselect?.skillKey ?? null);
     const [difficulty,       setDifficulty]       = useState(1);
     const [isAssist,         setIsAssist]         = useState(false);
@@ -132,6 +132,7 @@ const AchtungDiceModal = ({
     const [extraDiceCount,  setExtraDiceCount]  = useState(0);
     const [momentumSpent,   setMomentumSpent]   = useState(0);
     const [threatGenerated, setThreatGenerated] = useState(0);
+    const [freeDieUsed,     setFreeDieUsed]     = useState(false);
 
     // ── État étape 3 — résultat compétence ────────────────────────────────────
     const [diceResults,      setDiceResults]      = useState([]); // résultats mutables (relances)
@@ -163,6 +164,9 @@ const AchtungDiceModal = ({
     // Dés réellement lancés = nbDice - fortunePreRoll (les forcés ne sont pas lancés)
     const dicesToRoll = Math.max(0, nbDice - fortunePreRoll);
 
+    // Interprétation A : le dé gratuit occupe le slot 0 de la table (coût 0 au lieu de 1).
+    // Les achats payants suivants continuent normalement : slot 1 = 2, slot 2 = 3.
+    // extraDiceCount inclut le dé gratuit, donc l'index dans EXTRA_DIE_COST est naturellement correct.
     const nextDieCost = extraDiceCount < MAX_SKILL_DICE - baseDice ? EXTRA_DIE_COST[extraDiceCount] : null;
     const canBuyWithMomentum = nextDieCost !== null && (sessionResources.momentum - momentumSpent) >= nextDieCost;
     const canBuyWithThreat   = nextDieCost !== null;
@@ -205,10 +209,17 @@ const AchtungDiceModal = ({
         setExtraDiceCount(v => v + 1);
     };
 
+    const buyFreeDie = () => {
+        if (freeDieUsed || extraDiceCount >= MAX_SKILL_DICE - baseDice) return;
+        setFreeDieUsed(true);
+        setExtraDiceCount(v => v + 1);
+    };
+
     const resetExtraDice = () => {
         setExtraDiceCount(0);
         setMomentumSpent(0);
         setThreatGenerated(0);
+        setFreeDieUsed(false);
     };
 
     // ── Émissions socket ──────────────────────────────────────────────────────
@@ -244,6 +255,7 @@ const AchtungDiceModal = ({
                         target, skillRank, difficulty,
                         momentumSpent, threatGenerated, isAssist,
                         nbDes: dicesToRoll,
+                        freeDieUsed,
                         // expertise : le joueur déclare après le jet
                     },
                 };
@@ -309,20 +321,55 @@ const AchtungDiceModal = ({
     }, [complications, success, momentum, emitResources, complicationsEmitted]);
 
     // ── Relancer un dé (Fortune post-jet) ────────────────────────────────────
-    const handleRerollDie = useCallback((idx) => {
-        const currentFortune = character.fortune ?? 0;
-        // Déduire les fortunes déjà dépensées pré-jet
+    const handleRerollDie = useCallback(async (idx) => {
+        const currentFortune   = character.fortune ?? 0;
         const remainingFortune = currentFortune - fortunePreRoll;
-        if (remainingFortune <= 0) return;
+        if (remainingFortune <= 0 || rolling) return;
 
-        const newVal  = Math.floor(Math.random() * 20) + 1;
-        const next    = [...diceResults];
-        next[idx]     = newVal;
-        setDiceResults(next);
+        setRolling(true);
+        setError(null);
+        try {
+            // Hook minimal — pas de beforeRoll (pas de validation ressources)
+            const fortuneRerollHook = {
+                buildNotation:        () => '1d20',
+                afterRoll:            (raw) => ({ results: raw.groups[0].values }),
+                buildAnimationSequence: (raw) => ({
+                    mode:   'single',
+                    groups: [{ id: 'fortune-reroll', diceType: 'd20', color: 'default', label: 'Fortune — Relance', waves: [{ dice: raw.groups[0].values }] }],
+                }),
+            };
 
-        // Décrémenter fortune
-        onCharacterUpdate?.({ ...character, fortune: Math.max(0, currentFortune - 1) });
-    }, [diceResults, character, fortunePreRoll, onCharacterUpdate]);
+            const ctx = {
+                apiBase, fetchFn: fetchWithAuth,
+                characterId:   character.id,
+                characterName: character.nom ?? character.playerName,
+                sessionId:     activeGMSession ?? null,
+                rollType:      'achtung_skill',
+                label:         `Fortune — Relance (${ATTRIBUTES.find(a => a.key === selectedAttrKey)?.label ?? ''} + ${skillDef?.label ?? ''})`,
+                systemData:    { nbDes: 1, isAssist: true, target: rawTarget, skillRank: rawSkillRank, difficulty, momentumSpent: 0, threatGenerated: 0 },
+            };
+
+            const raw    = await roll('1d20', ctx, fortuneRerollHook);
+            const newVal = raw.groups?.[0]?.values?.[0] ?? Math.floor(Math.random() * 20) + 1;
+
+            const next = [...diceResults];
+            next[idx]  = newVal;
+            setDiceResults(next);
+
+            // Décrémenter fortune
+            onCharacterUpdate?.({ ...character, fortune: Math.max(0, currentFortune - 1) });
+        } catch (err) {
+            console.error('[handleRerollDie]', err);
+            // Fallback silencieux — relance sans animation si roll() échoue
+            const next = [...diceResults];
+            next[idx]  = Math.floor(Math.random() * 20) + 1;
+            setDiceResults(next);
+            onCharacterUpdate?.({ ...character, fortune: Math.max(0, currentFortune - 1) });
+        } finally {
+            setRolling(false);
+        }
+    }, [diceResults, character, fortunePreRoll, rolling, apiBase, fetchWithAuth,
+        activeGMSession, selectedAttrKey, skillDef, rawTarget, rawSkillRank, difficulty, onCharacterUpdate]);
 
     // ── Jet de dommages ───────────────────────────────────────────────────────
     const handleDamageRoll = useCallback(async () => {
@@ -421,7 +468,7 @@ const AchtungDiceModal = ({
                                             onClick={() => setSelectedAttrKey(k => k === attr.key ? null : attr.key)}
                                             className={`ac-select-btn${isActive ? ' selected-primary' : ''} flex flex-col items-center py-2`}
                                         >
-                                            <span className="ac-label">{def?.label ?? attr.key}</span>
+                                            <span className="ac-label mb-1">{def?.label ?? attr.key}</span>
                                             <span className="ac-attr-value">{attr.value}</span>
                                         </button>
                                     );
@@ -504,7 +551,7 @@ const AchtungDiceModal = ({
                                 <div className="ac-text-muted">Cible {target} · {difficulty} succès requis</div>
                             </div>
                             <div className="text-center">
-                                <div className="ac-label">Dés</div>
+                                <div className="ac-label mb-1">Dés</div>
                                 <div className="ac-resource-value text-secondary">{nbDice}</div>
                                 {fortunePreRoll > 0 && (
                                     <div className="ac-text-muted" style={{ fontSize: '0.6rem' }}>
@@ -513,6 +560,22 @@ const AchtungDiceModal = ({
                                 )}
                             </div>
                         </div>
+
+                        {/* Dé gratuit — talent */}
+                        {!freeDieUsed && extraDiceCount < MAX_SKILL_DICE - baseDice && (
+                            <button
+                                onClick={buyFreeDie}
+                                className="ac-btn ac-btn-secondary w-full"
+                                style={{ borderColor: 'var(--ac-secondary)', color: 'var(--ac-secondary)' }}
+                            >
+                                ✦ Utiliser talent — 1 dé gratuit
+                            </button>
+                        )}
+                        {freeDieUsed && (
+                            <div style={{ fontSize: '0.72rem', color: 'var(--ac-secondary)', textAlign: 'center' }}>
+                                ✦ Dé gratuit (talent) utilisé — prochains dés : 2, 3…
+                            </div>
+                        )}
 
                         {/* Achats dés */}
                         {nextDieCost !== null && (
@@ -568,7 +631,6 @@ const AchtungDiceModal = ({
                                 >−</button>
                                 <div className="text-center">
                                     <div className="ac-resource-value" style={{ color: 'var(--ac-fortune-color)' }}>{fortunePreRoll}</div>
-                                    <div className="ac-text-muted" style={{ fontSize: '0.6rem' }}>dé{fortunePreRoll > 1 ? 's' : ''} forcé{fortunePreRoll > 1 ? 's' : ''}</div>
                                 </div>
                                 <button
                                     onClick={() => setFortunePreRoll(v => v + 1)}

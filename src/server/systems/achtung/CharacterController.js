@@ -36,8 +36,6 @@ function _reshapeSkills(row) {
 }
 
 // ── Helpers flatten client → BDD ─────────────────────────────────────────────
-// Acceptent uniquement des tableaux (format client).
-// Retournent un objet vide si le format n'est pas reconnu.
 
 function _flattenAttributes(attributes) {
     if (!Array.isArray(attributes)) return {};
@@ -76,7 +74,9 @@ function loadFullCharacter(db, id) {
         'SELECT id, name, description, effect FROM character_items WHERE character_id = ? ORDER BY sort_order, id'
     ).all(id);
     const spells = db.prepare(
-        'SELECT id, name, skill_used, difficulty, cost, duration, effect, momentum_spends FROM character_spells WHERE character_id = ? ORDER BY sort_order, id'
+        `SELECT id, name, skill_used, difficulty, cost, duration, effect,
+                momentum_spends, spell_key, tradition
+         FROM character_spells WHERE character_id = ? ORDER BY sort_order, id`
     ).all(id);
 
     return {
@@ -135,9 +135,16 @@ function loadFullCharacter(db, id) {
             id: i.id, name: i.name ?? '', description: i.description ?? '', effect: i.effect ?? '',
         })),
         spells: spells.map(s => ({
-            id: s.id, name: s.name ?? '', skillUsed: s.skill_used ?? '',
-            difficulty: s.difficulty ?? 1, cost: s.cost ?? '', duration: s.duration ?? '',
-            effect: s.effect ?? '', momentumSpends: s.momentum_spends ?? '',
+            id:             s.id,
+            name:           s.name           ?? '',
+            skillUsed:      s.skill_used     ?? '',
+            difficulty:     s.difficulty     ?? 1,
+            cost:           s.cost           ?? '',
+            duration:       s.duration       ?? '',
+            effect:         s.effect         ?? '',
+            momentumSpends: s.momentum_spends ?? '',
+            spellKey:       s.spell_key      ?? null,
+            tradition:      s.tradition      ?? null,
         })),
 
         createdAt:    row.created_at,
@@ -148,15 +155,11 @@ function loadFullCharacter(db, id) {
 
 // ── saveFullCharacter ─────────────────────────────────────────────────────────
 // Met à jour UNIQUEMENT les champs explicitement présents dans data.
-// Pas de COALESCE : on SET directement les champs fournis, les absents sont ignorés.
-// Cela permet d'effacer un champ texte (valeur '') sans COALESCE qui bloquerait.
 
 function saveFullCharacter(db, id, data) {
     db.prepare('BEGIN').run();
     try {
 
-        // ── Colonnes scalaires ────────────────────────────────────────────────
-        // On construit dynamiquement la liste des colonnes à mettre à jour.
         const scalarFields = [];
         const scalarValues = [];
 
@@ -166,19 +169,19 @@ function saveFullCharacter(db, id, data) {
         };
 
         // Identité
-        if (data.playerName  !== undefined) addField('player_name',    data.playerName);
-        if (data.avatar      !== undefined) addField('avatar',         data.avatar);
-        if (data.nom         !== undefined) addField('nom',            data.nom);
-        if (data.prenom      !== undefined) addField('prenom',         data.prenom);
-        if (data.sexe        !== undefined) addField('sexe',           data.sexe);
-        if (data.age         !== undefined) addField('age',            data.age);
-        if (data.taille      !== undefined) addField('taille',         data.taille);
-        if (data.nationality !== undefined) addField('nationality',    data.nationality);
-        if (data.rank        !== undefined) addField('"rank"',         data.rank);
-        if (data.archetype   !== undefined) addField('archetype',      data.archetype);
-        if (data.background  !== undefined) addField('background',     data.background);
+        if (data.playerName     !== undefined) addField('player_name',    data.playerName);
+        if (data.avatar         !== undefined) addField('avatar',         data.avatar);
+        if (data.nom            !== undefined) addField('nom',            data.nom);
+        if (data.prenom         !== undefined) addField('prenom',         data.prenom);
+        if (data.sexe           !== undefined) addField('sexe',           data.sexe);
+        if (data.age            !== undefined) addField('age',            data.age);
+        if (data.taille         !== undefined) addField('taille',         data.taille);
+        if (data.nationality    !== undefined) addField('nationality',    data.nationality);
+        if (data.rank           !== undefined) addField('"rank"',         data.rank);
+        if (data.archetype      !== undefined) addField('archetype',      data.archetype);
+        if (data.background     !== undefined) addField('background',     data.background);
         if (data.characteristic !== undefined) addField('characteristic', data.characteristic);
-        if (data.biography   !== undefined) addField('biography',      data.biography);
+        if (data.biography      !== undefined) addField('biography',      data.biography);
 
         // Truths
         if (Array.isArray(data.truths)) {
@@ -207,13 +210,13 @@ function saveFullCharacter(db, id, data) {
         if (data.isSpellcaster !== undefined) addField('is_spellcaster', data.isSpellcaster ? 1 : 0);
         if (data.power         !== undefined) addField('power',          data.power);
 
-        // Attributs (tableau client → colonnes BDD)
+        // Attributs
         if (Array.isArray(data.attributes)) {
             const cols = _flattenAttributes(data.attributes);
             for (const [col, val] of Object.entries(cols)) addField(col, val);
         }
 
-        // Compétences (tableau client → colonnes BDD)
+        // Compétences
         if (Array.isArray(data.skills)) {
             const cols = _flattenSkills(data.skills);
             for (const [col, val] of Object.entries(cols)) addField(col, val);
@@ -228,7 +231,6 @@ function saveFullCharacter(db, id, data) {
         }
 
         // ── Tables liées ──────────────────────────────────────────────────────
-        // Chaque table n'est mise à jour que si le tableau correspondant est fourni.
 
         if (Array.isArray(data.talents)) {
             db.prepare('DELETE FROM character_talents WHERE character_id = ?').run(id);
@@ -267,12 +269,26 @@ function saveFullCharacter(db, id, data) {
         if (Array.isArray(data.spells)) {
             db.prepare('DELETE FROM character_spells WHERE character_id = ?').run(id);
             const ins = db.prepare(
-                'INSERT INTO character_spells (character_id, name, skill_used, difficulty, cost, duration, effect, momentum_spends, sort_order) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)'
+                `INSERT INTO character_spells
+                 (character_id, name, skill_used, difficulty, cost, duration,
+                  effect, momentum_spends, spell_key, tradition, sort_order)
+                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
             );
             data.spells.forEach((s, i) => {
                 if (!s.name?.trim()) return;
-                ins.run(id, s.name.trim(), s.skillUsed ?? '', s.difficulty ?? 1,
-                    s.cost ?? '', s.duration ?? '', s.effect ?? '', s.momentumSpends ?? '', i);
+                ins.run(
+                    id,
+                    s.name.trim(),
+                    s.skillUsed      ?? s.skill_used      ?? '',
+                    s.difficulty     ?? 1,
+                    s.cost           ?? '',
+                    s.duration       ?? '',
+                    s.effect         ?? '',
+                    s.momentumSpends ?? s.momentum_spends ?? '',
+                    s.spellKey       ?? s.spell_key       ?? null,
+                    s.tradition      ?? null,
+                    i
+                );
             });
         }
 

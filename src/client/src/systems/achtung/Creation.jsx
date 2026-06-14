@@ -1267,14 +1267,20 @@ const Creation = ({ darkMode, onToggleDarkMode }) => {
 
         const spells = (ws.selectedSpells ?? []).map(key => {
             const sp = allSpellsList.find(s => s.key === key) ?? {};
+            const tradition = SPELLS.celtic.some(s => s.key === key)  ? 'celtic'
+                : SPELLS.runic.some(s => s.key === key)   ? 'runic'
+                    : SPELLS.psychic.some(s => s.key === key) ? 'psychic'
+                        : null;
             return {
-                name:           sp.label  ?? key,
-                skill_used:     sp.skill  ?? '',
+                name:           sp.label      ?? key,
+                skillUsed:      sp.skill      ?? '',
                 difficulty:     sp.difficulty ?? 0,
-                cost:           sp.cost   ?? '',
-                duration:       sp.duration ?? '',
-                effect:         sp.effect ?? '',
-                momentum_spends: '',
+                cost:           sp.cost       ?? '',
+                duration:       sp.duration   ?? '',
+                effect:         sp.effect     ?? '',
+                momentumSpends: '',
+                spellKey:       key,
+                tradition,
                 flawed:         isFlawed,
             };
         });

@@ -1817,13 +1817,19 @@ const skillDiceHooks = {
     },
 
     beforeRoll: (ctx) => {
-        const { nbDes, momentumSpent = 0, threatGenerated = 0, isAssist = false } = ctx.systemData;
+        const { nbDes, momentumSpent = 0, threatGenerated = 0, isAssist = false, freeDieUsed = false } = ctx.systemData;
         if (nbDes < 1 || nbDes > 5)
             throw new RollError('INVALID_DICE', `Nombre de dés invalide : ${nbDes}`);
         const base      = isAssist ? 1 : 2;
         const extraDice = nbDes - base;
         if (extraDice > 0) {
-            const expectedCost = EXTRA_DIE_COST.slice(0, extraDice).reduce((a, b) => a + b, 0);
+            // Si un dé gratuit (talent) a été utilisé, il occupe le premier slot
+            // Les dés payants commencent donc à l'index 1 de la table
+            const paidDice     = freeDieUsed ? extraDice - 1 : extraDice;
+            const startIndex   = freeDieUsed ? 1 : 0;
+            const expectedCost = paidDice > 0
+                ? EXTRA_DIE_COST.slice(startIndex, startIndex + paidDice).reduce((a, b) => a + b, 0)
+                : 0;
             if (momentumSpent + threatGenerated !== expectedCost)
                 throw new RollError('RESOURCE_MISMATCH', 'Incohérence ressources / dés achetés');
         }

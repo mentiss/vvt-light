@@ -152,6 +152,8 @@ CREATE TABLE IF NOT EXISTS character_spells (
                                                 id              INTEGER  PRIMARY KEY AUTOINCREMENT,
                                                 character_id    INTEGER  NOT NULL,
                                                 name            TEXT     NOT NULL DEFAULT '',
+                                                spell_key       TEXT     DEFAULT NULL,
+                                                tradition       TEXT     DEFAULT NULL,
                                                 skill_used      TEXT     DEFAULT '',
                                                 difficulty      INTEGER  DEFAULT 1,
                                                 cost            TEXT     DEFAULT '',
