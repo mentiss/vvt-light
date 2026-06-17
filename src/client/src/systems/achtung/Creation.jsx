@@ -1202,13 +1202,17 @@ const Creation = ({ darkMode, onToggleDarkMode }) => {
                 return !!ws.charTruth?.trim();
             }
             case 6: { // Magie (seulement si isSpellcaster)
-                const spellcasterTk = detectSpellcasterTalent(ws);
-                const sType = getSpellcasterType(spellcasterTk);
-                const isDabbler = sType === 'dabbler';
-                if (!isDabbler && !ws.spellTradition) return false;
-                if (isDabbler && !ws.dabblerMode) return false;
-                const maxSpells = isDabbler && ws.dabblerMode === 'two_flawed' ? 2 : getStartingSpellCount(sType);
-                return (ws.selectedSpells?.length ?? 0) >= maxSpells;
+                if(isSpellcaster) {
+                    const spellcasterTk = detectSpellcasterTalent(ws);
+                    const sType = getSpellcasterType(spellcasterTk);
+                    const isDabbler = sType === 'dabbler';
+                    if (!isDabbler && !ws.spellTradition) return false;
+                    if (isDabbler && !ws.dabblerMode) return false;
+                    const maxSpells = isDabbler && ws.dabblerMode === 'two_flawed' ? 2 : getStartingSpellCount(sType);
+                    return (ws.selectedSpells?.length ?? 0) >= maxSpells;
+                } else {
+                    return ws.playerName?.trim() && ws.nom?.trim() && ws.prenom?.trim();
+                }
             }
             case 7: return ws.playerName?.trim() && ws.nom?.trim() && ws.prenom?.trim();
             default: return true;

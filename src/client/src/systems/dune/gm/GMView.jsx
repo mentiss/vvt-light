@@ -19,6 +19,7 @@ import TabJournal   from '../../../components/gm/tabs/TabJournal.jsx';
 import GMDiceModal  from './modals/GMDiceModal.jsx';
 
 import duneConfig from '../config.jsx';
+import DuneHistoryEntry from "../components/DuneHistoryEntry.jsx";
 
 const GM_TABS = [
     { id: 'session',    label: '📜 Session'   },
@@ -98,7 +99,12 @@ const GMView = ({ activeSession, onSessionChange, onlineCharacters, darkMode, on
 
     return (
         <div className="min-h-screen" style={{ background: 'var(--dune-bg)', color: 'var(--dune-text)' }}>
-            <ToastNotifications sessionId={activeSession?.id} />
+            <ToastNotifications
+                sessionId={activeSession?.id}
+                renderDiceToast={(entry) => {
+                    return <DuneHistoryEntry roll={entry}  />;
+                }}
+            />
 
             {/* ── HEADER ──────────────────────────────────────────────────── */}
             <header

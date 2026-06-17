@@ -33,6 +33,7 @@ import { useFetch }   from '../../hooks/useFetch.js';
 import { usePlayerSession } from '../../hooks/usePlayerSession.js';
 import DiceHistoryPage from "../../components/layout/DiceHistoryPage.jsx";
 import DuneHistoryEntry from "./components/DuneHistoryEntry.jsx";
+import AchtungHistoryEntry from "../achtung/components/AchtungHistoryEntry.jsx";
 
 // ── Onglets ───────────────────────────────────────────────────────────────────
 
@@ -168,7 +169,12 @@ const Sheet = ({
 
     return (
         <div className="min-h-screen flex flex-col" style={{ background: 'var(--dune-bg)', color: 'var(--dune-text)' }}>
-            <ToastNotifications />
+            <ToastNotifications
+                sessionId={activeGMSession}
+                renderDiceToast={(entry) => {
+                    return <DuneHistoryEntry roll={entry}  />;
+                }}
+            />
 
             {/* ── HEADER ──────────────────────────────────────────────────── */}
             <header

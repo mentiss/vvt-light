@@ -16,8 +16,11 @@ import DiceConfigModal    from '../../../components/modals/DiceConfigModal.jsx';
 import TabJournal         from '../../../components/gm/tabs/TabJournal.jsx';
 import DiceHistoryPage    from '../../../components/layout/DiceHistoryPage.jsx';
 
-import TabSession         from './tabs/TabSession.jsx';
+import TabSession          from './tabs/TabSession.jsx';
+import GMDiceModal         from './modals/GMDiceModal.jsx';
 import AchtungHistoryEntry from '../components/AchtungHistoryEntry.jsx';
+import achtungHistoryEntry from "../components/AchtungHistoryEntry.jsx";
+import DiceEntryHistory from "../../cyberpunk/components/layout/DiceEntryHistory.jsx";
 
 // ── Onglets ───────────────────────────────────────────────────────────────────
 
@@ -33,12 +36,13 @@ const GMView = ({ activeSession, onSessionChange, onlineCharacters, darkMode, on
     const { logout } = useAuth();
     const { slug }   = useSystem();
 
-    const [activeTab,     setActiveTab]     = useState(() => {
+    const [activeTab,      setActiveTab]      = useState(() => {
         const hash = window.location.hash.replace('#', '');
         return GM_TABS.some(t => t.id === hash) ? hash : 'session';
     });
-    const [showMenu,      setShowMenu]      = useState(false);
-    const [showDiceConfig,setShowDiceConfig]= useState(false);
+    const [showMenu,       setShowMenu]       = useState(false);
+    const [showDiceConfig, setShowDiceConfig] = useState(false);
+    const [showDiceModal,  setShowDiceModal]  = useState(false);
 
     const changeTab = useCallback((id) => {
         setActiveTab(id);
@@ -52,15 +56,21 @@ const GMView = ({ activeSession, onSessionChange, onlineCharacters, darkMode, on
     }, [logout, slug]);
 
     return (
-        <div className="min-h-screen bg-bg text-default">
-            <ToastNotifications />
+        <div className="min-h-screen bg-default text-default">
+            <ToastNotifications
+                sessionId={activeSession?.id}
+                renderDiceToast={(entry) => {
+                    const adapted = { ...entry, details: entry.roll_result };
+                    return <AchtungHistoryEntry roll={adapted}  />;
+                }}
+            />
 
             {/* ── HEADER ──────────────────────────────────────────────────── */}
             <header className="ac-header">
-                <div className="flex items-center gap-2">
-                    <span className="ac-font-title text-primary" style={{ fontSize: '0.85rem', letterSpacing: '0.1em', textTransform: 'uppercase' }}>
-                        GM — Achtung! Cthulhu
-                    </span>
+                <div className="flex items-center gap-2 min-w-0">
+                    <div className="min-w-0">
+                        <div className="ac-page-title">Achtung! Cthulhu</div>
+                    </div>
                     {activeSession && (
                         <span className="ac-pill text-secondary" style={{ fontSize: '0.65rem' }}>
                             {activeSession.name}
@@ -69,6 +79,15 @@ const GMView = ({ activeSession, onSessionChange, onlineCharacters, darkMode, on
                 </div>
 
                 <div className="flex items-center gap-2 shrink-0">
+                    {/* Bouton dés GM — accessible depuis tous les onglets */}
+                    <button
+                        onClick={() => setShowDiceModal(true)}
+                        className="ac-btn ac-btn-primary"
+                        title="Jet de dés GM"
+                    >
+                        🎲
+                    </button>
+
                     <ThemeToggle darkMode={darkMode} onToggle={onToggleDarkMode} />
 
                     <div className="relative">
@@ -99,20 +118,22 @@ const GMView = ({ activeSession, onSessionChange, onlineCharacters, darkMode, on
             </header>
 
             {/* ── ONGLETS ─────────────────────────────────────────────────── */}
-            <nav className="ac-nav-bar">
-                {GM_TABS.map(tab => (
-                    <button
-                        key={tab.id}
-                        onClick={() => changeTab(tab.id)}
-                        className={`ac-tab${activeTab === tab.id ? ' active' : ''}`}
-                    >
-                        {tab.label}
-                    </button>
-                ))}
-            </nav>
+            <div className="mb-1 ac-subheader-bar">
+                <nav className="ac-nav-bar">
+                    {GM_TABS.map(tab => (
+                        <button
+                            key={tab.id}
+                            onClick={() => changeTab(tab.id)}
+                            className={`ac-tab${activeTab === tab.id ? ' active' : ''}`}
+                        >
+                            {tab.label}
+                        </button>
+                    ))}
+                </nav>
+            </div>
 
             {/* ── CONTENU ─────────────────────────────────────────────────── */}
-            <div className="max-w-6xl mx-auto px-3 py-4">
+            <div className="">
 
                 {activeTab === 'session' && (
                     <TabSession
@@ -138,7 +159,16 @@ const GMView = ({ activeSession, onSessionChange, onlineCharacters, darkMode, on
             </div>
 
             {/* ── MODALES ─────────────────────────────────────────────────── */}
-            {showDiceConfig && <DiceConfigModal onClose={() => setShowDiceConfig(false)} />}
+            {showDiceConfig && (
+                <DiceConfigModal onClose={() => setShowDiceConfig(false)} />
+            )}
+
+            {showDiceModal && (
+                <GMDiceModal
+                    onClose={() => setShowDiceModal(false)}
+                    sessionId={activeSession?.id ?? null}
+                />
+            )}
         </div>
     );
 };

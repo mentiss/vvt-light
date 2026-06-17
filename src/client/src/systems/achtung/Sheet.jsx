@@ -139,7 +139,13 @@ const Sheet = ({
             data-theme={darkMode ? 'dark' : 'light'}
             style={{ background: 'var(--ac-bg)', color: 'var(--ac-text)', fontFamily: 'var(--ac-font-body)' }}
         >
-            <ToastNotifications />
+            <ToastNotifications
+                sessionId={activeGMSession}
+                renderDiceToast={(entry) => {
+                    const adapted = { ...entry, details: entry.roll_result };
+                    return <AchtungHistoryEntry roll={adapted}  />;
+                }}
+            />
 
             {/* ── HEADER ──────────────────────────────────────────────────── */}
             <header className="ac-header">
@@ -151,7 +157,7 @@ const Sheet = ({
 
                 <div className="flex items-center gap-2 shrink-0">
                     <button onClick={() => setDiceModal({ type: 'skill' })} className="ac-btn ac-btn-primary">
-                        🎲 Lancer
+                        🎲
                     </button>
                     <ThemeToggle darkMode={darkMode} onToggle={onToggleDarkMode} />
                     <div className="relative">
@@ -331,7 +337,7 @@ const Sheet = ({
                                     <div className="shrink-0 flex flex-col items-center px-2 py-4 sticky self-start ac-resource-gauge ac-resource-gauge-right h-full">
                                         <VerticalGauge
                                             label="Menace"
-                                            value={Math.min(sessionResources.threat ?? 0, 12)}
+                                            value={sessionResources.threat ?? 0}
                                             max={12}
                                             filledColor="var(--ac-accent)"
                                             emptyColor="var(--ac-surface-alt)"

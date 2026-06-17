@@ -16,7 +16,7 @@ export const ATTRIBUTES = [
     { key: 'agility',      label: 'Agilité',        description: 'Vitesse, équilibre, mémoire musculaire. Un personnage agile se déplace rapidement et silencieusement. Utilisé pour les attaques à distance.' },
     { key: 'brawn',        label: 'Force',           description: 'Condition physique et endurance. Un personnage fort est robuste et résistant. Détermine le stress maximum et la résistance aux dégâts (Armure).' },
     { key: 'coordination', label: 'Coordination',    description: 'Précision, timing, dextérité fine. Bons tireurs, bons pilotes, habiles de leurs mains. Utilisé pour les attaques à distance.' },
-    { key: 'insight',      label: 'Intuition',       description: 'Perception, instincts, intelligence de la rue. Discernement et sagesse pratique. Ajoute des dés de Challenge aux attaques à distance.' },
+    { key: 'insight',      label: 'Perception',       description: 'Perception, instincts, intelligence de la rue. Discernement et sagesse pratique. Ajoute des dés de Challenge aux attaques à distance.' },
     { key: 'reason',       label: 'Raisonnement',    description: 'Logique, intellect, savoir acquis. Personnages lucides, rationnels ou contemplatifs. Détermine les langues bonus.' },
     { key: 'will',         label: 'Volonté',         description: 'Force intérieure, discipline mentale. Personnages têtus et déterminés. Détermine le stress maximum et la résistance mentale (Courage).' },
 ];
@@ -43,12 +43,12 @@ export const ATTR_LABEL  = Object.fromEntries(ATTRIBUTES.map(a => [a.key, a.labe
 // ── Listes plates (pour Sheet / selects) ─────────────────────────────────────
 
 export const ARCHETYPES = [
-    { key: 'boffin',        label: 'Boffin' },
+    { key: 'boffin',        label: 'Expert' },
     { key: 'commander',     label: 'Commandant' },
     { key: 'con_artist',    label: 'Escroc' },
     { key: 'grease_monkey', label: 'Mécano' },
-    { key: 'infiltrator',   label: 'Infiltrateur' },
-    { key: 'investigator',  label: 'Investigateur' },
+    { key: 'infiltrator',   label: 'Infiltré' },
+    { key: 'investigator',  label: 'Enquêteur' },
     { key: 'occultist',     label: 'Occultiste' },
     { key: 'soldier',       label: 'Soldat' },
 ];
@@ -812,14 +812,14 @@ export const NATIONALITIES = [
 export const ARCHETYPE_DATA = {
     boffin: {
         label: 'Boffin',
-        labelFr: 'Boffin',
-        tagline: 'Le cerveau du groupe. Si un Boffin ne sait pas quelque chose, il peut probablement le découvrir.',
+        labelFr: 'Expert',
+        tagline: 'Le cerveau du groupe. Si un Expert ne sait pas quelque chose, il peut probablement le découvrir.',
         playIf: [
             'Être le plus intelligent du groupe.',
             'Avoir une réponse à tout.',
             'Craquer des codes, désactiver des chars, et déjouer les nazis !',
         ],
-        description: 'Un Boffin sait comment les choses fonctionnent. Il possède de vastes connaissances techniques et pratiques, et le talent pour les mettre en œuvre. Si un Boffin ne sait pas quelque chose, il peut probablement le découvrir à force d\'essais et d\'erreurs — et il n\'a pas peur de se salir les mains.',
+        description: 'Un Expert sait comment les choses fonctionnent. Il possède de vastes connaissances techniques et pratiques, et le talent pour les mettre en œuvre. Si un Boffin ne sait pas quelque chose, il peut probablement le découvrir à force d\'essais et d\'erreurs — et il n\'a pas peur de se salir les mains.',
         attrBonus:   { brawn: 1, coordination: 2, insight: 1, reason: 2 },
         skillBonus:  { academia: 1, engineering: 2, medicine: 2, observation: 1, stealth: 1, vehicles: 2 },
         focusPool:   ['engineering', 'medicine', 'vehicles'],
@@ -889,14 +889,14 @@ export const ARCHETYPE_DATA = {
     },
     infiltrator: {
         label: 'Infiltrator',
-        labelFr: 'Infiltrateur',
+        labelFr: 'Infiltré',
         tagline: 'L\'ombre. Expert pour entrer là où il ne devrait pas être, éviter la détection et récupérer des secrets.',
         playIf: [
             'Faire la guerre depuis les ombres !',
             'Se glisser derrière les lignes ennemies.',
             'Se déplacer sans être vu et être là où vous ne devriez pas !',
         ],
-        description: 'Un Infiltrateur est doué pour accéder aux endroits interdits. Il excelle à éviter la détection, à contourner les systèmes de sécurité et à récupérer des objets de valeur dans des lieux sécurisés. Dans le fracas de la guerre, la capacité à se déplacer sans être vu ni entendu lui confère un avantage crucial.',
+        description: 'Un Infiltré est doué pour accéder aux endroits interdits. Il excelle à éviter la détection, à contourner les systèmes de sécurité et à récupérer des objets de valeur dans des lieux sécurisés. Dans le fracas de la guerre, la capacité à se déplacer sans être vu ni entendu lui confère un avantage crucial.',
         attrBonus:   { agility: 2, brawn: 1, coordination: 2, insight: 1 },
         skillBonus:  { athletics: 2, engineering: 1, fighting: 2, observation: 1, stealth: 2, survival: 1 },
         focusPool:   ['athletics', 'fighting', 'stealth'],
@@ -907,14 +907,14 @@ export const ARCHETYPE_DATA = {
     },
     investigator: {
         label: 'Investigator',
-        labelFr: 'Investigateur',
+        labelFr: 'Enquêteur',
         tagline: 'Le chercheur de vérité. Insatiable dans sa quête de la vérité, quelle qu\'en soit le prix.',
         playIf: [
             'Découvrir la vérité quoi qu\'il en coûte.',
             'Démasquer les conspirations.',
             'Fouiller les bureaux, découvrir des indices et trouver les chaînons manquants !',
         ],
-        description: 'Un Investigateur a un appétit insatiable pour la vérité et ira au bout du monde pour la trouver. Avec la propagande de guerre dominant les deux camps, la vérité est plus difficile à discerner mais plus précieuse que jamais. Enquêteurs privés, policiers militaires et journalistes plongent dans la vérité cachée derrière les gros titres.',
+        description: 'Un Enquêteur a un appétit insatiable pour la vérité et ira au bout du monde pour la trouver. Avec la propagande de guerre dominant les deux camps, la vérité est plus difficile à discerner mais plus précieuse que jamais. Enquêteurs privés, policiers militaires et journalistes plongent dans la vérité cachée derrière les gros titres.',
         attrBonus:   { agility: 1, coordination: 1, insight: 2, reason: 2 },
         skillBonus:  { academia: 2, engineering: 1, medicine: 2, observation: 2, persuasion: 1, stealth: 1 },
         focusPool:   ['academia', 'medicine', 'observation'],

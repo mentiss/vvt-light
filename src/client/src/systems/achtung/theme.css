@@ -1274,5 +1274,100 @@ body > * { position: relative; z-index: 1; }
     color:       var(--ac-text-muted);
     margin-top:  0.25rem;
 }
+/* ═══════════════════════════════════════════════════════════════════════════
+   GM — SIDEBAR PERSONNAGES (à ajouter dans theme.css)
+═══════════════════════════════════════════════════════════════════════════ */
 
-/* Utilitaire bg-danger — généré par generate-css-utils.js, ne pas redéfinir ici */
+/* Sidebar conteneur */
+.ac-gm-sidebar {
+    width:          13rem;
+    flex-shrink:    0;
+    border-right:   1px solid var(--ac-border);
+    background:     var(--ac-surface);
+    overflow-y:     auto;
+    display:        flex;
+    flex-direction: column;
+}
+
+.ac-gm-sidebar-header {
+    padding:       0.6rem 0.75rem;
+    border-bottom: 1px solid var(--ac-border);
+    background:    var(--ac-surface-alt);
+}
+
+/* Bouton personnage sidebar */
+.ac-gm-char-btn {
+    width:        100%;
+    text-align:   left;
+    padding:      0.55rem 0.75rem;
+    border-bottom: 1px solid var(--ac-border);
+    border-left:  3px solid transparent;
+    background:   transparent;
+    display:      flex;
+    align-items:  center;
+    gap:          0.6rem;
+    cursor:       pointer;
+    transition:   background 0.15s, border-color 0.15s;
+}
+
+.ac-gm-char-btn:hover {
+    background: color-mix(in srgb, var(--ac-primary) 6%, transparent);
+}
+
+.ac-gm-char-btn.active {
+    border-left-color: var(--ac-primary);
+    background:        color-mix(in srgb, var(--ac-primary) 10%, transparent);
+}
+
+/* Avatar dans sidebar */
+.ac-gm-char-avatar {
+    background: var(--ac-surface-alt);
+    border:     1px solid var(--ac-border);
+}
+
+.ac-gm-char-initial {
+    font-size:   0.9rem;
+    font-weight: 700;
+    color:       var(--ac-primary);
+}
+
+/* Dot online/offline */
+.ac-gm-online-dot {
+    position:    absolute;
+    bottom:      -2px;
+    right:       -2px;
+    width:       10px;
+    height:      10px;
+    border-radius: 50%;
+    border:      2px solid var(--ac-surface);
+    background:  var(--ac-border);
+}
+
+.ac-gm-online-dot.online {
+    background: var(--ac-success);
+}
+
+/* Textes sidebar */
+.ac-gm-char-name {
+    color:      var(--ac-text);
+    font-size:  0.83rem;
+}
+
+.ac-gm-char-name-active {
+    color:      var(--ac-primary);
+    font-size:  0.83rem;
+}
+
+.ac-gm-char-player {
+    font-size:  0.67rem;
+    color:      var(--ac-muted);
+    font-style: italic;
+}
+
+.ac-gm-char-subtitle {
+    font-family:    var(--ac-font-heading);
+    font-size:      0.6rem;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color:          var(--ac-muted);
+}
