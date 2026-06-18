@@ -22,7 +22,9 @@ import {
     ARCHETYPE_DATA, BACKGROUND_DATA, CHARACTERISTIC_DATA,
     NATIONALITIES, TALENTS, SPELLS,
     getBonusDamage, computeStress, computeArmour, computeCourage, getBonusLanguages,
-    getSpellcasterType, getPowerRating, getBonusPowerDice, getCastAttribute, getStartingSpellCount,
+    SPELLCASTER_PRACTICES, getCastAttribute, getStartingSpellCount, getAccessibleTraditions,
+    getPowerRating, getBonusPowerDice,
+    KEYWORD_LABELS,
 } from './config.jsx';
 
 // ══════════════════════════════════════════════════════════════════════════════
@@ -106,12 +108,20 @@ function computeFinalValues(ws) {
     return { attrs, skills };
 }
 
-// Détecte le talent Lanceur de sorts parmi les 3 talents choisis
+// Détecte si un talent Lanceur de sorts (keyword 'spellcaster') a été pris,
+// parmi les 3 talents choisis. Ne détermine PLUS la pratique — celle-ci est
+// choisie librement par le joueur à l'étape 6 (cf. SPELLCASTER_PRACTICES).
 function detectSpellcasterTalent(ws) {
     for (const tk of [ws.archTalent, ws.bgTalent, ws.charTalent]) {
-        if (tk && TALENTS[tk]?.keywords.includes('Lanceur de sorts')) return tk;
+        if (tk && TALENTS[tk]?.keywords.includes('spellcaster')) return tk;
     }
     return null;
+}
+
+// Affiche une liste de clés keyword anglaises sous forme lisible FR ("X ou Y")
+function formatKeywordList(keys) {
+    if (!keys?.length) return '—';
+    return keys.map(k => KEYWORD_LABELS[k] ?? k).join(' ou ');
 }
 
 // ══════════════════════════════════════════════════════════════════════════════
@@ -153,22 +163,50 @@ const StepBar = ({ steps, current }) => (
     </div>
 );
 
-const TalentCard = ({ talentKey, selected, onSelect }) => {
+// Pour un talent ayant le keyword 'advanced', retourne { skillKey, currentRank } ou null.
+// Simplifié : le keyword de compétence associé EST déjà la clé SKILLS (plus de table de trad FR->clé).
+function getAdvancedRequirement(talentKey, ws) {
+    const t = TALENTS[talentKey];
+    if (!t?.keywords.includes('advanced')) return null;
+    const skillKey = t.keywords.find(k => SKILLS.some(s => s.key === k));
+    if (!skillKey) return null;
+    const { skills } = computeFinalValues(ws);
+    return { skillKey, currentRank: skills[skillKey] ?? 0 };
+}
+
+const TalentCard = ({ talentKey, selected, onSelect, ws }) => {
     const t = TALENTS[talentKey];
     if (!t) return null;
+
+    const advReq   = ws ? getAdvancedRequirement(talentKey, ws) : null;
+    const isLocked = advReq && advReq.currentRank < 3 && !selected;
+
     return (
-        <button onClick={() => onSelect(talentKey)} className="ac-card text-left w-full transition-all"
-                style={{ borderLeft: `3px solid ${selected ? 'var(--ac-secondary)' : 'var(--ac-border)'}`, cursor: 'pointer', background: selected ? 'var(--ac-surface-alt)' : 'var(--ac-surface)' }}>
+        <button
+            onClick={() => !isLocked && onSelect(talentKey)}
+            disabled={isLocked}
+            className="ac-card text-left w-full transition-all"
+            style={{
+                borderLeft: `3px solid ${selected ? 'var(--ac-secondary)' : 'var(--ac-border)'}`,
+                cursor:     isLocked ? 'not-allowed' : 'pointer',
+                background: selected ? 'var(--ac-surface-alt)' : 'var(--ac-surface)',
+                opacity:    isLocked ? 0.45 : 1,
+            }}>
             <div className="flex items-start justify-between gap-2">
                 <span style={{ fontFamily: 'var(--ac-font-heading)', fontWeight: 700, fontSize: '0.78rem', color: 'var(--ac-text)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>{t.label}</span>
                 {selected && <span style={{ color: 'var(--ac-secondary)', fontSize: '0.8rem', flexShrink: 0 }}>✓</span>}
             </div>
             <div className="flex flex-wrap gap-1 mt-1 mb-2">
                 {t.keywords.map(kw => (
-                    <span key={kw} style={{ fontSize: '0.6rem', fontFamily: 'var(--ac-font-heading)', fontWeight: 600, letterSpacing: '0.08em', textTransform: 'uppercase', background: 'var(--ac-primary)', color: 'var(--ac-bg)', borderRadius: 3, padding: '1px 5px' }}>{kw}</span>
+                    <span key={kw} style={{ fontSize: '0.6rem', fontFamily: 'var(--ac-font-heading)', fontWeight: 600, letterSpacing: '0.08em', textTransform: 'uppercase', background: 'var(--ac-primary)', color: 'var(--ac-bg)', borderRadius: 3, padding: '1px 5px' }}>{KEYWORD_LABELS[kw] ?? kw}</span>
                 ))}
             </div>
             <p style={{ fontSize: '0.76rem', color: 'var(--ac-text-muted)', lineHeight: 1.5, margin: 0 }}>{t.description}</p>
+            {isLocked && (
+                <p style={{ fontSize: '0.7rem', color: 'var(--ac-accent)', fontWeight: 600, marginTop: '0.4rem' }}>
+                    🔒 Nécessite {SKILL_LABEL[advReq.skillKey]} 3+ (actuel : {advReq.currentRank})
+                </p>
+            )}
         </button>
     );
 };
@@ -451,7 +489,7 @@ const Step2Archetype = ({ ws, patch }) => {
                             {ad.talentNote && <p style={{ fontSize: '0.74rem', color: 'var(--ac-muted)', marginBottom: '0.5rem', fontStyle: 'italic' }}>{ad.talentNote}</p>}
                             <div className="flex flex-col gap-3 mt-2">
                                 {ad.talentPool.map(tk => (
-                                    <TalentCard key={tk} talentKey={tk} selected={ws.archTalent === tk}
+                                    <TalentCard key={tk} talentKey={tk} selected={ws.archTalent === tk} ws={ws}
                                                 onSelect={val => patch({ archTalent: ws.archTalent === val ? null : val })} />
                                 ))}
                             </div>
@@ -536,31 +574,39 @@ const Step3Nationality = ({ ws, patch }) => {
 // ÉTAPE 4 — Background
 // ══════════════════════════════════════════════════════════════════════════════
 
-const TALENT_POOL_BY_KW = {
-    'érudition':  ['book_smart','deep_expertise','did_the_reading','dedication','library_dweller','polyglot','studious'],
-    'athlétisme': ['athletic_prodigy','fighting_fit','hail_mary','might_makes_right','sure_footed','serpentine'],
-    'ingénierie': ['demolitions','elbow_grease','gunsmith','jury_rig','saboteur','make_do_and_mend'],
-    'combat':     ['defensive','five_rounds_rapid','guardian','mean_right_hook','sharpshooter','they_dont_like_it_up_em'],
-    'médecine':   ['long_term_care','medic','out_of_harms_way','reassuring','seen_worse'],
-    'observation':['constantly_watching','forward_observer','lights_out','ransack','scout','scrutinise'],
-    'persuasion': ['an_answer_for_everything','hog_the_spotlight','imposing_presence','reasoned_discourse','rousing_speaker','subtle_cues'],
-    'résilience': ['a_stiff_drink','courageous','dauntless','extra_effort','hard_as_nails','second_wind','tough'],
-    'discrétion': ['all_the_best_hiding_spots','exploit_weakness','face_in_the_crowd','hit_and_run','like_a_shadow','perfect_timing'],
-    'survie':     ['companion','dig_for_victory','everything_i_need_is_here','fieldcraft','survive_and_thrive','tracker'],
-    'tactique':   ['band_of_brothers','call_to_action','convey_intent','decisive_plan','direct','teamwork'],
-    'véhicules':  ['combat_gunner','drive_all_night','off_road','smuggler','still_in_control','strafing_run'],
-    'étrange':    ['bizarre_insight','foreboding_survival','minor_pact','mystical_power','numb_to_the_horrors','occult_dabbler'],
-    'fortune':    ['second_wind','cool_under_pressure','born_leader','own_the_battlefield','minor_pact'],
-    'tout':       ['advisor','bold','cautious','cool_under_pressure'],
+// Pool de talents génériques par clé de compétence (Chapitre 6, p.87-96 du livre).
+// Clés alignées sur SKILLS + 'fortune'/'weird'/'skill'/'any' (cf. KEYWORD_LABELS).
+const TALENT_POOL_BY_SKILL = {
+    academia:    ['book_smart','deep_expertise','did_the_reading','dedication','library_dweller','polyglot','studious'],
+    athletics:   ['athletic_prodigy','fighting_fit','hail_mary','might_makes_right','sure_footed','serpentine'],
+    engineering: ['demolitions','elbow_grease','gunsmith','jury_rig','saboteur','make_do_and_mend'],
+    fighting:    ['defensive','five_rounds_rapid','guardian','mean_right_hook','sharpshooter','they_dont_like_it_up_em'],
+    medicine:    ['long_term_care','medic','make_do_mend_medicine','out_of_harms_way','reassuring','seen_worse'],
+    observation: ['constantly_watching','forward_observer','lights_out','ransack','scout','scrutinise'],
+    persuasion:  ['an_answer_for_everything','hog_the_spotlight','imposing_presence','reasoned_discourse','rousing_speaker','subtle_cues'],
+    resilience:  ['a_stiff_drink','courageous','dauntless','extra_effort','hard_as_nails','second_wind','tough'],
+    stealth:     ['all_the_best_hiding_spots','exploit_weakness','face_in_the_crowd','hit_and_run','like_a_shadow','perfect_timing'],
+    survival:    ['companion','dig_for_victory','everything_i_need_is_here','fieldcraft','survive_and_thrive','tracker'],
+    tactics:     ['band_of_brothers','call_to_action','convey_intent','decisive_plan','direct','teamwork'],
+    vehicles:    ['combat_gunner','drive_all_night','off_road','smuggler','still_in_control','strafing_run'],
+    weird:       ['bizarre_insight','foreboding_survival','minor_pact','mystical_power','numb_to_the_horrors','occult_dabbler'],
+    // Fortune en keyword secondaire (livre p.87) : seulement ces 2 talents.
+    fortune:     ['second_wind','cool_under_pressure'],
+    skill:       ['advisor','bold','cautious','cool_under_pressure'],
 };
 
-function getTalentPoolByKeyword(keyword) {
-    if (!keyword) return [];
-    const kw = keyword.toLowerCase();
-    for (const [mapKey, pool] of Object.entries(TALENT_POOL_BY_KW)) {
-        if (kw.includes(mapKey)) return pool;
+// Accepte un tableau de clés anglaises (relation "ou") et fusionne les pools
+// correspondants, sans doublon. 'any' = tous les talents génériques confondus.
+function getTalentPoolByKeyword(keys) {
+    if (!keys?.length) return [];
+    if (keys.includes('any')) {
+        return [...new Set(Object.values(TALENT_POOL_BY_SKILL).flat())];
     }
-    return [];
+    const merged = new Set();
+    for (const key of keys) {
+        for (const tk of (TALENT_POOL_BY_SKILL[key] ?? [])) merged.add(tk);
+    }
+    return [...merged];
 }
 
 const Step4Background = ({ ws, patch }) => {
@@ -657,10 +703,10 @@ const Step4Background = ({ ws, patch }) => {
                             </div>
                         </div>
                         <div className="ac-card">
-                            <div className="ac-section-header">Choisissez 1 talent <span style={{ color: 'var(--ac-muted)', fontWeight: 400, textTransform: 'none', letterSpacing: 0 }}>(keyword : {bd.talentKeyword})</span></div>
+                            <div className="ac-section-header">Choisissez 1 talent <span style={{ color: 'var(--ac-muted)', fontWeight: 400, textTransform: 'none', letterSpacing: 0 }}>(keyword : {formatKeywordList(bd.talentKeyword)})</span></div>
                             <div className="flex flex-col gap-3 mt-2">
                                 {talentPool.map(tk => (
-                                    <TalentCard key={tk} talentKey={tk} selected={ws.bgTalent === tk} onSelect={val => patch({ bgTalent: ws.bgTalent === val ? null : val })} />
+                                    <TalentCard key={tk} talentKey={tk} selected={ws.bgTalent === tk} ws={ws} onSelect={val => patch({ bgTalent: ws.bgTalent === val ? null : val })} />
                                 ))}
                             </div>
                         </div>
@@ -763,10 +809,10 @@ const Step5Characteristic = ({ ws, patch }) => {
                                     )}
                                 </div>
                                 <div className="ac-card">
-                                    <div className="ac-section-header">Choisissez 1 talent <span style={{ color: 'var(--ac-muted)', fontWeight: 400, textTransform: 'none', letterSpacing: 0 }}>(keyword : {activeChar.talentKeyword})</span></div>
+                                    <div className="ac-section-header">Choisissez 1 talent <span style={{ color: 'var(--ac-muted)', fontWeight: 400, textTransform: 'none', letterSpacing: 0 }}>(keyword : {formatKeywordList(activeChar.talentKeyword)})</span></div>
                                     <div className="flex flex-col gap-3 mt-2">
                                         {talentPool.slice(0, 6).map(tk => (
-                                            <TalentCard key={tk} talentKey={tk} selected={ws.charTalent === tk} onSelect={val => patch({ charTalent: ws.charTalent === val ? null : val })} />
+                                            <TalentCard key={tk} talentKey={tk} selected={ws.charTalent === tk} ws={ws} onSelect={val => patch({ charTalent: ws.charTalent === val ? null : val })} />
                                         ))}
                                     </div>
                                 </div>
@@ -800,159 +846,176 @@ const Step5Characteristic = ({ ws, patch }) => {
 
 const Step6Magic = ({ ws, patch, attrs }) => {
     const spellcasterTalentKey = detectSpellcasterTalent(ws);
-    const spellcasterType      = getSpellcasterType(spellcasterTalentKey);
-    const castAttr             = getCastAttribute(spellcasterType);
-    const castAttrValue        = attrs[castAttr] ?? ATTR_BASE;
-    const powerRating          = getPowerRating(spellcasterType);
-    const bonusDice            = getBonusPowerDice(castAttrValue);
-    const totalDice            = powerRating + bonusDice;
-    const startingSpells       = getStartingSpellCount(spellcasterType);
-    const isDabbler            = spellcasterType === 'dabbler';
+    const talentLabel          = spellcasterTalentKey ? TALENTS[spellcasterTalentKey]?.label : '—';
 
-    // Sorts disponibles selon tradition sélectionnée ou tous (Bricoleur)
+    // Pratique choisie LIBREMENT par le joueur — indépendante du talent précis pris
+    const practice       = ws.spellcasterPractice ?? null;
+    const isDabbler       = practice === 'dabbler';
+    const castAttr        = practice ? getCastAttribute(practice) : null;
+    const castAttrValue   = castAttr ? (attrs[castAttr] ?? ATTR_BASE) : 0;
+    const powerRating      = practice ? getPowerRating(practice) : 0;
+    const bonusDice        = practice ? getBonusPowerDice(castAttrValue) : 0;
+    const totalDice        = powerRating + bonusDice;
+    const startingSpells   = practice ? getStartingSpellCount(practice) : 0;
+    const accessibleTraditions = practice ? getAccessibleTraditions(practice) : [];
+
+    const TRADITION_INFO = {
+        celtic:  { label: 'Celtique',  desc: 'Druides et femmes sages celtes. Magie animiste, protection et forces naturelles destructrices.' },
+        runic:   { label: 'Runique',   desc: 'Voyants et tisserands de runes nordiques et germaniques. Magie de guerre et de divination.' },
+        psychic: { label: 'Psychique', desc: 'Pouvoirs de l\'esprit — ESP, télékinésie, perception extra-sensorielle. Pas de tradition formelle, juste un don brut.' },
+    };
+
+    // Sorts disponibles : si une seule tradition accessible (Traditionnaliste), on l'impose ;
+    // sinon le joueur choisit parmi les traditions accessibles à sa pratique.
     const availableSpells = useMemo(() => {
-        if (isDabbler) return [...SPELLS.celtic, ...SPELLS.runic, ...SPELLS.psychic];
         if (!ws.spellTradition) return [];
         return SPELLS[ws.spellTradition] ?? [];
-    }, [isDabbler, ws.spellTradition]);
+    }, [ws.spellTradition]);
 
     const selectedSpells = ws.selectedSpells ?? [];
+    const maxSpells = isDabbler && ws.dabblerMode === 'two_flawed' ? 2 : startingSpells;
 
     const toggleSpell = (key) => {
         if (selectedSpells.includes(key)) {
             patch({ selectedSpells: selectedSpells.filter(k => k !== key) });
-        } else {
-            const maxSpells = isDabbler && ws.dabblerMode === 'two_flawed' ? 2 : startingSpells;
-            if (selectedSpells.length < maxSpells) {
-                patch({ selectedSpells: [...selectedSpells, key] });
-            }
+        } else if (selectedSpells.length < maxSpells) {
+            patch({ selectedSpells: [...selectedSpells, key] });
         }
     };
 
-    const talentLabel = spellcasterTalentKey ? TALENTS[spellcasterTalentKey]?.label : '—';
-    const castAttrLabel = ATTR_LABEL[castAttr] ?? castAttr;
+    const selectPractice = (p) => {
+        // Changer de pratique réinitialise tradition + sorts sélectionnés (cohérence)
+        patch({ spellcasterPractice: p, spellTradition: null, dabblerMode: null, selectedSpells: [] });
+    };
 
-    const maxSpells = isDabbler && ws.dabblerMode === 'two_flawed' ? 2 : startingSpells;
+    const castAttrLabel = castAttr ? (ATTR_LABEL[castAttr] ?? castAttr) : '—';
 
     return (
         <div className="flex flex-col gap-6">
-            {/* ── Résumé du type ── */}
+            {/* ── Talent déclencheur (information) ── */}
             <div className="ac-card" style={{ borderLeft: '4px solid var(--ac-secondary)' }}>
-                <div className="ac-section-header">Profil de lanceur de sorts</div>
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '0.75rem', marginTop: '0.5rem' }}>
-                    {[
-                        { label: 'Type', value: isDabbler ? 'Bricoleur' : 'Traditionnel' },
-                        { label: 'Attribut de cast', value: castAttrLabel },
-                        { label: 'Talent déclencheur', value: talentLabel },
-                    ].map(item => (
-                        <div key={item.label} className="ac-card-alt" style={{ padding: '0.5rem 0.75rem' }}>
-                            <div className="ac-label">{item.label}</div>
-                            <div style={{ fontFamily: 'var(--ac-font-heading)', fontWeight: 700, fontSize: '0.85rem', color: 'var(--ac-secondary)', marginTop: 2 }}>{item.value}</div>
-                        </div>
+                <div className="ac-section-header">Accès à la magie</div>
+                <p style={{ fontSize: '0.78rem', color: 'var(--ac-text-muted)', margin: '0.5rem 0' }}>
+                    Talent déclencheur : <strong style={{ color: 'var(--ac-secondary)' }}>{talentLabel}</strong>.
+                    Choisissez librement votre pratique ci-dessous — elle détermine votre attribut de cast et les traditions accessibles, indépendamment du talent précis pris.
+                </p>
+            </div>
+
+            {/* ── Choix de la pratique ── */}
+            <div className="ac-card">
+                <div className="ac-section-header">Pratique</div>
+                <div className="flex gap-3 mt-2">
+                    {SPELLCASTER_PRACTICES.map(p => (
+                        <button key={p.key} onClick={() => selectPractice(p.key)}
+                                className="ac-card-alt text-left flex-1 transition-all"
+                                style={{ border: `2px solid ${practice === p.key ? 'var(--ac-secondary)' : 'var(--ac-border)'}`, cursor: 'pointer' }}>
+                            <div style={{ fontFamily: 'var(--ac-font-heading)', fontWeight: 700, fontSize: '0.85rem', color: practice === p.key ? 'var(--ac-secondary)' : 'var(--ac-text)', textTransform: 'uppercase', marginBottom: 4 }}>{p.label}</div>
+                            <p style={{ fontSize: '0.72rem', color: 'var(--ac-text-muted)', margin: 0 }}>
+                                Attribut : {ATTR_LABEL[p.attribute]} · {p.startingSpells} sort{p.startingSpells > 1 ? 's' : ''} de départ
+                            </p>
+                        </button>
                     ))}
                 </div>
             </div>
 
-            {/* ── Puissance ── */}
-            <div className="ac-card">
-                <div className="ac-section-header">Puissance & Power Rating</div>
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '0.75rem', marginTop: '0.5rem' }}>
-                    <div className="ac-card-alt" style={{ textAlign: 'center', padding: '0.75rem' }}>
-                        <div className="ac-label">Power Rating (manteau)</div>
-                        <div style={{ fontFamily: 'var(--ac-font-title)', fontSize: '2rem', fontWeight: 700, color: 'var(--ac-secondary)' }}>{powerRating}</div>
-                        <div style={{ fontSize: '0.65rem', color: 'var(--ac-muted)', fontFamily: 'var(--ac-font-heading)' }}>Sorts max dans le manteau</div>
+            {practice && (
+                <>
+                    {/* ── Puissance ── */}
+                    <div className="ac-card">
+                        <div className="ac-section-header">Puissance & Power Rating</div>
+                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '0.75rem', marginTop: '0.5rem' }}>
+                            <div className="ac-card-alt" style={{ textAlign: 'center', padding: '0.75rem' }}>
+                                <div className="ac-label">Power Rating (manteau)</div>
+                                <div style={{ fontFamily: 'var(--ac-font-title)', fontSize: '2rem', fontWeight: 700, color: 'var(--ac-secondary)' }}>{powerRating}</div>
+                                <div style={{ fontSize: '0.65rem', color: 'var(--ac-muted)', fontFamily: 'var(--ac-font-heading)' }}>Sorts max dans le manteau</div>
+                            </div>
+                            <div className="ac-card-alt" style={{ textAlign: 'center', padding: '0.75rem' }}>
+                                <div className="ac-label">Dés de base</div>
+                                <div style={{ fontFamily: 'var(--ac-font-title)', fontSize: '2rem', fontWeight: 700, color: 'var(--ac-primary)' }}>{powerRating}⚄</div>
+                                <div style={{ fontSize: '0.65rem', color: 'var(--ac-muted)', fontFamily: 'var(--ac-font-heading)' }}>+ {bonusDice}⚄ bonus ({castAttrLabel} {castAttrValue})</div>
+                            </div>
+                            <div className="ac-card-alt" style={{ textAlign: 'center', padding: '0.75rem' }}>
+                                <div className="ac-label">Total dés Challenge</div>
+                                <div style={{ fontFamily: 'var(--ac-font-title)', fontSize: '2rem', fontWeight: 700, color: 'var(--ac-accent)' }}>{totalDice}⚄</div>
+                                <div style={{ fontSize: '0.65rem', color: 'var(--ac-muted)', fontFamily: 'var(--ac-font-heading)' }}>Coût du sort</div>
+                            </div>
+                        </div>
                     </div>
-                    <div className="ac-card-alt" style={{ textAlign: 'center', padding: '0.75rem' }}>
-                        <div className="ac-label">Dés de base</div>
-                        <div style={{ fontFamily: 'var(--ac-font-title)', fontSize: '2rem', fontWeight: 700, color: 'var(--ac-primary)' }}>{powerRating}⚄</div>
-                        <div style={{ fontSize: '0.65rem', color: 'var(--ac-muted)', fontFamily: 'var(--ac-font-heading)' }}>+ {bonusDice}⚄ bonus ({castAttrLabel} {castAttrValue})</div>
-                    </div>
-                    <div className="ac-card-alt" style={{ textAlign: 'center', padding: '0.75rem' }}>
-                        <div className="ac-label">Total dés Challenge</div>
-                        <div style={{ fontFamily: 'var(--ac-font-title)', fontSize: '2rem', fontWeight: 700, color: 'var(--ac-accent)' }}>{totalDice}⚄</div>
-                        <div style={{ fontSize: '0.65rem', color: 'var(--ac-muted)', fontFamily: 'var(--ac-font-heading)' }}>Coût du sort</div>
-                    </div>
-                </div>
-            </div>
 
-            {/* ── Objet fétiche ── */}
-            <div className="ac-card">
-                <div className="ac-section-header">Manteau / Objet fétiche</div>
-                <p style={{ fontSize: '0.76rem', color: 'var(--ac-text-muted)', marginBottom: '0.5rem' }}>
-                    Tout lanceur de sorts possède un objet physique qui sert de focus pour ses sorts liés — baguette, pierre runique, sigil tatoué, poupée de tissu, bouteille de sorcière…
-                </p>
-                <input className="ac-input" value={ws.spellMantle ?? ''} onChange={e => patch({ spellMantle: e.target.value })} placeholder="Décrivez votre manteau ou objet fétiche (optionnel)…" />
-            </div>
-
-            {/* ── Tradition (si Traditionnel) ── */}
-            {!isDabbler && (
-                <div className="ac-card">
-                    <div className="ac-section-header">Tradition magique</div>
-                    <p style={{ fontSize: '0.76rem', color: 'var(--ac-text-muted)', marginBottom: '0.75rem' }}>
-                        Les lanceurs Traditionnels appartiennent à une tradition précise qui détermine leurs sorts accessibles.
-                    </p>
-                    <div className="flex gap-3">
-                        {[
-                            { key: 'celtic', label: 'Celtique', desc: 'Druides et femmes sages celtes. Magie animiste, protection et forces naturelles destructrices.' },
-                            { key: 'runic',  label: 'Runique',  desc: 'Voyants et tisserands de runes nordiques et germaniques. Magie de guerre et de divination.' },
-                        ].map(t => (
-                            <button key={t.key} onClick={() => patch({ spellTradition: t.key, selectedSpells: [] })}
-                                    className="ac-card-alt text-left flex-1 transition-all"
-                                    style={{ border: `2px solid ${ws.spellTradition === t.key ? 'var(--ac-secondary)' : 'var(--ac-border)'}`, cursor: 'pointer' }}>
-                                <div style={{ fontFamily: 'var(--ac-font-heading)', fontWeight: 700, fontSize: '0.85rem', color: ws.spellTradition === t.key ? 'var(--ac-secondary)' : 'var(--ac-text)', textTransform: 'uppercase', marginBottom: 4 }}>{t.label}</div>
-                                <p style={{ fontSize: '0.74rem', color: 'var(--ac-text-muted)', margin: 0, lineHeight: 1.5 }}>{t.desc}</p>
-                            </button>
-                        ))}
-                    </div>
-                </div>
-            )}
-
-            {/* ── Mode Bricoleur : 1 normal vs 2 imparfaits ── */}
-            {isDabbler && (
-                <div className="ac-card">
-                    <div className="ac-section-header">Mode d'apprentissage</div>
-                    <p style={{ fontSize: '0.76rem', color: 'var(--ac-text-muted)', marginBottom: '0.75rem' }}>
-                        Les Bricoleurs apprennent leurs sorts de sources douteuses. Vous pouvez choisir 1 sort maîtrisé ou 2 sorts imparfaits (plus dangereux, moins contrôlables).
-                    </p>
-                    <div className="flex gap-3">
-                        {[
-                            { key: 'one_normal',  label: '1 sort normal',    desc: 'Maîtrisé, pleinement sous contrôle.' },
-                            { key: 'two_flawed',  label: '2 sorts imparfaits', desc: 'Flawed — complication automatique à chaque lancer, pas de Momentum.' },
-                        ].map(m => (
-                            <button key={m.key} onClick={() => patch({ dabblerMode: m.key, selectedSpells: [] })}
-                                    className="ac-card-alt text-left flex-1 transition-all"
-                                    style={{ border: `2px solid ${ws.dabblerMode === m.key ? 'var(--ac-secondary)' : 'var(--ac-border)'}`, cursor: 'pointer' }}>
-                                <div style={{ fontFamily: 'var(--ac-font-heading)', fontWeight: 700, fontSize: '0.82rem', color: ws.dabblerMode === m.key ? 'var(--ac-secondary)' : 'var(--ac-text)', marginBottom: 4 }}>{m.label}</div>
-                                <p style={{ fontSize: '0.74rem', color: 'var(--ac-text-muted)', margin: 0 }}>{m.desc}</p>
-                            </button>
-                        ))}
-                    </div>
-                </div>
-            )}
-
-            {/* ── Sélection des sorts ── */}
-            {(isDabbler ? ws.dabblerMode : ws.spellTradition) && (
-                <div className="ac-card">
-                    <div className="ac-section-header">
-                        Sorts de départ
-                        <span style={{ marginLeft: '0.5rem', fontSize: '0.65rem', color: selectedSpells.length >= maxSpells ? 'var(--ac-success)' : 'var(--ac-muted)', fontWeight: 700 }}>
-                            {selectedSpells.length}/{maxSpells}
-                        </span>
-                    </div>
-                    {isDabbler && (
-                        <p style={{ fontSize: '0.74rem', color: 'var(--ac-text-muted)', marginBottom: '0.5rem' }}>
-                            Accès à tous les grimoires — choisissez parmi les traditions Celtique, Runique ou Psychique.
+                    {/* ── Objet fétiche ── */}
+                    <div className="ac-card">
+                        <div className="ac-section-header">Manteau / Objet fétiche</div>
+                        <p style={{ fontSize: '0.76rem', color: 'var(--ac-text-muted)', marginBottom: '0.5rem' }}>
+                            Tout lanceur de sorts possède un objet physique qui sert de focus pour ses sorts liés — baguette, pierre runique, sigil tatoué, poupée de tissu, bouteille de sorcière…
                         </p>
-                    )}
-                    <div className="flex flex-col gap-3 mt-2">
-                        {availableSpells.map(spell => (
-                            <SpellCard key={spell.key} spell={spell}
-                                       selected={selectedSpells.includes(spell.key)}
-                                       flawed={isDabbler && ws.dabblerMode === 'two_flawed'}
-                                       onSelect={toggleSpell} />
-                        ))}
+                        <input className="ac-input" value={ws.spellMantle ?? ''} onChange={e => patch({ spellMantle: e.target.value })} placeholder="Décrivez votre manteau ou objet fétiche (optionnel)…" />
                     </div>
-                </div>
+
+                    {/* ── Tradition — filtrée selon la pratique ── */}
+                    <div className="ac-card">
+                        <div className="ac-section-header">Tradition magique</div>
+                        <p style={{ fontSize: '0.76rem', color: 'var(--ac-text-muted)', marginBottom: '0.75rem' }}>
+                            Traditions accessibles à votre pratique ({SPELLCASTER_PRACTICES.find(p => p.key === practice)?.label}).
+                        </p>
+                        <div className="flex gap-3">
+                            {accessibleTraditions.map(trad => {
+                                const info = TRADITION_INFO[trad];
+                                if (!info) return null;
+                                return (
+                                    <button key={trad} onClick={() => patch({ spellTradition: trad, selectedSpells: [] })}
+                                            className="ac-card-alt text-left flex-1 transition-all"
+                                            style={{ border: `2px solid ${ws.spellTradition === trad ? 'var(--ac-secondary)' : 'var(--ac-border)'}`, cursor: 'pointer' }}>
+                                        <div style={{ fontFamily: 'var(--ac-font-heading)', fontWeight: 700, fontSize: '0.85rem', color: ws.spellTradition === trad ? 'var(--ac-secondary)' : 'var(--ac-text)', textTransform: 'uppercase', marginBottom: 4 }}>{info.label}</div>
+                                        <p style={{ fontSize: '0.74rem', color: 'var(--ac-text-muted)', margin: 0, lineHeight: 1.5 }}>{info.desc}</p>
+                                    </button>
+                                );
+                            })}
+                        </div>
+                    </div>
+
+                    {/* ── Mode Amateur : 1 normal vs 2 imparfaits ── */}
+                    {isDabbler && (
+                        <div className="ac-card">
+                            <div className="ac-section-header">Mode d'apprentissage</div>
+                            <p style={{ fontSize: '0.76rem', color: 'var(--ac-text-muted)', marginBottom: '0.75rem' }}>
+                                Les Amateurs apprennent leurs sorts de sources douteuses. Vous pouvez choisir 1 sort maîtrisé ou 2 sorts imparfaits (plus dangereux, moins contrôlables).
+                            </p>
+                            <div className="flex gap-3">
+                                {[
+                                    { key: 'one_normal', label: '1 sort normal',      desc: 'Maîtrisé, pleinement sous contrôle.' },
+                                    { key: 'two_flawed', label: '2 sorts imparfaits', desc: 'Flawed — complication automatique à chaque lancer, pas de Momentum.' },
+                                ].map(m => (
+                                    <button key={m.key} onClick={() => patch({ dabblerMode: m.key, selectedSpells: [] })}
+                                            className="ac-card-alt text-left flex-1 transition-all"
+                                            style={{ border: `2px solid ${ws.dabblerMode === m.key ? 'var(--ac-secondary)' : 'var(--ac-border)'}`, cursor: 'pointer' }}>
+                                        <div style={{ fontFamily: 'var(--ac-font-heading)', fontWeight: 700, fontSize: '0.82rem', color: ws.dabblerMode === m.key ? 'var(--ac-secondary)' : 'var(--ac-text)', marginBottom: 4 }}>{m.label}</div>
+                                        <p style={{ fontSize: '0.74rem', color: 'var(--ac-text-muted)', margin: 0 }}>{m.desc}</p>
+                                    </button>
+                                ))}
+                            </div>
+                        </div>
+                    )}
+
+                    {/* ── Sélection des sorts ── */}
+                    {ws.spellTradition && (!isDabbler || ws.dabblerMode) && (
+                        <div className="ac-card">
+                            <div className="ac-section-header">
+                                Sorts de départ
+                                <span style={{ marginLeft: '0.5rem', fontSize: '0.65rem', color: selectedSpells.length >= maxSpells ? 'var(--ac-success)' : 'var(--ac-muted)', fontWeight: 700 }}>
+                                    {selectedSpells.length}/{maxSpells}
+                                </span>
+                            </div>
+                            <div className="flex flex-col gap-3 mt-2">
+                                {availableSpells.map(spell => (
+                                    <SpellCard key={spell.key} spell={spell}
+                                               selected={selectedSpells.includes(spell.key)}
+                                               flawed={isDabbler && ws.dabblerMode === 'two_flawed'}
+                                               onSelect={toggleSpell} />
+                                ))}
+                            </div>
+                        </div>
+                    )}
+                </>
             )}
         </div>
     );
@@ -1203,12 +1266,12 @@ const Creation = ({ darkMode, onToggleDarkMode }) => {
             }
             case 6: { // Magie (seulement si isSpellcaster)
                 if(isSpellcaster) {
-                    const spellcasterTk = detectSpellcasterTalent(ws);
-                    const sType = getSpellcasterType(spellcasterTk);
-                    const isDabbler = sType === 'dabbler';
-                    if (!isDabbler && !ws.spellTradition) return false;
+                    const practice = ws.spellcasterPractice;
+                    if (!practice) return false;
+                    const isDabbler = practice === 'dabbler';
+                    if (!ws.spellTradition) return false;
                     if (isDabbler && !ws.dabblerMode) return false;
-                    const maxSpells = isDabbler && ws.dabblerMode === 'two_flawed' ? 2 : getStartingSpellCount(sType);
+                    const maxSpells = isDabbler && ws.dabblerMode === 'two_flawed' ? 2 : getStartingSpellCount(practice);
                     return (ws.selectedSpells?.length ?? 0) >= maxSpells;
                 } else {
                     return ws.playerName?.trim() && ws.nom?.trim() && ws.prenom?.trim();
@@ -1257,16 +1320,16 @@ const Creation = ({ darkMode, onToggleDarkMode }) => {
 
         // Sorts
         const spellcasterTk = detectSpellcasterTalent(ws);
-        const sType         = getSpellcasterType(spellcasterTk);
-        const isDabbler     = sType === 'dabbler';
-        const isFlawed      = isDabbler && ws.dabblerMode === 'two_flawed';
-        const allSpellsList = [...(SPELLS.celtic ?? []), ...(SPELLS.runic ?? []), ...(SPELLS.psychic ?? [])];
+        const practice      = ws.spellcasterPractice ?? null;
+        const isDabbler      = practice === 'dabbler';
+        const isFlawed       = isDabbler && ws.dabblerMode === 'two_flawed';
+        const allSpellsList  = [...(SPELLS.celtic ?? []), ...(SPELLS.runic ?? []), ...(SPELLS.psychic ?? [])];
 
         // Calcul de la puissance (power rating) à persister
-        const castAttr      = getCastAttribute(sType);
-        const castAttrValue = finalAttrs[castAttr] ?? ATTR_BASE;
-        const powerValue    = spellcasterTk
-            ? getPowerRating(sType) + getBonusPowerDice(castAttrValue)
+        const castAttr      = practice ? getCastAttribute(practice) : null;
+        const castAttrValue = castAttr ? (finalAttrs[castAttr] ?? ATTR_BASE) : 0;
+        const powerValue    = spellcasterTk && practice
+            ? getPowerRating(practice) + getBonusPowerDice(castAttrValue)
             : 0;
 
         const spells = (ws.selectedSpells ?? []).map(key => {
@@ -1300,10 +1363,10 @@ const Creation = ({ darkMode, onToggleDarkMode }) => {
             truths: [ws.bgTruth ?? '', ws.charTruth ?? '', ...(ws.truths ?? [])].filter(Boolean),
             languages, attributes, skills: skillsWithFocuses, talents, items, weapons: [],
             spells, isSpellcaster: !!spellcasterTk,
-            power:           powerValue,
-            spellcasterType: sType ?? null,
-            spellTradition:  isDabbler ? 'dabbler' : (ws.spellTradition ?? null),
-            spellMantle:     ws.spellMantle ?? '',
+            power:               powerValue,
+            spellcasterPractice: practice,
+            spellTradition:      ws.spellTradition ?? null,
+            spellMantle:          ws.spellMantle ?? '',
         };
 
         try {

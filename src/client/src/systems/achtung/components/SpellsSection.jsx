@@ -1,6 +1,6 @@
 // src/client/src/systems/achtung/components/SpellsSection.jsx
 import React, { useState } from 'react';
-import { SPELLS, SKILL_LABEL } from '../config.jsx';
+import { SPELLS, SKILL_LABEL, ATTR_LABEL, SPELLCASTER_PRACTICES, getCastAttribute } from '../config.jsx';
 
 const SPELL_INDEX = {
     ...Object.fromEntries((SPELLS.celtic  ?? []).map(s => [s.key, { ...s, tradition: 'celtic'  }])),
@@ -11,6 +11,8 @@ const SPELL_INDEX = {
 const ALL_SPELLS = [...(SPELLS.celtic ?? []), ...(SPELLS.runic ?? []), ...(SPELLS.psychic ?? [])];
 
 const TRADITION_LABELS = { celtic: 'Celtique', runic: 'Runique', psychic: 'Psychique' };
+
+const PRACTICE_LABEL = Object.fromEntries(SPELLCASTER_PRACTICES.map(p => [p.key, p.label]));
 
 const EMPTY_SPELL = { name: '', skillUsed: '', difficulty: 1, cost: '', duration: '', effect: '', momentumSpends: '', spellKey: null, tradition: null };
 
@@ -67,16 +69,23 @@ const SpellPicker = ({ onAdd, existing }) => {
 };
 
 // ── SpellCard ─────────────────────────────────────────────────────────────────
-const SpellCard = ({ spell, idx, editMode, onUpdate, onRemove }) => {
+// onRoll(ctx) — appelé au clic en lecture, ctx = { skillKey, attrKey } pour
+// préselectionner la modale de dés, exactement comme pour les compétences.
+const SpellCard = ({ spell, idx, editMode, onUpdate, onRemove, onRoll, attrKey }) => {
     const canonical  = spell.spellKey ? SPELL_INDEX[spell.spellKey] : null;
     const tradition  = spell.tradition ?? canonical?.tradition ?? null;
     const tradClass  = tradition ? `ac-spell-card--${tradition}` : '';
     const tradLabel  = tradition ? TRADITION_LABELS[tradition] : null;
     const skillLabel = SKILL_LABEL[spell.skillUsed] ?? spell.skillUsed;
     const displayEffect = canonical?.effect ?? spell.effect;
+    const clickable = !editMode && !!onRoll && !!spell.skillUsed;
 
     return (
-        <div className={`ac-spell-card ${tradClass}`}>
+        <div
+            className={`ac-spell-card ${tradClass}`}
+            onClick={() => clickable && onRoll({ skillKey: spell.skillUsed, attrKey })}
+            style={clickable ? { cursor: 'pointer' } : undefined}
+        >
             <div className="flex items-center justify-between gap-2 flex-wrap">
                 <div className="flex items-center gap-1 flex-wrap">
                     {editMode ? (
@@ -89,31 +98,31 @@ const SpellCard = ({ spell, idx, editMode, onUpdate, onRemove }) => {
                     {spell.flawed && <span className="ac-spell-flawed">Imparfait</span>}
                 </div>
                 {editMode && (
-                    <button onClick={() => onRemove(idx)} className="ac-btn ac-btn-danger" style={{ padding: '0.15rem 0.4rem', fontSize: '0.65rem', flexShrink: 0 }}>✕</button>
+                    <button onClick={(e) => { e.stopPropagation(); onRemove(idx); }} className="ac-btn ac-btn-danger" style={{ padding: '0.15rem 0.4rem', fontSize: '0.65rem', flexShrink: 0 }}>✕</button>
                 )}
             </div>
 
             <div className="ac-spell-meta">
                 {editMode ? (
                     <>
-                        <div>
+                        <div onClick={e => e.stopPropagation()}>
                             <span className="ac-label" style={{ display: 'block', marginBottom: 2 }}>Compétence</span>
                             <input value={spell.skillUsed} onChange={e => onUpdate(idx, 'skillUsed', e.target.value)} className="ac-input" style={{ maxWidth: 140 }} />
                         </div>
-                        <div>
+                        <div onClick={e => e.stopPropagation()}>
                             <span className="ac-label" style={{ display: 'block', marginBottom: 2 }}>Difficulté</span>
                             <input type="number" min={0} max={5} value={spell.difficulty} onChange={e => onUpdate(idx, 'difficulty', parseInt(e.target.value) || 0)} className="ac-input-num" />
                         </div>
-                        <div style={{ flex: '1 1 160px' }}>
+                        <div style={{ flex: '1 1 160px' }} onClick={e => e.stopPropagation()}>
                             <span className="ac-label" style={{ display: 'block', marginBottom: 2 }}>Coût</span>
                             <input value={spell.cost} onChange={e => onUpdate(idx, 'cost', e.target.value)} className="ac-input" placeholder="Ex : 5⚄ Drain" />
                         </div>
-                        <div style={{ flex: '1 1 140px' }}>
+                        <div style={{ flex: '1 1 140px' }} onClick={e => e.stopPropagation()}>
                             <span className="ac-label" style={{ display: 'block', marginBottom: 2 }}>Durée</span>
                             <input value={spell.duration} onChange={e => onUpdate(idx, 'duration', e.target.value)} className="ac-input" placeholder="Ex : Instantané" />
                         </div>
                         {!spell.spellKey && (
-                            <div>
+                            <div onClick={e => e.stopPropagation()}>
                                 <span className="ac-label" style={{ display: 'block', marginBottom: 2 }}>Tradition</span>
                                 <select value={spell.tradition ?? ''} onChange={e => onUpdate(idx, 'tradition', e.target.value || null)} className="ac-input" style={{ maxWidth: 120 }}>
                                     <option value=''>—</option>
@@ -135,7 +144,7 @@ const SpellCard = ({ spell, idx, editMode, onUpdate, onRemove }) => {
             </div>
 
             {editMode && !spell.spellKey ? (
-                <div style={{ marginTop: '0.5rem' }}>
+                <div style={{ marginTop: '0.5rem' }} onClick={e => e.stopPropagation()}>
                     <span className="ac-label" style={{ display: 'block', marginBottom: 2 }}>Effet</span>
                     <textarea value={spell.effect} onChange={e => onUpdate(idx, 'effect', e.target.value)} className="ac-input" rows={3} style={{ resize: 'vertical', fontSize: '0.78rem' }} />
                 </div>
@@ -144,7 +153,7 @@ const SpellCard = ({ spell, idx, editMode, onUpdate, onRemove }) => {
             ) : null}
 
             {editMode && (
-                <div style={{ marginTop: '0.4rem' }}>
+                <div style={{ marginTop: '0.4rem' }} onClick={e => e.stopPropagation()}>
                     <span className="ac-label" style={{ display: 'block', marginBottom: 2 }}>Dépenses Momentum</span>
                     <input value={spell.momentumSpends} onChange={e => onUpdate(idx, 'momentumSpends', e.target.value)} className="ac-input" placeholder="Ex : Pour 2 Momentum, ajout Intense…" />
                 </div>
@@ -154,7 +163,8 @@ const SpellCard = ({ spell, idx, editMode, onUpdate, onRemove }) => {
 };
 
 // ── SpellsSection ─────────────────────────────────────────────────────────────
-const SpellsSection = ({ isSpellcaster, power, spells = [], editMode, onChange, onChangePower }) => {
+// onRoll(ctx) transmis tel quel à chaque SpellCard pour le clic en lecture.
+const SpellsSection = ({ isSpellcaster, power, spellcasterPractice, spells = [], editMode, onChange, onChangePower, onRoll }) => {
     const [showPicker, setShowPicker] = useState(false);
 
     if (!isSpellcaster && !editMode) return null;
@@ -163,6 +173,12 @@ const SpellsSection = ({ isSpellcaster, power, spells = [], editMode, onChange, 
     const addEmpty = () => onChange?.([...spells, { ...EMPTY_SPELL, _tempId: Date.now() }]);
     const remove   = (idx) => onChange?.(spells.filter((_, i) => i !== idx));
     const update   = (idx, field, value) => onChange?.(spells.map((s, i) => i === idx ? { ...s, [field]: value } : s));
+
+    // Attribut de cast déduit de la pratique stockée — utilisé pour préselectionner
+    // la modale de dés au clic sur un sort (cf. AttributeGrid / SkillsSection).
+    const castAttr      = spellcasterPractice ? getCastAttribute(spellcasterPractice) : null;
+    const castAttrLabel = castAttr ? (ATTR_LABEL[castAttr] ?? castAttr) : null;
+    const practiceLabel = spellcasterPractice ? (PRACTICE_LABEL[spellcasterPractice] ?? spellcasterPractice) : null;
 
     return (
         <div className="ac-magic-section ac-card">
@@ -175,21 +191,41 @@ const SpellsSection = ({ isSpellcaster, power, spells = [], editMode, onChange, 
                         <span className="ac-label">Lanceur de sorts</span>
                     </label>
                     {isSpellcaster && (
-                        <div className="flex items-center gap-2">
-                            <span className="ac-label">Puissance</span>
-                            <input type="number" value={power} min={0}
-                                   onChange={e => onChangePower?.('power', Math.max(0, parseInt(e.target.value) || 0))}
-                                   className="ac-input-num" />
-                        </div>
+                        <>
+                            <div className="flex items-center gap-2">
+                                <span className="ac-label">Puissance</span>
+                                <input type="number" value={power} min={0}
+                                       onChange={e => onChangePower?.('power', Math.max(0, parseInt(e.target.value) || 0))}
+                                       className="ac-input-num" />
+                            </div>
+                            <div className="flex items-center gap-2">
+                                <span className="ac-label">Pratique</span>
+                                <select value={spellcasterPractice ?? ''} onChange={e => onChangePower?.('spellcaster_practice', e.target.value || null)} className="ac-input" style={{ maxWidth: 160 }}>
+                                    <option value=''>—</option>
+                                    {SPELLCASTER_PRACTICES.map(p => (
+                                        <option key={p.key} value={p.key}>{p.label}</option>
+                                    ))}
+                                </select>
+                            </div>
+                        </>
                     )}
                 </div>
             )}
 
             {!editMode && isSpellcaster && (
-                <div className="flex items-center gap-3 mb-3">
-                    <span className="ac-label">Puissance</span>
-                    <span style={{ fontFamily: 'var(--ac-font-title)', fontSize: '1.2rem', fontWeight: 700, color: 'var(--ac-mythos-header)' }}>{power}</span>
-                    <span style={{ fontSize: '0.7rem', color: 'var(--ac-text-muted)', fontFamily: 'var(--ac-font-heading)' }}>⚄ dés de Challenge</span>
+                <div className="flex items-center gap-4 mb-3 flex-wrap">
+                    <div className="flex items-center gap-2">
+                        <span className="ac-label">Puissance</span>
+                        <span style={{ fontFamily: 'var(--ac-font-title)', fontSize: '1.2rem', fontWeight: 700, color: 'var(--ac-mythos-header)' }}>{power}</span>
+                        <span style={{ fontSize: '0.7rem', color: 'var(--ac-text-muted)', fontFamily: 'var(--ac-font-heading)' }}>⚄ dés de Challenge</span>
+                    </div>
+                    {practiceLabel && (
+                        <div className="flex items-center gap-2">
+                            <span className="ac-label">Pratique</span>
+                            <span style={{ fontFamily: 'var(--ac-font-heading)', fontWeight: 700, fontSize: '0.82rem', color: 'var(--ac-secondary)' }}>{practiceLabel}</span>
+                            {castAttrLabel && <span style={{ fontSize: '0.7rem', color: 'var(--ac-text-muted)' }}>({castAttrLabel})</span>}
+                        </div>
+                    )}
                 </div>
             )}
 
@@ -197,7 +233,8 @@ const SpellsSection = ({ isSpellcaster, power, spells = [], editMode, onChange, 
                 <div className="flex flex-col gap-0">
                     {spells.map((s, idx) => (
                         <SpellCard key={s.id ?? s._tempId ?? idx} spell={s} idx={idx}
-                                   editMode={editMode} onUpdate={update} onRemove={remove} />
+                                   editMode={editMode} onUpdate={update} onRemove={remove}
+                                   onRoll={onRoll} attrKey={castAttr} />
                     ))}
                     {spells.length === 0 && !editMode && (
                         <p style={{ fontSize: '0.8rem', color: 'var(--ac-text-muted)', fontStyle: 'italic' }}>Aucun sort lié au manteau.</p>

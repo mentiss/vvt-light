@@ -139,13 +139,7 @@ const Sheet = ({
             data-theme={darkMode ? 'dark' : 'light'}
             style={{ background: 'var(--ac-bg)', color: 'var(--ac-text)', fontFamily: 'var(--ac-font-body)' }}
         >
-            <ToastNotifications
-                sessionId={activeGMSession}
-                renderDiceToast={(entry) => {
-                    const adapted = { ...entry, details: entry.roll_result };
-                    return <AchtungHistoryEntry roll={adapted}  />;
-                }}
-            />
+            <ToastNotifications />
 
             {/* ── HEADER ──────────────────────────────────────────────────── */}
             <header className="ac-header">
@@ -155,9 +149,14 @@ const Sheet = ({
                     </div>
                 </div>
 
+                <div className="hidden sm:block text-center shrink-0">
+                    <div className="ac-label" style={{ fontSize: '0.55rem' }}>Code d'accès</div>
+                    <div className="ac-code-display">{char.accessCode}</div>
+                </div>
+
                 <div className="flex items-center gap-2 shrink-0">
                     <button onClick={() => setDiceModal({ type: 'skill' })} className="ac-btn ac-btn-primary">
-                        🎲
+                        🎲 Lancer
                     </button>
                     <ThemeToggle darkMode={darkMode} onToggle={onToggleDarkMode} />
                     <div className="relative">
@@ -246,38 +245,38 @@ const Sheet = ({
                                     <div className="ac-sheet-main">
 
                                         {/* 1. IDENTITÉ */}
-
-                                        <div className="ac-gear-talents-grid">
-
-                                            <div className="ac-card">
-                                                <IdentitySection
-                                                    char={char}
-                                                    editMode={editMode}
-                                                    set={set}
-                                                    onAvatarClick={() => setShowAvatar(true)}
-                                                />
-                                            </div>
-                                            <div className="ac-card">
-                                                <AttributeGrid attributes={char.attributes} editMode={editMode} onChange={val => set('attributes', val)} onRoll={(ctx) => setDiceModal({ type: 'skill', ...ctx })} />
-                                            </div>
+                                        <div className="ac-card">
+                                            <IdentitySection
+                                                char={char}
+                                                editMode={editMode}
+                                                set={set}
+                                                onAvatarClick={() => setShowAvatar(true)}
+                                            />
                                         </div>
 
-
                                         {/* 2. ATTRIBUTS */}
-
+                                        <div className="ac-card">
+                                            <AttributeGrid attributes={char.attributes} editMode={editMode} onChange={val => set('attributes', val)} onRoll={(ctx) => setDiceModal({ type: 'skill', ...ctx })} />
+                                        </div>
 
                                         {/* 3. COMPÉTENCES */}
                                         <div className="ac-card">
                                             <SkillsSection skills={char.skills} editMode={editMode} onChange={val => set('skills', val)} onRoll={(ctx) => setDiceModal({ type: 'skill', ...ctx })} />
                                         </div>
 
-                                        {/* 4. WEAPONS */}
+                                        {/* 4. ARMEMENT */}
                                         <div className="ac-card">
                                             <WeaponsTable weapons={char.weapons} editMode={editMode} onChange={val => set('weapons', val)} onRollDamage={(w) => setDiceModal({ type: 'damage', weapon: w })} />
                                         </div>
 
-                                        <div className="ac-card">
-                                            <ItemsList items={char.items} editMode={editMode} onChange={val => set('items', val)} />
+                                        {/* 5. ÉQUIPEMENT + TALENTS — grille 2 colonnes */}
+                                        <div className="ac-gear-talents-grid">
+                                            <div className="ac-card">
+                                                <ItemsList items={char.items} editMode={editMode} onChange={val => set('items', val)} />
+                                            </div>
+                                            <div className="ac-card">
+                                                <TalentsList talents={char.talents} editMode={editMode} onChange={val => set('talents', val)} />
+                                            </div>
                                         </div>
 
                                         {/* 6. SORTS */}
@@ -285,10 +284,17 @@ const Sheet = ({
                                             <SpellsSection
                                                 isSpellcaster={char.isSpellcaster}
                                                 power={char.power}
+                                                spellcasterPractice={char.spellcasterPractice}
                                                 spells={char.spells}
                                                 editMode={editMode}
                                                 onChange={val => set('spells', val)}
-                                                onChangePower={(field, value) => set(field === 'is_spellcaster' ? 'isSpellcaster' : field, value)}
+                                                onChangePower={(field, value) => set(
+                                                    field === 'is_spellcaster'        ? 'isSpellcaster'
+                                                        : field === 'spellcaster_practice' ? 'spellcasterPractice'
+                                                            : field,
+                                                    value
+                                                )}
+                                                onRoll={(ctx) => setDiceModal({ type: 'skill', ...ctx })}
                                             />
                                         )}
                                     </div>
@@ -319,10 +325,6 @@ const Sheet = ({
                                             />
                                         </div>
 
-                                        <div className="ac-card">
-                                            <TalentsList talents={char.talents} editMode={editMode} onChange={val => set('talents', val)} />
-                                        </div>
-
                                         {/* Langues */}
                                         <div className="ac-card">
                                             <LanguagePills languages={char.languages} editMode={editMode} onChange={val => handleDirectField('languages', val)} />
@@ -337,7 +339,7 @@ const Sheet = ({
                                     <div className="shrink-0 flex flex-col items-center px-2 py-4 sticky self-start ac-resource-gauge ac-resource-gauge-right h-full">
                                         <VerticalGauge
                                             label="Menace"
-                                            value={sessionResources.threat ?? 0}
+                                            value={Math.min(sessionResources.threat ?? 0, 12)}
                                             max={12}
                                             filledColor="var(--ac-accent)"
                                             emptyColor="var(--ac-surface-alt)"

@@ -75,7 +75,7 @@ function loadFullCharacter(db, id) {
     ).all(id);
     const spells = db.prepare(
         `SELECT id, name, skill_used, difficulty, cost, duration, effect,
-                momentum_spends, spell_key, tradition
+                momentum_spends, spell_key, tradition, flawed
          FROM character_spells WHERE character_id = ? ORDER BY sort_order, id`
     ).all(id);
 
@@ -121,8 +121,9 @@ function loadFullCharacter(db, id) {
             catch { return []; }
         })(),
 
-        isSpellcaster: row.is_spellcaster === 1,
-        power:         row.power ?? 0,
+        isSpellcaster:       row.is_spellcaster === 1,
+        power:               row.power ?? 0,
+        spellcasterPractice: row.spellcaster_practice ?? null,
 
         talents: talents.map(t => ({
             id: t.id, name: t.name ?? '', keywords: t.keywords ?? '', effect: t.effect ?? '',
@@ -145,6 +146,7 @@ function loadFullCharacter(db, id) {
             momentumSpends: s.momentum_spends ?? '',
             spellKey:       s.spell_key      ?? null,
             tradition:      s.tradition      ?? null,
+            flawed:         s.flawed === 1,
         })),
 
         createdAt:    row.created_at,
@@ -207,8 +209,9 @@ function saveFullCharacter(db, id, data) {
         }
 
         // Magie
-        if (data.isSpellcaster !== undefined) addField('is_spellcaster', data.isSpellcaster ? 1 : 0);
-        if (data.power         !== undefined) addField('power',          data.power);
+        if (data.isSpellcaster       !== undefined) addField('is_spellcaster',       data.isSpellcaster ? 1 : 0);
+        if (data.power               !== undefined) addField('power',                data.power);
+        if (data.spellcasterPractice !== undefined) addField('spellcaster_practice', data.spellcasterPractice);
 
         // Attributs
         if (Array.isArray(data.attributes)) {
@@ -271,8 +274,8 @@ function saveFullCharacter(db, id, data) {
             const ins = db.prepare(
                 `INSERT INTO character_spells
                  (character_id, name, skill_used, difficulty, cost, duration,
-                  effect, momentum_spends, spell_key, tradition, sort_order)
-                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+                  effect, momentum_spends, spell_key, tradition, flawed, sort_order)
+                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
             );
             data.spells.forEach((s, i) => {
                 if (!s.name?.trim()) return;
@@ -287,6 +290,7 @@ function saveFullCharacter(db, id, data) {
                     s.momentumSpends ?? s.momentum_spends ?? '',
                     s.spellKey       ?? s.spell_key       ?? null,
                     s.tradition      ?? null,
+                    s.flawed ? 1 : 0,
                     i
                 );
             });
