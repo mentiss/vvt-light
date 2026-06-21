@@ -53,23 +53,6 @@ const IdentitySection = ({ char, editMode, set, onAvatarClick }) => (
                     ))}
                 </div>
 
-                {/* Ligne 2 : nationalité, grade, sexe, âge, taille */}
-                <div className="grid grid-cols-5 gap-2">
-                    {[
-                        { field: 'nationality', label: 'Nationalité' },
-                        { field: 'rank',        label: 'Grade' },
-                        { field: 'sexe',        label: 'Sexe' },
-                        { field: 'age',         label: 'Âge',    type: 'number' },
-                        { field: 'taille',      label: 'Taille', type: 'number' },
-                    ].map(({ field, label, type }) => (
-                        <Field key={field} label={label}>
-                            {editMode
-                                ? <input value={char[field] ?? ''} onChange={e => set(field, e.target.value)} className="ac-input" placeholder={`${label}…`} type={type ?? 'text'} />
-                                : <div className="ac-value" style={{ fontFamily: 'var(--ac-font-title)', fontSize: '0.88rem' }}>{char[field] || '—'}</div>}
-                        </Field>
-                    ))}
-                </div>
-
                 {/* Ligne 3 : archétype, background, caractéristique */}
                 <div className="grid grid-cols-3 gap-2">
                     {[
@@ -99,6 +82,21 @@ const IdentitySection = ({ char, editMode, set, onAvatarClick }) => (
                     ))}
                 </div>
             </div>
+        </div>
+        <div className="mt-3 grid grid-cols-5 gap-2">
+            {[
+                { field: 'nationality', label: 'Nationalité' },
+                { field: 'rank',        label: 'Grade' },
+                { field: 'sexe',        label: 'Sexe' },
+                { field: 'age',         label: 'Âge',    type: 'number' },
+                { field: 'taille',      label: 'Taille', type: 'number' },
+            ].map(({ field, label, type }) => (
+                <Field key={field} label={label}>
+                    {editMode
+                        ? <input value={char[field] ?? ''} onChange={e => set(field, e.target.value)} className="ac-input" placeholder={`${label}…`} type={type ?? 'text'} />
+                        : <div className="ac-value" style={{ fontFamily: 'var(--ac-font-title)', fontSize: '0.88rem' }}>{char[field] || '—'}</div>}
+                </Field>
+            ))}
         </div>
 
         {/* Biographie */}

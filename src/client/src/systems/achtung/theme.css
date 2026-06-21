@@ -1177,6 +1177,17 @@ body > * { position: relative; z-index: 1; }
     color: var(--ac-bg);
 }
 
+/* .selected (sable) — même besoin de contraste sur les enfants que selected-primary.
+   Couvre notamment la carte arme (étape 4 jet de dommages) : nom, focus,
+   dégâts, salvo, portée — tous héritaient sinon leur couleur d'origine
+   (ac-text-muted, text-secondary) peu lisible sur le nouveau fond sable. */
+.ac-modal .ac-select-btn.selected,
+.ac-modal .ac-select-btn.selected .ac-font-title,
+.ac-modal .ac-select-btn.selected .ac-text-muted,
+.ac-modal .ac-select-btn.selected .text-secondary {
+    color: var(--ac-bg);
+}
+
 /* Dans la modale, la grille d'attributs passe en 3 colonnes pour ne pas déborder */
 .ac-modal .ac-attr-grid {
     grid-template-columns: repeat(3, 1fr);

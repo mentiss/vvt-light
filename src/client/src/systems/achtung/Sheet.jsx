@@ -139,7 +139,13 @@ const Sheet = ({
             data-theme={darkMode ? 'dark' : 'light'}
             style={{ background: 'var(--ac-bg)', color: 'var(--ac-text)', fontFamily: 'var(--ac-font-body)' }}
         >
-            <ToastNotifications />
+            <ToastNotifications
+                sessionId={activeGMSession}
+                renderDiceToast={(entry) => {
+                    const adapted = { ...entry, details: entry.roll_result };
+                    return <AchtungHistoryEntry roll={adapted}  />;
+                }}
+            />
 
             {/* ── HEADER ──────────────────────────────────────────────────── */}
             <header className="ac-header">
@@ -149,14 +155,9 @@ const Sheet = ({
                     </div>
                 </div>
 
-                <div className="hidden sm:block text-center shrink-0">
-                    <div className="ac-label" style={{ fontSize: '0.55rem' }}>Code d'accès</div>
-                    <div className="ac-code-display">{char.accessCode}</div>
-                </div>
-
                 <div className="flex items-center gap-2 shrink-0">
                     <button onClick={() => setDiceModal({ type: 'skill' })} className="ac-btn ac-btn-primary">
-                        🎲 Lancer
+                        🎲
                     </button>
                     <ThemeToggle darkMode={darkMode} onToggle={onToggleDarkMode} />
                     <div className="relative">
@@ -269,14 +270,8 @@ const Sheet = ({
                                             <WeaponsTable weapons={char.weapons} editMode={editMode} onChange={val => set('weapons', val)} onRollDamage={(w) => setDiceModal({ type: 'damage', weapon: w })} />
                                         </div>
 
-                                        {/* 5. ÉQUIPEMENT + TALENTS — grille 2 colonnes */}
-                                        <div className="ac-gear-talents-grid">
-                                            <div className="ac-card">
-                                                <ItemsList items={char.items} editMode={editMode} onChange={val => set('items', val)} />
-                                            </div>
-                                            <div className="ac-card">
-                                                <TalentsList talents={char.talents} editMode={editMode} onChange={val => set('talents', val)} />
-                                            </div>
+                                        <div className="ac-card">
+                                            <ItemsList items={char.items} editMode={editMode} onChange={val => set('items', val)} />
                                         </div>
 
                                         {/* 6. SORTS */}
@@ -289,7 +284,7 @@ const Sheet = ({
                                                 editMode={editMode}
                                                 onChange={val => set('spells', val)}
                                                 onChangePower={(field, value) => set(
-                                                    field === 'is_spellcaster'        ? 'isSpellcaster'
+                                                    field === 'is_spellcaster'         ? 'isSpellcaster'
                                                         : field === 'spellcaster_practice' ? 'spellcasterPractice'
                                                             : field,
                                                     value
@@ -323,6 +318,10 @@ const Sheet = ({
                                                 editMode={editMode}
                                                 onChange={val => editMode ? set('truths', val) : handleDirectField('truths', val)}
                                             />
+                                        </div>
+
+                                        <div className="ac-card">
+                                            <TalentsList talents={char.talents} editMode={editMode} onChange={val => set('talents', val)} />
                                         </div>
 
                                         {/* Langues */}
@@ -385,8 +384,11 @@ const Sheet = ({
             )}
             {showAvatar && (
                 <AvatarUploader
-                    characterId={character.id}
-                    onUploaded={(url) => { setShowAvatar(false); patchImmediate({ avatar: url }); }}
+                    currentAvatar={char.avatar}
+                    onAvatarChange={(newAvatar) => {
+                        setEditableChar(prev => ({ ...prev, avatar: newAvatar }));
+                        patchImmediate({ avatar: newAvatar });
+                    }}
                     onClose={() => setShowAvatar(false)}
                 />
             )}

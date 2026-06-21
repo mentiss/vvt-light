@@ -40,9 +40,9 @@ const AttributeGrid = ({ attributes, editMode, onChange, onRoll }) => {
                             ) : (
                                 <span className="ac-attr-value">{value}</span>
                             )}
-                            <span className="ac-attr-bonus">
-                                {bonus > 0 ? `+${bonus}⚄` : '—'}
-                            </span>
+                            {(key === 'brawn' || key === 'insight') && (
+                                <span className="ac-attr-bonus">{bonus > 0 && `+${bonus}⚄`}</span>
+                            )}
                         </div>
                     );
                 })}

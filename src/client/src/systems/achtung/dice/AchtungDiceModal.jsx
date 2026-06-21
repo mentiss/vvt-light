@@ -7,7 +7,7 @@ import { useFetch }         from '../../../hooks/useFetch.js';
 import { useSystem }        from '../../../hooks/useSystem.js';
 import { useSession }       from '../../../context/SessionContext.jsx';
 import achtungConfig, {
-    ATTRIBUTES, SKILLS, getBonusDamage, EXTRA_DIE_COST,
+    ATTRIBUTES, SKILLS, getBonusDamage, EXTRA_DIE_COST, ATTR_LABEL, SALVO_LABELS, UNARMED_WEAPON,
 } from '../config.jsx';
 
 const MAX_SKILL_DICE   = 5;
@@ -64,7 +64,7 @@ const Die20 = ({ value, target, skillRank, expertiseApplied, forced, onClick, ca
             <div
                 className={`ac-die ${cls}${canReroll ? ' cursor-pointer hover:opacity-80' : ''}${forced ? ' ring-2 ring-yellow-400' : ''}`}
                 onClick={canReroll ? onClick : undefined}
-                title={canReroll ? 'Cliquer pour relancer (coûte 1 Fortune)' : undefined}
+                title={canReroll ? 'Cliquer pour relancer' : undefined}
             >
                 {value}
             </div>
@@ -75,11 +75,10 @@ const Die20 = ({ value, target, skillRank, expertiseApplied, forced, onClick, ca
 
 // ── Dé de Challenge d6 ────────────────────────────────────────────────────────
 
-const Die6 = ({ value, salvoUpper }) => {
+const Die6 = ({ value, isVicious }) => {
     let cls;
-    if (value <= 2)   cls = 'miss';
-    else if (value <= 4) cls = 'miss';
-    else cls = (salvoUpper.includes('VICIOUS') && value === 5) ? 'complication' : 'success';
+    if (value <= 4) cls = 'miss';
+    else cls = isVicious ? 'complication' : 'success';
     return <div className={`ac-die ${cls}`}>{value}</div>;
 };
 
@@ -124,27 +123,36 @@ const AchtungDiceModal = ({
     const [difficulty,       setDifficulty]       = useState(1);
     const [isAssist,         setIsAssist]         = useState(false);
 
+    // Viser / Paré — relance gratuite (1 usage, sans Fortune)
+    const [freeRerollAvailable, setFreeRerollAvailable] = useState(false);
+    const [freeRerollUsed,      setFreeRerollUsed]      = useState(false);
+
     // Fortune dépensée AVANT le jet (dés forcés à 1)
     const [fortunePreRoll, setFortunePreRoll] = useState(0);
 
     // ── État étape 2 — achats ─────────────────────────────────────────────────
-    // extraDiceCount : nombre de dés supplémentaires achetés (0–3)
     const [extraDiceCount,  setExtraDiceCount]  = useState(0);
     const [momentumSpent,   setMomentumSpent]   = useState(0);
     const [threatGenerated, setThreatGenerated] = useState(0);
     const [freeDieUsed,     setFreeDieUsed]     = useState(false);
 
     // ── État étape 3 — résultat compétence ────────────────────────────────────
-    const [diceResults,      setDiceResults]      = useState([]); // résultats mutables (relances)
-    const [forcedResults,    setForcedResults]    = useState([]); // indices des dés forcés à 1
+    const [diceResults,      setDiceResults]      = useState([]);
+    const [forcedResults,    setForcedResults]    = useState([]);
     const [expertiseApplied, setExpertiseApplied] = useState(false);
     const [rawTarget,        setRawTarget]        = useState(0);
     const [rawSkillRank,     setRawSkillRank]     = useState(0);
 
     // ── État étape 4/5 — dommages ─────────────────────────────────────────────
-    const [selectedWeapon,  setSelectedWeapon]  = useState(weapon);
+    const [selectedWeapon,      setSelectedWeapon]      = useState(weapon);
+    const [selectedWeaponIndex, setSelectedWeaponIndex] = useState(() => {
+        if (!weapon) return null;
+        const idx = (character.weapons ?? []).findIndex(w => w === weapon || (w.id != null && w.id === weapon.id));
+        return idx >= 0 ? idx : null;
+    });
     const [damageBonusDice, setDamageBonusDice] = useState(0);
     const [damageResults,   setDamageResults]   = useState([]);
+    const [activeSalvo,     setActiveSalvo]     = useState(null); // { key, value? } | null — choisi à l'étape 4
 
     const [rolling, setRolling] = useState(false);
     const [error,   setError]   = useState(null);
@@ -156,18 +164,17 @@ const AchtungDiceModal = ({
 
     const attrValue  = selectedAttr?.value  ?? 0;
     const skillRank  = selectedSkill?.rank  ?? 0;
-    const hasFocus   = !!(selectedSkill?.focus?.trim()); // focus renseigné sur la compétence
+    const hasFocus   = !!(selectedSkill?.focus?.trim());
     const target     = attrValue + skillRank;
 
     const baseDice = isAssist ? 1 : 2;
-    const nbDice   = Math.min(MAX_SKILL_DICE, baseDice + extraDiceCount);
-    // Dés réellement lancés = nbDice - fortunePreRoll (les forcés ne sont pas lancés)
-    const dicesToRoll = Math.max(0, nbDice - fortunePreRoll);
+    const maxExtraSlots = MAX_SKILL_DICE - baseDice;
 
-    // Interprétation A : le dé gratuit occupe le slot 0 de la table (coût 0 au lieu de 1).
-    // Les achats payants suivants continuent normalement : slot 1 = 2, slot 2 = 3.
-    // extraDiceCount inclut le dé gratuit, donc l'index dans EXTRA_DIE_COST est naturellement correct.
-    const nextDieCost = extraDiceCount < MAX_SKILL_DICE - baseDice ? EXTRA_DIE_COST[extraDiceCount] : null;
+    const usedExtraSlots = extraDiceCount + (freeDieUsed ? 1 : 0);
+    const nbDice         = Math.min(MAX_SKILL_DICE, baseDice + usedExtraSlots);
+    const dicesToRoll     = Math.max(0, nbDice - fortunePreRoll);
+
+    const nextDieCost = usedExtraSlots < maxExtraSlots ? EXTRA_DIE_COST[extraDiceCount] : null;
     const canBuyWithMomentum = nextDieCost !== null && (sessionResources.momentum - momentumSpent) >= nextDieCost;
     const canBuyWithThreat   = nextDieCost !== null;
 
@@ -188,14 +195,16 @@ const AchtungDiceModal = ({
     // ── Dérivés étape 4 ───────────────────────────────────────────────────────
     const attackAttrKey = useMemo(() => {
         if (!selectedWeapon) return null;
-        return (selectedWeapon.range ?? '').toLowerCase() === 'close' ? 'brawn' : 'coordination';
+        return (selectedWeapon.range ?? '').toLowerCase() === 'contact' ? 'brawn' : 'insight';
     }, [selectedWeapon]);
     const attackAttrVal = character.attributes?.find(a => a.key === attackAttrKey)?.value ?? 0;
     const bonusDamage   = getBonusDamage(attackAttrVal);
     const basePool      = (selectedWeapon?.damage ?? 0) + bonusDamage;
     const totalDicePool = basePool + damageBonusDice;
 
-    const salvoUpper = (selectedWeapon?.salvo ?? '').toUpperCase();
+    const weaponQualities    = selectedWeapon?.qualities ?? [];
+    const weaponSalvoOptions = selectedWeapon?.salvo ?? [];
+    const hasMunitionQuality = weaponQualities.includes('munition');
 
     // ── Achats dés ────────────────────────────────────────────────────────────
     const buyExtraDie = (source) => {
@@ -210,9 +219,8 @@ const AchtungDiceModal = ({
     };
 
     const buyFreeDie = () => {
-        if (freeDieUsed || extraDiceCount >= MAX_SKILL_DICE - baseDice) return;
+        if (freeDieUsed || usedExtraSlots >= maxExtraSlots) return;
         setFreeDieUsed(true);
-        setExtraDiceCount(v => v + 1);
     };
 
     const resetExtraDice = () => {
@@ -237,12 +245,9 @@ const AchtungDiceModal = ({
         setError(null);
 
         try {
-            // Dés forcés à 1 par Fortune
-            const forcedOnes  = Array(fortunePreRoll).fill(1);
-            const forcedIdx   = Array.from({ length: fortunePreRoll }, (_, i) => i); // indices 0..n-1
+            const forcedIdx = Array.from({ length: fortunePreRoll }, (_, i) => i);
 
-            // Lancer les dés restants
-            let rolledResults = [];
+            let allResults;
             if (dicesToRoll > 0) {
                 const ctx = {
                     apiBase, fetchFn: fetchWithAuth,
@@ -256,32 +261,29 @@ const AchtungDiceModal = ({
                         momentumSpent, threatGenerated, isAssist,
                         nbDes: dicesToRoll,
                         freeDieUsed,
-                        // expertise : le joueur déclare après le jet
+                        forcedOnesCount: fortunePreRoll,
+                        hasFocus: expertiseApplied,
                     },
                 };
                 const notation = `${dicesToRoll}d20`;
-                const raw      = await roll(notation, ctx, achtungConfig.dice);
-                rolledResults  = raw.groups?.[0]?.values ?? raw.results ?? [];
+                const result   = await roll(notation, ctx, achtungConfig.dice);
+                allResults     = result.results; // déjà reconstruit (forcés inclus) par afterRoll
+            } else {
+                // Cas extrême (tous les dés forcés) — normalement empêché par canSpendFortunePreRoll
+                allResults = Array(fortunePreRoll).fill(1);
             }
 
-            const allResults = [...forcedOnes, ...rolledResults];
-
-            // Stocker l'état pour les interactions post-jet
             setDiceResults(allResults);
             setForcedResults(forcedIdx);
             setRawTarget(target);
             setRawSkillRank(skillRank);
-            // L'expertise sera déclarée par le joueur à l'étape 3
-            setExpertiseApplied(false);
 
-            // Émettre ressources
             emitResources({
                 momentum:      -momentumSpent,
                 threat:         threatGenerated,
-                complications:  0, // calculé après déclaration expertise
+                complications:  0,
             });
 
-            // Décrémenter Fortune dépensée avant le jet
             if (fortunePreRoll > 0) {
                 onCharacterUpdate?.({ ...character, fortune: Math.max(0, fortuneAvailable - fortunePreRoll) });
             }
@@ -297,79 +299,84 @@ const AchtungDiceModal = ({
         rolling, selectedAttrKey, selectedSkillKey, target, skillRank, difficulty,
         momentumSpent, threatGenerated, isAssist, dicesToRoll, fortunePreRoll,
         fortuneAvailable, apiBase, fetchWithAuth, character, activeGMSession,
-        emitResources, onCharacterUpdate, skillDef,
+        emitResources, onCharacterUpdate, skillDef, expertiseApplied, freeDieUsed,
     ]);
 
-    // ── Déclaration expertise post-jet ────────────────────────────────────────
-    const handleExpertiseToggle = useCallback((checked) => {
-        setExpertiseApplied(checked);
-    }, []);
-
     // ── Émettre complications après déclaration expertise ────────────────────
-    // On émet les complications une fois que le résultat final est confirmé
     const [complicationsEmitted, setComplicationsEmitted] = useState(false);
     const handleConfirmResult = useCallback(() => {
         if (complicationsEmitted) return;
         if (complications > 0) {
             emitResources({ complications });
         }
-        // Momentum excédentaire — automatique selon les règles
         if (success && momentum > 0) {
             emitResources({ momentum });
         }
         setComplicationsEmitted(true);
     }, [complications, success, momentum, emitResources, complicationsEmitted]);
 
-    // ── Relancer un dé (Fortune post-jet) ────────────────────────────────────
+    // ── Relancer un dé (Viser/Paré gratuit en priorité, sinon Fortune) ───────
     const handleRerollDie = useCallback(async (idx) => {
+        const useFreeReroll    = freeRerollAvailable && !freeRerollUsed;
         const currentFortune   = character.fortune ?? 0;
         const remainingFortune = currentFortune - fortunePreRoll;
-        if (remainingFortune <= 0 || rolling) return;
+        if (!useFreeReroll && remainingFortune <= 0) return;
+        if (rolling) return;
 
         setRolling(true);
         setError(null);
         try {
-            // Hook minimal — pas de beforeRoll (pas de validation ressources)
-            const fortuneRerollHook = {
-                buildNotation:        () => '1d20',
-                afterRoll:            (raw) => ({ results: raw.groups[0].values }),
-                buildAnimationSequence: (raw) => ({
-                    mode:   'single',
-                    groups: [{ id: 'fortune-reroll', diceType: 'd20', color: 'default', label: 'Fortune — Relance', waves: [{ dice: raw.groups[0].values }] }],
-                }),
-            };
-
             const ctx = {
                 apiBase, fetchFn: fetchWithAuth,
                 characterId:   character.id,
                 characterName: character.nom ?? character.playerName,
                 sessionId:     activeGMSession ?? null,
                 rollType:      'achtung_skill',
-                label:         `Fortune — Relance (${ATTRIBUTES.find(a => a.key === selectedAttrKey)?.label ?? ''} + ${skillDef?.label ?? ''})`,
-                systemData:    { nbDes: 1, isAssist: true, target: rawTarget, skillRank: rawSkillRank, difficulty, momentumSpent: 0, threatGenerated: 0 },
+                label:         `${useFreeReroll ? 'Viser/Paré' : 'Fortune'} — Relance (${ATTRIBUTES.find(a => a.key === selectedAttrKey)?.label ?? ''} + ${skillDef?.label ?? ''})`,
+                systemData: {
+                    target: rawTarget, skillRank: rawSkillRank, hasFocus: expertiseApplied,
+                    difficulty, momentumSpent: 0, threatGenerated: 0, isAssist: true,
+                    nbDes: 1, forcedOnesCount: 0,
+                },
             };
 
-            const raw    = await roll('1d20', ctx, fortuneRerollHook);
-            const newVal = raw.groups?.[0]?.values?.[0] ?? Math.floor(Math.random() * 20) + 1;
+            const result = await roll('1d20', ctx, achtungConfig.dice);
+            const newVal = result.results?.[0] ?? Math.floor(Math.random() * 20) + 1;
 
             const next = [...diceResults];
             next[idx]  = newVal;
             setDiceResults(next);
 
-            // Décrémenter fortune
-            onCharacterUpdate?.({ ...character, fortune: Math.max(0, currentFortune - 1) });
+            if (useFreeReroll) {
+                setFreeRerollUsed(true);
+            } else {
+                onCharacterUpdate?.({ ...character, fortune: Math.max(0, currentFortune - 1) });
+            }
         } catch (err) {
             console.error('[handleRerollDie]', err);
-            // Fallback silencieux — relance sans animation si roll() échoue
             const next = [...diceResults];
             next[idx]  = Math.floor(Math.random() * 20) + 1;
             setDiceResults(next);
-            onCharacterUpdate?.({ ...character, fortune: Math.max(0, currentFortune - 1) });
+            if (useFreeReroll) setFreeRerollUsed(true);
+            else onCharacterUpdate?.({ ...character, fortune: Math.max(0, currentFortune - 1) });
         } finally {
             setRolling(false);
         }
     }, [diceResults, character, fortunePreRoll, rolling, apiBase, fetchWithAuth,
-        activeGMSession, selectedAttrKey, skillDef, rawTarget, rawSkillRank, difficulty, onCharacterUpdate]);
+        activeGMSession, selectedAttrKey, skillDef, rawTarget, rawSkillRank, difficulty,
+        expertiseApplied, onCharacterUpdate, freeRerollAvailable, freeRerollUsed]);
+
+    // ── Sélection du salvo actif (étape 4) ────────────────────────────────────
+    // Coût/remboursement de munition uniquement sur la transition actif <-> aucun.
+    const handleSelectSalvo = useCallback((option) => {
+        const wasActive = activeSalvo !== null;
+        const willBeActive = option !== null;
+        const delta = (willBeActive ? -1 : 0) - (wasActive ? -1 : 0);
+        setActiveSalvo(option);
+        if (delta !== 0) {
+            onCharacterUpdate?.({ ...character, ammo: Math.max(0, (character.ammo ?? 0) + delta) });
+        }
+    }, [activeSalvo, character, onCharacterUpdate]);
 
     // ── Jet de dommages ───────────────────────────────────────────────────────
     const handleDamageRoll = useCallback(async () => {
@@ -379,6 +386,11 @@ const AchtungDiceModal = ({
         try {
             if (damageBonusDice > 0) emitResources({ momentum: -damageBonusDice });
 
+            // Qualité Munition : consomme toujours 1 munition, indépendamment du salvo
+            if (hasMunitionQuality) {
+                onCharacterUpdate?.({ ...character, ammo: Math.max(0, (character.ammo ?? 0) - 1) });
+            }
+
             const ctx = {
                 apiBase, fetchFn: fetchWithAuth,
                 characterId: character.id,
@@ -386,10 +398,10 @@ const AchtungDiceModal = ({
                 sessionId: activeGMSession ?? null,
                 rollType: 'achtung_damage',
                 label: `Dommages — ${selectedWeapon.name}`,
-                systemData: { nbDice: totalDicePool, salvo: selectedWeapon.salvo ?? '' },
+                systemData: { nbDice: totalDicePool, activeSalvo: hasMunitionQuality ? null : activeSalvo },
             };
-            const raw     = await roll(`${totalDicePool}d6`, ctx, achtungConfig.challengeDice);
-            const results = raw.groups?.[0]?.values ?? raw.results ?? [];
+            const result  = await roll(`${totalDicePool}d6`, ctx, achtungConfig.challengeDice);
+            const results = result.results ?? [];
             setDamageResults(results);
             setStep(5);
         } catch (err) {
@@ -398,35 +410,32 @@ const AchtungDiceModal = ({
         } finally {
             setRolling(false);
         }
-    }, [rolling, selectedWeapon, totalDicePool, damageBonusDice, apiBase, fetchWithAuth, character, activeGMSession, emitResources]);
+    }, [rolling, selectedWeapon, totalDicePool, damageBonusDice, apiBase, fetchWithAuth,
+        character, activeGMSession, emitResources, hasMunitionQuality, activeSalvo, onCharacterUpdate]);
 
-    // ── Calcul dommages ───────────────────────────────────────────────────────
+    // ── Calcul dommages (affichage local, miroir de countChallengeDice) ──────
     const damageCalc = useMemo(() => {
+        const isVicious = !hasMunitionQuality && activeSalvo?.key === 'vicious';
         let stress = 0, effects = 0;
         for (const val of damageResults) {
             if (val === 1)      stress += 1;
             else if (val === 2) stress += 2;
             else if (val === 3 || val === 4) { /* 0 */ }
             else { // 5 ou 6
-                if (salvoUpper.includes('VICIOUS') && val === 5) stress += 2;
-                else { stress += 1; effects += 1; }
+                stress += 1; effects += 1;
+                if (isVicious) stress += 1;
             }
         }
         return { stress, effects };
-    }, [damageResults, salvoUpper]);
+    }, [damageResults, activeSalvo, hasMunitionQuality]);
 
-    // ── Utiliser Salvo ────────────────────────────────────────────────────────
-    const [salvoUsed, setSalvoUsed] = useState(false);
-    const handleSalvoSwitch = useCallback((checked) => {
-        setSalvoUsed(checked);
-        const delta = checked ? -1 : 1;
-        onCharacterUpdate?.({ ...character, ammo: Math.max(0, (character.ammo ?? 0) + delta) });
-    }, [character, onCharacterUpdate]);
-
-    const hasSalvo = damageCalc.effects > 0 && salvoUpper.length > 0;
+    const displayedActiveSalvo = hasMunitionQuality ? null : activeSalvo;
 
     // Fortune restante pour relances post-jet
     const fortuneForReroll = Math.max(0, (character.fortune ?? 0) - fortunePreRoll);
+    const canRerollAny = fortuneForReroll > 0 || (freeRerollAvailable && !freeRerollUsed);
+
+    const weaponList = useMemo(() => [...(character.weapons ?? []), UNARMED_WEAPON], [character.weapons]);
 
     // ─────────────────────────────────────────────────────────────────────────
     return (
@@ -483,6 +492,7 @@ const AchtungDiceModal = ({
                                 {character.skills?.map(skill => {
                                     const def      = SKILLS.find(s => s.key === skill.key);
                                     const isActive = selectedSkillKey === skill.key;
+                                    if(skill.rank === 0) return null;
                                     return (
                                         <button
                                             key={skill.key}
@@ -500,7 +510,7 @@ const AchtungDiceModal = ({
                             </div>
                         </div>
 
-                        {/* Expertise applicable — visible uniquement si la compétence sélectionnée a un focus */}
+                        {/* Expertise applicable */}
                         {hasFocus && selectedSkillKey && (
                             <div className="ac-card-alt">
                                 <Toggle
@@ -527,6 +537,16 @@ const AchtungDiceModal = ({
                             </div>
                         </div>
 
+                        {/* Viser / Paré */}
+                        <div className="ac-card-alt">
+                            <Toggle
+                                checked={freeRerollAvailable}
+                                onChange={setFreeRerollAvailable}
+                                label="Viser / Paré"
+                                sublabel="Relance gratuite d'1 dé après le jet (1 usage, sans Fortune)"
+                            />
+                        </div>
+
                         <button
                             onClick={() => setStep(2)}
                             disabled={!selectedAttrKey || !selectedSkillKey}
@@ -544,29 +564,18 @@ const AchtungDiceModal = ({
                         {/* Résumé */}
                         <div className="ac-card-alt flex items-center justify-between">
                             <div>
-                                <div className="ac-label">Jet</div>
-                                <div className="text-default" style={{ fontSize: '0.85rem' }}>
-                                    {ATTRIBUTES.find(a => a.key === selectedAttrKey)?.label} + {skillDef?.label}
+                                <div className="ac-label">Dés de base</div>
+                                <div className="ac-text-muted" style={{ fontSize: '0.7rem' }}>
+                                    {isAssist ? '1d20 (assist)' : '2d20'}
                                 </div>
-                                <div className="ac-text-muted">Cible {target} · {difficulty} succès requis</div>
                             </div>
-                            <div className="text-center">
-                                <div className="ac-label mb-1">Dés</div>
-                                <div className="ac-resource-value text-secondary">{nbDice}</div>
-                                {fortunePreRoll > 0 && (
-                                    <div className="ac-text-muted" style={{ fontSize: '0.6rem' }}>
-                                        {fortunePreRoll} forcé{fortunePreRoll > 1 ? 's' : ''} à 1
-                                    </div>
-                                )}
-                            </div>
+                            <div className="ac-resource-value text-secondary">{nbDice}d20</div>
                         </div>
 
-                        {/* Dé gratuit — talent */}
                         {!freeDieUsed && extraDiceCount < MAX_SKILL_DICE - baseDice && (
                             <button
                                 onClick={buyFreeDie}
                                 className="ac-btn ac-btn-secondary w-full"
-                                style={{ borderColor: 'var(--ac-secondary)', color: 'var(--ac-secondary)' }}
                             >
                                 ✦ Utiliser talent — 1 dé gratuit
                             </button>
@@ -660,26 +669,16 @@ const AchtungDiceModal = ({
                 {step === 3 && diceResults.length > 0 && (
                     <div className="flex flex-col gap-4">
 
-                        {/* Déclaration expertise — seulement si la compétence a un focus */}
-                        {hasFocus && (
-                            <div className="ac-card-alt">
-                                <Toggle
-                                    checked={expertiseApplied}
-                                    onChange={handleExpertiseToggle}
-                                    variant="default"
-                                    label="Expertise applicable"
-                                    sublabel={`Focus : ${selectedSkill?.focus} — résultats ≤ ${skillRank} comptent pour 2 succès`}
-                                />
-                            </div>
-                        )}
-
                         {/* Dés */}
                         <div>
                             <div className="ac-label mb-1.5">
                                 Résultats
-                                {fortuneForReroll > 0 && (
+                                {canRerollAny && (
                                     <span className="ac-text-muted ml-2" style={{ fontSize: '0.65rem' }}>
-                                        (cliquer sur un dé pour relancer — coûte 1 Fortune, {fortuneForReroll} restante{fortuneForReroll > 1 ? 's' : ''})
+                                        (cliquer sur un dé pour relancer
+                                        {freeRerollAvailable && !freeRerollUsed
+                                            ? ' — gratuite (Viser/Paré)'
+                                            : ` — coûte 1 Fortune, ${fortuneForReroll} restante${fortuneForReroll > 1 ? 's' : ''}`})
                                     </span>
                                 )}
                             </div>
@@ -692,7 +691,7 @@ const AchtungDiceModal = ({
                                         skillRank={rawSkillRank}
                                         expertiseApplied={expertiseApplied}
                                         forced={forcedResults.includes(i)}
-                                        canReroll={fortuneForReroll > 0}
+                                        canReroll={canRerollAny}
                                         onClick={() => handleRerollDie(i)}
                                     />
                                 ))}
@@ -729,11 +728,9 @@ const AchtungDiceModal = ({
 
                         {/* Actions suivantes */}
                         <div className="flex flex-col gap-2">
-                            {success && (character.weapons?.length ?? 0) > 0 && (
-                                <button onClick={() => setStep(4)} className="ac-btn ac-btn-primary w-full">
-                                    ⚄ Lancer les dommages →
-                                </button>
-                            )}
+                            <button onClick={() => setStep(4)} className="ac-btn ac-btn-primary w-full">
+                                ⚄ Lancer les dommages →
+                            </button>
                             <button onClick={onClose} className="ac-btn ac-btn-ghost w-full">Fermer</button>
                         </div>
                     </div>
@@ -745,23 +742,28 @@ const AchtungDiceModal = ({
                         <div>
                             <div className="ac-label mb-1.5">Arme</div>
                             <div className="flex flex-col gap-1">
-                                {(character.weapons ?? []).map((w, i) => (
-                                    <button
-                                        key={w.id ?? i}
-                                        onClick={() => setSelectedWeapon(w)}
-                                        className={`ac-select-btn${selectedWeapon?.id === w.id ? ' selected' : ''} flex items-center justify-between px-3 py-2`}
-                                    >
-                                        <div>
-                                            <span className="ac-font-title" style={{ fontSize: '0.82rem' }}>{w.name}</span>
-                                            {w.focus && <span className="ac-text-muted ml-2" style={{ fontSize: '0.7rem' }}>{w.focus}</span>}
-                                        </div>
-                                        <div className="flex gap-2 ac-text-muted" style={{ fontSize: '0.7rem' }}>
-                                            <span className="text-secondary">{w.damage}⚄</span>
-                                            {w.salvo && <span>{w.salvo}</span>}
-                                            <span>{w.range}</span>
-                                        </div>
-                                    </button>
-                                ))}
+                                {weaponList.map((w, i) => {
+                                    const isSelected = selectedWeapon?.id != null ? selectedWeapon.id === w.id : selectedWeapon === w;
+                                    return (
+                                        <button
+                                            key={w.id ?? i}
+                                            onClick={() => { setSelectedWeapon(w); setSelectedWeaponIndex(i); setActiveSalvo(null); }}
+                                            className={`ac-select-btn${isSelected ? ' selected' : ''} flex items-center justify-between px-3 py-2`}
+                                        >
+                                            <div>
+                                                <span className="ac-font-title" style={{ fontSize: '0.82rem' }}>{w.name}</span>
+                                                {w.focus && <span className="ac-text-muted ml-2" style={{ fontSize: '0.7rem' }}>{w.focus}</span>}
+                                            </div>
+                                            <div className="flex gap-2 ac-text-muted" style={{ fontSize: '0.7rem' }}>
+                                                <span className="text-secondary">{w.damage}⚄</span>
+                                                {(w.salvo ?? []).length > 0 && (
+                                                    <span>{w.salvo.map(s => SALVO_LABELS[s.key] ?? s.key).join(', ')}</span>
+                                                )}
+                                                <span>{w.range}</span>
+                                            </div>
+                                        </button>
+                                    );
+                                })}
                             </div>
                         </div>
 
@@ -772,7 +774,7 @@ const AchtungDiceModal = ({
                                         <div className="ac-label">Pool de Dés de Défi</div>
                                         <div className="ac-text-muted" style={{ fontSize: '0.7rem' }}>
                                             {selectedWeapon.damage}⚄ arme
-                                            {bonusDamage > 0 && ` + ${bonusDamage}⚄ Bonus (${attackAttrKey})`}
+                                            {bonusDamage > 0 && ` + ${bonusDamage}⚄ Bonus (${ATTR_LABEL[attackAttrKey]})`}
                                             {damageBonusDice > 0 && ` + ${damageBonusDice}⚄ achetés`}
                                         </div>
                                     </div>
@@ -788,6 +790,45 @@ const AchtungDiceModal = ({
                                             <button onClick={() => setDamageBonusDice(d => Math.min(MAX_DAMAGE_BONUS, Math.min(sessionResources.momentum, d + 1)))} disabled={damageBonusDice >= MAX_DAMAGE_BONUS || damageBonusDice >= sessionResources.momentum} className="ac-btn ac-btn-ghost w-8 h-8 p-0 flex items-center justify-center disabled:opacity-30">+</button>
                                             <span className="ac-text-muted" style={{ fontSize: '0.7rem' }}>{sessionResources.momentum} Momentum dispo</span>
                                         </div>
+                                    </div>
+                                )}
+
+                                {/* Salvo actif — un seul à la fois, choisi avant le jet */}
+                                {!hasMunitionQuality && weaponSalvoOptions.length > 0 && (
+                                    <div className="ac-card-alt">
+                                        <div className="ac-label mb-1.5">Salvo actif (1 munition si choisi)</div>
+                                        <div className="flex flex-wrap gap-1.5">
+                                            <button
+                                                onClick={() => handleSelectSalvo(null)}
+                                                className={`ac-select-btn${activeSalvo === null ? ' selected' : ''}`}
+                                                style={{ fontSize: '0.72rem', padding: '0.25rem 0.6rem' }}
+                                            >
+                                                Aucun
+                                            </button>
+                                            {weaponSalvoOptions.map((opt, i) => {
+                                                const isActive   = activeSalvo?.key === opt.key;
+                                                const isDisabled = (character.ammo ?? 0) <= 0 && !isActive;
+                                                return (
+                                                    <button
+                                                        key={opt.key + i}
+                                                        onClick={() => !isDisabled && handleSelectSalvo(opt)}
+                                                        disabled={isDisabled}
+                                                        className={`ac-select-btn${isActive ? ' selected-primary' : ''} disabled:opacity-30`}
+                                                        style={{ fontSize: '0.72rem', padding: '0.25rem 0.6rem' }}
+                                                    >
+                                                        {SALVO_LABELS[opt.key] ?? opt.key}{opt.value ? ` (${opt.value})` : ''}
+                                                    </button>
+                                                );
+                                            })}
+                                        </div>
+                                        <div className="ac-text-muted mt-1.5" style={{ fontSize: '0.65rem' }}>
+                                            Ammo : {character.ammo ?? 0}
+                                        </div>
+                                    </div>
+                                )}
+                                {hasMunitionQuality && (
+                                    <div className="ac-text-muted" style={{ fontSize: '0.7rem' }}>
+                                        ⚙ Qualité Munition — consomme toujours 1 munition au tir, salvo indisponible.
                                     </div>
                                 )}
                             </>
@@ -811,7 +852,7 @@ const AchtungDiceModal = ({
                     <div className="flex flex-col gap-4">
                         <div className="flex flex-wrap gap-1.5 justify-center">
                             {damageResults.map((val, i) => (
-                                <Die6 key={i} value={val} salvoUpper={salvoUpper} />
+                                <Die6 key={i} value={val} isVicious={displayedActiveSalvo?.key === 'vicious'} />
                             ))}
                         </div>
 
@@ -821,23 +862,11 @@ const AchtungDiceModal = ({
                             </div>
                             {damageCalc.effects > 0 && (
                                 <div className="ac-verdict-sub text-secondary">
-                                    {damageCalc.effects} effet(s) — {selectedWeapon?.salvo || 'Salvo'}
+                                    {damageCalc.effects} effet(s)
+                                    {displayedActiveSalvo && ` — ${SALVO_LABELS[displayedActiveSalvo.key] ?? displayedActiveSalvo.key}${displayedActiveSalvo.value ? ` (${displayedActiveSalvo.value})` : ''}`}
                                 </div>
                             )}
                         </div>
-
-                        {hasSalvo && (
-                            <div className="ac-card-alt">
-                                <Toggle
-                                    checked={salvoUsed}
-                                    onChange={handleSalvoSwitch}
-                                    variant="accent"
-                                    label={`Utiliser effet Salvo (${selectedWeapon?.salvo})`}
-                                    sublabel={`−1 munition · Ammo : ${character.ammo ?? 0}`}
-                                    disabled={(character.ammo ?? 0) <= 0 && !salvoUsed}
-                                />
-                            </div>
-                        )}
 
                         <button onClick={onClose} className="ac-btn ac-btn-primary w-full">Fermer</button>
                     </div>

@@ -38,7 +38,9 @@ export {
 // mis à jour pour ne plus appeler getSpellcasterType — chantier en cours.
 
 export {
-    WEAPON_RANGES, WEAPON_SIZES,
+    WEAPON_RANGES, WEAPON_SIZES, RANGE_LABELS,
+    SALVO_EFFECTS, SALVO_HAS_VALUE, SALVO_LABELS,
+    WEAPON_QUALITIES, QUALITY_LABELS, UNARMED_WEAPON,
     getBonusDamage, getResistance,
     computeStress, computeArmour, computeCourage, getBonusLanguages,
     EXTRA_DIE_COST, countSuccesses, countChallengeDice,
@@ -59,22 +61,9 @@ const skillDiceHooks = {
     },
 
     beforeRoll: (ctx) => {
-        const { nbDes, momentumSpent = 0, threatGenerated = 0, isAssist = false, freeDieUsed = false } = ctx.systemData;
+        const { nbDes } = ctx.systemData;
         if (nbDes < 1 || nbDes > 5)
             throw new RollError('INVALID_DICE', `Nombre de dés invalide : ${nbDes}`);
-        const base      = isAssist ? 1 : 2;
-        const extraDice = nbDes - base;
-        if (extraDice > 0) {
-            // Si un dé gratuit (talent) a été utilisé, il occupe le premier slot
-            // Les dés payants commencent donc à l'index 1 de la table
-            const paidDice     = freeDieUsed ? extraDice - 1 : extraDice;
-            const startIndex   = freeDieUsed ? 1 : 0;
-            const expectedCost = paidDice > 0
-                ? EXTRA_DIE_COST.slice(startIndex, startIndex + paidDice).reduce((a, b) => a + b, 0)
-                : 0;
-            if (momentumSpent + threatGenerated !== expectedCost)
-                throw new RollError('RESOURCE_MISMATCH', 'Incohérence ressources / dés achetés');
-        }
         return ctx;
     },
 
@@ -84,15 +73,19 @@ const skillDiceHooks = {
             difficulty = 1,
             momentumSpent = 0, threatGenerated = 0,
             isAssist = false,
+            forcedOnesCount = 0,
         } = ctx.systemData;
 
-        const results = raw.groups[0].values;
+        const rolled  = raw.groups[0].values;
+        const results = [...Array(forcedOnesCount).fill(1), ...rolled];
+
         const { successes, complications } = countSuccesses(results, target, skillRank, hasFocus);
         const success  = successes >= difficulty;
         const momentum = Math.max(0, successes - difficulty);
 
         return {
             results,
+            forcedCount:     forcedOnesCount,
             target,
             skillRank,
             hasFocus:        !!hasFocus,
@@ -140,10 +133,10 @@ const challengeDiceHooks = {
     },
 
     afterRoll: (raw, ctx) => {
-        const { salvo = '' } = ctx.systemData;
+        const { activeSalvo = null } = ctx.systemData;
         const results = raw.groups[0].values;
-        const { stress, effects } = countChallengeDice(results, salvo);
-        return { results, stress, effects, salvo, label: ctx.label, successes: stress };
+        const { stress, effects } = countChallengeDice(results, activeSalvo);
+        return { results, stress, effects, activeSalvo, label: ctx.label, successes: stress };
     },
 
     buildAnimationSequence: (raw, ctx) => ({

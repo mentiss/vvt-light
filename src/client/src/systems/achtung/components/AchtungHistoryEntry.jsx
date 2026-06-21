@@ -1,5 +1,6 @@
 // src/client/src/systems/achtung/components/AchtungHistoryEntry.jsx
 import React from 'react';
+import { SALVO_LABELS } from '../config.jsx';
 
 const AchtungHistoryEntry = ({ roll }) => {
     // Les données peuvent être dans roll_result ou details selon le contexte
@@ -12,12 +13,14 @@ const AchtungHistoryEntry = ({ roll }) => {
 
     if (!details) return null;
 
-    const isDamage = roll.roll_type === 'achtung_damage';
+    const isDamage   = roll.roll_type === 'achtung_damage';
+    const isVicious  = isDamage && details.activeSalvo?.key === 'vicious';
 
-    // Couleur d'un dé d20
+    // Couleur d'un dé
     const getDieClass = (val) => {
         if (isDamage) {
-            return (val === 5 || val === 6) ? 'success' : 'miss';
+            if (val !== 5 && val !== 6) return 'miss';
+            return isVicious ? 'complication' : 'success';
         }
         if (val === 20)                            return 'complication';
         if (val === 1)                             return 'double';
@@ -46,9 +49,10 @@ const AchtungHistoryEntry = ({ roll }) => {
                         cible {details.target} · {details.difficulty ?? 1} succès requis
                     </span>
                 )}
-                {isDamage && details.salvo && (
+                {isDamage && details.activeSalvo && (
                     <span style={{ fontSize: '0.68rem', color: 'var(--ac-muted)' }}>
-                        salvo: {details.salvo}
+                        salvo : {SALVO_LABELS[details.activeSalvo.key] ?? details.activeSalvo.key}
+                        {details.activeSalvo.value ? ` (${details.activeSalvo.value})` : ''}
                     </span>
                 )}
             </div>
@@ -56,11 +60,19 @@ const AchtungHistoryEntry = ({ roll }) => {
             {/* Dés */}
             {(details.results ?? []).length > 0 && (
                 <div className="flex flex-wrap gap-1 mb-1.5">
-                    {(details.results ?? []).map((val, i) => (
-                        <div key={i} className={`ac-die ${getDieClass(val)}`} style={{ width: '1.8rem', height: '1.8rem', fontSize: '0.8rem' }}>
-                            {val}
-                        </div>
-                    ))}
+                    {(details.results ?? []).map((val, i) => {
+                        const isForced = i < (details.forcedCount ?? 0);
+                        return (
+                            <div
+                                key={i}
+                                className={`ac-die ${getDieClass(val)}${isForced ? ' ring-2 ring-yellow-400' : ''}`}
+                                style={{ width: '1.8rem', height: '1.8rem', fontSize: '0.8rem' }}
+                                title={isForced ? 'Dé forcé (Fortune)' : undefined}
+                            >
+                                {val}
+                            </div>
+                        );
+                    })}
                 </div>
             )}
 

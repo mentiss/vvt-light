@@ -430,7 +430,7 @@ export const TALENTS = {
 
     // ── Étrange (Weird) ──────────────────────────────────────────────────────
     bizarre_insight: {
-        label: 'Intuition bizarre',
+        label: 'Étrange prémonition',
         keywords: ['weird'],
         description: 'Une fois par scène, générez 1 Menace pour poser une question au MJ (comme si vous aviez dépensé du Momentum pour Obtenir des Informations) sans avoir à réussir un jet.',
     },
@@ -457,7 +457,7 @@ export const TALENTS = {
     occult_dabbler: {
         label: 'Touche-à-tout de l\'occulte',
         keywords: ['weird', 'spellcaster'],
-        description: 'Vous avez expérimenté les forces occultes. Vous devenez lanceur de sorts de type Bricoleur, comme décrit dans le Chapitre 9 : Magie et le Mythe.',
+        description: 'Vous avez expérimenté les forces occultes. Vous devenez lanceur de sorts de type Amateur, comme décrit dans le Chapitre 9 : Magie et le Mythe.',
     },
 
     // ── Talents d'archétype (Boffin) ─────────────────────────────────────────

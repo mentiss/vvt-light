@@ -2,8 +2,47 @@
 // Calculs dérivés du système (dégâts, résistances, stress, armure, courage,
 // langues bonus, coût des dés, comptage succès / dommages).
 
-export const WEAPON_RANGES = ['Close', 'Short', 'Medium', 'Long'];
+export const WEAPON_RANGES = ['contact', 'close', 'medium', 'long', 'extreme'];
+
+export const RANGE_LABELS = {
+    contact: 'Contact',
+    close:   'Courte',
+    medium:  'Moyenne',
+    long:    'Longue',
+    extreme: 'Extrême',
+};
+
 export const WEAPON_SIZES  = ['Minor', 'Major'];
+
+export const SALVO_EFFECTS   = ['area', 'backslash', 'drain', 'intense', 'persistent', 'piercing', 'snare', 'stun', 'vicious'];
+export const SALVO_HAS_VALUE = ['backslash', 'persistent', 'piercing'];
+export const SALVO_LABELS = {
+    area: 'Zone', backslash: 'Contrecoup', drain: 'Vidange', intense: 'Intense',
+    persistent: 'Persistant', piercing: 'Perforant', snare: 'Piège', stun: 'Étourdissant', vicious: 'Vicieux',
+};
+
+export const WEAPON_QUALITIES = [
+    'accurate', 'close_quarters', 'cumbersome', 'debilitating', 'escalation',
+    'giant_killer', 'heavy', 'hidden', 'inaccurate', 'indirect', 'munition',
+    'parrying', 'reliable', 'subtle', 'unreliable',
+];
+export const QUALITY_LABELS = {
+    accurate: 'Précis', close_quarters: 'Combat rapproché', cumbersome: 'Encombrant',
+    debilitating: 'Débilitant', escalation: 'Escalade', giant_killer: 'Tueur de géants',
+    heavy: 'Lourd', hidden: 'Caché', inaccurate: 'Imprécis', indirect: 'Indirect',
+    munition: 'Munition', parrying: 'Parade', reliable: 'Fiable', subtle: 'Discret', unreliable: 'Peu fiable',
+};
+
+export const UNARMED_WEAPON = {
+    id: 'unarmed',
+    name: 'Main nue',
+    focus: '',
+    range: 'contact',
+    damage: 2,
+    salvo: [],
+    size: 'Minor',
+    qualities: ['snare'],
+};
 
 export function getBonusDamage(value) {
     if (value <= 8)  return 0;
@@ -73,21 +112,18 @@ export function countSuccesses(results, target, skillRank, expertiseApplied) {
 
 // ── Calcul dommages — dés de Challenge (d6) ───────────────────────────────────
 
-export function countChallengeDice(results, salvo = '') {
+export function countChallengeDice(results, activeSalvo = null) {
+    const isVicious = activeSalvo?.key === 'vicious';
     let stress  = 0;
     let effects = 0;
-    const salvoUpper = salvo.toUpperCase();
     for (const val of results) {
         if (val === 1)      { stress += 1; }
         else if (val === 2) { stress += 2; }
         else if (val === 3 || val === 4) { /* 0 */ }
-        else if (val === 5 || val === 6) {
-            if (salvoUpper.includes('VICIOUS') && val === 5) {
-                stress += 2;
-            } else {
-                stress += 1;
-                effects += 1;
-            }
+        else { // 5 ou 6
+            stress += 1;
+            effects += 1;
+            if (isVicious) stress += 1; // bonus en plus, l'effet reste compté
         }
     }
     return { stress, effects };

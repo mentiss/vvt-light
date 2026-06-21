@@ -130,7 +130,10 @@ function loadFullCharacter(db, id) {
         })),
         weapons: weapons.map(w => ({
             id: w.id, name: w.name ?? '', focus: w.focus ?? '', range: w.range ?? '',
-            damage: w.damage ?? 0, salvo: w.salvo ?? '', size: w.size ?? '', qualities: w.qualities ?? '',
+            damage: w.damage ?? 0,
+            salvo:     (() => { try { return JSON.parse(w.salvo     || '[]'); } catch { return []; } })(),
+            size: w.size ?? '',
+            qualities: (() => { try { return JSON.parse(w.qualities || '[]'); } catch { return []; } })(),
         })),
         items: items.map(i => ({
             id: i.id, name: i.name ?? '', description: i.description ?? '', effect: i.effect ?? '',
@@ -253,8 +256,13 @@ function saveFullCharacter(db, id, data) {
             );
             data.weapons.forEach((w, i) => {
                 if (!w.name?.trim()) return;
-                ins.run(id, w.name.trim(), w.focus ?? '', w.range ?? '', w.damage ?? 0,
-                    w.salvo ?? '', w.size ?? '', w.qualities ?? '', i);
+                ins.run(
+                    id, w.name.trim(), w.focus ?? '', w.range ?? '', w.damage ?? 0,
+                    JSON.stringify(Array.isArray(w.salvo) ? w.salvo : []),
+                    w.size ?? '',
+                    JSON.stringify(Array.isArray(w.qualities) ? w.qualities : []),
+                    i
+                );
             });
         }
 
