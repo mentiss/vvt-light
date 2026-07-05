@@ -133,10 +133,10 @@ const challengeDiceHooks = {
     },
 
     afterRoll: (raw, ctx) => {
-        const { activeSalvo = null } = ctx.systemData;
+        const { activeSalvo = null, innateEffects = [] } = ctx.systemData;
         const results = raw.groups[0].values;
-        const { stress, effects } = countChallengeDice(results, activeSalvo);
-        return { results, stress, effects, activeSalvo, label: ctx.label, successes: stress };
+        const { stress, effects } = countChallengeDice(results, activeSalvo, innateEffects);
+        return { results, stress, effects, activeSalvo, innateEffects, label: ctx.label, successes: stress };
     },
 
     buildAnimationSequence: (raw, ctx) => ({

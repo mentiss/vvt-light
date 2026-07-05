@@ -154,6 +154,7 @@ const AchtungDiceModal = ({
     const [damageResults,   setDamageResults]   = useState([]);
     const [activeSalvo,     setActiveSalvo]     = useState(null); // { key, value? } | null — choisi à l'étape 4
 
+
     const [rolling, setRolling] = useState(false);
     const [error,   setError]   = useState(null);
 
@@ -204,6 +205,7 @@ const AchtungDiceModal = ({
 
     const weaponQualities    = selectedWeapon?.qualities ?? [];
     const weaponSalvoOptions = selectedWeapon?.salvo ?? [];
+    const innateEffects = selectedWeapon?.effect ?? [];
     const hasMunitionQuality = weaponQualities.includes('munition');
 
     // ── Achats dés ────────────────────────────────────────────────────────────
@@ -398,7 +400,7 @@ const AchtungDiceModal = ({
                 sessionId: activeGMSession ?? null,
                 rollType: 'achtung_damage',
                 label: `Dommages — ${selectedWeapon.name}`,
-                systemData: { nbDice: totalDicePool, activeSalvo: hasMunitionQuality ? null : activeSalvo },
+                systemData: { nbDice: totalDicePool, activeSalvo: hasMunitionQuality ? null : activeSalvo, innateEffects },
             };
             const result  = await roll(`${totalDicePool}d6`, ctx, achtungConfig.challengeDice);
             const results = result.results ?? [];
@@ -415,19 +417,19 @@ const AchtungDiceModal = ({
 
     // ── Calcul dommages (affichage local, miroir de countChallengeDice) ──────
     const damageCalc = useMemo(() => {
-        const isVicious = !hasMunitionQuality && activeSalvo?.key === 'vicious';
+        const isVicious = (!hasMunitionQuality && activeSalvo?.key === 'vicious') || innateEffects.some(e => e?.key === 'vicious');
         let stress = 0, effects = 0;
         for (const val of damageResults) {
             if (val === 1)      stress += 1;
             else if (val === 2) stress += 2;
             else if (val === 3 || val === 4) { /* 0 */ }
-            else { // 5 ou 6
+            else {
                 stress += 1; effects += 1;
                 if (isVicious) stress += 1;
             }
         }
         return { stress, effects };
-    }, [damageResults, activeSalvo, hasMunitionQuality]);
+    }, [damageResults, activeSalvo, hasMunitionQuality, innateEffects]);
 
     const displayedActiveSalvo = hasMunitionQuality ? null : activeSalvo;
 
@@ -759,6 +761,9 @@ const AchtungDiceModal = ({
                                                 {(w.salvo ?? []).length > 0 && (
                                                     <span>{w.salvo.map(s => SALVO_LABELS[s.key] ?? s.key).join(', ')}</span>
                                                 )}
+                                                {(w.effect ?? []).length > 0 && (
+                                                    <span>{w.effect.map(e => SALVO_LABELS[e.key] ?? e.key).join(', ')}</span>
+                                                )}
                                                 <span>{w.range}</span>
                                             </div>
                                         </button>
@@ -852,7 +857,7 @@ const AchtungDiceModal = ({
                     <div className="flex flex-col gap-4">
                         <div className="flex flex-wrap gap-1.5 justify-center">
                             {damageResults.map((val, i) => (
-                                <Die6 key={i} value={val} isVicious={displayedActiveSalvo?.key === 'vicious'} />
+                                <Die6 key={i} value={val} isVicious={displayedActiveSalvo?.key === 'vicious' || innateEffects.some(e => e?.key === 'vicious')} />
                             ))}
                         </div>
 

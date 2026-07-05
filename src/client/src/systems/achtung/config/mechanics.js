@@ -24,13 +24,13 @@ export const SALVO_LABELS = {
 export const WEAPON_QUALITIES = [
     'accurate', 'close_quarters', 'cumbersome', 'debilitating', 'escalation',
     'giant_killer', 'heavy', 'hidden', 'inaccurate', 'indirect', 'munition',
-    'parrying', 'reliable', 'subtle', 'unreliable',
+    'parrying', 'reliable', 'subtle', 'unreliable', 'unwieldy',
 ];
 export const QUALITY_LABELS = {
     accurate: 'Précis', close_quarters: 'Combat rapproché', cumbersome: 'Encombrant',
     debilitating: 'Débilitant', escalation: 'Escalade', giant_killer: 'Tueur de géants',
     heavy: 'Lourd', hidden: 'Caché', inaccurate: 'Imprécis', indirect: 'Indirect',
-    munition: 'Munition', parrying: 'Parade', reliable: 'Fiable', subtle: 'Discret', unreliable: 'Peu fiable',
+    munition: 'Munition', parrying: 'Parade', reliable: 'Fiable', subtle: 'Subtil', unreliable: 'Peu fiable', unwieldy: 'Difficile à manier',
 };
 
 export const UNARMED_WEAPON = {
@@ -41,7 +41,7 @@ export const UNARMED_WEAPON = {
     damage: 2,
     salvo: [],
     size: 'Minor',
-    qualities: ['snare'],
+    qualities: ['subtle'],
 };
 
 export function getBonusDamage(value) {
@@ -112,18 +112,16 @@ export function countSuccesses(results, target, skillRank, expertiseApplied) {
 
 // ── Calcul dommages — dés de Challenge (d6) ───────────────────────────────────
 
-export function countChallengeDice(results, activeSalvo = null) {
-    const isVicious = activeSalvo?.key === 'vicious';
-    let stress  = 0;
-    let effects = 0;
+export function countChallengeDice(results, activeSalvo = null, innateEffects = []) {
+    const isVicious = activeSalvo?.key === 'vicious' || (innateEffects ?? []).some(e => e?.key === 'vicious');
+    let stress = 0, effects = 0;
     for (const val of results) {
-        if (val === 1)      { stress += 1; }
-        else if (val === 2) { stress += 2; }
+        if (val === 1)      stress += 1;
+        else if (val === 2) stress += 2;
         else if (val === 3 || val === 4) { /* 0 */ }
         else { // 5 ou 6
-            stress += 1;
-            effects += 1;
-            if (isVicious) stress += 1; // bonus en plus, l'effet reste compté
+            stress += 1; effects += 1;
+            if (isVicious) stress += 1;
         }
     }
     return { stress, effects };

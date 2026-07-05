@@ -94,7 +94,15 @@ const IdentitySection = ({ char, editMode, set, onAvatarClick }) => (
                 <Field key={field} label={label}>
                     {editMode
                         ? <input value={char[field] ?? ''} onChange={e => set(field, e.target.value)} className="ac-input" placeholder={`${label}…`} type={type ?? 'text'} />
-                        : <div className="ac-value" style={{ fontFamily: 'var(--ac-font-title)', fontSize: '0.88rem' }}>{char[field] || '—'}</div>}
+                        : (
+                            <div className="ac-value" style={{ fontFamily: 'var(--ac-font-title)', fontSize: '0.88rem' }}>
+                                {field === 'age' && char.age
+                                    ? `${char.age} an${char.age > 1 ? 's' : ''}`
+                                    : field === 'taille' && char.taille
+                                        ? `${Math.floor(char.taille / 100)}m${String(char.taille % 100).padStart(2, '0')}`
+                                        : (char[field] || '—')}
+                            </div>
+                        )}
                 </Field>
             ))}
         </div>

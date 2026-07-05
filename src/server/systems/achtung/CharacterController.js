@@ -68,7 +68,7 @@ function loadFullCharacter(db, id) {
         'SELECT id, name, keywords, effect FROM character_talents WHERE character_id = ? ORDER BY sort_order, id'
     ).all(id);
     const weapons = db.prepare(
-        'SELECT id, name, focus, range, damage, salvo, size, qualities FROM character_weapons WHERE character_id = ? ORDER BY sort_order, id'
+        'SELECT id, name, focus, range, damage, salvo, size, qualities, effect FROM character_weapons WHERE character_id = ? ORDER BY sort_order, id'
     ).all(id);
     const items = db.prepare(
         'SELECT id, name, description, effect FROM character_items WHERE character_id = ? ORDER BY sort_order, id'
@@ -132,6 +132,7 @@ function loadFullCharacter(db, id) {
             id: w.id, name: w.name ?? '', focus: w.focus ?? '', range: w.range ?? '',
             damage: w.damage ?? 0,
             salvo:     (() => { try { return JSON.parse(w.salvo     || '[]'); } catch { return []; } })(),
+            effect:    (() => { try { return JSON.parse(w.effect    || '[]'); } catch { return []; } })(),
             size: w.size ?? '',
             qualities: (() => { try { return JSON.parse(w.qualities || '[]'); } catch { return []; } })(),
         })),
@@ -252,7 +253,7 @@ function saveFullCharacter(db, id, data) {
         if (Array.isArray(data.weapons)) {
             db.prepare('DELETE FROM character_weapons WHERE character_id = ?').run(id);
             const ins = db.prepare(
-                'INSERT INTO character_weapons (character_id, name, focus, range, damage, salvo, size, qualities, sort_order) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)'
+                'INSERT INTO character_weapons (character_id, name, focus, range, damage, salvo, size, qualities, effect, sort_order) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)'
             );
             data.weapons.forEach((w, i) => {
                 if (!w.name?.trim()) return;
@@ -261,6 +262,7 @@ function saveFullCharacter(db, id, data) {
                     JSON.stringify(Array.isArray(w.salvo) ? w.salvo : []),
                     w.size ?? '',
                     JSON.stringify(Array.isArray(w.qualities) ? w.qualities : []),
+                    JSON.stringify(Array.isArray(w.effect) ? w.effect : []),
                     i
                 );
             });

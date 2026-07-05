@@ -201,7 +201,6 @@ body > * { position: relative; z-index: 1; }
     padding:         0.22rem 0.75rem;
     /* Débordement sur les bords de la card parente */
     margin:          -0.75rem -0.75rem 0.75rem;
-    display:         block;
     /* Pas de border-radius — bande pleine plat */
     border-radius:   0;
 }

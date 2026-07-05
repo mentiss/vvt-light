@@ -267,7 +267,7 @@ const Sheet = ({
 
                                         {/* 4. ARMEMENT */}
                                         <div className="ac-card">
-                                            <WeaponsTable weapons={char.weapons} editMode={editMode} onChange={val => set('weapons', val)} onRollDamage={(w) => setDiceModal({ type: 'damage', weapon: w })} />
+                                            <WeaponsTable weapons={char.weapons} editMode={editMode} onChange={val => handleDirectField('weapons', val)} onRollDamage={(w) => setDiceModal({ type: 'damage', weapon: w })} />
                                         </div>
 
                                         <div className="ac-card">

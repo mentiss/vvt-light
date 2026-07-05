@@ -1,5 +1,5 @@
 // src/client/src/systems/achtung/components/WeaponsTable.jsx
-import React from 'react';
+import React, {useState} from 'react';
 import {
     WEAPON_RANGES,
     RANGE_LABELS,
@@ -11,6 +11,7 @@ import {
     QUALITY_LABELS,
     UNARMED_WEAPON
 } from '../config.jsx';
+import WeaponCatalogModal from "./WeaponCatalogModal.jsx";
 
 const EMPTY_WEAPON = { name: '', focus: '', range: 'close', damage: 0, salvo: [], size: 'Minor', qualities: [] };
 
@@ -50,26 +51,63 @@ const WeaponsTable = ({ weapons = [], editMode, onChange, onRollDamage }) => {
     const update = (idx, field, value) =>
         onChange?.(weapons.map((w, i) => i === idx ? { ...w, [field]: value } : w));
 
+    const [catalogOpen, setCatalogOpen] = useState(false);
+
+    const addFromCatalog = (weaponData) =>
+        onChange?.([...weapons, { ...weaponData, _tempId: Date.now() }]);
+
     const toggleQuality = (idx, w, key) => {
-        const has = (w.qualities ?? []).includes(key);
-        update(idx, 'qualities', has ? w.qualities.filter(k => k !== key) : [...(w.qualities ?? []), key]);
+        const clean = (w.qualities ?? []).filter(k => WEAPON_QUALITIES.includes(k));
+        const has   = clean.includes(key);
+        update(idx, 'qualities', has ? clean.filter(k => k !== key) : [...clean, key]);
     };
 
     const toggleSalvo = (idx, w, key) => {
-        const list = w.salvo ?? [];
-        const has  = list.some(s => s.key === key);
+        const clean = (w.salvo ?? []).filter(s => s && typeof s === 'object' && SALVO_EFFECTS.includes(s.key));
+        const has   = clean.some(s => s.key === key);
         update(idx, 'salvo', has
-            ? list.filter(s => s.key !== key)
-            : [...list, SALVO_HAS_VALUE.includes(key) ? { key, value: 1 } : { key }]);
+            ? clean.filter(s => s.key !== key)
+            : [...clean, SALVO_HAS_VALUE.includes(key) ? { key, value: 1 } : { key }]);
     };
 
     const setSalvoValue = (idx, w, key, value) => {
-        update(idx, 'salvo', (w.salvo ?? []).map(s => s.key === key ? { ...s, value } : s));
+        const clean = (w.salvo ?? []).filter(s => s && typeof s === 'object' && SALVO_EFFECTS.includes(s.key));
+        update(idx, 'salvo', clean.map(s => s.key === key ? { ...s, value } : s));
+    };
+
+    const toggleEffect = (idx, w, key) => {
+        const clean = (w.effect ?? []).filter(e => e && typeof e === 'object' && SALVO_EFFECTS.includes(e.key));
+        const has   = clean.some(e => e.key === key);
+        update(idx, 'effect', has
+            ? clean.filter(e => e.key !== key)
+            : [...clean, SALVO_HAS_VALUE.includes(key) ? { key, value: 1 } : { key }]);
+    };
+
+    const setEffectValue = (idx, w, key, value) => {
+        const clean = (w.effect ?? []).filter(e => e && typeof e === 'object' && SALVO_EFFECTS.includes(e.key));
+        update(idx, 'effect', clean.map(e => e.key === key ? { ...e, value } : e));
     };
 
     return (
         <div>
-            <div className="ac-section-header">Armes</div>
+            <div className="ac-section-header flex items-center justify-between">
+                <span>Armes</span>
+                <button
+                    onClick={() => setCatalogOpen(true)}
+                    title="Catalogue d'armes"
+                    style={{
+                        background: 'none',
+                        border: 'none',
+                        color: 'inherit',
+                        fontSize: '0.85rem',
+                        lineHeight: 1,
+                        cursor: 'pointer',
+                        padding: '0.1rem 0.3rem',
+                    }}
+                >
+                    📖
+                </button>
+            </div>
             <div style={{ overflowX: 'auto' }}>
                 <table className="ac-table" style={{ minWidth: 700 }}>
                     <thead>
@@ -78,6 +116,7 @@ const WeaponsTable = ({ weapons = [], editMode, onChange, onRollDamage }) => {
                         <th>Focus</th>
                         <th>Portée</th>
                         <th style={{ textAlign: 'center' }}>Dmg⚄</th>
+                        <th>Effet</th>
                         <th>Salvo</th>
                         <th>Taille</th>
                         <th>Qualités</th>
@@ -111,6 +150,24 @@ const WeaponsTable = ({ weapons = [], editMode, onChange, onRollDamage }) => {
                                 {editMode
                                     ? <input type="number" value={w.damage} min={0} onChange={e => update(idx, 'damage', parseInt(e.target.value) || 0)} className="ac-input-num" />
                                     : <span className="ac-value">{w.damage}</span>}
+                            </td>
+                            <td>
+                                {editMode
+                                    ? (
+                                        <PillMultiSelect
+                                            options={SALVO_EFFECTS} labels={SALVO_LABELS} hasValue={SALVO_HAS_VALUE}
+                                            values={w.effect ?? []}
+                                            onToggle={key => toggleEffect(idx, w, key)}
+                                            onSetValue={(key, value) => setEffectValue(idx, w, key, value)}
+                                        />
+                                    )
+                                    : (
+                                        <span className="ac-text-muted" style={{ fontSize: '0.72rem' }}>
+                                            {(w.effect ?? []).length > 0
+                                                ? w.effect.map(e => `${SALVO_LABELS[e.key] ?? e.key}${e.value ? ` (${e.value})` : ''}`).join(', ')
+                                                : '—'}
+                                        </span>
+                                    )}
                             </td>
                             <td>
                                 {editMode
@@ -173,6 +230,7 @@ const WeaponsTable = ({ weapons = [], editMode, onChange, onRollDamage }) => {
                         <td><span className="ac-text-muted">{RANGE_LABELS[UNARMED_WEAPON.range]}</span></td>
                         <td style={{ textAlign: 'center' }}><span className="ac-value">{UNARMED_WEAPON.damage}</span></td>
                         <td><span className="ac-text-muted" style={{ fontSize: '0.72rem' }}>—</span></td>
+                        <td><span className="ac-text-muted" style={{ fontSize: '0.72rem' }}>—</span></td>
                         <td><span className="ac-text-muted">{UNARMED_WEAPON.size}</span></td>
                         <td>
                             <span className="ac-text-muted" style={{ fontSize: '0.75rem' }}>
@@ -188,6 +246,9 @@ const WeaponsTable = ({ weapons = [], editMode, onChange, onRollDamage }) => {
             </div>
             {editMode && (
                 <button onClick={add} className="ac-btn ac-btn-secondary mt-2 w-full">+ Ajouter une arme</button>
+            )}
+            {catalogOpen && (
+                <WeaponCatalogModal onClose={() => setCatalogOpen(false)} onSelect={addFromCatalog} />
             )}
         </div>
     );
