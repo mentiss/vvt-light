@@ -21,6 +21,7 @@ import GMDiceModal         from './modals/GMDiceModal.jsx';
 import AchtungHistoryEntry from '../components/AchtungHistoryEntry.jsx';
 import achtungHistoryEntry from "../components/AchtungHistoryEntry.jsx";
 import DiceEntryHistory from "../../cyberpunk/components/layout/DiceEntryHistory.jsx";
+import FreeDiceModal from "../../../components/modals/FreeDiceModal.jsx";
 
 // ── Onglets ───────────────────────────────────────────────────────────────────
 
@@ -43,6 +44,7 @@ const GMView = ({ activeSession, onSessionChange, onlineCharacters, darkMode, on
     const [showMenu,       setShowMenu]       = useState(false);
     const [showDiceConfig, setShowDiceConfig] = useState(false);
     const [showDiceModal,  setShowDiceModal]  = useState(false);
+    const [showFreeDice, setShowFreeDice] = useState(false);
 
     const changeTab = useCallback((id) => {
         setActiveTab(id);
@@ -86,6 +88,28 @@ const GMView = ({ activeSession, onSessionChange, onlineCharacters, darkMode, on
                         title="Jet de dés GM"
                     >
                         🎲
+                    </button>
+
+                    <button
+                        onClick={() => setShowFreeDice(true)}
+                        className="text-default hover:text-accent transition-colors p-1"
+                        title="Lancer des dés"
+                    >
+                        <svg viewBox="0 0 48 48" width="18" height="18" xmlns="http://www.w3.org/2000/svg">
+                            {/* Contour hexagonal du d20 vu de face */}
+                            <polygon
+                                points="24,2 42,13 42,35 24,46 6,35 6,13"
+                                fill="none" stroke="currentColor" strokeWidth="2" strokeLinejoin="round"
+                            />
+                            {/* Triangles intérieurs caractéristiques du d20 */}
+                            <polygon
+                                points="24,2 42,13 6,13"
+                                fill="none" stroke="currentColor" strokeWidth="1.2" strokeLinejoin="round" opacity="0.7"
+                            />
+                            <line x1="24" y1="2"  x2="24" y2="46" stroke="currentColor" strokeWidth="1.2" opacity="0.5" />
+                            <line x1="6"  y1="13" x2="42" y2="35" stroke="currentColor" strokeWidth="1.2" opacity="0.5" />
+                            <line x1="42" y1="13" x2="6"  y2="35" stroke="currentColor" strokeWidth="1.2" opacity="0.5" />
+                        </svg>
                     </button>
 
                     <ThemeToggle darkMode={darkMode} onToggle={onToggleDarkMode} />
@@ -167,6 +191,15 @@ const GMView = ({ activeSession, onSessionChange, onlineCharacters, darkMode, on
                 <GMDiceModal
                     onClose={() => setShowDiceModal(false)}
                     sessionId={activeSession?.id ?? null}
+                />
+            )}
+
+            {showFreeDice && (
+                <FreeDiceModal
+                    characterId={char.id}
+                    characterName={`${char.nom ?? ''} ${char.prenom ?? ''}`.trim()}
+                    sessionId={activeGMSession}
+                    onClose={() => setShowFreeDice(false)}
                 />
             )}
         </div>

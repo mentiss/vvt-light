@@ -2,6 +2,7 @@
 import React, {Suspense, useEffect} from 'react';
 import { useParams, useNavigate, useOutletContext } from 'react-router-dom';
 import LoadingScreen from "../components/gm/layout/LoadingScreen.jsx";
+import DiceAnimationOverlay from "../components/shared/DiceAnimationOverlay.jsx";
 
 const CREATIONS = import.meta.glob('../systems/*/Creation.jsx');
 const THEMES    = import.meta.glob('../systems/*/theme.css');
@@ -39,6 +40,7 @@ const CreationPage = () => {
 
     return (
         <Suspense fallback={<LoadingScreen />}>
+            <DiceAnimationOverlay />
             <SystemCreation
                 onCreated={handleCreated}
                 onCancel={handleCancel}

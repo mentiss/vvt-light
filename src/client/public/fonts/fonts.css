@@ -127,3 +127,36 @@
     font-weight: normal;
     font-style: normal;
 }
+
+@font-face {
+    font-family: 'Credit Valley';
+    src: url('./Credit_Valley.otf') format('opentype');
+    font-weight: normal;
+    font-style: normal;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'Credit Valley';
+    src: url('./Credit_Valley_Bold.otf') format('opentype');
+    font-weight: bold;
+    font-style: normal;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'Credit Valley';
+    src: url('./Credit_Valley_Italic.otf') format('opentype');
+    font-weight: normal;
+    font-style: italic;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'Credit Valley';
+    src: url('./Credit_Valley_Bold_Italic.otf') format('opentype');
+    font-weight: bold;
+    font-style: italic;
+    font-display: swap;
+}
+

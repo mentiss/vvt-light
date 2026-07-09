@@ -1,6 +1,7 @@
 // src/client/src/pages/GMPage.jsx
 // Shell GM : auth + chargement dynamique de GMView via import.meta.glob.
-// useGMSession gère les sockets génériques (session active, présence en ligne).
+// useGMSession gère les sockets génériques (session active, présence en ligne,
+// mises à jour personnage temps réel).
 
 import React, { useState, useEffect, Suspense } from 'react';
 import { useParams, useOutletContext } from 'react-router-dom';
@@ -33,7 +34,9 @@ const GMPage = () => {
     const loader    = SYSTEM_GM_APPS[moduleKey];
 
     // ── Sockets génériques GM ────────────────────────────────────────────────
-    const { activeSession, setActiveSession, onlineCharacters } = useGMSession({ apiBase });
+    // characterUpdates : nouveau, additif — un slug qui ne le destructure pas
+    // dans son GMApp n'est pas affecté.
+    const { activeSession, setActiveSession, onlineCharacters, characterUpdates } = useGMSession({ apiBase });
 
     useEffect(() => {
         const key = `../systems/${system}/theme.css`;
@@ -75,6 +78,7 @@ const GMPage = () => {
                         activeSession={activeSession}
                         onSessionChange={setActiveSession}
                         onlineCharacters={onlineCharacters}
+                        characterUpdates={characterUpdates}
                         darkMode={darkMode}
                         onToggleDarkMode={onToggleDarkMode}
                     />
@@ -102,7 +106,7 @@ const GMPage = () => {
                     <a
                         href={`/${system}/`}
                         className="block mt-3 px-6 py-3 bg-gray-600 text-white rounded-lg font-semibold hover:bg-gray-500 w-full text-center"
-                        >
+                    >
                         Retour à l'accueil
                     </a>
                 </div>

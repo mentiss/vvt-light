@@ -32,6 +32,7 @@ import IdentitySection    from './components/IdentitySection.jsx';
 import TruthsSection      from './components/TruthsSection.jsx';
 import AchtungHistoryEntry from './components/AchtungHistoryEntry.jsx';
 import AchtungDiceModal    from './dice/AchtungDiceModal.jsx';
+import FreeDiceModal from "../../components/modals/FreeDiceModal.jsx";
 
 const TABS = [
     { id: 'fiche',      label: '📋 Fiche' },
@@ -65,6 +66,7 @@ const Sheet = ({
     const [showCharList,   setShowCharList]   = useState(false);
     const [showAvatar,     setShowAvatar]     = useState(false);
     const [diceModal,      setDiceModal]      = useState(null);
+    const [showFreeDice, setShowFreeDice] = useState(false);
     const [sessionResources, setSessionResources] = useState({ momentum: 0, threat: 0 });
 
     // ── Ressources de session ─────────────────────────────────────────────────
@@ -158,6 +160,27 @@ const Sheet = ({
                 <div className="flex items-center gap-2 shrink-0">
                     <button onClick={() => setDiceModal({ type: 'skill' })} className="ac-btn ac-btn-primary">
                         🎲
+                    </button>
+                    <button
+                        onClick={() => setShowFreeDice(true)}
+                        className="text-default hover:text-accent transition-colors p-1"
+                        title="Lancer des dés"
+                    >
+                        <svg viewBox="0 0 48 48" width="18" height="18" xmlns="http://www.w3.org/2000/svg">
+                            {/* Contour hexagonal du d20 vu de face */}
+                            <polygon
+                                points="24,2 42,13 42,35 24,46 6,35 6,13"
+                                fill="none" stroke="currentColor" strokeWidth="2" strokeLinejoin="round"
+                            />
+                            {/* Triangles intérieurs caractéristiques du d20 */}
+                            <polygon
+                                points="24,2 42,13 6,13"
+                                fill="none" stroke="currentColor" strokeWidth="1.2" strokeLinejoin="round" opacity="0.7"
+                            />
+                            <line x1="24" y1="2"  x2="24" y2="46" stroke="currentColor" strokeWidth="1.2" opacity="0.5" />
+                            <line x1="6"  y1="13" x2="42" y2="35" stroke="currentColor" strokeWidth="1.2" opacity="0.5" />
+                            <line x1="42" y1="13" x2="6"  y2="35" stroke="currentColor" strokeWidth="1.2" opacity="0.5" />
+                        </svg>
                     </button>
                     <ThemeToggle darkMode={darkMode} onToggle={onToggleDarkMode} />
                     <div className="relative">
@@ -267,7 +290,13 @@ const Sheet = ({
 
                                         {/* 4. ARMEMENT */}
                                         <div className="ac-card">
-                                            <WeaponsTable weapons={char.weapons} editMode={editMode} onChange={val => handleDirectField('weapons', val)} onRollDamage={(w) => setDiceModal({ type: 'damage', weapon: w })} />
+                                            <WeaponsTable
+                                                weapons={char.weapons}
+                                                editMode={editMode}
+                                                onChange={val => handleDirectField('weapons', val)}
+                                                onRollDamage={(w) => setDiceModal({ type: 'damage', weapon: w })}
+                                                onRollAttack={(w) => setDiceModal({ type: 'attack', weapon: w })}
+                                            />
                                         </div>
 
                                         <div className="ac-card">
@@ -397,10 +426,18 @@ const Sheet = ({
                     mode={diceModal.type === 'damage' ? 'damage' : 'skill'}
                     character={char}
                     preselect={diceModal.type === 'skill' ? { skillKey: diceModal.skillKey, attrKey: diceModal.attrKey } : null}
-                    weapon={diceModal.type === 'damage' ? diceModal.weapon : null}
+                    weapon={(diceModal.type === 'damage' || diceModal.type === 'attack') ? diceModal.weapon : null}
                     sessionResources={sessionResources}
                     onClose={() => setDiceModal(null)}
                     onCharacterUpdate={onCharacterUpdate}
+                />
+            )}
+            {showFreeDice && (
+                <FreeDiceModal
+                    characterId={char.id}
+                    characterName={`${char.nom ?? ''} ${char.prenom ?? ''}`.trim()}
+                    sessionId={activeGMSession}
+                    onClose={() => setShowFreeDice(false)}
                 />
             )}
         </div>

@@ -1,0 +1,120 @@
+/* src/client/src/systems/fabula/theme.css */
+/* ─────────────────────────────────────────────────────────────────────────────
+   Thème Fabula Ultima — Tome héroïque JRPG
+   Mode jour : parchemin chaud, encre brune, rouge héroïque + or
+   Mode nuit  : indigo nocturne façon menu JRPG, or et cramoisi en glow doux
+   ─────────────────────────────────────────────────────────────────────────── */
+
+@import url('https://fonts.googleapis.com/css2?family=Antonio:wght@400;600;700&family=PT+Sans+Narrow:wght@400;700&display=swap');
+
+/* ── Mode JOUR (par défaut) ─────────────────────────────────────────────── */
+:root {
+    /* Couleurs plateforme */
+    --color-primary:        #8B2635;   /* Rouge héroïque — titres, actions principales */
+    --color-secondary:      #3D4F7D;   /* Bleu royal — éléments secondaires */
+    --color-accent:         #C9A227;   /* Or — Points Fabula, mise en avant */
+    --color-danger:         #A3282C;
+    --color-success:        #3F7D4F;
+
+    /* Surfaces — parchemin */
+    --color-bg:             #F3EAD9;
+    --color-surface:        #E8DCC4;
+    --color-surface-alt:    #DDCFAE;
+
+    /* Texte */
+    --color-text:           #2B2118;   /* Encre brune */
+    --color-text-muted:     #6B5D4F;
+
+    /* Bordure */
+    --color-border:         #A8916D;
+
+    /* ── Variables slug-spécifiques ───────────────────────────────────────── */
+    --fu-fabula-color:      var(--color-accent);   /* Points Fabula (joueurs) */
+    --fu-ultima-color:      #6A2A8A;                /* Points Ultima (Méchants) */
+    --fu-crisis-color:      var(--color-danger);    /* Seuil de Crise */
+    --fu-pm-color:          var(--color-secondary); /* Points de Magie */
+    --fu-pi-color:          #5A7D5E;                /* Points d'Inventaire */
+
+    --fu-radius:    4px;
+    --fu-radius-md: 8px;
+    --fu-radius-lg: 12px;
+}
+
+/* ── Mode NUIT ──────────────────────────────────────────────────────────── */
+[data-theme="dark"] {
+    --color-primary:        #E8C468;   /* Or — glow doux */
+    --color-secondary:      #8EA0D8;
+    --color-accent:         #E0525A;   /* Cramoisi — inversion jour/nuit volontaire */
+    --color-danger:         #E0525A;
+    --color-success:        #6FBF7A;
+
+    --color-bg:             #14101F;   /* Indigo nocturne profond */
+    --color-surface:        #1F1A30;
+    --color-surface-alt:    #2A2340;
+
+    --color-text:           #F2EAD9;
+    --color-text-muted:     #A89BC4;
+
+    --color-border:         #3D3560;
+
+    --fu-fabula-color:      #E8C468;
+    --fu-ultima-color:      #B47FE0;
+    --fu-crisis-color:      #E0525A;
+    --fu-pm-color:          #8EA0D8;
+    --fu-pi-color:          #7FBF8A;
+}
+
+/* ── Typographie slug — hiérarchie inspirée du matériel officiel ──────────── */
+
+/* Grand titre de page — header uniquement ("Fabula Ultima") */
+.fu-font-logo {
+    font-family: 'Credit Valley', 'Cinzel', Georgia, serif;
+    letter-spacing: 0.03em;
+}
+
+/* Titres de section — "Attributs & Altérations", noms de classe, etc. */
+.fu-font-title {
+    font-family: 'Antonio', 'Arial Narrow', sans-serif;
+    font-weight: 600;
+    letter-spacing: 0.03em;
+    text-transform: uppercase;
+}
+
+/* Corps de texte — descriptions, champs, contenu courant */
+.fu-font-body {
+    font-family: 'PT Sans Narrow', Arial, sans-serif;
+}
+
+/* ── Utilitaires slug-spécifiques ─────────────────────────────────────────── */
+/* Pastilles Points Fabula / Ultima — visuellement distinctes du reste de l'UI */
+.fu-badge-fabula {
+    background-color: color-mix(in srgb, var(--fu-fabula-color) 15%, transparent);
+    color: var(--fu-fabula-color);
+    border: 1px solid var(--fu-fabula-color);
+}
+
+.fu-badge-ultima {
+    background-color: color-mix(in srgb, var(--fu-ultima-color) 15%, transparent);
+    color: var(--fu-ultima-color);
+    border: 1px solid var(--fu-ultima-color);
+}
+
+/* Pastille de taille de dé (d6/d8/d10/d12) — sélecteurs pill dans le wizard et la fiche */
+.fu-die-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 2.75rem;
+    padding: 0.25rem 0.5rem;
+    border-radius: var(--fu-radius-md);
+    font-family: 'Antonio', 'Arial Narrow', sans-serif;
+    font-weight: 600;
+    font-size: 0.85rem;
+    letter-spacing: 0.02em;
+    transition: opacity 0.15s ease;
+}
+
+.fu-die-badge:disabled {
+    opacity: 0.3;
+    cursor: not-allowed;
+}

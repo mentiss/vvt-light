@@ -6,7 +6,14 @@
 //   - Charger la session active depuis localStorage au boot
 //   - Émettre gm-set-active-session + join/leave session quand activeSession change
 //   - Écouter online-characters-update
+//   - Écouter character-full-update / character-update et les exposer via
+//     characterUpdates (nouveau — corrige un bug de référence circulaire qui
+//     empêchait toute remontée temps réel côté GM, cf. onCharacterUpdate
+//     s'appelant lui-même faute de callback externe branché)
 //   - Exposer activeSession + setActiveSession pour que GMView puisse en changer
+//
+// characterUpdates est un ajout PUREMENT ADDITIF : les slugs qui ne le
+// consomment pas ne sont pas affectés, ils reçoivent juste un prop inutilisé.
 
 import { useEffect, useState, useCallback } from 'react';
 import { useSocket } from '../context/SocketContext.jsx';
@@ -18,6 +25,7 @@ import { useFetch } from './useFetch.js';
  *   activeSession: object|null,
  *   setActiveSession: function,
  *   onlineCharacters: array,
+ *   characterUpdates: object,  // { [characterId]: { type: 'full'|'partial', data, ts } }
  * }}
  */
 export function useGMSession({ apiBase }) {
@@ -26,6 +34,7 @@ export function useGMSession({ apiBase }) {
 
     const [activeSession,    setActiveSessionState] = useState(null);
     const [onlineCharacters, setOnlineCharacters]   = useState([]);
+    const [characterUpdates, setCharacterUpdates]   = useState({});
 
     const slug = apiBase.replace(/^\/api\//, '').replace(/\/$/, '');
     const storageKey = `activeSessionId_${slug}`;
@@ -60,17 +69,29 @@ export function useGMSession({ apiBase }) {
         return () => socket.off('online-characters-update', handleOnlineUpdate);
     }, [socket]);
 
+    // ── Mises à jour personnage temps réel (corrigé) ─────────────────────────
     useEffect(() => {
         if (!socket) return;
 
-        const onCharacterUpdate = ({ characterId, updates }) => {
-            // Callback à exposer en retour du hook pour que GMView/TabSession
-            // puisse mettre à jour son state local
-            onCharacterUpdate?.({ characterId, updates });
+        const onFullUpdate = ({ characterId, character }) => {
+            setCharacterUpdates(prev => ({
+                ...prev,
+                [characterId]: { type: 'full', data: character, ts: Date.now() },
+            }));
+        };
+        const onPartialUpdate = ({ characterId, updates }) => {
+            setCharacterUpdates(prev => ({
+                ...prev,
+                [characterId]: { type: 'partial', data: updates, ts: Date.now() },
+            }));
         };
 
-        socket.on('character-update', onCharacterUpdate);
-        return () => socket.off('character-update', onCharacterUpdate);
+        socket.on('character-full-update', onFullUpdate);
+        socket.on('character-update',      onPartialUpdate);
+        return () => {
+            socket.off('character-full-update', onFullUpdate);
+            socket.off('character-update',      onPartialUpdate);
+        };
     }, [socket]);
 
     // ── Broadcast session active + join/leave room ──────────────────────────
@@ -113,5 +134,5 @@ export function useGMSession({ apiBase }) {
         }
     }, [apiBase, fetchWithAuth]);
 
-    return { activeSession, setActiveSession, onlineCharacters };
+    return { activeSession, setActiveSession, onlineCharacters, characterUpdates };
 }

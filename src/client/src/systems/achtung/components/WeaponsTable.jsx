@@ -11,7 +11,7 @@ import {
     QUALITY_LABELS,
     UNARMED_WEAPON
 } from '../config.jsx';
-import WeaponCatalogModal from "./WeaponCatalogModal.jsx";
+import WeaponCatalogModal from "../dice/WeaponCatalogModal.jsx";
 
 const EMPTY_WEAPON = { name: '', focus: '', range: 'close', damage: 0, salvo: [], size: 'Minor', qualities: [] };
 
@@ -45,7 +45,7 @@ const PillMultiSelect = ({ options, labels, values, hasValue = [], onToggle, onS
     </div>
 );
 
-const WeaponsTable = ({ weapons = [], editMode, onChange, onRollDamage }) => {
+const WeaponsTable = ({ weapons = [], editMode, onChange, onRollDamage, onRollAttack }) => {
     const add    = () => onChange?.([...weapons, { ...EMPTY_WEAPON, _tempId: Date.now() }]);
     const remove = (idx) => onChange?.(weapons.filter((_, i) => i !== idx));
     const update = (idx, field, value) =>
@@ -216,7 +216,12 @@ const WeaponsTable = ({ weapons = [], editMode, onChange, onRollDamage }) => {
                                     )}
                             </td>
                             <td style={{ whiteSpace: 'nowrap' }}>
-                                <button onClick={() => onRollDamage?.(w)} className="ac-roll-btn" title={`Lancer dommages — ${w.name}`}>⚄</button>
+                                {onRollAttack && (
+                                    <button onClick={() => onRollAttack(w)} className="ac-roll-btn" title={`Attaque — ${w.name}`}>⚔</button>
+                                )}
+                                {onRollDamage && (
+                                    <button onClick={() => onRollDamage(w)} className={`ac-roll-btn${onRollAttack ? ' ml-1' : ''}`} title={`Lancer dommages — ${w.name}`}>⚄</button>
+                                )}
                                 {editMode && (
                                     <button onClick={() => remove(idx)} className="ac-btn ac-btn-danger ml-1" style={{ padding: '0.2rem 0.4rem', fontSize: '0.7rem' }}>✕</button>
                                 )}
@@ -238,7 +243,12 @@ const WeaponsTable = ({ weapons = [], editMode, onChange, onRollDamage }) => {
                             </span>
                         </td>
                         <td style={{ whiteSpace: 'nowrap' }}>
-                            <button onClick={() => onRollDamage?.(UNARMED_WEAPON)} className="ac-roll-btn" title="Lancer dommages — Main nue">⚄</button>
+                            {onRollAttack && (
+                                <button onClick={() => onRollAttack(UNARMED_WEAPON)} className="ac-roll-btn" title="Attaque — Main nue">⚔</button>
+                            )}
+                            {onRollDamage && (
+                                <button onClick={() => onRollDamage(UNARMED_WEAPON)} className={`ac-roll-btn${onRollAttack ? ' ml-1' : ''}`} title="Lancer dommages — Main nue">⚄</button>
+                            )}
                         </td>
                     </tr>
                     </tbody>

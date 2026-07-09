@@ -118,7 +118,10 @@ const AchtungDiceModal = ({
     const [step, setStep] = useState(mode === 'damage' ? 4 : 1);
 
     // ── État étape 1 ──────────────────────────────────────────────────────────
-    const [selectedAttrKey,  setSelectedAttrKey]  = useState(preselect?.attrKey ?? null);
+    const [selectedAttrKey, setSelectedAttrKey] = useState(
+        preselect?.attrKey
+        ?? (weapon ? ((weapon.range ?? '').toLowerCase() === 'contact' ? 'brawn' : 'coordination') : null)
+    );
     const [selectedSkillKey, setSelectedSkillKey] = useState(preselect?.skillKey ?? null);
     const [difficulty,       setDifficulty]       = useState(1);
     const [isAssist,         setIsAssist]         = useState(false);
@@ -242,7 +245,7 @@ const AchtungDiceModal = ({
 
     // ── Jet de compétence ─────────────────────────────────────────────────────
     const handleSkillRoll = useCallback(async () => {
-        if (rolling || !selectedAttrKey || !selectedSkillKey) return;
+        if (rolling || !selectedAttrKey) return;
         setRolling(true);
         setError(null);
 
@@ -379,6 +382,18 @@ const AchtungDiceModal = ({
             onCharacterUpdate?.({ ...character, ammo: Math.max(0, (character.ammo ?? 0) + delta) });
         }
     }, [activeSalvo, character, onCharacterUpdate]);
+
+    // ── Sélection d'une arme — no-op si déjà active, remboursement munition sinon ──
+    const handleSelectWeapon = useCallback((w, index) => {
+        if (index === selectedWeaponIndex) return; // reclic sur l'arme déjà active : no-op total
+        if (activeSalvo !== null) {
+            // Une munition avait été consommée pour l'ancienne arme : on la rembourse
+            onCharacterUpdate?.({ ...character, ammo: (character.ammo ?? 0) + 1 });
+        }
+        setSelectedWeapon(w);
+        setSelectedWeaponIndex(index);
+        setActiveSalvo(null);
+    }, [selectedWeaponIndex, activeSalvo, character, onCharacterUpdate]);
 
     // ── Jet de dommages ───────────────────────────────────────────────────────
     const handleDamageRoll = useCallback(async () => {
@@ -551,7 +566,7 @@ const AchtungDiceModal = ({
 
                         <button
                             onClick={() => setStep(2)}
-                            disabled={!selectedAttrKey || !selectedSkillKey}
+                            disabled={!selectedAttrKey}
                             className="ac-btn ac-btn-primary w-full disabled:opacity-30"
                         >
                             Suivant — Cible : {target} →
@@ -745,7 +760,7 @@ const AchtungDiceModal = ({
                             <div className="ac-label mb-1.5">Arme</div>
                             <div className="flex flex-col gap-1">
                                 {weaponList.map((w, i) => {
-                                    const isSelected = selectedWeapon?.id != null ? selectedWeapon.id === w.id : selectedWeapon === w;
+                                    const isSelected = i === selectedWeaponIndex;
                                     return (
                                         <button
                                             key={w.id ?? i}

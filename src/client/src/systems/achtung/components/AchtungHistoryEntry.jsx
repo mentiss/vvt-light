@@ -3,6 +3,10 @@ import React from 'react';
 import { SALVO_LABELS } from '../config.jsx';
 
 const AchtungHistoryEntry = ({ roll }) => {
+    // On ne sait interpréter que les jets Achtung — tout le reste (ex: free_roll)
+    // retombe sur le rendu générique de DiceHistoryPage.
+    if (roll?.roll_type !== 'achtung_skill' && roll?.roll_type !== 'achtung_damage') return null;
+
     // Les données peuvent être dans roll_result ou details selon le contexte
     const raw = roll?.roll_result ?? roll?.details;
     if (!raw) return null;

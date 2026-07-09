@@ -2,10 +2,11 @@
 // ─────────────────────────────────────────────────────────────────────────────
 // Onglet Session GM — Achtung! Cthulhu
 //
-// Architecture socket (règle permanente) :
+// Architecture socket :
 //   · GMPage → useGMSession → props { activeSession, onSessionChange, onlineCharacters }
-//   · Ce composant NE déclare PAS de listeners character-full-update / character-update.
-//   · SEUL listener socket autorisé ici : session-resources-gm-update (donnée de session).
+//   · Comme les autres slugs (Vikings, Dune, Tecumah, Cyberpunk, Noctis), ce composant
+//     écoute character-full-update pour répercuter les modifs faites côté joueur.
+//   · session-resources-gm-update reste géré séparément (donnée de session).
 //
 // Contrat GM standard (permanent, tous slugs) :
 //   1. Sidebar personnages : avatar + nom perso + nom joueur entre parenthèses + archétype + dot online
@@ -178,6 +179,7 @@ const GMActionBar = ({ char, editMode, copied, onToggleEdit, onSendNote, onCopyC
 const TabSession = ({ activeSession, onSessionChange, onlineCharacters }) => {
     const { apiBase }   = useSystem();
     const fetchWithAuth = useFetch();
+    const socket = useSocket();
 
     const [characters,    setCharacters]    = useState({});
     const [selectedId,    setSelectedId]    = useState(null);
@@ -214,6 +216,18 @@ const TabSession = ({ activeSession, onSessionChange, onlineCharacters }) => {
         };
         load();
     }, [activeSession?.id, activeSession?.characters?.length]);
+
+    // ── Temps réel — réception des updates joueur ──────────────────────────────
+    useEffect(() => {
+        if (!socket) return;
+        const onFullUpdate = ({ characterId, character }) => {
+            setCharacters(prev => prev[characterId]
+                ? { ...prev, [characterId]: character }
+                : prev);
+        };
+        socket.on('character-full-update', onFullUpdate);
+        return () => socket.off('character-full-update', onFullUpdate);
+    }, [socket]);
 
     // ── Chargement des ressources de session ──────────────────────────────────
     // Route : GET /api/achtung/session-resources/:id
@@ -453,12 +467,16 @@ const TabSession = ({ activeSession, onSessionChange, onlineCharacters }) => {
                                 <SpellsSection
                                     isSpellcaster={char.isSpellcaster}
                                     power={char.power}
+                                    spellcasterPractice={char.spellcasterPractice}
                                     spells={char.spells}
                                     editMode={editMode}
                                     onChange={val => set('spells', val)}
-                                    onChangePower={(field, value) =>
-                                        set(field === 'is_spellcaster' ? 'isSpellcaster' : field, value)
-                                    }
+                                    onChangePower={(field, value) => set(
+                                        field === 'is_spellcaster'         ? 'isSpellcaster'
+                                            : field === 'spellcaster_practice' ? 'spellcasterPractice'
+                                                : field,
+                                        value
+                                    )}
                                 />
                             )}
                         </div>
