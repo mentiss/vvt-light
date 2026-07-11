@@ -1,45 +1,52 @@
 // src/client/src/systems/fabula/components/layout/BackpackCard.jsx
 // ─────────────────────────────────────────────────────────────────────────────
-// Sac à dos — tout objet non équipé (equipe: false). "Équiper" applique les
-// règles de slots (equipItem) : déséquipe automatiquement le plus ancien objet
-// du même groupe si la limite est atteinte, plutôt que de bloquer l'action.
+// Sac à dos — tout objet non équipé (emplacementEquipe: null). "Équiper"
+// applique les règles d'emplacements nommés (equipItem) : armure/accessoire →
+// emplacement dédié, item de main → directrice si libre sinon secondaire,
+// arme deux mains → occupe tout ; déséquipe automatiquement l'occupant le
+// plus ancien plutôt que de bloquer l'action.
+// Le bouton 📖 ouvre le catalogue (même patron que Delta Green/Cyberpunk/
+// Achtung) — les items choisis arrivent ici, préremplis et non équipés.
 // ─────────────────────────────────────────────────────────────────────────────
 
-import React from 'react';
-import { equipItem } from '../../config.jsx';
-
-const EMPLACEMENTS = [
-    { key: 'arme',       label: 'Arme' },
-    { key: 'armure',     label: 'Armure' },
-    { key: 'bouclier',   label: 'Bouclier' },
-    { key: 'accessoire', label: 'Accessoire' },
-];
+import React, { useState } from 'react';
+import { equipItem, isEquipped } from '../../config.jsx';
+import EquipmentEditForm, { EquipmentItemSummary, createEmptyItem } from './EquipmentEditForm.jsx';
+import EquipmentCatalogModal from '../modals/EquipmentCatalogModal.jsx';
 
 const BackpackCard = ({ character, editMode, onArrayChange }) => {
+    const [catalogOpen, setCatalogOpen] = useState(false);
     const equipment = character.equipment ?? [];
     const backpackItems = equipment
         .map((e, i) => ({ e, i }))
-        .filter(({ e }) => !e.equipe);
+        .filter(({ e }) => !isEquipped(e));
 
-    const addItem = () => {
-        onArrayChange('equipment', [...equipment, {
-            typeEmplacement: 'arme', nomLibre: '', notesLibres: '', prix: 0,
-            modDefense: 0, modDefenseMagique: 0, modInitiative: 0, equipe: false,
-        }]);
-    };
-    const update = (index, patch) => onArrayChange('equipment', equipment.map((e, i) => i === index ? { ...e, ...patch } : e));
-    const remove = (index) => onArrayChange('equipment', equipment.filter((_, i) => i !== index));
-    const equip = (index) => onArrayChange('equipment', equipItem(equipment, index));
+    const addItem   = ()             => onArrayChange('equipment', [...equipment, createEmptyItem()]);
+    const addFromCatalog = (item)    => onArrayChange('equipment', [...equipment, item]);
+    const update    = (index, patch) => onArrayChange('equipment', equipment.map((e, i) => i === index ? { ...e, ...patch } : e));
+    const remove    = (index)        => onArrayChange('equipment', equipment.filter((_, i) => i !== index));
+    const equip     = (index)        => onArrayChange('equipment', equipItem(equipment, index));
 
     return (
         <div className="bg-surface border border-default rounded-lg p-3">
             <div className="flex items-center justify-between mb-2">
                 <h3 className="fu-font-title text-primary text-sm">Sac à dos</h3>
-                {editMode && (
-                    <button type="button" onClick={addItem} className="px-2 py-1 rounded-full bg-primary text-white text-xs">
-                        + Ajouter
+                <div className="flex gap-1">
+                    {/* Le catalogue est une action d'AJOUT (préremplissage), pas une
+                        édition de texte libre — toujours disponible, indépendamment
+                        du mode édition. Seule la saisie libre manuelle ("+ Ajouter")
+                        reste réservée au mode édition. */}
+                    <button type="button" onClick={() => setCatalogOpen(true)}
+                            className="px-2 py-1 rounded-full bg-default border border-default text-xs"
+                            title="Ouvrir le catalogue d'équipement">
+                        📖 Catalogue
                     </button>
-                )}
+                    {editMode && (
+                        <button type="button" onClick={addItem} className="px-2 py-1 rounded-full bg-primary text-white text-xs">
+                            + Ajouter
+                        </button>
+                    )}
+                </div>
             </div>
 
             {backpackItems.length === 0 && <p className="text-xs text-muted italic">Sac vide.</p>}
@@ -48,27 +55,14 @@ const BackpackCard = ({ character, editMode, onArrayChange }) => {
                 {backpackItems.map(({ e: item, i: index }) => (
                     <div key={index} className="bg-surface-alt rounded p-2 flex flex-col gap-1">
                         {editMode ? (
-                            <div className="flex gap-2 items-center flex-wrap">
-                                <div className="flex gap-1">
-                                    {EMPLACEMENTS.map(em => (
-                                        <button key={em.key} type="button" onClick={() => update(index, { typeEmplacement: em.key })}
-                                                className={`px-2 py-1 rounded-full text-xs border ${
-                                                    item.typeEmplacement === em.key ? 'bg-primary text-white border-primary' : 'bg-default border-default'
-                                                }`}>
-                                            {em.label}
-                                        </button>
-                                    ))}
+                            <div className="flex items-start gap-2">
+                                <div className="flex-1 min-w-0">
+                                    <EquipmentEditForm item={item} onChange={patch => update(index, patch)} />
                                 </div>
-                                <input placeholder="Nom" value={item.nomLibre}
-                                       onChange={e => update(index, { nomLibre: e.target.value })}
-                                       className="bg-default border border-default rounded px-2 py-1 text-sm flex-1 min-w-[100px]" />
-                                <input type="number" placeholder="Prix" value={item.prix}
-                                       onChange={e => update(index, { prix: parseInt(e.target.value) || 0 })}
-                                       className="w-20 bg-default border border-default rounded px-2 py-1 text-sm" />
-                                <button type="button" onClick={() => remove(index)} className="text-danger text-sm">✕</button>
+                                <button type="button" onClick={() => remove(index)} className="text-danger text-sm shrink-0">✕</button>
                             </div>
                         ) : (
-                            <span className="text-sm font-semibold">{item.nomLibre || '(sans nom)'} <span className="text-xs text-muted font-normal">({EMPLACEMENTS.find(em => em.key === item.typeEmplacement)?.label})</span></span>
+                            <EquipmentItemSummary item={item} />
                         )}
                         <button type="button" onClick={() => equip(index)}
                                 className="self-start px-2 py-0.5 rounded-full text-xs border bg-default border-default">
@@ -77,6 +71,8 @@ const BackpackCard = ({ character, editMode, onArrayChange }) => {
                     </div>
                 ))}
             </div>
+
+            <EquipmentCatalogModal open={catalogOpen} onClose={() => setCatalogOpen(false)} onPick={addFromCatalog} />
         </div>
     );
 };

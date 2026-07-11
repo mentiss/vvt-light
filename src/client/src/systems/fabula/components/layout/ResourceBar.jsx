@@ -11,6 +11,20 @@
 import React from 'react';
 import Stepper from './Stepper.jsx';
 
+// Ajustements rapides ±5/±10 (soins et dégâts par paquets) — PV/PM uniquement,
+// les PI restent en ±1 (valeurs trop petites pour justifier des paliers).
+const QuickAdjust = ({ value, max, onChange }) => (
+    <div className="flex gap-1">
+        {[-10, -5, 5, 10].map(d => (
+            <button key={d} type="button"
+                    onClick={() => onChange(Math.max(0, Math.min(max, value + d)))}
+                    className="px-1.5 py-0.5 rounded text-[10px] border bg-default border-default text-muted hover:text-default cursor-pointer">
+                {d > 0 ? `+${d}` : d}
+            </button>
+        ))}
+    </div>
+);
+
 const ResourceBar = ({ character, onQuickUpdate }) => {
     const pvCrise = character.pvActuel <= character.seuilCrise;
 
@@ -21,11 +35,15 @@ const ResourceBar = ({ character, onQuickUpdate }) => {
                     <span className="text-xs text-muted">PV {pvCrise && <span className="text-danger font-bold">(Crise)</span>}</span>
                     <Stepper size="sm" value={character.pvActuel} min={0} max={character.pvMax}
                              onChange={(v) => onQuickUpdate({ pvActuel: v })} />
+                    <QuickAdjust value={character.pvActuel} max={character.pvMax}
+                                 onChange={(v) => onQuickUpdate({ pvActuel: v })} />
                 </div>
                 <div className="flex flex-col gap-1">
                     <span className="text-xs text-muted">PM</span>
                     <Stepper size="sm" value={character.pmActuel} min={0} max={character.pmMax}
                              onChange={(v) => onQuickUpdate({ pmActuel: v })} />
+                    <QuickAdjust value={character.pmActuel} max={character.pmMax}
+                                 onChange={(v) => onQuickUpdate({ pmActuel: v })} />
                 </div>
                 <div className="flex flex-col gap-1">
                     <span className="text-xs text-muted">PI</span>

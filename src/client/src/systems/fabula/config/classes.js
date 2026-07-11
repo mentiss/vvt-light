@@ -16,8 +16,8 @@ export const CLASSES = {
     arcaniste: {
         nom: 'Arcaniste',
         tagline: 'Invoque les avatars magiques d\'anciennes entités quasi divines.',
-        atoutsGratuits: [
-            'Votre maximum de Points de Magie augmente définitivement de 5.',
+        atouts: [
+            { type: 'pm', valeur: 5, label: 'Votre maximum de Points de Magie augmente définitivement de 5.' },
         ],
         competences: [
             {
@@ -47,9 +47,9 @@ export const CLASSES = {
     bricoleur: {
         nom: 'Bricoleur/Bricoleuse',
         tagline: 'Fabrique des inventions et utilise les Points d\'Inventaire de manière innovante.',
-        atoutsGratuits: [
-            'Votre maximum de Points d\'Inventaire augmente définitivement de 2.',
-            'Vous pouvez démarrer des projets.',
+        atouts: [
+            { type: 'pi', valeur: 2, label: 'Votre maximum de Points d\'Inventaire augmente définitivement de 2.' },
+            { type: 'narratif', label: 'Vous pouvez démarrer des projets.' },
         ],
         competences: [
             {
@@ -93,9 +93,9 @@ TECHNOMAGIE :
     chimeriste: {
         nom: 'Chimériste',
         tagline: 'Apprend les sorts des créatures et parle avec les animaux.',
-        atoutsGratuits: [
-            'Votre maximum de Points de Magie augmente définitivement de 5.',
-            'Vous pouvez réaliser des rituels dont les effets relèvent de la discipline Ritualisme.',
+        atouts: [
+            { type: 'pm', valeur: 5, label: 'Votre maximum de Points de Magie augmente définitivement de 5.' },
+            { type: 'narratif', label: 'Vous pouvez réaliser des rituels dont les effets relèvent de la discipline Ritualisme.' },
         ],
         competences: [
             {
@@ -125,9 +125,9 @@ TECHNOMAGIE :
     elementaliste: {
         nom: 'Élémentaliste',
         tagline: 'Manie le pouvoir destructeur des éléments.',
-        atoutsGratuits: [
-            'Votre maximum de Points de Magie augmente définitivement de 5.',
-            'Vous pouvez réaliser des rituels dont les effets relèvent de la discipline Ritualisme.',
+        atouts: [
+            { type: 'pm', valeur: 5, label: 'Votre maximum de Points de Magie augmente définitivement de 5.' },
+            { type: 'narratif', label: 'Vous pouvez réaliser des rituels dont les effets relèvent de la discipline Ritualisme.' },
         ],
         competences: [
             {
@@ -157,9 +157,9 @@ TECHNOMAGIE :
     entropiste: {
         nom: 'Entropiste',
         tagline: 'Canalise l\'énergie obscure du Cosmos.',
-        atoutsGratuits: [
-            'Votre maximum de Points de Magie augmente définitivement de 5.',
-            'Vous pouvez réaliser des rituels dont les effets relèvent de la discipline Ritualisme.',
+        atouts: [
+            { type: 'pm', valeur: 5, label: 'Votre maximum de Points de Magie augmente définitivement de 5.' },
+            { type: 'narratif', label: 'Vous pouvez réaliser des rituels dont les effets relèvent de la discipline Ritualisme.' },
         ],
         competences: [
             {
@@ -189,9 +189,9 @@ TECHNOMAGIE :
     furie: {
         nom: 'Furie',
         tagline: 'Provoque les ennemis et frappe plus fort après avoir subi des dégâts.',
-        atoutsGratuits: [
-            'Votre maximum de Points de Vie augmente définitivement de 5.',
-            'Vous recevez la capacité de vous équiper d\'armes martiales de corps à corps et d\'armures martiales.',
+        atouts: [
+            { type: 'pv', valeur: 5, label: 'Votre maximum de Points de Vie augmente définitivement de 5.' },
+            { type: 'narratif', label: 'Vous recevez la capacité de vous équiper d\'armes martiales de corps à corps et d\'armures martiales.' },
         ],
         competences: [
             {
@@ -220,9 +220,9 @@ TECHNOMAGIE :
     gardien: {
         nom: 'Gardien/Gardienne',
         tagline: 'Protège ses alliés et combat vêtu d\'une armure lourde.',
-        atoutsGratuits: [
-            'Votre maximum de Points de Vie augmente définitivement de 5.',
-            'Vous recevez la capacité de vous équiper d\'armures martiales et de boucliers martiaux.',
+        atouts: [
+            { type: 'pv', valeur: 5, label: 'Votre maximum de Points de Vie augmente définitivement de 5.' },
+            { type: 'narratif', label: 'Vous recevez la capacité de vous équiper d\'armures martiales et de boucliers martiaux.' },
         ],
         competences: [
             {
@@ -251,9 +251,9 @@ TECHNOMAGIE :
     maitre_armes: {
         nom: 'Maître d\'Armes',
         tagline: 'Excelle au corps à corps, qu\'il s\'agisse de se battre ou de contrer les attaques.',
-        atoutsGratuits: [
-            'Votre maximum de Points de Vie augmente définitivement de 5.',
-            'Vous recevez la capacité de vous équiper d\'armes martiales de corps à corps et de boucliers martiaux.',
+        atouts: [
+            { type: 'pv', valeur: 5, label: 'Votre maximum de Points de Vie augmente définitivement de 5.' },
+            { type: 'narratif', label: 'Vous recevez la capacité de vous équiper d\'armes martiales de corps à corps et de boucliers martiaux.' },
         ],
         competences: [
             {
@@ -282,8 +282,8 @@ TECHNOMAGIE :
     maitre_erudit: {
         nom: 'Maître Érudit',
         tagline: 'Ce puits de savoir soutient ses alliés.',
-        atoutsGratuits: [
-            'Votre maximum de Points de Magie augmente définitivement de 5.',
+        atouts: [
+            { type: 'pm', valeur: 5, label: 'Votre maximum de Points de Magie augmente définitivement de 5.' },
         ],
         competences: [
             {
@@ -312,8 +312,8 @@ TECHNOMAGIE :
     orateur: {
         nom: 'Orateur/Oratrice',
         tagline: 'Gagne des alliés et influence les conflits par le verbe.',
-        atoutsGratuits: [
-            'Votre maximum de Points de Magie augmente définitivement de 5.',
+        atouts: [
+            { type: 'pm', valeur: 5, label: 'Votre maximum de Points de Magie augmente définitivement de 5.' },
         ],
         competences: [
             {
@@ -342,8 +342,8 @@ TECHNOMAGIE :
     roublard: {
         nom: 'Roublard/Roublarde',
         tagline: 'Saisit les occasions et vole des objets uniques à ses ennemis.',
-        atoutsGratuits: [
-            'Votre maximum de Points d\'Inventaire augmente définitivement de 2.',
+        atouts: [
+            { type: 'pi', valeur: 2, label: 'Votre maximum de Points d\'Inventaire augmente définitivement de 2.' },
         ],
         competences: [
             {
@@ -372,9 +372,9 @@ TECHNOMAGIE :
     sombrelame: {
         nom: 'Sombrelame',
         tagline: 'Utilise des attaques de ténèbres et tire son pouvoir des liens.',
-        atoutsGratuits: [
-            'Votre maximum de Points de Vie augmente définitivement de 5.',
-            'Vous recevez la capacité de vous équiper d\'armes martiales de corps à corps et d\'armures martiales.',
+        atouts: [
+            { type: 'pv', valeur: 5, label: 'Votre maximum de Points de Vie augmente définitivement de 5.' },
+            { type: 'narratif', label: 'Vous recevez la capacité de vous équiper d\'armes martiales de corps à corps et d\'armures martiales.' },
         ],
         competences: [
             {
@@ -403,9 +403,9 @@ TECHNOMAGIE :
     spirite: {
         nom: 'Spirite',
         tagline: 'Soutient ses alliés grâce à la magie et lance des sorts de lumière.',
-        atoutsGratuits: [
-            'Votre maximum de Points de Magie augmente définitivement de 5.',
-            'Vous pouvez réaliser des rituels dont les effets relèvent de la discipline Ritualisme.',
+        atouts: [
+            { type: 'pm', valeur: 5, label: 'Votre maximum de Points de Magie augmente définitivement de 5.' },
+            { type: 'narratif', label: 'Vous pouvez réaliser des rituels dont les effets relèvent de la discipline Ritualisme.' },
         ],
         competences: [
             {
@@ -435,9 +435,9 @@ TECHNOMAGIE :
     tireur_elite: {
         nom: 'Tireur d\'Élite/Tireuse d\'Élite',
         tagline: 'Excelle au combat à distance et annule les attaques à distance.',
-        atoutsGratuits: [
-            'Votre maximum de Points de Vie augmente définitivement de 5.',
-            'Vous recevez la capacité de vous équiper d\'armes martiales à distance et de boucliers martiaux.',
+        atouts: [
+            { type: 'pv', valeur: 5, label: 'Votre maximum de Points de Vie augmente définitivement de 5.' },
+            { type: 'narratif', label: 'Vous recevez la capacité de vous équiper d\'armes martiales à distance et de boucliers martiaux.' },
         ],
         competences: [
             {
@@ -466,8 +466,8 @@ TECHNOMAGIE :
     voyageur: {
         nom: 'Voyageur/Voyageuse',
         tagline: 'Ce maître explorateur est accompagné d\'un fidèle compagnon.',
-        atoutsGratuits: [
-            'Votre maximum de Points d\'Inventaire augmente définitivement de 2.',
+        atouts: [
+            { type: 'pi', valeur: 2, label: 'Votre maximum de Points d\'Inventaire augmente définitivement de 2.' },
         ],
         competences: [
             {

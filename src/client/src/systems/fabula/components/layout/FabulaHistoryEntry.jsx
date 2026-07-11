@@ -40,7 +40,10 @@ const FabulaHistoryEntry = ({ roll, compact = false }) => {
         );
     }
 
-    // type === 'test'
+    // type === 'test' ou 'attaque' — même jet de précision, l'attaque ajoute
+    // juste une ligne Dégâts en dessous (VH + bonus arme, déjà calculé par
+    // afterRoll). Fabula Ultima n'a pas de jet de dégâts séparé.
+    const isAttaque = result.type === 'attaque';
     let badge = null;
     if (result.criticalSuccess) badge = { text: '★ Critique', cls: 'bg-success text-white' };
     else if (result.criticalFailure) badge = { text: '✕ Échec critique', cls: 'bg-danger text-white' };
@@ -50,7 +53,7 @@ const FabulaHistoryEntry = ({ roll, compact = false }) => {
     return (
         <div className={`flex flex-col gap-1 ${compact ? 'text-xs' : 'text-sm'}`}>
             <div className="flex items-center gap-2">
-                <span className="fu-font-title text-primary">🎲</span>
+                <span className="fu-font-title text-primary">{isAttaque ? '⚔' : '🎲'}</span>
                 <span className="flex-1 font-semibold">{label}</span>
                 {badge && (
                     <span className={`px-1.5 py-0.5 rounded-full text-[10px] font-bold ${badge.cls}`}>
@@ -67,6 +70,12 @@ const FabulaHistoryEntry = ({ roll, compact = false }) => {
                 <span className="italic">(VH {result.vh})</span>
                 {result.nd != null && <span>vs ND {result.nd}</span>}
             </div>
+            {isAttaque && (
+                <div className="flex items-center gap-1.5">
+                    <span className="text-accent font-semibold">Dégâts : {result.degats}</span>
+                    <span className="text-muted text-[10px]">({result.degatsType}, VH {result.vh} + {result.degatsBonus})</span>
+                </div>
+            )}
         </div>
     );
 };

@@ -10,7 +10,9 @@
 //   - character_skills    → skills[]
 //   - character_arcana    → arcana[]
 //   - character_bonds     → bonds[]  (sentiments JSON parsé)
-//   - character_equipment → equipment[]
+//   - character_equipment → equipment[]  (profil structuré arme/défense +
+//     emplacement_equipe : null = sac, sinon armure/accessoire/
+//     main_directrice/main_secondaire/deux_mains)
 //   JSON parsé : alterations_etat
 //
 // saveFullCharacter persiste en transaction atomique :
@@ -59,9 +61,17 @@ function loadFullCharacter(db, id) {
         'SELECT id, cible_nom, cible_type, sentiments, notes FROM character_bonds WHERE character_id = ? ORDER BY id'
     ).all(id);
 
-    const equipment = db.prepare(
-        'SELECT id, type_emplacement, equipment_key, nom_libre, notes_libres, prix, mod_defense, mod_defense_magique, mod_initiative, equipe, ordre FROM character_equipment WHERE character_id = ? ORDER BY ordre, id'
-    ).all(id);
+    const equipment = db.prepare(`
+        SELECT id, type_emplacement, equipment_key, nom_libre, notes_libres, prix,
+               categorie, est_martial, qualite,
+               precision_attr1, precision_attr2, precision_bonus,
+               degats_bonus, degats_type, mains, portee,
+               mod_defense, mod_defense_magique, mod_initiative, def_fixe,
+               emplacement_equipe, ordre
+        FROM character_equipment
+        WHERE character_id = ?
+        ORDER BY ordre, id
+    `).all(id);
 
     return {
         id:                row.id,
@@ -106,6 +116,7 @@ function loadFullCharacter(db, id) {
 
         groupeNom:         row.groupe_nom,
         alterationsEtat:   _parseJson(row.alterations_etat, []),
+        boostsAttributs:   _parseJson(row.boosts_attributs, {}),
 
         // Sous-tables
         classes: classes.map(c => ({
@@ -139,10 +150,29 @@ function loadFullCharacter(db, id) {
             nomLibre:          e.nom_libre,
             notesLibres:       e.notes_libres,
             prix:              e.prix,
+
+            // Profil général
+            categorie:         e.categorie,
+            estMartial:        !!e.est_martial,
+            qualite:           e.qualite,
+
+            // Profil arme
+            precisionAttr1:    e.precision_attr1,
+            precisionAttr2:    e.precision_attr2,
+            precisionBonus:    e.precision_bonus,
+            degatsBonus:       e.degats_bonus,
+            degatsType:        e.degats_type,
+            mains:             e.mains,
+            portee:            e.portee,
+
+            // Profil défensif
             modDefense:        e.mod_defense,
             modDefenseMagique: e.mod_defense_magique,
             modInitiative:     e.mod_initiative,
-            equipe:            !!e.equipe,
+            defFixe:           e.def_fixe,
+
+            // Position — null = sac à dos
+            emplacementEquipe: e.emplacement_equipe,
             ordre:             e.ordre,
         })),
 
@@ -170,7 +200,7 @@ function saveFullCharacter(db, id, data) {
         dexDe, intDe, puiDe, volDe,
         pvMax, pvActuel, pmMax, pmActuel, piMax, piActuel,
         seuilCrise, initiative, defense, defenseMagique,
-        zenit, pointsFabula, groupeNom, alterationsEtat,
+        zenit, pointsFabula, groupeNom, alterationsEtat, boostsAttributs,
         classes, skills, arcana, bonds, equipment,
     } = data;
 
@@ -215,6 +245,7 @@ function saveFullCharacter(db, id, data) {
                                   points_fabula     = @pointsFabula,
                                   groupe_nom        = @groupeNom,
                                   alterations_etat  = @alterationsEtat,
+                                  boosts_attributs  = @boostsAttributs,
 
                                   updated_at        = CURRENT_TIMESTAMP
             WHERE id = @id
@@ -245,9 +276,15 @@ function saveFullCharacter(db, id, data) {
             defenseMagique: defenseMagique ?? 0,
 
             zenit:        zenit        ?? 0,
-            pointsFabula: pointsFabula != null ? Math.max(0, Math.min(6, pointsFabula)) : 3,
+            // Pas de plafond de Points Fabula (règle de table du MJ — la limite
+            // officielle de 6 de la spec §4.1 est explicitement écartée).
+            pointsFabula: pointsFabula != null ? Math.max(0, pointsFabula) : 3,
             groupeNom:    groupeNom    ?? '',
             alterationsEtat: JSON.stringify(Array.isArray(alterationsEtat) ? alterationsEtat : []),
+            boostsAttributs: JSON.stringify(
+                boostsAttributs && typeof boostsAttributs === 'object' && !Array.isArray(boostsAttributs)
+                    ? boostsAttributs : {}
+            ),
         });
 
         // ── 2. Sous-tables — delete puis reinsert ───────────────────────────────
@@ -307,11 +344,21 @@ function saveFullCharacter(db, id, data) {
 
         db.prepare('DELETE FROM character_equipment WHERE character_id = ?').run(id);
         if (Array.isArray(equipment)) {
+            // Énumérations autorisées — toute valeur hors liste retombe sur un
+            // défaut sûr plutôt que de faire échouer la transaction sur un CHECK.
+            const ATTRS        = ['dex', 'int', 'pui', 'vol'];
+            const DEGATS_TYPES = ['physique', 'feu', 'glace', 'foudre', 'air', 'terre', 'lumiere', 'tenebres', 'poison'];
+            const EMPLACEMENTS = ['armure', 'accessoire', 'main_directrice', 'main_secondaire', 'deux_mains'];
+
             const ins = db.prepare(`
                 INSERT INTO character_equipment
                 (character_id, type_emplacement, equipment_key, nom_libre, notes_libres, prix,
-                 mod_defense, mod_defense_magique, mod_initiative, equipe, ordre)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                 categorie, est_martial, qualite,
+                 precision_attr1, precision_attr2, precision_bonus,
+                 degats_bonus, degats_type, mains, portee,
+                 mod_defense, mod_defense_magique, mod_initiative, def_fixe,
+                 emplacement_equipe, ordre)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             `);
             equipment.forEach((e, index) => {
                 if (!['arme', 'armure', 'bouclier', 'accessoire'].includes(e.typeEmplacement)) return;
@@ -322,10 +369,25 @@ function saveFullCharacter(db, id, data) {
                     e.nomLibre ?? '',
                     e.notesLibres ?? '',
                     e.prix ?? 0,
+
+                    e.categorie ?? null,
+                    e.estMartial ? 1 : 0,
+                    e.qualite ?? '',
+
+                    ATTRS.includes(e.precisionAttr1) ? e.precisionAttr1 : null,
+                    ATTRS.includes(e.precisionAttr2) ? e.precisionAttr2 : null,
+                    e.precisionBonus ?? 0,
+                    e.degatsBonus ?? 0,
+                    DEGATS_TYPES.includes(e.degatsType) ? e.degatsType : 'physique',
+                    e.mains === 2 ? 2 : 1,
+                    e.portee === 'distance' ? 'distance' : 'cac',
+
                     e.modDefense ?? 0,
                     e.modDefenseMagique ?? 0,
                     e.modInitiative ?? 0,
-                    e.equipe ? 1 : 0,
+                    Number.isInteger(e.defFixe) ? e.defFixe : null,
+
+                    EMPLACEMENTS.includes(e.emplacementEquipe) ? e.emplacementEquipe : null,
                     e.ordre ?? index
                 );
             });

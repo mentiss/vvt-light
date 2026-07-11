@@ -43,6 +43,11 @@ const TabSession = ({ activeSession, onlineCharacters, characterUpdates }) => {
     const [copied, setCopied] = useState(false);
     const [saving, setSaving] = useState(false);
 
+    // Compteur GM de Points Fabula dépensés par personnage, pour cette session
+    // (calcul d'XP de fin de session — jamais exposé au joueur). État séparé de
+    // `characters` : la donnée vit sur session_characters, pas sur la fiche.
+    const [pfDepenses, setPfDepenses] = useState({});
+
     const onlineIds = new Set((onlineCharacters ?? []).map(c => c.characterId));
 
     // ── Chargement des personnages de la session ─────────────────────────────
@@ -67,7 +72,30 @@ const TabSession = ({ activeSession, onlineCharacters, characterUpdates }) => {
             setSelectedId(prev => (prev && loaded[prev]) ? prev : (activeSession.characters[0]?.id ?? null));
             setLoading(false);
         })();
+
+        // Compteur PF dépensés — route dédiée (pf_depenses vit sur
+        // session_characters, hors du contrat générique de la fiche).
+        fetchWithAuth(`${apiBase}/session-characters/${activeSession.id}`)
+            .then(r => r.ok ? r.json() : {})
+            .then(setPfDepenses)
+            .catch(e => console.error('[TabSession/fabula] load pfDepenses:', e));
     }, [activeSession, apiBase]);
+
+    const adjustPfDepenses = useCallback(async (characterId, delta) => {
+        try {
+            const r = await fetchWithAuth(`${apiBase}/session-characters/${activeSession.id}/${characterId}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ delta }),
+            });
+            if (r.ok) {
+                const { pfDepenses: newVal } = await r.json();
+                setPfDepenses(prev => ({ ...prev, [characterId]: newVal }));
+            }
+        } catch (e) {
+            console.error('[TabSession/fabula] adjustPfDepenses:', e);
+        }
+    }, [activeSession, apiBase, fetchWithAuth]);
 
     // ── Mises à jour temps réel (via useGMSession → characterUpdates) ────────
     // Ne touche que les personnages déjà chargés dans cette session — évite de
@@ -118,18 +146,24 @@ const TabSession = ({ activeSession, onlineCharacters, characterUpdates }) => {
 
     // Utilisé aussi par les actions "toujours actives" (steppers ressources,
     // altérations) hors mode édition — patch complet immédiat.
+    // Même correctif que Sheet.jsx : recalcule TOUJOURS les stats dérivées
+    // avant de persister — sinon Défense/Déf.Mag./Initiative restent périmés
+    // après un équiper/déséquiper ou un ajustement de boost côté GM.
     const patchImmediate = useCallback(async (patch) => {
         const base = characters[selectedId];
         if (!base) return;
+        const merged     = { ...base, ...patch };
+        const recomputed = computeDerivedStats(merged);
+        const full        = { ...merged, ...recomputed };
         const r = await fetchWithAuth(`${apiBase}/characters/${selectedId}`, {
             method: 'PUT',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ ...base, ...patch }),
+            body: JSON.stringify(full),
         });
         if (r.ok) {
             const updated = await r.json();
             setCharacters(prev => ({ ...prev, [selectedId]: updated }));
-            if (editMode) setEditableChar(prev => ({ ...prev, ...patch }));
+            if (editMode) setEditableChar(prev => ({ ...prev, ...patch, ...recomputed }));
         }
     }, [characters, selectedId, apiBase, fetchWithAuth, editMode]);
 
@@ -148,7 +182,19 @@ const TabSession = ({ activeSession, onlineCharacters, characterUpdates }) => {
     };
 
     const setField = (field, value) => setEditableChar(prev => ({ ...prev, [field]: value }));
-    const setArr   = (field, value) => setEditableChar(prev => ({ ...prev, [field]: value }));
+
+    // Certains boutons de FicheGrid (Équiper/Déséquiper le sac à dos, ajout
+    // depuis le catalogue d'équipement) restent actifs hors mode édition —
+    // ce sont des actions de jeu immédiates, pas des modifications de texte
+    // libre. onArrayChange doit donc persister tout de suite dans ce cas
+    // (comme onQuickUpdate), et ne bufferiser dans editableChar qu'en édition.
+    const setArr = (field, value) => {
+        if (editMode) {
+            setEditableChar(prev => ({ ...prev, [field]: value }));
+        } else {
+            patchImmediate({ [field]: value });
+        }
+    };
 
     // ── Copier le code d'accès ────────────────────────────────────────────────
     const handleCopyCode = () => {
@@ -193,11 +239,17 @@ const TabSession = ({ activeSession, onlineCharacters, characterUpdates }) => {
                     const online   = onlineIds.has(c.id);
                     const selected = selectedId === c.id;
                     return (
-                        <button key={c.id}
-                                onClick={() => { setSelectedId(c.id); setEditMode(false); }}
-                                className={`w-full text-left px-3 py-2 border-b border-default flex items-center gap-2 ${
-                                    selected ? 'bg-primary/10 border-l-2 border-l-primary' : 'hover:bg-surface-alt'
-                                }`}>
+                        // ⚠️ Élément englobant délibérément un <div>, pas un <button> : il
+                        // contient les boutons +/- du compteur PF (ligne ci-dessous), et un
+                        // <button> ne peut pas englober d'autres <button> (HTML invalide —
+                        // cassait le rendu/les clics). role="button" + clavier pour
+                        // l'accessibilité, comportement de clic inchangé.
+                        <div key={c.id} role="button" tabIndex={0}
+                             onClick={() => { setSelectedId(c.id); setEditMode(false); }}
+                             onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') { setSelectedId(c.id); setEditMode(false); } }}
+                             className={`w-full text-left px-3 py-2 border-b border-default flex items-center gap-2 cursor-pointer ${
+                                 selected ? 'bg-primary/10 border-l-2 border-l-primary' : 'hover:bg-surface-alt'
+                             }`}>
                             <div className="relative shrink-0">
                                 <div className="w-8 h-8 rounded-full overflow-hidden bg-surface-alt border border-default flex items-center justify-center">
                                     {full?.avatar ? <img src={full.avatar} alt="" className="w-full h-full object-cover" /> : <span className="text-xs">🗡️</span>}
@@ -209,7 +261,23 @@ const TabSession = ({ activeSession, onlineCharacters, characterUpdates }) => {
                                 <p className="text-[10px] text-muted truncate">{full?.playerName}</p>
                                 <p className="text-[10px] text-muted truncate">{classSummary(full?.classes)}</p>
                             </div>
-                        </button>
+                            {/* Compteur PF dépensés — GM uniquement, jamais visible joueur */}
+                            <div className="flex items-center gap-0.5 shrink-0" onClick={e => e.stopPropagation()}>
+                                <button type="button" onClick={() => adjustPfDepenses(c.id, -1)}
+                                        title="PF dépensés : −1"
+                                        className="w-4 h-4 rounded border border-default bg-default text-[10px] leading-none cursor-pointer">
+                                    −
+                                </button>
+                                <span className="text-[10px] text-muted min-w-[1rem] text-center" title="Points Fabula dépensés cette session">
+                                    {pfDepenses[c.id] ?? 0}
+                                </span>
+                                <button type="button" onClick={() => adjustPfDepenses(c.id, 1)}
+                                        title="PF dépensés : +1"
+                                        className="w-4 h-4 rounded border border-default bg-default text-[10px] leading-none cursor-pointer">
+                                    +
+                                </button>
+                            </div>
+                        </div>
                     );
                 })}
             </aside>

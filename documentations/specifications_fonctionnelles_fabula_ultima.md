@@ -662,7 +662,7 @@ Chaque personnage joueur commence la partie avec 3 Points Fabula.
 L'équilibre des forces de Fabula Ultima repose sur une asymétrie de ressources narratives entre les Joueurs (Points Fabula) et le Meneur de Jeu (Points Ultima dédiés aux Méchants).
 
 ### 4.1. Les Points Fabula (Ressources Joueurs)
-Chaque joueur commence la campagne avec des points Fabula et en accumule en cours de session. Un joueur ne peut jamais avoir plus de 6 Points Fabula simultanément.
+Chaque joueur commence la campagne avec des points Fabula et en accumule en cours de session.
 
 #### A. Obtention des Points Fabula
 Un joueur gagne un Point Fabula lorsque :

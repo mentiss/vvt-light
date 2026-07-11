@@ -1,7 +1,8 @@
 /* src/client/src/systems/fabula/theme.css */
 /* ─────────────────────────────────────────────────────────────────────────────
    Thème Fabula Ultima — Tome héroïque JRPG
-   Mode jour : parchemin chaud, encre brune, rouge héroïque + or
+   Mode jour : palette du livre de règles (proposition MJ) — vert feuille,
+               bleu profond, orange cuivré sur fonds vert d'eau
    Mode nuit  : indigo nocturne façon menu JRPG, or et cramoisi en glow doux
    ─────────────────────────────────────────────────────────────────────────── */
 
@@ -9,24 +10,24 @@
 
 /* ── Mode JOUR (par défaut) ─────────────────────────────────────────────── */
 :root {
-    /* Couleurs plateforme */
-    --color-primary:        #8B2635;   /* Rouge héroïque — titres, actions principales */
-    --color-secondary:      #3D4F7D;   /* Bleu royal — éléments secondaires */
-    --color-accent:         #C9A227;   /* Or — Points Fabula, mise en avant */
-    --color-danger:         #A3282C;
+    /* Couleurs plateforme — palette livre de règles (proposition MJ) */
+    --color-primary:        #3E7232;   /* Vert feuille — titres, actions principales */
+    --color-secondary:      #00619C;   /* Bleu profond — éléments secondaires */
+    --color-accent:         #D37928;   /* Orange cuivré — Points Fabula, mise en avant */
+    --color-danger:         #B82315;
     --color-success:        #3F7D4F;
 
-    /* Surfaces — parchemin */
-    --color-bg:             #F3EAD9;
-    --color-surface:        #E8DCC4;
-    --color-surface-alt:    #DDCFAE;
+    /* Surfaces — vert d'eau */
+    --color-bg:             #EAF0F4;
+    --color-surface:        #E1EFE3;
+    --color-surface-alt:    #CDDDD9;
 
     /* Texte */
     --color-text:           #2B2118;   /* Encre brune */
     --color-text-muted:     #6B5D4F;
 
-    /* Bordure */
-    --color-border:         #A8916D;
+    /* Bordure — ⚠ volontairement sombre/saturée (choix MJ, à juger sur pièce) */
+    --color-border:         #2B4A42;
 
     /* ── Variables slug-spécifiques ───────────────────────────────────────── */
     --fu-fabula-color:      var(--color-accent);   /* Points Fabula (joueurs) */

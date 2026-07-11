@@ -5,7 +5,11 @@
 // "Fiche — mêmes composants, même ordre que Sheet.jsx".
 //
 // Contrat : { character, editMode, onFieldChange, onArrayChange, onQuickUpdate,
-//             onAvatarClick, onRollAttribute }
+//             onAvatarClick, onRollAttribute, onAttack }
+//   onAttack (optionnel) : ouvre FabulaDiceModal en mode attaque pour une arme
+//   équipée. Fourni par Sheet.jsx (joueur) UNIQUEMENT — TabSession.jsx (GM) ne
+//   le passe pas, donc le bouton "⚔ Attaquer" de WeaponsCard reste invisible
+//   côté GM (le MJ ne joue pas les attaques à la place des joueurs).
 // ─────────────────────────────────────────────────────────────────────────────
 
 import React from 'react';
@@ -22,11 +26,13 @@ import AccessoryCard      from './AccessoryCard.jsx';
 import ArcanaSpellsPanel  from './ArcanaSpellsPanel.jsx';
 import BackpackCard       from './BackpackCard.jsx';
 
-const FicheGrid = ({ character, editMode, onFieldChange, onArrayChange, onQuickUpdate, onAvatarClick, onRollAttribute }) => (
+const FicheGrid = ({ character, editMode, onFieldChange, onArrayChange, onQuickUpdate, onAvatarClick, onRollAttribute, onAttack }) => (
     <div className="flex flex-col gap-3 w-full">
 
-        {/* Rangée 1 — Identité · Attributs+Ressources · Points Fabula+Liens */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-3 items-start">
+        {/* Rangée 1 — Identité · Attributs+Ressources · Points Fabula+Liens
+            Colonnes asymétriques (retour MJ) : la colonne PF/Liens rétrécit au
+            profit des attributs/ressources, plus denses. */}
+        <div className="grid grid-cols-1 lg:grid-cols-[1fr_1.25fr_0.75fr] gap-3 items-start">
             <TraitsPanel character={character} editMode={editMode} onFieldChange={onFieldChange}
                          onAvatarClick={onAvatarClick} />
 
@@ -49,7 +55,7 @@ const FicheGrid = ({ character, editMode, onFieldChange, onArrayChange, onQuickU
             <ClassesSkillsPanel character={character} editMode={editMode} onArrayChange={onArrayChange} />
             <div className="flex flex-col gap-3">
                 <ArmorCard character={character} editMode={editMode} onArrayChange={onArrayChange} />
-                <WeaponsCard character={character} editMode={editMode} onArrayChange={onArrayChange} />
+                <WeaponsCard character={character} editMode={editMode} onArrayChange={onArrayChange} onAttack={onAttack} />
                 <AccessoryCard character={character} editMode={editMode} onArrayChange={onArrayChange} />
             </div>
         </div>

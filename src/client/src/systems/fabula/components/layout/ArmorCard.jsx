@@ -1,10 +1,19 @@
 // src/client/src/systems/fabula/components/layout/ArmorCard.jsx
+// ─────────────────────────────────────────────────────────────────────────────
+// Armure équipée (emplacementEquipe === 'armure'). Le formulaire partagé gère
+// le double modèle de Défense : dé DEX + mod (armures légères) ou DEF fixe
+// (armures lourdes, defFixe non nul → le dé DEX est ignoré par
+// computeDerivedStats). Les chips d'en-tête affichent les valeurs dérivées
+// globales du personnage, toutes pièces équipées confondues.
+// ─────────────────────────────────────────────────────────────────────────────
+
 import React from 'react';
-import { equipItem, unequipItem } from '../../config.jsx';
+import { unequipItem } from '../../config.jsx';
+import EquipmentEditForm, { EquipmentItemSummary } from './EquipmentEditForm.jsx';
 
 const ArmorCard = ({ character, editMode, onArrayChange }) => {
     const equipment = character.equipment ?? [];
-    const index = equipment.findIndex(e => e.typeEmplacement === 'armure' && e.equipe);
+    const index = equipment.findIndex(e => e.emplacementEquipe === 'armure');
     const item = index >= 0 ? equipment[index] : null;
 
     const update = (patch) => onArrayChange('equipment', equipment.map((e, i) => i === index ? { ...e, ...patch } : e));
@@ -26,30 +35,16 @@ const ArmorCard = ({ character, editMode, onArrayChange }) => {
             {item && (
                 <div className="bg-surface-alt rounded p-2 flex flex-col gap-1">
                     {editMode ? (
-                        <>
-                            <input value={item.nomLibre} onChange={e => update({ nomLibre: e.target.value })}
-                                   className="bg-default border border-default rounded px-2 py-1 text-sm" placeholder="Nom" />
-                            <textarea value={item.notesLibres} onChange={e => update({ notesLibres: e.target.value })}
-                                      className="bg-default border border-default rounded px-2 py-1 text-xs" rows={2} placeholder="Notes" />
-                            <div className="flex gap-3 text-xs">
-                                <label>Déf. <input type="number" value={item.modDefense}
-                                                   onChange={e => update({ modDefense: parseInt(e.target.value) || 0 })}
-                                                   className="w-12 bg-default border border-default rounded px-1 ml-1" /></label>
-                                <label>Déf.Mag. <input type="number" value={item.modDefenseMagique}
-                                                       onChange={e => update({ modDefenseMagique: parseInt(e.target.value) || 0 })}
-                                                       className="w-12 bg-default border border-default rounded px-1 ml-1" /></label>
-                                <label>Init. <input type="number" value={item.modInitiative}
-                                                    onChange={e => update({ modInitiative: parseInt(e.target.value) || 0 })}
-                                                    className="w-12 bg-default border border-default rounded px-1 ml-1" /></label>
-                                <button type="button" onClick={unequip} className="ml-auto text-danger">Déséquiper</button>
-                            </div>
-                        </>
+                        <EquipmentEditForm item={item} onChange={update} showType={false} />
                     ) : (
-                        <>
-                            <span className="text-sm font-semibold">{item.nomLibre || '(sans nom)'}</span>
-                            {item.notesLibres && <p className="text-xs text-muted">{item.notesLibres}</p>}
-                        </>
+                        <EquipmentItemSummary item={item} showType={false} />
                     )}
+                    {/* Déséquiper est une action de jeu immédiate, pas une édition de
+                        texte libre — toujours disponible, comme "Équiper" au sac à dos. */}
+                    <button type="button" onClick={unequip}
+                            className="self-start px-2 py-0.5 rounded-full text-xs border bg-default border-default text-danger">
+                        Déséquiper
+                    </button>
                 </div>
             )}
         </div>

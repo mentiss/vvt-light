@@ -1,10 +1,18 @@
 // src/client/src/systems/fabula/components/layout/AccessoryCard.jsx
+// ─────────────────────────────────────────────────────────────────────────────
+// Accessoire équipé (emplacementEquipe === 'accessoire'). Les accessoires
+// peuvent porter des mods Déf./Déf.Mag./Init. (certains accessoires du jeu en
+// donnent) — le formulaire partagé les expose, et computeDerivedStats les
+// additionne comme toute pièce équipée.
+// ─────────────────────────────────────────────────────────────────────────────
+
 import React from 'react';
 import { unequipItem } from '../../config.jsx';
+import EquipmentEditForm, { EquipmentItemSummary } from './EquipmentEditForm.jsx';
 
 const AccessoryCard = ({ character, editMode, onArrayChange }) => {
     const equipment = character.equipment ?? [];
-    const index = equipment.findIndex(e => e.typeEmplacement === 'accessoire' && e.equipe);
+    const index = equipment.findIndex(e => e.emplacementEquipe === 'accessoire');
     const item = index >= 0 ? equipment[index] : null;
 
     const update = (patch) => onArrayChange('equipment', equipment.map((e, i) => i === index ? { ...e, ...patch } : e));
@@ -17,19 +25,16 @@ const AccessoryCard = ({ character, editMode, onArrayChange }) => {
             {item && (
                 <div className="bg-surface-alt rounded p-2 flex flex-col gap-1">
                     {editMode ? (
-                        <>
-                            <input value={item.nomLibre} onChange={e => update({ nomLibre: e.target.value })}
-                                   className="bg-default border border-default rounded px-2 py-1 text-sm" placeholder="Nom" />
-                            <textarea value={item.notesLibres} onChange={e => update({ notesLibres: e.target.value })}
-                                      className="bg-default border border-default rounded px-2 py-1 text-xs" rows={2} placeholder="Notes" />
-                            <button type="button" onClick={unequip} className="text-danger text-xs self-end">Déséquiper</button>
-                        </>
+                        <EquipmentEditForm item={item} onChange={update} showType={false} />
                     ) : (
-                        <>
-                            <span className="text-sm font-semibold">{item.nomLibre || '(sans nom)'}</span>
-                            {item.notesLibres && <p className="text-xs text-muted">{item.notesLibres}</p>}
-                        </>
+                        <EquipmentItemSummary item={item} showType={false} />
                     )}
+                    {/* Déséquiper est une action de jeu immédiate, pas une édition de
+                        texte libre — toujours disponible, comme "Équiper" au sac à dos. */}
+                    <button type="button" onClick={unequip}
+                            className="self-start px-2 py-0.5 rounded-full text-xs border bg-default border-default text-danger">
+                        Déséquiper
+                    </button>
                 </div>
             )}
         </div>

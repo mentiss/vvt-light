@@ -128,6 +128,27 @@ const ClassesSkillsPanel = ({ character, editMode, onArrayChange }) => {
                                 )}
                             </div>
                         </div>
+                        {/* Atouts gratuits de la classe — badge pour les mécaniques
+                            (PV/PM/PI, intégrés à computeDerivedStats), atout narratif sinon
+                            (martial, rituels, projets — purement informatifs). */}
+                        {(def.atouts ?? []).length > 0 && (
+                            <div className="flex flex-col gap-0.5 mb-1">
+                                {def.atouts.map((a, idx) => (
+                                    <div key={idx} className="text-[11px] text-muted flex items-start gap-1.5">
+                                        {a.type !== 'narratif' ? (
+                                            <span className="shrink-0 px-1.5 rounded-full bg-accent/10 text-accent border border-accent text-[10px] font-semibold">
+                                                {{ pv: 'PV', pm: 'PM', pi: 'PI' }[a.type]} +{a.valeur}
+                                            </span>
+                                        ) : (
+                                            <span className="shrink-0 px-1.5 rounded-full bg-surface border border-default text-[10px]">
+                                                Atout
+                                            </span>
+                                        )}
+                                        <span>{a.label}</span>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
                         <div className="text-xs text-muted mb-1">
                             Compétences : {skillTotal} / {c.niveau}
                         </div>

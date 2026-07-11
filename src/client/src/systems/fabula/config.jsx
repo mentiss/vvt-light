@@ -14,7 +14,12 @@ import FabulaHistoryEntry from './components/layout/FabulaHistoryEntry.jsx';
 export { CLASSES, CLASS_ORDER } from './config/classes.js';
 export { SPELL_LISTS }          from './config/spells.js';
 export { ARCANA_LISTS }         from './config/arcana.js';
-export { computeDerivedStats, getAttributeAffliction, effectiveDieSize, equipItem, unequipItem } from './config/utils.js';
+export {
+    computeDerivedStats, getAttributeAfflictions, effectiveAttrDie, classAtoutBonuses,
+    equipItem, unequipItem, switchHand, isEquipped, isInHands,
+    formatPrecision, formatDegats, formatDefense, formatDefenseMagique,
+} from './config/utils.js';
+export { EQUIPMENT_CATALOG, CATALOG_ORDER, CATEGORIES_ARMES, TYPES_DEGATS, ATTR_LABELS, catalogToItem } from './config/equipment.js';
 
 // ══════════════════════════════════════════════════════════════════════════════
 // BLOC DÉS — contrat diceEngine v2
@@ -48,7 +53,7 @@ const dice = {
     // ⚠️ À vérifier une fois testable : pour "1d8+1d10", on suppose que
     // raw.groups[0]/[1] correspondent dans l'ordre aux deux dés déclarés.
     afterRoll: (raw, ctx) => {
-        const { type } = ctx.systemData ?? {};
+        const { type, dieSize1, dieSize2, modifier = 0, nd = null, degatsBonus, degatsType } = ctx.systemData ?? {};
 
         if (type === 'economie') {
             const values = raw.groups[0].values;
@@ -62,7 +67,12 @@ const dice = {
             };
         }
 
-        const { dieSize1, dieSize2, modifier = 0, nd = null } = ctx.systemData ?? {};
+        // 'test' (test d'attribut classique) et 'attaque' (bouton Attaquer sur
+        // arme équipée) partagent EXACTEMENT le même jet de précision — Fabula
+        // Ultima n'a pas de jet de dégâts séparé, les dégâts sont [VH + bonus de
+        // l'arme] calculés immédiatement après le test. Seule 'attaque' porte
+        // en plus degatsBonus/degatsType (fournis par FabulaDiceModal depuis
+        // weaponContext) et calcule la ligne Dégâts.
         const die1 = raw.groups[0].values[0];
         const die2 = raw.groups[1].values[0];
         const vh   = Math.max(die1, die2);
@@ -76,8 +86,8 @@ const dice = {
         else if (criticalFailure) success = false;
         else if (nd != null) success = total >= nd;
 
-        return {
-            type: 'test',
+        const base = {
+            type: type === 'attaque' ? 'attaque' : 'test',
             die1, die2, dieSize1, dieSize2,
             vh,
             modifier,
@@ -86,9 +96,17 @@ const dice = {
             criticalSuccess,
             criticalFailure,
             success,
-            label: ctx.label ?? 'Test d\'Attribut',
+            label: ctx.label ?? (type === 'attaque' ? 'Attaque' : 'Test d\'Attribut'),
             successes: success === true ? 1 : 0,
         };
+
+        if (type === 'attaque') {
+            base.degatsBonus = degatsBonus ?? 0;
+            base.degatsType  = degatsType ?? 'physique';
+            base.degats      = vh + (degatsBonus ?? 0);
+        }
+
+        return base;
     },
 
     buildAnimationSequence: (raw, ctx, result) => {
@@ -140,19 +158,22 @@ const fabulaConfig = {
     dice,
     combat,
 
-    // Style par défaut des dés (lu par useDiceConfig) — cohérent avec la
-    // palette theme.css (rouge héroïque + or, ambiance tome héroïque).
+    // Style par défaut des dés (lu par useDiceConfig) — aligné sur la palette
+    // du thème jour fournie par le MJ (theme.css) : corps vert feuille
+    // (--color-primary), contour orange cuivré (--color-accent, la couleur
+    // des Points Fabula), chiffres lisibles sur fond clair, tranche dans le
+    // ton bordure sombre du thème.
     diceConfigDefault: {
         mode:   'custom',
         custom: {
-            foreground: '#F3EAD9', // parchemin clair — chiffres lisibles
-            background: '#8B2635', // rouge héroïque
-            outline:    '#C9A227', // or
-            edge:       '#2B2118', // encre brune
+            foreground: '#EAF0F4', // clair — chiffres lisibles (proche --color-bg)
+            background: '#3E7232', // vert feuille (--color-primary)
+            outline:    '#D37928', // orange cuivré (--color-accent)
+            edge:       '#2B4A42', // bordure sombre du thème (--color-border)
             texture:    '',
             material:   'plastic',
         },
-        lightColor:       '#C9A227',
+        lightColor:       '#D37928',
         strength:         5,
         gravity:          500,
         sounds:           true,

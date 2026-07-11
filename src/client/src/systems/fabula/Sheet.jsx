@@ -72,6 +72,7 @@ const Sheet = ({
 
     const [showMenu, setShowMenu]                     = useState(false);
     const [diceModalAttrs, setDiceModalAttrs]         = useState(null);
+    const [attackContext, setAttackContext]           = useState(null); // item d'arme équipée | null
     const [showFreeDice, setShowFreeDice]             = useState(false);
     const [showDiceConfig, setShowDiceConfig]         = useState(false);
     const [showCharList, setShowCharList]             = useState(false);
@@ -80,13 +81,40 @@ const Sheet = ({
 
     // ── Persistance ──────────────────────────────────────────────────────────
 
+    // Recalcule TOUJOURS les stats dérivées (defense, defenseMagique,
+    // initiative, pvMax/pmMax/piMax…) avant de persister. Sans ça, équiper/
+    // déséquiper une armure, ajuster un boost de dé ou (dés)activer une
+    // altération persiste bien son propre champ mais laisse defense/
+    // defenseMagique périmés jusqu'au prochain aller-retour en mode édition
+    // (computeDerivedStats n'était appelé qu'à la sauvegarde d'édition,
+    // jamais sur les actions rapides — bug remonté en jeu, corrigé ici).
     const patchImmediate = useCallback((patch) => {
-        onCharacterUpdate({ ...character, ...patch });
-        if (editMode) setEditableChar(prev => ({ ...prev, ...patch }));
+        const merged     = { ...character, ...patch };
+        const recomputed = computeDerivedStats(merged);
+        const full        = { ...merged, ...recomputed };
+        onCharacterUpdate(full);
+        if (editMode) setEditableChar(prev => ({ ...prev, ...patch, ...recomputed }));
     }, [character, onCharacterUpdate, editMode]);
 
     const setField = (field, value) => setEditableChar(prev => ({ ...prev, [field]: value }));
-    const setArr   = (field, value) => setEditableChar(prev => ({ ...prev, [field]: value }));
+
+    // Certains boutons de FicheGrid (Équiper/Déséquiper le sac à dos, ajout
+    // depuis le catalogue d'équipement) restent actifs hors mode édition — ce
+    // sont des actions de jeu immédiates, pas des modifications de texte libre.
+    // BUG CORRIGÉ : setArr n'écrivait auparavant que dans editableChar, invisible
+    // et jamais persisté hors édition (char = character, pas editableChar) — d'où
+    // les clics silencieusement sans effet. Même correctif que patchImmediate :
+    // persistance immédiate hors édition, buffer local seulement en édition.
+    const setArr = (field, value) => {
+        if (editMode) {
+            setEditableChar(prev => ({ ...prev, [field]: value }));
+        } else {
+            // Passe par patchImmediate (pas onCharacterUpdate direct) pour
+            // hériter du recalcul des stats dérivées — équiper/déséquiper hors
+            // édition doit mettre à jour Défense/Déf.Mag. immédiatement.
+            patchImmediate({ [field]: value });
+        }
+    };
 
     const toggleEditMode = () => {
         if (editMode) {
@@ -111,6 +139,7 @@ const Sheet = ({
     }, [logout, onLogout]);
 
     const openDiceModal = (attr1 = 'dex', attr2 = 'int') => setDiceModalAttrs({ attr1, attr2 });
+    const openAttackModal = (weaponItem) => setAttackContext(weaponItem);
 
     return (
         <div className="min-h-screen bg-default text-default fu-font-body" data-theme={darkMode ? 'dark' : 'light'}>
@@ -210,6 +239,7 @@ const Sheet = ({
                             onQuickUpdate={patchImmediate}
                             onAvatarClick={() => setShowAvatarUploader(true)}
                             onRollAttribute={(attrKey) => !editMode && openDiceModal(attrKey, attrKey === 'dex' ? 'int' : 'dex')}
+                            onAttack={(weaponItem) => !editMode && openAttackModal(weaponItem)}
                         />
                     )}
 
@@ -240,6 +270,14 @@ const Sheet = ({
                     initialAttr1={diceModalAttrs.attr1}
                     initialAttr2={diceModalAttrs.attr2}
                     onClose={() => setDiceModalAttrs(null)}
+                />
+            )}
+            {attackContext && (
+                <FabulaDiceModal
+                    character={character}
+                    sessionId={activeGMSession}
+                    weaponContext={attackContext}
+                    onClose={() => setAttackContext(null)}
                 />
             )}
             {showDiceConfig && <DiceConfigModal onClose={() => setShowDiceConfig(false)} />}

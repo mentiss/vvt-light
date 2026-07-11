@@ -50,11 +50,18 @@ const TraitsPanel = ({ character, editMode, onFieldChange, onAvatarClick }) => {
                 </button>
                 <div className="flex-1 min-w-0">
                     {editMode ? (
-                        <input value={character.nom ?? ''} onChange={e => onFieldChange('nom', e.target.value)}
-                               placeholder="Nom du personnage"
-                               className="bg-default border border-default rounded px-2 py-1 text-sm font-semibold w-full mb-1" />
+                        <div className="flex gap-1 mb-1">
+                            <input value={character.prenom ?? ''} onChange={e => onFieldChange('prenom', e.target.value)}
+                                   placeholder="Prénom"
+                                   className="bg-default border border-default rounded px-2 py-1 text-sm font-semibold w-1/3 min-w-0" />
+                            <input value={character.nom ?? ''} onChange={e => onFieldChange('nom', e.target.value)}
+                                   placeholder="Nom du personnage"
+                                   className="bg-default border border-default rounded px-2 py-1 text-sm font-semibold flex-1 min-w-0" />
+                        </div>
                     ) : (
-                        <p className="text-sm font-semibold truncate">{character.nom || 'Sans nom'}</p>
+                        <p className="text-sm font-semibold truncate">
+                            {[character.prenom, character.nom].filter(Boolean).join(' ') || 'Sans nom'}
+                        </p>
                     )}
                     {editMode ? (
                         <input value={character.playerName ?? ''} onChange={e => onFieldChange('playerName', e.target.value)}
@@ -66,9 +73,8 @@ const TraitsPanel = ({ character, editMode, onFieldChange, onAvatarClick }) => {
                 </div>
             </div>
 
-            {/* Colonnes plateforme (base.sql) */}
-            <div className="grid grid-cols-3 gap-2">
-                {textField('prenom', 'Prénom')}
+            {/* Colonnes plateforme (base.sql) — prénom déplacé à côté du nom ci-dessus */}
+            <div className="grid grid-cols-2 gap-2">
                 {textField('sexe', 'Sexe')}
                 {numberField('age', 'Âge')}
                 {numberField('taille', 'Taille (cm)')}

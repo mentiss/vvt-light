@@ -7,7 +7,7 @@
 //   1 — Classes & Compétences (2-3 classes, 5 niveaux à répartir, NC par classe)
 //   2 — Répartition des Dés d'Attributs (3 profils)
 //   3 — Statistiques Dérivées (calculées, lecture seule)
-//   4 — Équipement Initial (budget 500 zénits, saisie libre + bonus manuels)
+//   4 — Équipement Initial (budget 500 zénits, catalogue + saisie libre enrichie)
 //   5 — Jet des économies (2d6 × 10 zénits, ajoutés au reliquat du budget)
 //   6 — Points Fabula de départ (fixe : 3)
 //   7 — Liens Initiaux
@@ -25,7 +25,9 @@ import { useFetch }    from '../../hooks/useFetch.js';
 import { useNavigate } from 'react-router-dom';
 import { roll }        from '../../tools/diceEngine.js';
 import ThemeToggle      from '../../components/ui/ThemeToggle.jsx';
-import fabulaConfig, { CLASSES, CLASS_ORDER, SPELL_LISTS, ARCANA_LISTS } from './config.jsx';
+import fabulaConfig, { CLASSES, CLASS_ORDER, SPELL_LISTS, ARCANA_LISTS, equipItem, unequipItem, classAtoutBonuses } from './config.jsx';
+import EquipmentEditForm, { EquipmentItemSummary, EMPLACEMENT_LABELS, createEmptyItem } from './components/layout/EquipmentEditForm.jsx';
+import EquipmentCatalogModal from './components/modals/EquipmentCatalogModal.jsx';
 
 // ══════════════════════════════════════════════════════════════════════════════
 // CONSTANTES
@@ -58,13 +60,6 @@ const DIE_PROFILES = {
     specialise: { label: 'Spécialisé (d10 / d10 / d6 / d6)', dice: [10, 10, 6, 6] },
     polyvalent: { label: 'Polyvalent (d10 / d8 / d8 / d6)',  dice: [10, 8, 8, 6] },
 };
-
-const EMPLACEMENTS = [
-    { key: 'arme',       label: 'Arme' },
-    { key: 'armure',     label: 'Armure' },
-    { key: 'bouclier',   label: 'Bouclier' },
-    { key: 'accessoire', label: 'Accessoire' },
-];
 
 const SENTIMENT_PAIRS = [
     ['admiration', 'inferiorite'],
@@ -99,18 +94,28 @@ function computeStats(ws) {
 
     const niveauGlobal = sum(classes.map(c => c.niveau || 0)) || NIVEAU_TOTAL_DEPART;
 
-    const pvMax   = puiDe * 5 + niveauGlobal;
-    const pmMax   = volDe * 5 + niveauGlobal;
-    const piMax   = 6;
+    // Atouts gratuits de classe : bonus PV/PM/PI max (même logique que
+    // computeDerivedStats dans utils.js).
+    const atouts  = classAtoutBonuses(classes);
+    const pvMax   = puiDe * 5 + niveauGlobal + atouts.pv;
+    const pmMax   = volDe * 5 + niveauGlobal + atouts.pm;
+    const piMax   = 6 + atouts.pi;
     const seuilCrise = Math.floor(pvMax / 2);
 
-    const equipes = equipment.filter(e => e.equipe);
+    // Même logique que computeDerivedStats (utils.js) : un item est équipé
+    // ssi emplacementEquipe != null ; une armure lourde (defFixe) remplace la
+    // base dé DEX de la Défense, son propre mod est exclu, les mods des autres
+    // pièces s'additionnent par-dessus.
+    const equipes = equipment.filter(e => e.emplacementEquipe != null);
+    const armure  = equipes.find(e => e.emplacementEquipe === 'armure');
+    const defFixe = Number.isInteger(armure?.defFixe) ? armure.defFixe : null;
+
     const modInit   = sum(equipes.map(e => e.modInitiative ?? 0));
-    const modDef    = sum(equipes.map(e => e.modDefense ?? 0));
+    const modDef    = sum(equipes.filter(e => !(defFixe !== null && e === armure)).map(e => e.modDefense ?? 0));
     const modDefMag = sum(equipes.map(e => e.modDefenseMagique ?? 0));
 
     const initiative     = Math.floor((dexDe + intDe) / 2) + modInit;
-    const defense        = dexDe + modDef;
+    const defense        = (defFixe ?? dexDe) + modDef;
     const defenseMagique = intDe + modDefMag;
 
     return { dexDe, intDe, puiDe, volDe, niveauGlobal, pvMax, pmMax, piMax, seuilCrise, initiative, defense, defenseMagique };
@@ -193,7 +198,7 @@ const Creation = ({ darkMode, onToggleDarkMode }) => {
         profil: null,
         attrDice: { dex: 8, int: 8, pui: 8, vol: 8 },
         // Étape 4
-        equipment: [], // [{ typeEmplacement, nomLibre, notesLibres, prix, modDefense, modDefenseMagique, modInitiative, equipe }]
+        equipment: [], // items à la forme createEmptyItem() — emplacementEquipe: null = non équipé
         // Étape 5
         economieRoll: null, // { values, total }
         // Étape 7
@@ -341,11 +346,15 @@ const Creation = ({ darkMode, onToggleDarkMode }) => {
 
     // ── Étape 4 — Équipement ─────────────────────────────────────────────────
 
+    const [catalogOpen, setCatalogOpen] = useState(false);
+
     const addEquipmentItem = () => {
-        set({ equipment: [...ws.equipment, {
-                typeEmplacement: 'arme', nomLibre: '', notesLibres: '', prix: 0,
-                modDefense: 0, modDefenseMagique: 0, modInitiative: 0, equipe: true,
-            }] });
+        set({ equipment: [...ws.equipment, createEmptyItem()] });
+    };
+    // Le catalogue livre un item détaché prérempli, non équipé — le joueur
+    // l'équipe explicitement ensuite (la modale reste ouverte : achats multiples).
+    const addFromCatalog = (item) => {
+        set({ equipment: [...ws.equipment, item] });
     };
     const updateEquipmentItem = (index, patch) => {
         set({ equipment: ws.equipment.map((e, i) => i === index ? { ...e, ...patch } : e) });
@@ -476,6 +485,9 @@ const Creation = ({ darkMode, onToggleDarkMode }) => {
                 initiative: stats.initiative, defense: stats.defense, defenseMagique: stats.defenseMagique,
                 zenit: zenitFinal, pointsFabula: POINTS_FABULA_DEPART,
                 alterationsEtat: [],
+                boostsAttributs: {}, // toujours vierge à la création — DEF/DEF.M du wizard
+                                     // utilisent donc directement dexDe/intDe (équivalent à
+                                     // effectiveAttrDie tant qu'aucun boost/altération n'existe)
                 classes: ws.classes,
                 skills:  ws.skills,
                 arcana:  ws.arcana,
@@ -624,6 +636,20 @@ const Creation = ({ darkMode, onToggleDarkMode }) => {
                                             </div>
                                         </div>
                                         <p className="text-xs text-muted italic mb-2">{def.tagline}</p>
+                                        {(def.atouts ?? []).map((a, idx) => (
+                                            <div key={idx} className="text-[11px] text-muted flex items-start gap-1.5 mb-0.5">
+                                                {a.type !== 'narratif' ? (
+                                                    <span className="shrink-0 px-1.5 rounded-full bg-accent/10 text-accent border border-accent text-[10px] font-semibold">
+                                                        {{ pv: 'PV', pm: 'PM', pi: 'PI' }[a.type]} +{a.valeur}
+                                                    </span>
+                                                ) : (
+                                                    <span className="shrink-0 px-1.5 rounded-full bg-surface border border-default text-[10px]">
+                                                        Atout
+                                                    </span>
+                                                )}
+                                                <span>{a.label}</span>
+                                            </div>
+                                        ))}
                                         <div className="text-xs mb-2">
                                             Points de compétence à distribuer :{' '}
                                             <strong className={skillTotal === c.niveau ? 'text-success' : 'text-accent'}>
@@ -807,7 +833,13 @@ const Creation = ({ darkMode, onToggleDarkMode }) => {
                     {/* ── Étape 4 — Équipement ─────────────────────────────────── */}
                     {step === 4 && (
                         <div className="flex flex-col gap-3">
-                            <h2 className="fu-font-title text-lg">Équipement Initial</h2>
+                            <div className="flex items-center justify-between flex-wrap gap-2">
+                                <h2 className="fu-font-title text-lg">Équipement Initial</h2>
+                                <button type="button" onClick={() => setCatalogOpen(true)}
+                                        className="px-3 py-1 rounded-full bg-primary text-white text-sm">
+                                    📖 Catalogue
+                                </button>
+                            </div>
                             <div className="text-sm">
                                 Budget : {BUDGET_EQUIPEMENT} zénits — Dépensé : {budgetDepense} —{' '}
                                 <strong className={budgetRestant < 0 ? 'text-danger' : 'text-success'}>
@@ -816,51 +848,44 @@ const Creation = ({ darkMode, onToggleDarkMode }) => {
                             </div>
 
                             {ws.equipment.map((item, i) => (
-                                <div key={i} className="bg-surface-alt rounded p-2 flex flex-col gap-1">
-                                    <div className="flex gap-2 items-center flex-wrap">
-                                        <div className="flex gap-1">
-                                            {EMPLACEMENTS.map(e => (
-                                                <button key={e.key} type="button"
-                                                        onClick={() => updateEquipmentItem(i, { typeEmplacement: e.key })}
-                                                        className={`px-2 py-1 rounded-full text-xs border ${
-                                                            item.typeEmplacement === e.key ? 'bg-primary text-white border-primary' : 'bg-default border-default'
-                                                        }`}>
-                                                    {e.label}
-                                                </button>
-                                            ))}
+                                <div key={i} className="bg-surface-alt rounded p-2 flex flex-col gap-2">
+                                    <div className="flex items-start gap-2">
+                                        <div className="flex-1 min-w-0">
+                                            <EquipmentEditForm item={item} onChange={patch => updateEquipmentItem(i, patch)} />
                                         </div>
-                                        <input placeholder="Nom" value={item.nomLibre}
-                                               onChange={e => updateEquipmentItem(i, { nomLibre: e.target.value })}
-                                               className="bg-default border border-default rounded px-2 py-1 text-sm flex-1 min-w-[120px]" />
-                                        <input type="number" placeholder="Prix" value={item.prix}
-                                               onChange={e => updateEquipmentItem(i, { prix: parseInt(e.target.value) || 0 })}
-                                               className="w-20 bg-default border border-default rounded px-2 py-1 text-sm" />
-                                        <button type="button" onClick={() => removeEquipmentItem(i)} className="text-danger text-sm">✕</button>
+                                        <button type="button" onClick={() => removeEquipmentItem(i)} className="text-danger text-sm shrink-0">✕</button>
                                     </div>
-                                    <textarea placeholder="Notes libres (stats, description...)" value={item.notesLibres}
-                                              onChange={e => updateEquipmentItem(i, { notesLibres: e.target.value })}
-                                              className="bg-default border border-default rounded px-2 py-1 text-sm" rows={2} />
-                                    <div className="flex gap-3 text-xs items-center">
-                                        <label>Déf. <input type="number" value={item.modDefense}
-                                                           onChange={e => updateEquipmentItem(i, { modDefense: parseInt(e.target.value) || 0 })}
-                                                           className="w-12 bg-default border border-default rounded px-1 ml-1" /></label>
-                                        <label>Déf.Mag. <input type="number" value={item.modDefenseMagique}
-                                                               onChange={e => updateEquipmentItem(i, { modDefenseMagique: parseInt(e.target.value) || 0 })}
-                                                               className="w-12 bg-default border border-default rounded px-1 ml-1" /></label>
-                                        <label>Init. <input type="number" value={item.modInitiative}
-                                                            onChange={e => updateEquipmentItem(i, { modInitiative: parseInt(e.target.value) || 0 })}
-                                                            className="w-12 bg-default border border-default rounded px-1 ml-1" /></label>
-                                        <label className="ml-auto flex items-center gap-1">
-                                            <input type="checkbox" checked={item.equipe}
-                                                   onChange={e => updateEquipmentItem(i, { equipe: e.target.checked })} />
-                                            Équipé
-                                        </label>
+                                    <div className="flex items-center gap-2">
+                                        {item.emplacementEquipe != null ? (
+                                            <>
+                                                <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-primary/10 text-primary border border-primary">
+                                                    {EMPLACEMENT_LABELS[item.emplacementEquipe]}
+                                                </span>
+                                                <button type="button" onClick={() => set({ equipment: unequipItem(ws.equipment, i) })}
+                                                        className="px-2 py-0.5 rounded-full text-xs border bg-default border-default">
+                                                    Déséquiper
+                                                </button>
+                                            </>
+                                        ) : (
+                                            <>
+                                                <span className="text-[10px] text-muted italic">Non équipé — bonus non appliqués</span>
+                                                <button type="button" onClick={() => set({ equipment: equipItem(ws.equipment, i) })}
+                                                        className="px-2 py-0.5 rounded-full text-xs border bg-default border-default">
+                                                    Équiper
+                                                </button>
+                                            </>
+                                        )}
                                     </div>
                                 </div>
                             ))}
                             <button type="button" onClick={addEquipmentItem} className="px-3 py-1 rounded-full bg-primary text-white text-sm self-start">
-                                + Ajouter un objet
+                                + Ajouter un objet (saisie libre)
                             </button>
+
+                            {/* includeRare=false : les objets rares ne sont pas des choix de
+                                départ (décision MJ) — uniquement le catalogue de base ici. */}
+                            <EquipmentCatalogModal open={catalogOpen} onClose={() => setCatalogOpen(false)}
+                                                   onPick={addFromCatalog} includeRare={false} />
                         </div>
                     )}
 

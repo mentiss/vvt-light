@@ -79,14 +79,19 @@ const BondsPanel = ({ character, editMode, onArrayChange }) => {
                                 {b.notes && <p className="text-xs text-muted font-normal mt-0.5">{b.notes}</p>}
                             </div>
                         )}
+                        {/* Les sentiments sont une action de jeu (ils évoluent en cours de
+                            partie), pas une édition de texte libre — toujours actifs, comme
+                            Équiper/Attaquer côté équipement. La seule contrainte réelle (max 3
+                            sentiments, exclusivité de paire) est déjà gérée dans
+                            toggleSentiment et ne dépend d'aucune façon du mode édition. */}
                         <div className="flex gap-3 text-xs flex-wrap mt-1">
                             {SENTIMENT_PAIRS.map(pair => (
                                 <div key={pair.join('-')} className="flex gap-1">
                                     {pair.map(s => (
-                                        <button key={s} type="button" disabled={!editMode} onClick={() => toggleSentiment(i, s, pair)}
-                                                className={`px-2 py-0.5 rounded border ${
+                                        <button key={s} type="button" onClick={() => toggleSentiment(i, s, pair)}
+                                                className={`px-2 py-0.5 rounded border cursor-pointer ${
                                                     b.sentiments.includes(s) ? 'bg-accent text-white border-accent' : 'bg-default border-default'
-                                                } ${!editMode ? 'cursor-default' : ''}`}>
+                                                }`}>
                                             {SENTIMENT_LABELS[s]}
                                         </button>
                                     ))}

@@ -1,108 +1,89 @@
-// src/client/src/systems/fabula/components/EquipmentPanel.jsx
+// src/client/src/systems/fabula/components/layout/EquipmentPanel.jsx
 // ─────────────────────────────────────────────────────────────────────────────
-// Équipement — mêmes champs que l'Étape 5 du wizard (saisie libre + bonus
-// manuels). Le catalogue structuré (equipment.js) arrivera dans un lot
-// ultérieur ; equipmentKey reste nullable et prêt à l'accueillir.
+// Vue liste complète de l'équipement (équipé + sac confondus), avec badge
+// d'emplacement pour les items équipés. L'ancienne checkbox "Équipé" devient
+// une paire de boutons Équiper/Déséquiper passant par equipItem/unequipItem
+// (règles d'emplacements nommés). Catalogue accessible via 📖 en editMode.
 // ─────────────────────────────────────────────────────────────────────────────
 
-import React from 'react';
-
-const EMPLACEMENTS = [
-    { key: 'arme',       label: 'Arme' },
-    { key: 'armure',     label: 'Armure' },
-    { key: 'bouclier',   label: 'Bouclier' },
-    { key: 'accessoire', label: 'Accessoire' },
-];
+import React, { useState } from 'react';
+import { equipItem, unequipItem, isEquipped } from '../../config.jsx';
+import EquipmentEditForm, { EquipmentItemSummary, EMPLACEMENT_LABELS, createEmptyItem } from './EquipmentEditForm.jsx';
+import EquipmentCatalogModal from '../modals/EquipmentCatalogModal.jsx';
 
 const EquipmentPanel = ({ character, editMode, onArrayChange }) => {
+    const [catalogOpen, setCatalogOpen] = useState(false);
     const equipment = character.equipment ?? [];
 
-    const addItem = () => {
-        onArrayChange('equipment', [...equipment, {
-            typeEmplacement: 'arme', nomLibre: '', notesLibres: '', prix: 0,
-            modDefense: 0, modDefenseMagique: 0, modInitiative: 0, equipe: true,
-        }]);
-    };
-    const updateItem = (index, patch) => {
-        onArrayChange('equipment', equipment.map((e, i) => i === index ? { ...e, ...patch } : e));
-    };
-    const removeItem = (index) => {
-        onArrayChange('equipment', equipment.filter((_, i) => i !== index));
-    };
-    const toggleEquipe = (index) => {
-        updateItem(index, { equipe: !equipment[index].equipe });
-    };
+    const addItem        = ()             => onArrayChange('equipment', [...equipment, createEmptyItem()]);
+    const addFromCatalog = (item)         => onArrayChange('equipment', [...equipment, item]);
+    const updateItem     = (index, patch) => onArrayChange('equipment', equipment.map((e, i) => i === index ? { ...e, ...patch } : e));
+    const removeItem     = (index)        => onArrayChange('equipment', equipment.filter((_, i) => i !== index));
+    const equip          = (index)        => onArrayChange('equipment', equipItem(equipment, index));
+    const unequip        = (index)        => onArrayChange('equipment', unequipItem(equipment, index));
 
     return (
         <div className="bg-surface border border-default rounded-lg p-3">
             <div className="flex items-center justify-between mb-2">
                 <h3 className="fu-font-title text-primary text-sm">Équipement</h3>
-                {editMode && (
-                    <button type="button" onClick={addItem} className="px-2 py-1 rounded-full bg-primary text-white text-xs">
-                        + Ajouter
+                <div className="flex gap-1">
+                    {/* Idem BackpackCard : ajout catalogue toujours disponible,
+                        seule la saisie libre manuelle reste liée à editMode. */}
+                    <button type="button" onClick={() => setCatalogOpen(true)}
+                            className="px-2 py-1 rounded-full bg-default border border-default text-xs"
+                            title="Ouvrir le catalogue d'équipement">
+                        📖 Catalogue
                     </button>
-                )}
+                    {editMode && (
+                        <button type="button" onClick={addItem} className="px-2 py-1 rounded-full bg-primary text-white text-xs">
+                            + Ajouter
+                        </button>
+                    )}
+                </div>
             </div>
 
             {equipment.length === 0 && <p className="text-xs text-muted italic">Aucun équipement.</p>}
 
             <div className="flex flex-col gap-2">
                 {equipment.map((item, i) => (
-                    <div key={i} className="bg-surface-alt rounded p-2">
+                    <div key={i} className="bg-surface-alt rounded p-2 flex flex-col gap-1">
                         {editMode ? (
-                            <div className="flex flex-col gap-1">
-                                <div className="flex gap-2 items-center flex-wrap">
-                                    <div className="flex gap-1">
-                                        {EMPLACEMENTS.map(e => (
-                                            <button key={e.key} type="button" onClick={() => updateItem(i, { typeEmplacement: e.key })}
-                                                    className={`px-2 py-1 rounded-full text-xs border ${
-                                                        item.typeEmplacement === e.key ? 'bg-primary text-white border-primary' : 'bg-default border-default'
-                                                    }`}>
-                                                {e.label}
-                                            </button>
-                                        ))}
-                                    </div>
-                                    <input placeholder="Nom" value={item.nomLibre}
-                                           onChange={e => updateItem(i, { nomLibre: e.target.value })}
-                                           className="bg-default border border-default rounded px-2 py-1 text-sm flex-1 min-w-[100px]" />
-                                    <button type="button" onClick={() => removeItem(i)} className="text-danger text-sm">✕</button>
+                            <div className="flex items-start gap-2">
+                                <div className="flex-1 min-w-0">
+                                    <EquipmentEditForm item={item} onChange={patch => updateItem(i, patch)} />
                                 </div>
-                                <textarea placeholder="Notes libres" value={item.notesLibres}
-                                          onChange={e => updateItem(i, { notesLibres: e.target.value })}
-                                          className="bg-default border border-default rounded px-2 py-1 text-sm" rows={2} />
-                                <div className="flex gap-3 text-xs items-center">
-                                    <label>Prix <input type="number" value={item.prix}
-                                                       onChange={e => updateItem(i, { prix: parseInt(e.target.value) || 0 })}
-                                                       className="w-14 bg-default border border-default rounded px-1 ml-1" /></label>
-                                    <label>Déf. <input type="number" value={item.modDefense}
-                                                       onChange={e => updateItem(i, { modDefense: parseInt(e.target.value) || 0 })}
-                                                       className="w-12 bg-default border border-default rounded px-1 ml-1" /></label>
-                                    <label>Déf.Mag. <input type="number" value={item.modDefenseMagique}
-                                                           onChange={e => updateItem(i, { modDefenseMagique: parseInt(e.target.value) || 0 })}
-                                                           className="w-12 bg-default border border-default rounded px-1 ml-1" /></label>
-                                    <label>Init. <input type="number" value={item.modInitiative}
-                                                        onChange={e => updateItem(i, { modInitiative: parseInt(e.target.value) || 0 })}
-                                                        className="w-12 bg-default border border-default rounded px-1 ml-1" /></label>
-                                </div>
+                                <button type="button" onClick={() => removeItem(i)} className="text-danger text-sm shrink-0">✕</button>
                             </div>
                         ) : (
-                            <div className="flex items-center justify-between">
-                                <div>
-                                    <span className="text-sm font-semibold">{item.nomLibre || '(sans nom)'}</span>
-                                    <span className="text-xs text-muted ml-2">
-                                        {EMPLACEMENTS.find(e => e.key === item.typeEmplacement)?.label}
-                                    </span>
-                                    {item.notesLibres && <p className="text-xs text-muted mt-0.5">{item.notesLibres}</p>}
-                                </div>
-                            </div>
+                            <EquipmentItemSummary item={item} />
                         )}
-                        <label className="flex items-center gap-1 text-xs mt-1">
-                            <input type="checkbox" checked={item.equipe} onChange={() => toggleEquipe(i)} />
-                            Équipé {!item.equipe && <span className="text-muted italic">(dans l'inventaire, bonus non appliqués)</span>}
-                        </label>
+
+                        <div className="flex items-center gap-2 mt-1">
+                            {isEquipped(item) ? (
+                                <>
+                                    <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-primary/10 text-primary border border-primary">
+                                        {EMPLACEMENT_LABELS[item.emplacementEquipe]}
+                                    </span>
+                                    <button type="button" onClick={() => unequip(i)}
+                                            className="px-2 py-0.5 rounded-full text-xs border bg-default border-default">
+                                        Déséquiper
+                                    </button>
+                                </>
+                            ) : (
+                                <>
+                                    <span className="text-[10px] text-muted italic">Dans le sac — bonus non appliqués</span>
+                                    <button type="button" onClick={() => equip(i)}
+                                            className="px-2 py-0.5 rounded-full text-xs border bg-default border-default">
+                                        Équiper
+                                    </button>
+                                </>
+                            )}
+                        </div>
                     </div>
                 ))}
             </div>
+
+            <EquipmentCatalogModal open={catalogOpen} onClose={() => setCatalogOpen(false)} onPick={addFromCatalog} />
         </div>
     );
 };
