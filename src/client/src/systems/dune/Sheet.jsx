@@ -34,6 +34,7 @@ import { usePlayerSession } from '../../hooks/usePlayerSession.js';
 import DiceHistoryPage from "../../components/layout/DiceHistoryPage.jsx";
 import DuneHistoryEntry from "./components/DuneHistoryEntry.jsx";
 import AchtungHistoryEntry from "../achtung/components/AchtungHistoryEntry.jsx";
+import AccessCodeModal from "../../components/modals/AccessCodeModal.jsx";
 
 // ── Onglets ───────────────────────────────────────────────────────────────────
 
@@ -84,6 +85,7 @@ const Sheet = ({
     const [showDiceConfig,     setShowDiceConfig]     = useState(false);
     const [showCharList,       setShowCharList]       = useState(false);
     const [showAvatarUploader, setShowAvatarUploader] = useState(false);
+    const [showAccessCode,     setShowAccessCode]     = useState(false);
 
     // Ressources session (pour DuneDiceModal)
     const [sessionResources, setSessionResources] = useState({ impulsions: 0, menace: 0 });
@@ -260,6 +262,16 @@ const Sheet = ({
                                         onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
                                     >
                                         🗂️ Changer de personnage
+                                    </button>
+
+                                    <button
+                                        onClick={() => { setShowMenu(false); setShowAccessCode(true); }}
+                                        className="w-full px-4 py-2.5 text-left text-sm flex items-center gap-2"
+                                        style={{ color: 'var(--dune-text)' }}
+                                        onMouseEnter={e => e.currentTarget.style.background = 'var(--dune-surface-alt)'}
+                                        onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
+                                    >
+                                        🔑 Code d'accès
                                     </button>
 
                                     {/* Config animations dés */}
@@ -836,6 +848,13 @@ const Sheet = ({
                 currentCharId={character?.id}
                 onClose={() => setShowCharList(false)}
                 onSelect={handleSelectChar}
+            />
+
+            <AccessCodeModal
+                isOpen={showAccessCode}
+                character={character}
+                onClose={() => setShowAccessCode(false)}
+                onSuccess={(updated) => { onCharacterUpdate(updated); setShowAccessCode(false); }}
             />
 
             {/* ── AVATAR UPLOADER ───────────────────────────────────────── */}

@@ -202,6 +202,7 @@ function saveFullCharacter(db, id, data) {
         seuilCrise, initiative, defense, defenseMagique,
         zenit, pointsFabula, groupeNom, alterationsEtat, boostsAttributs,
         classes, skills, arcana, bonds, equipment,
+        accessCode,
     } = data;
 
     db.prepare('BEGIN').run();
@@ -247,10 +248,13 @@ function saveFullCharacter(db, id, data) {
                                   alterations_etat  = @alterationsEtat,
                                   boosts_attributs  = @boostsAttributs,
 
+                                  access_code       = COALESCE(@accessCode, access_code),
+
                                   updated_at        = CURRENT_TIMESTAMP
             WHERE id = @id
         `).run({
             id,
+            accessCode:   accessCode   ?? null,
             playerName:   playerName   ?? '',
             avatar:       avatar       ?? null,
             nom:          nom          ?? '',

@@ -285,10 +285,12 @@ function saveFullCharacter(db, id, data) {
                 distinctive_traits   = COALESCE(@distinctiveTraits,   distinctive_traits),
                 officer_responsible  = COALESCE(@officerResponsible,  officer_responsible),
                 agent_signature      = COALESCE(@agentSignature,      agent_signature),
+                access_code          = COALESCE(@accessCode,          access_code),
                 updated_at           = CURRENT_TIMESTAMP
             WHERE id = @id
         `).run({
             id,
+            accessCode:          data.accessCode          ?? null,
             playerName:          data.playerName          ?? null,
             avatar:              data.avatar              ?? null,
             nom:                 data.nom                 ?? null,

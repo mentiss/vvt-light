@@ -43,6 +43,7 @@ import DiceEntryHistory from "./components/layout/DiceEntryHistory.jsx";
 import BoltFarm from "./components/ui/BoltFarm.jsx";
 import BrowseModal from "./components/modals/BrowseModal.jsx";
 import ReferenceTab from "./components/ReferenceTab.jsx";
+import AccessCodeModal from "../../components/modals/AccessCodeModal.jsx";
 
 // ── Onglets ───────────────────────────────────────────────────────────────────
 
@@ -126,6 +127,7 @@ const Sheet = ({
     const [movesLoading,   setMovesLoading]   = useState(false);
     const [moveModal,      setMoveModal]      = useState(null); // { mode, move?, statKey? }
     const [browseModal, setBrowseModal] = useState(null);
+    const [showAccessCode, setShowAccessCode] = useState(false);
 
     // Tags en édition
     const [newTagText,    setNewTagText]    = useState('');
@@ -412,6 +414,13 @@ const Sheet = ({
                                         className="w-full text-left px-4 py-3 text-sm hover:bg-surface-alt transition-colors"
                                     >
                                         👤 Changer de personnage
+                                    </button>
+                                    <div className="cp-divider" />
+                                    <button
+                                        onClick={() => { setShowMenu(false); setShowAccessCode(true); }}
+                                        className="w-full text-left px-4 py-3 text-sm hover:bg-surface-alt transition-colors"
+                                    >
+                                        🔑 Code d'accès
                                     </button>
                                     <div className="cp-divider" />
                                     <button
@@ -1101,6 +1110,13 @@ const Sheet = ({
                 onClose={() => setShowCharList(false)}
                 onSelect={handleSelectChar}
             />}
+
+            <AccessCodeModal
+                isOpen={showAccessCode}
+                character={character}
+                onClose={() => setShowAccessCode(false)}
+                onSuccess={(updated) => { onCharacterUpdate(updated); setShowAccessCode(false); }}
+            />
             {showAvatar     && (
                 <AvatarUploader
                     currentAvatar={char.avatar}

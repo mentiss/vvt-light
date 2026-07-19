@@ -57,6 +57,7 @@ import EquipmentSection from "./components/layout/EquipmentSection.jsx";
 import IdentityInlineSection from "./components/layout/IdentityInlineSection.jsx";
 import PhysicalDescriptionSection from "./components/layout/PhysicalDescriotionSection.jsx";
 import FreeDiceModal from "../../components/modals/FreeDiceModal.jsx";
+import AccessCodeModal from "../../components/modals/AccessCodeModal.jsx";
 
 // ── Onglets ──────────────────────────────────────────────────────────────────
 
@@ -102,6 +103,7 @@ const Sheet = ({
     const [showCharList,   setShowCharList]   = useState(false);
     const [diceModal,      setDiceModal]      = useState(null);
     const [showFreeDice, setShowFreeDice] = useState(false);
+    const [showAccessCode, setShowAccessCode] = useState(false);
 
     // ── Sync character → editable (push serveur reçu) ─────────────────────────
     // Si editMode actif, on ne réinitialise pas — le joueur est en train d'éditer.
@@ -337,6 +339,15 @@ const Sheet = ({
                                         >
                                             Interface GM
                                         </button>
+                                        <hr className="border-default my-1" />
+
+                                        <button
+                                            onClick={() => { setShowMenu(false); setShowAccessCode(true); }}
+                                            className="w-full text-left px-4 py-2 text-sm hover:bg-surface-alt text-default font-mono"
+                                        >
+                                            Code d'accès
+                                        </button>
+
                                         <hr className="border-default my-1" />
 
                                         <button
@@ -798,6 +809,12 @@ const Sheet = ({
                     onClose={() => setShowFreeDice(false)}
                 />
             )}
+            <AccessCodeModal
+                isOpen={showAccessCode}
+                character={character}
+                onClose={() => setShowAccessCode(false)}
+                onSuccess={(updated) => { onCharacterUpdate(updated); setShowAccessCode(false); }}
+            />
         </div>
     );
 };

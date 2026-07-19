@@ -188,6 +188,7 @@ function saveFullCharacter(db, id, data) {
         if (data.background     !== undefined) addField('background',     data.background);
         if (data.characteristic !== undefined) addField('characteristic', data.characteristic);
         if (data.biography      !== undefined) addField('biography',      data.biography);
+        if (data.accessCode     !== undefined) addField('access_code',    data.accessCode);
 
         // Truths
         if (Array.isArray(data.truths)) {

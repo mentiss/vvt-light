@@ -33,6 +33,7 @@ import TruthsSection      from './components/TruthsSection.jsx';
 import AchtungHistoryEntry from './components/AchtungHistoryEntry.jsx';
 import AchtungDiceModal    from './dice/AchtungDiceModal.jsx';
 import FreeDiceModal from "../../components/modals/FreeDiceModal.jsx";
+import AccessCodeModal from "../../components/modals/AccessCodeModal.jsx";
 
 const TABS = [
     { id: 'fiche',      label: '📋 Fiche' },
@@ -68,6 +69,7 @@ const Sheet = ({
     const [diceModal,      setDiceModal]      = useState(null);
     const [showFreeDice, setShowFreeDice] = useState(false);
     const [sessionResources, setSessionResources] = useState({ momentum: 0, threat: 0 });
+    const [showAccessCode, setShowAccessCode] = useState(false);
 
     // ── Ressources de session ─────────────────────────────────────────────────
     useEffect(() => {
@@ -192,6 +194,7 @@ const Sheet = ({
                                     <button className="ac-menu-item" onClick={() => { setShowMenu(false); window.location.href = `/${slug}/creation`; }}>✨ Créer un personnage</button>
                                     <button className="ac-menu-item" onClick={() => { setShowMenu(false); setShowCharList(true); }}>🔄 Changer de personnage</button>
                                     <button className="ac-menu-item" onClick={() => { setShowMenu(false); setShowAvatar(true); }}>🖼️ Changer l'avatar</button>
+                                    <button className="ac-menu-item" onClick={() => { setShowMenu(false); setShowAccessCode(true); }}>🔑 Code d'accès</button>
                                     <button className="ac-menu-item" onClick={() => { setShowMenu(false); setShowDiceConfig(true); }}>🎲 Config animations dés</button>
                                     <button className="ac-menu-item" onClick={() => { setShowMenu(false); window.location.href = `/${slug}/gm`; }}>🎭 Interface GM</button>
                                     <div className="ac-menu-separator" />
@@ -411,6 +414,12 @@ const Sheet = ({
                     onSelect={(c) => { setShowCharList(false); window.location.href = `/${slug}/${c.accessUrl}`; }}
                 />
             )}
+            <AccessCodeModal
+                isOpen={showAccessCode}
+                character={character}
+                onClose={() => setShowAccessCode(false)}
+                onSuccess={(updated) => { onCharacterUpdate(updated); setShowAccessCode(false); }}
+            />
             {showAvatar && (
                 <AvatarUploader
                     currentAvatar={char.avatar}

@@ -153,6 +153,7 @@ function saveFullCharacter(db, id, data) {
         competences, principes,
         talents, items, avatar,
         prenom, age, taille, poids, sexe, motto,
+        accessCode,
     } = data;
 
     const competenceCols = _flattenCompetences(competences);
@@ -201,6 +202,8 @@ function saveFullCharacter(db, id, data) {
                 verite_rang       = COALESCE(?, verite_rang),
                 verite_maxime     = COALESCE(?, verite_maxime),
 
+                access_code = COALESCE(?, access_code),
+                
                 updated_at = CURRENT_TIMESTAMP
             WHERE id = ?
         `).run(
@@ -239,6 +242,8 @@ function saveFullCharacter(db, id, data) {
             principeCols.justice_maxime    ?? null,
             principeCols.verite_rang       ?? null,
             principeCols.verite_maxime     ?? null,
+
+            accessCode ?? null,
 
             id
         );

@@ -35,6 +35,7 @@ import FicheGrid           from './components/layout/FicheGrid.jsx';
 import FabulaDiceModal    from './components/modals/FabulaDiceModal.jsx';
 import FabulaHistoryEntry from './components/layout/FabulaHistoryEntry.jsx';
 import fabulaConfig, { computeDerivedStats } from './config.jsx';
+import AccessCodeModal from "../../components/modals/AccessCodeModal.jsx";
 
 const TABS = [
     { id: 'fiche',      label: '📋 Fiche' },
@@ -78,6 +79,7 @@ const Sheet = ({
     const [showCharList, setShowCharList]             = useState(false);
     const [showAvatarUploader, setShowAvatarUploader] = useState(false);
     const [saving, setSaving] = useState(false);
+    const [showAccessCode, setShowAccessCode] = useState(false);
 
     // ── Persistance ──────────────────────────────────────────────────────────
 
@@ -172,6 +174,10 @@ const Sheet = ({
                                     <button className="w-full text-left px-3 py-2 text-sm hover:bg-surface-alt"
                                             onClick={() => { setShowMenu(false); setShowFreeDice(true); }}>
                                         🎲 Jet libre
+                                    </button>
+                                    <button className="w-full text-left px-3 py-2 text-sm hover:bg-surface-alt"
+                                            onClick={() => { setShowMenu(false); setShowAccessCode(true); }}>
+                                        🔑 Code d'accès
                                     </button>
                                     <button className="w-full text-left px-3 py-2 text-sm hover:bg-surface-alt"
                                             onClick={() => { setShowMenu(false); setShowDiceConfig(true); }}>
@@ -301,6 +307,12 @@ const Sheet = ({
                 currentCharId={character?.id}
                 onClose={() => setShowCharList(false)}
                 onSelect={(selected) => { window.location.href = `/${slug}/${selected.accessUrl}`; }}
+            />
+            <AccessCodeModal
+                isOpen={showAccessCode}
+                character={character}
+                onClose={() => setShowAccessCode(false)}
+                onSuccess={(updated) => { onCharacterUpdate(updated); setShowAccessCode(false); }}
             />
         </div>
     );
