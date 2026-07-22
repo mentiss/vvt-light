@@ -1,0 +1,845 @@
+/* src/client/src/systems/zoneblanche/theme.css */
+/* ─────────────────────────────────────────────────────────────────────────────
+   Thème Zone Blanche
+   Mode jour : dossier de production — kraft, vert encre, rouge tampon
+   Mode nuit : found footage — phosphore, REC, noir profond
+   Signature : bandeau de diffusion + timecode live, cartes façon scellé.
+
+   ⚠ Les deux jeux de variables texte sont définis (--color-default/--color-muted
+   ET --color-text/--color-text-muted) : le générateur d'utilitaires produit
+   text-default/text-muted, mais plusieurs composants partagés lisent --color-text.
+   Les deux sélecteurs de mode nuit sont couverts : .dark (posé sur <html> par
+   AppRouter) et [data-theme="dark"] (posé par le slug sur son wrapper).
+   ─────────────────────────────────────────────────────────────────────────── */
+
+@import url('https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=IBM+Plex+Mono:wght@400;500;600&family=Inter:wght@400;500;600&display=swap');
+
+:root {
+    --zb-font-display: 'Barlow Condensed', 'Oswald', Impact, sans-serif;
+    --zb-font-mono:    'IBM Plex Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    --zb-font-body:    'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
+}
+
+/* ── Mode JOUR — dossier de production ───────────────────────────────────── */
+:root {
+    --color-primary:     #2f4f3a;
+    --color-secondary:   #8a7a54;
+    --color-accent:      #b3402a;
+    --color-danger:      #a3352a;
+    --color-success:     #3f7a4f;
+
+    --color-bg:          #efe9dc;
+    --color-surface:     #e6dfcd;
+    --color-surface-alt: #d9cfb6;
+    --color-border:      #bfb094;
+
+    --color-default:     #2b2620;
+    --color-muted:       #6b6151;
+    --color-text:        #2b2620;
+    --color-text-muted:  #6b6151;
+
+    --zb-gauge-track:      #cabb9e;
+    --zb-gauge-audimat:    var(--color-primary);
+    --zb-gauge-stress:     var(--color-accent);
+    --zb-rec-dot:          var(--color-accent);
+    --zb-bar-bg:           #2b2620;
+    --zb-bar-text:         #efe9dc;
+
+    /* Sélection — vert encre (le rouge reste réservé au REC/danger) */
+    --zb-select-bg:        #2f4f3a;
+    --zb-select-text:      #f4f0e4;
+    --zb-select-border:    #243d2d;
+
+    --zb-scanline-opacity: 0;
+    --zb-grain-opacity:    0.03;
+    --zb-vignette:         none;
+    --zb-flicker:          none;
+    --zb-glow:             none;
+}
+
+/* ── Mode NUIT — found footage ───────────────────────────────────────────── */
+.dark,
+[data-theme="dark"] {
+    --color-primary:     #4dff85;
+    --color-secondary:   #2f6b45;
+    --color-accent:      #ff3b30;
+    --color-danger:      #ff5c48;
+    --color-success:     #4dff85;
+
+    --color-bg:          #050b07;
+    --color-surface:     #0a140e;
+    --color-surface-alt: #101f16;
+    --color-border:      #1e3d27;
+
+    --color-default:     #d8f7de;
+    --color-muted:       #74a684;
+    --color-text:        #d8f7de;
+    --color-text-muted:  #74a684;
+
+    --zb-gauge-track:      #16301f;
+    --zb-gauge-audimat:    var(--color-primary);
+    --zb-gauge-stress:     var(--color-accent);
+    --zb-rec-dot:          var(--color-accent);
+    --zb-bar-bg:          #0a140e;
+    --zb-bar-text:        #4dff85;
+
+    /* Sélection — phosphore plein, texte sombre : lecture "surligné à l'écran" */
+    --zb-select-bg:       #4dff85;
+    --zb-select-text:     #04170c;
+    --zb-select-border:   #7dffa6;
+
+    --zb-scanline-opacity: 0.07;
+    --zb-grain-opacity:    0.06;
+    --zb-vignette:         radial-gradient(ellipse at center, transparent 45%, rgba(0, 0, 0, 0.75) 100%);
+    --zb-flicker:          zb-flicker 5s steps(1) infinite;
+    --zb-glow:             0 0 14px rgba(77, 255, 133, 0.35);
+}
+
+/* ── Typographie ─────────────────────────────────────────────────────────── */
+
+.zb-display {
+    font-family: var(--zb-font-display);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    font-weight: 700;
+}
+.zb-mono {
+    font-family: var(--zb-font-mono);
+    letter-spacing: 0.06em;
+    font-variant-numeric: tabular-nums;
+}
+.zb-eyebrow {
+    font-family: var(--zb-font-mono);
+    text-transform: uppercase;
+    letter-spacing: 0.18em;
+    font-size: 0.68rem;
+    color: inherit;
+    opacity: 0.7;
+}
+
+/* ── Bandeau de diffusion — barre pleine largeur type habillage de chaîne ── */
+.zb-broadcast-bar {
+    background: var(--zb-bar-bg);
+    color: var(--zb-bar-text);
+    border-bottom: 2px solid var(--color-accent);
+}
+.zb-channel-bug {
+    font-family: var(--zb-font-display);
+    text-transform: uppercase;
+    letter-spacing: 0.22em;
+    font-size: 0.7rem;
+    padding: 0.15rem 0.5rem;
+    border: 1px solid currentColor;
+}
+
+/* ── Titre principal — léger flicker néon en mode nuit uniquement ────────── */
+@keyframes zb-flicker {
+    0%, 92%, 96%, 100% { opacity: 1; }
+    93%                { opacity: 0.55; }
+    97%                { opacity: 0.75; }
+}
+.zb-title {
+    font-family: var(--zb-font-display);
+    text-transform: uppercase;
+    letter-spacing: 0.18em;
+    color: var(--color-primary);
+    text-shadow: var(--zb-glow);
+    animation: var(--zb-flicker);
+}
+
+/* ── Timecode ────────────────────────────────────────────────────────────── */
+.zb-timecode {
+    font-family: var(--zb-font-mono);
+    font-variant-numeric: tabular-nums;
+    letter-spacing: 0.08em;
+}
+
+/* ── Point REC pulsant ───────────────────────────────────────────────────── */
+@keyframes zb-rec-pulse {
+    0%, 100% { opacity: 1; }
+    50%      { opacity: 0.3; }
+}
+.zb-rec-dot {
+    display: inline-block;
+    width: 0.55rem;
+    height: 0.55rem;
+    border-radius: 9999px;
+    background: var(--zb-rec-dot);
+    animation: zb-rec-pulse 1.4s ease-in-out infinite;
+    flex-shrink: 0;
+}
+
+/* ── Carte "scellé" — bordure gauche épaisse + label tracké ─────────────── */
+.zb-tag-card {
+    border-left-width: 4px;
+    border-left-style: solid;
+    transition: border-color 0.15s, background 0.15s;
+}
+.zb-tag-label {
+    font-family: var(--zb-font-mono);
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    font-size: 0.65rem;
+    opacity: 0.7;
+}
+
+/* ── Badge d'étape — compteur de bobine ─────────────────────────────────── */
+.zb-step-badge {
+    font-family: var(--zb-font-mono);
+    border-radius: 3px;
+}
+
+/* ── Panneau principal — vignette + grain + scanlines ───────────────────── */
+.zb-panel {
+    position: relative;
+    overflow: hidden;
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+}
+.zb-panel::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    z-index: 2;
+    background: var(--zb-vignette);
+}
+.zb-panel::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    z-index: 1;
+    opacity: var(--zb-scanline-opacity);
+    background: repeating-linear-gradient(
+            to bottom,
+            rgba(255, 255, 255, 0.5) 0px,
+            rgba(255, 255, 255, 0.5) 1px,
+            transparent 1px,
+            transparent 3px
+    );
+}
+
+/* ── Grain (élément séparé pour pouvoir le poser sur la page entière) ───── */
+.zb-grain::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    opacity: var(--zb-grain-opacity);
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='100'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+
+/* ── Accessibilité — respect de prefers-reduced-motion ──────────────────── */
+@media (prefers-reduced-motion: reduce) {
+    .zb-rec-dot,
+    .zb-title {
+        animation: none;
+    }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   CLASSES DE COMPOSANTS
+   Les tokens slug-spécifiques (--zb-select-*, --zb-gauge-*) n'ont pas de
+   classe générée par generate-opacity-utils.js : on les expose ici plutôt
+   que de contourner en style inline.
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+.zb-root {
+    font-family: var(--zb-font-body);
+}
+
+/* ── Carte sélectionnable (archétype, vérité, talent) ───────────────────── */
+.zb-card {
+    background: var(--color-surface-alt);
+    color: var(--color-text);
+    border: 1px solid var(--color-border);
+    border-left: 4px solid var(--color-primary);
+    text-align: left;
+    transition: background 0.15s, border-color 0.15s, color 0.15s;
+}
+.zb-card:hover:not(:disabled):not(.is-selected) {
+    border-color: var(--color-primary);
+}
+.zb-card.is-selected {
+    background: var(--zb-select-bg);
+    color: var(--zb-select-text);
+    border-color: var(--zb-select-border);
+    border-left-color: var(--zb-select-border);
+}
+.zb-card:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+}
+
+/* Variante pointillés — option "sur mesure" */
+.zb-card-dashed {
+    background: transparent;
+    color: var(--color-text);
+    border: 2px dashed var(--color-border);
+    text-align: left;
+    transition: background 0.15s, border-color 0.15s, color 0.15s;
+}
+.zb-card-dashed.is-selected {
+    background: var(--zb-select-bg);
+    color: var(--zb-select-text);
+    border-color: var(--zb-select-border);
+}
+
+/* ── Pilule sélectionnable (maximes, focus, sexe) ───────────────────────── */
+.zb-pill {
+    background: var(--color-surface-alt);
+    color: var(--color-text);
+    border: 1px solid var(--color-border);
+    text-align: left;
+    transition: background 0.15s, border-color 0.15s, color 0.15s;
+}
+.zb-pill:hover:not(:disabled):not(.is-selected) {
+    border-color: var(--color-primary);
+}
+.zb-pill.is-selected {
+    background: var(--zb-select-bg);
+    color: var(--zb-select-text);
+    border-color: var(--zb-select-border);
+}
+.zb-pill:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+}
+
+/* ── Chip — valeur déjà retenue (focus choisis) ─────────────────────────── */
+.zb-chip {
+    background: var(--zb-select-bg);
+    color: var(--zb-select-text);
+}
+
+/* ── Champs de saisie ───────────────────────────────────────────────────── */
+.zb-input {
+    background: var(--color-surface-alt);
+    color: var(--color-text);
+    border: 1px solid var(--color-border);
+    transition: border-color 0.15s;
+}
+.zb-input:focus {
+    outline: none;
+    border-color: var(--color-primary);
+}
+.zb-input::placeholder {
+    color: var(--color-text-muted);
+}
+
+/* ── Astérisque champ obligatoire ───────────────────────────────────────── */
+.zb-required {
+    color: var(--color-accent);
+}
+
+/* ── Boutons ────────────────────────────────────────────────────────────── */
+.zb-btn-ghost {
+    background: var(--color-surface-alt);
+    color: var(--color-text);
+    border: 1px solid var(--color-border);
+}
+.zb-btn-ghost:hover { border-color: var(--color-primary); }
+
+.zb-btn-accent  { background: var(--color-accent);  color: #fff; }
+.zb-btn-primary { background: var(--color-primary); color: var(--color-bg); }
+.zb-btn-accent:disabled,
+.zb-btn-primary:disabled { opacity: 0.4; cursor: not-allowed; }
+
+/* ── Compteur de points restants ────────────────────────────────────────── */
+.zb-counter          { background: var(--color-accent);  color: #fff; }
+.zb-counter.is-complete { background: var(--color-success); color: var(--color-bg); }
+
+/* ── Segments de jauge (répartition) ────────────────────────────────────── */
+.zb-gauge-seg            { background: var(--zb-gauge-track); }
+.zb-gauge-seg.is-filled  { background: var(--zb-gauge-audimat); }
+
+/* ── Barre d'étapes ─────────────────────────────────────────────────────── */
+.zb-step-badge.is-done    { background: var(--color-success);     color: var(--color-bg); }
+.zb-step-badge.is-current { background: var(--color-accent);      color: #fff; }
+.zb-step-badge.is-todo    { background: var(--color-surface-alt); color: var(--color-text-muted); }
+
+.zb-step-label.is-current { color: var(--color-accent); }
+.zb-step-label.is-other   { color: var(--color-text-muted); }
+
+.zb-step-line           { background: var(--color-border); }
+.zb-step-line.is-done   { background: var(--color-success); }
+
+/* ── Accents de bordure gauche pour blocs informatifs (brief) ───────────── */
+.zb-brief-card          { background: var(--color-surface-alt); border-left: 4px solid var(--color-primary); }
+.zb-brief-card.is-alert { border-left-color: var(--color-accent); }
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   FICHE — layout, onglets, menu, jauges, historique
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* ── Sous-barre onglets ─────────────────────────────────────────────────── */
+.zb-subheader {
+    background: var(--color-surface);
+    border-bottom: 1px solid var(--color-border);
+}
+.zb-tab {
+    font-family: var(--zb-font-display);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    font-size: 0.8rem;
+    padding: 0.75rem 1rem;
+    color: var(--color-text-muted);
+    border-bottom: 2px solid transparent;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+}
+.zb-tab:hover     { color: var(--color-text); }
+.zb-tab.is-active { color: var(--color-primary); border-bottom-color: var(--color-accent); }
+
+.zb-badge {
+    background: var(--color-accent);
+    color: #fff;
+    font-family: var(--zb-font-mono);
+    font-size: 0.65rem;
+    padding: 0.05rem 0.35rem;
+    border-radius: 3px;
+}
+
+/* ── Menu hamburger ─────────────────────────────────────────────────────── */
+.zb-menu {
+    position: absolute;
+    right: 0;
+    top: calc(100% + 0.5rem);
+    z-index: 50;
+    min-width: 15rem;
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-left: 3px solid var(--color-accent);
+    box-shadow: 0 12px 32px rgba(0, 0, 0, 0.35);
+}
+.zb-menu-item {
+    display: block;
+    width: 100%;
+    text-align: left;
+    padding: 0.65rem 1rem;
+    font-size: 0.85rem;
+    color: var(--color-text);
+}
+.zb-menu-item:hover           { background: var(--color-surface-alt); color: var(--color-primary); }
+.zb-menu-item.is-danger       { color: var(--color-danger); }
+.zb-menu-item.is-danger:hover { background: var(--color-surface-alt); color: var(--color-danger); }
+.zb-menu-separator {
+    height: 1px;
+    background: var(--color-border);
+    margin: 0.25rem 0;
+}
+
+/* ── Layout deux colonnes ───────────────────────────────────────────────── */
+.zb-sheet-layout {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 1rem;
+    align-items: start;
+}
+@media (min-width: 1024px) {
+    .zb-sheet-layout { grid-template-columns: minmax(0, 2.4fr) minmax(0, 1fr); }
+}
+.zb-sheet-main,
+.zb-sheet-side {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    min-width: 0;
+}
+
+/* ── Lignes de stat (Principe / Compétence) ─────────────────────────────── */
+.zb-stat-row {
+    background: var(--color-surface-alt);
+    border-left: 3px solid var(--color-primary);
+    padding: 0.75rem;
+}
+
+/* Rang cliquable = jet de dés */
+.zb-rank {
+    font-family: var(--zb-font-mono);
+    font-variant-numeric: tabular-nums;
+    font-size: 1.5rem;
+    font-weight: 700;
+    line-height: 1;
+    min-width: 3rem;
+    padding: 0.4rem 0.6rem;
+    background: var(--color-surface);
+    color: var(--color-primary);
+    border: 1px solid var(--color-border);
+    border-radius: 3px;
+    transition: border-color 0.15s, box-shadow 0.15s;
+}
+.zb-rank:hover {
+    border-color: var(--color-primary);
+    box-shadow: var(--zb-glow);
+}
+
+/* Maxime affichée sous le rang */
+.zb-maxime {
+    font-size: 0.85rem;
+    font-style: italic;
+    color: var(--color-text-muted);
+    border-left: 2px solid var(--color-border);
+    padding-left: 0.6rem;
+}
+
+/* ── Avatar ─────────────────────────────────────────────────────────────── */
+.zb-avatar {
+    width: 5rem;
+    height: 5rem;
+    background: var(--color-surface-alt);
+    border: 1px solid var(--color-border);
+    border-left: 3px solid var(--color-primary);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.zb-avatar:hover:not(:disabled) { border-color: var(--color-primary); }
+
+/* ── Prime Time ─────────────────────────────────────────────────────────── */
+.zb-primetime-value {
+    font-size: 2.5rem;
+    font-weight: 700;
+    line-height: 1;
+    color: var(--color-primary);
+    text-shadow: var(--zb-glow);
+}
+
+/* ── Jauges de session ──────────────────────────────────────────────────── */
+.zb-gauges {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1.5rem;
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-left: 4px solid var(--color-accent);
+    padding: 0.75rem 1rem;
+    margin-bottom: 1rem;
+}
+.zb-gauge-strip {
+    display: flex;
+    gap: 0.2rem;
+}
+.zb-gauge-strip .zb-gauge-seg {
+    width: 0.6rem;
+    height: 1.6rem;
+    border-radius: 2px;
+}
+.zb-stress-value {
+    font-size: 1.6rem;
+    font-weight: 700;
+    line-height: 1;
+    color: var(--color-accent);
+}
+
+/* ── Matériel ───────────────────────────────────────────────────────────── */
+.zb-equip-row {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    background: var(--color-surface-alt);
+    border-left: 2px solid var(--color-primary);
+    padding: 0.4rem 0.6rem;
+}
+
+/* ── Historique / toasts ────────────────────────────────────────────────── */
+.zb-history-entry {
+    background: var(--color-surface-alt);
+    border-left: 3px solid var(--color-primary);
+    padding: 0.6rem 0.75rem;
+}
+.zb-history-verdict {
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    padding: 0.1rem 0.4rem;
+    border-radius: 2px;
+}
+.zb-history-verdict.is-success { background: var(--color-success); color: var(--color-bg); }
+.zb-history-verdict.is-failure { background: var(--color-danger);  color: #fff; }
+
+.zb-die {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 1.9rem;
+    height: 1.9rem;
+    font-size: 0.85rem;
+    font-weight: 600;
+    border-radius: 3px;
+    border: 1px solid var(--color-border);
+    background: var(--color-surface);
+    color: var(--color-text-muted);
+}
+.zb-die.is-hit          { color: var(--color-text); border-color: var(--color-primary); }
+.zb-die.is-crit         { background: var(--color-primary); color: var(--color-bg); border-color: var(--color-primary); }
+.zb-die.is-complication { border-color: var(--color-accent); color: var(--color-accent); }
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   MODALE DE JET
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+.zb-modal-backdrop {
+    position: fixed;
+    inset: 0;
+    z-index: 60;
+    background: rgba(0, 0, 0, 0.72);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 1rem;
+}
+
+.zb-modal {
+    position: relative;
+    overflow: hidden;
+    width: 100%;
+    max-width: 44rem;
+    max-height: 90vh;
+    display: flex;
+    flex-direction: column;
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-left: 4px solid var(--color-accent);
+    box-shadow: 0 24px 64px rgba(0, 0, 0, 0.5);
+}
+
+.zb-modal-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: 0.9rem 1.25rem;
+    background: var(--zb-bar-bg);
+    color: var(--zb-bar-text);
+    border-bottom: 1px solid var(--color-border);
+}
+
+.zb-modal-body {
+    padding: 1.25rem;
+    overflow-y: auto;
+    flex: 1;
+}
+
+.zb-modal-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: 0.9rem 1.25rem;
+    border-top: 1px solid var(--color-border);
+    background: var(--color-surface-alt);
+}
+
+/* ── Récapitulatif du seuil ─────────────────────────────────────────────── */
+.zb-target-summary {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1rem;
+    background: var(--color-surface-alt);
+    border-left: 3px solid var(--color-primary);
+    padding: 0.75rem 1rem;
+}
+
+/* ── Ligne d'achat de dés ───────────────────────────────────────────────── */
+.zb-buy-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    background: var(--color-surface-alt);
+    border-left: 3px solid var(--color-primary);
+    padding: 0.6rem 0.85rem;
+}
+
+/* ── Bandeau de résultat ────────────────────────────────────────────────── */
+.zb-result-banner {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 1rem;
+    background: var(--color-surface-alt);
+    border-left: 4px solid var(--color-accent);
+    padding: 0.85rem 1rem;
+}
+
+.zb-complication-tag {
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    padding: 0.15rem 0.5rem;
+    border-radius: 2px;
+    background: var(--color-accent);
+    color: #fff;
+}
+
+/* ── Dés cliquables (grand format dans la modale) ───────────────────────── */
+.zb-die-lg {
+    min-width: 3rem;
+    height: 3rem;
+    font-size: 1.15rem;
+    transition: transform 0.12s, box-shadow 0.12s;
+}
+.zb-die-lg:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: var(--zb-glow);
+}
+.zb-die-lg:disabled { cursor: default; }
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   INTERFACE MJ
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+.zb-gm-layout {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 1rem;
+    align-items: start;
+}
+@media (min-width: 1024px) {
+    .zb-gm-layout { grid-template-columns: 16rem minmax(0, 1fr); }
+}
+
+.zb-gm-sidebar {
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-left: 4px solid var(--color-accent);
+    padding: 0.9rem;
+    position: sticky;
+    top: 5.5rem;
+}
+
+/* ── Vignette personnage ────────────────────────────────────────────────── */
+.zb-gm-tile {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    width: 100%;
+    text-align: left;
+    padding: 0.55rem 0.65rem;
+    background: var(--color-surface-alt);
+    color: var(--color-text);
+    border: 1px solid var(--color-border);
+    border-left: 3px solid var(--color-primary);
+    transition: background 0.15s, border-color 0.15s, color 0.15s;
+}
+.zb-gm-tile:hover:not(.is-selected) { border-color: var(--color-primary); }
+.zb-gm-tile.is-selected {
+    background: var(--zb-select-bg);
+    color: var(--zb-select-text);
+    border-color: var(--zb-select-border);
+    border-left-color: var(--zb-select-border);
+}
+
+/* ── Pastille de présence ───────────────────────────────────────────────── */
+.zb-presence {
+    width: 0.5rem;
+    height: 0.5rem;
+    border-radius: 9999px;
+    flex-shrink: 0;
+    background: var(--color-border);
+}
+.zb-presence.is-online {
+    background: var(--color-success);
+    box-shadow: var(--zb-glow);
+}
+
+/* ── Bouton flottant (accès rapide jet MJ) ──────────────────────────────── */
+.zb-fab {
+    position: fixed;
+    right: 1rem;
+    bottom: 1rem;
+    z-index: 40;
+    padding: 0.7rem 1.1rem;
+    background: var(--color-accent);
+    color: #fff;
+    border: 1px solid var(--zb-select-border);
+    box-shadow: 0 10px 26px rgba(0, 0, 0, 0.4);
+    transition: transform 0.12s;
+}
+.zb-fab:hover { transform: translateY(-2px); }
+
+/* ── Marqueurs de jet privé (modale MJ) ─────────────────────────────────── */
+.zb-private-badge {
+    font-size: 0.6rem;
+    text-transform: uppercase;
+    letter-spacing: 0.14em;
+    padding: 0.1rem 0.4rem;
+    border: 1px solid currentColor;
+    border-radius: 2px;
+    opacity: 0.85;
+}
+.zb-private-note {
+    background: var(--color-surface-alt);
+    border-left: 3px solid var(--color-accent);
+    padding: 0.5rem 0.7rem;
+}
+
+/* ── Contrôle du budget (MJ) ────────────────────────────────────────────── */
+.zb-budget-control {
+    background: var(--color-surface-alt);
+    border-left: 3px solid var(--color-accent);
+    padding: 0.7rem 0.85rem;
+}
+
+/* Autorise une casse normale sur un eyebrow utilisé en texte informatif */
+.zb-eyebrow.normal-case {
+    text-transform: none;
+    letter-spacing: 0.02em;
+    line-height: 1.4;
+}
+
+/* ── Bandeau de filtres du catalogue ────────────────────────────────────── */
+.zb-catalog-filters {
+    padding: 0.85rem 1rem;
+    border-bottom: 1px solid var(--color-border);
+    background: var(--color-surface-alt);
+    flex-shrink: 0;
+}
+
+/* ── Modale large (matériel) ────────────────────────────────────────────── */
+.zb-modal-lg {
+    max-width: 72rem;
+    max-height: 88vh;
+}
+
+/* Corps deux colonnes : catalogue à gauche, inventaire à droite */
+.zb-equip-modal-body {
+    display: grid;
+    grid-template-columns: 1fr;
+    flex: 1;
+    min-height: 0;
+    overflow: hidden;
+}
+@media (min-width: 900px) {
+    .zb-equip-modal-body { grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr); }
+    .zb-equip-col-side   { border-left: 1px solid var(--color-border); }
+}
+
+.zb-equip-col {
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+    min-width: 0;
+}
+
+/* Zone scrollable propre à chaque colonne — les en-têtes restent fixes */
+.zb-equip-scroll {
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+    padding: 0.85rem 1rem;
+}
+
+/* Bloc de création d'objet de scénario, ancré en bas de la colonne droite */
+.zb-equip-free {
+    border-top: 1px solid var(--color-border);
+    background: var(--color-surface-alt);
+    padding: 0.85rem 1rem;
+    flex-shrink: 0;
+}
+
+/* Les jauges de régie s'alignent et respirent, budget compris */
+.zb-gauges .zb-gauge { min-width: 12rem; }
