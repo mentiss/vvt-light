@@ -140,7 +140,7 @@ const Sheet = ({
         onLogout?.();
     }, [logout, onLogout]);
 
-    const openDiceModal = (attr1 = 'dex', attr2 = 'int') => setDiceModalAttrs({ attr1, attr2 });
+    const openDiceModal = (attr1 = 'dex', attr2 = 'int', label = '') => setDiceModalAttrs({ attr1, attr2, label });
     const openAttackModal = (weaponItem) => setAttackContext(weaponItem);
 
     return (
@@ -246,6 +246,7 @@ const Sheet = ({
                             onAvatarClick={() => setShowAvatarUploader(true)}
                             onRollAttribute={(attrKey) => !editMode && openDiceModal(attrKey, attrKey === 'dex' ? 'int' : 'dex')}
                             onAttack={(weaponItem) => !editMode && openAttackModal(weaponItem)}
+                            onCastSpell={(a1, a2, lbl) => openDiceModal(a1, a2, lbl)}
                         />
                     )}
 
@@ -275,6 +276,7 @@ const Sheet = ({
                     sessionId={activeGMSession}
                     initialAttr1={diceModalAttrs.attr1}
                     initialAttr2={diceModalAttrs.attr2}
+                    initialLabel={diceModalAttrs.label}
                     onClose={() => setDiceModalAttrs(null)}
                 />
             )}

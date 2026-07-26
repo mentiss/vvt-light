@@ -15,11 +15,14 @@ import ConfirmModal   from '../modals/ConfirmModal.jsx';
 import { useFetch }   from '../../hooks/useFetch.js';
 import { useSystem }  from '../../hooks/useSystem.js';
 
+const PLATFORM_ROLL_TYPES = ['free_roll'];
+
 const HistoryPanel = ({
                           isOpen,
                           onClose,
                           sessionId           = null,
                           renderHistoryEntry  = null, // (entry) => JSX | null
+                          renderAllRollTypes = false,
                       }) => {
     const [history,            setHistory]            = useState([]);
     const [loading,            setLoading]            = useState(false);
@@ -153,8 +156,11 @@ const HistoryPanel = ({
                         </div>
                     ) : (
                         history.map(roll => {
-                            // Tenter le rendu slug
-                            const slugRender = renderHistoryEntry ? renderHistoryEntry(roll) : null;
+                            // Types plateforme → rendu générique, sauf opt-in slug
+                            const isPlatformType = PLATFORM_ROLL_TYPES.includes(roll.roll_type);
+                            const slugRender = (renderHistoryEntry && (!isPlatformType || renderAllRollTypes))
+                                ? renderHistoryEntry(roll)
+                                : null;
 
                             return (
                                 <div

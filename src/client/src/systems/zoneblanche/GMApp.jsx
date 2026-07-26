@@ -247,6 +247,7 @@ const GMApp = ({
             <ToastNotifications
                 sessionId={sessionId}
                 renderDiceToast={(toast) => <ZoneBlancheHistoryEntry entry={toast} compact />}
+                renderAllRollTypes
             />
 
             {/* ── Bandeau de régie ─────────────────────────────────────────── */}
@@ -332,6 +333,7 @@ const GMApp = ({
                         <DiceHistoryPage
                             sessionId={sessionId}
                             renderHistoryEntry={(entry) => <ZoneBlancheHistoryEntry entry={entry} />}
+                            renderAllRollTypes
                         />
                     </div>
                 )}

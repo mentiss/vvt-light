@@ -26,7 +26,7 @@ import { useSystem }       from '../../../../hooks/useSystem.js';
 import zoneblancheConfig, {
     PRINCIPES, COMPETENCES,
     MAX_DES_ACHETES, POOL_BASE, DIFFICULTE_MIN, DIFFICULTE_MAX, AUDIMAT_MAX,
-    coutProchainDe, coutCumule,
+    coutProchainDe, coutCumule, assistanceHooks,
 } from '../../config.jsx';
 
 // ── Dé affiché dans l'état résultat ──────────────────────────────────────────
@@ -88,6 +88,7 @@ const ZoneBlancheDiceModal = ({
     const fetchWithAuth = useFetch();
 
     // ── État 1 : sélection ────────────────────────────────────────────────
+    const [isAssistance, setIsAssistance]   = useState(preselect.assistance ?? false);
     const [principeKey, setPrincipeKey]     = useState(preselect.principeKey ?? PRINCIPES[0].key);
     const [competenceKey, setCompetenceKey] = useState(preselect.competenceKey ?? COMPETENCES[0].key);
     const [difficulte, setDifficulte]       = useState(1);
@@ -107,10 +108,10 @@ const ZoneBlancheDiceModal = ({
     const [margeConvertie, setMargeConvertie]     = useState(false);
 
     // ── Données dérivées ──────────────────────────────────────────────────
-    const principes   = character?.principes ?? [];
-    const competences = character?.competences ?? [];
-    const focusList   = character?.focus ?? [];
-    const primeTime   = character?.prime_time ?? character?.primeTime ?? 0;
+    const principes     = character?.principes ?? [];
+    const competences   = character?.competences ?? [];
+    const focusList     = character?.focus ?? [];
+    const primeTime = character?.primeTime ?? 0;
 
     const rangPrincipe   = principes.find(p => p.key === principeKey)?.rang ?? 0;
     const rangCompetence = competences.find(c => c.key === competenceKey)?.rang ?? 0;
@@ -129,12 +130,36 @@ const ZoneBlancheDiceModal = ({
     const peutAcheterEncore = desAchetes < MAX_DES_ACHETES;
     const audimatRestant    = (sessionResources.audimat ?? 0) - coutAudimat;
 
+    // En assistance : pool fixe 1d20, pas d'achat, pas de dé gratuit talent
+    const poolTotalEffectif = isAssistance ? 1 + garantis : poolTotal;
+    const poolLanceEffectif = isAssistance ? Math.max(0, 1 - garantis) : poolLance;
+
+    // Reset des options incompatibles à la bascule assistance
+    const toggleAssistance = useCallback((v) => {
+        setIsAssistance(v);
+        if (v) {
+            setAchatAudimat(0);
+            setAchatStress(0);
+            setDeGratuit(false);
+            setDifficulte(0);
+        } else {
+            setDifficulte(1);
+        }
+        setGarantis(0);
+        setResult(null);
+        setError(null);
+    }, []);
+
     // ── Lancer ────────────────────────────────────────────────────────────
     const handleRoll = useCallback(async () => {
         setError(null);
         setRolling(true);
         try {
-            const label = `${PRINCIPES.find(p => p.key === principeKey)?.label} + ${COMPETENCES.find(c => c.key === competenceKey)?.label}`;
+            const principeLabel   = PRINCIPES.find(p => p.key === principeKey)?.label;
+            const competenceLabel = COMPETENCES.find(c => c.key === competenceKey)?.label;
+            const label = isAssistance
+                ? `Assistance : ${principeLabel} + ${competenceLabel}`
+                : `${principeLabel} + ${competenceLabel}`;
 
             const ctx = {
                 apiBase,
@@ -142,11 +167,12 @@ const ZoneBlancheDiceModal = ({
                 characterId:   character?.id ?? null,
                 characterName: [character?.prenom, character?.nom].filter(Boolean).join(' ') || null,
                 sessionId:     sessionId ?? null,
-                rollType:      'zoneblanche_2d20',
+                rollType:      isAssistance ? 'zoneblanche_assistance' : 'zoneblanche_2d20',
                 label,
                 systemData: {
-                    pool:             poolLance,
+                    pool:             isAssistance ? poolLanceEffectif : poolLance,
                     garantis,
+                    isAssistance,
                     rang:             rangTotal,
                     rangCompetence,
                     hasFocus,
@@ -157,8 +183,9 @@ const ZoneBlancheDiceModal = ({
                 },
             };
 
-            const notation = zoneblancheConfig.dice.buildNotation(ctx);
-            const res      = await roll(notation, ctx, zoneblancheConfig.dice);
+            const hooks    = isAssistance ? assistanceHooks : zoneblancheConfig.dice;
+            const notation = hooks.buildNotation(ctx);
+            const res      = await roll(notation, ctx, hooks);
 
             setResult(res);
             setRelanceDispo(relanceGratuite);
@@ -170,10 +197,11 @@ const ZoneBlancheDiceModal = ({
             //   · Stress  : réserve du MJ → CRÉDIT (delta positif). Acheter un
             //     d20 « en Stress » revient à en offrir au MJ. La route
             //     n'autorise aux joueurs que les deltas positifs sur ce champ.
-            if (sessionId) {
+            // Dépenses de ressources de session (pas en mode assistance)
+            if (sessionId && !isAssistance) {
                 const ajustements = [];
                 if (coutAudimat > 0) ajustements.push({ field: 'audimat', delta: -coutAudimat });
-                if (coutStress  > 0) ajustements.push({ field: 'stress',  delta:  coutStress  });
+                if (coutStress > 0)  ajustements.push({ field: 'stress',  delta: coutStress });
 
                 for (const ajustement of ajustements) {
                     const r = await fetchWithAuth(`${apiBase}/session-resources/${sessionId}`, {
@@ -197,7 +225,7 @@ const ZoneBlancheDiceModal = ({
     }, [
         apiBase, fetchWithAuth, character, sessionId, principeKey, competenceKey,
         poolLance, garantis, rangTotal, rangCompetence, hasFocus, difficulte,
-        coutAudimat, coutStress, relanceGratuite, primeTime, onCharacterUpdate, onResourcesChange,
+        coutAudimat, coutStress, relanceGratuite, primeTime, onCharacterUpdate, onResourcesChange, isAssistance,
     ]);
 
     // ── Relance d'un dé ───────────────────────────────────────────────────
@@ -301,6 +329,15 @@ const ZoneBlancheDiceModal = ({
                     {!result && (
                         <div className="space-y-5">
 
+                            {/* Toggle assistance */}
+                            <button type="button" onClick={() => toggleAssistance(!isAssistance)}
+                                    className={`zb-pill w-full px-4 py-2.5 rounded-sm text-sm ${isAssistance ? 'is-selected' : ''}`}>
+                                <span className="font-semibold">Jet d'assistance</span>
+                                <span className="block text-xs opacity-80 mt-0.5">
+                                    1d20 — vos succès s'ajoutent au jet d'un allié
+                                </span>
+                            </button>
+
                             {/* Principe */}
                             <div>
                                 <div className="zb-eyebrow mb-2">Principe</div>
@@ -366,57 +403,64 @@ const ZoneBlancheDiceModal = ({
                             )}
 
                             {/* Difficulté */}
-                            <div>
-                                <div className="zb-eyebrow mb-2">Difficulté</div>
-                                <div className="flex flex-wrap gap-1.5">
-                                    {Array.from({ length: DIFFICULTE_MAX - DIFFICULTE_MIN + 1 }, (_, i) => i + DIFFICULTE_MIN).map(d => (
-                                        <button key={d} type="button" onClick={() => setDifficulte(d)}
-                                                className={`zb-pill zb-mono w-11 h-11 rounded-sm text-center ${difficulte === d ? 'is-selected' : ''}`}>
-                                            {d}
-                                        </button>
-                                    ))}
+                            {!isAssistance && (
+                                <div>
+                                    <div className="zb-eyebrow mb-2">Difficulté</div>
+                                    <div className="flex flex-wrap gap-1.5">
+                                        {Array.from({ length: DIFFICULTE_MAX - DIFFICULTE_MIN + 1 }, (_, i) => i + DIFFICULTE_MIN).map(d => (
+                                            <button key={d} type="button" onClick={() => setDifficulte(d)}
+                                                    className={`zb-pill zb-mono w-11 h-11 rounded-sm text-center ${difficulte === d ? 'is-selected' : ''}`}>
+                                                {d}
+                                            </button>
+                                        ))}
+                                    </div>
                                 </div>
-                            </div>
+                            )}
+
 
                             {/* Achat de dés */}
-                            <div>
-                                <div className="flex items-center justify-between mb-2">
-                                    <div className="zb-eyebrow">Acheter des d20</div>
-                                    <span className="zb-eyebrow">{desAchetes} / {MAX_DES_ACHETES}</span>
-                                </div>
-                                <div className="space-y-2">
-                                    <BuyCounter
-                                        label="Audimat"
-                                        achetes={achatAudimat}
-                                        disponible={sessionResources.audimat ?? 0}
-                                        canAdd={peutAcheterEncore && audimatRestant >= coutProchainDe(achatAudimat)}
-                                        onAdjust={d => setAchatAudimat(v => Math.max(0, v + d))}
-                                    />
-                                    <BuyCounter
-                                        label="Stress (au profit du MJ)"
-                                        achetes={achatStress}
-                                        disponible={null}
-                                        canAdd={peutAcheterEncore}
-                                        onAdjust={d => setAchatStress(v => Math.max(0, v + d))}
-                                    />
-                                </div>
-                                {(coutAudimat > 0 || coutStress > 0) && (
-                                    <div className="zb-eyebrow mt-2">
-                                        Coût : {coutAudimat > 0 && `${coutAudimat} Audimat`}
-                                        {coutAudimat > 0 && coutStress > 0 && ' · '}
-                                        {coutStress > 0 && `${coutStress} Stress`}
+                            {!isAssistance && (
+                                <div>
+                                    <div className="flex items-center justify-between mb-2">
+                                        <div className="zb-eyebrow">Acheter des d20</div>
+                                        <span className="zb-eyebrow">{desAchetes} / {MAX_DES_ACHETES}</span>
                                     </div>
-                                )}
-                            </div>
+                                    <div className="space-y-2">
+                                        <BuyCounter
+                                            label="Audimat"
+                                            achetes={achatAudimat}
+                                            disponible={sessionResources.audimat ?? 0}
+                                            canAdd={peutAcheterEncore && audimatRestant >= coutProchainDe(achatAudimat)}
+                                            onAdjust={d => setAchatAudimat(v => Math.max(0, v + d))}
+                                        />
+                                        <BuyCounter
+                                            label="Stress (au profit du MJ)"
+                                            achetes={achatStress}
+                                            disponible={null}
+                                            canAdd={peutAcheterEncore}
+                                            onAdjust={d => setAchatStress(v => Math.max(0, v + d))}
+                                        />
+                                    </div>
+                                    {(coutAudimat > 0 || coutStress > 0) && (
+                                        <div className="zb-eyebrow mt-2">
+                                            Coût : {coutAudimat > 0 && `${coutAudimat} Audimat`}
+                                            {coutAudimat > 0 && coutStress > 0 && ' · '}
+                                            {coutStress > 0 && `${coutStress} Stress`}
+                                        </div>
+                                    )}
+                                </div>
+                            )}
 
                             {/* Talents */}
                             <div className="space-y-1.5">
                                 <div className="zb-eyebrow mb-1">Talents actifs</div>
-                                <button type="button" onClick={() => setDeGratuit(v => !v)}
-                                        disabled={!deGratuit && !peutAcheterEncore}
-                                        className={`zb-pill w-full px-4 py-2.5 rounded-sm text-sm ${deGratuit ? 'is-selected' : ''}`}>
-                                    1<sup>er</sup> d20 gratuit
-                                </button>
+                                {!isAssistance && (
+                                    <button type="button" onClick={() => setDeGratuit(v => !v)}
+                                            disabled={!deGratuit && !peutAcheterEncore}
+                                            className={`zb-pill w-full px-4 py-2.5 rounded-sm text-sm ${deGratuit ? 'is-selected' : ''}`}>
+                                        1<sup>er</sup> d20 gratuit
+                                    </button>
+                                )}
                                 <button type="button" onClick={() => setRelanceGratuite(v => !v)}
                                         className={`zb-pill w-full px-4 py-2.5 rounded-sm text-sm ${relanceGratuite ? 'is-selected' : ''}`}>
                                     <span className="font-semibold">Première relance gratuite</span>
@@ -452,11 +496,18 @@ const ZoneBlancheDiceModal = ({
                         <div className="space-y-5">
 
                             <div className="zb-result-banner">
-                                <span className={`zb-history-verdict zb-mono ${result.success ? 'is-success' : 'is-failure'}`}>
-                                    {result.success ? 'Réussite' : 'Échec'}
-                                </span>
+                                {!isAssistance && (
+                                    <span className={`zb-history-verdict zb-mono ${result.success ? 'is-success' : 'is-failure'}`}>
+                                        {result.success ? 'Réussite' : 'Échec'}
+                                    </span>
+                                )}
+                                {isAssistance && (
+                                    <span className="zb-history-verdict zb-mono is-success">
+                                        Assistance
+                                    </span>
+                                )}
                                 <span className="zb-mono text-lg text-default">
-                                    {result.successes} succès / difficulté {result.difficulte}
+                                    {result.successes} succès{!isAssistance && ` / difficulté ${result.difficulte}`}
                                 </span>
                                 {result.complications > 0 && (
                                     <span className="zb-complication-tag zb-mono">
@@ -481,8 +532,8 @@ const ZoneBlancheDiceModal = ({
                                 </div>
                             </div>
 
-                            {/* Marge → Audimat */}
-                            {result.marge > 0 && sessionId && (
+                            {/* Marge → Audimat (pas en assistance) */}
+                            {result.marge > 0 && sessionId && !isAssistance && (
                                 <button type="button" onClick={handleMargeToAudimat} disabled={margeConvertie}
                                         className="zb-btn-primary w-full px-4 py-3 rounded-sm zb-display">
                                     {margeConvertie
@@ -505,7 +556,7 @@ const ZoneBlancheDiceModal = ({
                             </button>
                             <button type="button" onClick={handleRoll} disabled={rolling || poolLance < 1}
                                     className="zb-btn-accent px-6 py-2.5 rounded-sm zb-display">
-                                {rolling ? 'Lancement…' : `Lancer ${poolTotal}d20`}
+                                {rolling ? 'Lancement…' : `Lancer ${isAssistance ? poolTotalEffectif : poolTotal}d20`}
                             </button>
                         </>
                     ) : (

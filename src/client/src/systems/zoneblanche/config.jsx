@@ -164,6 +164,42 @@ export const diceHooks = {
     renderHistoryEntry: (entry) => <ZoneBlancheHistoryEntry entry={entry} />,
 };
 
+// ── Hooks d'ASSISTANCE — jet simplifié 1d20 ─────────────────────────────────
+// Pool fixe 1d20 (+ éventuels garantis Prime Time). Difficulté forcée à 0
+// (pas de verdict, tout succès compte). Pas d'achat de d20.
+// Le Focus s'applique normalement pour les critiques.
+
+export const assistanceHooks = {
+    buildNotation: (ctx) => {
+        const { pool = 1 } = ctx.systemData;
+        if (pool < 0 || pool > 1) throw new RollError('INVALID_DICE', `Assistance : pool doit être 0 ou 1, reçu ${pool}`);
+        if (pool === 0) return '0d20'; // tous garantis
+        return '1d20';
+    },
+
+    beforeRoll: (ctx) => ctx,
+
+    afterRoll: (raw, ctx) => {
+        const { garantis = 0 } = ctx.systemData;
+        const results = [...Array(garantis).fill(1), ...raw.groups[0].values];
+        // Forcer difficulté 0 : pas de verdict réussite/échec
+        return interpreterJet(results, { ...ctx.systemData, difficulte: 0, label: ctx.label });
+    },
+
+    buildAnimationSequence: (raw, ctx, result) => ({
+        mode: 'single',
+        groups: [{
+            id:       'zoneblanche-assistance',
+            diceType: 'd20',
+            color:    'default',
+            label:    ctx.label || 'Assistance',
+            waves:    [{ dice: raw.groups[0].values }],
+        }],
+    }),
+
+    renderHistoryEntry: (entry) => <ZoneBlancheHistoryEntry entry={entry} />,
+};
+
 /**
  * Hooks de RELANCE d'un dé unique.
  *
@@ -233,10 +269,12 @@ export default {
     label: 'Zone Blanche',
 
     // Le composant choisit explicitement le jeu de hooks :
-    //   roll(notation, ctx, zoneblancheConfig.dice)   → jet complet
-    //   roll(notation, ctx, zoneblancheConfig.reroll) → relance d'un dé
-    dice:   diceHooks,
-    reroll: rerollHooks,
+    //   roll(notation, ctx, zoneblancheConfig.dice)       → jet complet
+    //   roll(notation, ctx, zoneblancheConfig.reroll)     → relance d'un dé
+    //   roll(notation, ctx, zoneblancheConfig.assistance) → jet d'assistance 1d20
+    dice:       diceHooks,
+    reroll:     rerollHooks,
+    assistance: assistanceHooks,
     combat,
     diceConfigDefault,
 };

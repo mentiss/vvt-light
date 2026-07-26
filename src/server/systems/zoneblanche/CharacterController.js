@@ -69,6 +69,7 @@ function loadFullCharacter(db, id) {
         ...row,
         accessCode: row.access_code,
         accessUrl:  row.access_url,
+        primeTime:  row.prime_time,
 
         principes:   _reshapePrincipes(row),
         competences: _reshapeCompetences(row),

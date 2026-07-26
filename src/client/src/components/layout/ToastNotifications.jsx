@@ -22,10 +22,13 @@ import {stripHtml} from "../shared/RichTextEditor.jsx";
 const TOAST_DICE_TTL    = 5000;
 const TOAST_MESSAGE_TTL = 8000;
 
+const PLATFORM_ROLL_TYPES = ['free_roll'];
+
 const ToastNotifications = ({
-                                sessionId       = null,
-                                onViewHistory   = null,
-                                renderDiceToast = null,
+                                sessionId          = null,
+                                onViewHistory      = null,
+                                renderDiceToast    = null,
+                                renderAllRollTypes = false,
                             }) => {
     const [toasts, setToasts] = useState([]);
     const socket              = useSocket();
@@ -169,8 +172,10 @@ const ToastNotifications = ({
 
                             {/* Rendu slug-spécifique ou fallback générique */}
                             {(() => {
-                                // Tenter rendu slug-spécifique
-                                if (renderDiceToast) {
+                                // Types plateforme → rendu générique, sauf opt-in slug
+                                const isPlatformType = PLATFORM_ROLL_TYPES.includes(toast.roll_type);
+
+                                if (renderDiceToast && (!isPlatformType || renderAllRollTypes)) {
                                     // Désérialiser roll_result si nécessaire
                                     let result = toast.roll_result;
                                     if (typeof result === 'string') {

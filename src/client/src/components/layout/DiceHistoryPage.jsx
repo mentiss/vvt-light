@@ -7,6 +7,11 @@
 //   - Prop renderHistoryEntry optionnelle (injectée depuis GMView/Sheet)
 //   - Rendu générique si renderHistoryEntry absent ou retourne null
 //   - URL via apiBase (déjà correct dans la v1)
+//
+// Changements v3 :
+//   - Les roll_type génériques (free_roll, …) sont rendus par le fallback
+//     générique sans appeler le renderer slug — sauf si le slug passe
+//     renderAllRollTypes={true} pour prendre le contrôle total.
 // ─────────────────────────────────────────────────────────────────────────────
 
 import React, { useState, useEffect, useCallback } from 'react';
@@ -14,9 +19,14 @@ import { useFetch }   from '../../hooks/useFetch.js';
 import { useSystem }  from '../../hooks/useSystem.js';
 import ConfirmModal   from '../modals/ConfirmModal.jsx';
 
+// Types de jet gérés par la plateforme — rendu générique par défaut.
+// Un slug peut passer renderAllRollTypes={true} pour prendre le contrôle.
+const PLATFORM_ROLL_TYPES = ['free_roll'];
+
 const DiceHistoryPage = ({
-                             sessionId          = null,
-                             renderHistoryEntry = null, // (entry) => JSX | null — optionnel
+                             sessionId            = null,
+                             renderHistoryEntry   = null, // (entry) => JSX | null — optionnel
+                             renderAllRollTypes= false, // opt-in slug pour gérer aussi les types plateforme
                          }) => {
     const [rolls,            setRolls]            = useState([]);
     const [loading,          setLoading]          = useState(false);
@@ -76,10 +86,14 @@ const DiceHistoryPage = ({
             + ' ' + d.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
     };
 
-    // ── Rendu générique fallback ───────────────────────────────────────────────
+    // ── Rendu : types plateforme → générique, sauf opt-in slug ────────────────
     const renderEntry = (roll) => {
-        const slugRender = renderHistoryEntry ? renderHistoryEntry(roll) : null;
-        if (slugRender) return slugRender;
+        // Types plateforme → rendu générique direct, sauf si le slug a demandé le contrôle total
+        const isPlatformType = PLATFORM_ROLL_TYPES.includes(roll.roll_type);
+        if (!isPlatformType || renderAllRollTypes) {
+            const slugRender = renderHistoryEntry ? renderHistoryEntry(roll) : null;
+            if (slugRender) return slugRender;
+        }
 
         const result        = roll.roll_result ?? {};
         const allDice   = result.allDice ?? result.results ?? [];

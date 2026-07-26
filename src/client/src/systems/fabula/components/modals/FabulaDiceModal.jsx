@@ -27,7 +27,7 @@ const ATTR_OPTIONS = [
 
 const degatsLabel = (key) => TYPES_DEGATS.find(t => t.key === key)?.label ?? key;
 
-const FabulaDiceModal = ({ character, sessionId = null, onClose, initialAttr1 = 'dex', initialAttr2 = 'int', weaponContext = null }) => {
+const FabulaDiceModal = ({ character, sessionId = null, onClose, initialAttr1 = 'dex', initialAttr2 = 'int', initialLabel = '', weaponContext = null }) => {
     const fetchWithAuth = useFetch();
     const { apiBase }   = useSystem();
 
@@ -35,7 +35,7 @@ const FabulaDiceModal = ({ character, sessionId = null, onClose, initialAttr1 = 
     const [attr2, setAttr2]     = useState(weaponContext ? weaponContext.precisionAttr2 : (initialAttr2 === initialAttr1 ? (initialAttr1 === 'dex' ? 'int' : 'dex') : initialAttr2));
     const [modifier, setModifier] = useState(weaponContext?.precisionBonus ?? 0);
     const [nd, setNd]           = useState('');
-    const [label, setLabel]     = useState(weaponContext ? `Attaque : ${weaponContext.nomLibre}` : '');
+    const [label, setLabel]     = useState(weaponContext ? `Attaque : ${weaponContext.nomLibre}` : initialLabel);
 
     const [rolling, setRolling] = useState(false);
     const [result, setResult]   = useState(null);

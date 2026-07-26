@@ -27,6 +27,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { useSocket } from '../../../../context/SocketContext.jsx';
 import { useFetch }  from '../../../../hooks/useFetch.js';
 import { useSystem } from '../../../../hooks/useSystem.js';
+import useConfirm    from '../../../../hooks/useConfirm.jsx';
 import EquipmentCatalogModal from '../modals/EquipmentCatalogModal.jsx';
 
 const EquipmentSection = ({ sessionId, characterId, readOnly = false }) => {
@@ -36,8 +37,8 @@ const EquipmentSection = ({ sessionId, characterId, readOnly = false }) => {
 
     const [state, setState]               = useState({ budget: 0, total: 0, items: [] });
     const [catalogOpen, setCatalogOpen]   = useState(false);
-    const [confirmClear, setConfirmClear] = useState(false);
     const [busy, setBusy]                 = useState(false);
+    const { confirm, confirmEl }          = useConfirm();
 
     // ── Chargement initial ────────────────────────────────────────────────
     useEffect(() => {
@@ -91,9 +92,15 @@ const EquipmentSection = ({ sessionId, characterId, readOnly = false }) => {
         `${apiBase}/session-equipment/${sessionId}/items/${itemId}`, { method: 'DELETE' },
     );
 
-    const clearPool = () => {
+    const clearPool = async () => {
+        const ok = await confirm({
+            title:       'Vider l\'inventaire',
+            message:     'Tout le matériel de l\'équipe sera retiré. Cette action est irréversible.',
+            confirmText: 'Vider',
+            danger:      true,
+        });
+        if (!ok) return;
         call(`${apiBase}/session-equipment/${sessionId}/clear`, { method: 'POST' });
-        setConfirmClear(false);
     };
 
     if (!sessionId) {
@@ -142,21 +149,11 @@ const EquipmentSection = ({ sessionId, characterId, readOnly = false }) => {
                     {readOnly ? "Voir l'inventaire" : 'Gérer le matériel'}
                 </button>
 
-                {state.items.length > 0 && (
-                    confirmClear ? (
-                        <span className="flex items-center gap-2">
-                            <span className="text-sm text-muted">Vider tout le matériel ?</span>
-                            <button type="button" onClick={clearPool} disabled={busy}
-                                    className="zb-btn-accent px-3 py-2 rounded-sm text-sm">Confirmer</button>
-                            <button type="button" onClick={() => setConfirmClear(false)}
-                                    className="zb-btn-ghost px-3 py-2 rounded-sm text-sm">Annuler</button>
-                        </span>
-                    ) : (
-                        <button type="button" onClick={() => setConfirmClear(true)}
-                                className="zb-btn-ghost px-4 py-2 rounded-sm text-sm">
-                            Vider l'inventaire
-                        </button>
-                    )
+                {state.items.length > 0 && !readOnly && (
+                    <button type="button" onClick={clearPool} disabled={busy}
+                            className="zb-btn-ghost px-4 py-2 rounded-sm text-sm">
+                        Vider l'inventaire
+                    </button>
                 )}
             </div>
 
@@ -171,6 +168,8 @@ const EquipmentSection = ({ sessionId, characterId, readOnly = false }) => {
                 onAdjustQuantity={adjustQuantity}
                 onRemove={removeLine}
             />
+
+            {confirmEl}
         </section>
     );
 };

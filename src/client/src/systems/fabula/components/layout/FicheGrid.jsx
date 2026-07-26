@@ -5,7 +5,7 @@
 // "Fiche — mêmes composants, même ordre que Sheet.jsx".
 //
 // Contrat : { character, editMode, onFieldChange, onArrayChange, onQuickUpdate,
-//             onAvatarClick, onRollAttribute, onAttack }
+//             onAvatarClick, onRollAttribute, onAttack, onCastSpell }
 //   onAttack (optionnel) : ouvre FabulaDiceModal en mode attaque pour une arme
 //   équipée. Fourni par Sheet.jsx (joueur) UNIQUEMENT — TabSession.jsx (GM) ne
 //   le passe pas, donc le bouton "⚔ Attaquer" de WeaponsCard reste invisible
@@ -26,7 +26,7 @@ import AccessoryCard      from './AccessoryCard.jsx';
 import ArcanaSpellsPanel  from './ArcanaSpellsPanel.jsx';
 import BackpackCard       from './BackpackCard.jsx';
 
-const FicheGrid = ({ character, editMode, onFieldChange, onArrayChange, onQuickUpdate, onAvatarClick, onRollAttribute, onAttack }) => (
+const FicheGrid = ({ character, editMode, onFieldChange, onArrayChange, onQuickUpdate, onAvatarClick, onRollAttribute, onAttack, onCastSpell }) => (
     <div className="flex flex-col gap-3 w-full">
 
         {/* Rangée 1 — Identité · Attributs+Ressources · Points Fabula+Liens
@@ -62,7 +62,7 @@ const FicheGrid = ({ character, editMode, onFieldChange, onArrayChange, onQuickU
 
         {/* Rangée 3 — Arcana & Sorts · Sac à dos */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 items-start">
-            <ArcanaSpellsPanel character={character} editMode={editMode} onArrayChange={onArrayChange} />
+            <ArcanaSpellsPanel character={character} editMode={editMode} onArrayChange={onArrayChange} onCastSpell={onCastSpell} />
             <BackpackCard character={character} editMode={editMode} onArrayChange={onArrayChange} />
         </div>
     </div>

@@ -18,7 +18,18 @@
 import React from 'react';
 import { CLASSES, SPELL_LISTS, ARCANA_LISTS } from '../../config.jsx';
 
-const ArcanaSpellsPanel = ({ character, editMode, onArrayChange }) => {
+// ── Parse testMagie ("[INT + VOL]") → { attr1, attr2 } ou null ──────────────
+const ATTR_MAP = { DEX: 'dex', INT: 'int', PUI: 'pui', VOL: 'vol' };
+const parseTestMagie = (testMagie) => {
+    if (!testMagie) return null;
+    const match = testMagie.match(/\[(\w+)\s*\+\s*(\w+)\]/);
+    if (!match) return null;
+    const a1 = ATTR_MAP[match[1].toUpperCase()];
+    const a2 = ATTR_MAP[match[2].toUpperCase()];
+    return (a1 && a2) ? { attr1: a1, attr2: a2 } : null;
+};
+
+const ArcanaSpellsPanel = ({ character, editMode, onArrayChange, onCastSpell }) => {
     const classes = character.classes ?? [];
     const skills  = character.skills ?? [];
     const arcana  = character.arcana ?? [];
@@ -98,16 +109,22 @@ const ArcanaSpellsPanel = ({ character, editMode, onArrayChange }) => {
                         {group.chosen.map(spellKey => {
                             const sp = SPELL_LISTS[group.spellList].find(s => s.key === spellKey);
                             if (!sp) return null;
+                            const castAttrs = parseTestMagie(sp.testMagie);
+                            const canCast   = !!castAttrs && !!onCastSpell;
                             return (
-                                <div key={sp.key} className="grid grid-cols-[1fr_auto_auto_auto_auto] gap-x-2 items-baseline bg-surface-alt rounded px-2 py-1 text-xs"
-                                     title={sp.description}>
+                                <div key={sp.key}
+                                     className={`grid grid-cols-[1fr_auto_auto_auto_auto] gap-x-2 items-baseline bg-surface-alt rounded px-2 py-1 text-xs${canCast ? ' cursor-pointer hover:bg-primary/10 transition-colors' : ''}`}
+                                     title={sp.description}
+                                     onClick={() => canCast && onCastSpell(castAttrs.attr1, castAttrs.attr2, `Sort : ${sp.nom}`)}>
                                     <span className="font-semibold truncate">{sp.nom}</span>
                                     <span className="text-muted whitespace-nowrap">{sp.cout}</span>
                                     <span className="text-muted whitespace-nowrap">{sp.cible}</span>
                                     <span className="text-muted whitespace-nowrap">{sp.duree}</span>
                                     {editMode ? (
-                                        <button type="button" onClick={() => removeSpell(group.classKey, group.skillKey, sp.key)}
+                                        <button type="button" onClick={(e) => { e.stopPropagation(); removeSpell(group.classKey, group.skillKey, sp.key); }}
                                                 className="text-danger">✕</button>
+                                    ) : canCast ? (
+                                        <span className="text-primary text-sm" title="Lancer le sort">🎲</span>
                                     ) : <span />}
                                 </div>
                             );

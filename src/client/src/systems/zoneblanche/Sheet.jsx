@@ -212,6 +212,7 @@ const Sheet = ({
             <ToastNotifications
                 sessionId={activeGMSession}
                 renderDiceToast={(entry) => <ZoneBlancheHistoryEntry entry={entry} compact />}
+                renderAllRollTypes
             />
 
             {/* ── Bandeau de diffusion ─────────────────────────────────────── */}
@@ -320,6 +321,7 @@ const Sheet = ({
                         <DiceHistoryPage
                             sessionId={activeGMSession}
                             renderHistoryEntry={(entry) => <ZoneBlancheHistoryEntry entry={entry} />}
+                            renderAllRollTypes
                         />
                     )}
                 </main>

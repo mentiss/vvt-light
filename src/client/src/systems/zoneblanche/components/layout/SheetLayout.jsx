@@ -9,8 +9,8 @@
 //
 // Layout deux colonnes :
 //   Principale (large)  — Identité (+ Vérités) · Principes (+ Maximes)
-//                          · Compétences (+ Focus) · Matériel d'équipe
-//   Secondaire (étroite) — Prime Time · Talents
+//                          · Compétences (+ Focus)
+//   Secondaire (étroite) — Prime Time · Talents · Matériel d'équipe
 //
 // Props :
 //   char             — personnage affiché (buffer d'édition si editMode)
@@ -76,14 +76,6 @@ const SheetLayout = ({
                         onRoll={key => onRoll?.({ competenceKey: key })}
                     />
                 </div>
-
-                <div className="zb-panel zb-grain rounded-sm p-5">
-                    <EquipmentSection
-                        sessionId={sessionId}
-                        characterId={char.id}
-                        readOnly={readOnlyEquipment}
-                    />
-                </div>
             </div>
 
             {/* ── COLONNE SECONDAIRE ──────────────────────────────────────── */}
@@ -93,7 +85,7 @@ const SheetLayout = ({
                     {/* Action de jeu : passe toujours par patchImmediate,
                         y compris hors mode édition. */}
                     <PrimeTimePanel
-                        value={char.prime_time ?? char.primeTime ?? 0}
+                        value={char.primeTime ?? 0}
                         onChange={val => patchImmediate?.({ primeTime: val })}
                     />
                 </div>
@@ -103,6 +95,14 @@ const SheetLayout = ({
                         char={char}
                         editMode={editMode}
                         set={set}
+                    />
+                </div>
+
+                <div className="zb-panel zb-grain rounded-sm p-5">
+                    <EquipmentSection
+                        sessionId={sessionId}
+                        characterId={char.id}
+                        readOnly={readOnlyEquipment}
                     />
                 </div>
             </div>

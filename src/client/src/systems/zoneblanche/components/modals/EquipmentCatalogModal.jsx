@@ -91,8 +91,9 @@ const EquipmentCatalogModal = ({
                                }) => {
     const [filtre, setFiltre]       = useState('toutes');
     const [search, setSearch]       = useState('');
-    const [freeLabel, setFreeLabel] = useState('');
-    const [freeCost, setFreeCost]   = useState('');
+    const [freeLabel, setFreeLabel]     = useState('');
+    const [freeCost, setFreeCost]       = useState('');
+    const [showFreeForm, setShowFreeForm] = useState(false);
 
     // Aplatissement une seule fois : la recherche filtre dessus.
     const entries = useMemo(
@@ -193,6 +194,40 @@ const EquipmentCatalogModal = ({
                             </span>
                         </div>
 
+                        {/* Ajout libre — collapsible */}
+                        {!readOnly && (
+                            <div className="zb-equip-free">
+                                <button type="button"
+                                        onClick={() => setShowFreeForm(v => !v)}
+                                        className="zb-eyebrow flex items-center gap-2 cursor-pointer w-full text-left mb-0">
+                                    <span className="transition-transform duration-200"
+                                          style={{ display: 'inline-block', transform: showFreeForm ? 'rotate(90deg)' : 'rotate(0deg)' }}>
+                                        ▸
+                                    </span>
+                                    Ajouter un objet
+                                </button>
+                                {showFreeForm && (
+                                    <div className="flex flex-wrap gap-2 items-center mt-2">
+                                        <input value={freeLabel} onChange={e => setFreeLabel(e.target.value)}
+                                               onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); ajouterLibre(); } }}
+                                               className="zb-input flex-1 px-3 py-2 rounded-sm text-sm"
+                                               placeholder="Nom de l'objet…"
+                                               autoFocus />
+                                        <input type="number" min="0" value={freeCost}
+                                               onChange={e => setFreeCost(e.target.value)}
+                                               onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); ajouterLibre(); } }}
+                                               className="zb-input zb-mono w-20 px-3 py-2 rounded-sm text-sm"
+                                               placeholder="Coût" />
+                                        <button type="button" onClick={ajouterLibre}
+                                                disabled={busy || !freeLabel.trim()}
+                                                className="zb-btn-ghost px-4 py-2 rounded-sm text-sm">
+                                            Ajouter
+                                        </button>
+                                    </div>
+                                )}
+                            </div>
+                        )}
+
                         <div className="zb-equip-scroll">
                             {state.items.length === 0 && (
                                 <p className="text-sm text-muted">Rien dans le camion pour l'instant.</p>
@@ -207,29 +242,6 @@ const EquipmentCatalogModal = ({
                                 ))}
                             </div>
                         </div>
-
-                        {/* Objet de scénario — hors catalogue */}
-                        {!readOnly && (
-                            <div className="zb-equip-free">
-                                <div className="zb-eyebrow mb-2">Matériel fourni par le scénario</div>
-                                <div className="flex flex-wrap gap-2 items-center">
-                                    <input value={freeLabel} onChange={e => setFreeLabel(e.target.value)}
-                                           onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); ajouterLibre(); } }}
-                                           className="zb-input flex-1 px-3 py-2 rounded-sm text-sm"
-                                           placeholder="Nom de l'objet…" />
-                                    <input type="number" min="0" value={freeCost}
-                                           onChange={e => setFreeCost(e.target.value)}
-                                           onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); ajouterLibre(); } }}
-                                           className="zb-input zb-mono w-20 px-3 py-2 rounded-sm text-sm"
-                                           placeholder="Coût" />
-                                    <button type="button" onClick={ajouterLibre}
-                                            disabled={busy || !freeLabel.trim()}
-                                            className="zb-btn-ghost px-4 py-2 rounded-sm text-sm">
-                                        Ajouter
-                                    </button>
-                                </div>
-                            </div>
-                        )}
                     </div>
                 </div>
 
