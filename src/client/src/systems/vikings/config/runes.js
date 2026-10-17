@@ -29,3 +29,13 @@ export const RUNES = [
     { symbol: "ᛟ", name: "Othila", letter: "O", literal: "Ancêtre", esoteric: "Héritage, possession terrestre, noble" },
     { symbol: "ᛞ", name: "Dagaz", letter: "D, Dj", literal: "Jour", esoteric: "Eveil, aube, percée, progrès, pureté" }
 ];
+
+// Ce que permet chaque niveau de rune (spec_vikings.md §3.6).
+export const RUNE_LEVELS = [
+    "Signe inconnu",
+    "Identification, légendes",
+    "Sensoriel (sentir la présence)",
+    "Active : tracer, activer, combiner jusqu'à 3 runes",
+    "Objets à charge, tatouages ; jusqu'à 4 runes",
+    "Artefacts permanents, visions ; jusqu'à 5 runes",
+];

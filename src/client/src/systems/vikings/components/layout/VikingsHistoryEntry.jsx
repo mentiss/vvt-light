@@ -80,6 +80,12 @@ const VikingsHistoryEntry = ({ entry, compact = false }) => {
                 ))}
             </div>
 
+            {meta.tripleTen && (
+                <div className="text-[11px] font-bold text-primary">
+                    ✨ Triple 10 — {meta.sagaGained ? '+1 SAGA' : 'SAGA déjà au maximum'}
+                </div>
+            )}
+
             {(mode === 'heroic' || mode === 'epic') && (
                 <div className="text-[11px] text-muted">
                     {meta.sagaFailed
@@ -92,6 +98,7 @@ const VikingsHistoryEntry = ({ entry, compact = false }) => {
                 <div className="text-[10px] text-muted">
                     Seuil {detail.threshold}+ · explosion {detail.explosionThresholds?.[0]}+ · {detail.pool}d10
                     {detail.autoSuccesses > 0 && ` · auto +${detail.autoSuccesses}`}
+                    {meta.aimBonus > 0 && ` · visée +${meta.aimBonus}`}
                     {detail.traitBonus !== 0 && detail.traitBonus != null && ` · traits ${detail.traitBonus > 0 ? '+' : ''}${detail.traitBonus}`}
                     {detail.fatigueMalus > 0 && ` · fatigue −${detail.fatigueMalus}`}
                     {detail.blessureMalus > 0 && ` · blessure −${detail.blessureMalus} dé(s)`}

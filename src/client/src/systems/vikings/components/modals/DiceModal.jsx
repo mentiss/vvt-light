@@ -38,6 +38,7 @@ const DiceModal = ({ character, isBerserk, context, onClose, onUpdate, sessionId
     const [selectedCarac, setSelectedCarac] = useState('force');
     const [selectedSkill, setSelectedSkill] = useState(null);
     const [autoSuccesses, setAutoSuccesses] = useState(0);
+    const [aimBonus,      setAimBonus]      = useState(0); // actions de visée (C-5)
     const [sagaMode,      setSagaMode]      = useState(null); // null | 'insurance' | 'heroic' | 'epic'
     const [diceResults,   setDiceResults]   = useState(null);
     const [rolling,       setRolling]       = useState(false);
@@ -112,6 +113,7 @@ const DiceModal = ({ character, isBerserk, context, onClose, onUpdate, sessionId
                 selectedCarac,
                 selectedSkill,
                 autoSuccesses,
+                aimBonus,
                 activeConditionalBonuses,
                 traitAutoBonus,
                 caracLevel,
@@ -126,7 +128,7 @@ const DiceModal = ({ character, isBerserk, context, onClose, onUpdate, sessionId
         };
     }, [
         character, isBerserk, rollType, selectedCarac, selectedSkill,
-        autoSuccesses, activeConditionalBonuses, traitAutoBonus,
+        autoSuccesses, aimBonus, activeConditionalBonuses, traitAutoBonus,
         sagaMode, sessionId, apiBase, fetchWithAuth,
     ]);
 
@@ -163,8 +165,11 @@ const DiceModal = ({ character, isBerserk, context, onClose, onUpdate, sessionId
             const result = await roll(notation, ctx, vikingsConfig.dice);
 
             // SAGA : le point dépensé revient après un jet héroïque/épique réussi
-            if (result.meta?.sagaSuccess) {
-                onUpdate(prev => applyRollOutcome(prev, { sagaRestored: 1 }));
+            // (pas un gain) ; un triple 10 rapporte +1 SAGA (gain, D-15)
+            const sagaRestored = result.meta?.sagaSuccess ? 1 : 0;
+            const tripleTen    = !!result.meta?.tripleTen;
+            if (sagaRestored || tripleTen) {
+                onUpdate(prev => applyRollOutcome(prev, { sagaRestored, tripleTen }));
             }
 
             setDiceResults(result);
@@ -292,9 +297,25 @@ const DiceModal = ({ character, isBerserk, context, onClose, onUpdate, sessionId
                         traitAutoBonus={traitAutoBonus}
                         activeConditionalBonuses={activeConditionalBonuses}
                         autoSuccesses={autoSuccesses}
+                        aimBonus={aimBonus}
                         isBerserk={isBerserk}
                         sagaMode={sagaMode}
                     />
+
+                    {/* Visée (C-5) : +1 succès auto par action passée à viser, sans limite imposée */}
+                    <div>
+                        <label className="block text-sm font-semibold text-viking-brown dark:text-viking-parchment mb-2">
+                            🎯 Actions de visée
+                        </label>
+                        <div className="flex items-center gap-2">
+                            <button onClick={() => setAimBonus(n => Math.max(0, n - 1))} disabled={aimBonus <= 0}
+                                    className="w-8 h-8 rounded font-bold bg-viking-parchment dark:bg-gray-800 text-viking-text dark:text-viking-parchment disabled:opacity-30">−</button>
+                            <span className="w-8 text-center font-bold text-viking-brown dark:text-viking-parchment">{aimBonus}</span>
+                            <button onClick={() => setAimBonus(n => n + 1)}
+                                    className="w-8 h-8 rounded font-bold bg-viking-parchment dark:bg-gray-800 text-viking-text dark:text-viking-parchment">+</button>
+                            <span className="text-xs text-viking-leather dark:text-viking-bronze">+1 succès auto par action</span>
+                        </div>
+                    </div>
 
                     {/* Succès auto */}
                     {rollType === 'skill' && selectedSkill && selectedSkill.currentPoints > 0 && (
@@ -398,7 +419,7 @@ const DiceModal = ({ character, isBerserk, context, onClose, onUpdate, sessionId
 // ─── Résumé pré-jet ───────────────────────────────────────────────────────────
 const RollSummary = ({
                          character, rollType, selectedCarac, selectedSkill,
-                         traitAutoBonus, activeConditionalBonuses, autoSuccesses, isBerserk, sagaMode,
+                         traitAutoBonus, activeConditionalBonuses, autoSuccesses, aimBonus, isBerserk, sagaMode,
                      }) => {
 
     const caracLevel = rollType === 'carac'
@@ -420,6 +441,7 @@ const RollSummary = ({
             <div>Dés : <strong>{pool}d10</strong> — explosion {explodeMin}+ — succès {threshold}+</div>
             {bonusTotal !== 0 && <div>Bonus traits : <strong>{bonusTotal > 0 ? '+' : ''}{bonusTotal}</strong></div>}
             {autoSuccesses > 0 && <div>Succès auto : <strong>+{autoSuccesses}</strong></div>}
+            {aimBonus > 0      && <div>Visée : <strong>+{aimBonus}</strong></div>}
             {fatigueMalus > 0  && <div>Malus fatigue : <strong>-{fatigueMalus}</strong></div>}
             {blessureMalus > 0 && <div>Malus blessure : <strong>-{blessureMalus} dé(s)</strong></div>}
             {sagaMode          && <div>Mode : <strong>{sagaMode == 'insurance' ? 'Assurance' : (sagaMode == 'epic' ? 'Épique' : (sagaMode == 'heroic' ? 'Héroïque' : sagaMode))}</strong> — 1 point SAGA dépensé</div>}
@@ -441,6 +463,12 @@ const DiceResultsView = ({ results, character, onClose, onRollAgain }) => {
                 <h3 className="text-lg font-bold text-viking-brown dark:text-viking-parchment mb-3">
                     🎲 Résultat
                 </h3>
+
+                {meta?.tripleTen && (
+                    <div className="mb-3 p-2 rounded-lg bg-viking-bronze text-viking-brown text-center font-bold">
+                        ✨ Triple 10 ! {meta.sagaGained ? '+1 SAGA' : 'SAGA déjà au maximum'}
+                    </div>
+                )}
 
 
                 <div className="p-4 bg-viking-parchment dark:bg-gray-800 rounded-lg border-2 border-viking-bronze space-y-3">
@@ -488,7 +516,7 @@ const DiceResultsView = ({ results, character, onClose, onRollAgain }) => {
                     </div>
                     {detail && (
                         <div className="text-xs text-viking-leather dark:text-viking-bronze mt-1 space-y-0.5">
-                            <div>Base : {detail.baseSuccesses} | Auto : {detail.autoSuccesses} | Traits : {detail.traitBonus > 0 ? '+' : ''}{detail.traitBonus}</div>
+                            <div>Base : {detail.baseSuccesses} | Auto : {detail.autoSuccesses} | Traits : {detail.traitBonus > 0 ? '+' : ''}{detail.traitBonus}{meta?.aimBonus > 0 && ` | Visée : +${meta.aimBonus}`}</div>
                             {detail.fatigueMalus > 0 && <div>Malus fatigue : −{detail.fatigueMalus}</div>}
                             {detail.blessureMalus > 0 && <div>Malus blessure : −{detail.blessureMalus} dés</div>}
                             <div>Seuil : {detail.threshold}+ | Explosion: {detail.explosionThresholds[0]}+ | Pool : {detail.pool}d10</div>

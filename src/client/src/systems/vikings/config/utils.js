@@ -42,7 +42,7 @@ export const getSkillExamples = (skillName) => {
 export const SHEET_EDITABLE_FIELDS = [
     'prenom', 'surnom', 'nom', 'age', 'taille', 'poids', 'activite', 'playerName',
     'force', 'agilite', 'perception', 'intelligence', 'charisme', 'chance',
-    'skills', 'traits', 'sagaTotale',
+    'skills', 'traits', 'runes', 'sagaTotale', 'armureMod', 'actionsMod', 'seuilMod',
 ];
 
 export const pickEditableFields = (character) =>

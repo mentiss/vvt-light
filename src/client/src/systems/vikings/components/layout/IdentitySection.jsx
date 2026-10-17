@@ -1,5 +1,5 @@
 // src/client/src/systems/vikings/components/layout/IdentitySection.jsx
-// Identité du personnage et valeurs de combat (lecture / édition).
+// Identité du personnage (lecture / édition).
 
 import React from 'react';
 import { formatFullName } from '../../config/utils.js';
@@ -24,13 +24,6 @@ const Avatar = ({ avatar, size, onClick }) => (
                 <span className="text-2xl">{onClick ? '📸' : '⚔️'}</span>
             </div>
         )}
-    </div>
-);
-
-const CombatValue = ({ label, value }) => (
-    <div className="text-center p-1.5 bg-default rounded">
-        <div className="text-xs text-muted">{label}</div>
-        <div className="font-bold text-sm text-default">{value}</div>
     </div>
 );
 
@@ -81,12 +74,6 @@ const IdentitySection = ({ char, editMode, set, onAvatarClick }) => {
                     </div>
                 </div>
             )}
-
-            <div className="grid grid-cols-3 gap-1.5 mt-2 pt-2 border-t border-default">
-                <CombatValue label="Armure"  value={char.armure} />
-                <CombatValue label="Actions" value={char.actionsDisponibles} />
-                <CombatValue label="Seuil"   value={char.seuilCombat} />
-            </div>
         </div>
     );
 };

@@ -2,7 +2,7 @@
 
 ## Statut
 
-**Validée par le MJ le 2026-10-17** (L3-1 à L3-7, §1 et §12). **3a implémenté le 2026-10-17** (écarts en §14) ; 3b à venir.
+**Validée par le MJ le 2026-10-17** (L3-1 à L3-7, §1 et §12). **3a et 3b implémentés le 2026-10-17** (écarts en §14). La migration `17102026_vikings_combat_mods.sql` est à jouer sur chaque base avant d'utiliser le code de 3b.
 
 Spec fonctionnelle de référence : `documentations/spec_vikings.md` (§8 écrans joueur, §8.1 runes, §8.2 pratique du combat, §9 interface MJ, décisions D-, Q-, C-). Lot précédent : `documentations/spec_vikings_lot2_serveur.md` (serveur, base, données et règles dans le slug).
 
@@ -247,3 +247,15 @@ Avant chaque commit : `npm run lint`, `npm test`, `npm run build` (depuis `src/c
 - **Défaut supplémentaire corrigé (B-9)** : `AddSkillModal` (`EditModals`) remettait l'erreur à `null` à chaque rendu ; ses messages (spécialisation manquante, doublon) ne s'affichaient jamais.
 - `config.jsx` : `renderHistoryEntry` renvoie `VikingsHistoryEntry` ; les jets libres gardent le rendu générique de la plateforme.
 - B-5 vérifié : aucun code serveur ni client n'émet `character-light-update` ; `PlayerPage` est le seul appelant de `usePlayerSession`.
+### 14.1 Écarts d'implémentation (3b, 2026-10-17)
+
+- **Actions de table** : bouton dans la colonne des personnages de l'onglet Session (et non dans le bandeau), là où les fiches de la table sont déjà chargées.
+- **Ordre des effets en évolution** : la dépense de SAGA est appliquée avant la « SAGA +N » du trait acquis (sinon, à 5, le bonus serait perdu par le plafond).
+- **Évolution des runes** : boutons « +1 Rune » et « Nouvelle Rune » ajoutés à la modale d'évolution (la logique existait sans bouton). Le livre de sort n'est pas imposé comme plafond : les points disponibles sont affichés sur la fiche (en rouge s'ils sont dépassés).
+- **Inventaire** : l'« armure totale » affichée reprend le calcul de la fiche (traits + équipement + ajustement), bouclier indiqué à part.
+- **Gain du triple 10** : `meta.sagaGained` est calculé dans `afterRoll` à partir de la SAGA avant le jet, de la dépense et de la restitution ; la modale applique le gain par `applyRollOutcome` (même plafond).
+- **Création** : la « SAGA +N » des traits choisis et les valeurs de combat dérivées sont appliquées au personnage envoyé et affichées dans le récapitulatif.
+- **Vérification** : migration et contrôleur testés sur une copie de la base DEV (avec son journal WAL) : lignes conservées, colonnes identiques à une base neuve, ajustements lus, écrits en mise à jour partielle et remis à 0.
+- **Inventaire sur la fiche** (demande du MJ, 2026-10-17, après test) : l'onglet Inventaire (joueur) et la bascule Fiche / Inventaire (MJ) sont supprimés ; l'inventaire devient une section de la fiche complète, entre les colonnes et les runes, comme sur les slugs récents. `components/tabs/InventoryTab.jsx` → `components/layout/InventorySection.jsx` ; seule la liste des objets est reportée sur la fiche à jour (pas le buffer d'édition).
+- **Reporté au lot 4 (demande du MJ)** : le malus de fatigue n'est pas assez visible au moment du jet. Constaté au test : 9 et 10 (succès 5+, explosion 2) donnent 1 succès au lieu de 2 à cause de « +1 succès requis » de fatigue, sans que l'utilisateur le comprenne. Le résumé avant jet et le résultat devront montrer clairement le malus et son origine.
+- **Reporté au lot 4 (demande du MJ, après test)** : organisation de la page. L'inventaire occupe une colonne centrale pleine largeur et prend trop de place, alors que le reste de la fiche est sur 2 colonnes ; la page n'utilise pas toute la largeur de l'écran.

@@ -18,11 +18,11 @@ import GMSendModal    from '../../../../components/gm/modals/GMSendModal.jsx';
 import AvatarUploader from '../../../../components/AvatarUploader.jsx';
 
 import SheetLayout     from '../../components/layout/SheetLayout.jsx';
-import InventoryTab    from '../../components/tabs/InventoryTab.jsx';
 import DiceModal       from '../../components/modals/DiceModal.jsx';
 import EditModals      from '../../components/modals/EditModals.jsx';
 import GMSendItemModal from '../modals/GMSendItemModal.jsx';
-import { BLESSURE_MAX, FATIGUE_MAX } from '../../config/rules.js';
+import TableActionsModal from '../modals/TableActionsModal.jsx';
+import { BLESSURE_MAX, FATIGUE_MAX, withDerivedValues } from '../../config/rules.js';
 import { formatFullName, pickEditableFields } from '../../config/utils.js';
 
 const resolve = (updater, prev) => (typeof updater === 'function' ? updater(prev) : updater);
@@ -77,7 +77,6 @@ const TabSession = ({ activeSession, onlineCharacters = [], characterUpdates }) 
     const [characters, setCharacters] = useState({});   // { [id]: personnage complet }
     const [selectedId, setSelectedId] = useState(null);
     const [loading,    setLoading]    = useState(false);
-    const [view,       setView]       = useState('fiche'); // 'fiche' | 'inventaire'
 
     const [editMode,     setEditMode]     = useState(false);
     const [editableChar, setEditableChar] = useState(null);
@@ -86,6 +85,7 @@ const TabSession = ({ activeSession, onlineCharacters = [], characterUpdates }) 
     const [showSendItemModal, setShowSendItemModal] = useState(false);
     const [showAvatar,        setShowAvatar]        = useState(false);
     const [showEditModal,     setShowEditModal]     = useState(null);
+    const [showTableActions,  setShowTableActions]  = useState(false);
     const [diceContext,       setDiceContext]       = useState(null);
     const [copied,            setCopied]            = useState(false);
 
@@ -144,7 +144,7 @@ const TabSession = ({ activeSession, onlineCharacters = [], characterUpdates }) 
         const id   = selectedId;
         const prev = charactersRef.current[id];
         if (!prev) return;
-        const next = resolve(updater, prev);
+        const next = withDerivedValues(resolve(updater, prev));   // valeurs de combat recalculées (L3-6)
         charactersRef.current = { ...charactersRef.current, [id]: next };
         setCharacters(p => ({ ...p, [id]: next }));
         if (editMode) setEditableChar(b => (b ? resolve(updater, b) : b));
@@ -162,6 +162,24 @@ const TabSession = ({ activeSession, onlineCharacters = [], characterUpdates }) 
             console.error('[TabSession/vikings] update:', e);
         }
     }, [selectedId, editMode, apiBase]);
+
+    // ── Actions de table : PATCH des seuls champs modifiés (§5.3) ─────────
+    // La route rediffuse character-full-update : joueurs et MJ se mettent à jour.
+    const patchCharacter = useCallback(async (id, patch) => {
+        try {
+            const r = await fetchWithAuth(`${apiBase}/characters/${id}`, {
+                method:  'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body:    JSON.stringify(patch),
+            });
+            if (r.ok) {
+                const saved = await r.json();
+                setCharacters(p => ({ ...p, [id]: saved }));
+            }
+        } catch (e) {
+            console.error('[TabSession/vikings] patchCharacter:', e);
+        }
+    }, [apiBase]);
 
     // ── Édition (buffer local, comme Sheet.jsx) ───────────────────────────
     const set = useCallback((field, value) => {
@@ -246,6 +264,12 @@ const TabSession = ({ activeSession, onlineCharacters = [], characterUpdates }) 
                     <button onClick={() => setShowSendModal(true)} className="flex-1 px-2 py-1.5 bg-success text-white rounded text-xs font-semibold">📨 Note</button>
                     <button onClick={() => setShowSendItemModal(true)} className="flex-1 px-2 py-1.5 bg-primary text-default rounded text-xs font-semibold">🎁 Objet</button>
                 </div>
+                <div className="px-2 pb-2">
+                    <button onClick={() => setShowTableActions(true)} disabled={loading}
+                            className="w-full px-2 py-1.5 bg-secondary text-white rounded text-xs font-semibold disabled:opacity-50">
+                        ᛟ Actions de table (SAGA, fin d'arc, repos)
+                    </button>
+                </div>
             </aside>
 
             {/* ── Fiche ─────────────────────────────────────────────────────── */}
@@ -254,42 +278,29 @@ const TabSession = ({ activeSession, onlineCharacters = [], characterUpdates }) 
                     <Empty icon="🗡️" title="Aucun personnage sélectionné">Sélectionnez un personnage dans la liste.</Empty>
                 ) : (
                     <>
-                        <div className="flex items-center gap-2 flex-wrap mb-3">
-                            <div className="flex gap-1">
-                                {[['fiche', '📋 Fiche'], ['inventaire', '🎒 Inventaire']].map(([id, label]) => (
-                                    <button key={id} onClick={() => setView(id)}
-                                            className={`px-3 py-1.5 rounded text-xs font-semibold ${view === id ? 'bg-primary text-default' : 'bg-surface-alt text-default'}`}>
-                                        {label}
-                                    </button>
-                                ))}
-                            </div>
-                            <div className="flex-1" />
+                        <div className="flex items-center gap-2 flex-wrap justify-end mb-3">
                             <button onClick={handleCopyCode} className="px-2 py-1.5 rounded border border-default text-xs text-default">
                                 {copied ? '✓ Copié' : '⎘ Copier lien + code'}
                             </button>
-                            {view === 'fiche' && (editMode ? (
+                            {editMode ? (
                                 <>
                                     <button onClick={cancelEdit} className="px-2 py-1.5 rounded border border-default text-xs text-default">Annuler</button>
                                     <button onClick={saveEdit} className="px-2 py-1.5 rounded bg-success text-white text-xs">✓ Enregistrer</button>
                                 </>
                             ) : (
                                 <button onClick={startEdit} className="px-2 py-1.5 rounded bg-secondary text-white text-xs">⚙️ Éditer</button>
-                            ))}
+                            )}
                         </div>
 
-                        {view === 'fiche' ? (
-                            <SheetLayout
-                                char={char}
-                                editMode={editMode}
-                                set={set}
-                                update={update}
-                                onRoll={setDiceContext}
-                                onAvatarClick={() => setShowAvatar(true)}
-                                onOpenEditModal={setShowEditModal}
-                            />
-                        ) : (
-                            <InventoryTab character={characters[selectedId]} onUpdate={update} />
-                        )}
+                        <SheetLayout
+                            char={char}
+                            editMode={editMode}
+                            set={set}
+                            update={update}
+                            onRoll={setDiceContext}
+                            onAvatarClick={() => setShowAvatar(true)}
+                            onOpenEditModal={setShowEditModal}
+                        />
                     </>
                 )}
             </div>
@@ -309,6 +320,13 @@ const TabSession = ({ activeSession, onlineCharacters = [], characterUpdates }) 
                     onSend={handleGMSendItem}
                     sessionCharacters={sessionCharacters}
                     preSelectedCharId={selectedId}
+                />
+            )}
+            {showTableActions && (
+                <TableActionsModal
+                    characters={sessionCharacters.map(sc => characters[sc.id]).filter(Boolean)}
+                    onApply={patchCharacter}
+                    onClose={() => setShowTableActions(false)}
                 />
             )}
             {showAvatar && char && (

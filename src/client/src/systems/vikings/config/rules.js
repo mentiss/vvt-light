@@ -6,6 +6,7 @@
 // ─────────────────────────────────────────────────────────────────────────────
 
 import { CARACNAMES, COMPETENCES } from './competences.js';
+import { TRAITS } from './traits.js';
 
 // ── Dés : explosion (caractéristique) et seuil (compétence) ──────────────────
 
@@ -93,17 +94,37 @@ const FATIGUE_STATES = [
 export const getFatigueState = (tokens) =>
     FATIGUE_STATES.find(([min]) => (tokens ?? 0) >= min)?.[1] ?? '';
 
+// ── SAGA ─────────────────────────────────────────────────────────────────────
+
+export const SAGA_MAX = 5;
+
+/**
+ * Gain de SAGA (triple 10, attribution MJ, trait « SAGA +N ») : réserve
+ * plafonnée à 5, SAGA totale augmentée du gain réellement reçu (D-10, L3-1).
+ */
+export const gainSaga = (character, n) => {
+    const actuelle = character.sagaActuelle ?? 0;
+    const sagaActuelle = Math.min(SAGA_MAX, actuelle + Math.max(0, n));
+    return { sagaActuelle, sagaTotale: (character.sagaTotale ?? 0) + (sagaActuelle - actuelle) };
+};
+
+/** Somme des « SAGA +N » des traits nommés (appliquée à la prise du trait, D-9). */
+export const getTraitSagaBonus = (traitNames) =>
+    traitNames.reduce((sum, name) => sum + (TRAITS.find(t => t.name === name)?.effects?.sagaBonus ?? 0), 0);
+
 // ── Effets d'un jet sur la fiche ─────────────────────────────────────────────
 
 /**
  * Applique les dépenses et restitutions d'un jet (SAGA plafonnée à 0–5,
  * points de compétence à 0–niveau). Un `skillPointsSpent` négatif rembourse.
- * @param {object} outcome { sagaSpent, sagaRestored, skill, skillPointsSpent }
+ * Le point récupéré après un jet héroïque réussi n'est pas un gain (D-10) ;
+ * le triple 10 en est un (+1 SAGA, D-15).
+ * @param {object} outcome { sagaSpent, sagaRestored, skill, skillPointsSpent, tripleTen }
  */
-export const applyRollOutcome = (character, { sagaSpent = 0, sagaRestored = 0, skill = null, skillPointsSpent = 0 } = {}) => {
-    const next = { ...character };
+export const applyRollOutcome = (character, { sagaSpent = 0, sagaRestored = 0, skill = null, skillPointsSpent = 0, tripleTen = false } = {}) => {
+    let next = { ...character };
     if (sagaSpent || sagaRestored) {
-        next.sagaActuelle = Math.max(0, Math.min(5, (character.sagaActuelle ?? 0) - sagaSpent + sagaRestored));
+        next.sagaActuelle = Math.max(0, Math.min(SAGA_MAX, (character.sagaActuelle ?? 0) - sagaSpent + sagaRestored));
     }
     if (skill && skillPointsSpent) {
         next.skills = (character.skills ?? []).map(s =>
@@ -112,7 +133,70 @@ export const applyRollOutcome = (character, { sagaSpent = 0, sagaRestored = 0, s
                 : s
         );
     }
+    if (tripleTen) next = { ...next, ...gainSaga(next, 1) };
     return next;
+};
+
+// ── Valeurs de combat (§3.3, §8.2 ; lot 3b, L3-6) ────────────────────────────
+// Dérivées des traits et de l'équipement, plus un ajustement saisi en mode
+// édition (armureMod / actionsMod / seuilMod) pour les effets conditionnels.
+
+const _traitEffect = (character, key) => (character.traits ?? [])
+    .reduce((sum, t) => sum + (TRAITS.find(d => d.name === t.name)?.effects?.[key] ?? 0), 0);
+
+/** Bouclier : armure équipée « fusible », comptée à part (pas de colonne dédiée). */
+export const isShield = (item) => item.category === 'armor' && /^bouclier/i.test(item.name ?? '');
+
+export const getCombatValues = (character) => {
+    const equipped = (character.items ?? []).filter(i => i.location === 'equipped' && i.category === 'armor');
+    const shields  = equipped.filter(isShield);
+    const armureNaturelle = _traitEffect(character, 'armure');
+    const armureEquipee   = equipped.filter(i => !isShield(i)).reduce((sum, i) => sum + (i.armorValue || 0), 0);
+    return {
+        actions:         Math.max(0, 1 + _traitEffect(character, 'actions') + (character.actionsMod ?? 0)),
+        seuil:           Math.max(0, 1 + _traitEffect(character, 'seuil') + (character.seuilMod ?? 0)),
+        armureNaturelle,
+        armureEquipee,
+        armureTotale:    Math.max(0, armureNaturelle + armureEquipee + (character.armureMod ?? 0)),
+        boucliers:       shields,
+        armureBoucliers: shields.reduce((sum, i) => sum + (i.armorValue || 0), 0),
+    };
+};
+
+/**
+ * Personnage avec ses colonnes de combat recalculées, avant toute écriture.
+ * `armure` inclut les boucliers, comme avant la refonte, pour le système de combat.
+ */
+export const withDerivedValues = (character) => {
+    const v = getCombatValues(character);
+    return { ...character, actionsDisponibles: v.actions, seuilCombat: v.seuil, armure: v.armureTotale + v.armureBoucliers };
+};
+
+/**
+ * Posture de combat passive (§8.2, C-1, C-2) : une ligne par compétence de
+ * combat au contact ; bonus = niveau ÷ 2 arrondi à l'inférieur, max 3 ;
+ * traits non comptés.
+ */
+export const getPassivePostures = (character) => {
+    const seuil = getCombatValues(character).seuil;
+    return (character.skills ?? [])
+        .filter(s => s.name === 'Combat CàC (armé)' || s.name === 'Combat CàC (non armé)')
+        .map(s => {
+            const bonus = Math.min(3, Math.floor((s.level ?? 0) / 2));
+            const label = s.name === 'Combat CàC (non armé)'
+                ? 'Esquive'
+                : `Parade${s.specialization ? ` (${s.specialization})` : ''}`;
+            return { skill: s, label, bonus, seuilDefense: seuil + bonus };
+        });
+};
+
+// ── Runes (§3.6, §8.1) ───────────────────────────────────────────────────────
+
+/** Livre de sort (somme des points de runes des traits), niveaux répartis, reste. */
+export const getRunePoints = (character) => {
+    const total = _traitEffect(character, 'runePoints');
+    const spent = (character.runes ?? []).reduce((sum, r) => sum + (r.level ?? 0), 0);
+    return { total, spent, available: total - spent };
 };
 
 // ── Évolution (§5) ───────────────────────────────────────────────────────────

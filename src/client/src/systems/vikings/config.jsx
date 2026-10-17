@@ -17,6 +17,7 @@ import {
     getBestCharacteristic,
     splitDiceWaves,
     isTripleTen,
+    SAGA_MAX,
 } from './config/rules.js';
 import getTraitBonuses from './config/traitBonuses.js';
 import { CARACNAMES }  from './config/competences.js';
@@ -160,7 +161,18 @@ const vikingsConfig = {
                 rollType,
                 selectedSkill,
                 selectedCarac,
+                aimBonus,
+                sagaActuelle,
             } = ctx.systemData;
+
+            // Visée : +1 succès auto par action de visée, sans coût (C-5)
+            const aim = aimBonus || 0;
+            // Triple 10 : +1 SAGA si la réserve, après le jet, n'est pas déjà à 5 (D-15, L3-1)
+            const tripleTenMeta = (values, spent, gained) => {
+                const tripleTen = isTripleTen(values, explosionThresholds || [10], pool);
+                const sagaAfter = (sagaActuelle ?? 0) - spent + gained;
+                return { tripleTen, sagaGained: tripleTen && sagaAfter < SAGA_MAX ? 1 : 0, aimBonus: aim };
+            };
 
             // Valeurs du jet principal (faces de dés uniquement, explosions incluses)
             const mainValues    = raw.groups[0].values;
@@ -179,7 +191,7 @@ const vikingsConfig = {
 
                 const totalSuccesses = Math.max(
                     0,
-                    keptRaw + (autoSuccesses || 0) + (totalTraitBonus || 0) - (fatigueMalus || 0)
+                    keptRaw + (autoSuccesses || 0) + (totalTraitBonus || 0) + aim - (fatigueMalus || 0)
                 );
 
                 const rollTarget = _buildRollTarget(rollType, selectedSkill, selectedCarac);
@@ -205,7 +217,7 @@ const vikingsConfig = {
                         autoSuccesses:  autoSuccesses || 0,
                         resourceSpent:  1,
                         resourceGained: 0,
-                        tripleTen:      isTripleTen(keptValues, explosionThresholds || [10], pool),
+                        ...tripleTenMeta(keptValues, 1, 0),
                         keptGroup,
                         secondaryValues: keptGroup === 0 ? values2 : mainValues,
                         // SAGA fields
@@ -222,14 +234,14 @@ const vikingsConfig = {
 
                 // Condition d'activation SAGA : 3+ succès, tout compris (dés, succès auto,
                 // bonus de traits) ; la fatigue relève aussi cette barre (D-5, Q-4)
-                const entrySuccesses = rawMainSuccesses + (autoSuccesses || 0) + (totalTraitBonus || 0) - (fatigueMalus || 0);
+                const entrySuccesses = rawMainSuccesses + (autoSuccesses || 0) + (totalTraitBonus || 0) + aim - (fatigueMalus || 0);
                 const sagaFailed    = entrySuccesses < 3;
 
                 const bonusSuccesses = sagaFailed ? 0 : sagaRaw;
                 const totalSuccesses = Math.max(
                     0,
                     rawMainSuccesses + bonusSuccesses
-                    + (autoSuccesses || 0) + (totalTraitBonus || 0) - (fatigueMalus || 0)
+                    + (autoSuccesses || 0) + (totalTraitBonus || 0) + aim - (fatigueMalus || 0)
                 );
 
                 const sagaSuccess   = !sagaFailed && sagaRaw >= 1 && totalSuccesses >= finalTarget;
@@ -256,7 +268,7 @@ const vikingsConfig = {
                         autoSuccesses:  autoSuccesses || 0,
                         resourceSpent:  1,
                         resourceGained: sagaSuccess ? 1 : 0,
-                        tripleTen:      isTripleTen(mainValues, explosionThresholds || [10], pool),
+                        ...tripleTenMeta(mainValues, 1, sagaSuccess ? 1 : 0),
                         sagaFailed,
                         sagaSuccess,
                         bonusSuccesses,
@@ -278,7 +290,7 @@ const vikingsConfig = {
             // ── Jet normal ────────────────────────────────────────────────────────
             const totalSuccesses = Math.max(
                 0,
-                rawMainSuccesses + (autoSuccesses || 0) + (totalTraitBonus || 0) - (fatigueMalus || 0)
+                rawMainSuccesses + (autoSuccesses || 0) + (totalTraitBonus || 0) + aim - (fatigueMalus || 0)
             );
             const rollTarget = _buildRollTarget(rollType, selectedSkill, selectedCarac);
 
@@ -303,7 +315,7 @@ const vikingsConfig = {
                     autoSuccesses:  autoSuccesses || 0,
                     resourceSpent:  0,
                     resourceGained: 0,
-                    tripleTen:      isTripleTen(mainValues, explosionThresholds || [10], pool),
+                    ...tripleTenMeta(mainValues, 0, 0),
                     sagaFailed: false, sagaSuccess: null, bonusSuccesses: null,
                     keptGroup: null, secondaryValues: null,
                 },

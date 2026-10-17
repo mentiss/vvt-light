@@ -1,6 +1,9 @@
 // CharacterCreation.js - Composant de création de personnage
 import React, { useState, useEffect } from "react";
-import { canSelectTrait, formatTraitConditions, getSuccessThreshold } from "./config/rules.js";
+import {
+    canSelectTrait, formatTraitConditions, getSuccessThreshold,
+    gainSaga, getTraitSagaBonus, withDerivedValues,
+} from "./config/rules.js";
 import {
     formatExplosion,
     formatFullName,
@@ -539,12 +542,12 @@ const Creation = ({ onCreated, onCancel }) => {
                                     {trait.description}
                                 </div>
                                 
-                                {(trait.effects.actions || trait.effects.armure || trait.effects.seuilCombat || trait.effects.runePoints || trait.effects.sagaBonus || trait.effects.description) && (
+                                {(trait.effects.actions || trait.effects.armure || trait.effects.seuil || trait.effects.runePoints || trait.effects.sagaBonus || trait.effects.description) && (
                                     <div className="text-sm text-viking-success dark:text-green-400 mb-2">
                                         <strong>Effets :</strong>{' '}
                                         {trait.effects.actions && `+${trait.effects.actions} Action `}
                                         {trait.effects.armure && `+${trait.effects.armure} Armure `}
-                                        {trait.effects.seuilCombat && `+${trait.effects.seuilCombat} Seuil `}
+                                        {trait.effects.seuil && `+${trait.effects.seuil} Seuil `}
                                         {trait.effects.runePoints && `${trait.effects.runePoints} pts Runes `}
                                         {trait.effects.sagaBonus && `+${trait.effects.sagaBonus} SAGA `}
                                         {trait.effects.description && trait.effects.description}
@@ -700,13 +703,20 @@ const Creation = ({ onCreated, onCancel }) => {
     const renderStep6 = () => {
         const fullName = formatFullName(character);
 
+        // Personnage final : « SAGA +N » des traits choisis appliqué à la SAGA de
+        // départ (D-9, D-11) et valeurs de combat dérivées des traits (L3-6)
+        const finalChar = withDerivedValues({
+            ...character,
+            ...gainSaga(character, getTraitSagaBonus(character.traits.map(t => t.name))),
+        });
+
         const handleComplete = async () => {
             setLoading(true);
             setError(null);
             try {
                 const characterToSave = customCode
-                    ? { ...character, accessCode: customCode }
-                    : character;
+                    ? { ...finalChar, accessCode: customCode }
+                    : finalChar;
                 const res = await fetch(`${apiBase}/characters`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
@@ -841,10 +851,10 @@ const Creation = ({ onCreated, onCancel }) => {
                 <div className="p-4 bg-viking-bronze/20 dark:bg-viking-leather/20 border-2 border-viking-bronze rounded-lg">
                     <h4 className="font-bold text-viking-brown dark:text-viking-parchment mb-2">Ressources de départ</h4>
                     <div className="text-sm text-viking-text dark:text-viking-parchment">
-                        <div>SAGA Actuelle : {character.sagaActuelle} / 5</div>
-                        <div>Actions par tour : {character.actionsDisponibles}</div>
-                        <div>Seuil de combat : {character.seuilCombat}</div>
-                        <div>Armure : {character.armure}</div>
+                        <div>SAGA Actuelle : {finalChar.sagaActuelle} / 5</div>
+                        <div>Actions par tour : {finalChar.actionsDisponibles}</div>
+                        <div>Seuil de combat : {finalChar.seuilCombat}</div>
+                        <div>Armure : {finalChar.armure}</div>
                     </div>
                 </div>
 

@@ -1,10 +1,15 @@
-// InventoryTab.js - Gestion inventaire/équipement
+// src/client/src/systems/vikings/components/layout/InventorySection.jsx
+// Inventaire (équipé / sac / réserve), section de la fiche complète — joueur
+// et MJ (ancien onglet séparé). onUpdate reçoit le personnage avec ses items ;
+// SheetLayout n'en reporte que les items sur la fiche à jour.
+// Défauts connus (useState dans renderSection, setAlertMessage) : lot 5.
 import React, { useState, useEffect } from "react";
 import {CARACNAMES} from "../../config/competences.js";
 import {ITEMS} from "../../config/equipment.js";
+import {getCombatValues} from "../../config/rules.js";
 import AlertModal from "../../../../components/modals/AlertModal.jsx";
 
-const InventoryTab = ({ character, onUpdate }) => {
+const InventorySection = ({ character, onUpdate }) => {
     const { useState } = React;
     
     const [showAddModal, setShowAddModal] = useState(false);
@@ -19,28 +24,15 @@ const InventoryTab = ({ character, onUpdate }) => {
     const bag = items.filter(i => i.location === 'bag');
     const stash = items.filter(i => i.location === 'stash');
     
-    // Calculer armure totale depuis équipement
-    const totalArmor = equipped.reduce((sum, i) => sum + (i.armorValue || 0), 0);
+    // Armure totale (traits + équipement + ajustement), boucliers à part — comme la fiche
+    const { armureTotale: totalArmor, armureBoucliers } = getCombatValues(character);
     
     // Déplacer item
     const moveItem = (item, newLocation) => {
-        const updatedItems = items.map(i => 
-            i.id === item.id ? { ...i, location: newLocation } : i
-        );
-        
-        // Recalculer armure si changement équipement
-        let newArmor = character.armure;
-        if (item.location === 'equipped' || newLocation === 'equipped') {
-            const newTotalArmor = updatedItems
-                .filter(i => i.location === 'equipped')
-                .reduce((sum, i) => sum + (i.armorValue || 0), 0);
-            newArmor = newTotalArmor;
-        }
-        
+        // Armure recalculée par la fiche avant écriture (withDerivedValues, lot 3b)
         onUpdate({
             ...character,
-            items: updatedItems,
-            armure: newArmor
+            items: items.map(i => i.id === item.id ? { ...i, location: newLocation } : i),
         });
     };
     
@@ -48,21 +40,10 @@ const InventoryTab = ({ character, onUpdate }) => {
     const deleteItem = (itemId) => {
         if (!confirm('Supprimer cet objet ?')) return;
         
-        const item = items.find(i => i.id === itemId);
-        const updatedItems = items.filter(i => i.id !== itemId);
-        
-        // Recalculer armure si équipé
-        let newArmor = character.armure;
-        if (item.location === 'equipped' && item.armorValue) {
-            newArmor = updatedItems
-                .filter(i => i.location === 'equipped')
-                .reduce((sum, i) => sum + (i.armorValue || 0), 0);
-        }
-        
+        // Armure recalculée par la fiche avant écriture (withDerivedValues, lot 3b)
         onUpdate({
             ...character,
-            items: updatedItems,
-            armure: newArmor
+            items: items.filter(i => i.id !== itemId),
         });
     };
     
@@ -121,7 +102,7 @@ const InventoryTab = ({ character, onUpdate }) => {
                 {location === 'equipped' && (
                     <div className="mb-3 p-3 bg-viking-success/20 rounded-lg border-2 border-viking-success">
                         <div className="text-lg font-bold text-viking-success text-center">
-                            ARMURE TOTALE : {totalArmor}
+                            ARMURE TOTALE : {totalArmor}{armureBoucliers > 0 && ` (+ bouclier ${armureBoucliers})`}
                         </div>
                     </div>
                 )}
@@ -436,20 +417,10 @@ const AddItemModal = ({ character, onClose, onUpdate, defaultLocation }) => {
             };
         }
         
-        const updatedItems = [...(character.items || []), newItem];
-        
-        // Recalculer armure si équipé
-        let newArmor = character.armure;
-        if (location === 'equipped' && newItem.armorValue) {
-            newArmor = updatedItems
-                .filter(i => i.location === 'equipped')
-                .reduce((sum, i) => sum + (i.armorValue || 0), 0);
-        }
-        
+        // Armure recalculée par la fiche avant écriture (withDerivedValues, lot 3b)
         onUpdate({
             ...character,
-            items: updatedItems,
-            armure: newArmor
+            items: [...(character.items || []), newItem],
         });
         
         onClose();
@@ -766,22 +737,10 @@ const EditItemModal = ({ character, item, onClose, onUpdate }) => {
             requirements
         };
         
-        const updatedItems = character.items.map(i => 
-            i.id === item.id ? updatedItem : i
-        );
-        
-        // Recalculer armure si changement dans équipement
-        let newArmor = character.armure;
-        if (item.location === 'equipped' || location === 'equipped' || item.armorValue !== updatedItem.armorValue) {
-            newArmor = updatedItems
-                .filter(i => i.location === 'equipped')
-                .reduce((sum, i) => sum + (i.armorValue || 0), 0);
-        }
-        
+        // Armure recalculée par la fiche avant écriture (withDerivedValues, lot 3b)
         onUpdate({
             ...character,
-            items: updatedItems,
-            armure: newArmor
+            items: character.items.map(i => i.id === item.id ? updatedItem : i),
         });
         
         onClose();
@@ -968,4 +927,4 @@ const EditItemModal = ({ character, item, onClose, onUpdate }) => {
     );
 };
 
-export default InventoryTab;
+export default InventorySection;

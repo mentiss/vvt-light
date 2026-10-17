@@ -101,6 +101,31 @@ describe('afterRoll — assurance', () => {
     });
 });
 
+describe('afterRoll — visée (C-5)', () => {
+    it('+1 succès auto par action de visée, compté dans le total', () => {
+        expect(afterRoll(raw([8, 3, 2]), ctx({ aimBonus: 2 })).successes).toBe(3);
+    });
+
+    it('compte aussi pour la barre d\'entrée du jet héroïque (D-5)', () => {
+        const r = afterRoll(raw([8, 8, 2], [7, 1, 1]), ctx({ declaredMode: 'heroic', aimBonus: 1 }));
+        expect(r.meta.sagaFailed).toBe(false);
+    });
+});
+
+describe('afterRoll — gain de SAGA du triple 10 (D-15, L3-1)', () => {
+    const triple = [10, 4, 10, 2, 10, 7];
+
+    it('+1 SAGA si la réserve n\'est pas pleine après le jet', () => {
+        expect(afterRoll(raw(triple), ctx({ sagaActuelle: 4 })).meta.sagaGained).toBe(1);
+        expect(afterRoll(raw(triple), ctx({ sagaActuelle: 5 })).meta.sagaGained).toBe(0);
+    });
+
+    it('tient compte du point dépensé en assurance', () => {
+        // 5 − 1 (assurance) = 4 : le triple 10 rapporte bien +1
+        expect(afterRoll(raw(triple, [1, 1, 1]), ctx({ declaredMode: 'insurance', sagaActuelle: 5 })).meta.sagaGained).toBe(1);
+    });
+});
+
 describe('buildAnimationSequence', () => {
     it('vagues d\'explosion dans le bon ordre', () => {
         const c = ctx({ pool: 3, explosionThresholds: [9, 10] });

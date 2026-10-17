@@ -10,7 +10,7 @@ import {
     getBlessureMalus, getFatigueMalus, isFatigueKO,
     splitDiceWaves, isTripleTen,
     XP_COSTS, checkTraitConditions, formatTraitConditions, canSelectTrait,
-    applyRollOutcome,
+    applyRollOutcome, gainSaga, getCombatValues, withDerivedValues, getPassivePostures,
     TRAITS,
 } from '../../../src/systems/vikings/config.jsx';
 
@@ -181,5 +181,71 @@ describe('effets d\'un jet sur la fiche (régression : dépenses qui s\'écrasai
     it('SAGA bornée entre 0 et 5', () => {
         expect(applyRollOutcome(perso({ sagaActuelle: 0 }), { sagaSpent: 1 }).sagaActuelle).toBe(0);
         expect(applyRollOutcome(perso({ sagaActuelle: 5 }), { sagaRestored: 1 }).sagaActuelle).toBe(5);
+    });
+
+    it('jet héroïque réussi : le point récupéré n\'augmente pas la SAGA totale (D-10)', () => {
+        const avant = applyRollOutcome(perso({ sagaActuelle: 3, sagaTotale: 7 }), { sagaSpent: 1 });
+        expect(applyRollOutcome(avant, { sagaRestored: 1 })).toMatchObject({ sagaActuelle: 3, sagaTotale: 7 });
+    });
+
+    it('triple 10 : +1 SAGA et +1 SAGA totale, rien à 5 (D-15, L3-1)', () => {
+        expect(applyRollOutcome(perso({ sagaActuelle: 2, sagaTotale: 4 }), { tripleTen: true }))
+            .toMatchObject({ sagaActuelle: 3, sagaTotale: 5 });
+        expect(applyRollOutcome(perso({ sagaActuelle: 5, sagaTotale: 9 }), { tripleTen: true }))
+            .toMatchObject({ sagaActuelle: 5, sagaTotale: 9 });
+    });
+});
+
+describe('gain de SAGA (D-9, D-10, L3-1)', () => {
+    it('réserve plafonnée à 5, SAGA totale augmentée du seul gain reçu', () => {
+        expect(gainSaga({ sagaActuelle: 3, sagaTotale: 3 }, 3)).toEqual({ sagaActuelle: 5, sagaTotale: 5 });
+        expect(gainSaga({ sagaActuelle: 1, sagaTotale: 1 }, 2)).toEqual({ sagaActuelle: 3, sagaTotale: 3 });
+    });
+});
+
+describe('valeurs de combat dérivées (B-8, L3-6)', () => {
+    const broigne  = { name: 'Broigne', category: 'armor', armorValue: 1, location: 'equipped' };
+    const bouclier = { name: 'Bouclier en bois', category: 'armor', armorValue: 1, location: 'equipped' };
+
+    it('traits + armure portée ; boucliers à part ; objet au sac ignoré', () => {
+        const c = perso({
+            traits: [{ name: 'Bons réflexes' }, { name: 'Peau dure' }],
+            items: [broigne, bouclier, { ...broigne, location: 'bag' }],
+        });
+        expect(getCombatValues(c)).toMatchObject({ actions: 2, seuil: 1, armureNaturelle: 1, armureEquipee: 1, armureTotale: 2, armureBoucliers: 1 });
+        // Colonne armure lue par le système de combat : boucliers compris, comme avant la refonte
+        expect(withDerivedValues(c)).toMatchObject({ actionsDisponibles: 2, seuilCombat: 1, armure: 3 });
+    });
+
+    it('effets conditionnels hors calcul : Marin (en mer), Insaisissable (armure légère)', () => {
+        expect(getCombatValues(perso({ traits: [{ name: 'Marin' }, { name: 'Insaisissable' }] })))
+            .toMatchObject({ actions: 1, seuil: 1 });
+    });
+
+    it('ajustement positif ou négatif ajouté au calcul', () => {
+        const c = perso({ traits: [{ name: 'Peau dure' }], actionsMod: 1, seuilMod: 1, armureMod: -1 });
+        expect(getCombatValues(c)).toMatchObject({ actions: 2, seuil: 2, armureTotale: 0 });
+    });
+
+    it('les anciennes valeurs stockées sont ignorées (recalcul)', () => {
+        expect(withDerivedValues(perso({ armure: 7, actionsDisponibles: 4, seuilCombat: 3 })))
+            .toMatchObject({ armure: 0, actionsDisponibles: 1, seuilCombat: 1 });
+    });
+});
+
+describe('posture passive (§8.2, C-1, C-2)', () => {
+    it('bonus = niveau ÷ 2 arrondi à l\'inférieur, max 3 ; une ligne par compétence de contact', () => {
+        const c = perso({ skills: [
+            { name: 'Combat CàC (armé)', specialization: 'Épée', level: 3 },
+            { name: 'Combat CàC (armé)', specialization: 'Hache', level: 1 },
+            { name: 'Combat CàC (non armé)', level: 5 },
+            { name: 'Combat distance', specialization: 'Arc', level: 4 },
+        ] });
+        expect(getPassivePostures(c).map(p => [p.label, p.bonus, p.seuilDefense])).toEqual([
+            ['Parade (Épée)', 1, 2],
+            ['Parade (Hache)', 0, 1],
+            ['Esquive', 2, 3],
+        ]);
+        expect(getPassivePostures(perso({ skills: [{ name: 'Combat CàC (non armé)', level: 7 }] }))[0].bonus).toBe(3);
     });
 });

@@ -43,10 +43,14 @@ CREATE TABLE IF NOT EXISTS characters (
                                           charisme             INTEGER  DEFAULT 2,
                                           chance               INTEGER  DEFAULT 2,
 
-    -- Combat
+    -- Combat (valeurs dérivées des traits et de l'équipement, recalculées par le
+    -- client ; *_mod = ajustement bonus/malus saisi en mode édition, lot 3b)
                                           armure               INTEGER  DEFAULT 0,
                                           actions_disponibles  INTEGER  DEFAULT 1,
                                           seuil_combat         INTEGER  DEFAULT 1,
+                                          armure_mod           INTEGER  NOT NULL DEFAULT 0,
+                                          actions_mod          INTEGER  NOT NULL DEFAULT 0,
+                                          seuil_mod            INTEGER  NOT NULL DEFAULT 0,
 
     -- SAGA (actuelle plafonnée à 5 côté client ; totale = légende cumulée, D-10)
                                           saga_actuelle        INTEGER  DEFAULT 1,

@@ -14,13 +14,12 @@
 import React, { useState, useCallback } from 'react';
 import './theme.css';
 import { formatFullName, pickEditableFields } from './config/utils.js';
+import { withDerivedValues } from './config/rules.js';
 import vikingsConfig      from './config.jsx';
 import SheetLayout        from './components/layout/SheetLayout.jsx';
 import VikingsHistoryEntry from './components/layout/VikingsHistoryEntry.jsx';
 import DiceModal          from './components/modals/DiceModal.jsx';
 import EditModals         from './components/modals/EditModals.jsx';
-import RunesTab           from './components/tabs/RunesTab.jsx';
-import InventoryTab       from './components/tabs/InventoryTab.jsx';
 import ExperienceModal    from './components/modals/ExperienceModal.jsx';
 import ThemeToggle        from '../../components/ui/ThemeToggle.jsx';
 import AvatarUploader     from '../../components/AvatarUploader.jsx';
@@ -40,11 +39,9 @@ import { useSystem }      from '../../hooks/useSystem.js';
 // Titres en runes qui tournent dans le header
 const RUNE_TITLES = ['ᛟᛞᛁᚾ', 'ᚢᛁᚲᛁᛜ', 'ᛃᚨᚱᛚ', 'ᚢᛟᛚᚢᚨ', 'ᛊᚲᚨᛚᛞ', 'ᛈᚢᚱᛖ'];
 
-// L'onglet Runes est remplacé par une section de la fiche au lot 3b.
+// Runes et inventaire sont des sections de la fiche, plus des onglets.
 const TABS = [
     { id: 'fiche',      label: '📋 Ma Fiche' },
-    { id: 'runes',      label: '🔮 Runes' },
-    { id: 'inventaire', label: '🎒 Inventaire' },
     { id: 'journal',    label: '📓 Journal' },
     { id: 'historique', label: '📜 Historique' },
 ];
@@ -98,17 +95,23 @@ const Sheet = ({
         setEditableChar(prev => ({ ...prev, [field]: value }));
     }, []);
 
+    // Toute écriture recalcule les valeurs de combat (traits, équipement,
+    // ajustement) avant le PUT de PlayerPage (L3-6).
+    const persist = useCallback((updater) => {
+        onCharacterUpdate(prev => withDerivedValues(resolve(updater, prev)));
+    }, [onCharacterUpdate]);
+
     // Action de jeu : persistée tout de suite, et reportée dans le buffer
     // d'édition pour rester visible pendant l'édition.
     const update = useCallback((updater) => {
-        onCharacterUpdate(updater);
+        persist(updater);
         if (editMode) setEditableChar(prev => resolve(updater, prev));
-    }, [onCharacterUpdate, editMode]);
+    }, [persist, editMode]);
 
     const startEdit = () => { setEditableChar({ ...character }); setEditMode(true); };
     const saveEdit  = () => {
         const edited = pickEditableFields(editableChar);
-        onCharacterUpdate(prev => ({ ...prev, ...edited }));
+        persist(prev => ({ ...prev, ...edited }));
         setEditMode(false);
     };
     const cancelEdit = () => setEditMode(false);
@@ -245,8 +248,6 @@ const Sheet = ({
                         </>
                     )}
 
-                    {activeTab === 'runes'      && <RunesTab character={character} onUpdate={onCharacterUpdate} />}
-                    {activeTab === 'inventaire' && <InventoryTab character={character} onUpdate={onCharacterUpdate} />}
                     {activeTab === 'journal'    && <JournalTab characterId={character.id} />}
                     {activeTab === 'historique' && (
                         <DiceHistoryPage
@@ -267,14 +268,14 @@ const Sheet = ({
             {/* ── Modales fiche ── */}
             {diceContext && (
                 <DiceModal character={character} isBerserk={false} context={diceContext}
-                           onClose={() => setDiceContext(null)} onUpdate={onCharacterUpdate} sessionId={activeGMSession} />
+                           onClose={() => setDiceContext(null)} onUpdate={persist} sessionId={activeGMSession} />
             )}
             {showEditModal && (
                 <EditModals type={showEditModal} character={editableChar}
                             onClose={() => setShowEditModal(null)}
                             onUpdate={(newChar) => { setEditableChar(newChar); setShowEditModal(null); }} />
             )}
-            {showEvolution && <ExperienceModal character={character} onClose={() => setShowEvolution(false)} onUpdate={onCharacterUpdate} />}
+            {showEvolution && <ExperienceModal character={character} onClose={() => setShowEvolution(false)} onUpdate={persist} />}
             {showAvatar && (
                 <AvatarUploader
                     currentAvatar={character.avatar}
@@ -294,7 +295,7 @@ const Sheet = ({
                 isOpen={showAccessCode}
                 character={character}
                 onClose={() => setShowAccessCode(false)}
-                onSuccess={(updated) => { onCharacterUpdate(prev => ({ ...prev, accessCode: updated.accessCode })); setShowAccessCode(false); }}
+                onSuccess={(updated) => { persist(prev => ({ ...prev, accessCode: updated.accessCode })); setShowAccessCode(false); }}
             />
             <CharacterListModal
                 isOpen={showCharList}

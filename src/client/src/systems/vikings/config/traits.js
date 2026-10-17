@@ -97,7 +97,8 @@ export const TRAITS = [
     {
         name: "Marin",
         description: "La mer est votre véritable foyer. Vous ne souffrez ni du mal de mer, ni de la promiscuité à bord, et ignorez le tangage. Vous savez entretenir un navire instinctivement.",
-        effects: { actions: 1, description: "Action +1 (en mer), Charpentier marine (+1 suc auto)" },
+        // Action +1 conditionnelle (en mer) : hors calcul automatique, via l'ajustement (lot 3b)
+        effects: { description: "Action +1 (en mer), Charpentier marine (+1 suc auto)" },
         requirements: { force: 2, agilite: 2 },
         requiresSkill: { "Combat CàC (armé)": 1 },
         incompatible: ["Volva", "Aveugle", "Berserk"]
@@ -231,7 +232,8 @@ export const TRAITS = [
     {
         name: "Sens de l'orientation",
         description: "Les étoiles et le soleil sont vos guides. Vous savez instinctivement où se trouve le Nord et comment diriger un navire vers sa destination.",
-        effects: { actions: 1, description: "Navigation (+1 suc auto), Action (en mer) +1" },
+        // Action +1 conditionnelle (en mer) : hors calcul automatique, via l'ajustement (lot 3b)
+        effects: { description: "Navigation (+1 suc auto), Action (en mer) +1" },
         requirements: {},
         incompatible: []
     },
@@ -294,7 +296,8 @@ export const TRAITS = [
     {
         name: "Insaisissable",
         description: "Anguille sur le champ de bataille, vous misez tout sur la mobilité, refusant les armures lourdes qui vous ralentiraient.",
-        effects: { seuil: 1, description: "Si Armure légère/nulle: SEUIL +1 contre CàC" },
+        // Seuil +1 conditionnel : hors calcul automatique, via l'ajustement (lot 3b)
+        effects: { description: "Si Armure légère/nulle: SEUIL +1 contre CàC" },
         requirements: { agilite: 3 },
         incompatible: ["Peau dure", "Berserk", "Huskarl", "Force de géant", "Foudre de guerre", "Taille imposante"]
     },

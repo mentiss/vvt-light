@@ -10,9 +10,10 @@
 
 import React, { useState } from "react";
 import {formatSkillName, getSkillExamples, isSpecializableSkill} from "../../config/utils.js";
-import {XP_COSTS, checkTraitConditions} from "../../config/rules.js";
+import {XP_COSTS, checkTraitConditions, gainSaga, getTraitSagaBonus} from "../../config/rules.js";
 import {CARACNAMES, COMPETENCES} from "../../config/competences.js";
 import {TRAITS} from "../../config/traits.js";
+import {RUNES} from "../../config/runes.js";
 
 /** Raison pour laquelle un trait ne peut pas être acquis, ou null. */
 const traitBlocker = (character, trait) => {
@@ -27,6 +28,8 @@ const MODES = [
     { mode: 'skill',    label: '+1 Compétence' },
     { mode: 'newSkill', label: 'Nouvelle Compétence' },
     { mode: 'trait',    label: 'Nouveau Trait' },
+    { mode: 'rune',     label: '+1 Rune' },
+    { mode: 'newRune',  label: 'Nouvelle Rune' },
 ];
 
 const ExperienceModal = ({ character, onClose, onUpdate }) => {
@@ -80,16 +83,8 @@ const ExperienceModal = ({ character, onClose, onUpdate }) => {
                 currentPoints: 1
             }];
         } else if (mode === 'trait') {
-            // Nouveau trait
+            // Nouveau trait (valeurs de combat recalculées par la fiche avant écriture)
             updated.traits = [...updated.traits, { name: selected }];
-            
-            // Appliquer effets
-            const trait = TRAITS.find(t => t.name === selected);
-            if (trait?.effects) {
-                if (trait.effects.actions) updated.actionsDisponibles += trait.effects.actions;
-                if (trait.effects.armure) updated.armure += trait.effects.armure;
-                if (trait.effects.seuil) updated.seuilCombat += trait.effects.seuil;
-            }
         } else if (mode === 'rune') {
             // +1 Rune existante
             updated.runes = updated.runes.map(r =>
@@ -107,6 +102,9 @@ const ExperienceModal = ({ character, onClose, onUpdate }) => {
         
         // Dépenser SAGA (la SAGA totale ne compte que les gains, D-10)
         updated.sagaActuelle = Math.max(0, updated.sagaActuelle - currentCost);
+
+        // « SAGA +N » du trait acquis, appliqué après la dépense (D-9, L3-2)
+        if (mode === 'trait') updated = { ...updated, ...gainSaga(updated, getTraitSagaBonus([selected])) };
         
         onUpdate(updated);
         onClose();
@@ -312,6 +310,41 @@ const ExperienceModal = ({ character, onClose, onUpdate }) => {
                                 </div>
                             )}
                             
+                            {(mode === 'rune' || mode === 'newRune') && (
+                                <div>
+                                    <div className="flex justify-between items-center mb-2">
+                                        <h4 className="text-sm font-semibold text-viking-brown dark:text-viking-parchment">
+                                            {mode === 'rune' ? 'Choisir une rune connue :' : 'Choisir une nouvelle rune :'}
+                                        </h4>
+                                        <button onClick={resetSelection} className="text-xs text-viking-leather dark:text-viking-bronze hover:underline">← Retour</button>
+                                    </div>
+                                    <div className="grid grid-cols-3 gap-2 max-h-60 overflow-y-auto">
+                                        {RUNES
+                                            .filter(r => {
+                                                const level = character.runes?.find(cr => cr.name === r.name)?.level ?? 0;
+                                                return mode === 'rune' ? level >= 1 && level < 5 : level === 0;
+                                            })
+                                            .map(r => {
+                                                const level = character.runes?.find(cr => cr.name === r.name)?.level ?? 0;
+                                                return (
+                                                    <button
+                                                        key={r.name}
+                                                        onClick={() => setSelected(r.name)}
+                                                        className={`p-2 rounded text-sm text-left ${
+                                                            selected === r.name
+                                                                ? 'bg-viking-bronze text-viking-brown font-semibold'
+                                                                : 'bg-viking-parchment dark:bg-gray-800 text-viking-text dark:text-viking-parchment hover:bg-viking-bronze/30'
+                                                        }`}
+                                                    >
+                                                        <div className="font-semibold">{r.symbol} {r.name}</div>
+                                                        <div className="text-xs">{mode === 'rune' ? `Niv ${level} → ${level + 1}` : 'Niv 1'}</div>
+                                                    </button>
+                                                );
+                                            })}
+                                    </div>
+                                </div>
+                            )}
+
                             {/* Bouton Confirmer */}
                             {mode && selected && (
                                 <div className="flex gap-2 pt-2 border-t border-viking-leather dark:border-viking-bronze">
@@ -341,7 +374,9 @@ const ExperienceModal = ({ character, onClose, onUpdate }) => {
                                     {mode === 'carac' && <p>+1 {CARACNAMES[selected]} ({character[selected]} → {character[selected] + 1})</p>}
                                     {mode === 'skill' && <p>+1 {formatSkillName(selected)} (Niv {selected.level} → {selected.level + 1})</p>}
                                     {mode === 'newSkill' && <p>Nouvelle compétence : {selected}{specialization && ` (${specialization})`} (Niv 1)</p>}
-                                    {mode === 'trait' && <p>Nouveau trait : {selected}</p>}
+                                    {mode === 'trait' && <p>Nouveau trait : {selected}{getTraitSagaBonus([selected]) > 0 && ` (SAGA +${getTraitSagaBonus([selected])})`}</p>}
+                                    {mode === 'rune' && <p>+1 {selected}</p>}
+                                    {mode === 'newRune' && <p>Nouvelle rune : {selected} (Niv 1)</p>}
                                     <p className="text-viking-bronze font-semibold">Coût : {currentCost} SAGA</p>
                                     <p>SAGA restante : {character.sagaActuelle - currentCost}</p>
                                 </div>

@@ -203,24 +203,9 @@ export const AddTraitModal = ({ character, onClose, onUpdate }) => {
     const handleAdd = () => {
         if (!selected) return;
         
-        const newTraits = [...character.traits, { name: selected.name }];
-        
-        // Appliquer les effets du trait
-        let updated = { ...character, traits: newTraits };
-        
-        if (selected.effects) {
-            if (selected.effects.actions) {
-                updated.actionsDisponibles += selected.effects.actions;
-            }
-            if (selected.effects.armure) {
-                updated.armure += selected.effects.armure;
-            }
-            if (selected.effects.seuil) {
-                updated.seuilCombat += selected.effects.seuil;
-            }
-        }
-        
-        onUpdate(updated);
+        // Mode édition = correction : pas de « SAGA +N » (L3-2) ; les valeurs de
+        // combat sont recalculées à l'enregistrement (withDerivedValues).
+        onUpdate({ ...character, traits: [...character.traits, { name: selected.name }] });
     };
     
     return (
