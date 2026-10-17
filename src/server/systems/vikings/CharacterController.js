@@ -67,33 +67,32 @@ function _syncSubTable(db, table, characterId, incoming, upsertFn) {
     }
 }
 
+// Mise à jour par id, sinon insertion. Un id inconnu de la base (id temporaire
+// créé côté client, ex. Date.now() dans l'inventaire) est traité comme une insertion.
+function _updateOrInsert(db, entry, updateSql, updateValues, insertSql, insertValues) {
+    const changes = entry.id ? db.prepare(updateSql).run(...updateValues).changes : 0;
+    if (!changes) db.prepare(insertSql).run(...insertValues);
+}
+
 function _upsertSkill(db, charId, s) {
     const values = [s.name, s.specialization || null, s.level ?? 0, s.currentPoints ?? 0];
-    if (s.id) {
-        db.prepare(`UPDATE character_skills SET skill_name = ?, specialization = ?, level = ?, current_points = ?
-                    WHERE id = ? AND character_id = ?`).run(...values, s.id, charId);
-    } else {
-        db.prepare(`INSERT INTO character_skills (character_id, skill_name, specialization, level, current_points)
-                    VALUES (?, ?, ?, ?, ?)`).run(charId, ...values);
-    }
+    _updateOrInsert(db, s,
+        `UPDATE character_skills SET skill_name = ?, specialization = ?, level = ?, current_points = ?
+         WHERE id = ? AND character_id = ?`, [...values, s.id, charId],
+        `INSERT INTO character_skills (character_id, skill_name, specialization, level, current_points)
+         VALUES (?, ?, ?, ?, ?)`, [charId, ...values]);
 }
 
 function _upsertTrait(db, charId, t) {
-    if (t.id) {
-        db.prepare('UPDATE character_traits SET trait_name = ? WHERE id = ? AND character_id = ?').run(t.name, t.id, charId);
-    } else {
-        db.prepare('INSERT INTO character_traits (character_id, trait_name) VALUES (?, ?)').run(charId, t.name);
-    }
+    _updateOrInsert(db, t,
+        'UPDATE character_traits SET trait_name = ? WHERE id = ? AND character_id = ?', [t.name, t.id, charId],
+        'INSERT INTO character_traits (character_id, trait_name) VALUES (?, ?)', [charId, t.name]);
 }
 
 function _upsertRune(db, charId, r) {
-    if (r.id) {
-        db.prepare('UPDATE character_runes SET rune_name = ?, level = ? WHERE id = ? AND character_id = ?')
-            .run(r.name, r.level ?? 1, r.id, charId);
-    } else {
-        db.prepare('INSERT INTO character_runes (character_id, rune_name, level) VALUES (?, ?, ?)')
-            .run(charId, r.name, r.level ?? 1);
-    }
+    _updateOrInsert(db, r,
+        'UPDATE character_runes SET rune_name = ?, level = ? WHERE id = ? AND character_id = ?', [r.name, r.level ?? 1, r.id, charId],
+        'INSERT INTO character_runes (character_id, rune_name, level) VALUES (?, ?, ?)', [charId, r.name, r.level ?? 1]);
 }
 
 function _upsertItem(db, charId, item) {
@@ -102,15 +101,13 @@ function _upsertItem(db, charId, item) {
         item.weaponType || null, item.damage ?? null, item.range || null, item.armorValue ?? 0,
         JSON.stringify(item.requirements ?? {}), item.customItem ? 1 : 0,
     ];
-    if (item.id) {
-        db.prepare(`UPDATE character_items SET name = ?, category = ?, quantity = ?, location = ?, notes = ?,
-                        weapon_type = ?, damage = ?, range = ?, armor_value = ?, requirements = ?, custom_item = ?
-                    WHERE id = ? AND character_id = ?`).run(...values, item.id, charId);
-    } else {
-        db.prepare(`INSERT INTO character_items (character_id, name, category, quantity, location, notes,
-                        weapon_type, damage, range, armor_value, requirements, custom_item)
-                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`).run(charId, ...values);
-    }
+    _updateOrInsert(db, item,
+        `UPDATE character_items SET name = ?, category = ?, quantity = ?, location = ?, notes = ?,
+             weapon_type = ?, damage = ?, range = ?, armor_value = ?, requirements = ?, custom_item = ?
+         WHERE id = ? AND character_id = ?`, [...values, item.id, charId],
+        `INSERT INTO character_items (character_id, name, category, quantity, location, notes,
+             weapon_type, damage, range, armor_value, requirements, custom_item)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`, [charId, ...values]);
 }
 
 function _parseJson(text, fallback) {

@@ -5,16 +5,11 @@
 
 import React, { useState, useEffect } from 'react';
 import { toSystemUrl } from '../../hooks/useFetch.js';
-import {formatFullName} from "../../tools/utils.js";
 import useSystem from "../../hooks/useSystem.js";
 
-const SayMyName = (slug, char) => {
-    if(slug !== 'vikings') {
-        return (char.prenom ? (char.nom ? char.prenom+' '+char.nom : char.prenom) : (char.nom ? char.nom : 'Nom inconnu'));
-    }
-    console.log(char);
-    return formatFullName(char);
-};
+// Affichage générique « Prénom Nom », identique pour tous les slugs
+const SayMyName = (char) =>
+    (char.prenom ? (char.nom ? char.prenom+' '+char.nom : char.prenom) : (char.nom ? char.nom : 'Nom inconnu'));
 
 const CharacterListModal = ({ isOpen, currentCharId, onClose, onSelect }) => {
     const { slug } = useSystem()
@@ -83,7 +78,7 @@ const CharacterListModal = ({ isOpen, currentCharId, onClose, onSelect }) => {
                         <div className="grid grid-cols-1 gap-3">
                             {characters.filter(c => c.id > 0).map(char => {
                                 const isCurrent = char.id === currentCharId;
-                                const charname = SayMyName(slug, char);
+                                const charname = SayMyName(char);
                                 return (
                                     <button
                                         key={char.id}

@@ -1,8 +1,10 @@
 // EvolutionModal.js - Modal d'évolution (Dépense SAGA)
 
 import React, { useState, useEffect } from "react";
-import {formatSkillName, getSkillExamples, isSpecializableSkill} from "../../tools/utils.js";
-import {CARACNAMES, COMPETENCES, TRAITS} from "../../tools/data.js";
+import {formatSkillName, getSkillExamples, isSpecializableSkill} from "./config/utils.js";
+import {XP_COSTS} from "./config/rules.js";
+import {CARACNAMES, COMPETENCES} from "./config/competences.js";
+import {TRAITS} from "./config/traits.js";
 
 const Experience = ({ character, onClose, onUpdate }) => {
     const { useState } = React;
@@ -14,14 +16,7 @@ const Experience = ({ character, onClose, onUpdate }) => {
     const [specialization, setSpecialization] = useState('');
     const [error, setError] = useState(null);
     
-    const costs = {
-        carac: 2,
-        skill: 1,
-        newSkill: 3,
-        trait: 4,
-        rune: 2,
-        newRune: 3
-    };
+    const costs = XP_COSTS;   // runes à 1 SAGA (D-7)
     
     const currentCost = mode ? costs[mode] : 0;
     const canAfford = character.sagaActuelle >= currentCost;

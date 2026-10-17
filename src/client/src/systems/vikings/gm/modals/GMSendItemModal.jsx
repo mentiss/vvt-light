@@ -1,6 +1,7 @@
-// components/GMView/scene/GMSendItemModal.jsx - Modale envoi d'item GM → joueur
+// src/client/src/systems/vikings/gm/modals/GMSendItemModal.jsx - Modale envoi d'item GM → joueur (catalogue Vikings)
 import React, { useState } from 'react';
-import { ITEMS, CARACNAMES } from '../../../tools/data.js';
+import { ITEMS } from '../../config/equipment.js';
+import { CARACNAMES } from '../../config/competences.js';
 
 const TOAST_ANIMATIONS = [
     { id: 'default', label: 'Classique', icon: '📬' },

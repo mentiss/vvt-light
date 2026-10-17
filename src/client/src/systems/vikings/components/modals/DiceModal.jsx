@@ -16,13 +16,13 @@
 
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import {
-    formatSkillName,
     getBestCharacteristic, getBlessureMalus,
     getExplosionThreshold, getFatigueMalus,
     getSuccessThreshold,
-} from '../../../../tools/utils.js';
-import getTraitBonuses from '../../../../tools/traitBonuses.js';
-import { CARACNAMES }  from '../../../../tools/data.js';
+} from '../../config/rules.js';
+import { formatSkillName } from '../../config/utils.js';
+import getTraitBonuses from '../../config/traitBonuses.js';
+import { CARACNAMES }  from '../../config/competences.js';
 import { roll, RollError } from '../../../../tools/diceEngine.js';
 import vikingsConfig   from '../../config.jsx';
 import { useFetch }    from '../../../../hooks/useFetch.js';

@@ -4,7 +4,7 @@ import { useSocket } from '../../../../context/SocketContext.jsx';
 import { useFetch } from '../../../../hooks/useFetch.js';
 import GMCharacterCard from '../pj/GMCharacterCard.jsx';
 import GMSendModal from "../../../../components/gm/modals/GMSendModal.jsx";
-import GMSendItemModal from "../../../../components/gm/modals/GMSendItemModal.jsx";
+import GMSendItemModal from "../modals/GMSendItemModal.jsx";
 
 const TabSession = ({ activeSession, onlineCharacters }) => {
     const [characters, setCharacters] = useState({}); // Map id -> fullCharacter

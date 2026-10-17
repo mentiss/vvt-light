@@ -1,13 +1,16 @@
 // CharacterCreation.js - Composant de création de personnage
 import React, { useState, useEffect } from "react";
+import { canSelectTrait, formatTraitConditions, getSuccessThreshold } from "./config/rules.js";
 import {
-    canSelectTrait, formatExplosion,
+    formatExplosion,
     formatFullName,
     formatSkillName,
     getSkillExamples,
-    getSuccessThreshold, isSpecializableSkill
-} from "../../tools/utils.js";
-import {CARACNAMES, COMPETENCES, RUNES, TRAITS} from "../../tools/data.js";
+    isSpecializableSkill
+} from "./config/utils.js";
+import {CARACNAMES, COMPETENCES} from "./config/competences.js";
+import {RUNES} from "./config/runes.js";
+import {TRAITS} from "./config/traits.js";
 import useSystem from "../../hooks/useSystem.js";
 
 const Creation = ({ onCreated, onCancel }) => {
@@ -548,9 +551,9 @@ const Creation = ({ onCreated, onCancel }) => {
                                     </div>
                                 )}
                                 
-                                {trait?.requirements != null && Object.keys(trait.requirements).length > 0 && (
+                                {formatTraitConditions(trait) && (
                                     <div className="text-xs text-viking-leather dark:text-viking-bronze">
-                                        <strong>Requis :</strong> {Object.entries(trait.requirements).map(([k,v]) => `${CARACNAMES[k]} ${v}+`).join(', ')}
+                                        <strong>Requis :</strong> {formatTraitConditions(trait)}
                                     </div>
                                 )}
                                 

@@ -6,8 +6,10 @@
 
 import React, { useState, useEffect } from 'react';
 import './theme.css';
-import { formatExplosion, formatFullName, formatSkillName, getBestCharacteristic, getBlessureMalus, getFatigueMalus, getSuccessThreshold } from '../../tools/utils.js';
-import { CARACNAMES, TRAITS } from '../../tools/data.js';
+import { getBestCharacteristic, getBlessureMalus, getFatigueMalus, getSuccessThreshold } from './config/rules.js';
+import { formatExplosion, formatFullName, formatSkillName } from './config/utils.js';
+import { CARACNAMES } from './config/competences.js';
+import { TRAITS } from './config/traits.js';
 import ThemeToggle      from '../../components/ui/ThemeToggle.jsx';
 import DiceModal        from './components/modals/DiceModal.jsx';
 import EditModals       from './components/modals/EditModals.jsx';

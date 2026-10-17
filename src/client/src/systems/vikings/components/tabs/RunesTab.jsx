@@ -1,6 +1,6 @@
 // RunesTab.js - Onglet runes complet
 import React, { useState, useEffect } from "react";
-import {RUNES} from "../../../../tools/data.js";
+import {RUNES} from "../../config/runes.js";
 
 const RunesTab = ({ character, onUpdate }) => {
     const { useState } = React;

@@ -190,3 +190,43 @@ Aucun appel client ne change de verbe HTTP dans ce lot : le `PATCH` est exposé,
 | T-1 | Supprimer `database-template/schema.sql` une fois remplacé ? | Oui : seul Vikings l'utilise, son nom générique et son contenu périmé prêtent à confusion. | Oui |
 | T-2 | `prenom` : garder `NOT NULL` en base (comme aujourd'hui) ou suivre `base.sql` (nullable) avec contrôle à la création ? | Suivre `base.sql`, contrôle dans la route. | Suivre `base.sql` |
 | T-3 | Le script de vérification de migration (§6) : le garder hors dépôt ou l'ajouter au projet ? | Hors dépôt : il est ponctuel, propre à cette migration. | Hors dépôt |
+
+---
+
+## 11. Correctif après livraison
+
+`_syncSubTable` traitait toute entrée portant un `id` comme une mise à jour. L'inventaire crée ses nouveaux objets avec un id temporaire (`Date.now()`) : aucune ligne mise à jour, aucune insertion, **objet perdu sans erreur**. Correctif : une mise à jour qui ne touche aucune ligne devient une insertion (`_updateOrInsert`), pour les 4 sous-tables. Test de non-régression ajouté au script de vérification des routes.
+
+---
+
+## 12. Sous-lot 2b : données et règles rapatriées dans le slug (décisions V-1 à V-4, 2026-10-17)
+
+### Déplacements
+| Avant (générique) | Après (`systems/vikings/config/`) |
+|---|---|
+| `tools/data.js` (supprimé) | `competences.js` (CARACNAMES, COMPETENCES), `traits.js`, `runes.js`, `equipment.js` (ITEMS), `npcs.js` |
+| `tools/traitBonuses.js` | `traitBonuses.js` |
+| fonctions de jeu de `tools/utils.js` | `rules.js` (règles) et `utils.js` (affichage) |
+| `components/gm/modals/GMSendItemModal.jsx` (utilisé par Vikings seul, V-2) | `systems/vikings/gm/modals/GMSendItemModal.jsx` |
+
+`config.jsx` réexporte données et règles ; les composants du slug importent directement `config/*.js` (évite les imports circulaires avec les modales importées par `config.jsx`). `tools/utils.js` ne garde que la gestion du thème. Anciens lanceurs de dés et sauvegarde locale de personnage, inutilisés, supprimés (V-4).
+
+`CharacterListModal` (générique) : cas particulier Vikings **supprimé**, affichage « Prénom Nom » pour tous les slugs (V-3).
+
+### Données retraitées (annexes de spec_vikings.md)
+- *Combat distance* : Agilité / Agilité ; *Folklore* : Intelligence / Intelligence (D-13).
+- Conditions des traits (D-12) : compétence fantôme « Combat CàC » → « Combat CàC (armé) » (*Huskarl*, *Foudre de guerre*, *Marin*, *Tueur de monstre*) ; *Banni* : Chance 1 **max** ; *Langue de serpent* : condition Agilité 2 retirée ; alternatives « OU » (`requiresAny`) pour *Connaissance des runes*, *Survivant miraculeux*, *Orphelin aguerri*.
+- 14 incompatibilités rendues réciproques (le vault n'en notait qu'un sens).
+- Bonus de traits : *Duelliste* → Combat CàC (armé), *Boxeur* → Combat CàC (non armé) (visaient un nom inexistant, jamais appliqués) ; bonus Esquive d'*Insaisissable* retiré (Q-2) ; bonus de *Forme de loup / d'ours* retirés (D-14).
+- Catalogue aligné sur le vault : armes en acier, prix, matériaux, notes.
+
+### Règles appliquées (fonctions pures, V-1)
+- Fatigue : paliers 2/4/6/8, inconscience à 10 (jet bloqué) (D-2).
+- Jet héroïque / épique : la barre des 3 succès compte dés, succès auto et bonus de traits, et la fatigue la relève (D-5, Q-4).
+- Coût des runes : 1 SAGA (D-7).
+- Conditions des traits vérifiées aussi à la création, avec une seule fonction commune (`checkTraitConditions`) à la place des deux vérifications divergentes (D-12).
+- Triple 10 naturel détecté (`meta.tripleTen`) sur les 3 dés de base (D-15, Q-5) ; le gain de SAGA automatique et la jauge de fatigue à 10 relèvent du lot 3 (interface).
+- Animation : les vagues d'explosion étaient mal regroupées (rpg-dice-roller insère chaque dé explosé juste après son dé d'origine) ; corrigé par `splitDiceWaves`, aussi utilisé pour le triple 10.
+
+### Tests
+`src/client/tests/systems/vikings/` : `rules.test.js` (règles), `data.test.js` (cohérence : 39 compétences, 65 traits, incompatibilités réciproques, conditions valides, catalogue), `dice.test.js` (hooks de dés : notation, KO, fatigue, héroïque, assurance, triple 10, animation), `utils.test.js` (affichage).

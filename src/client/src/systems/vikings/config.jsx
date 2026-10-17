@@ -12,13 +12,24 @@ import {
     getExplosionThreshold,
     getBlessureMalus,
     getFatigueMalus,
+    isFatigueKO,
     getSuccessThreshold,
     getBestCharacteristic,
-    countSuccesses,
-} from '../../tools/utils.js';
-import getTraitBonuses from '../../tools/traitBonuses.js';
-import { CARACNAMES }  from '../../tools/data.js';
+    splitDiceWaves,
+    isTripleTen,
+} from './config/rules.js';
+import getTraitBonuses from './config/traitBonuses.js';
+import { CARACNAMES }  from './config/competences.js';
 import { RollError }   from '../../tools/diceEngine.js';
+
+// Données et règles du slug (systems/vikings/config/), réexportées pour l'extérieur
+export { CARACNAMES, COMPETENCES } from './config/competences.js';
+export { TRAITS }                  from './config/traits.js';
+export { RUNES }                   from './config/runes.js';
+export { ITEMS }                   from './config/equipment.js';
+export { NPC_TEMPLATES }           from './config/npcs.js';
+export * from './config/rules.js';
+export * from './config/utils.js';
 import TokensDisplay   from './components/TokensDisplay.jsx';
 import PostureModal    from './components/modals/PostureModal.jsx';
 import DiceModal       from './components/modals/DiceModal.jsx';
@@ -77,6 +88,10 @@ const vikingsConfig = {
             // Garde : KO/Mourant
             if (tokensBlessure === 5)
                 throw new RollError('KO_DYING', 'Impossible : KO / Mourant !');
+
+            // Garde : inconscient de fatigue (10 tokens, D-2)
+            if (isFatigueKO(tokensFatigue))
+                throw new RollError('KO_FATIGUE', 'Impossible : inconscient (épuisement) !');
 
             // Garde : Saga insuffisante
             if ((declaredMode === 'insurance' || declaredMode === 'heroic' || declaredMode === 'epic')
@@ -189,6 +204,7 @@ const vikingsConfig = {
                         autoSuccesses:  autoSuccesses || 0,
                         resourceSpent:  1,
                         resourceGained: 0,
+                        tripleTen:      isTripleTen(keptValues, explosionThresholds || [10], pool),
                         keptGroup,
                         secondaryValues: keptGroup === 0 ? values2 : mainValues,
                         // SAGA fields
@@ -203,8 +219,10 @@ const vikingsConfig = {
                 const sagaValues    = raw.groups[1].values;
                 const sagaRaw       = sagaValues.filter(v => v >= 7).length;
 
-                // Condition d'activation SAGA : 3+ succès sur le jet principal
-                const sagaFailed    = rawMainSuccesses < 3;
+                // Condition d'activation SAGA : 3+ succès, tout compris (dés, succès auto,
+                // bonus de traits) ; la fatigue relève aussi cette barre (D-5, Q-4)
+                const entrySuccesses = rawMainSuccesses + (autoSuccesses || 0) + (totalTraitBonus || 0) - (fatigueMalus || 0);
+                const sagaFailed    = entrySuccesses < 3;
 
                 const bonusSuccesses = sagaFailed ? 0 : sagaRaw;
                 const totalSuccesses = Math.max(
@@ -237,13 +255,14 @@ const vikingsConfig = {
                         autoSuccesses:  autoSuccesses || 0,
                         resourceSpent:  1,
                         resourceGained: sagaSuccess ? 1 : 0,
+                        tripleTen:      isTripleTen(mainValues, explosionThresholds || [10], pool),
                         sagaFailed,
                         sagaSuccess,
                         bonusSuccesses,
                         sagaValues,
                         finalTarget,
                         failReason: sagaFailed
-                            ? `Condition non remplie (${rawMainSuccesses}/3 succès)`
+                            ? `Condition non remplie (${entrySuccesses}/3 succès)`
                             : !sagaRaw
                                 ? 'Aucun succès sur le jet SAGA'
                                 : totalSuccesses < finalTarget
@@ -283,6 +302,7 @@ const vikingsConfig = {
                     autoSuccesses:  autoSuccesses || 0,
                     resourceSpent:  0,
                     resourceGained: 0,
+                    tripleTen:      isTripleTen(mainValues, explosionThresholds || [10], pool),
                     sagaFailed: false, sagaSuccess: null, bonusSuccesses: null,
                     keptGroup: null, secondaryValues: null,
                 },
@@ -295,28 +315,9 @@ const vikingsConfig = {
         buildAnimationSequence: (raw, ctx, result) => {
             const { declaredMode, pool, explosionThresholds } = ctx.systemData;
 
-            // Découpe les values à plat en vagues successives.
-            // Vague 0 = les `pool` premiers dés.
-            // Vague N = les explosions générées par la vague N-1.
-            const buildWaves = (values, wavePool, thresholds) => {
-                if (!values.length) return [{ dice: [] }];
-                const waves = [];
-                let idx = 0;
-
-                let waveDice = values.slice(0, wavePool);
-                waves.push({ dice: waveDice });
-                idx = wavePool;
-
-                while (idx < values.length) {
-                    const explosionCount = waveDice.filter(v => thresholds.includes(v)).length;
-                    if (!explosionCount) break;
-                    waveDice = values.slice(idx, idx + explosionCount);
-                    waves.push({ dice: waveDice });
-                    idx += explosionCount;
-                }
-
-                return waves;
-            };
+            // Vagues d'explosion : rpg-dice-roller insère chaque dé explosé juste après
+            // son dé d'origine, d'où splitDiceWaves (et non « les `pool` premiers dés »).
+            const buildWaves = (values, _wavePool, thresholds) => splitDiceWaves(values, thresholds);
 
             if (declaredMode === 'insurance') {
                 const keptGroup = result.meta?.keptGroup ?? 0;

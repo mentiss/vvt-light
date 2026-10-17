@@ -2,8 +2,10 @@
 
 
 import React, { useState, useEffect } from "react";
-import {CARACNAMES, COMPETENCES, TRAITS} from "../../../../tools/data.js";
-import {getSkillExamples, isSpecializableSkill} from "../../../../tools/utils.js";
+import {CARACNAMES, COMPETENCES} from "../../config/competences.js";
+import {TRAITS} from "../../config/traits.js";
+import {checkTraitConditions} from "../../config/rules.js";
+import {getSkillExamples, isSpecializableSkill} from "../../config/utils.js";
 
 const EditModals = ({ type, character, onClose, onUpdate }) => {
     const { useState } = React;
@@ -195,33 +197,8 @@ export const AddTraitModal = ({ character, onClose, onUpdate }) => {
             }
         }
         
-        // Vérifier prérequis caractéristiques
-        if (trait.requirements) {
-            for (const [stat, required] of Object.entries(trait.requirements)) {
-                if (character[stat] < required) {
-                    return { can: false, reason: `Nécessite ${CARACNAMES[stat]} ${required}+` };
-                }
-            }
-        }
-        
-        // Vérifier prérequis compétences
-        if (trait.requiresSkill) {
-            for (const [skillName, requiredLevel] of Object.entries(trait.requiresSkill)) {
-                const skill = character.skills.find(s => s.name === skillName);
-                if (!skill || skill.level < requiredLevel) {
-                    return { can: false, reason: `Nécessite ${skillName} ${requiredLevel}+` };
-                }
-            }
-        }
-        
-        // Vérifier SAGA minimale
-        if (trait.requiresSaga) {
-            if (character.sagaTotale < trait.requiresSaga) {
-                return { can: false, reason: `Nécessite ${trait.requiresSaga} SAGA totale` };
-            }
-        }
-        
-        return { can: true };
+        // Conditions (caractéristiques, compétences, SAGA, alternatives) : règle commune
+        return checkTraitConditions(character, trait);
     };
     
     const handleAdd = () => {

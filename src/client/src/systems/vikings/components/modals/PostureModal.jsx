@@ -15,8 +15,8 @@ import {
     getSuccessThreshold,
     getBlessureMalus,
     getFatigueMalus,
-    formatSkillName,
-} from '../../../../tools/utils.js';
+} from '../../config/rules.js';
+import { formatSkillName } from '../../config/utils.js';
 import { roll, RollError } from '../../../../tools/diceEngine.js';
 import vikingsConfig       from '../../config.jsx';
 import { useFetch }        from '../../../../hooks/useFetch.js';

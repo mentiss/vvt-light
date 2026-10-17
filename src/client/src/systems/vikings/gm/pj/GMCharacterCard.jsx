@@ -1,14 +1,14 @@
 // components/GMView/scene/GMCharacterCard.jsx - Fiche personnage vue Maître du Jeu
 import React, { useState } from 'react';
 import {
-    formatFullName,
-    formatSkillName,
     getBlessureMalus,
     getFatigueMalus,
     getSuccessThreshold,
-    formatExplosion, getBestCharacteristic, getExplosionThreshold
-} from '../../../../tools/utils.js';
-import { CARACNAMES, TRAITS } from '../../../../tools/data.js';
+    getBestCharacteristic, getExplosionThreshold
+} from '../../config/rules.js';
+import { formatFullName, formatSkillName, formatExplosion } from '../../config/utils.js';
+import { CARACNAMES } from '../../config/competences.js';
+import { TRAITS } from '../../config/traits.js';
 import TokenRow from "../layout/TokenRow.jsx";
 import CollapsibleSection from "../layout/CollapsibleSection.jsx";
 

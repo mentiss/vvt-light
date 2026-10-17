@@ -1,5 +1,7 @@
-// traitBonuses.js - Calcul des bonus/malus de traits sur jets
-import {TRAITS} from "./data.js";
+// src/client/src/systems/vikings/config/traitBonuses.js
+// Calcul des bonus/malus de succès auto apportés par les traits sur un jet.
+// auto : appliqués d'office ; conditional : proposés au joueur (de nuit, en mer…).
+import {TRAITS} from "./traits.js";
 
 const getTraitBonuses = (character, rollType, rollTarget) => {
     const bonuses = {
@@ -135,7 +137,7 @@ const getTraitBonuses = (character, rollType, rollTarget) => {
         
         // Duelliste : Combat CàC (+1)
         if (trait.name === 'Duelliste') {
-            if (rollTarget === 'Combat CàC') bonuses.auto += 1;
+            if (rollTarget === 'Combat CàC (armé)') bonuses.auto += 1;
         }
         
         // Boxeur : Combat sans arme (+1)
@@ -144,7 +146,7 @@ const getTraitBonuses = (character, rollType, rollTarget) => {
                 name: 'Boxeur',
                 bonus: 1,
                 condition: 'Combat sans arme',
-                applies: rollTarget === 'Combat CàC'
+                applies: rollTarget === 'Combat CàC (non armé)'
             });
         }
         
@@ -183,11 +185,6 @@ const getTraitBonuses = (character, rollType, rollTarget) => {
         // Maître des bêtes : Dressage (+1)
         if (trait.name === 'Maître des bêtes') {
             if (rollTarget === 'Dressage') bonuses.auto += 1;
-        }
-        
-        // Insaisissable : Esquive (+1)
-        if (trait.name === 'Insaisissable') {
-            if (rollTarget === 'Esquive') bonuses.auto += 1;
         }
         
         // Sang de glace : Survie hiver (+1)
@@ -315,12 +312,6 @@ const getTraitBonuses = (character, rollType, rollTarget) => {
         if (trait.name === 'Marqué par les Nornes') {
             if (isCaracRoll && rollType === 'chance') bonuses.auto += 1;
             if (isCaracRoll && rollType === 'charisme') bonuses.auto -= 1;
-        }
-        
-        // Forme de loup/ours : Perception (+1) carac pure ou compétence
-        if ((trait.name === 'Forme de loup' || trait.name === 'Forme d\'ours') && 
-            ((isCaracRoll && rollType === 'perception') || rollTarget === 'Perception')) {
-            bonuses.auto += 1;
         }
     });
     
