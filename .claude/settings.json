@@ -1,0 +1,23 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm run lint)",
+      "Bash(npm run build)",
+      "Bash(cd src/client && npm run lint)",
+      "Bash(git status)",
+      "Bash(git diff:*)",
+      "Bash(git log:*)"
+    ],
+    "deny": [
+      "Read(./.env)",
+      "Read(./.env.*)",
+      "Edit(./.env)",
+      "Edit(./.env.*)",
+      "Read(./**/*.pem)",
+      "Read(./**/*.db)",
+      "Read(./**/*.sqlite)",
+      "Edit(./**/*.db)",
+      "Edit(./**/*.sqlite)"
+    ]
+  }
+}
