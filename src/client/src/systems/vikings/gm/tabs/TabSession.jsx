@@ -1,335 +1,331 @@
-// components/GMView/tabs/TabSession.jsx - Onglet Session (vue personnages de la table)
-import React, { useState, useEffect } from 'react';
-import { useSocket } from '../../../../context/SocketContext.jsx';
-import { useFetch } from '../../../../hooks/useFetch.js';
-import GMCharacterCard from '../pj/GMCharacterCard.jsx';
-import GMSendModal from "../../../../components/gm/modals/GMSendModal.jsx";
-import GMSendItemModal from "../modals/GMSendItemModal.jsx";
+// src/client/src/systems/vikings/gm/tabs/TabSession.jsx
+// ─────────────────────────────────────────────────────────────────────────────
+// Onglet Session (MJ) — contrat MJ standard (spec_vikings_lot3_client.md §5.2) :
+//   1. Liste des personnages de la table : avatar, nom, joueur, présence, état
+//   2. Fiche complète via le MÊME SheetLayout que la fiche joueur, + inventaire
+//   3. Mode édition (buffer, enregistrement), actions de jeu toujours actives
+//   4. Note au journal, envoi d'objet, copie du lien et du code, avatar
+//   5. Jet de dés pour le personnage (même DiceModal que le joueur)
+//
+// ⚠️ Aucun listener socket ici : le temps réel arrive par characterUpdates
+// (useGMSession dans GMPage).
+// ─────────────────────────────────────────────────────────────────────────────
 
-const TabSession = ({ activeSession, onlineCharacters }) => {
-    const [characters, setCharacters] = useState({}); // Map id -> fullCharacter
-    const [selectedCharId, setSelectedCharId] = useState(null);
-    const [loading, setLoading] = useState(false);
-    const [showSendModal, setShowSendModal] = useState(false);
-    const [sendPreSelectedCharId, setSendPreSelectedCharId] = useState(null);
-    const [showSendItemModal, setShowSendItemModal] = useState(false);
-    const [sendItemPreSelectedCharId, setSendItemPreSelectedCharId] = useState(null);
+import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
+import { useFetch }  from '../../../../hooks/useFetch.js';
+import { useSystem } from '../../../../hooks/useSystem.js';
+import GMSendModal    from '../../../../components/gm/modals/GMSendModal.jsx';
+import AvatarUploader from '../../../../components/AvatarUploader.jsx';
 
-    const socket = useSocket();
+import SheetLayout     from '../../components/layout/SheetLayout.jsx';
+import InventoryTab    from '../../components/tabs/InventoryTab.jsx';
+import DiceModal       from '../../components/modals/DiceModal.jsx';
+import EditModals      from '../../components/modals/EditModals.jsx';
+import GMSendItemModal from '../modals/GMSendItemModal.jsx';
+import { BLESSURE_MAX, FATIGUE_MAX } from '../../config/rules.js';
+import { formatFullName, pickEditableFields } from '../../config/utils.js';
+
+const resolve = (updater, prev) => (typeof updater === 'function' ? updater(prev) : updater);
+
+// ── Vignette d'un personnage dans la liste ───────────────────────────────────
+
+const CharacterTile = ({ sessionChar, full, selected, online, onSelect }) => (
+    <button type="button" onClick={onSelect}
+            className={`w-full text-left px-3 py-2 border-b border-default flex items-center gap-2 ${
+                selected ? 'bg-primary/10 border-l-4 border-l-primary' : 'hover:bg-surface-alt'
+            }`}>
+        <div className="relative shrink-0">
+            {full?.avatar ? (
+                <img src={full.avatar} alt="" className="w-9 h-9 rounded-full object-cover border border-default" />
+            ) : (
+                <div className="w-9 h-9 rounded-full bg-surface-alt border border-default flex items-center justify-center text-sm font-bold">
+                    {(full?.prenom ?? sessionChar.name)?.[0]?.toUpperCase() || '?'}
+                </div>
+            )}
+            <span className={`absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full border-2 border-surface ${online ? 'bg-success' : 'bg-surface-alt'}`} />
+        </div>
+        <div className="min-w-0 flex-1">
+            <div className={`text-sm truncate ${selected ? 'font-semibold text-primary' : 'text-default'}`}>
+                {full ? formatFullName(full) : sessionChar.name}
+            </div>
+            <div className="text-[10px] text-muted truncate">{full?.playerName}</div>
+            {full && (
+                <div className="flex gap-1 mt-0.5">
+                    <span className="text-[10px] px-1 rounded bg-danger/20 text-default">❤️ {full.tokensBlessure ?? 0}/{BLESSURE_MAX}</span>
+                    <span className="text-[10px] px-1 rounded bg-secondary/20 text-default">💤 {full.tokensFatigue ?? 0}/{FATIGUE_MAX}</span>
+                    <span className="text-[10px] px-1 rounded bg-primary/20 text-default">ᛟ {full.sagaActuelle ?? 0}</span>
+                </div>
+            )}
+        </div>
+    </button>
+);
+
+const Empty = ({ icon, title, children }) => (
+    <div className="bg-surface rounded-lg border-2 border-default p-8 text-center">
+        <div className="text-4xl mb-4">{icon}</div>
+        <h3 className="text-xl font-bold text-default mb-2">{title}</h3>
+        <p className="text-muted">{children}</p>
+    </div>
+);
+
+// ── Onglet ───────────────────────────────────────────────────────────────────
+
+const TabSession = ({ activeSession, onlineCharacters = [], characterUpdates }) => {
+    const { slug, apiBase } = useSystem();
     const fetchWithAuth = useFetch();
 
-    // IDs des personnages en ligne pour lookup rapide
-    const onlineIds = new Set(onlineCharacters.map(c => c.characterId));
+    const [characters, setCharacters] = useState({});   // { [id]: personnage complet }
+    const [selectedId, setSelectedId] = useState(null);
+    const [loading,    setLoading]    = useState(false);
+    const [view,       setView]       = useState('fiche'); // 'fiche' | 'inventaire'
 
+    const [editMode,     setEditMode]     = useState(false);
+    const [editableChar, setEditableChar] = useState(null);
 
-    // --- Charger les fiches complètes quand la session change ---
+    const [showSendModal,     setShowSendModal]     = useState(false);
+    const [showSendItemModal, setShowSendItemModal] = useState(false);
+    const [showAvatar,        setShowAvatar]        = useState(false);
+    const [showEditModal,     setShowEditModal]     = useState(null);
+    const [diceContext,       setDiceContext]       = useState(null);
+    const [copied,            setCopied]            = useState(false);
+
+    // Dernier état connu, lu par update() : deux mises à jour successives
+    // (dépense puis restitution d'un jet) s'enchaînent sans se perdre.
+    const charactersRef = useRef(characters);
+    useEffect(() => { charactersRef.current = characters; }, [characters]);
+
+    const sessionId = activeSession?.id ?? null;
+
+    // ── Chargement des fiches de la table ─────────────────────────────────
     useEffect(() => {
-        if (!activeSession?.characters?.length) {
-            setCharacters({});
-            setSelectedCharId(null);
-            return;
-        }
+        const list = activeSession?.characters ?? [];
+        if (!list.length) { setCharacters({}); setSelectedId(null); return; }
 
-        const loadAllCharacters = async () => {
-            setLoading(true);
-            const loaded = {};
-
-            // Charger toutes les fiches en parallèle
-            const promises = activeSession.characters.map(async (c) => {
-                try {
-                    const response = await fetchWithAuth(`/api/characters/${c.id}`);
-                    if (response.ok) {
-                        const fullChar = await response.json();
-                        loaded[c.id] = fullChar;
-                    }
-                } catch (error) {
-                    console.error(`[TabSession] Error loading character ${c.id}:`, error);
-                }
-            });
-
-            await Promise.all(promises);
-            setCharacters(loaded);
-
-            // Sélectionner le premier par défaut si aucun sélectionné
-            if (!selectedCharId || !loaded[selectedCharId]) {
-                const firstId = activeSession.characters[0]?.id;
-                if (firstId) setSelectedCharId(firstId);
-            }
-
+        let cancelled = false;
+        setLoading(true);
+        Promise.all(list.map(c =>
+            fetchWithAuth(`${apiBase}/characters/${c.id}`)
+                .then(r => (r.ok ? r.json() : null))
+                .catch(() => null)
+        )).then(results => {
+            if (cancelled) return;
+            const map = {};
+            for (const c of results) if (c?.id) map[c.id] = c;
+            setCharacters(map);
+            setSelectedId(prev => (prev && map[prev] ? prev : (list[0]?.id ?? null)));
             setLoading(false);
-        };
+        });
+        return () => { cancelled = true; };
+    }, [sessionId, activeSession?.characters?.length, apiBase]);
 
-        loadAllCharacters();
-    }, [activeSession?.id, activeSession?.characters?.length]);
-
-    // --- Écouter les mises à jour temps réel ---
+    // ── Temps réel — via characterUpdates (jamais de socket ici) ──────────
     useEffect(() => {
-        if (!socket) return;
-
-        const handleCharacterFullUpdate = (data) => {
-            console.log('[TabSession] character-full-update received:', data.characterId);
-            setCharacters(prev => {
-                if (prev[data.characterId]) {
-                    return {
-                        ...prev,
-                        [data.characterId]: data.character
-                    };
-                }
-                return prev;
-            });
-        };
-
-        // Écouter aussi le broadcast léger pour les tokens (combat, etc.)
-        const handleCharacterUpdate = (data) => {
-            setCharacters(prev => {
-                if (prev[data.characterId]) {
-                    return {
-                        ...prev,
-                        [data.characterId]: {
-                            ...prev[data.characterId],
-                            ...data.updates
-                        }
-                    };
-                }
-                return prev;
-            });
-        };
-
-        socket.on('character-full-update', handleCharacterFullUpdate);
-        socket.on('character-update', handleCharacterUpdate);
-
-        return () => {
-            socket.off('character-full-update', handleCharacterFullUpdate);
-            socket.off('character-update', handleCharacterUpdate);
-        };
-    }, [socket]);
-
-    // --- Handler pour modifier tokens depuis GMCharacterCard ---
-    const handleUpdateTokens = async (characterId, updates) => {
-        // Optimistic update local
-        setCharacters(prev => ({
-            ...prev,
-            [characterId]: {
-                ...prev[characterId],
-                ...updates
+        if (!characterUpdates) return;
+        setCharacters(prev => {
+            let changed = false;
+            const next = { ...prev };
+            for (const [idStr, upd] of Object.entries(characterUpdates)) {
+                const id = Number(idStr);
+                if (!prev[id]) continue;   // pas dans cette table
+                next[id] = upd.type === 'full' ? upd.data : { ...prev[id], ...upd.data };
+                changed = true;
             }
-        }));
+            return changed ? next : prev;
+        });
+    }, [characterUpdates]);
 
-        // Sauvegarder en backend
+    // Sortie du mode édition au changement de personnage
+    useEffect(() => { setEditMode(false); }, [selectedId]);
+
+    const char = selectedId ? (editMode ? editableChar : characters[selectedId]) : null;
+
+    // ── Action de jeu immédiate : appliquée au dernier état, PUT complet ──
+    const update = useCallback(async (updater) => {
+        const id   = selectedId;
+        const prev = charactersRef.current[id];
+        if (!prev) return;
+        const next = resolve(updater, prev);
+        charactersRef.current = { ...charactersRef.current, [id]: next };
+        setCharacters(p => ({ ...p, [id]: next }));
+        if (editMode) setEditableChar(b => (b ? resolve(updater, b) : b));
         try {
-            const currentChar = characters[characterId];
-            await fetchWithAuth(`/api/characters/${characterId}`, {
-                method: 'PUT',
+            const r = await fetchWithAuth(`${apiBase}/characters/${id}`, {
+                method:  'PUT',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    ...currentChar,
-                    ...updates
-                })
+                body:    JSON.stringify(next),
             });
-        } catch (error) {
-            console.error('[TabSession] Error updating character tokens:', error);
-            // TODO: rollback optimistic update si besoin
+            if (r.ok) {
+                const saved = await r.json();
+                setCharacters(p => ({ ...p, [id]: saved }));
+            }
+        } catch (e) {
+            console.error('[TabSession/vikings] update:', e);
         }
+    }, [selectedId, editMode, apiBase]);
+
+    // ── Édition (buffer local, comme Sheet.jsx) ───────────────────────────
+    const set = useCallback((field, value) => {
+        setEditableChar(prev => (prev ? { ...prev, [field]: value } : prev));
+    }, []);
+
+    const startEdit  = () => { setEditableChar({ ...characters[selectedId] }); setEditMode(true); };
+    const cancelEdit = () => setEditMode(false);
+    const saveEdit   = () => {
+        const edited = pickEditableFields(editableChar);
+        setEditMode(false);
+        update(prev => ({ ...prev, ...edited }));
     };
 
+    // ── Copier le lien et le code d'accès ─────────────────────────────────
+    const handleCopyCode = () => {
+        const c = characters[selectedId];
+        if (!c) return;
+        const text = [
+            `Pure Vikings — ${formatFullName(c)}`,
+            `Lien : ${window.location.origin}/${slug}/${c.accessUrl}`,
+            `Code : ${c.accessCode}`,
+        ].join('\n');
+        navigator.clipboard.writeText(text).then(() => {
+            setCopied(true);
+            setTimeout(() => setCopied(false), 2000);
+        });
+    };
+
+    // ── Envois au journal (routes génériques) ─────────────────────────────
     const handleGMSend = async (sendData) => {
-        try {
-            const response = await fetchWithAuth('/api/journal/gm-send', {
-                method: 'POST',
-                body: JSON.stringify({
-                    ...sendData,
-                    sessionId: activeSession?.id || null,
-                    metadata: sendData.imageData ? { imageUrl: sendData.imageData } : null
-                })
-            });
-            if (!response.ok) throw new Error('Send failed');
-        } catch (error) {
-            console.error('[TabSession] Error sending GM message:', error);
-            throw error;
-        }
+        const response = await fetchWithAuth('/api/journal/gm-send', {
+            method: 'POST',
+            body: JSON.stringify({
+                ...sendData,
+                sessionId,
+                metadata: sendData.imageData ? { imageUrl: sendData.imageData } : null,
+            }),
+        });
+        if (!response.ok) throw new Error('Send failed');
     };
 
     const handleGMSendItem = async (sendData) => {
-        try {
-            const response = await fetchWithAuth('/api/journal/gm-send-item', {
-                method: 'POST',
-                body: JSON.stringify({
-                    ...sendData,
-                    sessionId: activeSession?.id || null
-                })
-            });
-            if (!response.ok) throw new Error('Send item failed');
-        } catch (error) {
-            console.error('[TabSession] Error sending GM item:', error);
-            throw error;
-        }
+        const response = await fetchWithAuth('/api/journal/gm-send-item', {
+            method: 'POST',
+            body: JSON.stringify({ ...sendData, sessionId }),
+        });
+        if (!response.ok) throw new Error('Send item failed');
     };
 
-    // --- Pas de session active ---
+    const onlineIds = useMemo(
+        () => new Set(onlineCharacters.map(c => c.characterId)),
+        [onlineCharacters],
+    );
+
+    // ── États vides ───────────────────────────────────────────────────────
     if (!activeSession) {
-        return (
-            <div className="bg-white dark:bg-viking-brown rounded-lg shadow-lg border-2 border-viking-bronze p-8 text-center">
-                <div className="text-4xl mb-4">📋</div>
-                <h3 className="text-xl font-bold text-viking-brown dark:text-viking-parchment mb-2">
-                    Aucune table sélectionnée
-                </h3>
-                <p className="text-viking-leather dark:text-viking-bronze">
-                    Ouvrez le menu ☰ et gérez vos tables pour sélectionner une session active.
-                </p>
-            </div>
-        );
+        return <Empty icon="📋" title="Aucune table sélectionnée">Ouvrez le menu ☰ et gérez vos tables pour sélectionner une session active.</Empty>;
     }
-
-    // --- Session sans personnages ---
     if (!activeSession.characters?.length) {
-        return (
-            <div className="bg-white dark:bg-viking-brown rounded-lg shadow-lg border-2 border-viking-bronze p-8 text-center">
-                <div className="text-4xl mb-4">👥</div>
-                <h3 className="text-xl font-bold text-viking-brown dark:text-viking-parchment mb-2">
-                    Aucun personnage dans cette table
-                </h3>
-                <p className="text-viking-leather dark:text-viking-bronze">
-                    Assignez des personnages à la table « {activeSession.name} » via la gestion des tables.
-                </p>
-            </div>
-        );
+        return <Empty icon="👥" title="Aucun personnage dans cette table">Assignez des personnages à la table « {activeSession.name} » via la gestion des tables.</Empty>;
     }
 
-    // --- Loading ---
-    if (loading && Object.keys(characters).length === 0) {
-        return (
-            <div className="bg-white dark:bg-viking-brown rounded-lg shadow-lg border-2 border-viking-bronze p-8 text-center">
-                <div className="text-2xl animate-pulse mb-2">⏳</div>
-                <p className="text-viking-leather dark:text-viking-bronze">
-                    Chargement des fiches...
-                </p>
-            </div>
-        );
-    }
-
-    const selectedCharacter = selectedCharId ? characters[selectedCharId] : null;
+    const sessionCharacters = activeSession.characters;
 
     return (
-        <div className="space-y-4">
-            {/* === BARRE DE SÉLECTION PERSONNAGE (horizontale) === */}
-            <div className="bg-white dark:bg-viking-brown rounded-lg shadow-lg border-2 border-viking-bronze p-3">
-                <div className="flex gap-2 overflow-x-auto pb-1">
-                    {activeSession.characters.map(sessionChar => {
-                        const fullChar = characters[sessionChar.id];
-                        const isSelected = selectedCharId === sessionChar.id;
-                        const isOnline = onlineIds.has(sessionChar.id);
+        <div className="flex flex-col md:flex-row gap-4">
 
-                        return (
-                            <button
-                                key={sessionChar.id}
-                                onClick={() => setSelectedCharId(sessionChar.id)}
-                                className={`flex items-center gap-2 px-3 py-2 rounded-lg transition-all shrink-0 ${
-                                    isSelected
-                                        ? 'bg-viking-bronze border-2 border-viking-leather shadow-md'
-                                        : 'bg-viking-parchment dark:bg-gray-800 border-2 border-transparent hover:border-viking-bronze/50'
-                                }`}
-                            >
-                                {/* Avatar mini */}
-                                <div className="relative">
-                                    {sessionChar.avatar ? (
-                                        <img
-                                            src={sessionChar.avatar}
-                                            alt={sessionChar.name}
-                                            className="w-8 h-8 rounded-full object-cover border border-viking-leather"
-                                        />
-                                    ) : (
-                                        <div className="w-8 h-8 rounded-full bg-viking-leather/20 dark:bg-gray-700 flex items-center justify-center text-sm font-bold text-viking-brown dark:text-viking-parchment border border-viking-leather">
-                                            {sessionChar.name?.[0]?.toUpperCase() || '?'}
-                                        </div>
-                                    )}
-                                    {/* Pastille online */}
-                                    <div className={`absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full border-2 border-white dark:border-viking-brown ${
-                                        isOnline ? 'bg-green-500' : 'bg-gray-400'
-                                    }`} />
-                                </div>
-
-                                {/* Nom + indicateurs */}
-                                <div className="text-left">
-                                    <div className={`text-sm font-semibold ${
-                                        isSelected
-                                            ? 'text-viking-brown'
-                                            : 'text-viking-brown dark:text-viking-parchment'
-                                    }`}>
-                                        {sessionChar.name}
-                                    </div>
-                                    <div className="flex gap-1">
-                                        {/* Indicateur blessures compact */}
-                                        {(fullChar?.tokensBlessure > 0 || sessionChar.tokensBlessure > 0) && (
-                                            <span className={`text-[10px] px-1 rounded bg-red-500/20 ${
-                                                isSelected
-                                                    ? 'text-viking-brown'
-                                                    : 'text-viking-brown dark:text-viking-parchment'
-                                            }`}>
-                                                ❤️ {fullChar?.tokensBlessure ?? sessionChar.tokensBlessure}/5
-                                            </span>
-                                        )}
-                                        {/* Indicateur fatigue compact */}
-                                        {(fullChar?.tokensFatigue > 0 || sessionChar.tokensFatigue > 0) && (
-                                            <span className={`text-[10px] px-1 rounded bg-amber-500/20 ${
-                                                isSelected
-                                                    ? 'text-viking-brown'
-                                                    : 'text-viking-brown dark:text-viking-parchment'
-                                            }`}>
-                                                💤 {fullChar?.tokensFatigue ?? sessionChar.tokensFatigue}/9
-                                            </span>
-                                        )}
-                                    </div>
-                                </div>
-                            </button>
-                        );
-                    })}
-                    <button
-                          onClick={() => { setSendPreSelectedCharId(null); setShowSendModal(true); }}
-                          className="px-3 py-1.5 bg-viking-success text-white rounded text-sm font-semibold hover:bg-green-700 transition-colors shrink-0"
-                      >
-                          📨 Message
-                      </button>
-                    <button
-                        onClick={() => { setSendItemPreSelectedCharId(null); setShowSendItemModal(true); }}
-                        className="px-3 py-1.5 bg-viking-bronze text-viking-brown rounded text-sm font-semibold hover:bg-viking-leather transition-colors shrink-0"
-                    >
-                        🎁 Item
-                    </button>
+            {/* ── Liste des personnages ─────────────────────────────────────── */}
+            <aside className="md:w-64 shrink-0 bg-surface border-2 border-default rounded-lg overflow-hidden self-start w-full">
+                <div className="px-3 py-2 border-b border-default">
+                    <p className="text-[10px] uppercase tracking-wide text-muted">Personnages</p>
+                    <p className="text-xs font-semibold text-primary">{activeSession.name}</p>
                 </div>
+                {loading && <p className="p-3 text-xs text-muted italic">Chargement des fiches…</p>}
+                {!loading && sessionCharacters.map(sc => (
+                    <CharacterTile key={sc.id} sessionChar={sc} full={characters[sc.id]}
+                                   selected={selectedId === sc.id} online={onlineIds.has(sc.id)}
+                                   onSelect={() => setSelectedId(sc.id)} />
+                ))}
+                <div className="p-2 flex gap-2">
+                    <button onClick={() => setShowSendModal(true)} className="flex-1 px-2 py-1.5 bg-success text-white rounded text-xs font-semibold">📨 Note</button>
+                    <button onClick={() => setShowSendItemModal(true)} className="flex-1 px-2 py-1.5 bg-primary text-default rounded text-xs font-semibold">🎁 Objet</button>
+                </div>
+            </aside>
+
+            {/* ── Fiche ─────────────────────────────────────────────────────── */}
+            <div className="flex-1 min-w-0">
+                {!char ? (
+                    <Empty icon="🗡️" title="Aucun personnage sélectionné">Sélectionnez un personnage dans la liste.</Empty>
+                ) : (
+                    <>
+                        <div className="flex items-center gap-2 flex-wrap mb-3">
+                            <div className="flex gap-1">
+                                {[['fiche', '📋 Fiche'], ['inventaire', '🎒 Inventaire']].map(([id, label]) => (
+                                    <button key={id} onClick={() => setView(id)}
+                                            className={`px-3 py-1.5 rounded text-xs font-semibold ${view === id ? 'bg-primary text-default' : 'bg-surface-alt text-default'}`}>
+                                        {label}
+                                    </button>
+                                ))}
+                            </div>
+                            <div className="flex-1" />
+                            <button onClick={handleCopyCode} className="px-2 py-1.5 rounded border border-default text-xs text-default">
+                                {copied ? '✓ Copié' : '⎘ Copier lien + code'}
+                            </button>
+                            {view === 'fiche' && (editMode ? (
+                                <>
+                                    <button onClick={cancelEdit} className="px-2 py-1.5 rounded border border-default text-xs text-default">Annuler</button>
+                                    <button onClick={saveEdit} className="px-2 py-1.5 rounded bg-success text-white text-xs">✓ Enregistrer</button>
+                                </>
+                            ) : (
+                                <button onClick={startEdit} className="px-2 py-1.5 rounded bg-secondary text-white text-xs">⚙️ Éditer</button>
+                            ))}
+                        </div>
+
+                        {view === 'fiche' ? (
+                            <SheetLayout
+                                char={char}
+                                editMode={editMode}
+                                set={set}
+                                update={update}
+                                onRoll={setDiceContext}
+                                onAvatarClick={() => setShowAvatar(true)}
+                                onOpenEditModal={setShowEditModal}
+                            />
+                        ) : (
+                            <InventoryTab character={characters[selectedId]} onUpdate={update} />
+                        )}
+                    </>
+                )}
             </div>
 
-            {/* === FICHE DU PERSONNAGE SÉLECTIONNÉ === */}
-            {selectedCharacter ? (
-                <GMCharacterCard
-                    character={selectedCharacter}
-                    isOnline={onlineIds.has(selectedCharId)}
-                    onUpdateTokens={handleUpdateTokens}
-                    onSendMessage={(charId) => { setSendPreSelectedCharId(charId); setShowSendModal(true);}}
-                    onSendItem={(charId) => { setSendItemPreSelectedCharId(charId); setShowSendItemModal(true); }}
-                />
-            ) : (
-                <div className="bg-white dark:bg-viking-brown rounded-lg shadow-lg border-2 border-viking-bronze p-8 text-center">
-                    <p className="text-viking-leather dark:text-viking-bronze">
-                        Sélectionnez un personnage ci-dessus pour voir sa fiche.
-                    </p>
-                </div>
-            )}
-
+            {/* ── Modales ───────────────────────────────────────────────────── */}
             {showSendModal && (
                 <GMSendModal
-                  onClose={() => { setShowSendModal(false); setSendPreSelectedCharId(null); }}
-                  onSend={handleGMSend}
-                  sessionCharacters={activeSession?.characters || []}
-                  preSelectedCharId={sendPreSelectedCharId}
+                    onClose={() => setShowSendModal(false)}
+                    onSend={handleGMSend}
+                    sessionCharacters={sessionCharacters}
+                    preSelectedCharId={selectedId}
                 />
             )}
             {showSendItemModal && (
                 <GMSendItemModal
-                    onClose={() => { setShowSendItemModal(false); setSendItemPreSelectedCharId(null); }}
+                    onClose={() => setShowSendItemModal(false)}
                     onSend={handleGMSendItem}
-                    sessionCharacters={activeSession?.characters || []}
-                    preSelectedCharId={sendItemPreSelectedCharId}
+                    sessionCharacters={sessionCharacters}
+                    preSelectedCharId={selectedId}
                 />
+            )}
+            {showAvatar && char && (
+                <AvatarUploader
+                    currentAvatar={char.avatar}
+                    onAvatarChange={(avatar) => update(prev => ({ ...prev, avatar }))}
+                    onClose={() => setShowAvatar(false)}
+                />
+            )}
+            {showEditModal && editableChar && (
+                <EditModals type={showEditModal} character={editableChar}
+                            onClose={() => setShowEditModal(null)}
+                            onUpdate={(newChar) => { setEditableChar(newChar); setShowEditModal(null); }} />
+            )}
+            {diceContext && characters[selectedId] && (
+                <DiceModal character={characters[selectedId]} isBerserk={false} context={diceContext}
+                           onClose={() => setDiceContext(null)} onUpdate={update} sessionId={sessionId} />
             )}
         </div>
     );

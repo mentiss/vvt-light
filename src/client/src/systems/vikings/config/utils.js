@@ -36,6 +36,18 @@ export const getSkillExamples = (skillName) => {
     return examples[skillName] || "";
 };
 
+// Champs modifiés par le mode édition de la fiche. À l'enregistrement, seuls ces
+// champs du buffer sont reportés sur la fiche à jour : les actions de jeu faites
+// pendant l'édition (inventaire, jauges, jets) ne sont pas écrasées.
+export const SHEET_EDITABLE_FIELDS = [
+    'prenom', 'surnom', 'nom', 'age', 'taille', 'poids', 'activite', 'playerName',
+    'force', 'agilite', 'perception', 'intelligence', 'charisme', 'chance',
+    'skills', 'traits', 'sagaTotale',
+];
+
+export const pickEditableFields = (character) =>
+    Object.fromEntries(SHEET_EDITABLE_FIELDS.filter(f => f in character).map(f => [f, character[f]]));
+
 // Format d'affichage d'une compétence avec spécialisation
 export const formatSkillName = (skill) => {
     if (!skill) return '';

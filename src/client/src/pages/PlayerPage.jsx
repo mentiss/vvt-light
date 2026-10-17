@@ -107,13 +107,6 @@ const PlayerPage = () => {
         });
     };
 
-    const handleCharacterHasUpdated = (updatedOrFn) => {
-        setCharacter(prev => {
-            const updates = typeof updatedOrFn === 'function' ? updatedOrFn(prev) : updatedOrFn;
-            return { ...prev, ...updates };
-        });
-    } ;
-
     const handleCharacterReload = async () => {
         if (!character?.id) return;
         try {
@@ -128,7 +121,6 @@ const PlayerPage = () => {
     const { journalUnread, resetJournalUnread } = usePlayerSession({
         character:          appState === 'playing' ? character : null,
         onCharacterUpdate:      handleCharacterUpdate,
-        onCharacterHasUpdated:  handleCharacterHasUpdated,
         onCharacterReload:      handleCharacterReload,
         apiBase,
     });

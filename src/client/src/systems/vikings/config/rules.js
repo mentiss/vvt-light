@@ -82,6 +82,39 @@ export const getFatigueMalus = (tokens) => {
 
 export const isFatigueKO = (tokens) => (tokens ?? 0) >= 10;
 
+export const BLESSURE_MAX = 5;
+export const FATIGUE_MAX  = 10;
+
+const FATIGUE_STATES = [
+    [10, 'Inconscient'], [8, 'Exténué'], [6, 'Épuisé'], [4, 'Fatigué'], [2, 'En nage'], [1, 'Essoufflé'],
+];
+
+/** Libellé du palier de fatigue (§2.2), « » à 0. */
+export const getFatigueState = (tokens) =>
+    FATIGUE_STATES.find(([min]) => (tokens ?? 0) >= min)?.[1] ?? '';
+
+// ── Effets d'un jet sur la fiche ─────────────────────────────────────────────
+
+/**
+ * Applique les dépenses et restitutions d'un jet (SAGA plafonnée à 0–5,
+ * points de compétence à 0–niveau). Un `skillPointsSpent` négatif rembourse.
+ * @param {object} outcome { sagaSpent, sagaRestored, skill, skillPointsSpent }
+ */
+export const applyRollOutcome = (character, { sagaSpent = 0, sagaRestored = 0, skill = null, skillPointsSpent = 0 } = {}) => {
+    const next = { ...character };
+    if (sagaSpent || sagaRestored) {
+        next.sagaActuelle = Math.max(0, Math.min(5, (character.sagaActuelle ?? 0) - sagaSpent + sagaRestored));
+    }
+    if (skill && skillPointsSpent) {
+        next.skills = (character.skills ?? []).map(s =>
+            (s.name === skill.name && s.specialization === skill.specialization)
+                ? { ...s, currentPoints: Math.max(0, Math.min(s.level, (s.currentPoints ?? 0) - skillPointsSpent)) }
+                : s
+        );
+    }
+    return next;
+};
+
 // ── Évolution (§5) ───────────────────────────────────────────────────────────
 
 /** Coûts en SAGA des améliorations (vault « 07 » ; runes à 1, D-7). */

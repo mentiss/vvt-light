@@ -18,12 +18,11 @@ import useSystem from "./useSystem.js";
 /**
  * @param {object|null} character       - personnage actif (null si pas connecté)
  * @param {function}    onCharacterUpdate - callback(updatedCharacter) — mise à jour temps réel
- * @param {function}    onCharacterHasUpdated - callback de mise à jour des données sans update vers le server (readonly)
  * @param {function}    onCharacterReload  - callback() — recharger le perso complet depuis l'API
  * @param {string}      apiBase            - ex: '/api/vikings'
  * @returns {{ journalUnread: number, resetJournalUnread: function }}
  */
-export function usePlayerSession({ character, onCharacterUpdate, onCharacterHasUpdated, onCharacterReload, apiBase }) {
+export function usePlayerSession({ character, onCharacterUpdate, onCharacterReload, apiBase }) {
     const socket = useSocket();
     const { updateCharacterSessions, activeGMSession } = useSession();
     const fetchWithAuth = useFetch();
@@ -79,16 +78,6 @@ export function usePlayerSession({ character, onCharacterUpdate, onCharacterHasU
             }
         };
 
-        const handleCharacterLightUpdate = (data) => {
-            if (String(data.characterId) === String(character.id)) {
-                onCharacterHasUpdated(prev => ({
-                    tokensBlessure: data.tokensBlessure ?? prev.tokensBlessure,
-                    tokensFatigue:  data.tokensFatigue  ?? prev.tokensFatigue,
-                    sagaActuelle:   data.sagaActuelle   ?? prev.sagaActuelle,
-                }));
-            }
-        };
-
         // Réception d'un objet GM → recharger la fiche complète + badge journal
         const handleGMItemReceived = (data) => {
             if (String(data.characterId) === String(character.id)) {
@@ -106,14 +95,12 @@ export function usePlayerSession({ character, onCharacterUpdate, onCharacterHasU
 
         socket.on('character-update',    handleCharacterUpdate);
         socket.on('character-full-update', handleCharacterFullUpdate);
-        socket.on('character-light-update', handleCharacterLightUpdate);
         socket.on('gm-item-received',    handleGMItemReceived);
         socket.on('gm-message-received', handleGMMessage);
 
         return () => {
             socket.off('character-update',    handleCharacterUpdate);
             socket.off('character-full-update', handleCharacterFullUpdate);
-            socket.off('character-light-update', handleCharacterLightUpdate);
             socket.off('gm-item-received',    handleGMItemReceived);
             socket.off('gm-message-received', handleGMMessage);
         };

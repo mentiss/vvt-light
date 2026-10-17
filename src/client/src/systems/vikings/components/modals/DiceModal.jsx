@@ -18,7 +18,7 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import {
     getBestCharacteristic, getBlessureMalus,
     getExplosionThreshold, getFatigueMalus,
-    getSuccessThreshold,
+    getSuccessThreshold, applyRollOutcome,
 } from '../../config/rules.js';
 import { formatSkillName } from '../../config/utils.js';
 import getTraitBonuses from '../../config/traitBonuses.js';
@@ -29,6 +29,8 @@ import { useFetch }    from '../../../../hooks/useFetch.js';
 import { useParams }   from 'react-router-dom';
 import { useSystem }   from '../../../../hooks/useSystem.js';
 
+// onUpdate reçoit un updater (prev => next) : onCharacterUpdate de PlayerPage
+// côté joueur, update de TabSession côté MJ.
 const DiceModal = ({ character, isBerserk, context, onClose, onUpdate, sessionId = null }) => {
 
     // ── État UI ───────────────────────────────────────────────────────────────
@@ -135,25 +137,24 @@ const DiceModal = ({ character, isBerserk, context, onClose, onUpdate, sessionId
         setDiceResults(null);
         setError(null);
 
+        // Dépenses du jet (SAGA, points de compétence) : une seule mise à jour,
+        // appliquée à l'état le plus récent (updater) — sinon les dépenses
+        // successives s'écrasaient entre elles.
+        const sagaSpent   = sagaMode ? 1 : 0;
+        const pointsSpent = rollType === 'skill' && selectedSkill ? autoSuccesses : 0;
+        const skill       = selectedSkill;
+
         try {
             const ctx      = buildCtx();
             const notation = vikingsConfig.dice.buildNotation(ctx);
 
             // Dépenser les ressources AVANT roll() (UI optimiste)
-            if (sagaMode === 'insurance' || sagaMode === 'heroic' || sagaMode === 'epic') {
-                // Décrémente sagaActuelle immédiatement
-                onUpdate({ ...character, sagaActuelle: Math.max(0, character.sagaActuelle - 1) });
+            if (sagaSpent || pointsSpent) {
+                onUpdate(prev => applyRollOutcome(prev, { sagaSpent, skill, skillPointsSpent: pointsSpent }));
             }
-            if (rollType === 'skill' && selectedSkill && autoSuccesses > 0) {
-                // Dépense les points de compétence auto
-                const newSkills = character.skills.map(s =>
-                    (s.name === selectedSkill.name && s.specialization === selectedSkill.specialization)
-                        ? { ...s, currentPoints: Math.max(0, s.currentPoints - autoSuccesses) }
-                        : s
-                );
-                onUpdate({ ...character, skills: newSkills });
+            if (pointsSpent) {
                 setSelectedSkill(prev => prev
-                    ? { ...prev, currentPoints: Math.max(0, prev.currentPoints - autoSuccesses) }
+                    ? { ...prev, currentPoints: Math.max(0, prev.currentPoints - pointsSpent) }
                     : prev
                 );
             }
@@ -161,9 +162,9 @@ const DiceModal = ({ character, isBerserk, context, onClose, onUpdate, sessionId
             // roll() est async : gère animation + persist en interne
             const result = await roll(notation, ctx, vikingsConfig.dice);
 
-            // SAGA : restituer 1 point si sagaSuccess
+            // SAGA : le point dépensé revient après un jet héroïque/épique réussi
             if (result.meta?.sagaSuccess) {
-                onUpdate({ ...character, sagaActuelle: character.sagaActuelle }); // déjà décrémenté + restitué = inchangé
+                onUpdate(prev => applyRollOutcome(prev, { sagaRestored: 1 }));
             }
 
             setDiceResults(result);
@@ -173,7 +174,9 @@ const DiceModal = ({ character, isBerserk, context, onClose, onUpdate, sessionId
             if (err instanceof RollError) {
                 setError(err.message);
                 // Annuler la dépense si validation échouée
-                onUpdate({ ...character }); // re-passer le character original annule l'optimiste
+                if (sagaSpent || pointsSpent) {
+                    onUpdate(prev => applyRollOutcome(prev, { sagaRestored: sagaSpent, skill, skillPointsSpent: -pointsSpent }));
+                }
             } else {
                 console.error('[DiceModal]', err);
                 setError('Erreur inattendue lors du jet.');
@@ -183,7 +186,7 @@ const DiceModal = ({ character, isBerserk, context, onClose, onUpdate, sessionId
         }
     }, [
         rolling, buildCtx, sagaMode, rollType, selectedSkill, autoSuccesses,
-        character, onUpdate, context,
+        onUpdate, context,
     ]);
 
     // ── Rendu : résultats ────────────────────────────────────────────────────

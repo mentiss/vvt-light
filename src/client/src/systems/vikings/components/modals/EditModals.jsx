@@ -25,7 +25,6 @@ export const AddSkillModal = ({ character, onClose, onUpdate }) => {
     const [selected, setSelected] = useState(null);
     const [specialization, setSpecialization] = useState('');
     const [error, setError] = useState(null);
-    setError(null);
     // Compétences disponibles
     // Pour compétences spécialisables : toujours disponibles (on peut les prendre plusieurs fois)
     // Pour autres : seulement si pas déjà possédées

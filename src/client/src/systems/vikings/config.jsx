@@ -33,6 +33,7 @@ export * from './config/utils.js';
 import TokensDisplay   from './components/TokensDisplay.jsx';
 import PostureModal    from './components/modals/PostureModal.jsx';
 import DiceModal       from './components/modals/DiceModal.jsx';
+import VikingsHistoryEntry from './components/layout/VikingsHistoryEntry.jsx';
 
 // ─── Métadonnées système ──────────────────────────────────────────────────────
 
@@ -365,9 +366,8 @@ const vikingsConfig = {
         },
 
         // ── 5. renderHistoryEntry ─────────────────────────────────────────────────
-        // null → rendu générique dans HistoryPanel / DiceHistoryPage
-        // À implémenter pour un affichage riche spécifique Vikings.
-        renderHistoryEntry: (_entry) => null,
+        // Rendu Vikings dans DiceHistoryPage (jets libres : rendu générique).
+        renderHistoryEntry: (entry) => <VikingsHistoryEntry entry={entry} />,
     },
 
 

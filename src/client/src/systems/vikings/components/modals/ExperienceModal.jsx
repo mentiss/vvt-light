@@ -1,14 +1,35 @@
-// EvolutionModal.js - Modal d'évolution (Dépense SAGA)
+// src/client/src/systems/vikings/components/modals/ExperienceModal.jsx
+// ─────────────────────────────────────────────────────────────────────────────
+// Modale d'évolution : dépense de SAGA entre les scénarios (spec_vikings.md §5).
+// Coûts : XP_COSTS (config/rules.js). Un nouveau trait doit remplir ses
+// conditions et ne pas être incompatible avec un trait possédé (D-12).
+// La dépense ne modifie pas la SAGA totale (légende cumulée, D-10).
+//
+// Props : character, onClose, onUpdate (fait le PUT)
+// ─────────────────────────────────────────────────────────────────────────────
 
-import React, { useState, useEffect } from "react";
-import {formatSkillName, getSkillExamples, isSpecializableSkill} from "./config/utils.js";
-import {XP_COSTS} from "./config/rules.js";
-import {CARACNAMES, COMPETENCES} from "./config/competences.js";
-import {TRAITS} from "./config/traits.js";
+import React, { useState } from "react";
+import {formatSkillName, getSkillExamples, isSpecializableSkill} from "../../config/utils.js";
+import {XP_COSTS, checkTraitConditions} from "../../config/rules.js";
+import {CARACNAMES, COMPETENCES} from "../../config/competences.js";
+import {TRAITS} from "../../config/traits.js";
 
-const Experience = ({ character, onClose, onUpdate }) => {
-    const { useState } = React;
-    
+/** Raison pour laquelle un trait ne peut pas être acquis, ou null. */
+const traitBlocker = (character, trait) => {
+    const incompatible = (trait.incompatible ?? []).find(name => character.traits.some(t => t.name === name));
+    if (incompatible) return `Incompatible avec ${incompatible}`;
+    const { can, reason } = checkTraitConditions(character, trait);
+    return can ? null : reason;
+};
+
+const MODES = [
+    { mode: 'carac',    label: '+1 Caractéristique' },
+    { mode: 'skill',    label: '+1 Compétence' },
+    { mode: 'newSkill', label: 'Nouvelle Compétence' },
+    { mode: 'trait',    label: 'Nouveau Trait' },
+];
+
+const ExperienceModal = ({ character, onClose, onUpdate }) => {
     const [mode, setMode] = useState(null); // 'carac', 'skill', 'newSkill', 'trait', 'rune'
     const [selected, setSelected] = useState(null);
     const [step, setStep] = useState('select'); // 'select' ou 'confirm'
@@ -84,9 +105,8 @@ const Experience = ({ character, onClose, onUpdate }) => {
             }];
         }
         
-        // Dépenser SAGA
+        // Dépenser SAGA (la SAGA totale ne compte que les gains, D-10)
         updated.sagaActuelle = Math.max(0, updated.sagaActuelle - currentCost);
-        updated.sagaTotale += currentCost;
         
         onUpdate(updated);
         onClose();
@@ -120,38 +140,17 @@ const Experience = ({ character, onClose, onUpdate }) => {
                                 <div>
                                     <h4 className="text-sm font-semibold text-viking-brown dark:text-viking-parchment mb-2">Choisir une évolution :</h4>
                                     <div className="grid grid-cols-2 gap-2">
-                                        <button 
-                                            onClick={() => setMode('carac')}
-                                            disabled={character.sagaActuelle < 2}
-                                            className="p-3 rounded text-left text-sm font-semibold bg-viking-parchment dark:bg-gray-800 text-viking-text dark:text-viking-parchment border-2 border-transparent hover:border-viking-bronze disabled:opacity-30 disabled:cursor-not-allowed"
-                                        >
-                                            <div>+1 Caractéristique</div>
-                                            <div className="text-xs text-viking-bronze">Coût : 2 SAGA</div>
-                                        </button>
-                                        <button 
-                                            onClick={() => setMode('skill')}
-                                            disabled={character.sagaActuelle < 1}
-                                            className="p-3 rounded text-left text-sm font-semibold bg-viking-parchment dark:bg-gray-800 text-viking-text dark:text-viking-parchment border-2 border-transparent hover:border-viking-bronze disabled:opacity-30 disabled:cursor-not-allowed"
-                                        >
-                                            <div>+1 Compétence</div>
-                                            <div className="text-xs text-viking-bronze">Coût : 1 SAGA</div>
-                                        </button>
-                                        <button 
-                                            onClick={() => setMode('newSkill')}
-                                            disabled={character.sagaActuelle < 3}
-                                            className="p-3 rounded text-left text-sm font-semibold bg-viking-parchment dark:bg-gray-800 text-viking-text dark:text-viking-parchment border-2 border-transparent hover:border-viking-bronze disabled:opacity-30 disabled:cursor-not-allowed"
-                                        >
-                                            <div>Nouvelle Compétence</div>
-                                            <div className="text-xs text-viking-bronze">Coût : 3 SAGA</div>
-                                        </button>
-                                        <button 
-                                            onClick={() => setMode('trait')}
-                                            disabled={character.sagaActuelle < 4}
-                                            className="p-3 rounded text-left text-sm font-semibold bg-viking-parchment dark:bg-gray-800 text-viking-text dark:text-viking-parchment border-2 border-transparent hover:border-viking-bronze disabled:opacity-30 disabled:cursor-not-allowed"
-                                        >
-                                            <div>Nouveau Trait</div>
-                                            <div className="text-xs text-viking-bronze">Coût : 4 SAGA</div>
-                                        </button>
+                                        {MODES.map(({ mode: m, label }) => (
+                                            <button
+                                                key={m}
+                                                onClick={() => setMode(m)}
+                                                disabled={character.sagaActuelle < costs[m]}
+                                                className="p-3 rounded text-left text-sm font-semibold bg-viking-parchment dark:bg-gray-800 text-viking-text dark:text-viking-parchment border-2 border-transparent hover:border-viking-bronze disabled:opacity-30 disabled:cursor-not-allowed"
+                                            >
+                                                <div>{label}</div>
+                                                <div className="text-xs text-viking-bronze">Coût : {costs[m]} SAGA</div>
+                                            </button>
+                                        ))}
                                     </div>
                                 </div>
                             )}
@@ -289,20 +288,25 @@ const Experience = ({ character, onClose, onUpdate }) => {
                                                 const search = traitSearch.toLowerCase();
                                                 return !search || t.name.toLowerCase().includes(search) || t.description.toLowerCase().includes(search);
                                             })
-                                            .map(trait => (
-                                                <button
-                                                    key={trait.name}
-                                                    onClick={() => setSelected(trait.name)}
-                                                    className={`p-2 rounded text-sm text-left ${
-                                                        selected === trait.name
-                                                            ? 'bg-viking-bronze text-viking-brown'
-                                                            : 'bg-viking-parchment dark:bg-gray-800 text-viking-text dark:text-viking-parchment hover:bg-viking-bronze/30'
-                                                    }`}
-                                                >
-                                                    <div className="font-bold">{trait.name}</div>
-                                                    <div className="text-xs opacity-90">{trait.description}</div>
-                                                </button>
-                                            ))
+                                            .map(trait => {
+                                                const blocker = traitBlocker(character, trait);
+                                                return (
+                                                    <button
+                                                        key={trait.name}
+                                                        onClick={() => !blocker && setSelected(trait.name)}
+                                                        disabled={!!blocker}
+                                                        className={`p-2 rounded text-sm text-left disabled:opacity-40 disabled:cursor-not-allowed ${
+                                                            selected === trait.name
+                                                                ? 'bg-viking-bronze text-viking-brown'
+                                                                : 'bg-viking-parchment dark:bg-gray-800 text-viking-text dark:text-viking-parchment hover:bg-viking-bronze/30'
+                                                        }`}
+                                                    >
+                                                        <div className="font-bold">{trait.name}</div>
+                                                        <div className="text-xs opacity-90">{trait.description}</div>
+                                                        {blocker && <div className="text-xs text-viking-danger mt-0.5">{blocker}</div>}
+                                                    </button>
+                                                );
+                                            })
                                         }
                                     </div>
                                 </div>
@@ -389,4 +393,4 @@ const Experience = ({ character, onClose, onUpdate }) => {
     );
 };
 
-export default Experience;
+export default ExperienceModal;

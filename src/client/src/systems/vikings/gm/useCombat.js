@@ -1,37 +1,21 @@
-// GMView.jsx - Interface Maître du Jeu (shell avec tabs)
+// src/client/src/systems/vikings/gm/useCombat.js
+// ─────────────────────────────────────────────────────────────────────────────
+// État et handlers du combat MJ, déplacés TELS QUELS depuis l'ancien
+// gm/GMView.jsx (lot 3a de la refonte : le système de combat est hors
+// périmètre, aucun changement de comportement).
+// Renvoie exactement les props attendues par gm/tabs/TabCombat.jsx.
+// ─────────────────────────────────────────────────────────────────────────────
 
-import React, { useState, useEffect } from "react";
-import GMDiceModal from './modals/GMDiceModal.jsx';
-import {NPC_TEMPLATES} from "../config/npcs.js";
-import {useSocket} from "../../../context/SocketContext.jsx";
-import ToastNotifications from "../../../components/layout/ToastNotifications.jsx";
-import HistoryPanel from "../../../components/layout/HistoryPanel.jsx";
-import {useAuth} from "../../../context/AuthContext.jsx";
-import {toSystemUrl, useFetch} from "../../../hooks/useFetch.js";
-import GMHeader from "./layout/GMHeader.jsx";
-import TableManagementModal from "../../../components/gm/modals/TableManagementModal.jsx";
-import TabCombat from "./tabs/TabCombat.jsx";
-import TabSession from "./tabs/TabSession.jsx";
-import TabJournal from "../../../components/gm/tabs/TabJournal.jsx";
-import DiceConfigModal from "../../../components/modals/DiceConfigModal.jsx";
+import { useState, useEffect } from 'react';
+import { useSocket } from '../../../context/SocketContext.jsx';
+import { toSystemUrl, useFetch } from '../../../hooks/useFetch.js';
+import { useSystem } from '../../../hooks/useSystem.js';
 import vikingsConfig from '../config.jsx';
-import { useParams } from 'react-router-dom';
 
-const GMView = ({ activeSession, onSessionChange, onlineCharacters, darkMode, onToggleDarkMode }) => {
-    console.log('[GMView] Component rendering...');
-    console.log(activeSession);
-    const { system } = useParams();
-    const apiBase    = `/api/${system}`;
-
-    // --- Tab actif ---
-    const [activeGMTab, setActiveGMTab] = useState(() => {
-        const hash = window.location.hash.substring(1);
-        return ['combat', 'session', 'journal'].includes(hash) ? hash : 'combat';
-    });
-
-    useEffect(() => {
-        window.location.hash = activeGMTab;
-    }, [activeGMTab]);
+export function useCombat(onlineCharacters) {
+    const { apiBase }   = useSystem();
+    const fetchWithAuth = useFetch();
+    const socket        = useSocket();
 
     // --- State combat ---
     const [combatState, setCombatState] = useState({
@@ -47,16 +31,6 @@ const GMView = ({ activeSession, onSessionChange, onlineCharacters, darkMode, on
     const [showEndCombatConfirm, setShowEndCombatConfirm] = useState(false);
     const [draggedIndex, setDraggedIndex] = useState(null);
 
-    // --- State global ---
-    const [showDiceModal, setShowDiceModal] = useState(false);
-    const [historyPanelOpen, setHistoryPanelOpen] = useState(false);
-    const [showTableManagement, setShowTableManagement] = useState(false);
-    const [showDiceConfig, setShowDiceConfig] = useState(false);
-
-    const { logout } = useAuth();
-    const fetchWithAuth = useFetch();
-    const socket = useSocket();
-
     // =========================================
     // EFFECTS
     // =========================================
@@ -70,13 +44,7 @@ const GMView = ({ activeSession, onSessionChange, onlineCharacters, darkMode, on
     useEffect(() => {
         if (!socket) return;
 
-        const handleCombatUpdate = (state) => {
-            console.log('[GMView] combat-update received', {
-                pendingAttacks: state.pendingAttacks,
-                pendingLength: state.pendingAttacks?.length
-            });
-            setCombatState(state);
-        };
+        const handleCombatUpdate = (state) => setCombatState(state);
 
         socket.on('combat-update', handleCombatUpdate);
 
@@ -187,7 +155,7 @@ const GMView = ({ activeSession, onSessionChange, onlineCharacters, darkMode, on
                             }),
                         });
                     } catch (dbErr) {
-                        console.error('[GMView] Error syncing health to DB:', dbErr);
+                        console.error('[useCombat] Error syncing health to DB:', dbErr);
                     }
                 }
             }
@@ -369,128 +337,33 @@ const GMView = ({ activeSession, onSessionChange, onlineCharacters, darkMode, on
         setDraggedIndex(null);
     };
 
-    // =========================================
-    // HANDLERS NAVIGATION
-    // =========================================
-
-    const handleSelectTable = (session) => {
-        onSessionChange(session ?? null);
+    // Props de TabCombat, à l'identique de l'ancien GMView
+    return {
+        combatState,
+        onlineCharacters,
+        pendingAttacks:          combatState.pendingAttacks ?? [],
+        combatConfig:            vikingsConfig.combat,
+        onStartCombat:           startCombat,
+        onNextTurn:              nextTurn,
+        onEndCombat:             endCombat,
+        onAddCombatant:          addCombatant,
+        onUpdateCombatant:       updateCombatant,
+        onRemoveCombatant:       removeCombatant,
+        onAddPlayerToCombat:     addPlayerToCombat,
+        onValidateAttack:        handleValidateAttack,
+        onRejectAttack:          handleRejectAttack,
+        onNPCAttack:             handleNPCAttack,
+        attackingNPC,
+        onNPCAttackSubmitted:    handleNPCAttackSubmitted,
+        onCloseNPCAttack:        () => setAttackingNPC(null),
+        onDragStart:             handleDragStart,
+        onDragOver:              handleDragOver,
+        onDragEnd:               handleDragEnd,
+        showNPCModal,
+        onShowNPCModal:          () => setShowNPCModal(true),
+        onCloseNPCModal:         () => setShowNPCModal(false),
+        showEndCombatConfirm,
+        onShowEndCombatConfirm:  () => setShowEndCombatConfirm(true),
+        onCloseEndCombatConfirm: () => setShowEndCombatConfirm(false),
     };
-
-    const handleGoHome = () => {
-        window.history.pushState({}, '', '/');
-        window.location.reload();
-    };
-
-    const handleLogout = async () => {
-        await logout();
-        handleGoHome();
-    };
-
-    // =========================================
-    // RENDER
-    // =========================================
-
-    return (
-        <div className="min-h-screen bg-viking-parchment dark:bg-gray-900 transition-colors">
-            {/* Header avec tabs intégrés */}
-            <GMHeader
-                darkMode={darkMode}
-                onToggleDarkMode={onToggleDarkMode}
-                activeSession={activeSession}
-                activeTab={activeGMTab}
-                onTabChange={setActiveGMTab}
-                onManageTables={() => setShowTableManagement(true)}
-                onGoHome={handleGoHome}
-                onLogout={handleLogout}
-                onOpenDice={() => setShowDiceModal(true)}
-                onDiceConfig={() => setShowDiceConfig(true)}
-            />
-
-            {/* Contenu principal - délégué aux tabs */}
-            <div className="max-w-7xl mx-auto p-4">
-                {activeGMTab === 'combat' && (
-                    <TabCombat
-                        combatState={combatState}
-                        onlineCharacters={onlineCharacters}
-                        pendingAttacks={combatState.pendingAttacks ?? []}
-                        combatConfig={vikingsConfig.combat}
-                        onStartCombat={startCombat}
-                        onNextTurn={nextTurn}
-                        onEndCombat={endCombat}
-                        onAddCombatant={addCombatant}
-                        onUpdateCombatant={updateCombatant}
-                        onRemoveCombatant={removeCombatant}
-                        onAddPlayerToCombat={addPlayerToCombat}
-                        onValidateAttack={handleValidateAttack}
-                        onRejectAttack={handleRejectAttack}
-                        onNPCAttack={handleNPCAttack}
-                        attackingNPC={attackingNPC}
-                        onNPCAttackSubmitted={handleNPCAttackSubmitted}
-                        onCloseNPCAttack={() => setAttackingNPC(null)}
-                        onDragStart={handleDragStart}
-                        onDragOver={handleDragOver}
-                        onDragEnd={handleDragEnd}
-                        showNPCModal={showNPCModal}
-                        onShowNPCModal={() => setShowNPCModal(true)}
-                        onCloseNPCModal={() => setShowNPCModal(false)}
-                        showEndCombatConfirm={showEndCombatConfirm}
-                        onShowEndCombatConfirm={() => setShowEndCombatConfirm(true)}
-                        onCloseEndCombatConfirm={() => setShowEndCombatConfirm(false)}
-                    />
-                )}
-
-                {activeGMTab === 'session' && (
-                    <TabSession
-                        activeSession={activeSession}
-                        onlineCharacters={onlineCharacters}
-                    />
-                )}
-
-                {activeGMTab === 'journal' && (
-                    <TabJournal />
-                )}
-            </div>
-
-            {/* === Éléments globaux (visibles sur tous les tabs) === */}
-
-            {/* Modal Gestion Tables */}
-            {showTableManagement && (
-                <TableManagementModal
-                    isOpen={showTableManagement}
-                    onClose={() => setShowTableManagement(false)}
-                    onSelectTable={handleSelectTable}
-                    activeSessionId={activeSession?.id}
-                />
-            )}
-
-            {/* DiceModal pour MJ (accessible depuis tous les tabs) */}
-            {showDiceModal && (
-                <GMDiceModal
-                    onClose={() => setShowDiceModal(false)}
-                    darkMode={darkMode}
-                    sessionId={activeSession?.id}
-                />
-            )}
-
-            {/* Bouton flottant historique */}
-            <button
-                onClick={() => setHistoryPanelOpen(true)}
-                className="fixed bottom-2 right-1 w-10 h-10 bg-viking-bronze text-viking-brown rounded-full shadow-lg hover:bg-viking-leather transition-all z-30 flex items-center justify-center text-lg border-2 border-viking-leather"
-                title="Historique des jets"
-            >
-                📜
-            </button>
-
-            {/* Toast Notifications */}
-            <ToastNotifications onViewHistory={() => setHistoryPanelOpen(true)} sessionId={activeSession?.id} />
-
-            {/* History Panel */}
-            <HistoryPanel isOpen={historyPanelOpen} onClose={() => setHistoryPanelOpen(false)} sessionId={activeSession?.id} />
-
-            {showDiceConfig && <DiceConfigModal onClose={() => setShowDiceConfig(false)} />}
-        </div>
-    );
-};
-
-export default GMView;
+}

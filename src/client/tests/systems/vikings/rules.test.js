@@ -10,6 +10,7 @@ import {
     getBlessureMalus, getFatigueMalus, isFatigueKO,
     splitDiceWaves, isTripleTen,
     XP_COSTS, checkTraitConditions, formatTraitConditions, canSelectTrait,
+    applyRollOutcome,
     TRAITS,
 } from '../../../src/systems/vikings/config.jsx';
 
@@ -148,5 +149,37 @@ describe('sélection d\'un trait à la création', () => {
     it('conditions de compétence désormais vérifiées à la création', () => {
         expect(canSelectTrait(perso(), trait('Skald'))).toBe(false);   // Folklore 2
         expect(canSelectTrait(perso({ skills: [{ name: 'Folklore', level: 2 }] }), trait('Skald'))).toBe(true);
+    });
+});
+
+describe('effets d\'un jet sur la fiche (régression : dépenses qui s\'écrasaient)', () => {
+    const epee = { name: 'Combat CàC (armé)', specialization: 'Épée', level: 3, currentPoints: 3 };
+    const hache = { name: 'Combat CàC (armé)', specialization: 'Hache', level: 2, currentPoints: 2 };
+    const guerrier = perso({ sagaActuelle: 2, skills: [epee, hache] });
+
+    it('assurance + succès auto : SAGA ET points de compétence dépensés ensemble', () => {
+        const apres = applyRollOutcome(guerrier, { sagaSpent: 1, skill: epee, skillPointsSpent: 2 });
+        expect(apres.sagaActuelle).toBe(1);
+        expect(apres.skills).toEqual([{ ...epee, currentPoints: 1 }, hache]);
+    });
+
+    it('jet héroïque réussi : le point de SAGA revient, les points dépensés restent dépensés', () => {
+        const avant = applyRollOutcome(guerrier, { sagaSpent: 1, skill: epee, skillPointsSpent: 1 });
+        const apres = applyRollOutcome(avant, { sagaRestored: 1 });
+        expect(apres.sagaActuelle).toBe(2);
+        expect(apres.skills[0].currentPoints).toBe(2);
+    });
+
+    it('annulation d\'un jet refusé : dépense remboursée, plafonnée au niveau', () => {
+        const avant = applyRollOutcome(guerrier, { sagaSpent: 1, skill: epee, skillPointsSpent: 2 });
+        const annule = applyRollOutcome(avant, { sagaRestored: 1, skill: epee, skillPointsSpent: -2 });
+        expect(annule.sagaActuelle).toBe(2);
+        expect(annule.skills[0].currentPoints).toBe(3);
+        expect(applyRollOutcome(guerrier, { skill: epee, skillPointsSpent: -5 }).skills[0].currentPoints).toBe(3);
+    });
+
+    it('SAGA bornée entre 0 et 5', () => {
+        expect(applyRollOutcome(perso({ sagaActuelle: 0 }), { sagaSpent: 1 }).sagaActuelle).toBe(0);
+        expect(applyRollOutcome(perso({ sagaActuelle: 5 }), { sagaRestored: 1 }).sagaActuelle).toBe(5);
     });
 });
