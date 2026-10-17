@@ -52,9 +52,14 @@ npm run migrate 27022025_add_quoi.sql        # joue une migration précise
 
 # Lint (front uniquement)
 cd src/client && npm run lint
+
+# Tests unitaires (front uniquement pour l'instant, Vitest)
+cd src/client && npm test
 ```
 
-**Aucun test n'existe.** Après une modif, vérifie au minimum que `npm run lint` et `npm run build` passent.
+Après une modif, vérifie au minimum que `npm run lint`, `npm test` et `npm run build` passent (depuis `src/client`).
+
+**Tests** : Vitest, fonctions pures uniquement (barèmes, conversions, hooks de dés, stats dérivées), jamais de composants. Un dossier `tests/` par côté, qui reproduit l'arborescence du code testé : `src/client/tests/` miroir de `src/client/src/` (ex. `tests/systems/tecumah/xpCosts.test.js` pour `src/systems/tecumah/xpCosts.js`) ; côté serveur, le jour venu, `tests/server/…` à la racine. Pas de campagne de rattrapage : on ajoute un test quand on touche une règle de calcul. Supprimer un slug implique aussi de supprimer `tests/systems/<slug>/`.
 
 ## Architecture
 

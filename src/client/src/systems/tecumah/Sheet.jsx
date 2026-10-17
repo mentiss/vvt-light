@@ -193,6 +193,7 @@ const Sheet = ({
                                         onClick={e => e.stopPropagation()}
                                     >
                                         <MenuItem onClick={() => { setShowDiceConfig(true); setShowMenu(false); }}>⚙️ Config des dés</MenuItem>
+                                        <MenuItem onClick={() => { setShowXPModal(true); setShowMenu(false); }}>📈 Dépenser des PP</MenuItem>
                                         <hr style={{ borderColor: 'var(--color-border)', margin: '4px 0' }} />
                                         <MenuItem onClick={() => { setShowCharList(true); setShowMenu(false); }}>🔄 Changer de personnage</MenuItem>
                                         <MenuItem

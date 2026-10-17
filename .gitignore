@@ -33,3 +33,6 @@ Thumbs.db
 dist/
 build/
 _download/
+
+# Assets de dés générés (copy-dice-assets.js après npm install client)
+src/client/public/dice-assets/

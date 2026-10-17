@@ -1,14 +1,186 @@
-// src/client/src/systems/tecumah/components/XPModal.jsx
+// src/client/src/systems/tecumah/components/modals/XPModal.jsx
 // Modale de dépense de PP (Points de Personnage) pour les améliorations.
 // Flux : sélection cible → affichage coût → validation → PUT character.
+// Ouverte depuis le menu de la fiche joueur uniquement.
 
-import React, { useState, useMemo } from 'react';
+import React, { useState } from 'react';
+import {
+    SKILLS, ATTRIBUTS, ATTRIBUT_LABELS, BACKGROUNDS_BY_ID,
+    pipsToNotation, getCost,
+} from '../../config.jsx';
 
 const TABS = [
     { id: 'skills',      label: 'Compétences' },
     { id: 'attrs',       label: 'Attributs'   },
     { id: 'backgrounds', label: 'Backgrounds' },
 ];
+
+// Sous-composants des onglets (niveau module : jamais définis dans le rendu).
+// Props communes : character, canAfford(cost), onSelect(pending).
+
+// ── Onglet Compétences ────────────────────────────────────────────────────
+
+const SkillsTab = ({ character, canAfford, onSelect }) => (
+    <div className="flex flex-col gap-1">
+        {SKILLS.map(skill => {
+            const compPips  = character[skill.key] ?? 0;
+            const attrPips  = character[skill.attr] ?? 6;
+            const totalPips = attrPips + compPips;
+
+            // Coût selon situation
+            let action, cost, newPips;
+            if (compPips === 0) {
+                // Déblocage à 1D
+                action  = 'Débloquer (1D)';
+                cost    = getCost('new_skill');
+                newPips = 3;
+            } else {
+                // +1 pip
+                action  = '+1 pip';
+                cost    = getCost('skill_pip', compPips);
+                newPips = compPips + 1;
+            }
+
+            const affordable = canAfford(cost);
+
+            return (
+                <div
+                    key={skill.key}
+                    className="flex items-center justify-between py-2 px-3 rounded"
+                    style={{ background: 'var(--color-surface)', marginBottom: 2 }}
+                >
+                    <div>
+                        <span style={{ fontSize: '0.875rem', color: 'var(--color-text)' }}>{skill.label}</span>
+                        <span style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)', marginLeft: 8 }}>
+                            {pipsToNotation(totalPips)}
+                            {compPips > 0 && ` (comp: ${pipsToNotation(compPips)})`}
+                        </span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                        <span style={{ fontSize: '0.8rem', color: affordable ? 'var(--color-text)' : 'var(--color-danger)' }}>
+                            {cost} PP
+                        </span>
+                        <button
+                            disabled={!affordable || newPips > 36}
+                            onClick={() => onSelect({ type: compPips === 0 ? 'skill_new' : 'skill_pip', key: skill.key, label: skill.label, cost, newPips })}
+                            className="px-2 py-1 rounded text-xs"
+                            style={{
+                                background: affordable ? 'var(--color-accent)' : 'var(--color-border)',
+                                color: affordable ? 'var(--color-bg)' : 'var(--color-text-muted)',
+                                cursor: affordable ? 'pointer' : 'not-allowed',
+                            }}
+                        >
+                            {action}
+                        </button>
+                    </div>
+                </div>
+            );
+        })}
+    </div>
+);
+
+// ── Onglet Attributs ──────────────────────────────────────────────────────
+
+const AttrsTab = ({ character, canAfford, onSelect }) => (
+    <div className="flex flex-col gap-1">
+        {ATTRIBUTS.map(attrKey => {
+            const pips    = character[attrKey] ?? 6;
+            const cost    = getCost('attr_pip', pips);
+            const newPips = pips + 1;
+            const affordable = canAfford(cost);
+
+            return (
+                <div
+                    key={attrKey}
+                    className="flex items-center justify-between py-2 px-3 rounded"
+                    style={{ background: 'var(--color-surface)', marginBottom: 2 }}
+                >
+                    <div>
+                        <span style={{ fontSize: '0.875rem', fontWeight: 600, color: 'var(--color-primary)' }}>
+                            {ATTRIBUT_LABELS[attrKey]}
+                        </span>
+                        <span style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)', marginLeft: 8 }}>
+                            {pipsToNotation(pips)} → {pipsToNotation(newPips)}
+                        </span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                        <span style={{ fontSize: '0.8rem', color: affordable ? 'var(--color-text)' : 'var(--color-danger)' }}>
+                            {cost} PP
+                        </span>
+                        <button
+                            disabled={!affordable || newPips > 36}
+                            onClick={() => onSelect({ type: 'attr_pip', key: attrKey, label: ATTRIBUT_LABELS[attrKey], cost, newPips })}
+                            className="px-2 py-1 rounded text-xs"
+                            style={{
+                                background: affordable ? 'var(--color-accent)' : 'var(--color-border)',
+                                color: affordable ? 'var(--color-bg)' : 'var(--color-text-muted)',
+                                cursor: affordable ? 'pointer' : 'not-allowed',
+                            }}
+                        >
+                            +1 pip
+                        </button>
+                    </div>
+                </div>
+            );
+        })}
+    </div>
+);
+
+// ── Onglet Backgrounds ────────────────────────────────────────────────────
+
+const BackgroundsTab = ({ character, canAfford, onSelect }) => (
+    <div className="flex flex-col gap-1">
+        {(character.backgrounds ?? []).map((bg, i) => {
+            const def      = BACKGROUNDS_BY_ID[bg.type];
+            if (!def) return null;
+            const cost     = getCost('background', bg.niveau ?? 1);
+            const newNiv   = (bg.niveau ?? 1) + 1;
+            const affordable = canAfford(cost);
+            const atMax    = (bg.niveau ?? 1) >= def.maxNiveau;
+
+            return (
+                <div
+                    key={i}
+                    className="flex items-center justify-between py-2 px-3 rounded"
+                    style={{ background: 'var(--color-surface)', marginBottom: 2 }}
+                >
+                    <div>
+                        <span style={{ fontSize: '0.875rem', color: 'var(--color-text)' }}>{def.name}</span>
+                        <span style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)', marginLeft: 8 }}>
+                            Niv. {bg.niveau} {!atMax && `→ Niv. ${newNiv}`}
+                        </span>
+                    </div>
+                    {atMax ? (
+                        <span style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)' }}>Max</span>
+                    ) : (
+                        <div className="flex items-center gap-2">
+                            <span style={{ fontSize: '0.8rem', color: affordable ? 'var(--color-text)' : 'var(--color-danger)' }}>
+                                {cost} PP
+                            </span>
+                            <button
+                                disabled={!affordable}
+                                onClick={() => onSelect({ type: 'background', key: bg.type, label: `${def.name} Niv.${newNiv}`, cost, newNiveau: newNiv })}
+                                className="px-2 py-1 rounded text-xs"
+                                style={{
+                                    background: affordable ? 'var(--color-accent)' : 'var(--color-border)',
+                                    color: affordable ? 'var(--color-bg)' : 'var(--color-text-muted)',
+                                    cursor: affordable ? 'pointer' : 'not-allowed',
+                                }}
+                            >
+                                +1 niveau
+                            </button>
+                        </div>
+                    )}
+                </div>
+            );
+        })}
+        {(character.backgrounds ?? []).length === 0 && (
+            <p style={{ color: 'var(--color-text-muted)', fontSize: '0.85rem', textAlign: 'center' }}>
+                Aucun background enregistré.
+            </p>
+        )}
+    </div>
+);
 
 /**
  * @param {{
@@ -46,170 +218,6 @@ const XPModal = ({ character, onUpdate, onClose }) => {
         onUpdate(updated);
         onClose();
     };
-
-    // ── Onglet Compétences ────────────────────────────────────────────────────
-
-    const SkillsTab = () => (
-        <div className="flex flex-col gap-1">
-            {SKILLS.map(skill => {
-                const compPips  = character[skill.key] ?? 0;
-                const attrPips  = character[skill.attr] ?? 6;
-                const totalPips = attrPips + compPips;
-
-                // Coût selon situation
-                let action, cost, newPips;
-                if (compPips === 0) {
-                    // Déblocage à 1D
-                    action  = 'Débloquer (1D)';
-                    cost    = getCost('new_skill');
-                    newPips = 3;
-                } else {
-                    // +1 pip
-                    action  = '+1 pip';
-                    cost    = getCost('skill_pip', compPips);
-                    newPips = compPips + 1;
-                }
-
-                const affordable = canAfford(cost);
-
-                return (
-                    <div
-                        key={skill.key}
-                        className="flex items-center justify-between py-2 px-3 rounded"
-                        style={{ background: 'var(--color-surface)', marginBottom: 2 }}
-                    >
-                        <div>
-                            <span style={{ fontSize: '0.875rem', color: 'var(--color-text)' }}>{skill.label}</span>
-                            <span style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)', marginLeft: 8 }}>
-                                {pipsToNotation(totalPips)}
-                                {compPips > 0 && ` (comp: ${pipsToNotation(compPips)})`}
-                            </span>
-                        </div>
-                        <div className="flex items-center gap-2">
-                            <span style={{ fontSize: '0.8rem', color: affordable ? 'var(--color-text)' : 'var(--color-danger)' }}>
-                                {cost} PP
-                            </span>
-                            <button
-                                disabled={!affordable || newPips > 36}
-                                onClick={() => setPending({ type: compPips === 0 ? 'skill_new' : 'skill_pip', key: skill.key, label: skill.label, cost, newPips })}
-                                className="px-2 py-1 rounded text-xs"
-                                style={{
-                                    background: affordable ? 'var(--color-accent)' : 'var(--color-border)',
-                                    color: affordable ? 'var(--color-bg)' : 'var(--color-text-muted)',
-                                    cursor: affordable ? 'pointer' : 'not-allowed',
-                                }}
-                            >
-                                {action}
-                            </button>
-                        </div>
-                    </div>
-                );
-            })}
-        </div>
-    );
-
-    // ── Onglet Attributs ──────────────────────────────────────────────────────
-
-    const AttrsTab = () => (
-        <div className="flex flex-col gap-1">
-            {ATTRIBUTS.map(attrKey => {
-                const pips    = character[attrKey] ?? 6;
-                const cost    = getCost('attr_pip', pips);
-                const newPips = pips + 1;
-                const affordable = canAfford(cost);
-
-                return (
-                    <div
-                        key={attrKey}
-                        className="flex items-center justify-between py-2 px-3 rounded"
-                        style={{ background: 'var(--color-surface)', marginBottom: 2 }}
-                    >
-                        <div>
-                            <span style={{ fontSize: '0.875rem', fontWeight: 600, color: 'var(--color-primary)' }}>
-                                {ATTRIBUT_LABELS[attrKey]}
-                            </span>
-                            <span style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)', marginLeft: 8 }}>
-                                {pipsToNotation(pips)} → {pipsToNotation(newPips)}
-                            </span>
-                        </div>
-                        <div className="flex items-center gap-2">
-                            <span style={{ fontSize: '0.8rem', color: affordable ? 'var(--color-text)' : 'var(--color-danger)' }}>
-                                {cost} PP
-                            </span>
-                            <button
-                                disabled={!affordable || newPips > 36}
-                                onClick={() => setPending({ type: 'attr_pip', key: attrKey, label: ATTRIBUT_LABELS[attrKey], cost, newPips })}
-                                className="px-2 py-1 rounded text-xs"
-                                style={{
-                                    background: affordable ? 'var(--color-accent)' : 'var(--color-border)',
-                                    color: affordable ? 'var(--color-bg)' : 'var(--color-text-muted)',
-                                    cursor: affordable ? 'pointer' : 'not-allowed',
-                                }}
-                            >
-                                +1 pip
-                            </button>
-                        </div>
-                    </div>
-                );
-            })}
-        </div>
-    );
-
-    // ── Onglet Backgrounds ────────────────────────────────────────────────────
-
-    const BackgroundsTab = () => (
-        <div className="flex flex-col gap-1">
-            {(character.backgrounds ?? []).map((bg, i) => {
-                const def      = BACKGROUNDS_BY_ID[bg.type];
-                if (!def) return null;
-                const cost     = getCost('background', 0, bg.niveau, def.maxNiveau);
-                const newNiv   = (bg.niveau ?? 1) + 1;
-                const affordable = canAfford(cost);
-                const atMax    = (bg.niveau ?? 1) >= def.maxNiveau;
-
-                return (
-                    <div
-                        key={i}
-                        className="flex items-center justify-between py-2 px-3 rounded"
-                        style={{ background: 'var(--color-surface)', marginBottom: 2 }}
-                    >
-                        <div>
-                            <span style={{ fontSize: '0.875rem', color: 'var(--color-text)' }}>{def.name}</span>
-                            <span style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)', marginLeft: 8 }}>
-                                Niv. {bg.niveau} {!atMax && `→ Niv. ${newNiv}`}
-                            </span>
-                        </div>
-                        {atMax ? (
-                            <span style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)' }}>Max</span>
-                        ) : (
-                            <div className="flex items-center gap-2">
-                                <span style={{ fontSize: '0.8rem', color: affordable ? 'var(--color-text)' : 'var(--color-danger)' }}>
-                                    {cost} PP
-                                </span>
-                                <button
-                                    disabled={!affordable}
-                                    onClick={() => setPending({ type: 'background', key: bg.type, label: `${def.name} Niv.${newNiv}`, cost, newNiveau: newNiv })}
-                                    className="px-2 py-1 rounded text-xs"
-                                    style={{
-                                        background: affordable ? 'var(--color-accent)' : 'var(--color-border)',
-                                        color: affordable ? 'var(--color-bg)' : 'var(--color-text-muted)',
-                                        cursor: affordable ? 'pointer' : 'not-allowed',
-                                    }}
-                                >
-                                    +1 niveau
-                                </button>
-                            </div>
-                        )}
-                    </div>
-                );
-            })}
-            {(character.backgrounds ?? []).length === 0 && (
-                <p style={{ color: 'var(--color-text-muted)', fontSize: '0.85rem', textAlign: 'center' }}>
-                    Aucun background enregistré.
-                </p>
-            )}
-        </div>
-    );
 
     return (
         <div
@@ -254,9 +262,9 @@ const XPModal = ({ character, onUpdate, onClose }) => {
 
                 {/* Contenu */}
                 <div className="overflow-y-auto flex-1 p-4">
-                    {tab === 'skills'      && <SkillsTab />}
-                    {tab === 'attrs'       && <AttrsTab />}
-                    {tab === 'backgrounds' && <BackgroundsTab />}
+                    {tab === 'skills'      && <SkillsTab character={character} canAfford={canAfford} onSelect={setPending} />}
+                    {tab === 'attrs'       && <AttrsTab character={character} canAfford={canAfford} onSelect={setPending} />}
+                    {tab === 'backgrounds' && <BackgroundsTab character={character} canAfford={canAfford} onSelect={setPending} />}
                 </div>
 
                 {/* Confirmation */}

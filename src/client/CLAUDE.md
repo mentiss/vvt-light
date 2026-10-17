@@ -72,6 +72,14 @@ systems/:slug/
   gm/tabs/TabSession.jsx
 ```
 
+## Tests (`tests/`, Vitest)
+
+- `tests/` reproduit l'arborescence de `src/` : le test de `src/systems/:slug/xxx.js` est `tests/systems/:slug/xxx.test.js`.
+- Imports explicites (`import { describe, it, expect } from 'vitest'`), pas de globales.
+- Importe depuis le module public (ex. `config.jsx` du slug), comme le fait le code applicatif.
+- Fonctions pures uniquement ; l'environnement Node par défaut suffit (pas de jsdom).
+- Les cas de test reprennent les exemples des specs validées dans `documentations/`.
+
 ## Fichiers volumineux
 
 Avant de patcher un gros fichier souvent modifié à la main (ex. `Sheet.jsx`), présente le diagnostic et les corrections prévues, puis demande si des modifications manuelles non commitées existent.

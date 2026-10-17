@@ -19,8 +19,6 @@ import DiceHistoryPage    from '../../../components/layout/DiceHistoryPage.jsx';
 import TabSession          from './tabs/TabSession.jsx';
 import GMDiceModal         from './modals/GMDiceModal.jsx';
 import AchtungHistoryEntry from '../components/AchtungHistoryEntry.jsx';
-import achtungHistoryEntry from "../components/AchtungHistoryEntry.jsx";
-import DiceEntryHistory from "../../cyberpunk/components/layout/DiceEntryHistory.jsx";
 import FreeDiceModal from "../../../components/modals/FreeDiceModal.jsx";
 
 // ── Onglets ───────────────────────────────────────────────────────────────────
@@ -196,9 +194,8 @@ const GMView = ({ activeSession, onSessionChange, onlineCharacters, darkMode, on
 
             {showFreeDice && (
                 <FreeDiceModal
-                    characterId={char.id}
-                    characterName={`${char.nom ?? ''} ${char.prenom ?? ''}`.trim()}
-                    sessionId={activeGMSession}
+                    sessionId={activeSession?.id ?? null}
+                    isGM
                     onClose={() => setShowFreeDice(false)}
                 />
             )}

@@ -18,6 +18,8 @@ import HealthDisplay        from './components/HealthDisplay.jsx';
 import TecumahHistoryEntry  from './components/TecumahHistoryEntry.jsx';
 import TecumahNPCForm from "./components/gm/npc/TecumahNPCForm.jsx";
 
+export { getCost } from './xpCosts.js';
+
 // ═══════════════════════════════════════════════════════════════════════════════
 // FONCTIONS DE CALCUL
 // ═══════════════════════════════════════════════════════════════════════════════

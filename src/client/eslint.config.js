@@ -23,8 +23,22 @@ export default defineConfig([
       },
     },
     rules: {
-      'no-unused-vars': ['warning', { varsIgnorePattern: '^[A-Z_]' }],
+      'no-unused-vars': ['warn', { varsIgnorePattern: '^[A-Z_]' }],
       'react-refresh/only-export-components': 'off',
+      // catch (_) {} volontaires (localStorage, nettoyage dice-box…)
+      'no-empty': ['error', { allowEmptyCatch: true }],
+      // Règles React Compiler (react-hooks v7) : le projet n'utilise pas le
+      // compilateur, ce sont des optimisations manquées, pas des bugs.
+      'react-hooks/set-state-in-effect': 'warn',
+      'react-hooks/preserve-manual-memoization': 'warn',
+      'react-hooks/immutability': 'warn',
+      'react-hooks/static-components': 'warn',
+      'react-hooks/purity': 'warn',
     },
+  },
+  {
+    // Scripts Node exécutés hors navigateur (copy-dice-assets, generate-css-utils…)
+    files: ['scripts/**/*.js'],
+    languageOptions: { globals: globals.node },
   },
 ])

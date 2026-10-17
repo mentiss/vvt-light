@@ -51,7 +51,7 @@ const TabSession = ({
                         resources,
                         onResourcesChange,
                     }) => {
-    const { apiBase }   = useSystem();
+    const { slug, label, apiBase } = useSystem();
     const fetchWithAuth = useFetch();
 
     const [characters, setCharacters] = useState({});   // { [id]: character }
@@ -65,6 +65,7 @@ const TabSession = ({
     const [showSendModal,   setShowSendModal]   = useState(false);
     const [showAvatar,      setShowAvatar]      = useState(false);
     const [diceModalCtx,    setDiceModalCtx]    = useState(null);
+    const [copied,          setCopied]          = useState(false);
 
     const sessionId = activeSession?.id ?? null;
 
@@ -175,6 +176,21 @@ const TabSession = ({
         }
     }, [selectedId, characters, apiBase]);
 
+    // ── Copier le lien et le code d'accès du personnage sélectionné ───────
+    const handleCopyCode = () => {
+        const c = characters[selectedId];
+        if (!c) return;
+        const text = [
+            `${label ?? 'Zone Blanche'} — ${[c.prenom, c.nom].filter(Boolean).join(' ') || 'Sans nom'}`,
+            `Lien : ${window.location.origin}/${slug}/${c.accessUrl}`,
+            `Code : ${c.accessCode}`,
+        ].join('\n');
+        navigator.clipboard.writeText(text).then(() => {
+            setCopied(true);
+            setTimeout(() => setCopied(false), 2000);
+        });
+    };
+
     const onlineIds = useMemo(
         () => new Set((onlineCharacters ?? []).map(c => c.characterId ?? c.id)),
         [onlineCharacters],
@@ -241,6 +257,10 @@ const TabSession = ({
                 {char && (
                     <>
                         <div className="flex items-center justify-end gap-2 mb-3">
+                            <button type="button" onClick={handleCopyCode}
+                                    className="zb-btn-ghost px-3 py-1.5 rounded-sm text-sm">
+                                {copied ? '✓ Copié' : '⎘ Copier'}
+                            </button>
                             {editMode ? (
                                 <>
                                     <button type="button" onClick={cancelEdit}

@@ -1,6 +1,6 @@
 // src/client/src/pages/CreationPage.jsx
 import React, {Suspense, useEffect} from 'react';
-import { useParams, useNavigate, useOutletContext } from 'react-router-dom';
+import { useParams, useNavigate, useOutletContext, Navigate } from 'react-router-dom';
 import LoadingScreen from "../components/gm/layout/LoadingScreen.jsx";
 import DiceAnimationOverlay from "../components/shared/DiceAnimationOverlay.jsx";
 
@@ -17,10 +17,16 @@ const CreationPage = () => {
     const navigate               = useNavigate();
     const { darkMode, onToggleDarkMode } = useOutletContext();
 
+    // Hooks avant toute sortie anticipée (ordre des hooks constant)
+    useEffect(() => {
+        const key = `../systems/${system}/theme.css`;
+        if (THEMES[key]) THEMES[key]();
+    }, [system]);
+
+    // Garde-fou : slug sans assistant de création → retour à l'accueil du slug
     const creationKey = `../systems/${system}/Creation.jsx`;
     if (!CREATIONS[creationKey]) {
-        navigate(`/${system}/`);
-        return null;
+        return <Navigate to={`/${system}/`} replace />;
     }
 
     const SystemCreation = getLazyComponent(CREATIONS, creationKey);
@@ -32,11 +38,6 @@ const CreationPage = () => {
     const handleCancel = () => {
         navigate(`/${system}/`);
     };
-
-    useEffect(() => {
-        const key = `../systems/${system}/theme.css`;
-        if (THEMES[key]) THEMES[key]();
-    }, [system]);
 
     return (
         <Suspense fallback={<LoadingScreen />}>
