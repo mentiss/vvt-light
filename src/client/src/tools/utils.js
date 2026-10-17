@@ -129,7 +129,8 @@ export const formatFullName = (character) => {
     const base = character.prenom;
     const surname = character.surnom ? ` "${character.surnom}"` : '';
     const parentType = character.sexe === 'homme' ? 'fils' : 'fille';
-    const parent = ` ${parentType} de ${character.nomParent}`;
+    // `nom` contient le nom du parent (ancien nomParent) ; « fils/fille de » déduit du sexe
+    const parent = character.nom ? ` ${parentType} de ${character.nom}` : '';
     return base + surname + parent;
 };
 
@@ -140,8 +141,8 @@ export const formatExplosion = (level) => {
 
 // Compétences qui peuvent être prises plusieurs fois avec spécialisations différentes
 export const SPECIALIZABLE_SKILLS = [
-    "Combat CàC armé",
-    "Combat à distance",
+    "Combat CàC (armé)",
+    "Combat distance",
     "Langue orale",
     "Langue écrite"
 ];
@@ -152,8 +153,8 @@ export const isSpecializableSkill = (skillName) => {
 
 export const getSkillExamples = (skillName) => {
     const examples = {
-        "Combat CàC armé": "Hache, Épée, Lance, Masse, Marteau",
-        "Combat à distance": "Arc, Javelot, Fronde, Hache de jet",
+        "Combat CàC (armé)": "Hache, Épée, Lance, Masse, Marteau",
+        "Combat distance": "Arc, Javelot, Fronde, Hache de jet",
         "Langue orale": "Norse, Latin, Anglais, Gaélique, Finnois",
         "Langue écrite": "Runes (Futhark), Latin"
     };

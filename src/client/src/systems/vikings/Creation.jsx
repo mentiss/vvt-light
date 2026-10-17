@@ -25,7 +25,7 @@ const Creation = ({ onCreated, onCancel }) => {
     const [character, setCharacter] = useState({
         prenom: '',
         surnom: '',
-        nomParent: '',
+        nom: '',   // nom du parent (« fils/fille de » ajouté à l'affichage)
         typeParent: 'pere',
         sexe: 'homme',
         age: 25,
@@ -139,8 +139,8 @@ const Creation = ({ onCreated, onCancel }) => {
                 <input
                     type="text"
                     placeholder="Nom du parent"
-                    value={character.nomParent}
-                    onChange={e => setCharacter({...character, nomParent: e.target.value})}
+                    value={character.nom}
+                    onChange={e => setCharacter({...character, nom: e.target.value})}
                     className="w-full px-3 py-2 border-2 border-viking-leather dark:border-viking-bronze rounded-lg bg-white dark:bg-viking-brown text-viking-text dark:text-viking-parchment"
                 />
             </div>
@@ -204,7 +204,7 @@ const Creation = ({ onCreated, onCancel }) => {
             )}
             <button
                 onClick={() => setStep(2)}
-                disabled={!character.prenom || !character.nomParent}
+                disabled={!character.prenom || !character.nom}
                 className="w-full mt-4 px-6 py-3 bg-viking-bronze hover:bg-viking-leather text-viking-brown dark:text-viking-parchment font-semibold rounded-lg disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
             >
                 Suivant →

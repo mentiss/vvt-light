@@ -350,7 +350,7 @@ const Sheet = ({
                                                         </div>
                                                     </div>
                                                 </div>
-                                                <input value={editableChar.nomParent} onChange={e => setEditableChar({ ...editableChar, nomParent: e.target.value })} placeholder="Parent" className="w-full px-2 py-1 border rounded text-xs bg-white dark:bg-gray-800 text-viking-text dark:text-viking-parchment" />
+                                                <input value={editableChar.nom ?? ''} onChange={e => setEditableChar({ ...editableChar, nom: e.target.value })} placeholder="Parent" className="w-full px-2 py-1 border rounded text-xs bg-white dark:bg-gray-800 text-viking-text dark:text-viking-parchment" />
                                                 <div className="grid grid-cols-3 gap-1.5">
                                                     <input type="number" value={editableChar.age} onChange={e => setEditableChar({ ...editableChar, age: parseInt(e.target.value) || 25 })} placeholder="Âge" className="px-2 py-1 border rounded text-xs bg-white dark:bg-gray-800 text-viking-text dark:text-viking-parchment" />
                                                     <input type="number" value={editableChar.taille || ''} onChange={e => setEditableChar({ ...editableChar, taille: parseInt(e.target.value) || undefined })} placeholder="Taille" className="px-2 py-1 border rounded text-xs bg-white dark:bg-gray-800 text-viking-text dark:text-viking-parchment" />

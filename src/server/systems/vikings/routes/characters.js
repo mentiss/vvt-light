@@ -1,213 +1,256 @@
 // src/server/systems/vikings/routes/characters.js
-// Route characters spécifique au système Pure Vikings.
-// Connaît la structure complète d'un personnage Vikings (caracs, SAGA, runes...).
+// Routes personnages spécifiques au système Pure Vikings.
+// Montée automatiquement sur /api/vikings/characters par Loader.js.
+// Spec : documentations/spec_vikings_lot2_serveur.md (§5)
+//
+// Création, liste et chargement par URL/code : publics (sélection et connexion).
+// Lecture/écriture d'une fiche : propriétaire ou MJ. Suppression : MJ.
 
 const express = require('express');
-const router = express.Router();
+const router  = express.Router();
+
 const { authenticate, requireOwnerOrGM, requireGM } = require('../../../middlewares/auth');
 const { ensureUniqueCode } = require('../../../utils/characters');
-const { loadFullCharacter, saveFullCharacter } = require('../characterController');
-const {generateAccessUrl} = require("../config");
+const { loadFullCharacter, saveFullCharacter } = require('../CharacterController');
+const { generateAccessUrl } = require('../config');
 
-// GET / - Liste tous les personnages
+// ── Broadcast helper ─────────────────────────────────────────────────────────
+// Une room par session du personnage, jamais d'io.emit global.
+
+function broadcastCharacterUpdate(io, db, characterId, character) {
+    if (!io) return;
+    const sessions = db.prepare(
+        'SELECT session_id FROM session_characters WHERE character_id = ?'
+    ).all(characterId);
+    for (const { session_id } of sessions) {
+        io.to(`vikings_session_${session_id}`).emit('character-full-update', {
+            characterId,
+            character,
+        });
+    }
+}
+
+// ── GET / — Liste résumée (publique — sélection du personnage) ───────────────
+
 router.get('/', (req, res) => {
     try {
-        const characters = req.db.prepare(`
-            SELECT id, access_code, access_url, player_name, prenom, surnom, nom_parent,
+        const rows = req.db.prepare(`
+            SELECT id, access_code, access_url, player_name, prenom, surnom, nom,
                    avatar, age, sexe, saga_actuelle, saga_totale,
                    tokens_blessure, tokens_fatigue
-            FROM characters ORDER BY updated_at DESC
+            FROM characters
+            WHERE id != -1
+            ORDER BY updated_at DESC
         `).all();
 
-        res.json(characters.map(c => ({
-            id: c.id,
-            accessCode: c.access_code,
-            accessUrl: c.access_url,
-            playerName: c.player_name,
-            name: `${c.prenom}${c.surnom ? ' "' + c.surnom + '"' : ''}`,
-            nom: c.nom,
-            prenom: c.prenom,
-            surnom: c.surnom,
-            nomParent: c.nom_parent,
-            avatar: c.avatar,
-            age: c.age,
-            sexe: c.sexe,
-            sagaActuelle: c.saga_actuelle,
-            sagaTotale: c.saga_totale,
+        res.json(rows.map(c => ({
+            id:             c.id,
+            accessCode:     c.access_code,
+            accessUrl:      c.access_url,
+            playerName:     c.player_name,
+            name:           `${c.prenom ?? ''}${c.surnom ? ' "' + c.surnom + '"' : ''}`,
+            prenom:         c.prenom,
+            surnom:         c.surnom,
+            nom:            c.nom,
+            avatar:         c.avatar,
+            age:            c.age,
+            sexe:           c.sexe,
+            sagaActuelle:   c.saga_actuelle,
+            sagaTotale:     c.saga_totale,
             tokensBlessure: c.tokens_blessure,
-            tokensFatigue: c.tokens_fatigue
+            tokensFatigue:  c.tokens_fatigue,
         })));
-    } catch (error) {
-        console.error('Error fetching characters:', error);
-        res.status(500).json({ error: error.message });
+    } catch (err) {
+        console.error('[vikings] GET /characters:', err);
+        res.status(500).json({ error: err.message });
     }
 });
 
-// GET /by-url/:url
+// ── GET /by-url/:url — Chargement par access_url (public) ────────────────────
+
 router.get('/by-url/:url', (req, res) => {
     try {
-        const char = req.db.prepare('SELECT id FROM characters WHERE access_url = ?').get(req.params.url);
-        if (!char) return res.status(404).json({ error: 'Character not found' });
-        req.db.prepare('UPDATE characters SET last_accessed = CURRENT_TIMESTAMP WHERE id = ?').run(char.id);
-        res.json(loadFullCharacter(req.db, char.id));
-    } catch (error) {
-        console.error('Error fetching character by URL:', error);
-        res.status(500).json({ error: error.message });
+        const row = req.db.prepare('SELECT id FROM characters WHERE access_url = ?').get(req.params.url);
+        if (!row) return res.status(404).json({ error: 'Personnage introuvable' });
+
+        req.db.prepare('UPDATE characters SET last_accessed = CURRENT_TIMESTAMP WHERE id = ?').run(row.id);
+        res.json(loadFullCharacter(req.db, row.id));
+    } catch (err) {
+        console.error('[vikings] GET /by-url:', err);
+        res.status(500).json({ error: err.message });
     }
 });
 
-// GET /by-code/:code
+// ── GET /by-code/:code — Chargement par access_code (public, login) ──────────
+
 router.get('/by-code/:code', (req, res) => {
     try {
-        const char = req.db.prepare('SELECT id FROM characters WHERE access_code = ?').get(req.params.code.toUpperCase());
-        if (!char) return res.status(404).json({ error: 'Character not found' });
-        res.json(loadFullCharacter(req.db, char.id));
-    } catch (error) {
-        console.error('Error fetching character by code:', error);
-        res.status(500).json({ error: error.message });
+        const row = req.db.prepare('SELECT id FROM characters WHERE access_code = ?').get(req.params.code.toUpperCase());
+        if (!row) return res.status(404).json({ error: 'Personnage introuvable' });
+
+        res.json(loadFullCharacter(req.db, row.id));
+    } catch (err) {
+        console.error('[vikings] GET /by-code:', err);
+        res.status(500).json({ error: err.message });
     }
 });
 
-// GET /:id/sessions
+// ── GET /:id/sessions — Sessions du personnage ────────────────────────────────
+// ⚠️ Déclarée AVANT GET /:id : sinon "/12/sessions" correspond à "/:id".
+
 router.get('/:id/sessions', authenticate, requireOwnerOrGM, (req, res) => {
     try {
         const sessions = req.db.prepare(`
             SELECT gs.*, COUNT(sc2.character_id) AS character_count
             FROM game_sessions gs
-            INNER JOIN session_characters sc ON gs.id = sc.session_id
-            LEFT JOIN session_characters sc2 ON gs.id = sc2.session_id
+            INNER JOIN session_characters sc  ON gs.id = sc.session_id
+            LEFT  JOIN session_characters sc2 ON gs.id = sc2.session_id
             WHERE sc.character_id = ?
             GROUP BY gs.id
             ORDER BY gs.updated_at DESC
         `).all(req.params.id);
+
         res.json(sessions);
-    } catch (error) {
-        console.error('Error fetching character sessions:', error);
-        res.status(500).json({ error: error.message });
+    } catch (err) {
+        console.error('[vikings] GET /:id/sessions:', err);
+        res.status(500).json({ error: err.message });
     }
 });
 
-// GET /:id
+// ── GET /:id — Fiche complète (propriétaire ou MJ) ────────────────────────────
+
 router.get('/:id', authenticate, requireOwnerOrGM, (req, res) => {
     try {
-        const char = loadFullCharacter(req.db, req.params.id);
-        if (!char) return res.status(404).json({ error: 'Character not found' });
-        req.db.prepare('UPDATE characters SET last_accessed = CURRENT_TIMESTAMP WHERE id = ?').run(req.params.id);
+        const id = Number(req.params.id);
+        const char = loadFullCharacter(req.db, id);
+        if (!char) return res.status(404).json({ error: 'Personnage introuvable' });
+
+        req.db.prepare('UPDATE characters SET last_accessed = CURRENT_TIMESTAMP WHERE id = ?').run(id);
         res.json(char);
-    } catch (error) {
-        console.error('Error fetching character:', error);
-        res.status(500).json({ error: error.message });
+    } catch (err) {
+        console.error('[vikings] GET /:id:', err);
+        res.status(500).json({ error: err.message });
     }
 });
 
-// POST / - Créer un personnage
+// ── POST / — Création (publique, assistant de création) ──────────────────────
+// Le joueur peut choisir son code d'accès : conservé s'il est libre, 409 sinon (L-4).
+
 router.post('/', (req, res) => {
     try {
-        const {
-            playerName, prenom, surnom, nomParent, sexe, age, taille, poids, activite, avatar,
-            force, agilite, perception, intelligence, charisme, chance,
-            armure, actionsDisponibles, seuilCombat,
-            sagaActuelle, sagaTotale, tokensBlessure, tokensFatigue,
-            skills, traits, runes, items, accessCode
-        } = req.body;
+        const { playerName, prenom, accessCode } = req.body;
 
-        if (!playerName || !prenom) return res.status(400).json({ error: 'playerName and prenom are required' });
+        if (!playerName?.trim() || !prenom?.trim()) {
+            return res.status(400).json({ error: 'Le nom du joueur et le prénom du personnage sont requis' });
+        }
 
-        let code, finalUrl;
+        let code, url;
         if (accessCode?.trim()) {
-            code = accessCode.toUpperCase().substring(0, 6);
-            finalUrl = generateAccessUrl();
+            code = accessCode.trim().toUpperCase().substring(0, 6);
+            if (req.db.prepare('SELECT id FROM characters WHERE access_code = ?').get(code)) {
+                return res.status(409).json({ error: 'Ce code d\'accès est déjà utilisé' });
+            }
+            let attempts = 0;
+            do {
+                url = generateAccessUrl();
+                attempts++;
+            } while (req.db.prepare('SELECT id FROM characters WHERE access_url = ?').get(url) && attempts < 10);
+            if (attempts >= 10) return res.status(500).json({ error: 'Impossible de générer une URL unique' });
         } else {
-            ({ code, url: finalUrl } = ensureUniqueCode('character', req));
+            ({ code, url } = ensureUniqueCode('character', req));
         }
-
-        let attempts = 0;
-        while (req.db.prepare('SELECT id FROM characters WHERE access_url = ?').get(finalUrl) && attempts < 10) {
-            finalUrl = generateAccessUrl();
-            attempts++;
-        }
-        if (attempts >= 10) return res.status(500).json({ error: 'Could not generate unique URL' });
 
         const result = req.db.prepare(`
-            INSERT INTO characters (
-                access_code, access_url,
-                player_name, prenom, surnom, nom_parent, sexe, age, taille, poids, activite, avatar,
-                force, agilite, perception, intelligence, charisme, chance,
-                armure, actions_disponibles, seuil_combat,
-                saga_actuelle, saga_totale, tokens_blessure, tokens_fatigue
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-        `).run(
-            code, finalUrl,
-            playerName, prenom, surnom || null, nomParent || null, sexe,
-            age, taille || null, poids || null, activite || null, avatar || null,
-            force || 2, agilite || 2, perception || 2, intelligence || 2, charisme || 2, chance || 2,
-            armure || 0, actionsDisponibles || 1, seuilCombat || 1,
-            sagaActuelle || 3, sagaTotale || 3, tokensBlessure || 0, tokensFatigue || 0
-        );
+            INSERT INTO characters (access_code, access_url, player_name, prenom)
+            VALUES (?, ?, ?, ?)
+        `).run(code, url, playerName.trim(), prenom.trim());
 
-        const characterId = result.lastInsertRowid;
-        // Sauvegarder les relations (skills, traits, runes, items)
-        saveFullCharacter(req.db, characterId, { skills, traits, runes, items });
+        const charId = Number(result.lastInsertRowid);
 
-        res.status(201).json(loadFullCharacter(req.db, characterId));
-    } catch (error) {
-        console.error('Error creating character:', error);
-        res.status(500).json({ error: error.message });
+        // Le code est déjà fixé : on ne le laisse pas réécrire par le corps de la requête
+        const created = saveFullCharacter(req.db, charId, {
+            ...req.body,
+            accessCode: undefined,
+            playerName: playerName.trim(),
+            prenom:     prenom.trim(),
+        });
+
+        res.status(201).json(created);
+    } catch (err) {
+        console.error('[vikings] POST /characters:', err);
+        res.status(500).json({ error: err.message });
     }
 });
 
-// PUT /:id - Mettre à jour un personnage
+// ── PUT /:id — Mise à jour complète (propriétaire ou MJ) ─────────────────────
+
 router.put('/:id', authenticate, requireOwnerOrGM, (req, res) => {
     try {
-        const db = req.db;
-        if (!db.prepare('SELECT id FROM characters WHERE id = ?').get(req.params.id))
-            return res.status(404).json({ error: 'Character not found' });
-
-        if (req.body.accessUrl) {
-            const existing = db.prepare('SELECT id FROM characters WHERE access_url = ? AND id != ?')
-                .get(req.body.accessUrl, req.params.id);
-            if (existing) return res.status(400).json({ error: 'Cette URL est déjà utilisée par un autre personnage' });
+        const id = Number(req.params.id);
+        if (!req.db.prepare('SELECT id FROM characters WHERE id = ?').get(id)) {
+            return res.status(404).json({ error: 'Personnage introuvable' });
         }
-
-        saveFullCharacter(db, req.params.id, req.body);
-        const updated = loadFullCharacter(db, req.params.id);
-        const system = req.system.slug;
-
-        const io = req.app.get('io');
-        if (io) {
-            try {
-                const sessions = db.prepare('SELECT session_id FROM session_characters WHERE character_id = ?').all(req.params.id);
-                if (sessions.length > 0) {
-                    const payload = { characterId: parseInt(req.params.id), character: updated };
-                    sessions.forEach(s => io.to(`${system}_session_${s.session_id}`).emit('character-full-update', payload));
-                }
-            } catch (err) {
-                console.error('Error broadcasting character-full-update:', err);
-            }
-            io.emit('character-light-update', {
-                characterId: parseInt(req.params.id),
-                tokensBlessure: updated.tokensBlessure,
-                tokensFatigue: updated.tokensFatigue,
-                sagaActuelle: updated.sagaActuelle
-            });
-        }
-
+        const updated = saveFullCharacter(req.db, id, req.body);
+        broadcastCharacterUpdate(req.app.get('io'), req.db, id, updated);
         res.json(updated);
-    } catch (error) {
-        console.error('Error updating character:', error);
-        res.status(500).json({ error: error.message });
+    } catch (err) {
+        console.error('[vikings] PUT /:id:', err);
+        res.status(500).json({ error: err.message });
     }
 });
 
-// DELETE /:id
+// ── PATCH /:id — Mise à jour partielle (propriétaire ou MJ) ──────────────────
+// Pour patchImmediate (actions de jeu hors mode édition).
+
+router.patch('/:id', authenticate, requireOwnerOrGM, (req, res) => {
+    try {
+        const id = Number(req.params.id);
+        if (!req.db.prepare('SELECT id FROM characters WHERE id = ?').get(id)) {
+            return res.status(404).json({ error: 'Personnage introuvable' });
+        }
+        const updated = saveFullCharacter(req.db, id, req.body);
+        broadcastCharacterUpdate(req.app.get('io'), req.db, id, updated);
+        res.json(updated);
+    } catch (err) {
+        console.error('[vikings] PATCH /:id:', err);
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// ── POST /:id/avatar — Upload avatar (propriétaire ou MJ) ────────────────────
+
+router.post('/:id/avatar', authenticate, requireOwnerOrGM, (req, res) => {
+    try {
+        const id = Number(req.params.id);
+        const { avatar } = req.body;
+        if (!avatar) return res.status(400).json({ error: 'avatar requis' });
+        if (!req.db.prepare('SELECT id FROM characters WHERE id = ?').get(id)) {
+            return res.status(404).json({ error: 'Personnage introuvable' });
+        }
+
+        const updated = saveFullCharacter(req.db, id, { avatar });
+        broadcastCharacterUpdate(req.app.get('io'), req.db, id, updated);
+        res.json(updated);
+    } catch (err) {
+        console.error('[vikings] POST /:id/avatar:', err);
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// ── DELETE /:id — Suppression (MJ uniquement, jamais le compte MJ) ───────────
+
 router.delete('/:id', authenticate, requireGM, (req, res) => {
     try {
-        const result = req.db.prepare('DELETE FROM characters WHERE id = ?').run(req.params.id);
-        if (result.changes === 0) return res.status(404).json({ error: 'Character not found' });
-        res.json({ deleted: true, id: parseInt(req.params.id) });
-    } catch (error) {
-        console.error('Error deleting character:', error);
-        res.status(500).json({ error: error.message });
+        const id = Number(req.params.id);
+        if (id === -1) return res.status(403).json({ error: 'Le compte MJ ne peut pas être supprimé' });
+
+        const result = req.db.prepare('DELETE FROM characters WHERE id = ? AND id != -1').run(id);
+        if (result.changes === 0) return res.status(404).json({ error: 'Personnage introuvable' });
+
+        res.json({ deleted: true, id });
+    } catch (err) {
+        console.error('[vikings] DELETE /:id:', err);
+        res.status(500).json({ error: err.message });
     }
 });
 

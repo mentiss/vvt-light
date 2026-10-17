@@ -23,6 +23,6 @@ module.exports = {
     slug:       'vikings',
     label:      'Pure Vikings',
     dbPath:     path.join(__dirname, '../../../../database/pure-vikings.db'),
-    schemaPath: path.join(__dirname, '../../../../database-template/schema.sql'),
+    schemaPath: path.join(__dirname, '../../../../database-template/vikings-schema.sql'),
     generateAccessUrl,
 };

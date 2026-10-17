@@ -6,17 +6,17 @@
 
 export const COMPETENCES = [
     { 
-        name: "Combat CàC armé",
+        name: "Combat CàC (armé)",
         caracs: ["force", "agilite"],
         description: "Votre aisance au combat avec une arme déterminée de corps à corps (cf les notes). Cette compétence est cumulable pour plusieurs armes différentes. Vous permet aussi d'effectuer des parades en combat (bonus au SEUIL)"
     },
     {
-        name: "Combat CàC non armé",
+        name: "Combat CàC (non armé)",
         caracs: ["force", "agilite"],
         description: "Votre aisance au combat à main nue. Permet d'effectuer des esquives (bonus au SEUIL)"
     },
     { 
-        name: "Combat à distance", 
+        name: "Combat distance",
         caracs: ["agilite", "perception"],
         description: "Manier l'arc, la fronde, lancer javelot ou hache. Toucher une cible éloignée avec précision."
     },
@@ -349,7 +349,7 @@ export const TRAITS = [
         name: "Virtuose de l'arc",
         description: "Votre maîtrise est telle que l'encochage, la visée et le tir ne forment qu'un seul mouvement fluide et mortel.",
         effects: { description: "Viser devient une action gratuite" },
-        requiresSkill: { "Combat à distance": 3 },
+        requiresSkill: { "Combat distance": 3 },
         incompatible: []
     },
     {

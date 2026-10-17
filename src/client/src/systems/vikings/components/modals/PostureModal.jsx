@@ -36,7 +36,7 @@ const PostureModal = ({
 
     // Compétences défensives disponibles
     const defensiveSkills = (character.skills || []).filter(s =>
-        ['Esquive', 'Parade', 'Combat CàC armé'].includes(s.name) && s.level > 0
+        ['Combat CàC (armé)', 'Combat CàC (non armé)'].includes(s.name) && s.level > 0
     );
     const [selectedSkill, setSelectedSkill] = useState(defensiveSkills[0] ?? null);
 
