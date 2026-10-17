@@ -6,6 +6,7 @@ import { ITEMS } from '../../config/equipment.js';
 import { CARACNAMES } from '../../config/competences.js';
 import VkModal from '../../components/ui/VkModal.jsx';
 import VkIcon  from '../../components/ui/VkIcon.jsx';
+import VkQuantity from '../../components/ui/VkQuantity.jsx';
 
 const TOAST_ANIMATIONS = [
     { id: 'default', label: 'Classique' },
@@ -190,11 +191,7 @@ const GMSendItemModal = ({ onClose, onSend, sessionCharacters = [], preSelectedC
 
                 <div className="flex items-center gap-3">
                     <span className="vk-label text-lg">Quantité</span>
-                    <div className="vk-stepper">
-                        <button type="button" onClick={() => setQuantity(Math.max(1, quantity - 1))} disabled={quantity <= 1}><VkIcon name="minus" /></button>
-                        <span className="vk-num">{quantity}</span>
-                        <button type="button" onClick={() => setQuantity(quantity + 1)}><VkIcon name="plus" /></button>
-                    </div>
+                    <VkQuantity value={quantity} onChange={setQuantity} />
                 </div>
 
                 <label className="block"><span className="vk-field-label">Note (optionnel)</span>

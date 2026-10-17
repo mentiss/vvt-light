@@ -16,6 +16,7 @@ import { ITEMS } from "../../config/equipment.js";
 import { getCombatValues } from "../../config/rules.js";
 import VkModal from "../ui/VkModal.jsx";
 import VkIcon from "../ui/VkIcon.jsx";
+import VkQuantity from "../ui/VkQuantity.jsx";
 
 const FILTERS = [['all', 'Tous'], ['weapon', 'Armes'], ['armor', 'Armures'], ['item', 'Objets']];
 const CATEGORIES = [['item', 'Objet'], ['weapon', 'Arme'], ['armor', 'Armure']];
@@ -45,14 +46,6 @@ const Pills = ({ options, value, onChange }) => (
         {options.map(([id, label]) => (
             <button key={id} type="button" className={`vk-pill ${value === id ? 'is-selected' : ''}`} onClick={() => onChange(id)}>{label}</button>
         ))}
-    </div>
-);
-
-const Stepper = ({ value, min = 1, onChange }) => (
-    <div className="vk-stepper">
-        <button type="button" onClick={() => onChange(Math.max(min, value - 1))} disabled={value <= min}><VkIcon name="minus" /></button>
-        <span className="vk-num">{value}</span>
-        <button type="button" onClick={() => onChange(value + 1)}><VkIcon name="plus" /></button>
     </div>
 );
 
@@ -158,7 +151,7 @@ const itemFromFields = (f) => {
 
 const QtyAndLocation = ({ quantity, setQuantity, location, setLocation }) => (
     <div className="grid sm:grid-cols-2 gap-4 pt-3 mt-3 border-t border-default">
-        <div><div className="vk-field-label">Quantité</div><Stepper value={quantity} onChange={setQuantity} /></div>
+        <div><div className="vk-field-label">Quantité</div><VkQuantity value={quantity} onChange={setQuantity} /></div>
         <div><div className="vk-field-label">Emplacement</div><Pills options={LOCATIONS.map(l => [l.id, l.label])} value={location} onChange={setLocation} /></div>
     </div>
 );

@@ -8,6 +8,7 @@
 
 import React, { useState, useCallback } from 'react';
 import { roll } from '../../../../tools/diceEngine.js';
+import { splitDiceWaves } from '../../config/rules.js';
 import { useFetch }  from '../../../../hooks/useFetch.js';
 import { useSystem } from '../../../../hooks/useSystem.js';
 import VkModal from '../../components/ui/VkModal.jsx';
@@ -31,10 +32,16 @@ const GM_DICE_HOOKS = {
         },
         meta: {},
     }),
-    buildAnimationSequence: (raw) => ({
-        mode: 'single',
-        groups: [{ id: 'main', diceType: 'd10', color: 'default', label: 'Jet MJ', waves: raw.groups[0].waves }],
-    }),
+    // Le moteur ne fournit plus raw.groups[i].waves : les vagues d'explosion se
+    // reconstruisent depuis les faces, comme pour les jets joueurs (splitDiceWaves).
+    buildAnimationSequence: (raw, ctx) => {
+        const { explosionMin } = ctx.systemData;
+        const thresholds = Array.from({ length: 11 - explosionMin }, (_, i) => explosionMin + i);
+        return {
+            mode: 'single',
+            groups: [{ id: 'main', diceType: 'd10', color: 'default', label: 'Jet MJ', waves: splitDiceWaves(raw.groups[0].values, thresholds) }],
+        };
+    },
 };
 
 const Row = ({ label, value, onMinus, onPlus }) => (

@@ -245,6 +245,10 @@ textarea.vk-input { resize: vertical; min-height: 4.5rem; }
 .vk-stepper button:hover:not(:disabled) { background: color-mix(in srgb, var(--color-primary) 12%, transparent); }
 .vk-stepper button:disabled { opacity: .3; cursor: not-allowed; }
 .vk-stepper span { min-width: 2rem; text-align: center; font-weight: 700; border-inline: 1px solid var(--vk-border-soft); line-height: 1.8rem; }
+/* Quantité saisissable au clavier (VkQuantity) */
+.vk-stepper input { width: 4.5rem; text-align: center; font-weight: 700; color: var(--color-text); background: transparent; border-inline: 1px solid var(--vk-border-soft); line-height: 1.8rem; -moz-appearance: textfield; }
+.vk-stepper input:focus { outline: none; background: color-mix(in srgb, var(--color-primary) 10%, transparent); }
+.vk-stepper input::-webkit-outer-spin-button, .vk-stepper input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
 
 /* ── Bandeau, onglets, menu ─────────────────────────────────────────── */
 .vk-header {
