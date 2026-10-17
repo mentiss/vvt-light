@@ -1,8 +1,9 @@
 // src/client/src/systems/vikings/components/layout/VikingsHistoryEntry.jsx
 // Rendu d'un jet Vikings — DiceHistoryPage (renderHistoryEntry) et
-// ToastNotifications (renderDiceToast). Les données viennent de roll_result
-// (résultat d'afterRoll sérialisé). Les jets à l'ancien format (avant la
-// refonte, R-5) sont réduits à une ligne minimale.
+// ToastNotifications (renderDiceToast, avec renderAllRollTypes). Les données
+// viennent de roll_result (résultat d'afterRoll sérialisé). Les jets à l'ancien
+// format (avant la refonte, R-5) sont réduits à une ligne minimale.
+// Habillage : planche du lot 4 (section « Historique et notifications »).
 //
 // Props : entry — ligne d'historique brute · compact — rendu resserré (toast)
 
@@ -30,22 +31,41 @@ const keptDice = (allDice, meta, mode) => {
     return allDice;
 };
 
-const Die = ({ value, threshold, explosionThresholds }) => {
-    const exploded = (explosionThresholds ?? []).includes(value);
-    const success  = value >= threshold;
+// Dés dans l'ordre du moteur : un dé qui suit une explosion en est issu (↳)
+const Dice = ({ values, threshold, explosionThresholds }) => (
+    <div className="flex flex-wrap gap-2 pl-3">
+        {values.map((v, i) => {
+            const chained = i > 0 && (explosionThresholds ?? []).includes(values[i - 1]);
+            const state = (explosionThresholds ?? []).includes(v) ? 'is-explode' : (threshold != null && v >= threshold ? 'is-success' : '');
+            return <span key={i} className={`vk-die vk-die-sm ${state} ${chained ? 'is-chained' : ''}`}>{v}</span>;
+        })}
+    </div>
+);
+
+// Jet libre (FreeDiceModal) : résultat brut du moteur — groupes { notation, values, total }
+const FreeRollEntry = ({ result, compact }) => {
+    const groups = result.groups ?? [];
+    const total  = groups.reduce((sum, g) => sum + (g.total ?? 0), 0);
     return (
-        <span className={`inline-flex items-center justify-center w-6 h-6 rounded text-[11px] font-bold border ${
-            exploded ? 'bg-primary border-primary text-default'
-                : success ? 'bg-success border-success text-white'
-                    : 'bg-surface-alt border-default text-muted'
-        }`}>
-            {value}
-        </span>
+        <div className="px-3 py-2 space-y-1.5">
+            <div className="flex items-center justify-between gap-2">
+                <span className="font-bold text-default">Jet libre</span>
+                <span className="vk-title text-lg shrink-0">= {total}</span>
+            </div>
+            {groups.map((g, i) => (
+                <div key={i} className="flex items-center gap-1">
+                    {!compact && <span className="text-xs text-muted w-12">{g.notation}</span>}
+                    <Dice values={g.values ?? []} />
+                </div>
+            ))}
+        </div>
     );
 };
 
 const VikingsHistoryEntry = ({ entry, compact = false }) => {
     const result = parseResult(entry);
+
+    if (entry?.roll_type === 'free_roll' && result) return <FreeRollEntry result={result} compact={compact} />;
 
     // Ancien format (ou résultat illisible) : ligne minimale
     if (!result?.detail || result.detail.threshold == null) {
@@ -65,44 +85,43 @@ const VikingsHistoryEntry = ({ entry, compact = false }) => {
     const mainDice = keptDice(allDice, meta, mode);
 
     return (
-        <div className="px-3 py-2 space-y-1">
+        <div className="px-3 py-2 space-y-1.5">
             <div className="flex items-center justify-between gap-2">
-                <span className="text-xs font-semibold text-default truncate">
+                <span className="font-bold text-default truncate">
                     {detail.rollTarget ?? 'Jet'}
-                    {mode && <span className="ml-1.5 text-[10px] text-primary">{MODE_LABELS[mode]}</span>}
+                    {mode && <span className="vk-tag vk-tag-gold ml-1.5">{MODE_LABELS[mode]}</span>}
                 </span>
-                <span className="text-sm font-bold text-primary shrink-0">{successes} succès</span>
+                <span className="vk-title text-lg shrink-0">{successes} succès</span>
             </div>
 
-            <div className="flex flex-wrap gap-1">
-                {mainDice.map((v, i) => (
-                    <Die key={i} value={v} threshold={detail.threshold} explosionThresholds={detail.explosionThresholds} />
-                ))}
-            </div>
+            <Dice values={mainDice} threshold={detail.threshold} explosionThresholds={detail.explosionThresholds} />
 
             {meta.tripleTen && (
-                <div className="text-[11px] font-bold text-primary">
-                    ✨ Triple 10 — {meta.sagaGained ? '+1 SAGA' : 'SAGA déjà au maximum'}
+                <div className="text-sm font-bold text-primary flex items-center gap-1.5">
+                    <span className="vk-rune">ᛊ</span>Triple 10 — {meta.sagaGained ? '+1 Saga' : 'Saga déjà au maximum'}
                 </div>
             )}
 
             {(mode === 'heroic' || mode === 'epic') && (
-                <div className="text-[11px] text-muted">
+                <div className={`text-sm ${meta.sagaSuccess ? 'text-success' : 'vk-text-warn'}`}>
                     {meta.sagaFailed
                         ? meta.failReason
-                        : <>Jet SAGA : {meta.bonusSuccesses} succès — {meta.sagaSuccess ? 'réussi, SAGA récupérée' : meta.failReason}</>}
+                        : <>Jet de Saga : {meta.bonusSuccesses} succès — {meta.sagaSuccess ? 'réussi, Saga récupérée' : meta.failReason}</>}
                 </div>
             )}
 
             {!compact && (
-                <div className="text-[10px] text-muted">
-                    Seuil {detail.threshold}+ · explosion {detail.explosionThresholds?.[0]}+ · {detail.pool}d10
+                <div className="text-xs text-muted">
+                    Seuil {detail.threshold}+ · explosion {detail.explosionThresholds?.join(', ')} · {detail.pool}d10
                     {detail.autoSuccesses > 0 && ` · auto +${detail.autoSuccesses}`}
                     {meta.aimBonus > 0 && ` · visée +${meta.aimBonus}`}
                     {detail.traitBonus !== 0 && detail.traitBonus != null && ` · traits ${detail.traitBonus > 0 ? '+' : ''}${detail.traitBonus}`}
-                    {detail.fatigueMalus > 0 && ` · fatigue −${detail.fatigueMalus}`}
-                    {detail.blessureMalus > 0 && ` · blessure −${detail.blessureMalus} dé(s)`}
+                    {detail.fatigueMalus > 0 && <span className="vk-text-warn"> · fatigue −{detail.fatigueMalus}</span>}
+                    {detail.blessureMalus > 0 && <span className="vk-text-warn"> · blessures −{detail.blessureMalus} dé{detail.blessureMalus > 1 ? 's' : ''}</span>}
                 </div>
+            )}
+            {compact && detail.fatigueMalus > 0 && (
+                <div className="text-xs vk-text-warn">fatigue −{detail.fatigueMalus}</div>
             )}
         </div>
     );

@@ -22,6 +22,8 @@ import DiceModal       from '../../components/modals/DiceModal.jsx';
 import EditModals      from '../../components/modals/EditModals.jsx';
 import GMSendItemModal from '../modals/GMSendItemModal.jsx';
 import TableActionsModal from '../modals/TableActionsModal.jsx';
+import VkPanel         from '../../components/ui/VkPanel.jsx';
+import VkIcon          from '../../components/ui/VkIcon.jsx';
 import { BLESSURE_MAX, FATIGUE_MAX, withDerivedValues } from '../../config/rules.js';
 import { formatFullName, pickEditableFields } from '../../config/utils.js';
 
@@ -30,42 +32,35 @@ const resolve = (updater, prev) => (typeof updater === 'function' ? updater(prev
 // ── Vignette d'un personnage dans la liste ───────────────────────────────────
 
 const CharacterTile = ({ sessionChar, full, selected, online, onSelect }) => (
-    <button type="button" onClick={onSelect}
-            className={`w-full text-left px-3 py-2 border-b border-default flex items-center gap-2 ${
-                selected ? 'bg-primary/10 border-l-4 border-l-primary' : 'hover:bg-surface-alt'
-            }`}>
-        <div className="relative shrink-0">
-            {full?.avatar ? (
-                <img src={full.avatar} alt="" className="w-9 h-9 rounded-full object-cover border border-default" />
-            ) : (
-                <div className="w-9 h-9 rounded-full bg-surface-alt border border-default flex items-center justify-center text-sm font-bold">
-                    {(full?.prenom ?? sessionChar.name)?.[0]?.toUpperCase() || '?'}
-                </div>
-            )}
-            <span className={`absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full border-2 border-surface ${online ? 'bg-success' : 'bg-surface-alt'}`} />
-        </div>
-        <div className="min-w-0 flex-1">
-            <div className={`text-sm truncate ${selected ? 'font-semibold text-primary' : 'text-default'}`}>
-                {full ? formatFullName(full) : sessionChar.name}
-            </div>
-            <div className="text-[10px] text-muted truncate">{full?.playerName}</div>
+    <button type="button" onClick={onSelect} className={`vk-tile ${selected ? 'is-selected' : ''}`}>
+        <span className="relative shrink-0">
+            <span className="vk-avatar w-9 h-9 overflow-hidden">
+                {full?.avatar
+                    ? <img src={full.avatar} alt="" className="w-full h-full object-cover" />
+                    : ((full?.prenom ?? sessionChar.name)?.[0]?.toUpperCase() || '?')}
+            </span>
+            <span className={`vk-presence absolute -bottom-0.5 -right-0.5 ${online ? 'is-online' : ''}`} />
+        </span>
+        <span className="flex-1 min-w-0">
+            <span className="block font-bold truncate">{full ? formatFullName(full) : sessionChar.name}</span>
+            {full?.playerName && <span className="block text-xs text-muted truncate">{full.playerName}</span>}
             {full && (
-                <div className="flex gap-1 mt-0.5">
-                    <span className="text-[10px] px-1 rounded bg-danger/20 text-default">❤️ {full.tokensBlessure ?? 0}/{BLESSURE_MAX}</span>
-                    <span className="text-[10px] px-1 rounded bg-secondary/20 text-default">💤 {full.tokensFatigue ?? 0}/{FATIGUE_MAX}</span>
-                    <span className="text-[10px] px-1 rounded bg-primary/20 text-default">ᛟ {full.sagaActuelle ?? 0}</span>
-                </div>
+                <span className="flex gap-1 mt-0.5 flex-wrap">
+                    <span className={`vk-tag ${full.tokensBlessure > 1 ? 'vk-tag-warn' : 'vk-tag-muted'}`}><VkIcon name="blood" />{full.tokensBlessure ?? 0}/{BLESSURE_MAX}</span>
+                    <span className={`vk-tag ${full.tokensFatigue > 1 ? 'vk-tag-warn' : 'vk-tag-muted'}`}><VkIcon name="moon" />{full.tokensFatigue ?? 0}/{FATIGUE_MAX}</span>
+                    <span className="vk-tag vk-tag-gold"><span className="vk-rune">ᛟ</span>{full.sagaActuelle ?? 0}</span>
+                </span>
             )}
-        </div>
+        </span>
     </button>
 );
 
 const Empty = ({ icon, title, children }) => (
-    <div className="bg-surface rounded-lg border-2 border-default p-8 text-center">
-        <div className="text-4xl mb-4">{icon}</div>
-        <h3 className="text-xl font-bold text-default mb-2">{title}</h3>
+    <VkPanel className="text-center">
+        <VkIcon name={icon} className="vk-icon-lg text-primary mb-2" />
+        <div className="vk-label text-xl text-primary mb-2">{title}</div>
         <p className="text-muted">{children}</p>
-    </div>
+    </VkPanel>
 );
 
 // ── Onglet ───────────────────────────────────────────────────────────────────
@@ -237,37 +232,35 @@ const TabSession = ({ activeSession, onlineCharacters = [], characterUpdates }) 
 
     // ── États vides ───────────────────────────────────────────────────────
     if (!activeSession) {
-        return <Empty icon="📋" title="Aucune table sélectionnée">Ouvrez le menu ☰ et gérez vos tables pour sélectionner une session active.</Empty>;
+        return <Empty icon="people" title="Aucune table sélectionnée">Ouvrez le menu et gérez vos tables pour sélectionner une session active.</Empty>;
     }
     if (!activeSession.characters?.length) {
-        return <Empty icon="👥" title="Aucun personnage dans cette table">Assignez des personnages à la table « {activeSession.name} » via la gestion des tables.</Empty>;
+        return <Empty icon="people" title="Aucun personnage dans cette table">Assignez des personnages à la table « {activeSession.name} » via la gestion des tables.</Empty>;
     }
 
     const sessionCharacters = activeSession.characters;
 
     return (
-        <div className="flex flex-col md:flex-row gap-4">
+        <div className="flex flex-col md:flex-row gap-6">
 
             {/* ── Liste des personnages ─────────────────────────────────────── */}
-            <aside className="md:w-64 shrink-0 bg-surface border-2 border-default rounded-lg overflow-hidden self-start w-full">
+            <aside className="vk-panel md:w-72 shrink-0 self-start w-full">
                 <div className="px-3 py-2 border-b border-default">
-                    <p className="text-[10px] uppercase tracking-wide text-muted">Personnages</p>
-                    <p className="text-xs font-semibold text-primary">{activeSession.name}</p>
+                    <div className="vk-eyebrow">Personnages</div>
+                    <div className="vk-label text-primary">{activeSession.name}</div>
                 </div>
-                {loading && <p className="p-3 text-xs text-muted italic">Chargement des fiches…</p>}
+                {loading && <p className="p-3 text-sm text-muted italic">Chargement des fiches…</p>}
                 {!loading && sessionCharacters.map(sc => (
                     <CharacterTile key={sc.id} sessionChar={sc} full={characters[sc.id]}
                                    selected={selectedId === sc.id} online={onlineIds.has(sc.id)}
                                    onSelect={() => setSelectedId(sc.id)} />
                 ))}
-                <div className="p-2 flex gap-2">
-                    <button onClick={() => setShowSendModal(true)} className="flex-1 px-2 py-1.5 bg-success text-white rounded text-xs font-semibold">📨 Note</button>
-                    <button onClick={() => setShowSendItemModal(true)} className="flex-1 px-2 py-1.5 bg-primary text-default rounded text-xs font-semibold">🎁 Objet</button>
-                </div>
-                <div className="px-2 pb-2">
-                    <button onClick={() => setShowTableActions(true)} disabled={loading}
-                            className="w-full px-2 py-1.5 bg-secondary text-white rounded text-xs font-semibold disabled:opacity-50">
-                        ᛟ Actions de table (SAGA, fin d'arc, repos)
+                <div className="p-2 grid grid-cols-2 gap-2">
+                    <button type="button" onClick={() => setShowSendModal(true)} className="vk-btn vk-btn-sm"><VkIcon name="scroll" />Note</button>
+                    <button type="button" onClick={() => setShowSendItemModal(true)} className="vk-btn vk-btn-sm"><VkIcon name="pouch" />Objet</button>
+                    <button type="button" onClick={() => setShowTableActions(true)} disabled={loading}
+                            className="vk-btn vk-btn-primary vk-btn-sm col-span-2" title="Saga, fin d'arc, repos">
+                        <span className="vk-rune">ᛟ</span>Actions de table
                     </button>
                 </div>
             </aside>
@@ -275,20 +268,20 @@ const TabSession = ({ activeSession, onlineCharacters = [], characterUpdates }) 
             {/* ── Fiche ─────────────────────────────────────────────────────── */}
             <div className="flex-1 min-w-0">
                 {!char ? (
-                    <Empty icon="🗡️" title="Aucun personnage sélectionné">Sélectionnez un personnage dans la liste.</Empty>
+                    <Empty icon="portrait" title="Aucun personnage sélectionné">Sélectionnez un personnage dans la liste.</Empty>
                 ) : (
                     <>
-                        <div className="flex items-center gap-2 flex-wrap justify-end mb-3">
-                            <button onClick={handleCopyCode} className="px-2 py-1.5 rounded border border-default text-xs text-default">
-                                {copied ? '✓ Copié' : '⎘ Copier lien + code'}
+                        <div className="flex items-center gap-2 flex-wrap justify-end mb-4">
+                            <button type="button" onClick={handleCopyCode} className="vk-btn vk-btn-sm">
+                                {copied ? <><VkIcon name="check" />Copié</> : <><VkIcon name="key" />Copier lien + code</>}
                             </button>
                             {editMode ? (
                                 <>
-                                    <button onClick={cancelEdit} className="px-2 py-1.5 rounded border border-default text-xs text-default">Annuler</button>
-                                    <button onClick={saveEdit} className="px-2 py-1.5 rounded bg-success text-white text-xs">✓ Enregistrer</button>
+                                    <button type="button" onClick={cancelEdit} className="vk-btn vk-btn-danger vk-btn-sm">Annuler</button>
+                                    <button type="button" onClick={saveEdit} className="vk-btn vk-btn-success vk-btn-sm"><VkIcon name="check" />Enregistrer</button>
                                 </>
                             ) : (
-                                <button onClick={startEdit} className="px-2 py-1.5 rounded bg-secondary text-white text-xs">⚙️ Éditer</button>
+                                <button type="button" onClick={startEdit} className="vk-btn vk-btn-sm"><VkIcon name="quill" />Éditer</button>
                             )}
                         </div>
 

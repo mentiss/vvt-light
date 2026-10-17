@@ -97,12 +97,14 @@ const SessionPlayersBar = ({ character, sessionId, sessionName, headerHeight = n
         cursor:      'pointer',
     };
 
+    // Liste fixée au défilement : sous le bandeau collant du slug s'il fournit
+    // headerHeight (sinon tout en haut, comme avant).
     const listContainerStyle = isListFixed ? {
         position: 'fixed',
-        top: 0,
+        top: headerHeight ?? 0,
         left: 0,
         width: '14rem',
-        height: '100vh',
+        height: headerHeight ? `calc(100vh - ${headerHeight}px)` : '100vh',
         overflowY: 'auto',
         zIndex: 50,
         borderRight: '4px solid var(--color-border)',

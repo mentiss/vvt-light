@@ -2,17 +2,18 @@
 // ─────────────────────────────────────────────────────────────────────────────
 // Fiche joueur Vikings — enveloppe : bandeau, onglets, menu, modales.
 // Le corps de la fiche vit dans components/layout/SheetLayout.jsx, partagé à
-// l'identique avec l'interface MJ. Spec : documentations/spec_vikings_lot3_client.md §4.
+// l'identique avec l'interface MJ. Spec : documentations/spec_vikings_lot3_client.md §4,
+// habillage : spec_vikings_lot4_graphisme.md (planche UIkit_complet).
 //
 // Contrat props (PlayerPage) :
 //   character, onCharacterUpdate, onLogout, journalUnread, onJournalRead,
 //   darkMode, onToggleDarkMode
 //
 // onCharacterUpdate accepte un objet ou un updater (prev => next) et fait le PUT.
+// theme.css est chargé par PlayerPage (import.meta.glob), pas importé ici.
 // ─────────────────────────────────────────────────────────────────────────────
 
-import React, { useState, useCallback } from 'react';
-import './theme.css';
+import React, { useState, useCallback, useEffect, useRef } from 'react';
 import { formatFullName, pickEditableFields } from './config/utils.js';
 import { withDerivedValues } from './config/rules.js';
 import vikingsConfig      from './config.jsx';
@@ -21,7 +22,8 @@ import VikingsHistoryEntry from './components/layout/VikingsHistoryEntry.jsx';
 import DiceModal          from './components/modals/DiceModal.jsx';
 import EditModals         from './components/modals/EditModals.jsx';
 import ExperienceModal    from './components/modals/ExperienceModal.jsx';
-import ThemeToggle        from '../../components/ui/ThemeToggle.jsx';
+import VkIcon             from './components/ui/VkIcon.jsx';
+import RuneTitle          from './components/ui/RuneTitle.jsx';
 import AvatarUploader     from '../../components/AvatarUploader.jsx';
 import JournalTab         from '../../components/tabs/JournalTab.jsx';
 import ToastNotifications from '../../components/layout/ToastNotifications.jsx';
@@ -36,22 +38,18 @@ import { useSession }     from '../../context/SessionContext.jsx';
 import { useAuth }        from '../../context/AuthContext.jsx';
 import { useSystem }      from '../../hooks/useSystem.js';
 
-// Titres en runes qui tournent dans le header
-const RUNE_TITLES = ['ᛟᛞᛁᚾ', 'ᚢᛁᚲᛁᛜ', 'ᛃᚨᚱᛚ', 'ᚢᛟᛚᚢᚨ', 'ᛊᚲᚨᛚᛞ', 'ᛈᚢᚱᛖ'];
-
 // Runes et inventaire sont des sections de la fiche, plus des onglets.
 const TABS = [
-    { id: 'fiche',      label: '📋 Ma Fiche' },
-    { id: 'journal',    label: '📓 Journal' },
-    { id: 'historique', label: '📜 Historique' },
+    { id: 'fiche',      label: 'Ma fiche' },
+    { id: 'journal',    label: 'Journal' },
+    { id: 'historique', label: 'Historique' },
 ];
 
 const resolve = (updater, prev) => (typeof updater === 'function' ? updater(prev) : updater);
 
-const MenuItem = ({ onClick, danger = false, children }) => (
-    <button onClick={onClick}
-            className={`w-full px-4 py-2 text-left text-sm flex items-center gap-2 hover:bg-surface-alt ${danger ? 'text-danger' : 'text-default'}`}>
-        {children}
+const MenuItem = ({ icon, onClick, danger = false, children }) => (
+    <button type="button" onClick={onClick} className={`vk-menu-item ${danger ? 'is-danger' : ''}`}>
+        <VkIcon name={icon} />{children}
     </button>
 );
 
@@ -68,7 +66,6 @@ const Sheet = ({
     const { logout }  = useAuth();
     const { activeGMSession, activeSessionName } = useSession();
 
-    const [runeTitle] = useState(() => RUNE_TITLES[Math.floor(Math.random() * RUNE_TITLES.length)]);
     const [activeTab, setActiveTab] = useState(() => {
         const hash = window.location.hash.substring(1);
         return TABS.some(t => t.id === hash) ? hash : 'fiche';
@@ -85,6 +82,18 @@ const Sheet = ({
     const [showEditModal,  setShowEditModal]  = useState(null);
     const [diceContext,    setDiceContext]    = useState(null);
     const [linkCopied,     setLinkCopied]     = useState(false);
+
+    // Hauteur du bandeau collant (variable : retour à la ligne sur mobile),
+    // pour que la barre des joueurs se fixe dessous au défilement.
+    const stickyRef = useRef(null);
+    const [headerHeight, setHeaderHeight] = useState(null);
+    useEffect(() => {
+        const el = stickyRef.current;
+        if (!el) return;
+        const observer = new ResizeObserver(() => setHeaderHeight(Math.ceil(el.getBoundingClientRect().height)));
+        observer.observe(el);
+        return () => observer.disconnect();
+    }, []);
 
     // ── Édition (buffer local) ───────────────────────────────────────────────
     const [editMode,     setEditMode]     = useState(false);
@@ -137,99 +146,96 @@ const Sheet = ({
     const openMenuEntry = (open) => () => { setShowMenu(false); open(); };
 
     return (
-        <div className="min-h-screen bg-default text-default transition-colors">
+        <div className="vk-root min-h-screen" data-theme={darkMode ? 'dark' : 'light'}>
 
-            {/* ── HEADER ── */}
-            <header className="bg-surface border-b-2 border-default p-4 shadow-lg sticky top-0 z-40">
-                <div className="max-w-7xl mx-auto flex justify-between items-center gap-3">
-                    <div className="flex items-center gap-3 font-viking min-w-0">
-                        <span className="text-3xl font-bold tracking-wider text-primary">{runeTitle}</span>
-                        <span className="text-lg font-normal opacity-75 truncate">— {formatFullName(character)}</span>
+            {/* ── BANDEAU + ONGLETS (collants) ── */}
+            <div className="sticky top-0 z-40" ref={stickyRef}>
+                {/* Pas de nom ici : il figure dans l'en-tête de la fiche (retour MJ) */}
+                <header className="vk-header px-4 py-3 flex items-center justify-between gap-3">
+                    <div className="flex items-center gap-3 min-w-0">
+                        <RuneTitle className="text-3xl" />
+                        {activeSessionName && <div className="vk-eyebrow truncate">Session : {activeSessionName}</div>}
                     </div>
 
-                    <div className="flex gap-2 items-center shrink-0">
-                        {character.accessCode && (
-                            <div className="hidden md:block text-xs bg-primary px-3 py-1 rounded text-default font-mono font-bold">
-                                Code : {character.accessCode}
-                            </div>
-                        )}
-                        {character.accessUrl && (
-                            <button onClick={copyLink} className="hidden md:block px-3 py-1 bg-primary text-default rounded text-xs font-semibold">
-                                {linkCopied ? '✅ Copié !' : '📋 Copier lien'}
-                            </button>
-                        )}
-                        <ThemeToggle darkMode={darkMode} onToggle={onToggleDarkMode} />
+                    <div className="flex items-center gap-2 shrink-0">
+                        {/* Enveloppe : les classes .vk-* fixent display, hidden ne s'y applique pas */}
+                        <span className="hidden md:inline-flex items-center gap-2">
+                            {character.accessCode && (
+                                <span className="vk-tag vk-tag-gold vk-num" title="Code d'accès">
+                                    <VkIcon name="key" />{character.accessCode}
+                                </span>
+                            )}
+                            {character.accessUrl && (
+                                <button type="button" onClick={copyLink} className="vk-btn vk-btn-sm">
+                                    {linkCopied ? <><VkIcon name="check" />Copié</> : 'Copier le lien'}
+                                </button>
+                            )}
+                        </span>
+                        <button type="button" onClick={onToggleDarkMode} className="vk-btn vk-btn-icon"
+                                title={darkMode ? 'Mode jour (bois)' : 'Mode nuit (fer)'}>
+                            <VkIcon name={darkMode ? 'sun' : 'moon'} />
+                        </button>
 
                         <div className="relative">
-                            <button onClick={() => setShowMenu(v => !v)} title="Menu"
-                                    className="px-3 py-2 bg-surface-alt border border-default rounded font-semibold text-lg text-default">
-                                ☰
+                            <button type="button" onClick={() => setShowMenu(v => !v)} className="vk-btn vk-btn-icon" title="Menu">
+                                <VkIcon name="menu" />
                             </button>
                             {showMenu && (
                                 <>
                                     <div className="fixed inset-0 z-10" onClick={() => setShowMenu(false)} />
-                                    <div className="absolute right-0 mt-2 w-56 bg-surface rounded-lg shadow-2xl border-2 border-primary z-20 py-1">
-                                        <MenuItem onClick={openMenuEntry(() => { window.location.href = `/${slug}/creation`; })}>⚔️ Créer un personnage</MenuItem>
-                                        <MenuItem onClick={openMenuEntry(() => setShowCharList(true))}>🗂️ Changer de personnage</MenuItem>
-                                        <MenuItem onClick={openMenuEntry(() => setShowAvatar(true))}>📸 Changer l'avatar</MenuItem>
-                                        <MenuItem onClick={openMenuEntry(() => setShowAccessCode(true))}>🔑 Code d'accès</MenuItem>
-                                        <MenuItem onClick={openMenuEntry(() => setShowFreeDice(true))}>🎲 Jet de dés libre</MenuItem>
-                                        <MenuItem onClick={openMenuEntry(() => setShowDiceConfig(true))}>🎛️ Config animations dés</MenuItem>
-                                        <MenuItem onClick={openMenuEntry(() => { window.location.href = `/${slug}/gm`; })}>🎭 Interface MJ</MenuItem>
-                                        <div className="border-t border-default my-1" />
-                                        <MenuItem onClick={handleLogout} danger>🚪 Déconnexion</MenuItem>
+                                    <div className="vk-menu absolute right-0 mt-2 z-20">
+                                        <MenuItem icon="axe"      onClick={openMenuEntry(() => { window.location.href = `/${slug}/creation`; })}>Créer un personnage</MenuItem>
+                                        <MenuItem icon="people"   onClick={openMenuEntry(() => setShowCharList(true))}>Changer de personnage</MenuItem>
+                                        <MenuItem icon="portrait" onClick={openMenuEntry(() => setShowAvatar(true))}>Changer l'avatar</MenuItem>
+                                        <MenuItem icon="key"      onClick={openMenuEntry(() => setShowAccessCode(true))}>Code d'accès</MenuItem>
+                                        <MenuItem icon="dice"     onClick={openMenuEntry(() => setShowFreeDice(true))}>Jet de dés libre</MenuItem>
+                                        <MenuItem icon="horn"     onClick={openMenuEntry(() => setShowDiceConfig(true))}>Config animations dés</MenuItem>
+                                        <MenuItem icon="helm"     onClick={openMenuEntry(() => { window.location.href = `/${slug}/gm`; })}>Interface MJ</MenuItem>
+                                        <div className="vk-menu-sep" />
+                                        <MenuItem icon="door" onClick={handleLogout} danger>Déconnexion</MenuItem>
                                     </div>
                                 </>
                             )}
                         </div>
                     </div>
-                </div>
+                </header>
 
-                {activeSessionName && (
-                    <div className="max-w-7xl mx-auto mt-1 text-xs text-primary opacity-75">
-                        Session : {activeSessionName}
-                    </div>
-                )}
-            </header>
-
-            {/* ── TABS ── */}
-            <nav className="bg-surface border-b border-default sticky top-[72px] z-30">
-                <div className="max-w-7xl mx-auto flex gap-1 p-2 overflow-x-auto">
-                    {TABS.map(tab => (
-                        <button key={tab.id} onClick={() => changeTab(tab.id)}
-                                className={`px-4 py-2 rounded text-sm font-semibold transition-colors shrink-0 ${
-                                    activeTab === tab.id ? 'bg-primary text-default' : 'bg-default text-default hover:bg-primary/30'
-                                }`}>
-                            {tab.label}
-                            {tab.id === 'journal' && journalUnread > 0 && (
-                                <span className="ml-1 px-1.5 py-0.5 text-[10px] bg-primary text-default rounded-full font-bold">{journalUnread}</span>
+                <div className="px-4 bg-surface flex items-center justify-between gap-3 flex-wrap">
+                    <nav className="vk-tabs">
+                        {TABS.map(tab => (
+                            <button key={tab.id} type="button" onClick={() => changeTab(tab.id)}
+                                    className={`vk-tab ${activeTab === tab.id ? 'is-active' : ''}`}>
+                                {tab.label}
+                                {tab.id === 'journal' && journalUnread > 0 && <span className="vk-badge">{journalUnread}</span>}
+                            </button>
+                        ))}
+                    </nav>
+                    {activeTab === 'fiche' && (
+                        <div className="flex gap-2 py-2">
+                            {editMode ? (
+                                <>
+                                    <button type="button" onClick={cancelEdit} className="vk-btn vk-btn-danger vk-btn-sm">Annuler</button>
+                                    <button type="button" onClick={saveEdit} className="vk-btn vk-btn-success vk-btn-sm"><VkIcon name="check" />Sauvegarder</button>
+                                </>
+                            ) : (
+                                <>
+                                    <button type="button" onClick={() => setShowEvolution(true)} className="vk-btn vk-btn-primary vk-btn-sm"><VkIcon name="tree" />Évolution</button>
+                                    <button type="button" onClick={startEdit} className="vk-btn vk-btn-sm"><VkIcon name="quill" />Édition</button>
+                                </>
                             )}
-                        </button>
-                    ))}
+                        </div>
+                    )}
                 </div>
-            </nav>
+            </div>
 
-            {/* ── CONTENU ── */}
+            {/* ── CONTENU (toute la largeur) ── */}
             <div className="flex">
-                <SessionPlayersBar character={character} sessionId={activeGMSession} sessionName={activeSessionName} />
+                <SessionPlayersBar character={character} sessionId={activeGMSession} sessionName={activeSessionName}
+                                   headerHeight={headerHeight} noWidthWhenCollapsed />
 
-                <div className="flex-1 min-w-0 max-w-7xl mx-auto p-4">
+                <main className="flex-1 min-w-0 p-4 md:p-6">
                     {activeTab === 'fiche' && (
                         <>
-                            <div className="flex justify-end gap-2 mb-4">
-                                {editMode ? (
-                                    <>
-                                        <button onClick={cancelEdit} className="px-4 py-2 rounded text-xs font-semibold bg-surface-alt border border-default text-default">Annuler</button>
-                                        <button onClick={saveEdit} className="px-4 py-2 rounded text-xs font-semibold bg-success text-white">✓ Sauvegarder</button>
-                                    </>
-                                ) : (
-                                    <>
-                                        <button onClick={() => setShowEvolution(true)} className="px-4 py-2 rounded text-xs font-semibold bg-primary text-default">💎 Évolution</button>
-                                        <button onClick={startEdit} className="px-4 py-2 rounded text-xs font-semibold bg-secondary text-white">⚙️ Édition</button>
-                                    </>
-                                )}
-                            </div>
-
                             <SheetLayout
                                 char={char}
                                 editMode={editMode}
@@ -239,7 +245,6 @@ const Sheet = ({
                                 onAvatarClick={() => setShowAvatar(true)}
                                 onOpenEditModal={setShowEditModal}
                             />
-
                             <CombatPanel
                                 character={character}
                                 combatConfig={vikingsConfig.combat}
@@ -248,21 +253,17 @@ const Sheet = ({
                         </>
                     )}
 
-                    {activeTab === 'journal'    && <JournalTab characterId={character.id} />}
+                    {activeTab === 'journal' && <JournalTab characterId={character.id} />}
                     {activeTab === 'historique' && (
                         <DiceHistoryPage
                             sessionId={activeGMSession}
                             renderHistoryEntry={vikingsConfig.dice.renderHistoryEntry}
                         />
                     )}
-                </div>
+                </main>
             </div>
 
             {/* ── Éléments globaux ── */}
-            <ToastNotifications
-                sessionId={activeGMSession}
-                renderDiceToast={(toast) => <VikingsHistoryEntry entry={toast} compact />}
-            />
             {showDiceConfig && <DiceConfigModal onClose={() => setShowDiceConfig(false)} />}
 
             {/* ── Modales fiche ── */}
@@ -302,6 +303,15 @@ const Sheet = ({
                 currentCharId={character?.id}
                 onClose={() => setShowCharList(false)}
                 onSelect={(c) => { window.location.href = `/${slug}/${c.accessUrl}`; }}
+            />
+
+            {/* Notifications en dernier : au même z-index que les modales, elles
+                doivent passer devant (sinon un jet libre, modale encore ouverte,
+                masquait sa propre notification). */}
+            <ToastNotifications
+                sessionId={activeGMSession}
+                renderDiceToast={(toast) => <VikingsHistoryEntry entry={toast} compact />}
+                renderAllRollTypes
             />
         </div>
     );

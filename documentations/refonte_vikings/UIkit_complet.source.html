@@ -1,0 +1,1166 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Viking UI Kit — complet (lot 4a)</title>
+    <!--
+        Planche de validation du lot 4 (spec_vikings_lot4_graphisme.md, L4-5).
+        Extension de UIkit_preview.html (inchangé) avec les éléments absents du kit.
+
+        Construite avec le système CSS de l'app, pour que ce qui est validé ici soit
+        exactement ce qui sera appliqué :
+          • classes génériques de generated-css-utils.css (bg-*, text-*, border-*…)
+          • Tailwind pour la mise en page (flex, grid, gap, padding…), comme dans l'app
+          • le bloc <style id="theme"> ci-dessous = futur systems/vikings/theme.css
+            (variables plateforme --color-*, variables --vk-*, classes .vk-*)
+          • le sprite <svg id="vk-icons"> = futur composant VkIcon (icônes au trait)
+        À ouvrir depuis le dépôt (chemins relatifs vers assets/ et generated-css-utils.css).
+    -->
+    <link href="https://fonts.googleapis.com/css2?family=Alegreya:ital,wght@0,400;0,500;0,700;1,400&family=Eagle+Lake&family=Grenze+Gotisch:wght@400;600;700&family=Noto+Sans+Runic&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <link rel="stylesheet" href="../../src/client/src/generated-css-utils.css">
+
+    <style id="theme">
+        /* ═════════════════════════════════════════════════════════════════════
+           FUTUR systems/vikings/theme.css
+           Jour = bois sombre et or · Nuit = fer (L4-1 : deux thèmes sombres)
+           ═════════════════════════════════════════════════════════════════════ */
+
+        /* ── Mode JOUR — bois et or ─────────────────────────────────────────── */
+        :root {
+            --color-primary:     #d4a017;   /* or */
+            --color-secondary:   #8b5a2b;   /* cuir */
+            --color-accent:      #b8432f;   /* rouge sang séché — mise en avant */
+            --color-danger:      #c0392b;
+            --color-success:     #7a9a3a;   /* mousse */
+
+            --color-bg:          #1a1410;   /* bois sombre */
+            --color-surface:     #2a2118;
+            --color-surface-alt: #352a1f;
+
+            --color-text:        #e8dcc8;   /* parchemin */
+            --color-text-muted:  #a08b6e;
+            --color-border:      rgba(200, 169, 110, 0.35);
+
+            /* Spécifique Vikings */
+            --vk-on-primary:     #1a1410;   /* texte sur fond or */
+            --vk-gold-dim:       #b8942a;
+            --vk-border-soft:    rgba(200, 169, 110, 0.15);
+            --vk-panel-shadow:   inset 0 0 30px rgba(0, 0, 0, 0.3), 0 4px 20px rgba(0, 0, 0, 0.4);
+            --vk-ornament-filter: none;
+            --vk-field-bg:       rgba(0, 0, 0, 0.25);
+            --vk-token-blessure: #a8322a;
+            --vk-token-fatigue:  #9a7240;
+            --vk-warn:           #d98a2b;   /* malus (fatigue, blessures) */
+
+            --vk-font-title:     'Eagle Lake', Georgia, serif;
+            --vk-font-label:     'Grenze Gotisch', Georgia, serif;
+            --vk-font-body:      'Alegreya', Georgia, serif;
+            --vk-font-runic:     'Noto Sans Runic', 'Segoe UI Historic', sans-serif;   /* Eagle Lake n'a pas les runes */
+
+            --vk-corner-h-tl: url('assets/corner-heavy-tl.png');
+            --vk-corner-h-tr: url('assets/corner-heavy-tr.png');
+            --vk-corner-h-bl: url('assets/corner-heavy-bl.png');
+            --vk-corner-h-br: url('assets/corner-heavy-br.png');
+            --vk-corner-l-tl: url('assets/corner-light-tl.png');
+            --vk-corner-l-tr: url('assets/corner-light-tr.png');
+            --vk-corner-l-bl: url('assets/corner-light-bl.png');
+            --vk-corner-l-br: url('assets/corner-light-br.png');
+        }
+
+        /* ── Mode NUIT — fer (.dark posé par l'app sur <html>, data-theme par le slug) ── */
+        .dark, [data-theme="dark"] {
+            --color-primary:     #ebcb8b;   /* or pâle */
+            --color-secondary:   #5e81ac;   /* bleu nordique */
+            --color-accent:      #bf616a;
+            --color-danger:      #bf616a;
+            --color-success:     #a3be8c;
+
+            --color-bg:          #0f1419;
+            --color-surface:     #161c23;
+            --color-surface-alt: #1e252e;
+
+            --color-text:        #d8dee9;
+            --color-text-muted:  #81a1c1;
+            --color-border:      rgba(150, 160, 180, 0.28);
+
+            --vk-on-primary:     #0f1419;
+            --vk-gold-dim:       #c9ad74;
+            --vk-border-soft:    rgba(150, 160, 180, 0.12);
+            --vk-panel-shadow:   inset 0 0 30px rgba(0, 0, 0, 0.4), 0 4px 20px rgba(0, 0, 0, 0.5);
+            --vk-ornament-filter: saturate(0.15) brightness(0.65) contrast(1.2);
+            --vk-field-bg:       rgba(0, 0, 0, 0.3);
+            --vk-token-blessure: #bf616a;
+            --vk-token-fatigue:  #81a1c1;
+            --vk-warn:           #d08770;
+        }
+
+        /* ── Base ───────────────────────────────────────────────────────────── */
+        .vk-root {
+            background: var(--color-bg);
+            color: var(--color-text);
+            font-family: var(--vk-font-body);
+            font-size: 1rem;
+            line-height: 1.45;
+        }
+        .vk-root input, .vk-root textarea { caret-color: var(--color-primary); }
+
+        /* ── Icônes au trait (sprite SVG → composant VkIcon) ────────────────── */
+        .vk-icon {
+            display: inline-block;   /* le reset de Tailwind met les <svg> en display:block */
+            width: 1.15em; height: 1.15em; flex-shrink: 0; vertical-align: -0.2em;
+            fill: none; stroke: currentColor; stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round;
+        }
+        .vk-icon-lg { width: 1.5em; height: 1.5em; }
+
+        /* ── Typographie ────────────────────────────────────────────────────── */
+        .vk-title  { font-family: var(--vk-font-title); color: var(--color-primary); text-shadow: 0 2px 8px rgba(0,0,0,.45); }
+        .vk-label  { font-family: var(--vk-font-label); letter-spacing: 0.04em; }   /* intitulés COURTS uniquement */
+        .vk-num    { font-variant-numeric: lining-nums tabular-nums; }
+        .vk-font-body { font-family: var(--vk-font-body); }   /* texte courant dans un titre en Grenze */
+        .vk-eyebrow{ font-size: .72rem; text-transform: uppercase; letter-spacing: .12em; color: var(--color-text-muted); }
+        .vk-rune   { font-family: var(--vk-font-runic); color: var(--color-primary); line-height: 1; }
+
+        /* ── Panneaux à coins ornés (kit) ───────────────────────────────────── */
+        .vk-panel {
+            position: relative;
+            background: var(--color-surface);
+            border: 2px solid var(--color-border);
+            box-shadow: var(--vk-panel-shadow);
+        }
+        .vk-panel::before, .vk-panel::after,
+        .vk-panel > .vk-c::before, .vk-panel > .vk-c::after {
+            content: ''; position: absolute; pointer-events: none; z-index: 5;
+            background-size: contain; background-repeat: no-repeat;
+            filter: var(--vk-ornament-filter);
+        }
+        .vk-c { position: absolute; inset: 0; pointer-events: none; }
+
+        /* Bas plus aéré : les coins du bas ne touchent pas le dernier élément */
+        .vk-heavy { padding: 24px 24px 38px; }
+        .vk-heavy::before         { width: 90px; height: 90px; top: -7px;    left: -7px;  background-image: var(--vk-corner-h-tl); }
+        .vk-heavy::after          { width: 90px; height: 90px; top: -7px;    right: -7px; background-image: var(--vk-corner-h-tr); }
+        .vk-heavy > .vk-c::before { width: 90px; height: 90px; bottom: -7px; left: -7px;  background-image: var(--vk-corner-h-bl); }
+        .vk-heavy > .vk-c::after  { width: 90px; height: 90px; bottom: -7px; right: -7px; background-image: var(--vk-corner-h-br); }
+
+        .vk-light { padding: 18px 18px 24px; }
+        .vk-light::before         { width: 55px; height: 55px; top: -5px;    left: -5px;  background-image: var(--vk-corner-l-tl); }
+        .vk-light::after          { width: 55px; height: 55px; top: -5px;    right: -5px; background-image: var(--vk-corner-l-tr); }
+        .vk-light > .vk-c::before { width: 55px; height: 55px; bottom: -5px; left: -5px;  background-image: var(--vk-corner-l-bl); }
+        .vk-light > .vk-c::after  { width: 55px; height: 55px; bottom: -5px; right: -5px; background-image: var(--vk-corner-l-br); }
+
+        .vk-light-sm { padding: 12px 12px 16px; }
+        .vk-light-sm::before         { width: 40px; height: 40px; top: -4px;    left: -4px;  background-image: var(--vk-corner-l-tl); }
+        .vk-light-sm::after          { width: 40px; height: 40px; top: -4px;    right: -4px; background-image: var(--vk-corner-l-tr); }
+        .vk-light-sm > .vk-c::before { width: 40px; height: 40px; bottom: -4px; left: -4px;  background-image: var(--vk-corner-l-bl); }
+        .vk-light-sm > .vk-c::after  { width: 40px; height: 40px; bottom: -4px; right: -4px; background-image: var(--vk-corner-l-br); }
+
+        /* Mobile : ornements réduits */
+        @media (max-width: 640px) {
+            .vk-heavy { padding: 16px 16px 30px; }
+            .vk-heavy::before, .vk-heavy::after, .vk-heavy > .vk-c::before, .vk-heavy > .vk-c::after { width: 56px; height: 56px; }
+            .vk-light::before, .vk-light::after, .vk-light > .vk-c::before, .vk-light > .vk-c::after { width: 40px; height: 40px; }
+        }
+
+        /* Titre de section ; les contrôles à droite restent hors des ornements */
+        .vk-section-title {
+            font-family: var(--vk-font-label); color: var(--color-primary); letter-spacing: .03em;
+            font-size: 1.4rem; line-height: 1.2; margin-bottom: .6rem; padding-right: 14px;
+            display: flex; align-items: baseline; justify-content: space-between; gap: .5rem;
+        }
+        .vk-heavy > .vk-section-title { padding-right: 30px; }
+
+        /* ── Séparateurs (sobres, sans image) ───────────────────────────────── */
+        .vk-sep-line {   /* entre sous-éléments */
+            height: 1px; margin: 14px 0;
+            background: linear-gradient(90deg, transparent 0%, var(--color-border) 20%, var(--color-border) 80%, transparent 100%);
+        }
+        .vk-sep {        /* entre grandes zones : double filet */
+            height: 4px; margin: 22px 0;
+            background:
+                linear-gradient(90deg, transparent 0%, var(--color-border) 15%, var(--color-border) 85%, transparent 100%) top / 100% 1px no-repeat,
+                linear-gradient(90deg, transparent 0%, var(--vk-border-soft) 25%, var(--vk-border-soft) 75%, transparent 100%) bottom / 100% 1px no-repeat;
+        }
+
+        /* ── Boutons ────────────────────────────────────────────────────────── */
+        .vk-btn {
+            display: inline-flex; align-items: center; justify-content: center; gap: .4rem;
+            font-family: var(--vk-font-body); font-weight: 700; font-size: .9rem;
+            padding: .45rem .95rem; border: 1px solid var(--color-border); border-radius: 2px;
+            background: transparent; color: var(--color-text); cursor: pointer;
+            transition: background-color .15s, border-color .15s, color .15s, box-shadow .2s, transform .15s, filter .2s;
+        }
+        .vk-btn:hover:not(:disabled)  { border-color: var(--color-primary); background-color: color-mix(in srgb, var(--color-primary) 10%, transparent); }
+        .vk-btn:focus-visible         { outline: 2px solid var(--color-primary); outline-offset: 2px; }
+        .vk-btn:disabled              { opacity: .4; cursor: not-allowed; }
+        /* Bouton principal (Lancer les dés…) : survol nettement différencié — éclat doré, léger soulèvement */
+        .vk-btn-primary {
+            font-family: var(--vk-font-label); font-weight: 600; font-size: 1.02rem; letter-spacing: .03em;
+            background-image: linear-gradient(180deg, var(--color-primary), var(--vk-gold-dim));
+            border-color: var(--vk-gold-dim); color: var(--vk-on-primary);
+            box-shadow: inset 0 1px 0 rgba(255,255,255,.25), 0 2px 6px rgba(0,0,0,.35);
+        }
+        .vk-btn-primary:hover:not(:disabled) {
+            border-color: var(--color-primary);
+            filter: brightness(1.12) saturate(1.1);
+            transform: translateY(-1px);
+            box-shadow: inset 0 1px 0 rgba(255,255,255,.35), 0 0 0 1px var(--color-primary), 0 4px 18px color-mix(in srgb, var(--color-primary) 45%, transparent);
+        }
+        .vk-btn-primary:active:not(:disabled) {
+            transform: translateY(1px); filter: brightness(.95);
+            box-shadow: inset 0 2px 5px rgba(0,0,0,.4);
+        }
+        .vk-btn-danger  { border-color: color-mix(in srgb, var(--color-danger) 60%, transparent); color: var(--color-danger); }
+        .vk-btn-danger:hover:not(:disabled)  { background-color: color-mix(in srgb, var(--color-danger) 15%, transparent); border-color: var(--color-danger); }
+        .vk-btn-success { border-color: color-mix(in srgb, var(--color-success) 60%, transparent); color: var(--color-success); }
+        .vk-btn-success:hover:not(:disabled) { background-color: color-mix(in srgb, var(--color-success) 15%, transparent); border-color: var(--color-success); }
+        .vk-btn-sm   { font-size: .78rem; padding: .25rem .6rem; }
+        .vk-btn-primary.vk-btn-sm { font-size: .9rem; }
+        .vk-btn-icon { padding: 0; width: 2rem; height: 2rem; }
+        .vk-btn-icon.vk-btn-sm { width: 1.6rem; height: 1.6rem; }
+
+        /* Bouton de jet discret sur une ligne (carac, compétence) */
+        .vk-roll {
+            width: 1.75rem; height: 1.75rem; border-radius: 2px; border: 1px solid var(--vk-border-soft);
+            display: inline-flex; align-items: center; justify-content: center;
+            color: var(--color-primary); background: transparent; cursor: pointer;
+            transition: border-color .15s, background-color .15s, transform .15s;
+        }
+        .vk-roll:hover { border-color: var(--color-primary); background: color-mix(in srgb, var(--color-primary) 12%, transparent); transform: rotate(-8deg); }
+
+        /* ── Champs ─────────────────────────────────────────────────────────── */
+        .vk-field-label { display: block; font-family: var(--vk-font-label); font-size: .98rem; letter-spacing: .03em; color: var(--color-text-muted); margin-bottom: .2rem; }
+        .vk-input {
+            width: 100%; font-family: var(--vk-font-body); font-size: .95rem; color: var(--color-text);
+            background: var(--vk-field-bg); border: 1px solid var(--vk-border-soft);
+            border-bottom-color: var(--color-border); border-radius: 2px; padding: .4rem .6rem;
+        }
+        .vk-input::placeholder { color: var(--color-text-muted); opacity: .7; font-style: italic; }
+        .vk-input:focus { outline: none; border-color: var(--color-primary); box-shadow: 0 0 0 2px color-mix(in srgb, var(--color-primary) 20%, transparent); }
+        textarea.vk-input { resize: vertical; min-height: 4.5rem; }
+        .vk-input-icon { position: relative; }
+        .vk-input-icon .vk-icon { position: absolute; left: .6rem; top: 50%; transform: translateY(-50%); color: var(--color-text-muted); }
+        .vk-input-icon .vk-input { padding-left: 2rem; }
+
+        /* Pastilles de choix (pas de <select> ni de case à cocher) */
+        .vk-pill {
+            display: inline-flex; align-items: center; gap: .3rem; cursor: pointer;
+            font-size: .82rem; padding: .25rem .7rem; border-radius: 999px;
+            border: 1px solid var(--color-border); color: var(--color-text-muted); background: transparent;
+            transition: color .15s, border-color .15s, background-color .15s;
+        }
+        .vk-pill:hover { color: var(--color-text); border-color: var(--color-primary); }
+        .vk-pill.is-selected { background: var(--color-primary); border-color: var(--color-primary); color: var(--vk-on-primary); font-weight: 700; }
+
+        /* Stepper −/+ (valeurs numériques : visée, ajustements, actions de table…) */
+        .vk-stepper { display: inline-flex; align-items: center; border: 1px solid var(--color-border); border-radius: 2px; }
+        .vk-stepper button { width: 1.8rem; height: 1.8rem; color: var(--color-primary); font-weight: 700; background: transparent; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; }
+        .vk-stepper button:hover:not(:disabled) { background: color-mix(in srgb, var(--color-primary) 12%, transparent); }
+        .vk-stepper button:disabled { opacity: .3; cursor: not-allowed; }
+        .vk-stepper span { min-width: 2rem; text-align: center; font-weight: 700; border-inline: 1px solid var(--vk-border-soft); line-height: 1.8rem; }
+
+        /* ── Bandeau, onglets, menu ─────────────────────────────────────────── */
+        .vk-header {
+            background: linear-gradient(180deg, var(--color-surface), var(--color-bg));
+            border-bottom: 1px solid var(--color-border);
+            box-shadow: 0 4px 16px rgba(0,0,0,.35);
+        }
+        /* Titre runique du bandeau : change de mot (liste RUNE_TITLES) dans un fondu « mirage » et une fumée.
+           Mécanique : .is-changing (fumée + distorsion SVG #vk-mirage), .is-out puis .is-in (sortie / entrée du mot). */
+        .vk-rune-title {
+            position: relative; display: inline-block; cursor: default;
+            width: 4.3em; text-align: center; white-space: nowrap;   /* largeur fixe : le nom à côté ne bouge pas */
+            font-family: var(--vk-font-runic); color: var(--color-primary); letter-spacing: .15em;
+            text-shadow: 0 0 6px color-mix(in srgb, var(--color-primary) 35%, transparent);
+        }
+        .vk-rune-title .vk-mirage { display: inline-block; position: relative; z-index: 1; }
+        .vk-rune-title .vk-mirage > span { display: inline-block; }
+        .vk-rune-title.is-changing .vk-mirage { filter: url(#vk-mirage); }
+        .vk-rune-title::before, .vk-rune-title::after {   /* volutes de fumée */
+            content: ''; position: absolute; inset: -55% -30%; z-index: 0; pointer-events: none;
+            border-radius: 50%; filter: blur(12px); opacity: 0; transition: opacity .8s;
+            background: radial-gradient(closest-side, color-mix(in srgb, var(--color-text-muted) 55%, transparent), transparent 75%);
+        }
+        .vk-rune-title::after { inset: -40% -15%; background: radial-gradient(closest-side, color-mix(in srgb, var(--color-primary) 35%, transparent), transparent 70%); }
+        .vk-rune-title.is-changing::before { opacity: .85; animation: vk-smoke 2.3s ease-in-out; }
+        .vk-rune-title.is-changing::after  { opacity: .7;  animation: vk-smoke 2.3s ease-in-out reverse; }
+        .vk-rune-title.is-out .vk-mirage > span { animation: vk-rune-out .9s ease-in forwards; }
+        .vk-rune-title.is-in  .vk-mirage > span { animation: vk-rune-in 1.4s ease-out; }
+        @keyframes vk-rune-out {
+            to { opacity: 0; filter: blur(6px); transform: translateY(-4px) scaleX(1.3); }
+        }
+        @keyframes vk-rune-in {
+            0%   { opacity: 0; filter: blur(7px); transform: translateY(4px) scaleX(1.3); }
+            60%  { opacity: 1; text-shadow: 0 0 20px var(--color-primary); }
+            100% { opacity: 1; filter: blur(0); transform: none; }
+        }
+        @keyframes vk-smoke {
+            0%   { transform: translateX(-14%) scale(.75) rotate(-6deg); }
+            50%  { transform: translateX(4%)   scale(1.1) rotate(4deg); }
+            100% { transform: translateX(16%)  scale(1.3) rotate(10deg); }
+        }
+        @media (prefers-reduced-motion: reduce) {
+            .vk-rune-title .vk-mirage > span, .vk-rune-title::before, .vk-rune-title::after { animation: none !important; }
+            .vk-rune-title.is-changing .vk-mirage { filter: none; }
+        }
+        /* Onglets : défilement horizontal sur mobile, sans barre de défilement visible */
+        .vk-tabs {
+            display: flex; gap: .25rem; border-bottom: 1px solid var(--vk-border-soft);
+            overflow-x: auto; overflow-y: hidden; scrollbar-width: none;
+        }
+        .vk-tabs::-webkit-scrollbar { display: none; }
+        .vk-tab {
+            font-family: var(--vk-font-label); font-size: 1.05rem; letter-spacing: .04em;
+            padding: .5rem 1rem; color: var(--color-text-muted); background: transparent; cursor: pointer;
+            white-space: nowrap; box-shadow: inset 0 -2px 0 transparent; transition: color .15s, box-shadow .15s;
+        }
+        .vk-tab:hover { color: var(--color-text); }
+        .vk-tab.is-active { color: var(--color-primary); box-shadow: inset 0 -2px 0 var(--color-primary); }
+        .vk-badge { display: inline-flex; min-width: 1.15rem; height: 1.15rem; padding: 0 .3rem; margin-left: .35rem; align-items: center; justify-content: center; border-radius: 999px; font-family: var(--vk-font-body); font-size: .7rem; font-weight: 700; background: var(--color-accent); color: #fff; }
+        .vk-menu { background: var(--color-surface); border: 1px solid var(--color-border); box-shadow: 0 10px 30px rgba(0,0,0,.5); padding: .3rem 0; min-width: 14rem; }
+        .vk-menu-item { display: flex; width: 100%; align-items: center; gap: .6rem; padding: .45rem 1rem; font-size: .92rem; color: var(--color-text); background: transparent; cursor: pointer; text-align: left; }
+        .vk-menu-item .vk-icon { color: var(--color-primary); }
+        .vk-menu-item:hover { background: color-mix(in srgb, var(--color-primary) 10%, transparent); }
+        .vk-menu-item.is-danger, .vk-menu-item.is-danger .vk-icon { color: var(--color-danger); }
+        .vk-menu-sep { height: 1px; margin: .3rem .8rem; background: var(--vk-border-soft); }
+
+        /* ── Valeurs, lignes de liste ───────────────────────────────────────── */
+        .vk-stat {
+            text-align: center; padding: .5rem .3rem; position: relative;
+            background: color-mix(in srgb, var(--color-primary) 6%, transparent);
+            border: 1px solid var(--vk-border-soft);
+        }
+        .vk-stat .val { font-family: var(--vk-font-title); font-size: 1.5rem; color: var(--color-primary); line-height: 1.1; }
+        .vk-stat .lbl { font-family: var(--vk-font-label); font-size: .98rem; letter-spacing: .03em; color: var(--color-text-muted); }
+        .vk-stat .sub { font-size: .72rem; color: var(--color-text-muted); }
+        .vk-stat.is-rollable { cursor: pointer; transition: border-color .15s, background-color .15s; }
+        .vk-stat.is-rollable:hover { border-color: var(--color-primary); background: color-mix(in srgb, var(--color-primary) 12%, transparent); }
+
+        .vk-row { display: flex; align-items: center; gap: .6rem; padding: .35rem .25rem; border-bottom: 1px solid var(--vk-border-soft); }
+        .vk-row:last-child { border-bottom: none; }
+        .vk-row:hover { background: color-mix(in srgb, var(--color-primary) 5%, transparent); }
+        .vk-row-val { font-family: var(--vk-font-title); color: var(--color-primary); }
+
+        /* Carte de rune (grille : pas de filet de ligne, qui paraîtrait décentré) */
+        .vk-rune-card { display: flex; align-items: flex-start; gap: .7rem; padding: .55rem .7rem; border: 1px solid var(--vk-border-soft); background: color-mix(in srgb, var(--color-primary) 4%, transparent); }
+
+        /* ── Jauges ─────────────────────────────────────────────────────────── */
+        /* SAGA : losanges cliquables (clic = fixe la réserve à ce niveau ; sur le dernier rempli = −1) */
+        .vk-saga { display: inline-flex; gap: .5rem; padding: .2rem; }
+        .vk-saga button {
+            width: 1.05rem; height: 1.05rem; transform: rotate(45deg); cursor: pointer;
+            border: 1.5px solid var(--color-primary); background: transparent;
+            transition: transform .15s, box-shadow .15s, background-color .15s;
+        }
+        .vk-saga button.is-full { background: var(--color-primary); box-shadow: 0 0 8px color-mix(in srgb, var(--color-primary) 60%, transparent); }
+        .vk-saga button:hover { transform: rotate(45deg) scale(1.3); box-shadow: 0 0 12px color-mix(in srgb, var(--color-primary) 80%, transparent); }
+        .vk-saga button:not(.is-full):hover { background: color-mix(in srgb, var(--color-primary) 35%, transparent); }
+        .vk-saga button:focus-visible { outline: 2px solid var(--color-primary); outline-offset: 3px; }
+
+        /* Tokens blessure / fatigue */
+        .vk-gauges { display: flex; flex-wrap: wrap; gap: 1rem 2.5rem; }   /* blessures et fatigue côte à côte si la place le permet */
+        .vk-tokens { display: flex; flex-wrap: wrap; gap: .25rem; }
+        .vk-token {
+            width: 1.6rem; height: 1.6rem; border: 1.5px solid var(--color-border); border-radius: 2px;
+            background: var(--vk-field-bg); cursor: pointer; position: relative; transition: border-color .15s, transform .1s;
+        }
+        .vk-token:hover { border-color: var(--color-primary); transform: translateY(-1px); }
+        .vk-token.is-blessure { background: var(--vk-token-blessure); border-color: var(--vk-token-blessure); }
+        .vk-token.is-fatigue  { background: var(--vk-token-fatigue);  border-color: var(--vk-token-fatigue); }
+        .vk-token.is-ko       { border-style: double; border-width: 3px; border-color: var(--color-danger); }
+        .vk-tokens.has-tiers { padding-bottom: 1rem; }
+        .vk-token.is-tier::after {   /* repère de palier de fatigue (2, 4, 6, 8) */
+            content: attr(data-tier); position: absolute; bottom: -1.05rem; left: 50%; transform: translateX(-50%);
+            font-size: .62rem; color: var(--color-text-muted); white-space: nowrap;
+        }
+
+        /* Points de compétence (succès auto) */
+        .vk-dots { display: inline-flex; gap: .2rem; }
+        .vk-dots i { width: .5rem; height: .5rem; border-radius: 999px; border: 1px solid var(--color-success); display: block; }
+        .vk-dots i.is-full { background: var(--color-success); }
+
+        /* ── Étiquettes et encadrés ─────────────────────────────────────────── */
+        .vk-tag { display: inline-flex; align-items: center; gap: .3rem; font-size: .75rem; font-weight: 700; padding: .12rem .5rem; border-radius: 2px; border: 1px solid; }
+        .vk-tag-gold   { color: var(--color-primary); border-color: color-mix(in srgb, var(--color-primary) 50%, transparent); background: color-mix(in srgb, var(--color-primary) 10%, transparent); }
+        .vk-tag-warn   { color: var(--vk-warn); border-color: color-mix(in srgb, var(--vk-warn) 50%, transparent); background: color-mix(in srgb, var(--vk-warn) 12%, transparent); }
+        .vk-tag-danger { color: #fff; border-color: var(--color-danger); background: var(--color-danger); }
+        .vk-tag-muted  { color: var(--color-text-muted); border-color: var(--vk-border-soft); }
+        .vk-text-warn  { color: var(--vk-warn); }   /* malus (fatigue, blessures) dans un texte */
+
+        .vk-callout { border-left: 3px solid var(--color-primary); background: color-mix(in srgb, var(--color-primary) 8%, transparent); padding: .55rem .8rem; font-size: .9rem; }
+        .vk-callout-warn   { border-left-color: var(--vk-warn); background: color-mix(in srgb, var(--vk-warn) 12%, transparent); }
+        .vk-callout-danger { border-left-color: var(--color-danger); background: color-mix(in srgb, var(--color-danger) 12%, transparent); }
+
+        /* ── Dés ────────────────────────────────────────────────────────────── */
+        .vk-die {
+            width: 2.4rem; height: 2.4rem; display: inline-flex; align-items: center; justify-content: center;
+            font-family: var(--vk-font-title); font-size: 1.15rem; border-radius: 3px; position: relative;
+            border: 1.5px solid var(--color-border); color: var(--color-text-muted); background: var(--vk-field-bg);
+        }
+        .vk-die.is-success { border-color: var(--color-success); color: var(--color-text); background: color-mix(in srgb, var(--color-success) 22%, transparent); }
+        .vk-die.is-explode { border-color: var(--color-primary); color: var(--vk-on-primary); background: var(--color-primary); box-shadow: 0 0 10px color-mix(in srgb, var(--color-primary) 55%, transparent); }
+        .vk-die.is-chained::before { content: '↳'; position: absolute; left: -.85rem; color: var(--color-primary); font-size: .8rem; }
+        .vk-die.is-dropped { opacity: .35; }
+        .vk-die-sm { width: 1.6rem; height: 1.6rem; font-size: .8rem; }
+
+        /* Calcul du résultat, ligne par ligne */
+        .vk-calc { width: 100%; font-size: .92rem; }
+        .vk-calc td { padding: .2rem .3rem; }
+        .vk-calc td:last-child { text-align: right; font-weight: 700; white-space: nowrap; }
+        .vk-calc tr.is-malus td { color: var(--vk-warn); }
+        .vk-calc tr.is-total td { border-top: 1px solid var(--color-border); font-family: var(--vk-font-title); color: var(--color-primary); font-size: 1.2rem; padding-top: .4rem; }
+
+        .vk-banner {   /* triple 10, réussite héroïque */
+            display: flex; align-items: center; justify-content: center; gap: .5rem;
+            text-align: center; padding: .5rem; font-family: var(--vk-font-title); font-size: 1.1rem;
+            color: var(--vk-on-primary); background: linear-gradient(90deg, var(--vk-gold-dim), var(--color-primary), var(--vk-gold-dim));
+            box-shadow: 0 0 18px color-mix(in srgb, var(--color-primary) 45%, transparent);
+        }
+        .vk-banner .vk-rune { color: var(--vk-on-primary); font-size: 1.3rem; }
+
+        /* ── Modale ─────────────────────────────────────────────────────────── */
+        .vk-modal-backdrop { background: rgba(0,0,0,.65); backdrop-filter: blur(2px); }
+        /* En-tête : le bouton de fermeture reste à l'écart des coins ornés */
+        .vk-modal-header { display: flex; align-items: center; justify-content: space-between; gap: .75rem; padding: 0 30px .6rem 6px; margin-bottom: .8rem; border-bottom: 1px solid var(--vk-border-soft); }
+        .vk-light > .vk-modal-header { padding-right: 16px; }
+
+        /* ── Historique / notifications ─────────────────────────────────────── */
+        .vk-entry { border: 1px solid var(--vk-border-soft); background: var(--color-surface); }
+        .vk-entry-meta { display: flex; justify-content: space-between; font-size: .72rem; color: var(--color-text-muted); padding: .3rem .7rem; background: var(--color-surface-alt); }
+        .vk-toast { border: 1px solid var(--color-border); border-left: 3px solid var(--color-primary); background: var(--color-surface); box-shadow: 0 8px 24px rgba(0,0,0,.5); }
+
+        /* ── Interface MJ ───────────────────────────────────────────────────── */
+        .vk-tile { display: flex; align-items: center; gap: .6rem; width: 100%; padding: .55rem .7rem; text-align: left; cursor: pointer; border-left: 3px solid transparent; border-bottom: 1px solid var(--vk-border-soft); background: transparent; color: var(--color-text); }
+        .vk-tile:hover { background: color-mix(in srgb, var(--color-primary) 6%, transparent); }
+        .vk-tile.is-selected { border-left-color: var(--color-primary); background: color-mix(in srgb, var(--color-primary) 12%, transparent); }
+        .vk-avatar { border-radius: 999px; border: 2px solid var(--color-primary); object-fit: cover; background: var(--color-surface-alt); display: inline-flex; align-items: center; justify-content: center; font-family: var(--vk-font-title); color: var(--color-primary); }
+        .vk-presence { width: .65rem; height: .65rem; border-radius: 999px; border: 2px solid var(--color-surface); background: var(--color-text-muted); }
+        .vk-presence.is-online { background: var(--color-success); box-shadow: 0 0 6px var(--color-success); }
+
+        /* ═══════════════════ FIN DU FUTUR theme.css ═══════════════════ */
+    </style>
+
+    <style>
+        /* Habillage de la planche elle-même (pas dans l'app) */
+        .kit-section { scroll-margin-top: 4.5rem; }
+        .kit-note { font-size: .82rem; color: var(--color-text-muted); font-style: italic; }
+        .kit-code { font-family: ui-monospace, Consolas, monospace; font-size: .75rem; color: var(--color-text-muted); }
+        .swatch { width: 100%; height: 3rem; border: 1px solid var(--color-border); }
+        .kit-icon-cell { display: flex; flex-direction: column; align-items: center; gap: .35rem; padding: .6rem .3rem; border: 1px solid var(--vk-border-soft); font-size: .72rem; color: var(--color-text-muted); text-align: center; }
+        .kit-icon-cell .vk-icon { width: 1.8rem; height: 1.8rem; color: var(--color-primary); }
+    </style>
+</head>
+
+<body class="vk-root min-h-screen">
+
+<!-- ═══ Icônes au trait (futur composant VkIcon : mêmes tracés, viewBox 24×24) ═══ -->
+<svg id="vk-icons" xmlns="http://www.w3.org/2000/svg" style="display:none">
+    <symbol id="i-die" viewBox="0 0 24 24"><rect x="8" y="2.5" width="8" height="19" rx="2.2"/><circle cx="12" cy="7" r="1" fill="currentColor"/><circle cx="12" cy="12" r="1" fill="currentColor"/><circle cx="12" cy="17" r="1" fill="currentColor"/></symbol>
+    <symbol id="i-dice" viewBox="0 0 24 24"><rect x="3" y="5" width="7" height="15" rx="2" transform="rotate(-12 6.5 12.5)"/><rect x="14" y="4" width="7" height="15" rx="2" transform="rotate(10 17.5 11.5)"/><circle cx="6.5" cy="9.5" r=".9" fill="currentColor"/><circle cx="6.9" cy="15" r=".9" fill="currentColor"/><circle cx="17.3" cy="8.5" r=".9" fill="currentColor"/><circle cx="17.7" cy="11.5" r=".9" fill="currentColor"/><circle cx="17.9" cy="14.5" r=".9" fill="currentColor"/></symbol>
+    <symbol id="i-axe" viewBox="0 0 24 24"><path d="M4.5 21.5 15.5 6"/><path d="M13.6 8.7C12.8 5.3 14.6 2.6 18.2 2.2c.5 2.4 2 3.9 3.6 4.4-1 3.4-4 5.4-7.2 4.5"/></symbol>
+    <symbol id="i-shield" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="2.4"/><path d="M12 3v6.6M12 14.4V21M3 12h6.6M14.4 12H21"/></symbol>
+    <symbol id="i-pouch" viewBox="0 0 24 24"><path d="M9 7h6"/><path d="M9.5 7C6.5 9.5 5 12.5 5 15.5a5 5 0 0 0 5 5h4a5 5 0 0 0 5-5c0-3-1.5-6-4.5-8.5"/><path d="M10 7 9 3.5M14 7l1-3.5"/></symbol>
+    <symbol id="i-longhouse" viewBox="0 0 24 24"><path d="M2.5 12 12 6l9.5 6"/><path d="M5 10.5V19h14v-8.5"/><path d="M10.5 19v-4.5h3V19"/><path d="M12 6 10 3M12 6l2-3"/></symbol>
+    <symbol id="i-scroll" viewBox="0 0 24 24"><path d="M5 4.5a2 2 0 0 1 4 0V18a2.5 2.5 0 0 1-2.5 2.5"/><path d="M5 4.5h12a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H6.5"/><path d="M11.5 9h5M11.5 12.5h5M11.5 16h3"/></symbol>
+    <symbol id="i-key" viewBox="0 0 24 24"><circle cx="7" cy="12" r="3.5"/><path d="M10.5 12H21M17 12v3.5M20 12v2.5"/></symbol>
+    <symbol id="i-sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4.5"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9 7 7M17 17l2.1 2.1M4.9 19.1 7 17M17 7l2.1-2.1"/></symbol>
+    <symbol id="i-moon" viewBox="0 0 24 24"><path d="M16 3.5A8.5 8.5 0 1 0 20.5 16 7 7 0 0 1 16 3.5z"/></symbol>
+    <symbol id="i-quill" viewBox="0 0 24 24"><path d="M20 3C12 4 7.5 9 6 17l-2 4"/><path d="M20 3c-.5 6-4 10.5-11 12.5"/><path d="M9.5 11.5h4"/></symbol>
+    <symbol id="i-close" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18"/></symbol>
+    <symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
+    <symbol id="i-minus" viewBox="0 0 24 24"><path d="M5 12h14"/></symbol>
+    <symbol id="i-menu" viewBox="0 0 24 24"><path d="M4 6.5h16M4 12h16M4 17.5h16"/></symbol>
+    <symbol id="i-tree" viewBox="0 0 24 24"><path d="M12 21V3"/><path d="M12 13 7 9.5M12 11l5-3.5M12 8.5 9 4.5M12 8.5l3-4"/><path d="M12 21l-4.5 1M12 21l4.5 1M12 18.5 8.5 21M12 18.5l3.5 2.5"/></symbol>
+    <symbol id="i-helm" viewBox="0 0 24 24"><path d="M4.5 15.5a7.5 7.5 0 0 1 15 0"/><path d="M4.5 15.5h15"/><path d="M12 8V3.5M12 15.5V21"/><path d="M8 9.5l1.4 6M16 9.5l-1.4 6"/></symbol>
+    <symbol id="i-portrait" viewBox="0 0 24 24"><circle cx="12" cy="9" r="4"/><path d="M4.5 21a7.5 7.5 0 0 1 15 0"/></symbol>
+    <symbol id="i-people" viewBox="0 0 24 24"><circle cx="9" cy="9" r="3.5"/><path d="M2.5 20a6.5 6.5 0 0 1 13 0"/><path d="M15 5.5a3.5 3.5 0 0 1 0 7M17.5 14.3a6.5 6.5 0 0 1 4 5.7"/></symbol>
+    <symbol id="i-door" viewBox="0 0 24 24"><path d="M14 3H6v18h8"/><path d="M14 3l5 2v14l-5 2z"/><path d="M16 12h.01"/></symbol>
+    <symbol id="i-check" viewBox="0 0 24 24"><path d="M4.5 12.5 9 17 19.5 6.5"/></symbol>
+    <symbol id="i-up" viewBox="0 0 24 24"><path d="M6 15l6-6 6 6"/></symbol>
+    <symbol id="i-down" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></symbol>
+    <symbol id="i-blood" viewBox="0 0 24 24"><path d="M12 3c3.5 4.5 6 8 6 11.5a6 6 0 0 1-12 0C6 11 8.5 7.5 12 3z"/></symbol>
+    <symbol id="i-arrow" viewBox="0 0 24 24"><path d="M4 20 19 5"/><path d="M14 4.5h5.5V10"/><path d="M4 20l1-4M4 20l4-1M6.5 17.5l1-3.5M6.5 17.5l3.5-1"/></symbol>
+    <symbol id="i-eye" viewBox="0 0 24 24"><path d="M2 12s3.5-6.5 10-6.5S22 12 22 12s-3.5 6.5-10 6.5S2 12 2 12z"/><circle cx="12" cy="12" r="2.8"/></symbol>
+    <symbol id="i-horn" viewBox="0 0 24 24"><path d="M3 7c4 0 7 2 9 5s4.5 6 9 6c-1.5 1.5-3.5 2.5-6 2.5C9 20.5 5 14 3 7z"/><path d="M7 9.5 5.5 13M10.5 13.5 9 17"/></symbol>
+</svg>
+
+<!-- Filtre de distorsion « mirage » du titre runique (hors du sprite : un filtre dans un <svg display:none> n'est pas rendu) -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+    <filter id="vk-mirage" x="-20%" y="-60%" width="140%" height="220%">
+        <feTurbulence type="fractalNoise" baseFrequency="0.015 0.09" numOctaves="2" seed="7" result="noise">
+            <animate attributeName="baseFrequency" dur="2.4s" values="0.015 0.09;0.03 0.14;0.015 0.09" repeatCount="indefinite"/>
+        </feTurbulence>
+        <feDisplacementMap in="SourceGraphic" in2="noise" scale="10" xChannelSelector="R" yChannelSelector="G"/>
+    </filter>
+</svg>
+
+<!-- ═══ Barre de la planche ═══════════════════════════════════════════════════ -->
+<nav class="vk-header sticky top-0 z-40 px-4 py-2 flex items-center gap-3 flex-wrap">
+    <span class="vk-title text-xl">Viking UI Kit — complet</span>
+    <span class="vk-eyebrow hidden md:inline">Lot 4a · à valider</span>
+    <div class="flex gap-1 flex-wrap text-sm ml-auto">
+        <a class="vk-pill" href="#palette">Palette</a>
+        <a class="vk-pill" href="#icones">Icônes</a>
+        <a class="vk-pill" href="#panneaux">Cadres</a>
+        <a class="vk-pill" href="#controles">Boutons & champs</a>
+        <a class="vk-pill" href="#navigation">Navigation</a>
+        <a class="vk-pill" href="#jauges">Jauges</a>
+        <a class="vk-pill" href="#fiche">Fiche</a>
+        <a class="vk-pill" href="#jet">Jet</a>
+        <a class="vk-pill" href="#historique">Historique</a>
+        <a class="vk-pill" href="#mj">MJ</a>
+    </div>
+    <button id="themeToggle" class="vk-btn vk-btn-primary vk-btn-sm"><svg class="vk-icon"><use href="#i-moon"/></svg><span>Mode nuit (fer)</span></button>
+</nav>
+
+<main class="px-4 md:px-8 py-8 space-y-14">
+
+    <!-- ═══ 1. PALETTE & TYPOGRAPHIE ══════════════════════════════════════════ -->
+    <section id="palette" class="kit-section">
+        <h2 class="vk-title text-2xl mb-1">1. Palette et typographie</h2>
+        <p class="kit-note mb-4">Variables plateforme (--color-*) : les classes génériques bg-*, text-*, border-* de generated-css-utils.css suivent automatiquement le mode jour / nuit.</p>
+
+        <div class="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 gap-3 mb-6">
+            <div><div class="swatch bg-default"></div><div class="kit-code mt-1">bg-default</div></div>
+            <div><div class="swatch bg-surface"></div><div class="kit-code mt-1">bg-surface</div></div>
+            <div><div class="swatch bg-surface-alt"></div><div class="kit-code mt-1">bg-surface-alt</div></div>
+            <div><div class="swatch bg-primary"></div><div class="kit-code mt-1">primary · or</div></div>
+            <div><div class="swatch bg-secondary"></div><div class="kit-code mt-1">secondary · cuir / bleu</div></div>
+            <div><div class="swatch bg-accent"></div><div class="kit-code mt-1">accent</div></div>
+            <div><div class="swatch bg-success"></div><div class="kit-code mt-1">success</div></div>
+            <div><div class="swatch bg-danger"></div><div class="kit-code mt-1">danger</div></div>
+        </div>
+
+        <div class="vk-panel vk-light">
+            <span class="vk-c"></span>
+            <div class="grid md:grid-cols-3 gap-6">
+                <div>
+                    <div class="vk-eyebrow mb-1">Titres — Eagle Lake</div>
+                    <div class="vk-title text-3xl">Björn Côtes-de-Fer</div>
+                    <div class="vk-title text-lg mt-1">Compétences</div>
+                    <p class="kit-code mt-2">.vk-title · .vk-section-title</p>
+                </div>
+                <div>
+                    <div class="vk-eyebrow mb-1">Intitulés courts — Grenze Gotisch</div>
+                    <div class="vk-label text-2xl text-primary">Saga · Blessures · Fatigue</div>
+                    <div class="vk-label text-lg mt-1">Ma fiche · Journal · Historique</div>
+                    <p class="kit-code mt-2">.vk-label — onglets, titres de section, libellés de valeurs et de champs, bouton principal ; jamais de texte courant</p>
+                </div>
+                <div>
+                    <div class="vk-eyebrow mb-1">Texte courant, chiffres, saisies — Alegreya</div>
+                    <p>Vous avez juré fidélité à un Jarl. En tant que garde du corps d'élite, vos réflexes sont conditionnés pour protéger votre seigneur.</p>
+                    <p class="vk-num mt-1 text-lg">0 1 2 3 4 5 6 7 8 9 — <em>Seuil 5+ · explosion 9, 10</em></p>
+                    <p class="vk-mt-1 mt-1"><span class="vk-rune text-2xl">ᛟ ᛊ ᚲ ᛉ ᚠ</span> <span class="kit-code">runes — Noto Sans Runic (.vk-rune)</span></p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ═══ 1 bis. ICÔNES ═════════════════════════════════════════════════════ -->
+    <section id="icones" class="kit-section">
+        <h2 class="vk-title text-2xl mb-1">Icônes</h2>
+        <p class="kit-note mb-4">Plus d'emojis : icônes au trait, objets et symboles du 9ᵉ siècle. Le dé est un dé long en os, celui de l'époque viking. Les runes servent de symboles quand elles ont du sens (ᛟ Othala pour la Saga, ᛊ Sowilo — succès — pour le triple 10).</p>
+        <div class="grid grid-cols-3 sm:grid-cols-5 md:grid-cols-7 xl:grid-cols-14 gap-2">
+            <div class="kit-icon-cell"><svg class="vk-icon"><use href="#i-die"/></svg>Jet</div>
+            <div class="kit-icon-cell"><svg class="vk-icon"><use href="#i-dice"/></svg>Jet libre</div>
+            <div class="kit-icon-cell"><svg class="vk-icon"><use href="#i-axe"/></svg>Arme · créer</div>
+            <div class="kit-icon-cell"><svg class="vk-icon"><use href="#i-shield"/></svg>Bouclier · équipé</div>
+            <div class="kit-icon-cell"><svg class="vk-icon"><use href="#i-pouch"/></svg>Sac · objet</div>
+            <div class="kit-icon-cell"><svg class="vk-icon"><use href="#i-longhouse"/></svg>Réserve · accueil</div>
+            <div class="kit-icon-cell"><svg class="vk-icon"><use href="#i-scroll"/></svg>Journal · note</div>
+            <div class="kit-icon-cell"><svg class="vk-icon"><use href="#i-key"/></svg>Code d'accès</div>
+            <div class="kit-icon-cell"><svg class="vk-icon"><use href="#i-tree"/></svg>Évolution</div>
+            <div class="kit-icon-cell"><svg class="vk-icon"><use href="#i-quill"/></svg>Édition</div>
+            <div class="kit-icon-cell"><svg class="vk-icon"><use href="#i-helm"/></svg>Interface MJ</div>
+            <div class="kit-icon-cell"><svg class="vk-icon"><use href="#i-portrait"/></svg>Avatar</div>
+            <div class="kit-icon-cell"><svg class="vk-icon"><use href="#i-people"/></svg>Personnages</div>
+            <div class="kit-icon-cell"><svg class="vk-icon"><use href="#i-door"/></svg>Déconnexion</div>
+            <div class="kit-icon-cell"><svg class="vk-icon"><use href="#i-sun"/></svg>Mode jour</div>
+            <div class="kit-icon-cell"><svg class="vk-icon"><use href="#i-moon"/></svg>Mode nuit · fatigue</div>
+            <div class="kit-icon-cell"><svg class="vk-icon"><use href="#i-blood"/></svg>Blessures</div>
+            <div class="kit-icon-cell"><svg class="vk-icon"><use href="#i-arrow"/></svg>Visée</div>
+            <div class="kit-icon-cell"><svg class="vk-icon"><use href="#i-eye"/></svg>Recherche</div>
+            <div class="kit-icon-cell"><svg class="vk-icon"><use href="#i-horn"/></svg>Config dés</div>
+            <div class="kit-icon-cell"><svg class="vk-icon"><use href="#i-menu"/></svg>Menu</div>
+            <div class="kit-icon-cell"><svg class="vk-icon"><use href="#i-close"/></svg>Fermer</div>
+            <div class="kit-icon-cell"><svg class="vk-icon"><use href="#i-check"/></svg>Valider</div>
+            <div class="kit-icon-cell"><svg class="vk-icon"><use href="#i-up"/></svg>Équiper</div>
+            <div class="kit-icon-cell"><svg class="vk-icon"><use href="#i-down"/></svg>Ranger</div>
+            <div class="kit-icon-cell"><svg class="vk-icon"><use href="#i-plus"/></svg>Ajouter</div>
+            <div class="kit-icon-cell"><span class="vk-rune text-3xl">ᛟ</span>Saga</div>
+            <div class="kit-icon-cell"><span class="vk-rune text-3xl">ᛊ</span>Triple 10</div>
+        </div>
+        <p class="kit-code mt-2">&lt;svg class="vk-icon"&gt;&lt;use href="#i-axe"/&gt;&lt;/svg&gt; → dans l'app : &lt;VkIcon name="axe" /&gt;</p>
+    </section>
+
+    <!-- ═══ 2. CADRES & SÉPARATEURS ═══════════════════════════════════════════ -->
+    <section id="panneaux" class="kit-section">
+        <h2 class="vk-title text-2xl mb-1">2. Cadres et séparateurs</h2>
+        <p class="kit-note mb-4">Cadre lourd : bloc principal (fiche, modale de jet). Coins légers : sections. Petits coins : quelques cartes (SAGA, état). Jamais sur les lignes de liste. Le bas des cadres est plus aéré, pour que les coins ne touchent pas le dernier élément.</p>
+
+        <div class="vk-panel vk-heavy">
+            <span class="vk-c"></span>
+            <div class="vk-section-title">Cadre lourd <span class="kit-code">.vk-panel.vk-heavy</span></div>
+            <div class="grid md:grid-cols-2 gap-6">
+                <div class="vk-panel vk-light">
+                    <span class="vk-c"></span>
+                    <div class="vk-section-title">Section <span class="kit-code">.vk-light</span></div>
+                    <p>Contenu d'une section de la fiche.</p>
+                </div>
+                <div class="grid grid-cols-3 gap-4">
+                    <div class="vk-panel vk-light-sm"><span class="vk-c"></span><div class="vk-stat"><div class="val">3</div><div class="lbl">Saga</div></div></div>
+                    <div class="vk-panel vk-light-sm"><span class="vk-c"></span><div class="vk-stat"><div class="val">2/5</div><div class="lbl">Blessures</div></div></div>
+                    <div class="vk-panel vk-light-sm"><span class="vk-c"></span><div class="vk-stat"><div class="val">3/10</div><div class="lbl">Fatigue</div></div></div>
+                </div>
+            </div>
+
+            <div class="vk-sep"></div>
+            <p class="kit-note text-center">↑ Entre grandes zones : double filet fin, sans image — <span class="kit-code">.vk-sep</span></p>
+            <div class="vk-sep-line"></div>
+            <p class="kit-note text-center">↑ Ligne simple en dégradé, partout ailleurs — <span class="kit-code">.vk-sep-line</span></p>
+
+            <div class="vk-panel vk-light mt-6">
+                <span class="vk-c"></span>
+                <p>Section placée en dernier dans un cadre lourd : les coins du bas restent dégagés.</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- ═══ 3. BOUTONS & CHAMPS ═══════════════════════════════════════════════ -->
+    <section id="controles" class="kit-section">
+        <h2 class="vk-title text-2xl mb-4">3. Boutons et champs</h2>
+        <div class="grid lg:grid-cols-2 gap-8">
+            <div class="vk-panel vk-light">
+                <span class="vk-c"></span>
+                <div class="vk-section-title">Boutons</div>
+                <div class="flex flex-wrap gap-2 items-center mb-3">
+                    <button class="vk-btn vk-btn-primary"><svg class="vk-icon"><use href="#i-die"/></svg>Lancer les dés</button>
+                    <button class="vk-btn"><svg class="vk-icon"><use href="#i-quill"/></svg>Édition</button>
+                    <button class="vk-btn vk-btn-success"><svg class="vk-icon"><use href="#i-check"/></svg>Sauvegarder</button>
+                    <button class="vk-btn vk-btn-danger">Annuler</button>
+                    <button class="vk-btn" disabled>Désactivé</button>
+                </div>
+                <div class="flex flex-wrap gap-2 items-center mb-3">
+                    <button class="vk-btn vk-btn-primary vk-btn-sm"><svg class="vk-icon"><use href="#i-tree"/></svg>Évolution</button>
+                    <button class="vk-btn vk-btn-sm">Récup tous</button>
+                    <button class="vk-btn vk-btn-icon" title="Menu"><svg class="vk-icon"><use href="#i-menu"/></svg></button>
+                    <button class="vk-btn vk-btn-icon vk-btn-sm" title="Fermer"><svg class="vk-icon"><use href="#i-close"/></svg></button>
+                    <button class="vk-roll" title="Lancer"><svg class="vk-icon"><use href="#i-die"/></svg></button>
+                </div>
+                <p class="kit-note mb-2">Survolez « Lancer les dés » : éclat doré et léger soulèvement, enfoncement au clic.</p>
+                <p class="kit-code">.vk-btn · -primary · -success · -danger · -sm · -icon · .vk-roll (jet sur une ligne)</p>
+            </div>
+
+            <div class="vk-panel vk-light">
+                <span class="vk-c"></span>
+                <div class="vk-section-title">Champs (mode édition)</div>
+                <div class="grid sm:grid-cols-2 gap-3 mb-3">
+                    <label><span class="vk-field-label">Prénom *</span><input class="vk-input" value="Björn"></label>
+                    <label><span class="vk-field-label">Surnom</span><input class="vk-input" placeholder="Le Brave"></label>
+                    <label><span class="vk-field-label">Âge</span><input class="vk-input vk-num" type="number" value="32"></label>
+                    <label><span class="vk-field-label">Recherche</span><span class="vk-input-icon block"><svg class="vk-icon"><use href="#i-eye"/></svg><input class="vk-input" placeholder="Rechercher un trait…"></span></label>
+                </div>
+                <label class="block mb-3"><span class="vk-field-label">Notes</span><textarea class="vk-input">Corde marine pour langskip.</textarea></label>
+
+                <div class="vk-field-label">Pastilles de choix</div>
+                <div class="flex flex-wrap gap-1.5 mb-3">
+                    <button class="vk-pill is-selected">Homme</button>
+                    <button class="vk-pill">Femme</button>
+                    <span class="w-4"></span>
+                    <button class="vk-pill is-selected">Tous</button>
+                    <button class="vk-pill">Armes</button>
+                    <button class="vk-pill">Armures</button>
+                    <button class="vk-pill">Objets</button>
+                </div>
+                <div class="flex items-center gap-4">
+                    <div><div class="vk-field-label">Stepper (visée, ajustements…)</div><div class="vk-stepper"><button><svg class="vk-icon"><use href="#i-minus"/></svg></button><span class="vk-num">2</span><button><svg class="vk-icon"><use href="#i-plus"/></svg></button></div></div>
+                    <div><div class="vk-field-label">Borne atteinte</div><div class="vk-stepper"><button disabled><svg class="vk-icon"><use href="#i-minus"/></svg></button><span class="vk-num">0</span><button><svg class="vk-icon"><use href="#i-plus"/></svg></button></div></div>
+                </div>
+                <p class="kit-code mt-3">.vk-input · .vk-input-icon · .vk-field-label · .vk-pill(.is-selected) · .vk-stepper</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- ═══ 4. NAVIGATION ═════════════════════════════════════════════════════ -->
+    <section id="navigation" class="kit-section">
+        <h2 class="vk-title text-2xl mb-4">4. Bandeau, onglets, menu</h2>
+        <div class="border border-default">
+            <header class="vk-header px-4 py-3 flex items-center justify-between gap-3">
+                <div class="flex items-center gap-3 min-w-0">
+                    <span class="vk-rune-title text-3xl" id="runeTitle" title="Change toutes les 7 s — cliquez pour le voir"><span class="vk-mirage"><span>ᛟᛞᛁᚾ</span></span></span>
+                    <div class="min-w-0">
+                        <div class="vk-title text-lg truncate">Björn « Côtes-de-Fer » fils de Ragnar</div>
+                        <div class="vk-eyebrow">Session : Le serment de Hedeby</div>
+                    </div>
+                </div>
+                <div class="flex items-center gap-2">
+                    <span class="vk-tag vk-tag-gold vk-num hidden md:inline-flex"><svg class="vk-icon"><use href="#i-key"/></svg>KX4P2M</span>
+                    <button class="vk-btn vk-btn-icon" title="Mode jour"><svg class="vk-icon"><use href="#i-sun"/></svg></button>
+                    <button class="vk-btn vk-btn-icon" title="Menu"><svg class="vk-icon"><use href="#i-menu"/></svg></button>
+                </div>
+            </header>
+            <div class="px-4 bg-surface flex items-center justify-between gap-3 flex-wrap">
+                <nav class="vk-tabs">
+                    <button class="vk-tab is-active">Ma fiche</button>
+                    <button class="vk-tab">Journal<span class="vk-badge">2</span></button>
+                    <button class="vk-tab">Historique</button>
+                </nav>
+                <div class="flex gap-2 py-2">
+                    <button class="vk-btn vk-btn-primary vk-btn-sm"><svg class="vk-icon"><use href="#i-tree"/></svg>Évolution</button>
+                    <button class="vk-btn vk-btn-sm"><svg class="vk-icon"><use href="#i-quill"/></svg>Édition</button>
+                </div>
+            </div>
+            <div class="p-4 flex justify-end">
+                <div class="vk-menu">
+                    <button class="vk-menu-item"><svg class="vk-icon"><use href="#i-axe"/></svg>Créer un personnage</button>
+                    <button class="vk-menu-item"><svg class="vk-icon"><use href="#i-people"/></svg>Changer de personnage</button>
+                    <button class="vk-menu-item"><svg class="vk-icon"><use href="#i-portrait"/></svg>Changer l'avatar</button>
+                    <button class="vk-menu-item"><svg class="vk-icon"><use href="#i-key"/></svg>Code d'accès</button>
+                    <button class="vk-menu-item"><svg class="vk-icon"><use href="#i-dice"/></svg>Jet de dés libre</button>
+                    <button class="vk-menu-item"><svg class="vk-icon"><use href="#i-horn"/></svg>Config animations dés</button>
+                    <button class="vk-menu-item"><svg class="vk-icon"><use href="#i-helm"/></svg>Interface MJ</button>
+                    <div class="vk-menu-sep"></div>
+                    <button class="vk-menu-item is-danger"><svg class="vk-icon"><use href="#i-door"/></svg>Déconnexion</button>
+                </div>
+            </div>
+        </div>
+        <p class="kit-note mt-2">Titre runique : un mot au hasard parmi la liste actuelle de la fiche (Odin, Viking, Jarl, Volva, Skald, Pure), qui change toutes les 7 s dans un fondu « mirage » et une fumée ; cliquez dessus pour le déclencher. Désactivé si le système demande de réduire les animations.</p>
+        <p class="kit-code mt-1">.vk-header · .vk-rune-title (+ filtre SVG #vk-mirage) · .vk-tabs/.vk-tab(.is-active) — sans barre de défilement · .vk-badge · .vk-menu/.vk-menu-item</p>
+    </section>
+
+    <!-- ═══ 5. JAUGES & ÉTATS ═════════════════════════════════════════════════ -->
+    <section id="jauges" class="kit-section">
+        <h2 class="vk-title text-2xl mb-4">5. Jauges et états</h2>
+        <div class="vk-panel vk-light">
+            <span class="vk-c"></span>
+            <div class="vk-section-title">Saga & état physique</div>
+            <div class="flex flex-wrap gap-2 mb-4">
+                <span class="vk-tag vk-tag-danger">KO / Mourant</span>
+                <span class="vk-tag vk-tag-warn"><svg class="vk-icon"><use href="#i-blood"/></svg>Blessure sérieuse : −1 dé</span>
+                <span class="vk-tag vk-tag-warn"><svg class="vk-icon"><use href="#i-moon"/></svg>En nage : +1 succès requis</span>
+                <span class="vk-tag vk-tag-gold"><span class="vk-rune">ᛊ</span>Triple 10</span>
+            </div>
+
+            <div class="flex items-center justify-between gap-4 mb-5 flex-wrap">
+                <div class="flex items-center gap-3">
+                    <span class="vk-label text-lg">Saga</span>
+                    <div class="vk-saga" role="group" aria-label="Saga 3 sur 5">
+                        <button class="is-full" title="Saga 1"></button><button class="is-full" title="Saga 2"></button><button class="is-full" title="Saga 3 (cliquer : 2)"></button><button title="Saga 4"></button><button title="Saga 5"></button>
+                    </div>
+                    <span class="vk-num font-bold">3 / 5</span>
+                </div>
+                <div class="text-sm text-muted">Saga totale <strong class="text-default vk-num">12</strong></div>
+            </div>
+            <p class="kit-note mb-5">Les losanges sont le contrôle de la Saga (le compteur −/+ est retiré) : clic sur un losange = la réserve passe à ce niveau ; clic sur le dernier rempli = −1. Survolez-les.</p>
+
+            <div class="vk-gauges mb-4">
+                <div>
+                    <div class="flex justify-between items-baseline gap-4 mb-1">
+                        <span class="vk-label text-lg"><svg class="vk-icon"><use href="#i-blood"/></svg> Blessures</span>
+                        <span class="text-sm text-muted">2/5 — Sérieuse : <span style="color:var(--vk-warn)">−1 dé</span></span>
+                    </div>
+                    <div class="vk-tokens">
+                        <button class="vk-token is-blessure"></button><button class="vk-token is-blessure"></button>
+                        <button class="vk-token"></button><button class="vk-token"></button><button class="vk-token is-ko" title="KO"></button>
+                    </div>
+                </div>
+                <div>
+                    <div class="flex justify-between items-baseline gap-4 mb-1">
+                        <span class="vk-label text-lg"><svg class="vk-icon"><use href="#i-moon"/></svg> Fatigue</span>
+                        <span class="text-sm text-muted">3/10 — En nage : <span style="color:var(--vk-warn)">+1 succès requis</span></span>
+                    </div>
+                    <div class="vk-tokens has-tiers">
+                        <button class="vk-token is-fatigue"></button>
+                        <button class="vk-token is-fatigue is-tier" data-tier="+1"></button>
+                        <button class="vk-token is-fatigue"></button>
+                        <button class="vk-token is-tier" data-tier="+2"></button>
+                        <button class="vk-token"></button>
+                        <button class="vk-token is-tier" data-tier="+3"></button>
+                        <button class="vk-token"></button>
+                        <button class="vk-token is-tier" data-tier="+4"></button>
+                        <button class="vk-token"></button>
+                        <button class="vk-token is-ko" title="Inconscient"></button>
+                    </div>
+                </div>
+            </div>
+            <p class="kit-note mb-4">Blessures et fatigue côte à côte quand la largeur le permet, l'une sous l'autre sinon (cas de la colonne de la fiche, section 6 : même composant, moins de place).</p>
+
+            <div class="flex items-center gap-3 text-sm">
+                <span class="text-muted">Points de compétence :</span>
+                <div class="vk-dots"><i class="is-full"></i><i class="is-full"></i><i></i></div>
+                <button class="vk-btn vk-btn-success vk-btn-sm">Récup</button>
+            </div>
+            <p class="kit-code mt-4">.vk-saga (boutons) · .vk-gauges · .vk-tokens(.has-tiers)/.vk-token(.is-blessure/.is-fatigue/.is-ko/.is-tier) · .vk-dots · .vk-tag-*</p>
+        </div>
+    </section>
+
+    <!-- ═══ 6. FICHE — MISE EN PAGE (L4-3) ════════════════════════════════════ -->
+    <section id="fiche" class="kit-section">
+        <h2 class="vk-title text-2xl mb-1">6. Fiche complète — mise en page</h2>
+        <p class="kit-note mb-4">Toute la largeur. Écran large : 3 colonnes (caractéristiques, Saga & état et combat / compétences / traits), puis l'inventaire sur 3 colonnes (équipé / sac / réserve), puis les runes. Tablette : 2 colonnes. Mobile : 1 colonne. Redimensionnez la fenêtre pour voir.</p>
+
+        <div class="vk-panel vk-heavy">
+            <span class="vk-c"></span>
+
+            <!-- En-tête de fiche -->
+            <div class="flex items-center gap-4 flex-wrap pr-6">
+                <div class="vk-avatar w-16 h-16 text-2xl">B</div>
+                <div class="flex-1 min-w-0">
+                    <div class="vk-title text-2xl">Björn « Côtes-de-Fer » fils de Ragnar</div>
+                    <div class="text-muted text-sm">Homme, 32 ans · 1m84, 90 kg · Forgeron · <em>joué par Aurélien</em></div>
+                </div>
+                <span class="vk-tag vk-tag-warn"><svg class="vk-icon"><use href="#i-moon"/></svg>En nage : +1 succès requis</span>
+            </div>
+
+            <div class="vk-sep"></div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-2 2xl:grid-cols-3 gap-6">
+
+                <!-- Colonne 1 : caractéristiques, Saga & état, combat -->
+                <div class="space-y-6">
+                    <div class="vk-panel vk-light">
+                        <span class="vk-c"></span>
+                        <div class="vk-section-title">Caractéristiques <span class="vk-eyebrow">clic = jet</span></div>
+                        <div class="grid grid-cols-3 gap-2">
+                            <div class="vk-stat is-rollable"><div class="val">4</div><div class="lbl">Force</div><div class="sub">expl. 9, 10</div></div>
+                            <div class="vk-stat is-rollable"><div class="val">3</div><div class="lbl">Agilité</div><div class="sub">expl. 9, 10</div></div>
+                            <div class="vk-stat is-rollable"><div class="val">2</div><div class="lbl">Perception</div><div class="sub">expl. 10</div></div>
+                            <div class="vk-stat is-rollable"><div class="val">2</div><div class="lbl">Intellect</div><div class="sub">expl. 10</div></div>
+                            <div class="vk-stat is-rollable"><div class="val">2</div><div class="lbl">Charisme</div><div class="sub">expl. 10</div></div>
+                            <div class="vk-stat is-rollable"><div class="val">1</div><div class="lbl">Chance</div><div class="sub">expl. 10</div></div>
+                        </div>
+                    </div>
+
+                    <div class="vk-panel vk-light">
+                        <span class="vk-c"></span>
+                        <div class="vk-section-title">Saga & état</div>
+                        <div class="flex items-center justify-between gap-4 mb-4 flex-wrap">
+                            <div class="flex items-center gap-3">
+                                <span class="vk-label text-lg">Saga</span>
+                                <div class="vk-saga" role="group" aria-label="Saga 3 sur 5"><button class="is-full" title="Saga 1"></button><button class="is-full" title="Saga 2"></button><button class="is-full" title="Saga 3 (cliquer : 2)"></button><button title="Saga 4"></button><button title="Saga 5"></button></div>
+                                <span class="vk-num font-bold">3 / 5</span>
+                            </div>
+                            <div class="text-sm text-muted">Saga totale <strong class="text-default vk-num">12</strong></div>
+                        </div>
+                        <div class="vk-gauges">
+                            <div>
+                                <div class="flex justify-between items-baseline gap-4 mb-1">
+                                    <span class="vk-label text-lg"><svg class="vk-icon"><use href="#i-blood"/></svg> Blessures</span>
+                                    <span class="text-sm text-muted">1/5 — Superficielle</span>
+                                </div>
+                                <div class="vk-tokens"><button class="vk-token is-blessure"></button><button class="vk-token"></button><button class="vk-token"></button><button class="vk-token"></button><button class="vk-token is-ko" title="KO"></button></div>
+                            </div>
+                            <div>
+                                <div class="flex justify-between items-baseline gap-4 mb-1">
+                                    <span class="vk-label text-lg"><svg class="vk-icon"><use href="#i-moon"/></svg> Fatigue</span>
+                                    <span class="text-sm text-muted">3/10 — En nage : <span style="color:var(--vk-warn)">+1 succès requis</span></span>
+                                </div>
+                                <div class="vk-tokens has-tiers">
+                                    <button class="vk-token is-fatigue"></button><button class="vk-token is-fatigue is-tier" data-tier="+1"></button><button class="vk-token is-fatigue"></button><button class="vk-token is-tier" data-tier="+2"></button><button class="vk-token"></button><button class="vk-token is-tier" data-tier="+3"></button><button class="vk-token"></button><button class="vk-token is-tier" data-tier="+4"></button><button class="vk-token"></button><button class="vk-token is-ko" title="Inconscient"></button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                
+                    <div class="vk-panel vk-light">
+                        <span class="vk-c"></span>
+                        <div class="vk-section-title">Combat</div>
+                        <div class="grid grid-cols-3 gap-2 mb-3">
+                            <div class="vk-stat"><div class="val">2</div><div class="lbl">Armure</div><div class="sub">nat. 1 · portée 1</div></div>
+                            <div class="vk-stat"><div class="val">2</div><div class="lbl">Actions</div></div>
+                            <div class="vk-stat"><div class="val">1</div><div class="lbl">Seuil</div></div>
+                        </div>
+                        <div class="text-sm mb-2 flex items-center gap-2"><svg class="vk-icon text-primary"><use href="#i-shield"/></svg>Bouclier en bois (1) <span class="text-muted">— encaisse en premier, se brise au-delà</span></div>
+                        <div class="vk-sep-line"></div>
+                        <div class="vk-label text-primary mb-1">Posture passive</div>
+                        <div class="vk-row text-sm"><span class="flex-1">Parade (Hache) <span class="text-muted">niv 3</span></span><span>+1 → seuil de défense <strong class="vk-row-val">2</strong></span></div>
+                        <div class="vk-row text-sm"><span class="flex-1">Esquive <span class="text-muted">niv 1</span></span><span>+0 → seuil de défense <strong class="vk-row-val">1</strong></span></div>
+                        <p class="text-xs text-muted mt-1">Nécessite 1 action disponible.</p>
+                    </div>
+                </div>
+
+                <!-- Colonne 2 : compétences -->
+                <div class="vk-panel vk-light">
+                    <span class="vk-c"></span>
+                    <div class="vk-section-title">Compétences <button class="vk-btn vk-btn-sm">Récup tous</button></div>
+                    <div>
+                        <div class="vk-row">
+                            <div class="flex-1 min-w-0"><div class="font-bold">Combat CàC (armé) <span class="text-muted font-normal">— Hache</span></div><div class="text-xs text-muted">Force · seuil 5+ · expl. 9, 10</div></div>
+                            <div class="vk-dots"><i class="is-full"></i><i class="is-full"></i><i></i></div>
+                            <span class="vk-row-val w-5 text-center">3</span>
+                            <button class="vk-roll" title="Lancer"><svg class="vk-icon"><use href="#i-die"/></svg></button>
+                        </div>
+                        <div class="vk-row">
+                            <div class="flex-1 min-w-0"><div class="font-bold">Ferronnerie</div><div class="text-xs text-muted">Force · seuil 5+ · expl. 9, 10</div></div>
+                            <div class="vk-dots"><i class="is-full"></i><i class="is-full"></i><i class="is-full"></i><i class="is-full"></i></div>
+                            <span class="vk-row-val w-5 text-center">4</span>
+                            <button class="vk-roll" title="Lancer"><svg class="vk-icon"><use href="#i-die"/></svg></button>
+                        </div>
+                        <div class="vk-row">
+                            <div class="flex-1 min-w-0"><div class="font-bold">Navigation</div><div class="text-xs text-muted">Perception · seuil 5+ · expl. 10</div></div>
+                            <div class="vk-dots"><i class="is-full"></i><i class="is-full"></i><i class="is-full"></i></div>
+                            <span class="vk-row-val w-5 text-center">3</span>
+                            <button class="vk-roll" title="Lancer"><svg class="vk-icon"><use href="#i-die"/></svg></button>
+                        </div>
+                        <div class="vk-row">
+                            <div class="flex-1 min-w-0"><div class="font-bold">Combat CàC (non armé)</div><div class="text-xs text-muted">Force · seuil 7+ · expl. 9, 10</div></div>
+                            <div class="vk-dots"><i class="is-full"></i></div>
+                            <span class="vk-row-val w-5 text-center">1</span>
+                            <button class="vk-roll" title="Lancer"><svg class="vk-icon"><use href="#i-die"/></svg></button>
+                        </div>
+                        <div class="vk-row">
+                            <div class="flex-1 min-w-0"><div class="font-bold">Langue orale <span class="text-muted font-normal">— Norse</span></div><div class="text-xs text-muted">Intellect · seuil 6+ · expl. 10</div></div>
+                            <div class="vk-dots"><i class="is-full"></i><i class="is-full"></i></div>
+                            <span class="vk-row-val w-5 text-center">2</span>
+                            <button class="vk-roll" title="Lancer"><svg class="vk-icon"><use href="#i-die"/></svg></button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Colonne 3 : traits -->
+                <div class="lg:col-span-2 2xl:col-span-1">
+                    <div class="vk-panel vk-light">
+                        <span class="vk-c"></span>
+                        <div class="vk-section-title">Traits & backgrounds</div>
+                        <div class="vk-row items-start"><div><div class="font-bold">Bons réflexes</div><div class="text-sm text-muted">Réagir avec une rapidité surprenante.</div><div class="text-xs text-success">+1 action</div></div></div>
+                        <div class="vk-row items-start"><div><div class="font-bold">Peau dure</div><div class="text-sm text-muted">Peau tannée par les éléments.</div><div class="text-xs text-success">+1 armure</div></div></div>
+                        <div class="vk-row items-start"><div><div class="font-bold">Marin</div><div class="text-sm text-muted">La mer est votre véritable foyer.</div><div class="text-xs text-success">Action +1 (en mer) — via l'ajustement</div></div></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="vk-sep"></div>
+
+            <!-- Inventaire sur 3 colonnes -->
+            <div class="vk-panel vk-light">
+                <span class="vk-c"></span>
+                <div class="vk-section-title">
+                    Inventaire
+                    <div class="flex gap-1.5 flex-wrap" style="font-family:var(--vk-font-body)">
+                        <button class="vk-pill is-selected">Tous</button><button class="vk-pill">Armes</button><button class="vk-pill">Armures</button><button class="vk-pill">Objets</button>
+                    </div>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <div>
+                        <div class="flex justify-between items-center mb-1"><span class="vk-label text-lg flex items-center gap-1.5"><svg class="vk-icon"><use href="#i-shield"/></svg>Équipé (3)</span><button class="vk-btn vk-btn-sm"><svg class="vk-icon"><use href="#i-plus"/></svg>Ajouter</button></div>
+                        <div class="vk-row text-sm"><div class="flex-1"><div class="font-bold">Hache</div><div class="text-xs text-muted">1 main · dégâts 2 · Force 2</div></div><button class="vk-btn vk-btn-icon vk-btn-sm" title="Ranger dans le sac"><svg class="vk-icon"><use href="#i-down"/></svg></button><button class="vk-btn vk-btn-icon vk-btn-sm" title="Modifier"><svg class="vk-icon"><use href="#i-quill"/></svg></button></div>
+                        <div class="vk-row text-sm"><div class="flex-1"><div class="font-bold">Broigne</div><div class="text-xs text-muted">Armure +1 · Force 1</div></div><button class="vk-btn vk-btn-icon vk-btn-sm" title="Ranger"><svg class="vk-icon"><use href="#i-down"/></svg></button><button class="vk-btn vk-btn-icon vk-btn-sm" title="Modifier"><svg class="vk-icon"><use href="#i-quill"/></svg></button></div>
+                        <div class="vk-row text-sm"><div class="flex-1"><div class="font-bold">Bouclier en bois</div><div class="text-xs text-muted">Bouclier 1 · se brise si dégâts &gt; 1</div></div><button class="vk-btn vk-btn-icon vk-btn-sm" title="Ranger"><svg class="vk-icon"><use href="#i-down"/></svg></button><button class="vk-btn vk-btn-icon vk-btn-sm" title="Modifier"><svg class="vk-icon"><use href="#i-quill"/></svg></button></div>
+                    </div>
+                    <div>
+                        <div class="flex justify-between items-center mb-1"><span class="vk-label text-lg flex items-center gap-1.5"><svg class="vk-icon"><use href="#i-pouch"/></svg>Sac (2)</span><button class="vk-btn vk-btn-sm"><svg class="vk-icon"><use href="#i-plus"/></svg>Ajouter</button></div>
+                        <div class="vk-row text-sm"><div class="flex-1"><div class="font-bold">Corde (10m) <span class="text-muted font-normal">×1</span></div><div class="text-xs text-muted">Corde marine pour langskip</div></div><button class="vk-btn vk-btn-icon vk-btn-sm" title="Équiper"><svg class="vk-icon"><use href="#i-up"/></svg></button><button class="vk-btn vk-btn-icon vk-btn-sm" title="Modifier"><svg class="vk-icon"><use href="#i-quill"/></svg></button></div>
+                        <div class="vk-row text-sm"><div class="flex-1"><div class="font-bold">Provisions (semaine) <span class="text-muted font-normal">×2</span></div><div class="text-xs text-muted">Pour une personne</div></div><button class="vk-btn vk-btn-icon vk-btn-sm" title="Équiper"><svg class="vk-icon"><use href="#i-up"/></svg></button><button class="vk-btn vk-btn-icon vk-btn-sm" title="Modifier"><svg class="vk-icon"><use href="#i-quill"/></svg></button></div>
+                    </div>
+                    <div>
+                        <div class="flex justify-between items-center mb-1"><span class="vk-label text-lg flex items-center gap-1.5"><svg class="vk-icon"><use href="#i-longhouse"/></svg>Réserve (1)</span><button class="vk-btn vk-btn-sm"><svg class="vk-icon"><use href="#i-plus"/></svg>Ajouter</button></div>
+                        <div class="vk-row text-sm"><div class="flex-1"><div class="font-bold">Once d'argent <span class="text-muted font-normal">×14</span></div></div><button class="vk-btn vk-btn-icon vk-btn-sm" title="Équiper"><svg class="vk-icon"><use href="#i-up"/></svg></button><button class="vk-btn vk-btn-icon vk-btn-sm" title="Modifier"><svg class="vk-icon"><use href="#i-quill"/></svg></button></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Runes -->
+            <div class="vk-panel vk-light mt-6">
+                <span class="vk-c"></span>
+                <div class="vk-section-title">Runes <span class="text-sm text-muted" style="font-family:var(--vk-font-body)">Livre de sort 3/5 — 2 disponibles</span></div>
+                <p class="text-sm text-muted italic mb-3">La rune est une permission, jamais un bonus : le jet se fait sur une compétence pratique.</p>
+                <div class="grid sm:grid-cols-2 xl:grid-cols-3 gap-3">
+                    <div class="vk-rune-card"><span class="vk-rune text-3xl w-8 text-center">ᚲ</span><div><div class="font-bold">Kauno — niveau 2</div><div class="text-xs text-muted">Transition, soin, lumière</div><div class="text-sm">Sensoriel (sentir la présence)</div></div></div>
+                    <div class="vk-rune-card"><span class="vk-rune text-3xl w-8 text-center">ᛉ</span><div><div class="font-bold">Algiz — niveau 1</div><div class="text-xs text-muted">Abri, protection</div><div class="text-sm">Identification, légendes</div></div></div>
+                </div>
+                <div class="vk-sep-line"></div>
+                <button class="text-sm text-primary">▸ Futhark complet</button>
+            </div>
+        </div>
+    </section>
+
+    <!-- ═══ 7. MODALE DE JET (lisibilité de la fatigue) ═══════════════════════ -->
+    <section id="jet" class="kit-section">
+        <h2 class="vk-title text-2xl mb-1">7. Modale de jet</h2>
+        <p class="kit-note mb-4">Le malus de fatigue est annoncé avant le jet et détaillé dans le résultat (exemple du test : 9, 10 et une explosion à 2, seuil 5+, fatigue 3 → 1 succès).</p>
+
+        <div class="grid xl:grid-cols-2 gap-8 items-start">
+            <!-- Avant le jet -->
+            <div class="vk-panel vk-heavy">
+                <span class="vk-c"></span>
+                <div class="vk-modal-header"><span class="vk-title text-xl flex items-center gap-2"><svg class="vk-icon"><use href="#i-die"/></svg>Navigation</span><button class="vk-btn vk-btn-icon vk-btn-sm" title="Fermer"><svg class="vk-icon"><use href="#i-close"/></svg></button></div>
+
+                <div class="flex flex-wrap gap-1.5 mb-3">
+                    <button class="vk-pill">Caractéristique</button><button class="vk-pill is-selected">Compétence</button>
+                </div>
+
+                <div class="vk-callout mb-2 text-sm">
+                    <strong>3d10</strong> · explosion sur <strong>10</strong> (Perception 2) · succès sur <strong>5+</strong> (niveau 3)
+                </div>
+                <div class="vk-callout vk-callout-warn mb-4 text-sm flex gap-2 items-start">
+                    <svg class="vk-icon mt-0.5"><use href="#i-moon"/></svg>
+                    <span><strong>Fatigue — En nage (3 tokens) : +1 succès requis.</strong> Il faudra un succès de plus pour réussir.</span>
+                </div>
+
+                <div class="grid sm:grid-cols-2 gap-4 mb-4">
+                    <div><div class="vk-field-label">Succès automatiques (3 pts)</div><div class="flex gap-1.5"><button class="vk-pill is-selected">0</button><button class="vk-pill">1</button><button class="vk-pill">2</button><button class="vk-pill">3</button></div></div>
+                    <div><div class="vk-field-label"><svg class="vk-icon"><use href="#i-arrow"/></svg> Actions de visée</div><div class="vk-stepper"><button disabled><svg class="vk-icon"><use href="#i-minus"/></svg></button><span class="vk-num">0</span><button><svg class="vk-icon"><use href="#i-plus"/></svg></button></div></div>
+                </div>
+
+                <div class="vk-field-label">Mode Saga (3 disponibles)</div>
+                <div class="grid grid-cols-2 sm:grid-cols-4 gap-1.5 mb-5">
+                    <button class="vk-pill is-selected justify-center">Normal</button>
+                    <button class="vk-pill justify-center">Héroïque (4)</button>
+                    <button class="vk-pill justify-center">Épique (5)</button>
+                    <button class="vk-pill justify-center">Assurance</button>
+                </div>
+                <button class="vk-btn vk-btn-primary w-full text-base py-2.5"><svg class="vk-icon"><use href="#i-die"/></svg>Lancer les dés</button>
+            </div>
+
+            <!-- Résultat -->
+            <div class="vk-panel vk-heavy">
+                <span class="vk-c"></span>
+                <div class="vk-modal-header"><span class="vk-title text-xl">Résultat</span><button class="vk-btn vk-btn-icon vk-btn-sm" title="Fermer"><svg class="vk-icon"><use href="#i-close"/></svg></button></div>
+
+                <div class="flex gap-4 justify-center mb-4">
+                    <span class="vk-die is-success">9</span>
+                    <span class="vk-die is-explode" title="Explosion">10</span>
+                    <span class="vk-die is-chained">2</span>
+                </div>
+
+                <table class="vk-calc mb-4">
+                    <tr><td>Dés : 9 et 10 réussissent (5+), l'explosion à 2 non</td><td>2</td></tr>
+                    <tr><td>Succès automatiques</td><td>+0</td></tr>
+                    <tr class="is-malus"><td>Fatigue — En nage</td><td>−1</td></tr>
+                    <tr class="is-total"><td>Succès</td><td>1</td></tr>
+                </table>
+
+                <div class="vk-banner mb-3"><span class="vk-rune">ᛊ</span>Triple 10 ! +1 Saga</div>
+                <p class="kit-note mb-4">↑ Bandeau affiché seulement sur un triple 10 (ou une réussite héroïque / épique).</p>
+
+                <div class="vk-field-label">Assurance : seul le jet retenu est mis en avant</div>
+                <div class="flex items-center gap-2 mb-1"><span class="vk-tag vk-tag-gold">Retenu</span><span class="vk-die vk-die-sm is-success">8</span><span class="vk-die vk-die-sm is-success">6</span><span class="vk-die vk-die-sm">3</span></div>
+                <div class="flex items-center gap-2 mb-4"><span class="vk-tag vk-tag-muted">Écarté</span><span class="vk-die vk-die-sm is-dropped">4</span><span class="vk-die vk-die-sm is-dropped">2</span><span class="vk-die vk-die-sm is-dropped">5</span></div>
+
+                <div class="flex gap-2"><button class="vk-btn flex-1">Relancer</button><button class="vk-btn vk-btn-primary flex-1">Fermer</button></div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ═══ 8. HISTORIQUE & NOTIFICATIONS ═════════════════════════════════════ -->
+    <section id="historique" class="kit-section">
+        <h2 class="vk-title text-2xl mb-4">8. Historique et notifications</h2>
+        <div class="grid lg:grid-cols-2 gap-8 items-start">
+            <div class="space-y-3">
+                <div class="vk-entry">
+                    <div class="vk-entry-meta"><span>Björn « Côtes-de-Fer »</span><span>17/10 21:42</span></div>
+                    <div class="p-3">
+                        <div class="flex justify-between items-center mb-2"><span class="font-bold">Navigation</span><span class="vk-title text-xl">1 succès</span></div>
+                        <div class="flex gap-1.5 mb-2 pl-3"><span class="vk-die vk-die-sm is-success">9</span><span class="vk-die vk-die-sm is-explode">10</span><span class="vk-die vk-die-sm is-chained">2</span></div>
+                        <div class="text-xs text-muted">Seuil 5+ · explosion 10 · 3d10 · <span style="color:var(--vk-warn)">fatigue −1</span></div>
+                    </div>
+                </div>
+                <div class="vk-entry">
+                    <div class="vk-entry-meta"><span>Astrid « la Rousse »</span><span>17/10 21:40</span></div>
+                    <div class="p-3">
+                        <div class="flex justify-between items-center mb-2"><span class="font-bold">Navigation <span class="vk-tag vk-tag-gold ml-1">Héroïque</span></span><span class="vk-title text-xl">5 succès</span></div>
+                        <div class="flex gap-1.5 mb-2 pl-3"><span class="vk-die vk-die-sm is-explode">10</span><span class="vk-die vk-die-sm is-chained">4</span><span class="vk-die vk-die-sm is-explode ml-2">10</span><span class="vk-die vk-die-sm is-chained">2</span><span class="vk-die vk-die-sm is-explode ml-2">10</span><span class="vk-die vk-die-sm is-chained is-success">7</span></div>
+                        <div class="text-sm text-success mb-1">Jet Saga : 1 succès — réussi, Saga récupérée</div>
+                        <div class="text-sm text-primary font-bold flex items-center gap-1.5"><span class="vk-rune">ᛊ</span>Triple 10 — +1 Saga</div>
+                    </div>
+                </div>
+            </div>
+            <div class="flex justify-center">
+                <div class="vk-toast w-80 p-3">
+                    <div class="flex items-center gap-2 mb-2"><svg class="vk-icon vk-icon-lg text-primary"><use href="#i-die"/></svg><div><div class="font-bold">Björn « Côtes-de-Fer »</div><div class="text-xs text-muted">Navigation</div></div></div>
+                    <div class="flex justify-between items-center"><div class="flex gap-1 pl-3"><span class="vk-die vk-die-sm is-success">9</span><span class="vk-die vk-die-sm is-explode">10</span><span class="vk-die vk-die-sm is-chained">2</span></div><span class="vk-title text-lg">1 succès</span></div>
+                </div>
+            </div>
+        </div>
+        <p class="kit-code mt-2">.vk-entry/.vk-entry-meta · .vk-toast · .vk-die-sm</p>
+    </section>
+
+    <!-- ═══ 9. INTERFACE MJ ═══════════════════════════════════════════════════ -->
+    <section id="mj" class="kit-section">
+        <h2 class="vk-title text-2xl mb-4">9. Interface MJ</h2>
+        <div class="border border-default">
+            <header class="vk-header px-4 py-3 flex items-center justify-between gap-3">
+                <div><div class="vk-title text-2xl flex items-center gap-2"><svg class="vk-icon"><use href="#i-helm"/></svg>Interface MJ</div><div class="vk-eyebrow">Table : Le serment de Hedeby</div></div>
+                <div class="flex gap-2"><button class="vk-btn vk-btn-primary vk-btn-sm"><svg class="vk-icon"><use href="#i-die"/></svg>Jet MJ</button><button class="vk-btn vk-btn-icon" title="Mode jour"><svg class="vk-icon"><use href="#i-sun"/></svg></button><button class="vk-btn vk-btn-icon" title="Menu"><svg class="vk-icon"><use href="#i-menu"/></svg></button></div>
+            </header>
+            <div class="px-4 bg-surface"><nav class="vk-tabs"><button class="vk-tab is-active">Session</button><button class="vk-tab">Combat</button><button class="vk-tab">Journal</button><button class="vk-tab">Historique</button></nav></div>
+
+            <div class="p-4 flex flex-col md:flex-row gap-6">
+                <aside class="md:w-72 shrink-0 vk-panel" style="padding:0">
+                    <div class="px-3 py-2 border-b border-default"><div class="vk-eyebrow">Personnages</div></div>
+                    <button class="vk-tile is-selected">
+                        <span class="relative"><span class="vk-avatar w-9 h-9">B</span><span class="vk-presence is-online absolute -bottom-0.5 -right-0.5"></span></span>
+                        <span class="flex-1 min-w-0"><span class="block font-bold truncate">Björn « Côtes-de-Fer »</span><span class="flex gap-1 mt-0.5"><span class="vk-tag vk-tag-muted"><svg class="vk-icon"><use href="#i-blood"/></svg>1/5</span><span class="vk-tag vk-tag-warn"><svg class="vk-icon"><use href="#i-moon"/></svg>3/10</span><span class="vk-tag vk-tag-gold"><span class="vk-rune">ᛟ</span>3</span></span></span>
+                    </button>
+                    <button class="vk-tile">
+                        <span class="relative"><span class="vk-avatar w-9 h-9">A</span><span class="vk-presence absolute -bottom-0.5 -right-0.5"></span></span>
+                        <span class="flex-1 min-w-0"><span class="block font-bold truncate">Astrid « la Rousse »</span><span class="flex gap-1 mt-0.5"><span class="vk-tag vk-tag-muted"><svg class="vk-icon"><use href="#i-blood"/></svg>0/5</span><span class="vk-tag vk-tag-muted"><svg class="vk-icon"><use href="#i-moon"/></svg>0/10</span><span class="vk-tag vk-tag-gold"><span class="vk-rune">ᛟ</span>5</span></span></span>
+                    </button>
+                    <div class="p-2 grid grid-cols-2 gap-2"><button class="vk-btn vk-btn-sm"><svg class="vk-icon"><use href="#i-scroll"/></svg>Note</button><button class="vk-btn vk-btn-sm"><svg class="vk-icon"><use href="#i-pouch"/></svg>Objet</button><button class="vk-btn vk-btn-primary vk-btn-sm col-span-2"><span class="vk-rune">ᛟ</span>Actions de table</button></div>
+                </aside>
+
+                <!-- Modale d'actions de table -->
+                <div class="flex-1 vk-panel vk-light">
+                    <span class="vk-c"></span>
+                    <div class="vk-modal-header"><span class="vk-title text-xl flex items-center gap-2"><span class="vk-rune">ᛟ</span>Actions de table</span><button class="vk-btn vk-btn-icon vk-btn-sm" title="Fermer"><svg class="vk-icon"><use href="#i-close"/></svg></button></div>
+                    <div class="vk-field-label">Personnages</div>
+                    <div class="flex flex-wrap gap-1.5 mb-4"><button class="vk-pill is-selected">Björn · 3</button><button class="vk-pill is-selected">Astrid · 5</button><button class="vk-pill">Leif · 1</button></div>
+                    <div class="grid md:grid-cols-3 gap-4">
+                        <div class="vk-panel vk-light-sm"><span class="vk-c"></span><div class="vk-label text-lg text-primary">Attribuer la Saga</div><p class="text-xs text-muted mb-2">Plafond 5 ; le gain reçu compte dans la Saga totale.</p><div class="flex items-center justify-between"><div class="vk-stepper"><button><svg class="vk-icon"><use href="#i-minus"/></svg></button><span class="vk-num">1</span><button><svg class="vk-icon"><use href="#i-plus"/></svg></button></div><button class="vk-btn vk-btn-primary vk-btn-sm">Attribuer</button></div></div>
+                        <div class="vk-panel vk-light-sm"><span class="vk-c"></span><div class="vk-label text-lg text-primary">Fin d'arc</div><p class="text-xs text-muted mb-2">Restaure tous les points de compétence.</p><button class="vk-btn vk-btn-primary vk-btn-sm">Restaurer</button></div>
+                        <div class="vk-panel vk-light-sm"><span class="vk-c"></span><div class="vk-label text-lg text-primary">Repos</div><div class="flex items-center justify-between text-sm my-1">Fatigue − <div class="vk-stepper"><button><svg class="vk-icon"><use href="#i-minus"/></svg></button><span class="vk-num">2</span><button><svg class="vk-icon"><use href="#i-plus"/></svg></button></div></div><div class="flex items-center justify-between text-sm mb-2">Blessures − <div class="vk-stepper"><button disabled><svg class="vk-icon"><use href="#i-minus"/></svg></button><span class="vk-num">0</span><button><svg class="vk-icon"><use href="#i-plus"/></svg></button></div></div><div class="flex gap-2"><button class="vk-btn vk-btn-primary vk-btn-sm">Appliquer</button><button class="vk-btn vk-btn-sm">Tout à 0</button></div></div>
+                    </div>
+                    <p class="text-sm text-success mt-3 flex items-center gap-1.5"><svg class="vk-icon"><use href="#i-check"/></svg>+1 Saga : 2 personnages</p>
+                </div>
+            </div>
+        </div>
+        <p class="kit-code mt-2">.vk-tile(.is-selected) · .vk-avatar · .vk-presence(.is-online) · modales = .vk-panel + .vk-modal-header (fermeture à l'écart des coins)</p>
+    </section>
+
+</main>
+
+<script>
+    // Bascule jour / nuit de la planche (dans l'app : .dark sur <html> + data-theme sur le wrapper du slug)
+    const btn = document.getElementById('themeToggle');
+    btn.addEventListener('click', () => {
+        const dark = document.documentElement.getAttribute('data-theme') === 'dark';
+        document.documentElement.setAttribute('data-theme', dark ? 'light' : 'dark');
+        btn.innerHTML = dark
+            ? '<svg class="vk-icon"><use href="#i-moon"/></svg><span>Mode nuit (fer)</span>'
+            : '<svg class="vk-icon"><use href="#i-sun"/></svg><span>Mode jour (bois)</span>';
+    });
+
+    // Titre runique animé (dans l'app : composant RuneTitle, même liste que RUNE_TITLES de Sheet.jsx)
+    const RUNE_TITLES = ['ᛟᛞᛁᚾ', 'ᚢᛁᚲᛁᛜ', 'ᛃᚨᚱᛚ', 'ᚢᛟᛚᚢᚨ', 'ᛊᚲᚨᛚᛞ', 'ᛈᚢᚱᛖ'];
+    const runeTitle = document.getElementById('runeTitle');
+    const runeText  = runeTitle.querySelector('.vk-mirage > span');
+    let changing = false;
+    const changeRuneTitle = () => {
+        if (changing) return;
+        changing = true;
+        const others = RUNE_TITLES.filter(t => t !== runeText.textContent);
+        runeTitle.classList.add('is-changing', 'is-out');
+        setTimeout(() => {
+            runeText.textContent = others[Math.floor(Math.random() * others.length)];
+            runeTitle.classList.replace('is-out', 'is-in');
+        }, 900);
+        setTimeout(() => { runeTitle.classList.remove('is-changing', 'is-in'); changing = false; }, 2400);
+    };
+    setInterval(changeRuneTitle, 7000);
+    runeTitle.addEventListener('click', changeRuneTitle);
+
+    // Démonstration des losanges de Saga : clic = la réserve passe à ce niveau ; sur le dernier rempli = −1
+    document.querySelectorAll('.vk-saga').forEach(group => {
+        const pips = [...group.querySelectorAll('button')];
+        const label = group.parentElement.querySelector('.vk-num');
+        pips.forEach((pip, i) => pip.addEventListener('click', () => {
+            const current = pips.filter(p => p.classList.contains('is-full')).length;
+            const next = current === i + 1 ? i : i + 1;
+            pips.forEach((p, j) => p.classList.toggle('is-full', j < next));
+            if (label) label.textContent = `${next} / 5`;
+        }));
+    });
+</script>
+</body>
+</html>

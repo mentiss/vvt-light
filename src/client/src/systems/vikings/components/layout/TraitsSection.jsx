@@ -3,42 +3,43 @@
 
 import React from 'react';
 import { TRAITS } from '../../config/traits.js';
+import VkPanel from '../ui/VkPanel.jsx';
+import VkIcon from '../ui/VkIcon.jsx';
+
+const effectsText = (effects) => [
+    effects.actions && `+${effects.actions} action`,
+    effects.armure  && `+${effects.armure} armure`,
+    effects.seuil   && `+${effects.seuil} seuil`,
+    effects.description,
+].filter(Boolean).join(' · ');
 
 const TraitsSection = ({ char, editMode, set, onOpenEditModal }) => (
-    <div className="bg-surface rounded-lg p-3 border-2 border-default">
-        <div className="flex justify-between items-center mb-2">
-            <h3 className="text-sm font-bold text-default">Traits & Backgrounds</h3>
+    <VkPanel>
+        <div className="vk-section-title">
+            Traits & backgrounds
             {editMode && (
-                <button onClick={() => onOpenEditModal('addTrait')} className="text-xs px-2 py-1 bg-primary text-default rounded">+ Ajout</button>
+                <button type="button" className="vk-btn vk-btn-sm" onClick={() => onOpenEditModal('addTrait')}><VkIcon name="plus" />Ajouter</button>
             )}
         </div>
-        <div className="space-y-1.5">
-            {(char.traits ?? []).map(trait => {
-                const td = TRAITS.find(t => t.name === trait.name);
-                return (
-                    <div key={trait.name} className="p-1.5 bg-default rounded text-xs">
-                        <div className="flex justify-between items-start">
-                            <div className="flex-1">
-                                <div className="font-semibold text-default">{trait.name}</div>
-                                <div className="text-default">{td?.description}</div>
-                                {td?.effects && (
-                                    <div className="text-success mt-0.5">
-                                        {td.effects.actions && `+${td.effects.actions} Action `}
-                                        {td.effects.armure && `+${td.effects.armure} Armure `}
-                                        {td.effects.description}
-                                    </div>
-                                )}
-                            </div>
-                            {editMode && (
-                                <button onClick={() => set('traits', char.traits.filter(t => t.name !== trait.name))}
-                                        className="ml-2 text-xs px-1 bg-danger text-white rounded">✕</button>
-                            )}
-                        </div>
+        {(char.traits ?? []).map(trait => {
+            const td = TRAITS.find(t => t.name === trait.name);
+            return (
+                <div key={trait.name} className="vk-row items-start">
+                    <div className="flex-1 min-w-0">
+                        <div className="font-bold">{trait.name}</div>
+                        {td?.description && <div className="text-sm text-muted">{td.description}</div>}
+                        {td?.effects && <div className="text-xs text-success mt-0.5">{effectsText(td.effects)}</div>}
                     </div>
-                );
-            })}
-        </div>
-    </div>
+                    {editMode && (
+                        <button type="button" className="vk-btn vk-btn-danger vk-btn-icon vk-btn-sm" title="Retirer"
+                                onClick={() => set('traits', char.traits.filter(t => t.name !== trait.name))}>
+                            <VkIcon name="close" />
+                        </button>
+                    )}
+                </div>
+            );
+        })}
+    </VkPanel>
 );
 
 export default TraitsSection;

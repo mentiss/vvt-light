@@ -2,8 +2,10 @@
 // ─────────────────────────────────────────────────────────────────────────────
 // Modale d'évolution : dépense de SAGA entre les scénarios (spec_vikings.md §5).
 // Coûts : XP_COSTS (config/rules.js). Un nouveau trait doit remplir ses
-// conditions et ne pas être incompatible avec un trait possédé (D-12).
+// conditions et ne pas être incompatible avec un trait possédé (D-12) ; sa
+// « SAGA +N » est appliquée après la dépense (D-9, L3-2).
 // La dépense ne modifie pas la SAGA totale (légende cumulée, D-10).
+// Habillage : planche du lot 4.
 //
 // Props : character, onClose, onUpdate (fait le PUT)
 // ─────────────────────────────────────────────────────────────────────────────
@@ -14,6 +16,8 @@ import {XP_COSTS, checkTraitConditions, gainSaga, getTraitSagaBonus} from "../..
 import {CARACNAMES, COMPETENCES} from "../../config/competences.js";
 import {TRAITS} from "../../config/traits.js";
 import {RUNES} from "../../config/runes.js";
+import VkModal from "../ui/VkModal.jsx";
+import VkIcon from "../ui/VkIcon.jsx";
 
 /** Raison pour laquelle un trait ne peut pas être acquis, ou null. */
 const traitBlocker = (character, trait) => {
@@ -26,25 +30,43 @@ const traitBlocker = (character, trait) => {
 const MODES = [
     { mode: 'carac',    label: '+1 Caractéristique' },
     { mode: 'skill',    label: '+1 Compétence' },
-    { mode: 'newSkill', label: 'Nouvelle Compétence' },
-    { mode: 'trait',    label: 'Nouveau Trait' },
+    { mode: 'newSkill', label: 'Nouvelle compétence' },
+    { mode: 'trait',    label: 'Nouveau trait' },
     { mode: 'rune',     label: '+1 Rune' },
-    { mode: 'newRune',  label: 'Nouvelle Rune' },
+    { mode: 'newRune',  label: 'Nouvelle rune' },
 ];
 
+// En-tête d'étape avec retour au choix du type d'évolution
+const StepHeader = ({ onBack, children }) => (
+    <div className="flex justify-between items-center mb-2 gap-2">
+        <span className="vk-label text-lg text-primary">{children}</span>
+        <button type="button" className="vk-btn vk-btn-sm" onClick={onBack}>← Retour</button>
+    </div>
+);
+
+const runeLevel = (character, name) => character.runes?.find(r => r.name === name)?.level ?? 0;
+
+// Bouton de choix (pastille pleine largeur, sélection dorée)
+const Choice = ({ selected, disabled, onClick, children }) => (
+    <button type="button" onClick={onClick} disabled={disabled}
+            className={`vk-pill w-full justify-between text-left disabled:opacity-40 ${selected ? 'is-selected' : ''}`}>
+        {children}
+    </button>
+);
+
 const ExperienceModal = ({ character, onClose, onUpdate }) => {
-    const [mode, setMode] = useState(null); // 'carac', 'skill', 'newSkill', 'trait', 'rune'
+    const [mode, setMode] = useState(null); // 'carac', 'skill', 'newSkill', 'trait', 'rune', 'newRune'
     const [selected, setSelected] = useState(null);
     const [step, setStep] = useState('select'); // 'select' ou 'confirm'
     const [traitSearch, setTraitSearch] = useState('');
     const [specialization, setSpecialization] = useState('');
     const [error, setError] = useState(null);
-    
+
     const costs = XP_COSTS;   // runes à 1 SAGA (D-7)
-    
+
     const currentCost = mode ? costs[mode] : 0;
     const canAfford = character.sagaActuelle >= currentCost;
-    
+
     const handleConfirm = () => {
         if (!selected || !canAfford) return;
         setError(null);
@@ -52,379 +74,221 @@ const ExperienceModal = ({ character, onClose, onUpdate }) => {
         // Validation spécialisation pour newSkill
         if (mode === 'newSkill' && isSpecializableSkill(selected)) {
             if (!specialization.trim()) {
-                setError(`La compétence "${selected}" nécessite une spécialisation (ex: ${getSkillExamples(selected)})`);
+                setError(`La compétence « ${selected} » nécessite une spécialisation (ex : ${getSkillExamples(selected)})`);
+                setStep('select');
                 return;
             }
-            // Vérifier doublon
             if (character.skills.some(s => s.name === selected && s.specialization === specialization.trim())) {
-                setError(`Vous possédez déjà "${selected} (${specialization.trim()})"`);
+                setError(`Vous possédez déjà « ${selected} (${specialization.trim()}) »`);
+                setStep('select');
                 return;
             }
         }
-        
+
         let updated = { ...character };
-        
+
         if (mode === 'carac') {
-            // +1 Caractéristique
             updated[selected] = Math.min(5, updated[selected] + 1);
         } else if (mode === 'skill') {
-            // +1 Compétence existante (selected est l'objet skill entier)
-            updated.skills = updated.skills.map(s => 
+            // selected est l'objet compétence
+            updated.skills = updated.skills.map(s =>
                 (s.name === selected.name && s.specialization === selected.specialization)
                     ? { ...s, level: Math.min(5, s.level + 1), currentPoints: Math.min(5, s.level + 1) }
                     : s
             );
         } else if (mode === 'newSkill') {
-            // Nouvelle compétence (niveau 1)
             updated.skills = [...updated.skills, {
                 name: selected,
                 specialization: specialization.trim() || undefined,
                 level: 1,
-                currentPoints: 1
+                currentPoints: 1,
             }];
         } else if (mode === 'trait') {
-            // Nouveau trait (valeurs de combat recalculées par la fiche avant écriture)
+            // Valeurs de combat recalculées par la fiche avant écriture
             updated.traits = [...updated.traits, { name: selected }];
         } else if (mode === 'rune') {
-            // +1 Rune existante
-            updated.runes = updated.runes.map(r =>
-                r.name === selected
-                    ? { ...r, level: Math.min(5, r.level + 1) }
-                    : r
-            );
+            updated.runes = updated.runes.map(r => r.name === selected ? { ...r, level: Math.min(5, r.level + 1) } : r);
         } else if (mode === 'newRune') {
-            // Nouvelle rune (niveau 1)
-            updated.runes = [...(updated.runes || []), {
-                name: selected,
-                level: 1
-            }];
+            updated.runes = [...(updated.runes || []), { name: selected, level: 1 }];
         }
-        
+
         // Dépenser SAGA (la SAGA totale ne compte que les gains, D-10)
         updated.sagaActuelle = Math.max(0, updated.sagaActuelle - currentCost);
 
         // « SAGA +N » du trait acquis, appliqué après la dépense (D-9, L3-2)
         if (mode === 'trait') updated = { ...updated, ...gainSaga(updated, getTraitSagaBonus([selected])) };
-        
+
         onUpdate(updated);
         onClose();
     };
-    
+
     const resetSelection = () => {
         setMode(null);
         setSelected(null);
         setStep('select');
+        setError(null);
     };
-    
-    return (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4" onClick={onClose}>
-            <div className="bg-white dark:bg-viking-brown rounded-lg shadow-2xl max-w-3xl w-full border-4 border-viking-bronze max-h-[85vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
-                <div className="p-4 border-b-2 border-viking-bronze flex justify-between items-center sticky top-0 bg-white dark:bg-viking-brown z-10">
-                    <h3 className="text-lg font-bold text-viking-brown dark:text-viking-parchment">💎 Évolution du personnage</h3>
-                    <button onClick={onClose} className="text-2xl text-viking-leather dark:text-viking-bronze hover:text-viking-danger">✕</button>
-                </div>
-                
-                <div className="p-4 space-y-4">
-                    {/* SAGA disponible */}
-                    <div className="p-3 bg-viking-bronze/20 dark:bg-viking-leather/20 rounded-lg border-2 border-viking-bronze text-center">
-                        <div className="text-sm text-viking-text dark:text-viking-parchment">SAGA disponible</div>
-                        <div className="text-3xl font-bold text-viking-bronze">{character.sagaActuelle}</div>
-                    </div>
-                    
-                    {step === 'select' && (
-                        <>
-                            {/* Choix du type d'évolution */}
-                            {!mode && (
-                                <div>
-                                    <h4 className="text-sm font-semibold text-viking-brown dark:text-viking-parchment mb-2">Choisir une évolution :</h4>
-                                    <div className="grid grid-cols-2 gap-2">
-                                        {MODES.map(({ mode: m, label }) => (
-                                            <button
-                                                key={m}
-                                                onClick={() => setMode(m)}
-                                                disabled={character.sagaActuelle < costs[m]}
-                                                className="p-3 rounded text-left text-sm font-semibold bg-viking-parchment dark:bg-gray-800 text-viking-text dark:text-viking-parchment border-2 border-transparent hover:border-viking-bronze disabled:opacity-30 disabled:cursor-not-allowed"
-                                            >
-                                                <div>{label}</div>
-                                                <div className="text-xs text-viking-bronze">Coût : {costs[m]} SAGA</div>
-                                            </button>
-                                        ))}
-                                    </div>
-                                </div>
-                            )}
-                            
-                            {/* Sélection selon le mode */}
-                            {mode === 'carac' && (
-                                <div>
-                                    <div className="flex justify-between items-center mb-2">
-                                        <h4 className="text-sm font-semibold text-viking-brown dark:text-viking-parchment">Choisir une caractéristique :</h4>
-                                        <button onClick={resetSelection} className="text-xs text-viking-leather dark:text-viking-bronze hover:underline">← Retour</button>
-                                    </div>
-                                    <div className="grid grid-cols-3 gap-2">
-                                        {Object.entries(CARACNAMES).map(([key, label]) => {
-                                            const current = character[key];
-                                            const canIncrease = current < 5;
-                                            return (
-                                                <button
-                                                    key={key}
-                                                    onClick={() => canIncrease && setSelected(key)}
-                                                    disabled={!canIncrease}
-                                                    className={`p-2 rounded text-sm ${
-                                                        !canIncrease
-                                                            ? 'opacity-30 cursor-not-allowed bg-gray-300 dark:bg-gray-700'
-                                                            : selected === key
-                                                                ? 'bg-viking-bronze text-viking-brown font-semibold'
-                                                                : 'bg-viking-parchment dark:bg-gray-800 text-viking-text dark:text-viking-parchment hover:bg-viking-bronze/30'
-                                                    }`}
-                                                >
-                                                    <div className="font-semibold">{label}</div>
-                                                    <div className="text-xs">{current} → {Math.min(5, current + 1)}</div>
-                                                </button>
-                                            );
-                                        })}
-                                    </div>
-                                </div>
-                            )}
-                            
-                            {mode === 'skill' && (
-                                <div>
-                                    <div className="flex justify-between items-center mb-2">
-                                        <h4 className="text-sm font-semibold text-viking-brown dark:text-viking-parchment">Choisir une compétence :</h4>
-                                        <button onClick={resetSelection} className="text-xs text-viking-leather dark:text-viking-bronze hover:underline">← Retour</button>
-                                    </div>
-                                    <div className="grid grid-cols-2 gap-2 max-h-60 overflow-y-auto">
-                                        {character.skills.map(skill => {
-                                            const canIncrease = skill.level < 5;
-                                            return (
-                                                <button
-                                                    key={`${skill.name}-${skill.specialization || 'default'}`}
-                                                    onClick={() => canIncrease && setSelected(skill)}
-                                                    disabled={!canIncrease}
-                                                    className={`p-2 rounded text-sm text-left ${
-                                                        !canIncrease
-                                                            ? 'opacity-30 cursor-not-allowed bg-gray-300 dark:bg-gray-700'
-                                                            : selected?.name === skill.name && selected?.specialization === skill.specialization
-                                                                ? 'bg-viking-bronze text-viking-brown font-semibold'
-                                                                : 'bg-viking-parchment dark:bg-gray-800 text-viking-text dark:text-viking-parchment hover:bg-viking-bronze/30'
-                                                    }`}
-                                                >
-                                                    <div className="font-semibold">{formatSkillName(skill)}</div>
-                                                    <div className="text-xs">Niv {skill.level} → {Math.min(5, skill.level + 1)}</div>
-                                                </button>
-                                            );
-                                        })}
-                                    </div>
-                                </div>
-                            )}
-                            
-                            {mode === 'newSkill' && (
-                                <div>
-                                    <div className="flex justify-between items-center mb-2">
-                                        <h4 className="text-sm font-semibold text-viking-brown dark:text-viking-parchment">Choisir une nouvelle compétence :</h4>
-                                        <button onClick={resetSelection} className="text-xs text-viking-leather dark:text-viking-bronze hover:underline">← Retour</button>
-                                    </div>
-                                    <div className="grid grid-cols-2 gap-2 max-h-60 overflow-y-auto">
-                                        {COMPETENCES.filter(comp => {
-                                            // Compétences spécialisables : toujours disponibles
-                                            if (isSpecializableSkill(comp.name)) return true;
-                                            // Autres : seulement si pas possédées
-                                            return !character.skills.some(s => s.name === comp.name);
-                                        }).map(comp => (
-                                            <button
-                                                key={comp.name}
-                                                onClick={() => setSelected(comp.name)}
-                                                className={`p-2 rounded text-sm text-left ${
-                                                    selected === comp.name
-                                                        ? 'bg-viking-bronze text-viking-brown font-semibold'
-                                                        : 'bg-viking-parchment dark:bg-gray-800 text-viking-text dark:text-viking-parchment hover:bg-viking-bronze/30'
-                                                }`}
-                                            >
-                                                <div className="font-semibold">{comp.name}</div>
-                                                <div className="text-xs opacity-75">{comp.caracs.map(c => CARACNAMES[c]).join(', ')}</div>
-                                            </button>
-                                        ))}
-                                    </div>
-                                    
-                                    {/* Spécialisation (si nécessaire) */}
-                                    {selected && isSpecializableSkill(selected) && (
-                                        <div className="mt-3 p-3 bg-viking-bronze/10 dark:bg-viking-leather/10 rounded-lg border-2 border-viking-bronze">
-                                            <label className="block text-sm font-semibold text-viking-brown dark:text-viking-parchment mb-2">
-                                                ⚔️ Spécialisation requise
-                                            </label>
-                                            <input
-                                                type="text"
-                                                value={specialization}
-                                                onChange={(e) => setSpecialization(e.target.value)}
-                                                placeholder={`Ex: ${getSkillExamples(selected)}`}
-                                                className="w-full px-3 py-2 border-2 border-viking-leather dark:border-viking-bronze rounded-lg bg-white dark:bg-gray-800 text-viking-text dark:text-viking-parchment"
-                                            />
-                                        </div>
-                                    )}
-                                </div>
-                            )}
-                            
-                            {mode === 'trait' && (
-                                <div>
-                                    <div className="flex justify-between items-center mb-2">
-                                        <h4 className="text-sm font-semibold text-viking-brown dark:text-viking-parchment">Choisir un nouveau trait :</h4>
-                                        <button onClick={resetSelection} className="text-xs text-viking-leather dark:text-viking-bronze hover:underline">← Retour</button>
-                                    </div>
-                                    
-                                    {/* Recherche */}
-                                    <input
-                                        type="text"
-                                        placeholder="🔍 Rechercher un trait..."
-                                        value={traitSearch}
-                                        onChange={(e) => setTraitSearch(e.target.value)}
-                                        className="w-full px-3 py-2 mb-3 rounded border-2 border-viking-leather dark:border-viking-bronze bg-white dark:bg-gray-800 text-viking-text dark:text-viking-parchment text-sm"
-                                    />
-                                    
-                                    <div className="grid grid-cols-1 gap-2 max-h-96 overflow-y-auto">
-                                        {TRAITS
-                                            .filter(t => !character.traits.some(ct => ct.name === t.name))
-                                            .filter(t => {
-                                                const search = traitSearch.toLowerCase();
-                                                return !search || t.name.toLowerCase().includes(search) || t.description.toLowerCase().includes(search);
-                                            })
-                                            .map(trait => {
-                                                const blocker = traitBlocker(character, trait);
-                                                return (
-                                                    <button
-                                                        key={trait.name}
-                                                        onClick={() => !blocker && setSelected(trait.name)}
-                                                        disabled={!!blocker}
-                                                        className={`p-2 rounded text-sm text-left disabled:opacity-40 disabled:cursor-not-allowed ${
-                                                            selected === trait.name
-                                                                ? 'bg-viking-bronze text-viking-brown'
-                                                                : 'bg-viking-parchment dark:bg-gray-800 text-viking-text dark:text-viking-parchment hover:bg-viking-bronze/30'
-                                                        }`}
-                                                    >
-                                                        <div className="font-bold">{trait.name}</div>
-                                                        <div className="text-xs opacity-90">{trait.description}</div>
-                                                        {blocker && <div className="text-xs text-viking-danger mt-0.5">{blocker}</div>}
-                                                    </button>
-                                                );
-                                            })
-                                        }
-                                    </div>
-                                </div>
-                            )}
-                            
-                            {(mode === 'rune' || mode === 'newRune') && (
-                                <div>
-                                    <div className="flex justify-between items-center mb-2">
-                                        <h4 className="text-sm font-semibold text-viking-brown dark:text-viking-parchment">
-                                            {mode === 'rune' ? 'Choisir une rune connue :' : 'Choisir une nouvelle rune :'}
-                                        </h4>
-                                        <button onClick={resetSelection} className="text-xs text-viking-leather dark:text-viking-bronze hover:underline">← Retour</button>
-                                    </div>
-                                    <div className="grid grid-cols-3 gap-2 max-h-60 overflow-y-auto">
-                                        {RUNES
-                                            .filter(r => {
-                                                const level = character.runes?.find(cr => cr.name === r.name)?.level ?? 0;
-                                                return mode === 'rune' ? level >= 1 && level < 5 : level === 0;
-                                            })
-                                            .map(r => {
-                                                const level = character.runes?.find(cr => cr.name === r.name)?.level ?? 0;
-                                                return (
-                                                    <button
-                                                        key={r.name}
-                                                        onClick={() => setSelected(r.name)}
-                                                        className={`p-2 rounded text-sm text-left ${
-                                                            selected === r.name
-                                                                ? 'bg-viking-bronze text-viking-brown font-semibold'
-                                                                : 'bg-viking-parchment dark:bg-gray-800 text-viking-text dark:text-viking-parchment hover:bg-viking-bronze/30'
-                                                        }`}
-                                                    >
-                                                        <div className="font-semibold">{r.symbol} {r.name}</div>
-                                                        <div className="text-xs">{mode === 'rune' ? `Niv ${level} → ${level + 1}` : 'Niv 1'}</div>
-                                                    </button>
-                                                );
-                                            })}
-                                    </div>
-                                </div>
-                            )}
 
-                            {/* Bouton Confirmer */}
-                            {mode && selected && (
-                                <div className="flex gap-2 pt-2 border-t border-viking-leather dark:border-viking-bronze">
-                                    <button 
-                                        onClick={resetSelection}
-                                        className="flex-1 px-4 py-2 bg-gray-500 text-white rounded font-semibold hover:bg-gray-600"
-                                    >
-                                        Annuler
-                                    </button>
-                                    <button 
-                                        onClick={() => setStep('confirm')}
-                                        className="flex-1 px-4 py-2 bg-viking-bronze text-viking-brown rounded font-semibold hover:bg-viking-leather"
-                                    >
-                                        Suivant →
-                                    </button>
-                                </div>
+    return (
+        <VkModal title="Évolution du personnage" icon="tree" onClose={onClose} size="max-w-3xl">
+            <div className="flex items-center justify-between gap-4 mb-4">
+                <span className="text-sm text-muted">Dépense entre les scénarios ; au-delà du niveau 3, justification et accord du MJ.</span>
+                <div className="vk-stat px-4 shrink-0"><div className="val">{character.sagaActuelle}</div><div className="lbl">Saga</div></div>
+            </div>
+
+            {error && <div className="vk-callout vk-callout-danger mb-3 text-sm">{error}</div>}
+
+            {step === 'select' && (
+                <>
+                    {!mode && (
+                        <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
+                            {MODES.map(({ mode: m, label }) => (
+                                <button key={m} type="button" onClick={() => setMode(m)} disabled={character.sagaActuelle < costs[m]}
+                                        className="vk-stat is-rollable disabled:opacity-40 disabled:cursor-not-allowed">
+                                    <div className="vk-label text-lg text-default">{label}</div>
+                                    <div className="sub">Coût : {costs[m]} Saga</div>
+                                </button>
+                            ))}
+                        </div>
+                    )}
+
+                    {mode === 'carac' && (
+                        <>
+                            <StepHeader onBack={resetSelection}>Choisir une caractéristique</StepHeader>
+                            <div className="grid grid-cols-2 sm:grid-cols-3 gap-1.5">
+                                {Object.entries(CARACNAMES).map(([key, label]) => {
+                                    const current = character[key];
+                                    return (
+                                        <Choice key={key} selected={selected === key} disabled={current >= 5} onClick={() => setSelected(key)}>
+                                            <span>{label}</span><span className="vk-num">{current} → {Math.min(5, current + 1)}</span>
+                                        </Choice>
+                                    );
+                                })}
+                            </div>
+                        </>
+                    )}
+
+                    {mode === 'skill' && (
+                        <>
+                            <StepHeader onBack={resetSelection}>Choisir une compétence</StepHeader>
+                            <div className="grid sm:grid-cols-2 gap-1.5 max-h-72 overflow-y-auto pr-1">
+                                {character.skills.map(skill => (
+                                    <Choice key={`${skill.name}-${skill.specialization || 'default'}`}
+                                            selected={selected?.name === skill.name && selected?.specialization === skill.specialization}
+                                            disabled={skill.level >= 5} onClick={() => setSelected(skill)}>
+                                        <span>{formatSkillName(skill)}</span><span className="vk-num">{skill.level} → {Math.min(5, skill.level + 1)}</span>
+                                    </Choice>
+                                ))}
+                            </div>
+                        </>
+                    )}
+
+                    {mode === 'newSkill' && (
+                        <>
+                            <StepHeader onBack={resetSelection}>Choisir une nouvelle compétence</StepHeader>
+                            <div className="grid sm:grid-cols-2 gap-1.5 max-h-72 overflow-y-auto pr-1">
+                                {COMPETENCES
+                                    .filter(comp => isSpecializableSkill(comp.name) || !character.skills.some(s => s.name === comp.name))
+                                    .map(comp => (
+                                        <Choice key={comp.name} selected={selected === comp.name} onClick={() => setSelected(comp.name)}>
+                                            <span>{comp.name}</span><span className="text-xs opacity-75">{comp.caracs.map(c => CARACNAMES[c]).join(', ')}</span>
+                                        </Choice>
+                                    ))}
+                            </div>
+                            {selected && isSpecializableSkill(selected) && (
+                                <label className="block mt-3">
+                                    <span className="vk-field-label">Spécialisation requise</span>
+                                    <input className="vk-input" value={specialization} onChange={e => setSpecialization(e.target.value)}
+                                           placeholder={`Ex : ${getSkillExamples(selected)}`} />
+                                </label>
                             )}
                         </>
                     )}
-                    
-                    {/* Confirmation */}
-                    {step === 'confirm' && (
-                        <div className="space-y-4">
-                            <div className="p-4 bg-viking-parchment dark:bg-gray-800 rounded-lg border-2 border-viking-bronze">
-                                <h4 className="font-bold text-viking-brown dark:text-viking-parchment mb-2">Confirmer l'évolution :</h4>
-                                <div className="text-sm text-viking-text dark:text-viking-parchment space-y-1">
-                                    {mode === 'carac' && <p>+1 {CARACNAMES[selected]} ({character[selected]} → {character[selected] + 1})</p>}
-                                    {mode === 'skill' && <p>+1 {formatSkillName(selected)} (Niv {selected.level} → {selected.level + 1})</p>}
-                                    {mode === 'newSkill' && <p>Nouvelle compétence : {selected}{specialization && ` (${specialization})`} (Niv 1)</p>}
-                                    {mode === 'trait' && <p>Nouveau trait : {selected}{getTraitSagaBonus([selected]) > 0 && ` (SAGA +${getTraitSagaBonus([selected])})`}</p>}
-                                    {mode === 'rune' && <p>+1 {selected}</p>}
-                                    {mode === 'newRune' && <p>Nouvelle rune : {selected} (Niv 1)</p>}
-                                    <p className="text-viking-bronze font-semibold">Coût : {currentCost} SAGA</p>
-                                    <p>SAGA restante : {character.sagaActuelle - currentCost}</p>
-                                </div>
+
+                    {mode === 'trait' && (
+                        <>
+                            <StepHeader onBack={resetSelection}>Choisir un nouveau trait</StepHeader>
+                            <span className="vk-input-icon block mb-2">
+                                <VkIcon name="eye" />
+                                <input className="vk-input" placeholder="Rechercher un trait…" value={traitSearch} onChange={e => setTraitSearch(e.target.value)} />
+                            </span>
+                            <div className="space-y-1.5 max-h-96 overflow-y-auto pr-1">
+                                {TRAITS
+                                    .filter(t => !character.traits.some(ct => ct.name === t.name))
+                                    .filter(t => {
+                                        const search = traitSearch.toLowerCase();
+                                        return !search || t.name.toLowerCase().includes(search) || t.description.toLowerCase().includes(search);
+                                    })
+                                    .map(trait => {
+                                        const blocker = traitBlocker(character, trait);
+                                        const sagaBonus = trait.effects?.sagaBonus;
+                                        return (
+                                            <button key={trait.name} type="button" disabled={!!blocker}
+                                                    onClick={() => setSelected(trait.name)}
+                                                    className={`vk-rune-card w-full text-left disabled:opacity-45 disabled:cursor-not-allowed ${selected === trait.name ? 'border-primary' : ''}`}>
+                                                <div className="flex-1 min-w-0">
+                                                    <div className="font-bold">{trait.name}{sagaBonus ? <span className="vk-tag vk-tag-gold ml-2">Saga +{sagaBonus}</span> : null}</div>
+                                                    <div className="text-sm text-muted">{trait.description}</div>
+                                                    {blocker && <div className="text-xs text-danger mt-0.5">{blocker}</div>}
+                                                </div>
+                                                {selected === trait.name && <VkIcon name="check" className="text-primary" />}
+                                            </button>
+                                        );
+                                    })}
                             </div>
-                            
-                            <div className="flex gap-2">
-                                <button 
-                                    onClick={() => setStep('select')}
-                                    className="flex-1 px-4 py-2 bg-gray-500 text-white rounded font-semibold hover:bg-gray-600"
-                                >
-                                    ← Retour
-                                </button>
-                                <button 
-                                    onClick={handleConfirm}
-                                    className="flex-1 px-4 py-2 bg-viking-success text-white rounded font-semibold hover:bg-green-700"
-                                >
-                                    ✓ Confirmer
-                                </button>
+                        </>
+                    )}
+
+                    {(mode === 'rune' || mode === 'newRune') && (
+                        <>
+                            <StepHeader onBack={resetSelection}>{mode === 'rune' ? 'Choisir une rune connue' : 'Choisir une nouvelle rune'}</StepHeader>
+                            <div className="grid grid-cols-2 sm:grid-cols-3 gap-1.5 max-h-72 overflow-y-auto pr-1">
+                                {RUNES
+                                    .filter(r => {
+                                        const level = runeLevel(character, r.name);
+                                        return mode === 'rune' ? level >= 1 && level < 5 : level === 0;
+                                    })
+                                    .map(r => {
+                                        const level = runeLevel(character, r.name);
+                                        return (
+                                            <Choice key={r.name} selected={selected === r.name} onClick={() => setSelected(r.name)}>
+                                                <span><span className="vk-rune mr-1">{r.symbol}</span>{r.name}</span>
+                                                <span className="vk-num">{mode === 'rune' ? `${level} → ${level + 1}` : 'niv 1'}</span>
+                                            </Choice>
+                                        );
+                                    })}
                             </div>
+                        </>
+                    )}
+
+                    {mode && selected && (
+                        <div className="flex gap-2 pt-3 mt-3 border-t border-default">
+                            <button type="button" className="vk-btn flex-1" onClick={resetSelection}>Annuler</button>
+                            <button type="button" className="vk-btn vk-btn-primary flex-1" onClick={() => setStep('confirm')}>Suivant →</button>
                         </div>
                     )}
-                </div>
-            </div>
-            {error && (
-                <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-in fade-in duration-200">
-                    <div className="relative w-full max-w-sm bg-viking-parchment dark:bg-viking-brown border-4 border-double border-viking-danger p-6 shadow-2xl shadow-red-900/50">
-                        <div className="flex justify-center mb-4">
-                            <span className="text-4xl">⚠️</span>
-                        </div>
-
-                        <h3 className="text-center text-viking-danger font-viking text-xl mb-4 uppercase">
-                            Par Odin !
-                        </h3>
-
-                        <p className="text-center text-viking-text dark:text-viking-parchment font-vikingText mb-6 italic">
-                            {error}
-                        </p>
-
-                        <button
-                            onClick={() => setError(null)}
-                            className="w-full py-3 bg-viking-danger text-white font-viking uppercase tracking-widest hover:brightness-110 shadow-lg transition-all"
-                        >
-                            Continuer
-                        </button>
-                    </div>
-                </div>
+                </>
             )}
-        </div>
+
+            {step === 'confirm' && (
+                <>
+                    <div className="vk-callout mb-4">
+                        <div className="vk-label text-lg text-primary mb-1">Confirmer l'évolution</div>
+                        {mode === 'carac'    && <p>+1 {CARACNAMES[selected]} ({character[selected]} → {character[selected] + 1})</p>}
+                        {mode === 'skill'    && <p>+1 {formatSkillName(selected)} ({selected.level} → {selected.level + 1})</p>}
+                        {mode === 'newSkill' && <p>Nouvelle compétence : {selected}{specialization && ` (${specialization})`} (niveau 1)</p>}
+                        {mode === 'trait'    && <p>Nouveau trait : {selected}{getTraitSagaBonus([selected]) > 0 && ` (Saga +${getTraitSagaBonus([selected])})`}</p>}
+                        {mode === 'rune'     && <p>+1 {selected}</p>}
+                        {mode === 'newRune'  && <p>Nouvelle rune : {selected} (niveau 1)</p>}
+                        <p className="mt-1">Coût : <strong>{currentCost} Saga</strong> — reste {character.sagaActuelle - currentCost}</p>
+                    </div>
+                    <div className="flex gap-2">
+                        <button type="button" className="vk-btn flex-1" onClick={() => setStep('select')}>← Retour</button>
+                        <button type="button" className="vk-btn vk-btn-success flex-1" onClick={handleConfirm}><VkIcon name="check" />Confirmer</button>
+                    </div>
+                </>
+            )}
+        </VkModal>
     );
 };
 

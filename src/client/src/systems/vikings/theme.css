@@ -1,50 +1,435 @@
 /* src/client/src/systems/vikings/theme.css */
 /* ─────────────────────────────────────────────────────────────────────────────
-   Thème Vikings — Pure Saga
-   Mode jour : parchemin, cuir, or vieilli
-   Mode nuit  : nuit nordique, fer, runes
+   Thème Vikings — Pure Saga (refonte lot 4, spec_vikings_lot4_graphisme.md)
+   Mode jour : bois sombre et or · Mode nuit : fer (deux thèmes sombres, L4-1)
+   Source validée par le MJ : documentations/refonte_vikings/UIkit_complet.source.html
+   (bloc <style id="theme">). Toute évolution passe d'abord par la planche.
+
+   Variables plateforme --color-* → classes génériques de generated-css-utils.css.
+   Spécifique Vikings : variables --vk-* et classes .vk-* uniquement.
+   ⚠ Les classes .vk-* (non « layered ») l'emportent sur les utilitaires Tailwind :
+     ne pas combiner une classe .vk-* qui fixe display avec flex / grid / block.
    ─────────────────────────────────────────────────────────────────────────── */
 
-/* ── Mode JOUR (par défaut) ─────────────────────────────────────────────── */
+@import url('https://fonts.googleapis.com/css2?family=Alegreya:ital,wght@0,400;0,500;0,700;1,400&family=Eagle+Lake&family=Grenze+Gotisch:wght@400;600;700&family=Noto+Sans+Runic&display=swap');
+
+/* ── Mode JOUR — bois et or ─────────────────────────────────────────── */
 :root {
-    --color-primary:        #B8860B;
-    --color-secondary:      #8B4513;
-    --color-accent:         #D2691E;
+    --color-primary:     #d4a017;   /* or */
+    --color-secondary:   #8b5a2b;   /* cuir */
+    --color-accent:      #b8432f;   /* rouge sang séché — mise en avant */
+    --color-danger:      #c0392b;
+    --color-success:     #7a9a3a;   /* mousse */
 
-    --color-bg:             #F2E8CF;
-    --color-surface:        #E7D9B8;
-    --color-surface-alt:    #DFCFA3;
+    --color-bg:          #1a1410;   /* bois sombre */
+    --color-surface:     #2a2118;
+    --color-surface-alt: #352a1f;
 
-    --color-text:           #2C1810;
-    --color-text-muted:     #6D4C41;
+    --color-text:        #e8dcc8;   /* parchemin */
+    --color-text-muted:  #a08b6e;
+    --color-border:      rgba(200, 169, 110, 0.35);
 
-    --color-border:         #A0522D;
-    --color-danger:         #991B1B;
-    --color-success:        #166534;
+    /* Spécifique Vikings */
+    --vk-on-primary:     #1a1410;   /* texte sur fond or */
+    --vk-gold-dim:       #b8942a;
+    --vk-border-soft:    rgba(200, 169, 110, 0.15);
+    --vk-panel-shadow:   inset 0 0 30px rgba(0, 0, 0, 0.3), 0 4px 20px rgba(0, 0, 0, 0.4);
+    --vk-ornament-filter: none;
+    --vk-field-bg:       rgba(0, 0, 0, 0.25);
+    --vk-token-blessure: #a8322a;
+    --vk-token-fatigue:  #9a7240;
+    --vk-warn:           #d98a2b;   /* malus (fatigue, blessures) */
 
+    --vk-font-title:     'Eagle Lake', Georgia, serif;
+    --vk-font-label:     'Grenze Gotisch', Georgia, serif;
+    --vk-font-body:      'Alegreya', Georgia, serif;
+    --vk-font-runic:     'Noto Sans Runic', 'Segoe UI Historic', sans-serif;   /* Eagle Lake n'a pas les runes */
 
-    --viking-iron:         #454545;
-    --viking-leather-dark: #5D4037;
-    --viking-bronze-light: #FFD700;
+    --vk-corner-h-tl: url('./assets/corner-heavy-tl.png');
+    --vk-corner-h-tr: url('./assets/corner-heavy-tr.png');
+    --vk-corner-h-bl: url('./assets/corner-heavy-bl.png');
+    --vk-corner-h-br: url('./assets/corner-heavy-br.png');
+    --vk-corner-l-tl: url('./assets/corner-light-tl.png');
+    --vk-corner-l-tr: url('./assets/corner-light-tr.png');
+    --vk-corner-l-bl: url('./assets/corner-light-bl.png');
+    --vk-corner-l-br: url('./assets/corner-light-br.png');
 }
 
-/* ── Mode NUIT ──────────────────────────────────────────────────────────── */
-.dark {
-    --color-bg:             #0F1419;
-    --color-surface:        #1A1F26;
-    --color-surface-alt:    #242B33;
+/* ── Mode NUIT — fer (.dark posé par l'app sur <html>, data-theme par le slug) ── */
+.dark, [data-theme="dark"] {
+    --color-primary:     #ebcb8b;   /* or pâle */
+    --color-secondary:   #5e81ac;   /* bleu nordique */
+    --color-accent:      #bf616a;
+    --color-danger:      #bf616a;
+    --color-success:     #a3be8c;
 
-    --color-primary:        #EBCB8B;
-    --color-secondary:      #5E81AC;
-    --color-accent:         #BF616A;
+    --color-bg:          #0f1419;
+    --color-surface:     #161c23;
+    --color-surface-alt: #1e252e;
 
-    --color-text:           #ECEFF4;
-    --color-text-muted:     #81A1C1;
+    --color-text:        #d8dee9;
+    --color-text-muted:  #81a1c1;
+    --color-border:      rgba(150, 160, 180, 0.28);
 
-    --color-border:         #4C566A;
-    --color-danger:         #BF616A;
-    --color-success:        #A3BE8C;
+    --vk-on-primary:     #0f1419;
+    --vk-gold-dim:       #c9ad74;
+    --vk-border-soft:    rgba(150, 160, 180, 0.12);
+    --vk-panel-shadow:   inset 0 0 30px rgba(0, 0, 0, 0.4), 0 4px 20px rgba(0, 0, 0, 0.5);
+    --vk-ornament-filter: saturate(0.15) brightness(0.65) contrast(1.2);
+    --vk-field-bg:       rgba(0, 0, 0, 0.3);
+    --vk-token-blessure: #bf616a;
+    --vk-token-fatigue:  #81a1c1;
+    --vk-warn:           #d08770;
 }
+
+/* ── Base ───────────────────────────────────────────────────────────── */
+.vk-root {
+    background: var(--color-bg);
+    color: var(--color-text);
+    font-family: var(--vk-font-body);
+    font-size: 1rem;
+    line-height: 1.45;
+}
+.vk-root input, .vk-root textarea { caret-color: var(--color-primary); }
+
+/* ── Icônes au trait (sprite SVG → composant VkIcon) ────────────────── */
+.vk-icon {
+    display: inline-block;   /* le reset de Tailwind met les <svg> en display:block */
+    width: 1.15em; height: 1.15em; flex-shrink: 0; vertical-align: -0.2em;
+    fill: none; stroke: currentColor; stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round;
+}
+.vk-icon-lg { width: 1.5em; height: 1.5em; }
+
+/* ── Typographie ────────────────────────────────────────────────────── */
+.vk-title  { font-family: var(--vk-font-title); color: var(--color-primary); text-shadow: 0 2px 8px rgba(0,0,0,.45); }
+.vk-label  { font-family: var(--vk-font-label); letter-spacing: 0.04em; }   /* intitulés COURTS uniquement */
+.vk-num    { font-variant-numeric: lining-nums tabular-nums; }
+.vk-font-body { font-family: var(--vk-font-body); }   /* texte courant dans un titre en Grenze */
+.vk-eyebrow{ font-size: .72rem; text-transform: uppercase; letter-spacing: .12em; color: var(--color-text-muted); }
+.vk-rune   { font-family: var(--vk-font-runic); color: var(--color-primary); line-height: 1; }
+
+/* ── Panneaux à coins ornés (kit) ───────────────────────────────────── */
+.vk-panel {
+    position: relative;
+    background: var(--color-surface);
+    border: 2px solid var(--color-border);
+    box-shadow: var(--vk-panel-shadow);
+}
+.vk-panel::before, .vk-panel::after,
+.vk-panel > .vk-c::before, .vk-panel > .vk-c::after {
+    content: ''; position: absolute; pointer-events: none; z-index: 5;
+    background-size: contain; background-repeat: no-repeat;
+    filter: var(--vk-ornament-filter);
+}
+.vk-c { position: absolute; inset: 0; pointer-events: none; }
+
+/* Bas plus aéré : les coins du bas ne touchent pas le dernier élément */
+.vk-heavy { padding: 24px 24px 38px; }
+.vk-heavy::before         { width: 90px; height: 90px; top: -7px;    left: -7px;  background-image: var(--vk-corner-h-tl); }
+.vk-heavy::after          { width: 90px; height: 90px; top: -7px;    right: -7px; background-image: var(--vk-corner-h-tr); }
+.vk-heavy > .vk-c::before { width: 90px; height: 90px; bottom: -7px; left: -7px;  background-image: var(--vk-corner-h-bl); }
+.vk-heavy > .vk-c::after  { width: 90px; height: 90px; bottom: -7px; right: -7px; background-image: var(--vk-corner-h-br); }
+
+.vk-light { padding: 18px 18px 24px; }
+.vk-light::before         { width: 55px; height: 55px; top: -5px;    left: -5px;  background-image: var(--vk-corner-l-tl); }
+.vk-light::after          { width: 55px; height: 55px; top: -5px;    right: -5px; background-image: var(--vk-corner-l-tr); }
+.vk-light > .vk-c::before { width: 55px; height: 55px; bottom: -5px; left: -5px;  background-image: var(--vk-corner-l-bl); }
+.vk-light > .vk-c::after  { width: 55px; height: 55px; bottom: -5px; right: -5px; background-image: var(--vk-corner-l-br); }
+
+.vk-light-sm { padding: 12px 12px 16px; }
+.vk-light-sm::before         { width: 40px; height: 40px; top: -4px;    left: -4px;  background-image: var(--vk-corner-l-tl); }
+.vk-light-sm::after          { width: 40px; height: 40px; top: -4px;    right: -4px; background-image: var(--vk-corner-l-tr); }
+.vk-light-sm > .vk-c::before { width: 40px; height: 40px; bottom: -4px; left: -4px;  background-image: var(--vk-corner-l-bl); }
+.vk-light-sm > .vk-c::after  { width: 40px; height: 40px; bottom: -4px; right: -4px; background-image: var(--vk-corner-l-br); }
+
+/* Mobile : ornements réduits */
+@media (max-width: 640px) {
+    .vk-heavy { padding: 16px 16px 30px; }
+    .vk-heavy::before, .vk-heavy::after, .vk-heavy > .vk-c::before, .vk-heavy > .vk-c::after { width: 56px; height: 56px; }
+    .vk-light::before, .vk-light::after, .vk-light > .vk-c::before, .vk-light > .vk-c::after { width: 40px; height: 40px; }
+}
+
+/* Titre de section ; les contrôles à droite restent hors des ornements */
+.vk-section-title {
+    font-family: var(--vk-font-label); color: var(--color-primary); letter-spacing: .03em;
+    font-size: 1.4rem; line-height: 1.2; margin-bottom: .6rem; padding-right: 14px;
+    display: flex; align-items: baseline; justify-content: space-between; gap: .5rem;
+}
+.vk-heavy > .vk-section-title { padding-right: 30px; }
+
+/* ── Séparateurs (sobres, sans image) ───────────────────────────────── */
+.vk-sep-line {   /* entre sous-éléments */
+    height: 1px; margin: 14px 0;
+    background: linear-gradient(90deg, transparent 0%, var(--color-border) 20%, var(--color-border) 80%, transparent 100%);
+}
+.vk-sep {        /* entre grandes zones : double filet */
+    height: 4px; margin: 22px 0;
+    background:
+        linear-gradient(90deg, transparent 0%, var(--color-border) 15%, var(--color-border) 85%, transparent 100%) top / 100% 1px no-repeat,
+        linear-gradient(90deg, transparent 0%, var(--vk-border-soft) 25%, var(--vk-border-soft) 75%, transparent 100%) bottom / 100% 1px no-repeat;
+}
+
+/* ── Boutons ────────────────────────────────────────────────────────── */
+.vk-btn {
+    display: inline-flex; align-items: center; justify-content: center; gap: .4rem;
+    font-family: var(--vk-font-body); font-weight: 700; font-size: .9rem;
+    padding: .45rem .95rem; border: 1px solid var(--color-border); border-radius: 2px;
+    background: transparent; color: var(--color-text); cursor: pointer;
+    transition: background-color .15s, border-color .15s, color .15s, box-shadow .2s, transform .15s, filter .2s;
+}
+.vk-btn:hover:not(:disabled)  { border-color: var(--color-primary); background-color: color-mix(in srgb, var(--color-primary) 10%, transparent); }
+.vk-btn:focus-visible         { outline: 2px solid var(--color-primary); outline-offset: 2px; }
+.vk-btn:disabled              { opacity: .4; cursor: not-allowed; }
+/* Bouton principal (Lancer les dés…) : survol nettement différencié — éclat doré, léger soulèvement */
+.vk-btn-primary {
+    font-family: var(--vk-font-label); font-weight: 600; font-size: 1.02rem; letter-spacing: .03em;
+    background-image: linear-gradient(180deg, var(--color-primary), var(--vk-gold-dim));
+    border-color: var(--vk-gold-dim); color: var(--vk-on-primary);
+    box-shadow: inset 0 1px 0 rgba(255,255,255,.25), 0 2px 6px rgba(0,0,0,.35);
+}
+.vk-btn-primary:hover:not(:disabled) {
+    border-color: var(--color-primary);
+    filter: brightness(1.12) saturate(1.1);
+    transform: translateY(-1px);
+    box-shadow: inset 0 1px 0 rgba(255,255,255,.35), 0 0 0 1px var(--color-primary), 0 4px 18px color-mix(in srgb, var(--color-primary) 45%, transparent);
+}
+.vk-btn-primary:active:not(:disabled) {
+    transform: translateY(1px); filter: brightness(.95);
+    box-shadow: inset 0 2px 5px rgba(0,0,0,.4);
+}
+.vk-btn-danger  { border-color: color-mix(in srgb, var(--color-danger) 60%, transparent); color: var(--color-danger); }
+.vk-btn-danger:hover:not(:disabled)  { background-color: color-mix(in srgb, var(--color-danger) 15%, transparent); border-color: var(--color-danger); }
+.vk-btn-success { border-color: color-mix(in srgb, var(--color-success) 60%, transparent); color: var(--color-success); }
+.vk-btn-success:hover:not(:disabled) { background-color: color-mix(in srgb, var(--color-success) 15%, transparent); border-color: var(--color-success); }
+.vk-btn-sm   { font-size: .78rem; padding: .25rem .6rem; }
+.vk-btn-primary.vk-btn-sm { font-size: .9rem; }
+.vk-btn-icon { padding: 0; width: 2rem; height: 2rem; }
+.vk-btn-icon.vk-btn-sm { width: 1.6rem; height: 1.6rem; }
+
+/* Bouton de jet discret sur une ligne (carac, compétence) */
+.vk-roll {
+    width: 1.75rem; height: 1.75rem; border-radius: 2px; border: 1px solid var(--vk-border-soft);
+    display: inline-flex; align-items: center; justify-content: center;
+    color: var(--color-primary); background: transparent; cursor: pointer;
+    transition: border-color .15s, background-color .15s, transform .15s;
+}
+.vk-roll:hover { border-color: var(--color-primary); background: color-mix(in srgb, var(--color-primary) 12%, transparent); transform: rotate(-8deg); }
+
+/* ── Champs ─────────────────────────────────────────────────────────── */
+.vk-field-label { display: block; font-family: var(--vk-font-label); font-size: .98rem; letter-spacing: .03em; color: var(--color-text-muted); margin-bottom: .2rem; }
+.vk-input {
+    width: 100%; font-family: var(--vk-font-body); font-size: .95rem; color: var(--color-text);
+    background: var(--vk-field-bg); border: 1px solid var(--vk-border-soft);
+    border-bottom-color: var(--color-border); border-radius: 2px; padding: .4rem .6rem;
+}
+.vk-input::placeholder { color: var(--color-text-muted); opacity: .7; font-style: italic; }
+.vk-input:focus { outline: none; border-color: var(--color-primary); box-shadow: 0 0 0 2px color-mix(in srgb, var(--color-primary) 20%, transparent); }
+textarea.vk-input { resize: vertical; min-height: 4.5rem; }
+.vk-input-icon { position: relative; }
+.vk-input-icon .vk-icon { position: absolute; left: .6rem; top: 50%; transform: translateY(-50%); color: var(--color-text-muted); }
+.vk-input-icon .vk-input { padding-left: 2rem; }
+
+/* Pastilles de choix (pas de <select> ni de case à cocher) */
+.vk-pill {
+    display: inline-flex; align-items: center; gap: .3rem; cursor: pointer;
+    font-size: .82rem; padding: .25rem .7rem; border-radius: 999px;
+    border: 1px solid var(--color-border); color: var(--color-text-muted); background: transparent;
+    transition: color .15s, border-color .15s, background-color .15s;
+}
+.vk-pill:hover { color: var(--color-text); border-color: var(--color-primary); }
+.vk-pill.is-selected { background: var(--color-primary); border-color: var(--color-primary); color: var(--vk-on-primary); font-weight: 700; }
+
+/* Stepper −/+ (valeurs numériques : visée, ajustements, actions de table…) */
+.vk-stepper { display: inline-flex; align-items: center; border: 1px solid var(--color-border); border-radius: 2px; }
+.vk-stepper button { width: 1.8rem; height: 1.8rem; color: var(--color-primary); font-weight: 700; background: transparent; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; }
+.vk-stepper button:hover:not(:disabled) { background: color-mix(in srgb, var(--color-primary) 12%, transparent); }
+.vk-stepper button:disabled { opacity: .3; cursor: not-allowed; }
+.vk-stepper span { min-width: 2rem; text-align: center; font-weight: 700; border-inline: 1px solid var(--vk-border-soft); line-height: 1.8rem; }
+
+/* ── Bandeau, onglets, menu ─────────────────────────────────────────── */
+.vk-header {
+    background: linear-gradient(180deg, var(--color-surface), var(--color-bg));
+    border-bottom: 1px solid var(--color-border);
+    box-shadow: 0 4px 16px rgba(0,0,0,.35);
+}
+/* Titre runique du bandeau : change de mot (liste RUNE_TITLES) dans un fondu « mirage » et une fumée.
+   Mécanique : .is-changing (fumée + distorsion SVG #vk-mirage), .is-out puis .is-in (sortie / entrée du mot). */
+.vk-rune-title {
+    position: relative; display: inline-block; cursor: default;
+    width: 4.3em; text-align: center; white-space: nowrap;   /* largeur fixe : le nom à côté ne bouge pas */
+    font-family: var(--vk-font-runic); color: var(--color-primary); letter-spacing: .15em;
+    text-shadow: 0 0 6px color-mix(in srgb, var(--color-primary) 35%, transparent);
+}
+.vk-rune-title .vk-mirage { display: inline-block; position: relative; z-index: 1; }
+.vk-rune-title .vk-mirage > span { display: inline-block; }
+.vk-rune-title.is-changing .vk-mirage { filter: url(#vk-mirage); }
+.vk-rune-title::before, .vk-rune-title::after {   /* volutes de fumée */
+    content: ''; position: absolute; inset: -55% -30%; z-index: 0; pointer-events: none;
+    border-radius: 50%; filter: blur(12px); opacity: 0; transition: opacity .8s;
+    background: radial-gradient(closest-side, color-mix(in srgb, var(--color-text-muted) 55%, transparent), transparent 75%);
+}
+.vk-rune-title::after { inset: -40% -15%; background: radial-gradient(closest-side, color-mix(in srgb, var(--color-primary) 35%, transparent), transparent 70%); }
+.vk-rune-title.is-changing::before { opacity: .85; animation: vk-smoke 2.3s ease-in-out; }
+.vk-rune-title.is-changing::after  { opacity: .7;  animation: vk-smoke 2.3s ease-in-out reverse; }
+.vk-rune-title.is-out .vk-mirage > span { animation: vk-rune-out .9s ease-in forwards; }
+.vk-rune-title.is-in  .vk-mirage > span { animation: vk-rune-in 1.4s ease-out; }
+@keyframes vk-rune-out {
+    to { opacity: 0; filter: blur(6px); transform: translateY(-4px) scaleX(1.3); }
+}
+@keyframes vk-rune-in {
+    0%   { opacity: 0; filter: blur(7px); transform: translateY(4px) scaleX(1.3); }
+    60%  { opacity: 1; text-shadow: 0 0 20px var(--color-primary); }
+    100% { opacity: 1; filter: blur(0); transform: none; }
+}
+@keyframes vk-smoke {
+    0%   { transform: translateX(-14%) scale(.75) rotate(-6deg); }
+    50%  { transform: translateX(4%)   scale(1.1) rotate(4deg); }
+    100% { transform: translateX(16%)  scale(1.3) rotate(10deg); }
+}
+@media (prefers-reduced-motion: reduce) {
+    .vk-rune-title .vk-mirage > span, .vk-rune-title::before, .vk-rune-title::after { animation: none !important; }
+    .vk-rune-title.is-changing .vk-mirage { filter: none; }
+}
+/* Onglets : défilement horizontal sur mobile, sans barre de défilement visible */
+.vk-tabs {
+    display: flex; gap: .25rem; border-bottom: 1px solid var(--vk-border-soft);
+    overflow-x: auto; overflow-y: hidden; scrollbar-width: none;
+}
+.vk-tabs::-webkit-scrollbar { display: none; }
+.vk-tab {
+    font-family: var(--vk-font-label); font-size: 1.05rem; letter-spacing: .04em;
+    padding: .5rem 1rem; color: var(--color-text-muted); background: transparent; cursor: pointer;
+    white-space: nowrap; box-shadow: inset 0 -2px 0 transparent; transition: color .15s, box-shadow .15s;
+}
+.vk-tab:hover { color: var(--color-text); }
+.vk-tab.is-active { color: var(--color-primary); box-shadow: inset 0 -2px 0 var(--color-primary); }
+.vk-badge { display: inline-flex; min-width: 1.15rem; height: 1.15rem; padding: 0 .3rem; margin-left: .35rem; align-items: center; justify-content: center; border-radius: 999px; font-family: var(--vk-font-body); font-size: .7rem; font-weight: 700; background: var(--color-accent); color: #fff; }
+.vk-menu { background: var(--color-surface); border: 1px solid var(--color-border); box-shadow: 0 10px 30px rgba(0,0,0,.5); padding: .3rem 0; min-width: 14rem; }
+.vk-menu-item { display: flex; width: 100%; align-items: center; gap: .6rem; padding: .45rem 1rem; font-size: .92rem; color: var(--color-text); background: transparent; cursor: pointer; text-align: left; }
+.vk-menu-item .vk-icon { color: var(--color-primary); }
+.vk-menu-item:hover { background: color-mix(in srgb, var(--color-primary) 10%, transparent); }
+.vk-menu-item.is-danger, .vk-menu-item.is-danger .vk-icon { color: var(--color-danger); }
+.vk-menu-sep { height: 1px; margin: .3rem .8rem; background: var(--vk-border-soft); }
+
+/* ── Valeurs, lignes de liste ───────────────────────────────────────── */
+.vk-stat {
+    text-align: center; padding: .5rem .3rem; position: relative;
+    background: color-mix(in srgb, var(--color-primary) 6%, transparent);
+    border: 1px solid var(--vk-border-soft);
+}
+.vk-stat .val { font-family: var(--vk-font-title); font-size: 1.5rem; color: var(--color-primary); line-height: 1.1; }
+.vk-stat .lbl { font-family: var(--vk-font-label); font-size: .98rem; letter-spacing: .03em; color: var(--color-text-muted); }
+.vk-stat .sub { font-size: .72rem; color: var(--color-text-muted); }
+.vk-stat.is-rollable { cursor: pointer; transition: border-color .15s, background-color .15s; }
+.vk-stat.is-rollable:hover { border-color: var(--color-primary); background: color-mix(in srgb, var(--color-primary) 12%, transparent); }
+
+.vk-row { display: flex; align-items: center; gap: .6rem; padding: .35rem .25rem; border-bottom: 1px solid var(--vk-border-soft); }
+.vk-row:last-child { border-bottom: none; }
+.vk-row:hover { background: color-mix(in srgb, var(--color-primary) 5%, transparent); }
+.vk-row-val { font-family: var(--vk-font-title); color: var(--color-primary); }
+
+/* Carte de rune (grille : pas de filet de ligne, qui paraîtrait décentré) */
+.vk-rune-card { display: flex; align-items: flex-start; gap: .7rem; padding: .55rem .7rem; border: 1px solid var(--vk-border-soft); background: color-mix(in srgb, var(--color-primary) 4%, transparent); }
+
+/* ── Jauges ─────────────────────────────────────────────────────────── */
+/* SAGA : losanges cliquables (clic = fixe la réserve à ce niveau ; sur le dernier rempli = −1) */
+.vk-saga { display: inline-flex; gap: .5rem; padding: .2rem; }
+.vk-saga button {
+    width: 1.05rem; height: 1.05rem; transform: rotate(45deg); cursor: pointer;
+    border: 1.5px solid var(--color-primary); background: transparent;
+    transition: transform .15s, box-shadow .15s, background-color .15s;
+}
+.vk-saga button.is-full { background: var(--color-primary); box-shadow: 0 0 8px color-mix(in srgb, var(--color-primary) 60%, transparent); }
+.vk-saga button:hover { transform: rotate(45deg) scale(1.3); box-shadow: 0 0 12px color-mix(in srgb, var(--color-primary) 80%, transparent); }
+.vk-saga button:not(.is-full):hover { background: color-mix(in srgb, var(--color-primary) 35%, transparent); }
+.vk-saga button:focus-visible { outline: 2px solid var(--color-primary); outline-offset: 3px; }
+
+/* Tokens blessure / fatigue */
+.vk-gauges { display: flex; flex-wrap: wrap; gap: 1rem 2.5rem; }   /* blessures et fatigue côte à côte si la place le permet */
+.vk-tokens { display: flex; flex-wrap: wrap; gap: .25rem; }
+.vk-token {
+    width: 1.6rem; height: 1.6rem; border: 1.5px solid var(--color-border); border-radius: 2px;
+    background: var(--vk-field-bg); cursor: pointer; position: relative; transition: border-color .15s, transform .1s;
+}
+.vk-token:hover { border-color: var(--color-primary); transform: translateY(-1px); }
+.vk-token.is-blessure { background: var(--vk-token-blessure); border-color: var(--vk-token-blessure); }
+.vk-token.is-fatigue  { background: var(--vk-token-fatigue);  border-color: var(--vk-token-fatigue); }
+.vk-token.is-ko       { border-style: double; border-width: 3px; border-color: var(--color-danger); }
+.vk-tokens.has-tiers { padding-bottom: 1rem; }
+.vk-token.is-tier::after {   /* repère de palier de fatigue (2, 4, 6, 8) */
+    content: attr(data-tier); position: absolute; bottom: -1.05rem; left: 50%; transform: translateX(-50%);
+    font-size: .62rem; color: var(--color-text-muted); white-space: nowrap;
+}
+
+/* Points de compétence (succès auto) */
+.vk-dots { display: inline-flex; gap: .2rem; }
+.vk-dots i { width: .5rem; height: .5rem; border-radius: 999px; border: 1px solid var(--color-success); display: block; }
+.vk-dots i.is-full { background: var(--color-success); }
+
+/* ── Étiquettes et encadrés ─────────────────────────────────────────── */
+.vk-tag { display: inline-flex; align-items: center; gap: .3rem; font-size: .75rem; font-weight: 700; padding: .12rem .5rem; border-radius: 2px; border: 1px solid; }
+.vk-tag-gold   { color: var(--color-primary); border-color: color-mix(in srgb, var(--color-primary) 50%, transparent); background: color-mix(in srgb, var(--color-primary) 10%, transparent); }
+.vk-tag-warn   { color: var(--vk-warn); border-color: color-mix(in srgb, var(--vk-warn) 50%, transparent); background: color-mix(in srgb, var(--vk-warn) 12%, transparent); }
+.vk-tag-danger { color: #fff; border-color: var(--color-danger); background: var(--color-danger); }
+.vk-tag-muted  { color: var(--color-text-muted); border-color: var(--vk-border-soft); }
+.vk-text-warn  { color: var(--vk-warn); }   /* malus (fatigue, blessures) dans un texte */
+
+.vk-callout { border-left: 3px solid var(--color-primary); background: color-mix(in srgb, var(--color-primary) 8%, transparent); padding: .55rem .8rem; font-size: .9rem; }
+.vk-callout-warn   { border-left-color: var(--vk-warn); background: color-mix(in srgb, var(--vk-warn) 12%, transparent); }
+.vk-callout-danger { border-left-color: var(--color-danger); background: color-mix(in srgb, var(--color-danger) 12%, transparent); }
+
+/* ── Dés ────────────────────────────────────────────────────────────── */
+.vk-die {
+    width: 2.4rem; height: 2.4rem; display: inline-flex; align-items: center; justify-content: center;
+    font-family: var(--vk-font-title); font-size: 1.15rem; border-radius: 3px; position: relative;
+    border: 1.5px solid var(--color-border); color: var(--color-text-muted); background: var(--vk-field-bg);
+}
+.vk-die.is-success { border-color: var(--color-success); color: var(--color-text); background: color-mix(in srgb, var(--color-success) 22%, transparent); }
+.vk-die.is-explode { border-color: var(--color-primary); color: var(--vk-on-primary); background: var(--color-primary); box-shadow: 0 0 10px color-mix(in srgb, var(--color-primary) 55%, transparent); }
+.vk-die.is-chained::before { content: '↳'; position: absolute; left: -.85rem; color: var(--color-primary); font-size: .8rem; }
+.vk-die.is-dropped { opacity: .35; }
+.vk-die-sm { width: 1.6rem; height: 1.6rem; font-size: .8rem; }
+
+/* Calcul du résultat, ligne par ligne */
+.vk-calc { width: 100%; font-size: .92rem; }
+.vk-calc td { padding: .2rem .3rem; }
+.vk-calc td:last-child { text-align: right; font-weight: 700; white-space: nowrap; }
+.vk-calc tr.is-malus td { color: var(--vk-warn); }
+.vk-calc tr.is-total td { border-top: 1px solid var(--color-border); font-family: var(--vk-font-title); color: var(--color-primary); font-size: 1.2rem; padding-top: .4rem; }
+
+.vk-banner {   /* triple 10, réussite héroïque */
+    display: flex; align-items: center; justify-content: center; gap: .5rem;
+    text-align: center; padding: .5rem; font-family: var(--vk-font-title); font-size: 1.1rem;
+    color: var(--vk-on-primary); background: linear-gradient(90deg, var(--vk-gold-dim), var(--color-primary), var(--vk-gold-dim));
+    box-shadow: 0 0 18px color-mix(in srgb, var(--color-primary) 45%, transparent);
+}
+.vk-banner .vk-rune { color: var(--vk-on-primary); font-size: 1.3rem; }
+
+/* ── Modale ─────────────────────────────────────────────────────────── */
+.vk-modal-backdrop { background: rgba(0,0,0,.65); backdrop-filter: blur(2px); }
+/* En-tête : le bouton de fermeture reste à l'écart des coins ornés */
+.vk-modal-header { display: flex; align-items: center; justify-content: space-between; gap: .75rem; padding: 0 30px .6rem 6px; margin-bottom: .8rem; border-bottom: 1px solid var(--vk-border-soft); }
+.vk-light > .vk-modal-header { padding-right: 16px; }
+
+/* ── Historique / notifications ─────────────────────────────────────── */
+.vk-entry { border: 1px solid var(--vk-border-soft); background: var(--color-surface); }
+.vk-entry-meta { display: flex; justify-content: space-between; font-size: .72rem; color: var(--color-text-muted); padding: .3rem .7rem; background: var(--color-surface-alt); }
+.vk-toast { border: 1px solid var(--color-border); border-left: 3px solid var(--color-primary); background: var(--color-surface); box-shadow: 0 8px 24px rgba(0,0,0,.5); }
+
+/* ── Interface MJ ───────────────────────────────────────────────────── */
+.vk-tile { display: flex; align-items: center; gap: .6rem; width: 100%; padding: .55rem .7rem; text-align: left; cursor: pointer; border-left: 3px solid transparent; border-bottom: 1px solid var(--vk-border-soft); background: transparent; color: var(--color-text); }
+.vk-tile:hover { background: color-mix(in srgb, var(--color-primary) 6%, transparent); }
+.vk-tile.is-selected { border-left-color: var(--color-primary); background: color-mix(in srgb, var(--color-primary) 12%, transparent); }
+.vk-avatar { border-radius: 999px; border: 2px solid var(--color-primary); object-fit: cover; background: var(--color-surface-alt); display: inline-flex; align-items: center; justify-content: center; font-family: var(--vk-font-title); color: var(--color-primary); }
+.vk-presence { width: .65rem; height: .65rem; border-radius: 999px; border: 2px solid var(--color-surface); background: var(--color-text-muted); }
+.vk-presence.is-online { background: var(--color-success); box-shadow: 0 0 6px var(--color-success); }
+
+/* ═════════════════════════════════════════════════════════════════════════════
+   COMPATIBILITÉ — anciennes classes viking-*
+   Encore utilisées par les composants de combat génériques (components/combat,
+   components/gm/pj, components/gm/npc : hors périmètre de la refonte) et par les
+   modales du slug jusqu'à leur habillage (lot 4c). Branchées sur la nouvelle palette.
+   ═════════════════════════════════════════════════════════════════════════════ */
 
 /* ── Utilitaires slug-spécifiques ────────────────────────────────────────── */
 /* Remplacent les classes Tailwind générées depuis tailwind.config.js.

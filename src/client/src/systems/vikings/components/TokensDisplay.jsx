@@ -14,9 +14,7 @@ const TokensDisplay = ({ combatant }) => {
             {Array.from({ length: max }).map((_, i) => (
                 <span
                     key={i}
-                    className={`text-xs leading-none ${
-                        i < current ? 'text-viking-danger' : 'text-gray-300 dark:text-gray-600'
-                    }`}
+                    className={`text-xs leading-none ${i < current ? 'text-danger' : 'text-muted opacity-40'}`}
                 >
                     ■
                 </span>

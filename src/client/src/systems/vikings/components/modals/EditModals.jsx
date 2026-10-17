@@ -1,298 +1,158 @@
-// EditModals.js - Modales d'édition (Ajout compétences/traits)
+// src/client/src/systems/vikings/components/modals/EditModals.jsx
+// Modales du mode édition : ajout d'une compétence ou d'un trait.
+// Mode édition = correction : pas de « SAGA +N » à l'ajout d'un trait (L3-2) ;
+// les valeurs de combat sont recalculées à l'enregistrement (withDerivedValues).
+// Habillage : planche du lot 4.
 
-
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import {CARACNAMES, COMPETENCES} from "../../config/competences.js";
 import {TRAITS} from "../../config/traits.js";
 import {checkTraitConditions} from "../../config/rules.js";
 import {getSkillExamples, isSpecializableSkill} from "../../config/utils.js";
+import VkModal from "../ui/VkModal.jsx";
+import VkIcon from "../ui/VkIcon.jsx";
 
-const EditModals = ({ type, character, onClose, onUpdate }) => {
-    const { useState } = React;
-    
-    if (type === 'addSkill') {
-        return <AddSkillModal character={character} onClose={onClose} onUpdate={onUpdate} />;
-    } else if (type === 'addTrait') {
-        return <AddTraitModal character={character} onClose={onClose} onUpdate={onUpdate} />;
-    }
-    return null;
-};
+const Actions = ({ onClose, onAdd, disabled }) => (
+    <div className="flex gap-2 pt-3 mt-3 border-t border-default">
+        <button type="button" className="vk-btn flex-1" onClick={onClose}>Annuler</button>
+        <button type="button" className="vk-btn vk-btn-primary flex-1" onClick={onAdd} disabled={disabled}><VkIcon name="plus" />Ajouter</button>
+    </div>
+);
 
-// Modal Ajout Compétence
-export const AddSkillModal = ({ character, onClose, onUpdate }) => {
-    const { useState } = React;
+const Search = ({ value, onChange, placeholder }) => (
+    <span className="vk-input-icon block mb-3">
+        <VkIcon name="eye" />
+        <input className="vk-input" value={value} onChange={e => onChange(e.target.value)} placeholder={placeholder} autoFocus />
+    </span>
+);
+
+// ── Ajout d'une compétence ───────────────────────────────────────────────────
+const AddSkillModal = ({ character, onClose, onUpdate }) => {
     const [search, setSearch] = useState('');
     const [selected, setSelected] = useState(null);
     const [specialization, setSpecialization] = useState('');
     const [error, setError] = useState(null);
-    // Compétences disponibles
-    // Pour compétences spécialisables : toujours disponibles (on peut les prendre plusieurs fois)
-    // Pour autres : seulement si pas déjà possédées
-    const availableSkills = COMPETENCES.filter(comp => {
-        if (!comp.name.toLowerCase().includes(search.toLowerCase())) return false;
-        
-        if (isSpecializableSkill(comp.name)) {
-            return true; // Toujours disponible
-        } else {
-            return !character.skills.some(s => s.name === comp.name);
-        }
-    });
-    
+
+    // Spécialisables : toujours disponibles ; les autres seulement si absentes
+    const availableSkills = COMPETENCES.filter(comp =>
+        comp.name.toLowerCase().includes(search.toLowerCase())
+        && (isSpecializableSkill(comp.name) || !character.skills.some(s => s.name === comp.name)));
+
     const handleAdd = () => {
         if (!selected) return;
-        
-        // Vérifier spécialisation requise mais non fournie
         if (isSpecializableSkill(selected.name) && !specialization.trim()) {
-            setError(`La compétence "${selected.name}" nécessite une spécialisation (ex: ${getSkillExamples(selected.name)})`);
+            setError(`La compétence « ${selected.name} » nécessite une spécialisation (ex : ${getSkillExamples(selected.name)})`);
             return;
         }
-        
-        // Vérifier si cette spécialisation existe déjà
-        if (specialization.trim() && character.skills.some(s => 
-            s.name === selected.name && s.specialization === specialization.trim()
-        )) {
-            setError(`Vous possédez déjà "${selected.name} (${specialization.trim()})"`);
+        if (specialization.trim() && character.skills.some(s => s.name === selected.name && s.specialization === specialization.trim())) {
+            setError(`Vous possédez déjà « ${selected.name} (${specialization.trim()}) »`);
             return;
         }
-        
-        const newSkills = [...character.skills, {
-            name: selected.name,
-            specialization: specialization.trim() || undefined,
-            level: 0,
-            currentPoints: 0
-        }];
-        
-        onUpdate({ ...character, skills: newSkills });
+        onUpdate({
+            ...character,
+            skills: [...character.skills, { name: selected.name, specialization: specialization.trim() || undefined, level: 0, currentPoints: 0 }],
+        });
     };
-    
+
     return (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4" onClick={onClose}>
-            <div className="bg-white dark:bg-viking-brown rounded-lg shadow-2xl max-w-2xl w-full border-4 border-viking-bronze max-h-[80vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
-                <div className="p-4 border-b-2 border-viking-bronze flex justify-between items-center sticky top-0 bg-white dark:bg-viking-brown z-10">
-                    <h3 className="text-lg font-bold text-viking-brown dark:text-viking-parchment">Ajouter une compétence</h3>
-                    <button onClick={onClose} className="text-2xl text-viking-leather dark:text-viking-bronze hover:text-viking-danger">✕</button>
-                </div>
-                
-                <div className="p-4 space-y-4">
-                    {/* Recherche */}
-                    <div>
-                        <input 
-                            type="text"
-                            value={search}
-                            onChange={e => setSearch(e.target.value)}
-                            placeholder="Rechercher une compétence..."
-                            className="w-full px-3 py-2 border-2 border-viking-leather dark:border-viking-bronze rounded-lg bg-white dark:bg-gray-800 text-viking-text dark:text-viking-parchment"
-                            autoFocus
-                        />
-                    </div>
-                    
-                    {/* Liste des compétences */}
-                    <div className="grid grid-cols-2 gap-2 max-h-96 overflow-y-auto">
-                        {availableSkills.length === 0 ? (
-                            <div className="col-span-2 text-center text-viking-leather dark:text-viking-bronze p-4">
-                                {search ? 'Aucune compétence trouvée' : 'Toutes les compétences ont été ajoutées'}
-                            </div>
-                        ) : (
-                            availableSkills.map(skill => (
-                                <button
-                                    key={skill.name}
-                                    onClick={() => setSelected(skill)}
-                                    className={`p-3 rounded text-left text-sm transition-all ${
-                                        selected?.name === skill.name
-                                            ? 'bg-viking-bronze text-viking-brown border-2 border-viking-leather'
-                                            : 'bg-viking-parchment dark:bg-gray-800 text-viking-text dark:text-viking-parchment border-2 border-transparent hover:border-viking-bronze'
-                                    }`}
-                                >
-                                    <div className="font-semibold">{skill.name}</div>
-                                    <div className="text-xs opacity-75">Caracs: {skill.caracs.map(c => CARACNAMES[c]).join(', ')}</div>
-                                </button>
-                            ))
-                        )}
-                    </div>
-                    
-                    {/* Spécialisation (si nécessaire) */}
-                    {selected && isSpecializableSkill(selected.name) && (
-                        <div className="p-4 bg-viking-bronze/10 dark:bg-viking-leather/10 rounded-lg border-2 border-viking-bronze">
-                            <label className="block text-sm font-semibold text-viking-brown dark:text-viking-parchment mb-2">
-                                ⚔️ Spécialisation requise
-                            </label>
-                            <input
-                                type="text"
-                                value={specialization}
-                                onChange={(e) => setSpecialization(e.target.value)}
-                                placeholder={`Ex: ${getSkillExamples(selected.name)}`}
-                                className="w-full px-3 py-2 border-2 border-viking-leather dark:border-viking-bronze rounded-lg bg-white dark:bg-gray-800 text-viking-text dark:text-viking-parchment"
-                            />
-                            <div className="text-xs text-viking-leather dark:text-viking-bronze mt-2">
-                                Cette compétence peut être prise plusieurs fois avec différentes spécialisations.
-                                Chaque spécialisation a son propre niveau de maîtrise.
-                            </div>
-                        </div>
-                    )}
-                    
-                    {/* Actions */}
-                    <div className="flex gap-2 pt-2 border-t border-viking-leather dark:border-viking-bronze">
-                        <button 
-                            onClick={onClose}
-                            className="flex-1 px-4 py-2 bg-gray-500 text-white rounded font-semibold hover:bg-gray-600"
-                        >
-                            Annuler
-                        </button>
-                        <button 
-                            onClick={handleAdd}
-                            disabled={!selected}
-                            className="flex-1 px-4 py-2 bg-viking-bronze text-viking-brown rounded font-semibold hover:bg-viking-leather disabled:opacity-30 disabled:cursor-not-allowed"
-                        >
-                            Ajouter
-                        </button>
-                    </div>
-                </div>
+        <VkModal title="Ajouter une compétence" icon="plus" onClose={onClose} size="max-w-2xl">
+            {error && <div className="vk-callout vk-callout-danger mb-3 text-sm">{error}</div>}
+            <Search value={search} onChange={setSearch} placeholder="Rechercher une compétence…" />
+
+            <div className="grid sm:grid-cols-2 gap-1.5 max-h-80 overflow-y-auto pr-1">
+                {availableSkills.length === 0 ? (
+                    <p className="sm:col-span-2 text-center text-muted italic p-4">
+                        {search ? 'Aucune compétence trouvée' : 'Toutes les compétences ont été ajoutées'}
+                    </p>
+                ) : availableSkills.map(skill => (
+                    <button key={skill.name} type="button" onClick={() => { setSelected(skill); setError(null); }}
+                            className={`vk-pill w-full justify-between text-left ${selected?.name === skill.name ? 'is-selected' : ''}`}>
+                        <span>{skill.name}</span>
+                        <span className="text-xs opacity-75">{skill.caracs.map(c => CARACNAMES[c]).join(', ')}</span>
+                    </button>
+                ))}
             </div>
-            {error && (
-                <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-in fade-in duration-200">
-                    <div className="relative w-full max-w-sm bg-viking-parchment dark:bg-viking-brown border-4 border-double border-viking-danger p-6 shadow-2xl shadow-red-900/50">
-                        <div className="flex justify-center mb-4">
-                            <span className="text-4xl">⚠️</span>
-                        </div>
 
-                        <h3 className="text-center text-viking-danger font-viking text-xl mb-4 uppercase">
-                            Par Odin !
-                        </h3>
-
-                        <p className="text-center text-viking-text dark:text-viking-parchment font-vikingText mb-6 italic">
-                            {error}
-                        </p>
-
-                        <button
-                            onClick={() => setError(null)}
-                            className="w-full py-3 bg-viking-danger text-white font-viking uppercase tracking-widest hover:brightness-110 shadow-lg transition-all"
-                        >
-                            Continuer
-                        </button>
-                    </div>
-                </div>
+            {selected && isSpecializableSkill(selected.name) && (
+                <label className="block mt-3">
+                    <span className="vk-field-label">Spécialisation requise</span>
+                    <input className="vk-input" value={specialization} onChange={e => setSpecialization(e.target.value)}
+                           placeholder={`Ex : ${getSkillExamples(selected.name)}`} />
+                    <span className="block text-xs text-muted mt-1">
+                        Compétence cumulable : chaque spécialisation a son propre niveau.
+                    </span>
+                </label>
             )}
-        </div>
+
+            <Actions onClose={onClose} onAdd={handleAdd} disabled={!selected} />
+        </VkModal>
     );
 };
 
-// Modal Ajout Trait
-export const AddTraitModal = ({ character, onClose, onUpdate }) => {
-    const { useState } = React;
+// ── Ajout d'un trait ─────────────────────────────────────────────────────────
+const traitCheck = (character, trait) => {
+    if (character.traits.some(t => t.name === trait.name)) return { can: false, reason: 'Déjà possédé' };
+    const incompatible = (trait.incompatible || []).find(name => character.traits.some(t => t.name === name));
+    if (incompatible) return { can: false, reason: `Incompatible avec ${incompatible}` };
+    // Conditions (caractéristiques, compétences, SAGA, alternatives) : règle commune
+    return checkTraitConditions(character, trait);
+};
+
+const effectsText = (effects) => [
+    effects.actions && `+${effects.actions} action`,
+    effects.armure  && `+${effects.armure} armure`,
+    effects.seuil   && `+${effects.seuil} seuil`,
+    effects.description,
+].filter(Boolean).join(' · ');
+
+const AddTraitModal = ({ character, onClose, onUpdate }) => {
     const [selected, setSelected] = useState(null);
     const [traitSearch, setTraitSearch] = useState('');
-    
-    // Vérifier si un trait peut être sélectionné
-    const canSelectTrait = (trait) => {
-        // Déjà sélectionné
-        if (character.traits.some(t => t.name === trait.name)) {
-            return { can: false, reason: 'Déjà possédé' };
-        }
-        
-        // Vérifier incompatibilités
-        for (const incompName of trait.incompatible || []) {
-            if (character.traits.some(t => t.name === incompName)) {
-                return { can: false, reason: `Incompatible avec ${incompName}` };
-            }
-        }
-        
-        // Conditions (caractéristiques, compétences, SAGA, alternatives) : règle commune
-        return checkTraitConditions(character, trait);
-    };
-    
+
     const handleAdd = () => {
         if (!selected) return;
-        
-        // Mode édition = correction : pas de « SAGA +N » (L3-2) ; les valeurs de
-        // combat sont recalculées à l'enregistrement (withDerivedValues).
         onUpdate({ ...character, traits: [...character.traits, { name: selected.name }] });
     };
-    
+
     return (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4" onClick={onClose}>
-            <div className="bg-white dark:bg-viking-brown rounded-lg shadow-2xl max-w-4xl w-full border-4 border-viking-bronze max-h-[85vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
-                <div className="p-4 border-b-2 border-viking-bronze flex justify-between items-center sticky top-0 bg-white dark:bg-viking-brown z-10">
-                    <h3 className="text-lg font-bold text-viking-brown dark:text-viking-parchment">Ajouter un trait</h3>
-                    <button onClick={onClose} className="text-2xl text-viking-leather dark:text-viking-bronze hover:text-viking-danger">✕</button>
-                </div>
-                
-                <div className="p-4 space-y-4">
-                    {/* Info */}
-                    <div className="text-sm text-viking-leather dark:text-viking-bronze">
-                        Traits actuels : {character.traits.length}
-                    </div>
-                    
-                    {/* Recherche */}
-                    <input
-                        type="text"
-                        placeholder="🔍 Rechercher un trait..."
-                        value={traitSearch}
-                        onChange={(e) => setTraitSearch(e.target.value)}
-                        className="w-full px-3 py-2 rounded border-2 border-viking-leather dark:border-viking-bronze bg-white dark:bg-gray-800 text-viking-text dark:text-viking-parchment text-sm"
-                    />
-                    
-                    {/* Liste des traits */}
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3 max-h-[500px] overflow-y-auto">
-                        {TRAITS
-                            .filter(trait => {
-                                const search = traitSearch.toLowerCase();
-                                return !search || trait.name.toLowerCase().includes(search) || trait.description.toLowerCase().includes(search);
-                            })
-                            .map(trait => {
-                            const check = canSelectTrait(trait);
-                            return (
-                                <button
-                                    key={trait.name}
+        <VkModal title="Ajouter un trait" icon="plus" onClose={onClose} size="max-w-4xl">
+            <p className="text-sm text-muted mb-2">Traits actuels : {character.traits.length}</p>
+            <Search value={traitSearch} onChange={setTraitSearch} placeholder="Rechercher un trait…" />
+
+            <div className="grid md:grid-cols-2 gap-2 max-h-[28rem] overflow-y-auto pr-1">
+                {TRAITS
+                    .filter(trait => {
+                        const search = traitSearch.toLowerCase();
+                        return !search || trait.name.toLowerCase().includes(search) || trait.description.toLowerCase().includes(search);
+                    })
+                    .map(trait => {
+                        const check = traitCheck(character, trait);
+                        const isSelected = selected?.name === trait.name;
+                        return (
+                            <button key={trait.name} type="button" disabled={!check.can}
                                     onClick={() => check.can && setSelected(trait)}
-                                    disabled={!check.can}
-                                    className={`p-3 rounded text-left text-sm transition-all ${
-                                        !check.can
-                                            ? 'opacity-40 cursor-not-allowed bg-gray-300 dark:bg-gray-700'
-                                            : selected?.name === trait.name
-                                                ? 'bg-viking-bronze text-viking-brown border-2 border-viking-leather'
-                                                : 'bg-viking-parchment dark:bg-gray-800 text-viking-text dark:text-viking-parchment border-2 border-transparent hover:border-viking-bronze'
-                                    }`}
-                                >
+                                    className={`vk-rune-card w-full text-left disabled:opacity-45 disabled:cursor-not-allowed ${isSelected ? 'border-primary' : ''}`}>
+                                <div className="flex-1 min-w-0">
                                     <div className="font-bold">{trait.name}</div>
-                                    <div className="text-xs mt-1 opacity-90">{trait.description}</div>
-                                    {trait.effects && (
-                                        <div className="text-xs mt-1 text-viking-success">
-                                            {trait.effects.actions && `+${trait.effects.actions} Action `}
-                                            {trait.effects.armure && `+${trait.effects.armure} Armure `}
-                                            {trait.effects.seuil && `+${trait.effects.seuil} Seuil `}
-                                            {trait.effects.description}
-                                        </div>
-                                    )}
-                                    {!check.can && (
-                                        <div className="text-xs mt-1 text-red-600 dark:text-red-400 font-semibold">
-                                            ⚠️ {check.reason}
-                                        </div>
-                                    )}
-                                </button>
-                            );
-                        })}
-                    </div>
-                    
-                    {/* Actions */}
-                    <div className="flex gap-2 pt-2 border-t border-viking-leather dark:border-viking-bronze">
-                        <button 
-                            onClick={onClose}
-                            className="flex-1 px-4 py-2 bg-gray-500 text-white rounded font-semibold hover:bg-gray-600"
-                        >
-                            Annuler
-                        </button>
-                        <button 
-                            onClick={handleAdd}
-                            disabled={!selected}
-                            className="flex-1 px-4 py-2 bg-viking-bronze text-viking-brown rounded font-semibold hover:bg-viking-leather disabled:opacity-30 disabled:cursor-not-allowed"
-                        >
-                            Ajouter
-                        </button>
-                    </div>
-                </div>
+                                    <div className="text-sm text-muted">{trait.description}</div>
+                                    {trait.effects && <div className="text-xs text-success mt-0.5">{effectsText(trait.effects)}</div>}
+                                    {!check.can && <div className="text-xs text-danger mt-0.5">{check.reason}</div>}
+                                </div>
+                                {isSelected && <VkIcon name="check" className="text-primary" />}
+                            </button>
+                        );
+                    })}
             </div>
-        </div>
+
+            <Actions onClose={onClose} onAdd={handleAdd} disabled={!selected} />
+        </VkModal>
     );
+};
+
+const EditModals = ({ type, character, onClose, onUpdate }) => {
+    if (type === 'addSkill') return <AddSkillModal character={character} onClose={onClose} onUpdate={onUpdate} />;
+    if (type === 'addTrait') return <AddTraitModal character={character} onClose={onClose} onUpdate={onUpdate} />;
+    return null;
 };
 
 export default EditModals;

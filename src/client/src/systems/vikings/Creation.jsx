@@ -1,22 +1,89 @@
-// CharacterCreation.js - Composant de création de personnage
-import React, { useState, useEffect } from "react";
+// src/client/src/systems/vikings/Creation.jsx
+// ─────────────────────────────────────────────────────────────────────────────
+// Assistant de création Vikings (spec_vikings.md §4) : identité, 14 points de
+// caractéristiques (max 4), 10 points de compétences (max 3), 2 à 4 traits
+// (conditions et incompatibilités), runes si livre de sort, récapitulatif.
+// À la fin : « SAGA +N » des traits appliqué à la SAGA de départ (D-9, D-11)
+// et valeurs de combat dérivées (L3-6).
+// Habillage : planche du lot 4. « Fils de / fille de » se déduit du sexe (D-17).
+//
+// Props (CreationPage) : onCreated, onCancel, darkMode
+// ─────────────────────────────────────────────────────────────────────────────
+
+import React, { useState } from "react";
 import {
     canSelectTrait, formatTraitConditions, getSuccessThreshold,
     gainSaga, getTraitSagaBonus, withDerivedValues,
 } from "./config/rules.js";
-import {
-    formatExplosion,
-    formatFullName,
-    formatSkillName,
-    getSkillExamples,
-    isSpecializableSkill
-} from "./config/utils.js";
-import {CARACNAMES, COMPETENCES} from "./config/competences.js";
-import {RUNES} from "./config/runes.js";
-import {TRAITS} from "./config/traits.js";
+import { formatExplosion, formatFullName, formatSkillName, getSkillExamples, isSpecializableSkill } from "./config/utils.js";
+import { CARACNAMES, COMPETENCES } from "./config/competences.js";
+import { RUNES, RUNE_LEVELS } from "./config/runes.js";
+import { TRAITS } from "./config/traits.js";
 import useSystem from "../../hooks/useSystem.js";
+import VkPanel from "./components/ui/VkPanel.jsx";
+import VkModal from "./components/ui/VkModal.jsx";
+import VkIcon from "./components/ui/VkIcon.jsx";
 
-const Creation = ({ onCreated, onCancel }) => {
+const TOTAL_CARAC_POINTS = 14;
+const TOTAL_SKILL_POINTS = 10;
+const MIN_CARAC = 1;
+const MAX_CARAC_CREATION = 4;
+const MAX_SKILL_CREATION = 3;
+const MIN_TRAITS = 2;
+const MAX_TRAITS = 4;
+const STEPS = ['Identité', 'Caractéristiques', 'Compétences', 'Traits', 'Runes', 'Finalisation'];
+
+const INITIAL_CHARACTER = {
+    prenom: '', surnom: '', nom: '',   // nom du parent (« fils/fille de » selon le sexe)
+    sexe: 'homme', age: 25, activite: '', playerName: '',
+    force: 1, agilite: 1, perception: 1, intelligence: 1, charisme: 1, chance: 1,
+    sagaActuelle: 1, sagaTotale: 1,
+    armure: 0, actionsDisponibles: 1, seuilCombat: 1,
+    tokensBlessure: 0, tokensFatigue: 0,
+    skills: [], traits: [], runes: [], items: [],
+};
+
+const effectsText = (effects) => [
+    effects.actions    && `+${effects.actions} action`,
+    effects.armure     && `+${effects.armure} armure`,
+    effects.seuil      && `+${effects.seuil} seuil`,
+    effects.runePoints && `livre de sort ${effects.runePoints} pts`,
+    effects.sagaBonus  && `Saga +${effects.sagaBonus}`,
+    effects.description,
+].filter(Boolean).join(' · ');
+
+// ── Petits composants de module ──────────────────────────────────────────────
+const Field = ({ label, children }) => (
+    <label className="block"><span className="vk-field-label">{label}</span>{children}</label>
+);
+
+const Budget = ({ label, remaining, total }) => (
+    <div className={`vk-callout text-center ${remaining < 0 ? 'vk-callout-danger' : ''}`}>
+        <span className="vk-label text-lg">{label} : </span>
+        <strong className="vk-num">{remaining} / {total}</strong>
+    </div>
+);
+
+const Pips = ({ value }) => (
+    <div className="vk-dots">{[1, 2, 3, 4, 5].map(i => <i key={i} className={i <= value ? 'is-full' : ''} />)}</div>
+);
+
+const LevelStepper = ({ value, onMinus, onPlus, minusDisabled, plusDisabled }) => (
+    <div className="vk-stepper">
+        <button type="button" onClick={onMinus} disabled={minusDisabled}><VkIcon name="minus" /></button>
+        <span className="vk-num">{value}</span>
+        <button type="button" onClick={onPlus} disabled={plusDisabled}><VkIcon name="plus" /></button>
+    </div>
+);
+
+const NavButtons = ({ onPrev, onNext, nextDisabled, nextLabel = 'Suivant →' }) => (
+    <div className="flex gap-2 mt-6">
+        {onPrev && <button type="button" className="vk-btn flex-1" onClick={onPrev}>← Précédent</button>}
+        <button type="button" className="vk-btn vk-btn-primary flex-1" onClick={onNext} disabled={nextDisabled}>{nextLabel}</button>
+    </div>
+);
+
+const Creation = ({ onCreated, onCancel, darkMode }) => {
     const { apiBase } = useSystem();
     const [created,  setCreated]  = useState(null);
     const [loading,  setLoading]  = useState(false);
@@ -24,685 +91,256 @@ const Creation = ({ onCreated, onCancel }) => {
     const [copied,   setCopied]   = useState(false);
     const [step, setStep] = useState(1);
     const [customCode, setCustomCode] = useState('');
-    const [showSpecModal, setShowSpecModal] = useState(false);
-    const [pendingSkill, setPendingSkill] = useState(null);
+    const [skillSearch, setSkillSearch] = useState('');
+    const [pendingSkill, setPendingSkill] = useState(null);   // compétence spécialisable en attente
     const [specValue, setSpecValue] = useState('');
     const [specError, setSpecError] = useState('');
-    const [character, setCharacter] = useState({
-        prenom: '',
-        surnom: '',
-        nom: '',   // nom du parent (« fils/fille de » ajouté à l'affichage)
-        typeParent: 'pere',
-        sexe: 'homme',
-        age: 25,
-        activite: '',
-        playerName: '',
-        force: 1,
-        agilite: 1,
-        perception: 1,
-        intelligence: 1,
-        charisme: 1,
-        chance: 1,
-        sagaActuelle: 1,
-        sagaTotale: 1,
-        armure: 0,
-        actionsDisponibles: 1,
-        seuilCombat: 1,
-        tokensBlessure: 0,
-        tokensFatigue: 0,
-        skills: [],
-        traits: [],
-        runes: [],
-        items: []
-    });
+    const [character, setCharacter] = useState(INITIAL_CHARACTER);
 
-    const TOTAL_CARAC_POINTS = 14;
-    const TOTAL_SKILL_POINTS = 10;
-    const MIN_CARAC = 1;
-    const MAX_CARAC_CREATION = 4;
-    const MAX_SKILL_CREATION = 3;
-    const MIN_TRAITS = 2;
-    const MAX_TRAITS = 4;
+    const set = (field, value) => setCharacter(prev => ({ ...prev, [field]: value }));
 
-    const getUsedCaracPoints = () => {
-        return character.force + character.agilite + character.perception + 
-               character.intelligence + character.charisme + character.chance;
-    };
+    const usedCaracPoints = Object.keys(CARACNAMES).reduce((sum, k) => sum + character[k], 0);
+    const usedSkillPoints = character.skills.reduce((sum, skill) => sum + skill.level, 0);
+    const totalRunePoints = character.traits.reduce((sum, trait) =>
+        sum + (TRAITS.find(t => t.name === trait.name)?.effects?.runePoints || 0), 0);
+    const usedRunePoints  = character.runes.reduce((sum, rune) => sum + rune.level, 0);
 
-    const getUsedSkillPoints = () => {
-        return character.skills.reduce((sum, skill) => sum + skill.level, 0);
-    };
-
-    const getRemainingRunePoints = () => {
-        const totalRunePoints = character.traits.reduce((sum, trait) => {
-            const traitData = TRAITS.find(t => t.name === trait.name);
-            return sum + (traitData?.effects?.runePoints || 0);
-        }, 0);
-        
-        const usedRunePoints = character.runes.reduce((sum, rune) => sum + rune.level, 0);
-        return totalRunePoints - usedRunePoints;
-    };
-
-    const handleFinalAddSkill = (skillName, specialization) => {
-        // On met à jour via onUpdate (ton prop qui remonte à App.js)
-        setCharacter({
-            ...character,
-            skills: [...character.skills, { name: skillName, specialization, level: 1, currentPoints: 1 }]
-        });
-    };
-
-    // Étape 1: Identité
+    // ── Étape 1 : identité ───────────────────────────────────────────────────
     const renderStep1 = () => (
         <div className="space-y-4">
-            <div>
-                <label className="block text-sm font-medium text-viking-brown dark:text-viking-parchment mb-1">
-                    Prénom *
-                </label>
-                <input
-                    type="text"
-                    value={character.prenom}
-                    onChange={e => setCharacter({...character, prenom: e.target.value})}
-                    className="w-full px-3 py-2 border-2 border-viking-leather dark:border-viking-bronze rounded-lg bg-white dark:bg-viking-brown text-viking-text dark:text-viking-parchment"
-                />
+            <div className="grid sm:grid-cols-2 gap-4">
+                <Field label="Prénom *"><input className="vk-input" value={character.prenom} onChange={e => set('prenom', e.target.value)} /></Field>
+                <Field label="Surnom (optionnel)"><input className="vk-input" value={character.surnom} onChange={e => set('surnom', e.target.value)} placeholder="Le Brave" /></Field>
             </div>
-
-            <div>
-                <label className="block text-sm font-medium text-viking-brown dark:text-viking-parchment mb-1">
-                    Surnom (optionnel)
-                </label>
-                <input
-                    type="text"
-                    value={character.surnom}
-                    onChange={e => setCharacter({...character, surnom: e.target.value})}
-                    className="w-full px-3 py-2 border-2 border-viking-leather dark:border-viking-bronze rounded-lg bg-white dark:bg-viking-brown text-viking-text dark:text-viking-parchment"
-                />
-            </div>
-
-            <div>
-                <label className="block text-sm font-medium text-viking-brown dark:text-viking-parchment mb-2">
-                    Filiation *
-                </label>
-                <div className="flex gap-4 mb-2">
-                    <label className="flex items-center gap-2 cursor-pointer">
-                        <input
-                            type="radio"
-                            checked={character.typeParent === 'pere'}
-                            onChange={() => setCharacter({...character, typeParent: 'pere'})}
-                            className="text-viking-bronze"
-                        />
-                        <span className="text-viking-text dark:text-viking-parchment">Fils de</span>
-                    </label>
-                    <label className="flex items-center gap-2 cursor-pointer">
-                        <input
-                            type="radio"
-                            checked={character.typeParent === 'mere'}
-                            onChange={() => setCharacter({...character, typeParent: 'mere'})}
-                            className="text-viking-bronze"
-                        />
-                        <span className="text-viking-text dark:text-viking-parchment">Fille de</span>
-                    </label>
-                </div>
-                <input
-                    type="text"
-                    placeholder="Nom du parent"
-                    value={character.nom}
-                    onChange={e => setCharacter({...character, nom: e.target.value})}
-                    className="w-full px-3 py-2 border-2 border-viking-leather dark:border-viking-bronze rounded-lg bg-white dark:bg-viking-brown text-viking-text dark:text-viking-parchment"
-                />
-            </div>
-
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid sm:grid-cols-2 gap-4">
                 <div>
-                    <label className="block text-sm font-medium text-viking-brown dark:text-viking-parchment mb-1">
-                        Sexe *
-                    </label>
-                    <select
-                        value={character.sexe}
-                        onChange={e => setCharacter({...character, sexe: e.target.value})}
-                        className="w-full px-3 py-2 border-2 border-viking-leather dark:border-viking-bronze rounded-lg bg-white dark:bg-viking-brown text-viking-text dark:text-viking-parchment"
-                    >
-                        <option value="homme">Homme</option>
-                        <option value="femme">Femme</option>
-                    </select>
+                    <div className="vk-field-label">Sexe *</div>
+                    <div className="flex gap-1.5">
+                        {[['homme', 'Homme'], ['femme', 'Femme']].map(([id, label]) => (
+                            <button key={id} type="button" className={`vk-pill ${character.sexe === id ? 'is-selected' : ''}`} onClick={() => set('sexe', id)}>{label}</button>
+                        ))}
+                    </div>
                 </div>
-
-                <div>
-                    <label className="block text-sm font-medium text-viking-brown dark:text-viking-parchment mb-1">
-                        Âge
-                    </label>
-                    <input
-                        type="number"
-                        value={character.age}
-                        onChange={e => setCharacter({...character, age: parseInt(e.target.value) || 25})}
-                        className="w-full px-3 py-2 border-2 border-viking-leather dark:border-viking-bronze rounded-lg bg-white dark:bg-viking-brown text-viking-text dark:text-viking-parchment"
-                    />
-                </div>
+                <Field label={`${character.sexe === 'homme' ? 'Fils' : 'Fille'} de * (nom du parent)`}>
+                    <input className="vk-input" value={character.nom} onChange={e => set('nom', e.target.value)} placeholder="Ragnar" />
+                </Field>
             </div>
-
-            <div>
-                <label className="block text-sm font-medium text-viking-brown dark:text-viking-parchment mb-1">
-                    Activité/Métier
-                </label>
-                <input
-                    type="text"
-                    value={character.activite}
-                    onChange={e => setCharacter({...character, activite: e.target.value})}
-                    className="w-full px-3 py-2 border-2 border-viking-leather dark:border-viking-bronze rounded-lg bg-white dark:bg-viking-brown text-viking-text dark:text-viking-parchment"
-                />
+            <div className="grid sm:grid-cols-3 gap-4">
+                <Field label="Âge"><input type="number" className="vk-input vk-num" value={character.age} onChange={e => set('age', parseInt(e.target.value) || 25)} /></Field>
+                <Field label="Activité / métier"><input className="vk-input" value={character.activite} onChange={e => set('activite', e.target.value)} /></Field>
+                <Field label="Nom du joueur"><input className="vk-input" value={character.playerName} onChange={e => set('playerName', e.target.value)} /></Field>
             </div>
-
-            <div>
-                <label className="block text-sm font-medium text-viking-brown dark:text-viking-parchment mb-1">
-                    Nom du joueur
-                </label>
-                <input
-                    type="text"
-                    value={character.playerName}
-                    onChange={e => setCharacter({...character, playerName: e.target.value})}
-                    className="w-full px-3 py-2 border-2 border-viking-leather dark:border-viking-bronze rounded-lg bg-white dark:bg-viking-brown text-viking-text dark:text-viking-parchment"
-                />
-            </div>
-
-            {onCancel && (
-                <button onClick={onCancel} className="px-4 py-2 bg-gray-600 text-white rounded hover:bg-gray-500">
-                    ← Retour
-                </button>
+            {character.prenom && (
+                <p className="text-center vk-title text-xl">{formatFullName(character)}</p>
             )}
-            <button
-                onClick={() => setStep(2)}
-                disabled={!character.prenom || !character.nom}
-                className="w-full mt-4 px-6 py-3 bg-viking-bronze hover:bg-viking-leather text-viking-brown dark:text-viking-parchment font-semibold rounded-lg disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-            >
-                Suivant →
-            </button>
+            <div className="flex gap-2 mt-6">
+                {onCancel && <button type="button" className="vk-btn flex-1" onClick={onCancel}>← Retour</button>}
+                <button type="button" className="vk-btn vk-btn-primary flex-1" onClick={() => setStep(2)} disabled={!character.prenom || !character.nom}>Suivant →</button>
+            </div>
         </div>
     );
 
-    // Étape 2: Caractéristiques
+    // ── Étape 2 : caractéristiques ───────────────────────────────────────────
     const renderStep2 = () => {
-        const remaining = TOTAL_CARAC_POINTS - getUsedCaracPoints();
-        const caracs = [
-            { key: 'force', label: 'Force' },
-            { key: 'agilite', label: 'Agilité' },
-            { key: 'perception', label: 'Perception' },
-            { key: 'intelligence', label: 'Intelligence' },
-            { key: 'charisme', label: 'Charisme' },
-            { key: 'chance', label: 'Chance' }
-        ];
-        
+        const remaining = TOTAL_CARAC_POINTS - usedCaracPoints;
         return (
             <div className="space-y-4">
-                <div className="p-4 bg-viking-bronze dark:bg-viking-leather rounded-lg text-center font-semibold text-viking-brown dark:text-viking-parchment">
-                    Points restants : {remaining} / {TOTAL_CARAC_POINTS}
-                </div>
-
-                {remaining < 0 && (
-                    <div className="p-3 bg-red-100 dark:bg-red-900/30 border-2 border-red-500 rounded-lg text-sm text-red-800 dark:text-red-200">
-                        Vous avez dépassé le nombre de points disponibles !
-                    </div>
-                )}
-
-                <div className="p-3 bg-blue-100 dark:bg-blue-900/30 border-2 border-viking-bronze rounded-lg text-sm text-viking-text dark:text-viking-parchment">
-                    <strong>Explosions :</strong> Niv 1-2 → 10 | Niv 3-4 → 9-10 | Niv 5 → 8-9-10
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    {caracs.map(({key, label}) => {
+                <Budget label="Points restants" remaining={remaining} total={TOTAL_CARAC_POINTS} />
+                <p className="text-sm text-muted text-center">Explosion : niveau 1-2 → 10 · niveau 3-4 → 9, 10 · niveau 5 → 8, 9, 10. Maximum {MAX_CARAC_CREATION} à la création.</p>
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                    {Object.entries(CARACNAMES).map(([key, label]) => {
                         const level = character[key];
-                        const explosionText = formatExplosion(level);
-                        
                         return (
-                            <div key={key} className="p-4 bg-white dark:bg-viking-brown border-2 border-viking-leather dark:border-viking-bronze rounded-lg">
-                                <div className="flex justify-between items-center mb-2">
-                                    <span className="font-semibold text-viking-brown dark:text-viking-parchment">{label}</span>
-                                    <div className="flex items-center gap-2">
-                                        <button
-                                            onClick={() => level > MIN_CARAC && setCharacter({...character, [key]: level - 1})}
-                                            disabled={level <= MIN_CARAC}
-                                            className="w-7 h-7 flex items-center justify-center bg-viking-bronze hover:bg-viking-leather rounded-full text-viking-brown font-bold disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
-                                        >
-                                            -
-                                        </button>
-                                        
-                                        <div className="flex gap-1">
-                                            {[1,2,3,4,5].map(i => (
-                                                <div
-                                                    key={i}
-                                                    className={`w-3 h-3 rounded-full border-2 ${
-                                                        i <= level 
-                                                            ? 'bg-viking-bronze border-viking-bronze' 
-                                                            : 'bg-transparent border-viking-leather dark:border-viking-bronze'
-                                                    }`}
-                                                />
-                                            ))}
-                                        </div>
-                                        
-                                        <span className="text-viking-text dark:text-viking-parchment w-6 text-center">({level})</span>
-                                        
-                                        <button
-                                            onClick={() => level < MAX_CARAC_CREATION && setCharacter({...character, [key]: level + 1})}
-                                            disabled={level >= MAX_CARAC_CREATION || remaining <= 0}
-                                            className="w-7 h-7 flex items-center justify-center bg-viking-bronze hover:bg-viking-leather rounded-full text-viking-brown font-bold disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
-                                        >
-                                            +
-                                        </button>
-                                    </div>
-                                </div>
-                                <div className="text-xs text-viking-leather dark:text-viking-bronze italic">
-                                    Explosion sur: {explosionText}
+                            <div key={key} className="vk-stat">
+                                <div className="val">{level}</div>
+                                <div className="lbl">{label}</div>
+                                <div className="sub">expl. {formatExplosion(level)}</div>
+                                <div className="mt-1">
+                                    <LevelStepper value={level}
+                                                  onMinus={() => set(key, level - 1)} minusDisabled={level <= MIN_CARAC}
+                                                  onPlus={() => set(key, level + 1)} plusDisabled={level >= MAX_CARAC_CREATION || remaining <= 0} />
                                 </div>
                             </div>
                         );
                     })}
                 </div>
-
-                <div className="flex gap-2 mt-6">
-                    <button
-                        onClick={() => setStep(1)}
-                        className="flex-1 px-6 py-3 bg-viking-leather hover:bg-viking-brown text-viking-parchment font-semibold rounded-lg transition-colors"
-                    >
-                        ← Précédent
-                    </button>
-                    <button
-                        onClick={() => setStep(3)}
-                        disabled={remaining !== 0}
-                        className="flex-1 px-6 py-3 bg-viking-bronze hover:bg-viking-leather text-viking-brown font-semibold rounded-lg disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                    >
-                        Suivant →
-                    </button>
-                </div>
+                <NavButtons onPrev={() => setStep(1)} onNext={() => setStep(3)} nextDisabled={remaining !== 0} />
             </div>
         );
     };
 
-    // Étape 3: Compétences
+    // ── Étape 3 : compétences ────────────────────────────────────────────────
+    const addSkill = (skillName) => {
+        if (isSpecializableSkill(skillName)) {
+            setPendingSkill(skillName);
+            setSpecValue('');
+            setSpecError('');
+            return;
+        }
+        if (character.skills.some(s => s.name === skillName)) return;
+        set('skills', [...character.skills, { name: skillName, level: 1, currentPoints: 1 }]);
+    };
+
+    const confirmSpecialization = () => {
+        const val = specValue.trim();
+        if (!val) { setSpecError('Une spécialisation est requise.'); return; }
+        if (character.skills.some(s => s.name === pendingSkill && s.specialization === val)) {
+            setSpecError(`Doublon : ${pendingSkill} (${val}) existe déjà.`);
+            return;
+        }
+        set('skills', [...character.skills, { name: pendingSkill, specialization: val, level: 1, currentPoints: 1 }]);
+        setPendingSkill(null);
+    };
+
     const renderStep3 = () => {
-        const remaining = TOTAL_SKILL_POINTS - getUsedSkillPoints();
-        
-        const addSkill = (skillName) => {
-            const comp = COMPETENCES.find(c => c.name === skillName);
-            if (!comp) return;
-            
-            let specialization = undefined;
-            
-            // Demander spécialisation si nécessaire
-            if (isSpecializableSkill(skillName)) {
-                setPendingSkill(skillName);
-                setSpecValue('');
-                setSpecError('');
-                setShowSpecModal(true);
-                return;
-            } else {
-                // Vérifier doublon pour compétences normales
-                if (character.skills.some(s => s.name === skillName)) return;
-            }
-            
-            setCharacter({
-                ...character,
-                skills: [...character.skills, { name: skillName, specialization, level: 1, currentPoints: 1 }]
-            });
-        };
-
-        const removeSkill = (skill) => {
-            setCharacter({
-                ...character,
-                skills: character.skills.filter(s => 
-                    s.name !== skill.name || s.specialization !== skill.specialization
-                )
-            });
-        };
-
-        const changeSkillLevel = (skill, delta) => {
-            setCharacter({
-                ...character,
-                skills: character.skills.map(s => {
-                    if (s.name !== skill.name || s.specialization !== skill.specialization) return s;
-                    const newLevel = Math.max(0, Math.min(MAX_SKILL_CREATION, s.level + delta));
-                    return { ...s, level: newLevel, currentPoints: newLevel };
-                })
-            });
-        };
+        const remaining = TOTAL_SKILL_POINTS - usedSkillPoints;
+        const sameSkill = (a, b) => a.name === b.name && a.specialization === b.specialization;
+        const changeSkillLevel = (skill, delta) => set('skills', character.skills.map(s => {
+            if (!sameSkill(s, skill)) return s;
+            const level = Math.max(0, Math.min(MAX_SKILL_CREATION, s.level + delta));
+            return { ...s, level, currentPoints: level };
+        }));
+        const removeSkill = (skill) => set('skills', character.skills.filter(s => !sameSkill(s, skill)));
+        const available = COMPETENCES.filter(c =>
+            c.name.toLowerCase().includes(skillSearch.toLowerCase())
+            && (isSpecializableSkill(c.name) || !character.skills.some(s => s.name === c.name)));
 
         return (
             <div className="space-y-4">
-                <div className="p-4 bg-viking-bronze dark:bg-viking-leather rounded-lg text-center font-semibold text-viking-brown dark:text-viking-parchment">
-                    Points restants : {remaining} / {TOTAL_SKILL_POINTS}
-                </div>
+                <Budget label="Points restants" remaining={remaining} total={TOTAL_SKILL_POINTS} />
+                <p className="text-sm text-muted text-center">Seuil : niveau 0-1 → 7+ · 2 → 6+ · 3-4 → 5+ · 5 → 4+. Maximum {MAX_SKILL_CREATION} à la création ; coût = niveau.</p>
 
-                <div className="p-3 bg-blue-100 dark:bg-blue-900/30 border-2 border-viking-bronze rounded-lg text-sm text-viking-text dark:text-viking-parchment">
-                    <strong>Seuils :</strong> Niv 0-1 → 7+ | Niv 2 → 6+ | Niv 3-4 → 5+ | Niv 5 → 4+
-                </div>
+                <div className="grid md:grid-cols-2 gap-5">
+                    <div>
+                        <div className="vk-label text-lg text-primary mb-1">Ajouter une compétence</div>
+                        <span className="vk-input-icon block mb-2">
+                            <VkIcon name="eye" />
+                            <input className="vk-input" value={skillSearch} onChange={e => setSkillSearch(e.target.value)} placeholder="Rechercher…" />
+                        </span>
+                        <div className="grid grid-cols-1 gap-1 max-h-80 overflow-y-auto pr-1">
+                            {available.map(c => (
+                                <button key={c.name} type="button" className="vk-pill w-full justify-between text-left" onClick={() => addSkill(c.name)}>
+                                    <span>{c.name}</span><span className="text-xs opacity-75">{c.caracs.map(k => CARACNAMES[k]).join(' / ')}</span>
+                                </button>
+                            ))}
+                        </div>
+                    </div>
 
-                <div>
-                    <label className="block text-sm font-medium text-viking-brown dark:text-viking-parchment mb-1">
-                        Ajouter une compétence
-                    </label>
-                    <select
-                        onChange={(e) => { if (e.target.value) { addSkill(e.target.value); e.target.value = ''; }}}
-                        className="w-full px-3 py-2 border-2 border-viking-leather dark:border-viking-bronze rounded-lg bg-white dark:bg-viking-brown text-viking-text dark:text-viking-parchment"
-                    >
-                        <option value="">-- Choisir --</option>
-                        {COMPETENCES.map(c => (
-                            <option
-                                key={c.name}
-                                value={c.name}
-                                disabled={!isSpecializableSkill(c.name) && character.skills.some(s => s.name === c.name)}
-                            >
-                                {c.name}
-                            </option>
-                        ))}
-                    </select>
-                </div>
-
-                <div className="max-h-96 overflow-y-auto space-y-2">
-                    {character.skills.map(skill => {
-                        const comp = COMPETENCES.find(c => c.name === skill.name);
-                        const threshold = getSuccessThreshold(skill.level);
-                        
-                        return (
-                            <div key={`${skill.name}-${skill.specialization || 'default'}`} className="p-3 bg-white dark:bg-viking-brown border-2 border-viking-leather dark:border-viking-bronze rounded-lg">
-                                <div className="flex justify-between items-start mb-2">
-                                    <div>
-                                        <div className="font-semibold text-viking-brown dark:text-viking-parchment">
-                                            {formatSkillName(skill)}
-                                        </div>
-                                        {comp && (
-                                            <div className="text-xs text-viking-leather dark:text-viking-bronze">
-                                                {CARACNAMES[comp.caracs[0]]} / {CARACNAMES[comp.caracs[1]]}
-                                            </div>
-                                        )}
-                                    </div>
-                                    <button
-                                        onClick={() => removeSkill(skill)}
-                                        className="text-red-600 hover:text-red-800 dark:text-red-400 dark:hover:text-red-300 font-bold"
-                                    >
-                                        🗑️
-                                    </button>
+                    <div>
+                        <div className="vk-label text-lg text-primary mb-1">Compétences choisies ({character.skills.length})</div>
+                        {character.skills.length === 0 && <p className="text-sm text-muted italic">Aucune pour l'instant.</p>}
+                        {character.skills.map(skill => (
+                            <div key={`${skill.name}-${skill.specialization || 'default'}`} className="vk-row">
+                                <div className="flex-1 min-w-0">
+                                    <div className="font-bold">{formatSkillName(skill)}</div>
+                                    <div className="text-xs text-muted">seuil {getSuccessThreshold(skill.level)}+</div>
                                 </div>
-                                
-                                <div className="flex items-center justify-between">
-                                    <div className="flex items-center gap-2">
-                                        <button
-                                            onClick={() => changeSkillLevel(skill, -1)}
-                                            disabled={skill.level <= 0}
-                                            className="w-7 h-7 flex items-center justify-center bg-viking-bronze hover:bg-viking-leather rounded-full text-viking-brown font-bold disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
-                                        >
-                                            -
-                                        </button>
-                                        
-                                        <div className="flex gap-1">
-                                            {[1,2,3,4,5].map(i => (
-                                                <div
-                                                    key={i}
-                                                    className={`w-3 h-3 rounded-full border-2 ${
-                                                        i <= skill.level 
-                                                            ? 'bg-viking-bronze border-viking-bronze' 
-                                                            : 'bg-transparent border-viking-leather dark:border-viking-bronze'
-                                                    }`}
-                                                />
-                                            ))}
-                                        </div>
-                                        
-                                        <span className="text-viking-text dark:text-viking-parchment text-sm">
-                                            Niv {skill.level} - {skill.level} pt(s)
-                                        </span>
-                                        
-                                        <button
-                                            onClick={() => changeSkillLevel(skill, 1)}
-                                            disabled={skill.level >= MAX_SKILL_CREATION || remaining <= 0}
-                                            className="w-7 h-7 flex items-center justify-center bg-viking-bronze hover:bg-viking-leather rounded-full text-viking-brown font-bold disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
-                                        >
-                                            +
-                                        </button>
-                                    </div>
-                                </div>
-                                
-                                <div className="text-xs text-viking-leather dark:text-viking-bronze italic mt-1">
-                                    Succès sur: {threshold}+
-                                </div>
+                                <LevelStepper value={skill.level}
+                                              onMinus={() => changeSkillLevel(skill, -1)} minusDisabled={skill.level <= 0}
+                                              onPlus={() => changeSkillLevel(skill, 1)} plusDisabled={skill.level >= MAX_SKILL_CREATION || remaining <= 0} />
+                                <button type="button" className="vk-btn vk-btn-danger vk-btn-icon vk-btn-sm" onClick={() => removeSkill(skill)} title="Retirer"><VkIcon name="close" /></button>
                             </div>
-                        );
-                    })}
+                        ))}
+                    </div>
                 </div>
 
-                <div className="flex gap-2 mt-6">
-                    <button
-                        onClick={() => setStep(2)}
-                        className="flex-1 px-6 py-3 bg-viking-leather hover:bg-viking-brown text-viking-parchment font-semibold rounded-lg transition-colors"
-                    >
-                        ← Précédent
-                    </button>
-                    <button
-                        onClick={() => setStep(4)}
-                        disabled={remaining !== 0}
-                        className="flex-1 px-6 py-3 bg-viking-bronze hover:bg-viking-leather text-viking-brown font-semibold rounded-lg disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                    >
-                        Suivant →
-                    </button>
-                </div>
+                <NavButtons onPrev={() => setStep(2)} onNext={() => setStep(4)} nextDisabled={remaining !== 0} />
             </div>
         );
     };
 
-    // Étape 4: Traits
+    // ── Étape 4 : traits ─────────────────────────────────────────────────────
     const renderStep4 = () => {
         const toggleTrait = (trait) => {
             if (character.traits.some(t => t.name === trait.name)) {
-                setCharacter({
-                    ...character,
-                    traits: character.traits.filter(t => t.name !== trait.name)
-                });
-            } else {
-                if (canSelectTrait(character, trait, MAX_TRAITS)) {
-                    setCharacter({
-                        ...character,
-                        traits: [...character.traits, trait]
-                    });
-                }
+                set('traits', character.traits.filter(t => t.name !== trait.name));
+            } else if (canSelectTrait(character, trait, MAX_TRAITS)) {
+                set('traits', [...character.traits, trait]);
             }
         };
 
         return (
             <div className="space-y-4">
-                <div className="p-3 bg-amber-100 dark:bg-amber-900/30 border-2 border-viking-bronze rounded-lg text-sm text-viking-text dark:text-viking-parchment">
-                    Sélectionnez entre {MIN_TRAITS} et {MAX_TRAITS} traits/backgrounds. Vérifiez les prérequis et incompatibilités.
-                </div>
-                <div className="p-4 bg-viking-bronze dark:bg-viking-leather rounded-lg text-center font-semibold text-viking-brown dark:text-viking-parchment">
-                    Traits sélectionnés : {character.traits.length} / {MAX_TRAITS}
-                </div>
-                <div className="max-h-96 overflow-y-auto space-y-2">
+                <Budget label="Traits sélectionnés" remaining={character.traits.length} total={MAX_TRAITS} />
+                <p className="text-sm text-muted text-center">Entre {MIN_TRAITS} et {MAX_TRAITS} traits ou backgrounds, en respectant conditions et incompatibilités.</p>
+                <div className="grid md:grid-cols-2 gap-2 max-h-[32rem] overflow-y-auto pr-1">
                     {TRAITS.map(trait => {
                         const isSelected = character.traits.some(t => t.name === trait.name);
                         const canSelect = canSelectTrait(character, trait, MAX_TRAITS);
-                        
+                        const conditions = formatTraitConditions(trait);
                         return (
-                            <div 
-                                key={trait.name} 
-                                onClick={() => canSelect && toggleTrait(trait)}
-                                className={`p-4 border-2 rounded-lg cursor-pointer transition-all ${
-                                    isSelected 
-                                        ? 'bg-viking-bronze/20 border-viking-bronze dark:border-viking-bronze border-4' 
-                                        : canSelect
-                                        ? 'bg-white dark:bg-viking-brown border-viking-leather dark:border-viking-bronze hover:border-viking-bronze hover:shadow-lg'
-                                        : 'bg-gray-100 dark:bg-gray-800 border-gray-300 dark:border-gray-600 opacity-50 cursor-not-allowed'
-                                }`}
-                            >
-                                <div className="flex items-start justify-between mb-2">
-                                    <div className="font-bold text-lg text-viking-brown dark:text-viking-parchment">
-                                        {isSelected ? '✓ ' : ''}{trait.name}
+                            <button key={trait.name} type="button" disabled={!canSelect} onClick={() => toggleTrait(trait)}
+                                    className={`vk-rune-card w-full text-left disabled:opacity-45 disabled:cursor-not-allowed ${isSelected ? 'border-primary' : ''}`}>
+                                <div className="flex-1 min-w-0">
+                                    <div className="font-bold flex items-center gap-2">
+                                        {trait.name}
+                                        {isSelected && <span className="vk-tag vk-tag-gold"><VkIcon name="check" />Choisi</span>}
                                     </div>
-                                    {isSelected && (
-                                        <span className="px-2 py-1 bg-viking-success text-white text-xs rounded-full">
-                                            Sélectionné
-                                        </span>
-                                    )}
+                                    <div className="text-sm text-muted">{trait.description}</div>
+                                    {trait.effects && effectsText(trait.effects) && <div className="text-xs text-success mt-0.5">{effectsText(trait.effects)}</div>}
+                                    {conditions && <div className="text-xs mt-0.5"><span className="text-muted">Requis :</span> {conditions}</div>}
+                                    {trait.incompatible.length > 0 && <div className="text-xs text-danger mt-0.5">Incompatible : {trait.incompatible.join(', ')}</div>}
                                 </div>
-                                
-                                <div className="text-sm text-viking-text dark:text-viking-parchment mb-2">
-                                    {trait.description}
-                                </div>
-                                
-                                {(trait.effects.actions || trait.effects.armure || trait.effects.seuil || trait.effects.runePoints || trait.effects.sagaBonus || trait.effects.description) && (
-                                    <div className="text-sm text-viking-success dark:text-green-400 mb-2">
-                                        <strong>Effets :</strong>{' '}
-                                        {trait.effects.actions && `+${trait.effects.actions} Action `}
-                                        {trait.effects.armure && `+${trait.effects.armure} Armure `}
-                                        {trait.effects.seuil && `+${trait.effects.seuil} Seuil `}
-                                        {trait.effects.runePoints && `${trait.effects.runePoints} pts Runes `}
-                                        {trait.effects.sagaBonus && `+${trait.effects.sagaBonus} SAGA `}
-                                        {trait.effects.description && trait.effects.description}
-                                    </div>
-                                )}
-                                
-                                {formatTraitConditions(trait) && (
-                                    <div className="text-xs text-viking-leather dark:text-viking-bronze">
-                                        <strong>Requis :</strong> {formatTraitConditions(trait)}
-                                    </div>
-                                )}
-                                
-                                {trait.incompatible.length > 0 && (
-                                    <div className="text-xs text-red-600 dark:text-red-400 mt-1">
-                                        <strong>Incompatible :</strong> {trait.incompatible.join(', ')}
-                                    </div>
-                                )}
-                            </div>
+                            </button>
                         );
                     })}
                 </div>
-                <div className="flex gap-2 mt-6">
-                    <button onClick={() => setStep(3)} className="flex-1 px-6 py-3 bg-viking-leather hover:bg-viking-brown text-viking-parchment font-semibold rounded-lg transition-colors">
-                        ← Précédent
-                    </button>
-                    <button 
-                        onClick={() => setStep(5)} 
-                        disabled={character.traits.length < MIN_TRAITS || character.traits.length > MAX_TRAITS}
-                        className="flex-1 px-6 py-3 bg-viking-bronze hover:bg-viking-leather text-viking-brown font-semibold rounded-lg disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                    >
-                        Suivant →
-                    </button>
-                </div>
+                <NavButtons onPrev={() => setStep(3)} onNext={() => setStep(5)}
+                            nextDisabled={character.traits.length < MIN_TRAITS || character.traits.length > MAX_TRAITS} />
             </div>
         );
     };
 
-    // Étape 5: Runes
+    // ── Étape 5 : runes ──────────────────────────────────────────────────────
     const renderStep5 = () => {
-        const totalRunePoints = character.traits.reduce((sum, trait) => {
-            const traitData = TRAITS.find(t => t.name === trait.name);
-            return sum + (traitData?.effects?.runePoints || 0);
-        }, 0);
-
-        const remaining = getRemainingRunePoints();
-
+        const remaining = totalRunePoints - usedRunePoints;
         const changeRuneLevel = (runeName, delta) => {
-            const existingRune = character.runes.find(r => r.name === runeName);
-            
-            if (existingRune) {
-                const newLevel = Math.max(0, Math.min(5, existingRune.level + delta));
-                setCharacter({
-                    ...character,
-                    runes: character.runes.map(r => r.name === runeName ? {...r, level: newLevel} : r).filter(r => r.level > 0)
-                });
+            const existing = character.runes.find(r => r.name === runeName);
+            if (existing) {
+                const level = Math.max(0, Math.min(5, existing.level + delta));
+                set('runes', character.runes.map(r => r.name === runeName ? { ...r, level } : r).filter(r => r.level > 0));
             } else if (delta > 0) {
-                const runeData = RUNES.find(r => r.name === runeName);
-                setCharacter({
-                    ...character,
-                    runes: [...character.runes, { name: runeName, symbol: runeData.symbol, level: 1 }]
-                });
+                set('runes', [...character.runes, { name: runeName, level: 1 }]);
             }
         };
 
         if (totalRunePoints === 0) {
             return (
                 <div className="space-y-4">
-                    <div className="p-4 bg-amber-100 dark:bg-amber-900/30 border-2 border-viking-bronze rounded-lg text-sm text-viking-text dark:text-viking-parchment">
-                        Aucun trait ne vous donne accès aux runes à la création. Vous pourrez en apprendre par la suite via le roleplay.
-                    </div>
-                    <div className="flex gap-2 mt-6">
-                        <button onClick={() => setStep(4)} className="flex-1 px-6 py-3 bg-viking-leather hover:bg-viking-brown text-viking-parchment font-semibold rounded-lg transition-colors">
-                            ← Précédent
-                        </button>
-                        <button onClick={() => setStep(6)} className="flex-1 px-6 py-3 bg-viking-bronze hover:bg-viking-leather text-viking-brown font-semibold rounded-lg transition-colors">
-                            Suivant →
-                        </button>
-                    </div>
+                    <div className="vk-callout">Aucun trait choisi ne donne de livre de sort : pas de runes à la création. Elles pourront s'apprendre en jeu.</div>
+                    <NavButtons onPrev={() => setStep(4)} onNext={() => setStep(6)} />
                 </div>
             );
         }
 
         return (
             <div className="space-y-4">
-                <div className="p-4 bg-viking-bronze dark:bg-viking-leather rounded-lg text-center font-semibold text-viking-brown dark:text-viking-parchment">
-                    Points Runes restants : {remaining} / {totalRunePoints}
-                </div>
-                <div className="p-3 bg-blue-100 dark:bg-blue-900/30 border-2 border-viking-bronze rounded-lg text-sm text-viking-text dark:text-viking-parchment">
-                    <strong>Niveaux :</strong> 1 = Légende | 2 = Sensoriel | 3+ = Actif (majeur) | 4+ = Objets/Tatouages | 5 = Artefacts permanents
-                </div>
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-3 max-h-96 overflow-y-auto">
+                <Budget label="Points de runes restants" remaining={remaining} total={totalRunePoints} />
+                <p className="text-sm text-muted text-center">{RUNE_LEVELS.slice(1).map((label, i) => `${i + 1} : ${label}`).join(' · ')}</p>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-3 max-h-[32rem] overflow-y-auto pr-1">
                     {RUNES.map(rune => {
-                        const charRune = character.runes.find(r => r.name === rune.name);
-                        const level = charRune?.level || 0;
-                        
+                        const level = character.runes.find(r => r.name === rune.name)?.level || 0;
                         return (
-                            <div key={rune.name} className="p-3 bg-white dark:bg-viking-brown border-2 border-viking-leather dark:border-viking-bronze rounded-lg text-center">
-                                <div className="text-4xl mb-2">{rune.symbol}</div>
-                                <div className="font-semibold text-sm text-viking-brown dark:text-viking-parchment mb-1">{rune.name}</div>
-                                <div className="text-xs text-viking-leather dark:text-viking-bronze mb-2">{rune.literal}</div>
-                                <div className="flex items-center justify-center gap-2 mb-2">
-                                    <button
-                                        onClick={() => changeRuneLevel(rune.name, -1)}
-                                        disabled={level <= 0}
-                                        className="w-6 h-6 flex items-center justify-center bg-viking-bronze hover:bg-viking-leather rounded-full text-viking-brown text-sm font-bold disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
-                                    >
-                                        -
-                                    </button>
-                                    <div className="flex gap-1">
-                                        {[1,2,3,4,5].map(i => (
-                                            <div
-                                                key={i}
-                                                className={`w-2 h-2 rounded-full border ${
-                                                    i <= level 
-                                                        ? 'bg-viking-bronze border-viking-bronze' 
-                                                        : 'bg-transparent border-viking-leather dark:border-viking-bronze'
-                                                }`}
-                                            />
-                                        ))}
-                                    </div>
-                                    <button
-                                        onClick={() => changeRuneLevel(rune.name, 1)}
-                                        disabled={level >= 5 || remaining <= 0}
-                                        className="w-6 h-6 flex items-center justify-center bg-viking-bronze hover:bg-viking-leather rounded-full text-viking-brown text-sm font-bold disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
-                                    >
-                                        +
-                                    </button>
-                                </div>
-                                <div className="text-xs text-viking-text dark:text-viking-parchment">
-                                    Niveau {level}
+                            <div key={rune.name} className={`vk-stat ${level ? '' : 'opacity-80'}`} title={rune.esoteric}>
+                                <div className="vk-rune text-3xl mb-1">{rune.symbol}</div>
+                                <div className="font-bold text-sm">{rune.name}</div>
+                                <div className="sub">{rune.literal}</div>
+                                <div className="mt-1">
+                                    <LevelStepper value={level}
+                                                  onMinus={() => changeRuneLevel(rune.name, -1)} minusDisabled={level <= 0}
+                                                  onPlus={() => changeRuneLevel(rune.name, 1)} plusDisabled={level >= 5 || remaining <= 0} />
                                 </div>
                             </div>
                         );
                     })}
                 </div>
-                <div className="flex gap-2 mt-6">
-                    <button onClick={() => setStep(4)} className="flex-1 px-6 py-3 bg-viking-leather hover:bg-viking-brown text-viking-parchment font-semibold rounded-lg transition-colors">
-                        ← Précédent
-                    </button>
-                    <button 
-                        onClick={() => setStep(6)} 
-                        disabled={remaining !== 0}
-                        className="flex-1 px-6 py-3 bg-viking-bronze hover:bg-viking-leather text-viking-brown font-semibold rounded-lg disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                    >
-                        Suivant →
-                    </button>
-                </div>
+                <NavButtons onPrev={() => setStep(4)} onNext={() => setStep(6)} nextDisabled={remaining !== 0} />
             </div>
         );
     };
 
-    // Étape 6: Finalisation
+    // ── Étape 6 : finalisation ───────────────────────────────────────────────
     const renderStep6 = () => {
-        const fullName = formatFullName(character);
-
         // Personnage final : « SAGA +N » des traits choisis appliqué à la SAGA de
         // départ (D-9, D-11) et valeurs de combat dérivées des traits (L3-6)
         const finalChar = withDerivedValues({
@@ -714,9 +352,7 @@ const Creation = ({ onCreated, onCancel }) => {
             setLoading(true);
             setError(null);
             try {
-                const characterToSave = customCode
-                    ? { ...finalChar, accessCode: customCode }
-                    : finalChar;
+                const characterToSave = customCode ? { ...finalChar, accessCode: customCode } : finalChar;
                 const res = await fetch(`${apiBase}/characters`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
@@ -726,8 +362,7 @@ const Creation = ({ onCreated, onCancel }) => {
                     const err = await res.json().catch(() => ({}));
                     throw new Error(err.error || 'Erreur lors de la création');
                 }
-                const newChar = await res.json();
-                setCreated(newChar);
+                setCreated(await res.json());
             } catch (err) {
                 setError(err.message);
             } finally {
@@ -741,253 +376,137 @@ const Creation = ({ onCreated, onCancel }) => {
             setTimeout(() => setCopied(false), 2000);
         };
 
-        // ── Écran post-création ───────────────────────────────────────────────
+        // ── Écran post-création ──
         if (created) {
             return (
                 <div className="text-center space-y-5 py-4">
-                    <div className="text-5xl">⚔️</div>
-                    <div className="text-2xl font-bold text-viking-brown dark:text-viking-parchment">
-                        {formatFullName(created)} est né·e !
-                    </div>
-                    <div className="p-4 bg-viking-bronze/20 border-2 border-viking-bronze rounded-lg mx-auto max-w-xs text-center">
-                        <div className="text-sm text-viking-leather dark:text-viking-bronze mb-2">
-                            Votre code d'accès
-                        </div>
-                        <div className="font-mono text-4xl font-bold tracking-widest text-viking-brown dark:text-viking-parchment mb-3">
-                            {created.accessCode}
-                        </div>
-                        <button
-                            onClick={copyCode}
-                            className="px-4 py-1.5 text-sm border-2 border-viking-bronze text-viking-brown dark:text-viking-parchment rounded hover:bg-viking-bronze/20 transition-colors"
-                        >
-                            {copied ? '✅ Copié !' : '📋 Copier le code'}
+                    <div className="vk-rune text-5xl">ᛊ</div>
+                    <div className="vk-title text-2xl">{formatFullName(created)} est né·e !</div>
+                    <VkPanel variant="sm" className="mx-auto max-w-xs">
+                        <div className="vk-field-label">Votre code d'accès</div>
+                        <div className="vk-title vk-num text-4xl tracking-widest mb-3">{created.accessCode}</div>
+                        <button type="button" className="vk-btn vk-btn-sm" onClick={copyCode}>
+                            {copied ? <><VkIcon name="check" />Copié</> : <><VkIcon name="key" />Copier le code</>}
                         </button>
-                        <p className="text-xs text-viking-leather dark:text-viking-bronze mt-2">
-                            Conservez ce code — clé d'accès permanente.
-                        </p>
-                    </div>
-                    <div className="text-xs text-viking-leather dark:text-viking-bronze">
-                        URL : <span className="font-mono">{created.accessUrl}</span>
-                    </div>
-                    <button
-                        onClick={() => onCreated(created)}
-                        className="w-full px-6 py-3 bg-viking-success hover:bg-green-700 text-white font-bold text-lg rounded-lg transition-colors shadow-lg"
-                    >
-                        Accéder à ma fiche →
-                    </button>
+                        <p className="text-xs text-muted mt-2">Conservez ce code : c'est votre clé d'accès permanente.</p>
+                    </VkPanel>
+                    <div className="text-xs text-muted">Lien : <span className="vk-num">{created.accessUrl}</span></div>
+                    <button type="button" className="vk-btn vk-btn-primary w-full py-2.5" onClick={() => onCreated(created)}>Accéder à ma fiche →</button>
                 </div>
             );
         }
 
-        // ── Formulaire récap ──────────────────────────────────────────────────
+        // ── Récapitulatif ──
         return (
             <div className="space-y-4">
-                <h3 className="text-2xl font-viking font-bold text-viking-brown dark:text-viking-parchment mb-4">
-                    Récapitulatif
-                </h3>
-
-                <div className="p-4 bg-white dark:bg-viking-brown border-2 border-viking-leather dark:border-viking-bronze rounded-lg">
-                    <h4 className="font-bold text-lg text-viking-brown dark:text-viking-parchment mb-2">{fullName}</h4>
-                    <p className="text-viking-text dark:text-viking-parchment">
+                <div className="text-center">
+                    <div className="vk-title text-2xl">{formatFullName(character)}</div>
+                    <div className="text-sm text-muted">
                         {character.sexe === 'homme' ? 'Homme' : 'Femme'}, {character.age} ans
-                    </p>
-                    <p className="text-viking-text dark:text-viking-parchment">{character.activite}</p>
-                    <p className="text-viking-leather dark:text-viking-bronze">Joueur : {character.playerName}</p>
-                </div>
-
-                <div className="p-4 bg-white dark:bg-viking-brown border-2 border-viking-leather dark:border-viking-bronze rounded-lg">
-                    <h4 className="font-bold text-viking-brown dark:text-viking-parchment mb-2">Caractéristiques</h4>
-                    <div className="grid grid-cols-3 gap-2 text-sm text-viking-text dark:text-viking-parchment">
-                        <div>Force : {character.force}</div>
-                        <div>Agilité : {character.agilite}</div>
-                        <div>Perception : {character.perception}</div>
-                        <div>Intelligence : {character.intelligence}</div>
-                        <div>Charisme : {character.charisme}</div>
-                        <div>Chance : {character.chance}</div>
+                        {character.activite && ` · ${character.activite}`}
+                        {character.playerName && <> · <em>joué par {character.playerName}</em></>}
                     </div>
                 </div>
 
-                <div className="p-4 bg-white dark:bg-viking-brown border-2 border-viking-leather dark:border-viking-bronze rounded-lg">
-                    <h4 className="font-bold text-viking-brown dark:text-viking-parchment mb-2">
-                        Compétences ({character.skills.length})
-                    </h4>
-                    <div className="grid grid-cols-2 gap-2 text-sm">
+                <div className="grid grid-cols-3 md:grid-cols-6 gap-2">
+                    {Object.entries(CARACNAMES).map(([key, label]) => (
+                        <div key={key} className="vk-stat"><div className="val">{character[key]}</div><div className="lbl">{label}</div></div>
+                    ))}
+                </div>
+
+                <div className="grid md:grid-cols-2 gap-4">
+                    <VkPanel>
+                        <div className="vk-section-title">Compétences ({character.skills.length})</div>
                         {character.skills.map(s => (
-                            <div key={`${s.name}-${s.specialization}`} className="text-viking-text dark:text-viking-parchment">
-                                • {s.name} ({s.level})
+                            <div key={`${s.name}-${s.specialization}`} className="vk-row text-sm">
+                                <span className="flex-1">{formatSkillName(s)}</span><span className="vk-row-val">{s.level}</span>
                             </div>
                         ))}
-                    </div>
-                </div>
-
-                <div className="p-4 bg-white dark:bg-viking-brown border-2 border-viking-leather dark:border-viking-bronze rounded-lg">
-                    <h4 className="font-bold text-viking-brown dark:text-viking-parchment mb-2">
-                        Traits ({character.traits.length})
-                    </h4>
-                    <div className="space-y-1 text-sm">
+                    </VkPanel>
+                    <VkPanel>
+                        <div className="vk-section-title">Traits ({character.traits.length})</div>
                         {character.traits.map(t => (
-                            <div key={t.name} className="text-viking-text dark:text-viking-parchment">
-                                • <strong>{t.name}</strong> - {t.description}
+                            <div key={t.name} className="vk-row text-sm items-start">
+                                <div><div className="font-bold">{t.name}</div><div className="text-xs text-muted">{t.description}</div></div>
                             </div>
                         ))}
-                    </div>
+                    </VkPanel>
                 </div>
 
                 {character.runes.length > 0 && (
-                    <div className="p-4 bg-white dark:bg-viking-brown border-2 border-viking-leather dark:border-viking-bronze rounded-lg">
-                        <h4 className="font-bold text-viking-brown dark:text-viking-parchment mb-2">
-                            Runes ({character.runes.length})
-                        </h4>
-                        <div className="grid grid-cols-2 gap-2 text-sm">
-                            {character.runes.map(r => (
-                                <div key={r.name} className="text-viking-text dark:text-viking-parchment">
-                                    {r.symbol} {r.name} (Niv {r.level})
-                                </div>
-                            ))}
-                        </div>
+                    <div className="flex flex-wrap gap-2">
+                        {character.runes.map(r => (
+                            <span key={r.name} className="vk-tag vk-tag-gold">
+                                <span className="vk-rune">{RUNES.find(x => x.name === r.name)?.symbol}</span>{r.name} · niveau {r.level}
+                            </span>
+                        ))}
                     </div>
                 )}
 
-                <div className="p-4 bg-viking-bronze/20 dark:bg-viking-leather/20 border-2 border-viking-bronze rounded-lg">
-                    <h4 className="font-bold text-viking-brown dark:text-viking-parchment mb-2">Ressources de départ</h4>
-                    <div className="text-sm text-viking-text dark:text-viking-parchment">
-                        <div>SAGA Actuelle : {finalChar.sagaActuelle} / 5</div>
-                        <div>Actions par tour : {finalChar.actionsDisponibles}</div>
-                        <div>Seuil de combat : {finalChar.seuilCombat}</div>
-                        <div>Armure : {finalChar.armure}</div>
-                    </div>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+                    <div className="vk-stat"><div className="val">{finalChar.sagaActuelle}</div><div className="lbl">Saga</div><div className="sub">sur 5</div></div>
+                    <div className="vk-stat"><div className="val">{finalChar.actionsDisponibles}</div><div className="lbl">Actions</div></div>
+                    <div className="vk-stat"><div className="val">{finalChar.seuilCombat}</div><div className="lbl">Seuil</div></div>
+                    <div className="vk-stat"><div className="val">{finalChar.armure}</div><div className="lbl">Armure</div></div>
                 </div>
 
-                <div className="p-4 bg-white dark:bg-viking-brown border-2 border-viking-leather dark:border-viking-bronze rounded-lg">
-                    <h4 className="font-bold text-viking-brown dark:text-viking-parchment mb-2">
-                        Code d'accès personnalisé (optionnel)
-                    </h4>
-                    <input
-                        value={customCode}
-                        onChange={e => setCustomCode(e.target.value.toUpperCase().substring(0, 6))}
-                        placeholder="Laisser vide pour génération automatique"
-                        maxLength={6}
-                        className="w-full px-3 py-2 border-2 border-viking-leather dark:border-viking-bronze rounded-lg bg-white dark:bg-gray-800 text-viking-text dark:text-viking-parchment font-mono"
-                    />
-                    <div className="text-xs text-viking-leather dark:text-viking-bronze mt-2">
-                        6 caractères max. Plusieurs personnages peuvent partager le même code.
-                    </div>
-                </div>
+                <Field label="Code d'accès personnalisé (optionnel)">
+                    <input className="vk-input vk-num" value={customCode} maxLength={6}
+                           onChange={e => setCustomCode(e.target.value.toUpperCase().substring(0, 6))}
+                           placeholder="Laisser vide pour une génération automatique" />
+                    <span className="block text-xs text-muted mt-1">6 caractères au plus ; le code doit être libre.</span>
+                </Field>
 
-                {error && (
-                    <div className="p-3 bg-red-100 border-2 border-red-500 rounded-lg text-sm text-red-800">
-                        ⚠️ {error}
-                    </div>
-                )}
+                {error && <div className="vk-callout vk-callout-danger text-sm">{error}</div>}
 
-                <div className="flex gap-2 mt-6">
-                    <button
-                        onClick={() => setStep(5)}
-                        className="flex-1 px-6 py-3 bg-viking-leather hover:bg-viking-brown text-viking-parchment font-semibold rounded-lg transition-colors"
-                    >
-                        ← Précédent
-                    </button>
-                    <button
-                        onClick={handleComplete}
-                        disabled={loading}
-                        className="flex-1 px-6 py-3 bg-viking-success hover:bg-green-700 text-white font-bold text-lg rounded-lg transition-colors shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
-                    >
-                        {loading ? 'Création...' : '✓ Créer le personnage'}
-                    </button>
-                </div>
+                <NavButtons onPrev={() => setStep(5)} onNext={handleComplete} nextDisabled={loading}
+                            nextLabel={loading ? 'Création…' : 'Créer le personnage'} />
             </div>
         );
     };
-    
-    const steps = ['Identité', 'Caractéristiques', 'Compétences', 'Traits', 'Runes', 'Finalisation'];
-    
+
     return (
-        <div className="min-h-screen bg-gradient-to-br from-viking-parchment to-amber-100 dark:from-gray-900 dark:to-gray-800 p-4">
-            <div className="max-w-4xl mx-auto">
-                <div className="bg-white dark:bg-viking-brown rounded-lg shadow-2xl overflow-hidden border-4 border-viking-leather dark:border-viking-bronze">
-                    {/* Step Indicator */}
-                    <div className="flex border-b-2 border-viking-leather dark:border-viking-bronze">
-                        {steps.map((s, i) => (
-                            <div
-                                key={i}
-                                className={`flex-1 p-3 text-center text-sm font-medium border-r border-viking-leather dark:border-viking-bronze last:border-r-0 ${
-                                    i + 1 === step
-                                        ? 'bg-viking-bronze text-viking-brown'
-                                        : i + 1 < step
-                                        ? 'bg-viking-success text-white'
-                                        : 'bg-viking-parchment dark:bg-gray-800 text-viking-leather dark:text-viking-bronze'
-                                }`}
-                            >
-                                {s}
-                            </div>
+        <div className="vk-root min-h-screen p-4 md:p-6" data-theme={darkMode ? 'dark' : 'light'}>
+            <div className="max-w-5xl mx-auto">
+                <div className="text-center mb-4">
+                    <div className="vk-rune text-3xl">ᚢᛁᚲᛁᛜ</div>
+                    <h1 className="vk-title text-3xl">Naissance d'un Viking</h1>
+                </div>
+
+                <VkPanel variant="heavy">
+                    {/* Étapes */}
+                    <nav className="vk-tabs mb-5 pr-6">
+                        {STEPS.map((label, i) => (
+                            <span key={label} className={`vk-tab ${i + 1 === step ? 'is-active' : ''}`}>
+                                {i + 1 < step && <VkIcon name="check" />} {label}
+                            </span>
                         ))}
-                    </div>
+                    </nav>
 
-                    {/* Content */}
-                    <div className="p-6">
-                        {step === 1 && renderStep1()}
-                        {step === 2 && renderStep2()}
-                        {step === 3 && renderStep3()}
-                        {step === 4 && renderStep4()}
-                        {step === 5 && renderStep5()}
-                        {step === 6 && renderStep6()}
-                    </div>
-                </div>
+                    {step === 1 && renderStep1()}
+                    {step === 2 && renderStep2()}
+                    {step === 3 && renderStep3()}
+                    {step === 4 && renderStep4()}
+                    {step === 5 && renderStep5()}
+                    {step === 6 && renderStep6()}
+                </VkPanel>
             </div>
-            {showSpecModal && (
-                <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4">
-                    <div className="bg-viking-parchment dark:bg-viking-brown p-6 rounded-lg border-2 border-viking-bronze max-w-sm w-full shadow-xl">
-                        <h3 className="text-lg font-bold text-viking-brown dark:text-viking-parchment mb-2">
-                            Spécialisation requise
-                        </h3>
-                        <p className="text-sm text-viking-leather mb-4">
-                            Définissez une spécialité pour <strong>{pendingSkill}</strong>.
-                            <br/><span className="italic opacity-75">Ex: {getSkillExamples(pendingSkill)}</span>
-                        </p>
 
-                        <input
-                            autoFocus
-                            value={specValue}
-                            onChange={(e) => {
-                                setSpecValue(e.target.value);
-                                setSpecError('');
-                            }}
-                            className="w-full p-2 border-2 border-viking-leather rounded bg-white dark:bg-gray-800 text-viking-text dark:text-viking-parchment"
-                            placeholder="Ex: Épée longue, Pistage..."
-                        />
-
-                        {specError && <p className="text-red-600 text-xs mt-1 font-bold">{specError}</p>}
-
-                        <div className="flex gap-2 mt-6">
-                            <button
-                                onClick={() => setShowSpecModal(false)}
-                                className="flex-1 px-4 py-2 bg-gray-300 text-gray-700 rounded font-bold hover:bg-gray-400 transition-colors"
-                            >
-                                Annuler
-                            </button>
-                            <button
-                                onClick={() => {
-                                    const val = specValue.trim();
-                                    if (!val) {
-                                        setSpecError('Une spécialisation est requise.');
-                                        return;
-                                    }
-                                    if (character.skills.some(s => s.name === pendingSkill && s.specialization === val)) {
-                                        setSpecError(`Doublon : ${pendingSkill} (${val}) existe déjà.`);
-                                        return;
-                                    }
-
-                                    // ICI : Appelle ta fonction finale d'ajout
-                                    handleFinalAddSkill(pendingSkill, val);
-                                    setShowSpecModal(false);
-                                }}
-                                className="flex-1 px-4 py-2 bg-viking-bronze text-viking-brown rounded font-bold hover:bg-viking-leather transition-colors"
-                            >
-                                Confirmer
-                            </button>
-                        </div>
+            {pendingSkill && (
+                <VkModal title="Spécialisation requise" icon="quill" onClose={() => setPendingSkill(null)} size="max-w-sm">
+                    <p className="text-sm mb-3">
+                        Précisez une spécialité pour <strong>{pendingSkill}</strong>.
+                        <span className="block text-muted italic">Ex : {getSkillExamples(pendingSkill)}</span>
+                    </p>
+                    <input className="vk-input" autoFocus value={specValue}
+                           onChange={e => { setSpecValue(e.target.value); setSpecError(''); }}
+                           onKeyDown={e => { if (e.key === 'Enter') confirmSpecialization(); }} />
+                    {specError && <p className="text-xs text-danger mt-1">{specError}</p>}
+                    <div className="flex gap-2 mt-4">
+                        <button type="button" className="vk-btn flex-1" onClick={() => setPendingSkill(null)}>Annuler</button>
+                        <button type="button" className="vk-btn vk-btn-primary flex-1" onClick={confirmSpecialization}>Confirmer</button>
                     </div>
-                </div>
+                </VkModal>
             )}
         </div>
     );

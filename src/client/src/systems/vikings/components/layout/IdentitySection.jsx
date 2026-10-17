@@ -1,79 +1,81 @@
 // src/client/src/systems/vikings/components/layout/IdentitySection.jsx
-// Identité du personnage (lecture / édition).
+// En-tête de la fiche : avatar, nom complet, informations, états (KO, malus).
+// En mode édition : champs d'identité.
 
 import React from 'react';
 import { formatFullName } from '../../config/utils.js';
+import { BLESSURE_MAX, getBlessureMalus, getFatigueMalus, getFatigueState, isFatigueKO } from '../../config/rules.js';
+import VkIcon from '../ui/VkIcon.jsx';
 
-const inputClass = 'w-full px-2 py-1 border border-default rounded text-xs bg-default text-default';
-
-const Field = ({ label, children }) => (
-    <label className="block">
-        <span className="block text-[10px] uppercase tracking-wide text-muted mb-0.5">{label}</span>
+const Field = ({ label, className = '', children }) => (
+    <label className={className}>
+        <span className="vk-field-label">{label}</span>
         {children}
     </label>
 );
 
-const Avatar = ({ avatar, size, onClick }) => (
-    <div onClick={onClick}
-         className={`relative group shrink-0 ${onClick ? 'cursor-pointer' : ''}`}
-         title={onClick ? (avatar ? "Modifier l'avatar" : 'Ajouter un avatar') : undefined}>
-        {avatar ? (
-            <img src={avatar} alt="Avatar" className={`${size} rounded-full border-4 border-primary object-cover`} />
-        ) : (
-            <div className={`${size} rounded-full border-4 border-dashed border-default bg-surface-alt flex items-center justify-center`}>
-                <span className="text-2xl">{onClick ? '📸' : '⚔️'}</span>
-            </div>
-        )}
-    </div>
+// États visibles d'un coup d'œil (rappelés aussi au moment du jet)
+export const StatusTags = ({ char }) => {
+    const blessureMalus = getBlessureMalus(char.tokensBlessure);
+    const fatigueMalus  = getFatigueMalus(char.tokensFatigue);
+    return (
+        <div className="flex flex-wrap gap-2">
+            {char.tokensBlessure >= BLESSURE_MAX
+                ? <span className="vk-tag vk-tag-danger">KO / Mourant</span>
+                : blessureMalus > 0 && <span className="vk-tag vk-tag-warn"><VkIcon name="blood" />Blessures : −{blessureMalus} dé{blessureMalus > 1 ? 's' : ''}</span>}
+            {isFatigueKO(char.tokensFatigue)
+                ? <span className="vk-tag vk-tag-danger">Inconscient (épuisement)</span>
+                : fatigueMalus > 0 && <span className="vk-tag vk-tag-warn"><VkIcon name="moon" />{getFatigueState(char.tokensFatigue)} : +{fatigueMalus} succès requis</span>}
+        </div>
+    );
+};
+
+const Avatar = ({ avatar, initial, onClick }) => (
+    <button type="button" onClick={onClick} disabled={!onClick}
+            className="vk-avatar w-16 h-16 text-2xl shrink-0 overflow-hidden disabled:cursor-default"
+            title={onClick ? "Changer l'avatar" : undefined}>
+        {avatar ? <img src={avatar} alt="" className="w-full h-full object-cover" /> : (initial || '?')}
+    </button>
 );
 
 const IdentitySection = ({ char, editMode, set, onAvatarClick }) => {
     const num = (field, fallback) => (e) => set(field, parseInt(e.target.value) || fallback);
+    const initial = char.prenom?.[0]?.toUpperCase();
+
+    if (editMode) {
+        return (
+            <div className="flex items-start gap-4 flex-wrap pr-6">
+                <Avatar avatar={char.avatar} initial={initial} onClick={onAvatarClick} />
+                <div className="flex-1 min-w-0 grid grid-cols-2 md:grid-cols-4 gap-3">
+                    <Field label="Prénom *"><input className="vk-input" value={char.prenom ?? ''} onChange={e => set('prenom', e.target.value)} /></Field>
+                    <Field label="Surnom"><input className="vk-input" value={char.surnom ?? ''} onChange={e => set('surnom', e.target.value)} placeholder="Le Brave" /></Field>
+                    <Field label="Nom du parent (fils / fille de)"><input className="vk-input" value={char.nom ?? ''} onChange={e => set('nom', e.target.value)} placeholder="Ragnar" /></Field>
+                    <Field label="Joueur"><input className="vk-input" value={char.playerName ?? ''} onChange={e => set('playerName', e.target.value)} /></Field>
+                    <Field label="Âge"><input className="vk-input vk-num" type="number" value={char.age ?? ''} onChange={num('age', 25)} /></Field>
+                    <Field label="Taille (cm)"><input className="vk-input vk-num" type="number" value={char.taille ?? ''} onChange={num('taille', undefined)} /></Field>
+                    <Field label="Poids (kg)"><input className="vk-input vk-num" type="number" value={char.poids ?? ''} onChange={num('poids', undefined)} /></Field>
+                    <Field label="Activité"><input className="vk-input" value={char.activite ?? ''} onChange={e => set('activite', e.target.value)} /></Field>
+                </div>
+            </div>
+        );
+    }
+
+    const details = [
+        `${char.sexe === 'homme' ? 'Homme' : 'Femme'}, ${char.age} ans`,
+        char.taille ? `${char.taille} cm${char.poids ? `, ${char.poids} kg` : ''}` : null,
+        char.activite || null,
+    ].filter(Boolean).join(' · ');
 
     return (
-        <div className="bg-surface rounded-lg p-3 border-2 border-default">
-            <h3 className="text-sm font-bold text-default mb-2">Informations</h3>
-
-            {editMode ? (
-                <div className="space-y-2 text-xs">
-                    <div className="flex items-start gap-4">
-                        <Avatar avatar={char.avatar} size="w-20 h-20" onClick={onAvatarClick} />
-                        <div className="flex-1 space-y-2">
-                            <Field label="Prénom *">
-                                <input value={char.prenom ?? ''} onChange={e => set('prenom', e.target.value)} className={inputClass} />
-                            </Field>
-                            <Field label="Surnom">
-                                <input value={char.surnom ?? ''} onChange={e => set('surnom', e.target.value)} className={inputClass} placeholder="Le Brave" />
-                            </Field>
-                        </div>
-                    </div>
-                    <Field label="Nom du parent (« fils / fille de »)">
-                        <input value={char.nom ?? ''} onChange={e => set('nom', e.target.value)} className={inputClass} placeholder="Ragnar" />
-                    </Field>
-                    <div className="grid grid-cols-3 gap-1.5">
-                        <Field label="Âge"><input type="number" value={char.age ?? ''} onChange={num('age', 25)} className={inputClass} /></Field>
-                        <Field label="Taille (cm)"><input type="number" value={char.taille ?? ''} onChange={num('taille', undefined)} className={inputClass} /></Field>
-                        <Field label="Poids (kg)"><input type="number" value={char.poids ?? ''} onChange={num('poids', undefined)} className={inputClass} /></Field>
-                    </div>
-                    <Field label="Activité">
-                        <input value={char.activite ?? ''} onChange={e => set('activite', e.target.value)} className={inputClass} />
-                    </Field>
-                    <Field label="Joueur">
-                        <input value={char.playerName ?? ''} onChange={e => set('playerName', e.target.value)} className={inputClass} />
-                    </Field>
+        <div className="flex items-center gap-4 flex-wrap pr-6">
+            <Avatar avatar={char.avatar} initial={initial} onClick={onAvatarClick} />
+            <div className="flex-1 min-w-0">
+                <div className="vk-title text-2xl">{formatFullName(char)}</div>
+                <div className="text-sm text-muted">
+                    {details}{char.playerName && <> · <em>joué par {char.playerName}</em></>}
                 </div>
-            ) : (
-                <div className="flex items-start gap-3">
-                    <Avatar avatar={char.avatar} size="w-16 h-16" />
-                    <div className="text-xs text-default space-y-0.5">
-                        <div className="font-bold text-sm">{formatFullName(char)}</div>
-                        <div>{char.playerName}</div>
-                        <div>{char.sexe === 'homme' ? 'Homme' : 'Femme'}, {char.age} ans</div>
-                        {char.activite && <div className="italic">{char.activite}</div>}
-                        {char.taille && <div>{char.taille}cm{char.poids ? ` — ${char.poids}kg` : ''}</div>}
-                    </div>
-                </div>
-            )}
+            </div>
+            <StatusTags char={char} />
         </div>
     );
 };

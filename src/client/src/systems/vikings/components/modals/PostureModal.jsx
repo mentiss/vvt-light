@@ -1,26 +1,19 @@
 // src/client/src/systems/vikings/components/modals/PostureModal.jsx
 // ─────────────────────────────────────────────────────────────────────────────
-// Modale posture défensive active Vikings — VERSION v2 (diceEngine async).
-//
-// Suppressions par rapport à v1 :
-//   - Plus de DiceAnimationOverlay local (singleton dans PlayerPage)
-//   - Plus de pendingResultRef / animationData
-//   - roll() est maintenant async (animation + persist inclus)
+// Modale posture défensive (action du système de combat, diceEngine async).
+// Posture active : jet sur une compétence de combat au contact ; posture
+// passive : sans jet. Logique inchangée ; habillage : planche du lot 4.
 // ─────────────────────────────────────────────────────────────────────────────
 
 import React, { useState, useCallback } from 'react';
-import {
-    getBestCharacteristic,
-    getExplosionThreshold,
-    getSuccessThreshold,
-    getBlessureMalus,
-    getFatigueMalus,
-} from '../../config/rules.js';
+import { getBestCharacteristic, getSuccessThreshold } from '../../config/rules.js';
 import { formatSkillName } from '../../config/utils.js';
 import { roll, RollError } from '../../../../tools/diceEngine.js';
 import vikingsConfig       from '../../config.jsx';
 import { useFetch }        from '../../../../hooks/useFetch.js';
 import { useSystem }       from '../../../../hooks/useSystem.js';
+import VkModal from '../ui/VkModal.jsx';
+import VkIcon  from '../ui/VkIcon.jsx';
 
 const PostureModal = ({
                           character,
@@ -81,7 +74,6 @@ const PostureModal = ({
             const notation = vikingsConfig.dice.buildNotation(ctx);
             // await : animation + persist inclus dans roll()
             const result   = await roll(notation, ctx, vikingsConfig.dice);
-
             setRollResult(result);
 
         } catch (err) {
@@ -92,124 +84,59 @@ const PostureModal = ({
         }
     }, [rolling, selectedSkill, character, combatant, isBerserk, sessionId, apiBase, fetchWithAuth]);
 
-    // ── Résultat affiché ──────────────────────────────────────────────────────
+    // ── Résultat ──────────────────────────────────────────────────────────────
     if (rollResult) {
         const successes = rollResult.successes ?? 0;
+        const threshold = rollResult.detail?.threshold ?? 7;
+        const expl      = rollResult.detail?.explosionThresholds ?? [10];
         return (
-            <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50" onClick={onClose}>
-                <div className="bg-white dark:bg-viking-brown rounded-lg shadow-2xl max-w-sm w-full border-4 border-viking-bronze p-4"
-                     onClick={e => e.stopPropagation()}>
-
-                    <h3 className="text-lg font-bold text-viking-brown dark:text-viking-parchment mb-4">
-                        🛡️ Posture Défensive Active
-                    </h3>
-
-                    <div className="p-3 bg-viking-bronze/10 rounded mb-4 text-center">
-                        <div className="text-2xl font-bold text-viking-brown dark:text-viking-parchment">
-                            {successes} succès
-                        </div>
-                        <div className="flex flex-wrap gap-1 justify-center mt-2">
-                            {(rollResult.allDice ?? []).map((v, i) => {
-                                const threshold = rollResult.detail?.threshold ?? 7;
-                                const isSuccess = v >= threshold;
-                                const isExploded = rollResult.flags?.exploded?.includes?.(v);
-                                return (
-                                    <span key={i} className={`w-9 h-9 rounded flex items-center justify-center font-bold text-sm border-2 ${
-                                        isExploded
-                                            ? 'bg-orange-500 text-white border-orange-700'
-                                            : isSuccess
-                                                ? 'bg-green-600 text-white border-green-800'
-                                                : 'bg-gray-200 dark:bg-gray-700 text-gray-600 dark:text-gray-300 border-gray-400'
-                                    }`}>
-                                        {v}
-                                    </span>
-                                );
-                            })}
-                        </div>
-                    </div>
-
-                    <div className="flex gap-2">
-                        <button
-                            onClick={() => onActivatePosture('actif', successes)}
-                            className="flex-1 py-2 rounded bg-blue-600 text-white font-semibold text-sm hover:bg-blue-700"
-                        >
-                            ✅ Activer ({successes} succès)
-                        </button>
-                        <button
-                            onClick={onClose}
-                            className="flex-1 py-2 rounded bg-gray-200 dark:bg-gray-700 text-viking-brown dark:text-viking-parchment font-semibold text-sm"
-                        >
-                            Annuler
-                        </button>
+            <VkModal title="Posture défensive active" icon="shield" onClose={onClose} size="max-w-sm">
+                <div className="text-center mb-4">
+                    <div className="vk-title text-2xl mb-2">{successes} succès</div>
+                    <div className="flex flex-wrap gap-2 justify-center">
+                        {(rollResult.allDice ?? []).map((v, i) => (
+                            <span key={i} className={`vk-die ${expl.includes(v) ? 'is-explode' : v >= threshold ? 'is-success' : ''}`}>{v}</span>
+                        ))}
                     </div>
                 </div>
-            </div>
+                <div className="flex gap-2">
+                    <button type="button" className="vk-btn flex-1" onClick={onClose}>Annuler</button>
+                    <button type="button" className="vk-btn vk-btn-primary flex-1" onClick={() => onActivatePosture('actif', successes)}>
+                        <VkIcon name="check" />Activer ({successes})
+                    </button>
+                </div>
+            </VkModal>
         );
     }
 
     // ── Formulaire ────────────────────────────────────────────────────────────
     return (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50" onClick={onClose}>
-            <div className="bg-white dark:bg-viking-brown rounded-lg shadow-2xl max-w-sm w-full border-4 border-viking-bronze p-4"
-                 onClick={e => e.stopPropagation()}>
+        <VkModal title="Posture défensive" icon="shield" onClose={onClose} size="max-w-sm">
+            {error && <div className="vk-callout vk-callout-danger mb-3 text-sm">{error}</div>}
 
-                <h3 className="text-lg font-bold text-viking-brown dark:text-viking-parchment mb-4">
-                    🛡️ Posture Défensive
-                </h3>
-
-                {error && (
-                    <div className="p-2 mb-3 bg-red-100 dark:bg-red-900/30 border border-red-400 rounded text-red-700 dark:text-red-300 text-xs">
-                        ⚠️ {error}
+            {defensiveSkills.length > 1 && (
+                <div className="mb-4">
+                    <div className="vk-field-label">Compétence</div>
+                    <div className="space-y-1">
+                        {defensiveSkills.map(skill => (
+                            <button key={`${skill.name}-${skill.specialization || ''}`} type="button" onClick={() => setSelectedSkill(skill)}
+                                    className={`vk-pill w-full justify-between ${selectedSkill === skill ? 'is-selected' : ''}`}>
+                                <span>{formatSkillName(skill)}</span><span className="vk-num">seuil {getSuccessThreshold(skill.level)}+</span>
+                            </button>
+                        ))}
                     </div>
-                )}
-
-                {/* Sélection compétence défensive */}
-                {defensiveSkills.length > 1 && (
-                    <div className="mb-4">
-                        <label className="block text-sm font-semibold text-viking-brown dark:text-viking-parchment mb-2">
-                            Compétence
-                        </label>
-                        <div className="space-y-1">
-                            {defensiveSkills.map((skill, i) => (
-                                <button
-                                    key={i}
-                                    onClick={() => setSelectedSkill(skill)}
-                                    className={`w-full px-3 py-1.5 rounded text-xs text-left font-semibold ${
-                                        selectedSkill?.name === skill.name
-                                            ? 'bg-viking-bronze text-viking-brown'
-                                            : 'bg-viking-parchment dark:bg-gray-800 text-viking-text dark:text-viking-parchment'
-                                    }`}
-                                >
-                                    {formatSkillName(skill)} — seuil {getSuccessThreshold(skill.level)}+
-                                </button>
-                            ))}
-                        </div>
-                    </div>
-                )}
-
-                {!selectedSkill && (
-                    <div className="text-sm text-viking-leather dark:text-viking-bronze mb-4">
-                        Aucune compétence défensive disponible.
-                    </div>
-                )}
-
-                <div className="flex gap-2">
-                    <button
-                        onClick={handleRollActif}
-                        disabled={rolling || !selectedSkill}
-                        className="flex-1 py-2 rounded bg-viking-bronze text-viking-brown font-semibold text-sm hover:bg-viking-leather hover:text-viking-parchment disabled:opacity-50"
-                    >
-                        {rolling ? '⏳ Jet…' : '🎲 Lancer'}
-                    </button>
-                    <button
-                        onClick={() => onActivatePosture('passive', 0)}
-                        className="flex-1 py-2 rounded bg-gray-200 dark:bg-gray-700 text-viking-brown dark:text-viking-parchment font-semibold text-sm"
-                    >
-                        Posture passive
-                    </button>
                 </div>
+            )}
+
+            {!selectedSkill && <p className="text-sm text-muted italic mb-4">Aucune compétence de combat au contact.</p>}
+
+            <div className="flex gap-2">
+                <button type="button" className="vk-btn flex-1" onClick={() => onActivatePosture('passive', 0)}>Posture passive</button>
+                <button type="button" className="vk-btn vk-btn-primary flex-1" onClick={handleRollActif} disabled={rolling || !selectedSkill}>
+                    <VkIcon name="die" />{rolling ? 'Jet…' : 'Lancer'}
+                </button>
             </div>
-        </div>
+        </VkModal>
     );
 };
 

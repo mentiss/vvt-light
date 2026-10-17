@@ -1,11 +1,13 @@
 // src/client/src/systems/vikings/components/layout/SkillsSection.jsx
-// Compétences : niveau, carac utilisée, seuil, explosion, points (succès auto).
-// La récupération des points est une action de jeu (hors mode édition).
+// Compétences : carac utilisée, seuil, explosion, points (succès auto), niveau.
+// La récupération des points et le jet sont des actions de jeu (hors édition).
 
 import React from 'react';
 import { CARACNAMES } from '../../config/competences.js';
 import { getBestCharacteristic, getSuccessThreshold } from '../../config/rules.js';
-import { formatExplosion, formatSkillName } from '../../config/utils.js';
+import { formatExplosion } from '../../config/utils.js';
+import VkPanel from '../ui/VkPanel.jsx';
+import VkIcon from '../ui/VkIcon.jsx';
 
 const sameSkill = (a, b) => a.name === b.name && a.specialization === b.specialization;
 
@@ -29,58 +31,60 @@ const SkillsSection = ({ char, editMode, set, update, onRoll, onOpenEditModal })
     }));
 
     return (
-        <div className="bg-surface rounded-lg p-3 border-2 border-default">
-            <div className="flex justify-between items-center mb-2">
-                <h3 className="text-sm font-bold text-default">Compétences</h3>
+        <VkPanel>
+            <div className="vk-section-title">
+                Compétences
                 {editMode
-                    ? <button onClick={() => onOpenEditModal('addSkill')} className="text-xs px-2 py-1 bg-primary text-default rounded">+ Ajout</button>
-                    : <button onClick={recoverAll} className="text-xs px-2 py-1 bg-success text-white rounded">Récup tous</button>}
+                    ? <button type="button" className="vk-btn vk-btn-sm" onClick={() => onOpenEditModal('addSkill')}><VkIcon name="plus" />Ajouter</button>
+                    : <button type="button" className="vk-btn vk-btn-sm" onClick={recoverAll}>Récup tous</button>}
             </div>
-            <div className="space-y-1 max-h-80 overflow-y-auto">
+            <div>
                 {skills.map(skill => {
                     const bc = getBestCharacteristic(char, skill);
+                    const missing = skill.currentPoints < skill.level;
                     return (
-                        <div key={`${skill.name}-${skill.specialization || 'default'}`} className="p-1.5 bg-default rounded">
-                            <div className="flex justify-between items-start">
-                                <div className="flex-1 text-xs text-default">
-                                    <div className="flex items-center gap-1.5">
-                                        <span className="font-semibold">{formatSkillName(skill)} (Niv {skill.level})</span>
-                                        {editMode && (
-                                            <>
-                                                <button onClick={() => changeLevel(skill, -1)} disabled={skill.level <= 0}
-                                                        className="w-3 h-3 bg-primary rounded-full text-xs font-bold disabled:opacity-30 text-default flex items-center justify-center leading-none">-</button>
-                                                <button onClick={() => changeLevel(skill, 1)} disabled={skill.level >= 5}
-                                                        className="w-3 h-3 bg-primary rounded-full text-xs font-bold disabled:opacity-30 text-default flex items-center justify-center leading-none">+</button>
-                                                <button onClick={() => removeSkill(skill)} className="text-xs px-1 bg-danger text-white rounded leading-none">✕</button>
-                                            </>
-                                        )}
-                                    </div>
-                                    <div className="text-muted">
-                                        {CARACNAMES[bc.name]} | Seuil : {getSuccessThreshold(skill.level)}+ | Expl : {formatExplosion(bc.level)}
-                                    </div>
+                        <div key={`${skill.name}-${skill.specialization || 'default'}`} className="vk-row">
+                            <div className="flex-1 min-w-0">
+                                <div className="font-bold">
+                                    {skill.name}
+                                    {skill.specialization && <span className="text-muted font-normal"> — {skill.specialization}</span>}
                                 </div>
-                                {!editMode && (
-                                    <button onClick={() => onRoll({ type: 'skill', data: skill })}
-                                            className="text-xs px-1 py-0.5 bg-primary rounded text-default" title={`Lancer ${formatSkillName(skill)}`}>
-                                        🎲
+                                <div className="text-xs text-muted">
+                                    {CARACNAMES[bc.name]} · seuil {getSuccessThreshold(skill.level)}+ · expl. {formatExplosion(bc.level)}
+                                </div>
+                            </div>
+
+                            <div className="vk-dots" title={`${skill.currentPoints}/${skill.level} points`}>
+                                {Array.from({ length: skill.level }, (_, i) => <i key={i} className={i < skill.currentPoints ? 'is-full' : ''} />)}
+                            </div>
+                            {!editMode && missing && (
+                                <button type="button" className="vk-btn vk-btn-success vk-btn-sm" onClick={() => recover(skill)}>Récup</button>
+                            )}
+
+                            {editMode ? (
+                                <>
+                                    <div className="vk-stepper">
+                                        <button type="button" onClick={() => changeLevel(skill, -1)} disabled={skill.level <= 0}><VkIcon name="minus" /></button>
+                                        <span className="vk-num">{skill.level}</span>
+                                        <button type="button" onClick={() => changeLevel(skill, 1)} disabled={skill.level >= 5}><VkIcon name="plus" /></button>
+                                    </div>
+                                    <button type="button" className="vk-btn vk-btn-danger vk-btn-icon vk-btn-sm" onClick={() => removeSkill(skill)} title="Retirer">
+                                        <VkIcon name="close" />
                                     </button>
-                                )}
-                            </div>
-                            <div className="flex items-center gap-1 text-xs mt-1">
-                                <div className="flex gap-0.5">
-                                    {Array.from({ length: skill.level }, (_, i) => (
-                                        <div key={i} className={`w-2 h-2 rounded-full ${i < skill.currentPoints ? 'bg-success' : 'bg-surface-alt border border-default'}`} />
-                                    ))}
-                                </div>
-                                {!editMode && skill.currentPoints < skill.level && (
-                                    <button onClick={() => recover(skill)} className="px-1 py-0.5 bg-success text-white rounded text-xs">Récup</button>
-                                )}
-                            </div>
+                                </>
+                            ) : (
+                                <>
+                                    <span className="vk-row-val w-5 text-center">{skill.level}</span>
+                                    <button type="button" className="vk-roll" onClick={() => onRoll({ type: 'skill', data: skill })} title={`Lancer ${skill.name}`}>
+                                        <VkIcon name="die" />
+                                    </button>
+                                </>
+                            )}
                         </div>
                     );
                 })}
             </div>
-        </div>
+        </VkPanel>
     );
 };
 

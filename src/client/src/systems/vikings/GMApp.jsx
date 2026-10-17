@@ -2,19 +2,18 @@
 // ─────────────────────────────────────────────────────────────────────────────
 // Interface MJ Vikings — architecture fusionnée (plus d'indirection GMView) :
 // bandeau, onglets et modales globales vivent ici.
-// Spec : documentations/spec_vikings_lot3_client.md §5.1.
+// Spec : documentations/spec_vikings_lot3_client.md §5.1, habillage lot 4.
 //
 // Contrat props (GMPage) :
 //   activeSession, onSessionChange, onlineCharacters, characterUpdates,
 //   darkMode, onToggleDarkMode
 //
 // Le combat (hors périmètre de la refonte) est fourni tel quel par useCombat.
+// theme.css est chargé par GMPage (import.meta.glob), pas importé ici.
 // ─────────────────────────────────────────────────────────────────────────────
 
 import React, { useState, useEffect } from 'react';
-import './theme.css';
 
-import ThemeToggle          from '../../components/ui/ThemeToggle.jsx';
 import ToastNotifications   from '../../components/layout/ToastNotifications.jsx';
 import DiceHistoryPage      from '../../components/layout/DiceHistoryPage.jsx';
 import DiceConfigModal      from '../../components/modals/DiceConfigModal.jsx';
@@ -28,19 +27,19 @@ import TabCombat           from './gm/tabs/TabCombat.jsx';
 import GMDiceModal         from './gm/modals/GMDiceModal.jsx';
 import { useCombat }       from './gm/useCombat.js';
 import VikingsHistoryEntry from './components/layout/VikingsHistoryEntry.jsx';
+import VkIcon              from './components/ui/VkIcon.jsx';
 import vikingsConfig       from './config.jsx';
 
 const TABS = [
-    { id: 'session',    label: '📜 Session' },
-    { id: 'combat',     label: '⚔️ Combat' },
-    { id: 'journal',    label: '📓 Journal' },
-    { id: 'historique', label: '🎲 Historique' },
+    { id: 'session',    label: 'Session' },
+    { id: 'combat',     label: 'Combat' },
+    { id: 'journal',    label: 'Journal' },
+    { id: 'historique', label: 'Historique' },
 ];
 
-const MenuItem = ({ onClick, danger = false, children }) => (
-    <button onClick={onClick}
-            className={`w-full text-left px-4 py-2 text-sm hover:bg-surface-alt ${danger ? 'text-danger' : 'text-default'}`}>
-        {children}
+const MenuItem = ({ icon, onClick, danger = false, children }) => (
+    <button type="button" onClick={onClick} className={`vk-menu-item ${danger ? 'is-danger' : ''}`}>
+        <VkIcon name={icon} />{children}
     </button>
 );
 
@@ -72,61 +71,59 @@ const GMApp = ({ activeSession, onSessionChange, onlineCharacters, characterUpda
     const openMenuEntry = (open) => () => { setShowMenu(false); open(); };
 
     return (
-        <div className="min-h-screen bg-default text-default transition-colors">
+        <div className="vk-root min-h-screen" data-theme={darkMode ? 'dark' : 'light'}>
 
-            {/* ── HEADER ── */}
-            <header className="bg-surface border-b-2 border-default shadow-lg sticky top-0 z-40">
-                <div className="max-w-7xl mx-auto px-4 py-3 flex justify-between items-center gap-3">
+            {/* ── BANDEAU + ONGLETS (collants) ── */}
+            <div className="sticky top-0 z-40">
+                <header className="vk-header px-4 py-3 flex justify-between items-center gap-3">
                     <div className="min-w-0">
-                        <h1 className="text-2xl font-bold font-viking text-primary">Interface MJ</h1>
-                        <div className="text-sm text-muted truncate">
-                            {activeSession ? <>Table : <span className="font-semibold">{activeSession.name}</span></> : 'Aucune table active'}
-                        </div>
+                        <div className="vk-title text-2xl flex items-center gap-2"><VkIcon name="helm" />Interface MJ</div>
+                        <div className="vk-eyebrow truncate">{activeSession ? `Table : ${activeSession.name}` : 'Aucune table active'}</div>
                     </div>
 
                     <div className="flex items-center gap-2 shrink-0">
-                        <button onClick={() => setShowGMDice(true)} title="Jet MJ (pool de d10)"
-                                className="px-3 py-1.5 bg-primary text-default rounded text-sm font-semibold">
-                            🎲 Jet MJ
+                        <button type="button" onClick={() => setShowGMDice(true)} className="vk-btn vk-btn-primary vk-btn-sm" title="Jet MJ (pool de d10)">
+                            <VkIcon name="die" />Jet MJ
                         </button>
-                        <ThemeToggle darkMode={darkMode} onToggle={onToggleDarkMode} />
+                        <button type="button" onClick={onToggleDarkMode} className="vk-btn vk-btn-icon"
+                                title={darkMode ? 'Mode jour (bois)' : 'Mode nuit (fer)'}>
+                            <VkIcon name={darkMode ? 'sun' : 'moon'} />
+                        </button>
                         <div className="relative">
-                            <button onClick={() => setShowMenu(v => !v)} title="Menu"
-                                    className="px-3 py-2 bg-surface-alt border border-default rounded font-semibold text-default">
-                                ☰
+                            <button type="button" onClick={() => setShowMenu(v => !v)} className="vk-btn vk-btn-icon" title="Menu">
+                                <VkIcon name="menu" />
                             </button>
                             {showMenu && (
                                 <>
                                     <div className="fixed inset-0 z-40" onClick={() => setShowMenu(false)} />
-                                    <div className="absolute right-0 mt-2 w-56 bg-surface rounded-lg shadow-xl border-2 border-primary z-50 py-1">
-                                        <MenuItem onClick={openMenuEntry(() => setShowTableMgmt(true))}>📋 Gestion des tables</MenuItem>
-                                        <MenuItem onClick={openMenuEntry(() => setShowFreeDice(true))}>🎲 Jet de dés libre</MenuItem>
-                                        <MenuItem onClick={openMenuEntry(() => setShowDiceConfig(true))}>🎛️ Config animations dés</MenuItem>
-                                        <div className="border-t border-default my-1" />
-                                        <MenuItem onClick={openMenuEntry(goHome)}>🏠 Retour à l'accueil</MenuItem>
-                                        <MenuItem onClick={openMenuEntry(handleLogout)} danger>🚪 Déconnexion</MenuItem>
+                                    <div className="vk-menu absolute right-0 mt-2 z-50">
+                                        <MenuItem icon="people" onClick={openMenuEntry(() => setShowTableMgmt(true))}>Gestion des tables</MenuItem>
+                                        <MenuItem icon="dice"   onClick={openMenuEntry(() => setShowFreeDice(true))}>Jet de dés libre</MenuItem>
+                                        <MenuItem icon="horn"   onClick={openMenuEntry(() => setShowDiceConfig(true))}>Config animations dés</MenuItem>
+                                        <div className="vk-menu-sep" />
+                                        <MenuItem icon="longhouse" onClick={openMenuEntry(goHome)}>Retour à l'accueil</MenuItem>
+                                        <MenuItem icon="door" onClick={openMenuEntry(handleLogout)} danger>Déconnexion</MenuItem>
                                     </div>
                                 </>
                             )}
                         </div>
                     </div>
+                </header>
+
+                <div className="px-4 bg-surface">
+                    <nav className="vk-tabs">
+                        {TABS.map(tab => (
+                            <button key={tab.id} type="button" onClick={() => setActiveTab(tab.id)}
+                                    className={`vk-tab ${activeTab === tab.id ? 'is-active' : ''}`}>
+                                {tab.label}
+                            </button>
+                        ))}
+                    </nav>
                 </div>
+            </div>
 
-                {/* Onglets */}
-                <nav className="max-w-7xl mx-auto px-4 flex gap-1 overflow-x-auto">
-                    {TABS.map(tab => (
-                        <button key={tab.id} onClick={() => setActiveTab(tab.id)}
-                                className={`px-4 py-2 text-sm font-semibold border-b-2 shrink-0 ${
-                                    activeTab === tab.id ? 'border-primary text-primary' : 'border-transparent text-muted'
-                                }`}>
-                            {tab.label}
-                        </button>
-                    ))}
-                </nav>
-            </header>
-
-            {/* ── CONTENU ── */}
-            <main className="max-w-7xl mx-auto p-4">
+            {/* ── CONTENU (toute la largeur) ── */}
+            <main className="p-4 md:p-6">
                 {activeTab === 'session' && (
                     <TabSession activeSession={activeSession} onlineCharacters={onlineCharacters} characterUpdates={characterUpdates} />
                 )}
@@ -144,12 +141,7 @@ const GMApp = ({ activeSession, onSessionChange, onlineCharacters, characterUpda
                 )}
             </main>
 
-            {/* ── Éléments globaux ── */}
-            <ToastNotifications
-                sessionId={sessionId}
-                renderDiceToast={(toast) => <VikingsHistoryEntry entry={toast} compact />}
-            />
-
+            {/* ── Modales globales ── */}
             {showTableMgmt && (
                 <TableManagementModal
                     isOpen
@@ -161,6 +153,13 @@ const GMApp = ({ activeSession, onSessionChange, onlineCharacters, characterUpda
             {showGMDice && <GMDiceModal onClose={() => setShowGMDice(false)} darkMode={darkMode} sessionId={sessionId} />}
             {showFreeDice && <FreeDiceModal sessionId={sessionId} isGM onClose={() => setShowFreeDice(false)} />}
             {showDiceConfig && <DiceConfigModal onClose={() => setShowDiceConfig(false)} />}
+
+            {/* Notifications en dernier : devant les modales (même z-index) */}
+            <ToastNotifications
+                sessionId={sessionId}
+                renderDiceToast={(toast) => <VikingsHistoryEntry entry={toast} compact />}
+                renderAllRollTypes
+            />
         </div>
     );
 };
