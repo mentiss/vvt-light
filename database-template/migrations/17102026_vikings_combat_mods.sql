@@ -9,7 +9,7 @@
 --
 -- À exécuter UNIQUEMENT sur Vikings, après la migration 17102026_vikings_refonte_schema.sql
 -- et après sauvegarde de la base :
---   npm run migrate 17102026_vikings_combat_mods.sql --system=vikings
+--   npm run migrate -- 17102026_vikings_combat_mods.sql --system=vikings
 -- ═════════════════════════════════════════════════════════════════════════════
 
 ALTER TABLE characters ADD COLUMN armure_mod  INTEGER NOT NULL DEFAULT 0;

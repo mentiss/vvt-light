@@ -68,7 +68,7 @@ Toutes avec `ON DELETE CASCADE` vers `characters` et un index sur `character_id`
 
 ## 3. Migration : `database-template/migrations/17102026_vikings_refonte_schema.sql`
 
-Appliquée par `npm run migrate 17102026_vikings_refonte_schema.sql --system=vikings` : le script désactive les clés étrangères puis exécute tout dans **une transaction** (annulée en cas d'erreur). Lignes référencées par sous-SELECT, jamais par id en dur.
+Appliquée par `npm run migrate -- 17102026_vikings_refonte_schema.sql --system=vikings` : le script désactive les clés étrangères puis exécute tout dans **une transaction** (annulée en cas d'erreur). Lignes référencées par sous-SELECT, jamais par id en dur.
 
 ### 3.1 `characters` (reconstruction)
 SQLite ne sait ni ajouter `UNIQUE` ni renommer avec changement de contrainte par `ALTER` : création d'une table `characters_new` au schéma cible (§2.2), copie, suppression de l'ancienne, renommage.
@@ -169,7 +169,7 @@ Aucun appel client ne change de verbe HTTP dans ce lot : le `PATCH` est exposé,
 1. Arrêter l'application (`pm2 stop`) ;
 2. **sauvegarder** `database/pure-vikings.db` (et ses fichiers `-wal` / `-shm`) ;
 3. déployer le code du lot 2 ;
-4. `npm run migrate 17102026_vikings_refonte_schema.sql --system=vikings` ;
+4. `npm run migrate -- 17102026_vikings_refonte_schema.sql --system=vikings` ;
 5. redémarrer (vide aussi le cache de nom de personnage de `getCharNameExpr`).
 
 ---

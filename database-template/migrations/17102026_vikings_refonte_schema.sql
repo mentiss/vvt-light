@@ -12,7 +12,7 @@
 --   • compétences : 3 noms alignés sur le vault (R-1)
 --
 -- À exécuter UNIQUEMENT sur Vikings, après sauvegarde de la base :
---   npm run migrate 17102026_vikings_refonte_schema.sql --system=vikings
+--   npm run migrate -- 17102026_vikings_refonte_schema.sql --system=vikings
 -- Le runner désactive les clés étrangères et exécute tout dans une transaction :
 -- en cas d'erreur (ex. access_code en double), rien n'est modifié.
 -- ═════════════════════════════════════════════════════════════════════════════
