@@ -120,10 +120,10 @@ Rooms Socket.io : `${slug}_session_${sessionId}`. L'état partagé (personnages 
 La documentation du projet et les **spécifications validées** vivent en Markdown dans `documentations/` :
 - specs de slugs : `spec_<slug>.md` (ex. `spec_deltagreen.md`, `spec_achtung_cthulhu.md`) ;
 - specs de briques plateforme : `spec_combat.md` (combat générique), `spec_diceengine_v2.md` (moteur de dés) ;
-- guides : `guide_new_slug_jdr.md`.
+- guides : `guide_new_slug_jdr.md` (réduit à un renvoi vers `/new-slug`).
 
 Règles :
 - **Avant de travailler sur un slug ou une brique plateforme, lis la spec correspondante.** Elle porte les choix fonctionnels et les règles du jeu validés avec le MJ : ne les contredis pas et n'invente pas de règle absente.
 - **En cas d'écart entre une spec et le code, le code fait foi** pour la technique (chemins, noms de colonnes, contrats de props). Certaines specs anciennes contiennent des détails dépassés (ex. `avatar_url` au lieu de `avatar`, cases à cocher). Signale l'écart plutôt que de « corriger » le code vers la spec.
 - Une spec produite en phase 2 se range dans `documentations/` au même format, après validation.
-- `guide_new_slug_jdr.md` est **obsolète**, notamment pour les chemins de composants et la structure GM (`gm/GMView.jsx`). Ne t'y fie pas : la référence est `/new-slug` et le code de `fabula`.
+- `guide_new_slug_jdr.md` n'est plus qu'un renvoi : la référence pour créer un slug est `/new-slug` et le code de `fabula`.

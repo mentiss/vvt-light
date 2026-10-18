@@ -16,7 +16,7 @@ Respecte la méthode en trois phases du CLAUDE.md racine. **N'écris aucun fichi
     - besoins côté MJ (ressources de session, PNJ, combat) ;
     - palette de couleurs et identité visuelle ;
     - les règles de référence (lore, livre de base) si je peux te les fournir : n'invente rien qui les contredise.
-3. Lis le slug de référence `fabula` (config, routes, schéma, `Sheet.jsx`, `GMApp.jsx`) pour calquer les patterns. **Ne prends pas `vikings` comme modèle** (en refonte). Lis aussi `documentations/spec_diceengine_v2.md` et `documentations/spec_combat.md` pour les contrats dés et combat. Ignore `documentations/guide_new_slug_jdr.md` (obsolète).
+3. Lis le slug de référence `fabula` (config, routes, schéma, `Sheet.jsx`, `GMApp.jsx`) pour calquer les patterns. **Ne prends pas `vikings` comme modèle** (en refonte). Lis aussi `documentations/spec_diceengine_v2.md` et `documentations/spec_combat.md` pour les contrats dés et combat.
 
 ## Phase 2 — Spécification (à faire valider)
 
