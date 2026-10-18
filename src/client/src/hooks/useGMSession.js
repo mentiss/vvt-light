@@ -94,6 +94,19 @@ export function useGMSession({ apiBase }) {
         };
     }, [socket]);
 
+    // ── Composition de la table active (ajout / retrait d'un personnage) ─────
+    useEffect(() => {
+        if (!socket) return;
+
+        const onComposition = ({ system, sessionId, session }) => {
+            if (system !== slug) return;
+            setActiveSessionState(prev => (prev && prev.id === sessionId ? session : prev));
+        };
+
+        socket.on('session-characters-update', onComposition);
+        return () => socket.off('session-characters-update', onComposition);
+    }, [socket, slug]);
+
     // ── Broadcast session active + join/leave room ──────────────────────────
     useEffect(() => {
         if (!socket) return;

@@ -13,6 +13,7 @@ const express = require('express');
 const router = express.Router();
 const { authenticate, requireGM } = require('../middlewares/auth');
 const { ensureUniqueCode, getCharNameExpr} = require('../utils/characters');
+const { sharedState } = require('../socket/index');
 
 // ─── Helper ─────────────────────────────────────────────────────────────────
 
@@ -62,6 +63,25 @@ function loadSessionWithCharacters(db, sessionId) {
             joinedAt:   c.joined_at,
         })),
     };
+}
+
+/**
+ * Diffuse un changement de composition (spec_composition_table.md §3) :
+ * la nouvelle composition à la room de la table (MJ, joueurs présents), et un
+ * signal au personnage ajouté ou retiré s'il est en ligne sur ce slug.
+ */
+function broadcastComposition(req, sessionId, characterId, session) {
+    const io = req.app.get('io');
+    if (!io || !session) return;
+    const system = req.system.slug;
+
+    io.to(`${system}_session_${sessionId}`)
+        .emit('session-characters-update', { system, sessionId: Number(sessionId), session });
+
+    const presence = sharedState.onlineCharacters.get(Number(characterId));
+    if (presence?.slug === system) {
+        io.to(presence.socketId).emit('character-sessions-changed', { system, characterId: Number(characterId) });
+    }
 }
 
 // ─── Routes ─────────────────────────────────────────────────────────────────
@@ -171,7 +191,9 @@ router.post('/:sessionId/characters/:characterId', authenticate, requireGM, (req
             return res.status(400).json({ error: 'Character already in this session' });
 
         db.prepare('INSERT INTO session_characters (session_id, character_id) VALUES (?, ?)').run(sessionId, characterId);
-        res.json(loadSessionWithCharacters(db, sessionId));
+        const session = loadSessionWithCharacters(db, sessionId);
+        broadcastComposition(req, sessionId, characterId, session);
+        res.json(session);
     } catch (error) {
         console.error('Error adding character to session:', error);
         res.status(500).json({ error: error.message });
@@ -187,7 +209,9 @@ router.delete('/:sessionId/characters/:characterId', authenticate, requireGM, (r
         ).run(sessionId, characterId);
 
         if (result.changes === 0) return res.status(404).json({ error: 'Character not in this session' });
-        res.json(loadSessionWithCharacters(req.db, sessionId));
+        const session = loadSessionWithCharacters(req.db, sessionId);
+        broadcastComposition(req, sessionId, characterId, session);
+        res.json(session);
     } catch (error) {
         console.error('Error removing character from session:', error);
         res.status(500).json({ error: error.message });

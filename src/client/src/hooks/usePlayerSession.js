@@ -34,13 +34,18 @@ export function usePlayerSession({ character, onCharacterUpdate, onCharacterRelo
     const [journalUnread, setJournalUnread] = useState(0);
 
     // ── Charger les sessions du personnage ──────────────────────────────────
-    useEffect(() => {
-        if (!character?.id || character.id === -1) return;
-
+    // Au chargement, puis quand le MJ l'ajoute à une table ou l'en retire
+    // (character-sessions-changed, spec_composition_table.md)
+    const loadCharacterSessions = () => {
         fetchWithAuth(`${apiBase}/characters/${character.id}/sessions`)
             .then(r => r.json())
             .then(sessions => updateCharacterSessions(sessions))
             .catch(err => console.error('[usePlayerSession] Error loading sessions:', err));
+    };
+
+    useEffect(() => {
+        if (!character?.id || character.id === -1) return;
+        loadCharacterSessions();
     }, [character?.id, apiBase]);
 
     // ── Charger le nombre d'entrées du journal non lues ─────────────────────
@@ -107,16 +112,25 @@ export function usePlayerSession({ character, onCharacterUpdate, onCharacterRelo
             }
         };
 
+        // Ajout à une table ou retrait par le MJ → recharger les tables du personnage
+        const handleSessionsChanged = (data) => {
+            if (data.system === slug && String(data.characterId) === String(character.id)) {
+                loadCharacterSessions();
+            }
+        };
+
         socket.on('character-update',    handleCharacterUpdate);
         socket.on('character-full-update', handleCharacterFullUpdate);
         socket.on('gm-item-received',    handleGMItemReceived);
         socket.on('gm-message-received', handleGMMessage);
+        socket.on('character-sessions-changed', handleSessionsChanged);
 
         return () => {
             socket.off('character-update',    handleCharacterUpdate);
             socket.off('character-full-update', handleCharacterFullUpdate);
             socket.off('gm-item-received',    handleGMItemReceived);
             socket.off('gm-message-received', handleGMMessage);
+            socket.off('character-sessions-changed', handleSessionsChanged);
         };
     }, [socket, character?.id]);
 

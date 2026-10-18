@@ -128,6 +128,16 @@ const SessionPlayersBar = ({ character, sessionId, sessionName, headerHeight = n
             .catch(err => console.error('[SessionPlayersBar] Error loading session characters:', err));
     }, [sessionId]);
 
+    // Composition de la table modifiée par le MJ (ajout / retrait d'un personnage)
+    useEffect(() => {
+        if (!socket || !sessionId) return;
+        const handleComposition = ({ system, sessionId: id, session }) => {
+            if (system === slug && String(id) === String(sessionId)) setSessionCharacters(session.characters || []);
+        };
+        socket.on('session-characters-update', handleComposition);
+        return () => socket.off('session-characters-update', handleComposition);
+    }, [socket, sessionId, slug]);
+
     // Écouter les mises à jour des personnages en ligne
     useEffect(() => {
         if (!socket) return;

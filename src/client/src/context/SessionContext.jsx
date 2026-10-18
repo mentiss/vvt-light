@@ -9,7 +9,7 @@ const SessionContext = createContext();
 export const SessionProvider = ({ children }) => {
     const [activeGMSession, setActiveGMSession] = useState(null);
     const [activeSessionName, setActiveSessionName] = useState(null);
-    const [characterSessions, setCharacterSessions] = useState([]); // Sessions du perso
+    const [characterSessions, setCharacterSessions] = useState(null); // Sessions du perso (null = pas encore chargées)
     const [pendingSessionId, setPendingSessionId] = useState(null);
     const socket = useSocket();
     const fetchWithAuth = useFetch();
@@ -48,7 +48,9 @@ export const SessionProvider = ({ children }) => {
 
     useEffect(() => {
         if (!socket || !pendingSessionId) return;
-        if (!characterSessions.length) return; // ← attendre que les sessions soient chargées
+        // Attendre que les sessions soient chargées ; une liste vide (personnage retiré
+        // de sa seule table) doit, elle, faire quitter la table active
+        if (characterSessions === null) return;
 
         const system   = getSystemFromPath();
         const isGM     = characterSessions.some(s => s.id === -1);
