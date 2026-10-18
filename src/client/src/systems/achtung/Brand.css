@@ -1,0 +1,32 @@
+/* src/client/src/systems/achtung/Brand.css */
+/* ─────────────────────────────────────────────────────────────────────────────
+   Marque Achtung! Cthulhu (spec_plateforme_accueil.md §5) : carte de l'accueil
+   et titre des pages d'accès. Importé par Brand.jsx (accueil) et par theme.css.
+   Classes .ac-brand-* uniquement, aucune couleur globale.
+   Police Achtung : public/fonts/fonts.css (chargé partout).
+   ─────────────────────────────────────────────────────────────────────────── */
+
+/* Polices du slug (marque et fiche) */
+@import url('https://fonts.googleapis.com/css2?family=Special+Elite&family=Oswald:wght@400;600;700&display=swap');
+
+/* ── Carte : dossier opérationnel kaki, tampon rouge ───────────────────── */
+.ac-brand {
+    height: 100%; position: relative; overflow: hidden; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 0.45rem;
+    background:
+            radial-gradient(ellipse at 50% 40%, transparent 40%, rgba(0, 0, 0, 0.45) 100%),
+            linear-gradient(135deg, #3d4428, #252518 75%);
+    color: #e5dcc0;
+}
+.ac-brand-stamp {
+    position: absolute; top: 0.9rem; right: 0.9rem; transform: rotate(8deg);
+    font-family: 'Special Elite', 'Courier New', monospace; font-size: 0.7rem; letter-spacing: 0.18em; text-transform: uppercase;
+    color: #c43030; border: 2px solid #c43030; padding: 0.1rem 0.45rem; opacity: 0.85;
+}
+.ac-brand-title { font-family: 'Achtung', serif; font-weight: 700; font-size: 2.2rem; line-height: 1.1; color: #e5dcc0; text-shadow: 0 2px 6px rgba(0, 0, 0, 0.6); }
+.ac-brand-rule { width: 55%; border-top: 1px solid rgba(181, 169, 106, 0.6); border-bottom: 1px solid rgba(181, 169, 106, 0.6); height: 3px; }
+.ac-brand-sub { font-family: 'Special Elite', 'Courier New', monospace; font-size: 0.75rem; letter-spacing: 0.14em; text-transform: uppercase; color: #b5a96a; }
+
+/* ── Titre (pages d'accès, Reprendre) : couleur primaire du thème courant ── */
+.ac-brand.is-title { height: auto; overflow: visible; background: none; gap: 0; }
+.ac-brand.is-title .ac-brand-stamp, .ac-brand.is-title .ac-brand-rule, .ac-brand.is-title .ac-brand-sub { display: none; }
+.ac-brand.is-title .ac-brand-title { font-size: 1.4em; text-shadow: none; color: var(--color-primary, #4a5830); white-space: nowrap; }

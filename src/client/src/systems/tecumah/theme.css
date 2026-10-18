@@ -1,5 +1,7 @@
 /* src/client/src/systems/tecumah/theme.css */
 
+/* Marque du slug (titre des pages d'accès) */
+@import './Brand.css';
 
 @source inline("bg-health-{0,1,2,3,4,5} text-health-{0,1,2,3,4,5} border-health-{0,1,2,3,4,5}");
 :root {

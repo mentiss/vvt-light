@@ -1,0 +1,25 @@
+/* src/client/src/systems/tecumah/Brand.css */
+/* ─────────────────────────────────────────────────────────────────────────────
+   Marque Tecumah Gulch (spec_plateforme_accueil.md §5) : carte de l'accueil et
+   titre des pages d'accès. Importé par Brand.jsx (accueil) et par theme.css.
+   Classes .tg-brand-* uniquement, aucune couleur globale.
+   Polices BleedingCowboys et DayRoman : public/fonts/fonts.css (chargé partout).
+   ─────────────────────────────────────────────────────────────────────────── */
+
+/* ── Carte : canyon au couchant ────────────────────────────────────────── */
+.tg-brand {
+    height: 100%; position: relative; overflow: hidden; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 0.9rem;
+    background:
+            linear-gradient(170deg, transparent 72%, #4E382F 72.5%),
+            linear-gradient(195deg, transparent 78%, #2B1B17 78.5%),
+            radial-gradient(circle at 50% 95%, rgba(247, 231, 206, 0.6) 0 10%, transparent 40%),
+            linear-gradient(180deg, #3D2B24 0%, #8B261A 40%, #BC4A2C 65%, #E9A73B 100%);
+    color: #F7E7CE;
+}
+.tg-brand-title { font-family: 'BleedingCowboys', Georgia, serif; font-size: 2.4rem; line-height: 1.1; color: #F7E7CE; text-shadow: 0 3px 8px rgba(43, 27, 23, 0.85); }
+.tg-brand-sub { font-family: 'DayRoman', Georgia, serif; font-size: 0.85rem; letter-spacing: 0.2em; text-transform: uppercase; color: #F7E7CE; text-shadow: 0 1px 4px rgba(43, 27, 23, 0.9); }
+
+/* ── Titre (pages d'accès, Reprendre) : couleur primaire du thème courant ── */
+.tg-brand.is-title { height: auto; overflow: visible; background: none; gap: 0; }
+.tg-brand.is-title .tg-brand-sub { display: none; }
+.tg-brand.is-title .tg-brand-title { font-size: 1.5em; text-shadow: none; color: var(--color-primary, #BC4A2C); white-space: nowrap; }

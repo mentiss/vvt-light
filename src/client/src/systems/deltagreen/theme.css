@@ -5,6 +5,9 @@
    Mode nuit  : papier sombre, encre claire, rouge atténué
    ─────────────────────────────────────────────────────────────────────────── */
 
+/* Marque du slug (titre des pages d'accès) et police des tampons */
+@import './Brand.css';
+
 /* ── Mode JOUR (par défaut) ─────────────────────────────────────────────── */
 :root {
     /* Couleurs plateforme — adaptées à l'esthétique administrative */

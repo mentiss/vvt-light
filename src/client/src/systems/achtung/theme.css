@@ -1,7 +1,8 @@
 /* src/client/src/systems/achtung/theme.css */
 /* Achtung! Cthulhu — WWII Secret War                                         */
 
-@import url('https://fonts.googleapis.com/css2?family=Special+Elite&family=Oswald:wght@400;600;700&display=swap');
+/* Marque du slug (titre des pages d'accès) et polices Google */
+@import './Brand.css';
 
 /* ═══════════════════════════════════════════════════════════════════════════
    MODE JOUR — Documents opérationnels, papier kraft, encre sépia
