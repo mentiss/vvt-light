@@ -12,7 +12,8 @@
    AppRouter) et [data-theme="dark"] (posé par le slug sur son wrapper).
    ─────────────────────────────────────────────────────────────────────────── */
 
-@import url('https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=IBM+Plex+Mono:wght@400;500;600&family=Inter:wght@400;500;600&display=swap');
+/* Marque du slug (titre des pages d'accès) et polices Google */
+@import './Brand.css';
 
 :root {
     --zb-font-display: 'Barlow Condensed', 'Oswald', Impact, sans-serif;

@@ -2,6 +2,9 @@
 /* Thème Dune: Adventures in the Imperium                                    */
 /* Palette : désert — ocre / sable / or / rouge brique — jour & nuit        */
 
+/* Marque du slug (titre des pages d'accès) */
+@import './Brand.css';
+
 :root {
     /* ── Couleurs principales ────────────────────────────────────────────── */
     --dune-sand:        #C8A96E;   /* sable doré */

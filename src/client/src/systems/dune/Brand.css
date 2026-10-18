@@ -1,0 +1,31 @@
+/* src/client/src/systems/dune/Brand.css */
+/* ─────────────────────────────────────────────────────────────────────────────
+   Marque Dune (spec_plateforme_accueil.md §5) : carte de l'accueil et titre des
+   pages d'accès. Importé par Brand.jsx (accueil) et par theme.css.
+   Classes .dune-brand-* uniquement, aucune couleur globale.
+   DuneRise : public/fonts/fonts.css (chargé partout).
+   ─────────────────────────────────────────────────────────────────────────── */
+
+/* ── Carte : désert au crépuscule, dunes et soleil ─────────────────────── */
+.dune-brand {
+    height: 100%; position: relative; overflow: hidden; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 0.4rem;
+    background:
+            radial-gradient(ellipse 160% 60% at 20% 118%, #8B6F47 50%, transparent 51%),
+            radial-gradient(ellipse 140% 55% at 85% 112%, #B5651D 50%, transparent 51%),
+            radial-gradient(circle at 86% 18%, rgba(245, 230, 200, 0.85) 0 5%, rgba(224, 123, 57, 0.35) 6%, transparent 24%),
+            linear-gradient(180deg, #2C1A0E 0%, #6B3A1A 55%, #C8A96E 100%);
+    color: #F5E6C8;
+}
+.dune-brand-title {
+    position: relative; font-family: 'DuneRise', Georgia, serif; font-size: 2.6rem; line-height: 1; letter-spacing: 0.08em;
+    color: #F5E6C8; text-shadow: 0 2px 12px rgba(44, 26, 14, 0.8);
+}
+.dune-brand-sub {
+    position: relative; font-size: 0.72rem; font-weight: 600; letter-spacing: 0.25em; text-transform: uppercase;
+    color: #EDD9A3; text-shadow: 0 1px 4px rgba(44, 26, 14, 0.9);
+}
+
+/* ── Titre (pages d'accès, Reprendre) : ocre du thème (lisible jour et nuit) ── */
+.dune-brand.is-title { height: auto; overflow: visible; background: none; gap: 0; }
+.dune-brand.is-title .dune-brand-sub { display: none; }
+.dune-brand.is-title .dune-brand-title { font-size: 1.5em; text-shadow: none; color: var(--dune-ochre, #B5651D); white-space: nowrap; }

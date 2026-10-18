@@ -6,7 +6,8 @@
    Mode nuit  : indigo nocturne façon menu JRPG, or et cramoisi en glow doux
    ─────────────────────────────────────────────────────────────────────────── */
 
-@import url('https://fonts.googleapis.com/css2?family=Antonio:wght@400;600;700&family=PT+Sans+Narrow:wght@400;700&display=swap');
+/* Marque du slug (titre des pages d'accès, police du logo) et polices Google */
+@import './Brand.css';
 
 /* ── Mode JOUR (par défaut) ─────────────────────────────────────────────── */
 :root {
@@ -67,11 +68,7 @@
 
 /* ── Typographie slug — hiérarchie inspirée du matériel officiel ──────────── */
 
-/* Grand titre de page — header uniquement ("Fabula Ultima") */
-.fu-font-logo {
-    font-family: 'Credit Valley', 'Cinzel', Georgia, serif;
-    letter-spacing: 0.03em;
-}
+/* Grand titre de page (.fu-font-logo) : Brand.css */
 
 /* Titres de section — "Attributs & Altérations", noms de classe, etc. */
 .fu-font-title {

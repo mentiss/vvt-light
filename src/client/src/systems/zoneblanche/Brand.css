@@ -1,0 +1,50 @@
+/* src/client/src/systems/zoneblanche/Brand.css */
+/* ─────────────────────────────────────────────────────────────────────────────
+   Marque Zone Blanche (spec_plateforme_accueil.md §5) : carte de l'accueil et
+   titre des pages d'accès. Importé par Brand.jsx (accueil) et par theme.css.
+   Classes .zb-brand-* uniquement, aucune couleur globale.
+   ─────────────────────────────────────────────────────────────────────────── */
+
+/* Polices du slug (marque et fiche) */
+@import url('https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=IBM+Plex+Mono:wght@400;500;600&family=Inter:wght@400;500;600&display=swap');
+
+/* ── Carte : found footage — écran noir, phosphore, REC ────────────────── */
+.zb-brand {
+    height: 100%; position: relative; overflow: hidden; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 0.4rem;
+    background:
+            repeating-linear-gradient(0deg, rgba(77, 255, 133, 0.06) 0 1px, transparent 1px 3px),
+            radial-gradient(ellipse at center, #0a140e 40%, #020503 100%);
+    color: #d8f7de;
+}
+.zb-brand-hud {
+    position: absolute; left: 0.85rem; right: 0.85rem; top: 0.7rem; display: flex; justify-content: space-between; align-items: center;
+    font-family: 'IBM Plex Mono', ui-monospace, monospace; font-size: 0.68rem; letter-spacing: 0.15em; color: #74a684;
+}
+.zb-brand-rec { display: inline-flex; align-items: center; gap: 0.35rem; color: #ff3b30; }
+.zb-brand-rec::before { content: ''; width: 0.5rem; height: 0.5rem; border-radius: 999px; background: #ff3b30; animation: zb-brand-pulse 1.4s ease-in-out infinite; }
+.zb-brand-bug {
+    font-family: 'Barlow Condensed', 'Oswald', Impact, sans-serif; text-transform: uppercase; letter-spacing: 0.22em; font-size: 0.7rem;
+    padding: 0.15rem 0.5rem; border: 1px solid currentColor; color: #74a684;
+}
+.zb-brand-title {
+    font-family: 'Barlow Condensed', 'Oswald', Impact, sans-serif; font-weight: 700; text-transform: uppercase;
+    font-size: 2.4rem; line-height: 1; letter-spacing: 0.18em; color: #4dff85;
+    text-shadow: 0 0 14px rgba(77, 255, 133, 0.35);
+    animation: zb-brand-flicker 5s steps(1) infinite;
+}
+.zb-brand-sub { font-family: 'IBM Plex Mono', ui-monospace, monospace; font-size: 0.68rem; letter-spacing: 0.18em; text-transform: uppercase; color: #74a684; }
+@keyframes zb-brand-pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
+@keyframes zb-brand-flicker {
+    0%, 92%, 96%, 100% { opacity: 1; }
+    93%                { opacity: 0.55; }
+    97%                { opacity: 0.75; }
+}
+
+/* ── Titre (pages d'accès, Reprendre) : couleur primaire du thème courant ── */
+.zb-brand.is-title { height: auto; overflow: visible; background: none; gap: 0; }
+.zb-brand.is-title .zb-brand-hud, .zb-brand.is-title .zb-brand-sub { display: none; }
+.zb-brand.is-title .zb-brand-title { font-size: 1.4em; color: var(--color-primary, #2f4f3a); text-shadow: var(--zb-glow, none); animation: var(--zb-flicker, none); white-space: nowrap; }
+
+@media (prefers-reduced-motion: reduce) {
+    .zb-brand-title, .zb-brand-rec::before { animation: none; }
+}

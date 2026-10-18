@@ -1,0 +1,42 @@
+/* src/client/src/systems/fabula/Brand.css */
+/* ─────────────────────────────────────────────────────────────────────────────
+   Marque Fabula Ultima (spec_plateforme_accueil.md §5) : carte de l'accueil et
+   titre des pages d'accès. Importé par Brand.jsx (accueil) et par theme.css.
+   Classes .fu-brand-* (et la police du logo), aucune couleur globale.
+   Credit Valley : public/fonts/fonts.css (chargé partout).
+   ─────────────────────────────────────────────────────────────────────────── */
+
+/* Polices du slug (marque et fiche) */
+@import url('https://fonts.googleapis.com/css2?family=Antonio:wght@400;600;700&family=PT+Sans+Narrow:wght@400;700&display=swap');
+
+/* Grand titre de page — header uniquement ("Fabula Ultima") */
+.fu-font-logo {
+    font-family: 'Credit Valley', 'Cinzel', Georgia, serif;
+    letter-spacing: 0.03em;
+}
+
+/* ── Carte : menu JRPG nocturne, or et indigo ──────────────────────────── */
+.fu-brand {
+    height: 100%; position: relative; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 0.35rem;
+    background:
+            radial-gradient(ellipse at 50% 0%, rgba(232, 196, 104, 0.18), transparent 55%),
+            linear-gradient(160deg, #2A2340, #14101F 70%);
+    color: #F2EAD9;
+}
+/* Cadre intérieur façon fenêtre de menu */
+.fu-brand::before {
+    content: ''; position: absolute; inset: 10px; pointer-events: none;
+    border: 1px solid rgba(232, 196, 104, 0.45); border-radius: 6px;
+    box-shadow: inset 0 0 0 3px rgba(20, 16, 31, 0.9), inset 0 0 0 4px rgba(142, 160, 216, 0.25);
+}
+.fu-brand-title { font-family: 'Credit Valley', 'Cinzel', Georgia, serif; font-size: 2.3rem; line-height: 1.1; letter-spacing: 0.03em; color: #E8C468; text-shadow: 0 0 14px rgba(232, 196, 104, 0.35); }
+.fu-brand-divider { display: flex; align-items: center; gap: 0.5rem; width: 55%; }
+.fu-brand-divider::before, .fu-brand-divider::after { content: ''; flex: 1; height: 1px; background: linear-gradient(90deg, transparent, #E8C468); }
+.fu-brand-divider::after { background: linear-gradient(90deg, #E8C468, transparent); }
+.fu-brand-gem { width: 7px; height: 7px; transform: rotate(45deg); background: #E0525A; box-shadow: 0 0 6px rgba(224, 82, 90, 0.7); }
+.fu-brand-sub { font-family: 'Antonio', 'Arial Narrow', sans-serif; font-weight: 600; font-size: 0.75rem; letter-spacing: 0.22em; text-transform: uppercase; color: #A89BC4; }
+
+/* ── Titre (pages d'accès, Reprendre) : couleur primaire du thème courant ── */
+.fu-brand.is-title { height: auto; background: none; gap: 0; }
+.fu-brand.is-title::before, .fu-brand.is-title .fu-brand-divider, .fu-brand.is-title .fu-brand-sub { display: none; }
+.fu-brand.is-title .fu-brand-title { font-size: 1.4em; text-shadow: none; color: var(--color-primary, #3E7232); white-space: nowrap; }
