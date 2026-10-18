@@ -253,7 +253,7 @@ const Sheet = ({
                         </>
                     )}
 
-                    {activeTab === 'journal' && <JournalTab characterId={character.id} />}
+                    {activeTab === 'journal' && <JournalTab characterId={character.id} onRead={onJournalRead} />}
                     {activeTab === 'historique' && (
                         <DiceHistoryPage
                             sessionId={activeGMSession}

@@ -190,7 +190,8 @@ router.put('/:characterId/:entryId', authenticate, requireOwnerOrGM, (req, res) 
         if (isRead !== undefined) { updates.push('is_read = ?'); params.push(isRead ? 1 : 0); }
         if (updates.length === 0) return res.status(400).json({ error: 'No fields to update' });
 
-        updates.push('updated_at = CURRENT_TIMESTAMP');
+        // Marquer comme lu n'est pas une modification du contenu
+        if (title !== undefined || body !== undefined) updates.push('updated_at = CURRENT_TIMESTAMP');
         params.push(entryId, characterId);
         db.prepare(`UPDATE character_journal SET ${updates.join(', ')} WHERE id = ? AND character_id = ?`).run(...params);
 

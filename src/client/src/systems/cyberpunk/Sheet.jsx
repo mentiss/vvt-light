@@ -1061,6 +1061,7 @@ const Sheet = ({
                         <div className="h-full overflow-y-auto cp-scroll p-4">
                             <JournalTab
                                 characterId={character.id}
+                                onRead={onJournalRead}
                             />
                         </div>
                     )}

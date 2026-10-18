@@ -61,6 +61,11 @@ Les dates enregistrées par le serveur (heure UTC) sont lues comme telles : « C
 - Une entrée « objet reçu » s'affiche comme telle (libellé « Objet reçu », et non « Message du MJ »), avec l'objet : nom, quantité, catégorie, et la note du MJ s'il y en a une.
 - Elle apparaît dans le journal en direct, comme les messages.
 
+### 2.6 bis — Compteur de l'onglet Journal (signalé par le MJ après le lot A)
+
+- Ouvrir un message ou un objet du MJ non lu le marque comme lu (côté serveur) et remet à zéro le compteur de l'onglet ; passer sur l'onglet le remet toujours à zéro. Marquer comme lu ne change pas la date de modification de l'entrée.
+- Le compteur persistant (calculé au chargement à partir des entrées non lues, avec les non lus signalés dans la liste) est reporté au lot B.
+
 ### 2.7 J-6 — Code mort
 
 Le double branchement de l'agrandissement d'image au double-clic est réduit à un seul (celui de l'éditeur) ; le hook `useImageLightbox`, alors inutilisé, est supprimé.
@@ -83,6 +88,7 @@ Même démarche que les modales génériques (`spec_ui_modales.md`) : classes st
 - `RichTextEditor` : couleurs de l'éditeur (barre flottante, barre d'outils, titres, citations, sélection d'image, poignées de redimensionnement) sur les variables `--color-*`, au lieu de l'or de Vikings et du fond blanc codés en dur ; plus d'emoji sur le bouton Image.
 - `ImageLightbox` (agrandissement d'une image) : bouton de fermeture et fond sur les mêmes conventions.
 - Vikings : les surcharges déjà présentes dans son `theme.css` s'appliquent ; ajout éventuel des classes propres au journal si le rendu le demande.
+- Compteur persistant de l'onglet Journal : calculé au chargement de la fiche à partir des entrées non lues, qui sont signalées dans la liste du journal (voir 2.6 bis).
 
 ---
 

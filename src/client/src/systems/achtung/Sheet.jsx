@@ -389,7 +389,7 @@ const Sheet = ({
                     {/* ── ONGLET JOURNAL ────────────────────────────────────── */}
                     {activeTab === 'journal' && (
                         <div className="px-3 py-4">
-                            <JournalTab characterId={character.id} sessionId={activeGMSession} apiBase={apiBase} />
+                            <JournalTab characterId={character.id} onRead={onJournalRead} sessionId={activeGMSession} apiBase={apiBase} />
                         </div>
                     )}
 

@@ -460,7 +460,7 @@ const Sheet = ({
                             )}
 
                             {/* ══ JOURNAL ══════════════════════════════════════════ */}
-                            {activeTab === 'journal' && <JournalTab characterId={character.id} />}
+                            {activeTab === 'journal' && <JournalTab characterId={character.id} onRead={onJournalRead} />}
 
                             {/* ══ HISTORIQUE ══════════════════════════════════════ */}
                             {activeTab === 'historique' && (

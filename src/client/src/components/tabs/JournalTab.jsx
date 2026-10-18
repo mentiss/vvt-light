@@ -12,7 +12,9 @@ import ImageLightbox from "../ui/ImageLightbox.jsx";
 import AlertModal     from '../modals/AlertModal.jsx';
 import { parseServerDate } from '../../tools/utils.js';
 
-const JournalTab = ({ characterId }) => {
+// onRead? — appelé quand une entrée non lue (message ou objet du MJ) est ouverte :
+//           la fiche remet à zéro le compteur de l'onglet Journal.
+const JournalTab = ({ characterId, onRead }) => {
     const [entries,       setEntries]       = useState([]);
     const [selectedEntry, setSelectedEntry] = useState(null);
     const [loading,       setLoading]       = useState(true);
@@ -180,9 +182,25 @@ const JournalTab = ({ characterId }) => {
         }
     };
 
+    // Ouvrir un message ou un objet du MJ non lu le marque comme lu
+    const markAsRead = async (entry) => {
+        const read = { ...entry, isRead: true };
+        setEntries(prev => prev.map(e => e.id === entry.id ? read : e));
+        onRead?.();
+        try {
+            await fetchWithAuth(`/api/journal/${characterId}/${entry.id}`, {
+                method: 'PUT',
+                body: JSON.stringify({ isRead: true }),
+            });
+        } catch (error) {
+            console.error('[JournalTab] Error marking entry as read:', error);
+        }
+        return read;
+    };
+
     const selectEntry = async (entry) => {
         await flushPendingSave();
-        setSelectedEntry(entry);
+        setSelectedEntry(entry.type !== 'note' && !entry.isRead ? await markAsRead(entry) : entry);
     };
 
     // ── Filtres ───────────────────────────────────────────────────────────────

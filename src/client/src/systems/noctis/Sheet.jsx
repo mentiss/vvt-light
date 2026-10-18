@@ -274,7 +274,7 @@ const Sheet = ({
                 )}
 
                 {activeTab === 'journal' && (
-                    <JournalTab characterId={character.id} />
+                    <JournalTab characterId={character.id} onRead={onJournalRead} />
                 )}
             </main>
 
