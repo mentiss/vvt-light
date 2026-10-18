@@ -243,7 +243,7 @@ const CombatantCard = ({
             {/* Modale de confirmation suppression */}
             {showConfirmRemove && (
                 <ConfirmModal
-                    title="🗑️ Retirer du combat"
+                    title="Retirer du combat"
                     message={`Voulez-vous retirer ${combatant.name} du combat ?`}
                     onConfirm={() => {
                         onRemove(combatant.id);

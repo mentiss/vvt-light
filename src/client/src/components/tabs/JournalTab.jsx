@@ -535,7 +535,7 @@ const JournalTab = ({ characterId }) => {
             {/* ── Confirmation suppression ──────────────────────────────────── */}
             {deleteTarget && (
                 <ConfirmModal
-                    title="🗑️ Supprimer la note"
+                    title="Supprimer la note"
                     message={`Voulez-vous vraiment supprimer « ${deleteTarget.title || 'Sans titre'} » ? Cette action est irréversible.`}
                     onConfirm={() => deleteEntry(deleteTarget.id)}
                     onCancel={() => setDeleteTarget(null)}

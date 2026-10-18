@@ -132,7 +132,7 @@ const TabCombat = ({
 
             {showEndCombatConfirm && (
                 <ConfirmModal
-                    title="⏹️ Terminer le combat"
+                    title="Terminer le combat"
                     message="Êtes-vous sûr de vouloir terminer le combat ? Les actions en cours seront perdues."
                     onConfirm={() => { onCloseEndCombatConfirm(); /* GMView gère endCombat */ }}
                     onCancel={onCloseEndCombatConfirm}

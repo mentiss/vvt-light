@@ -140,7 +140,7 @@ const TabCombat = ({
             {/* Confirmation fin combat */}
             {showEndCombatConfirm && (
                 <ConfirmModal
-                    title="⏹️ Terminer le combat"
+                    title="Terminer le combat"
                     message="Êtes-vous sûr de vouloir terminer le combat ? Les actions restantes seront perdues."
                     onConfirm={onEndCombat}
                     onCancel={onCloseEndCombatConfirm}
