@@ -162,8 +162,8 @@ body::before {
     mix-blend-mode: screen;
 }
 
-/* Le contenu doit passer au-dessus du drapé */
-body > * { position: relative; z-index: 1; }
+/* Le contenu doit passer au-dessus du drapé. #root seulement : les éléments rendus
+   directement dans <body> (carte de la barre de session…) gèrent leur propre position. */
 #root     { position: relative; z-index: 1; }
 
 /* ═══════════════════════════════════════════════════════════════════════════
@@ -1382,3 +1382,86 @@ body > * { position: relative; z-index: 1; }
     text-transform: uppercase;
     color:          var(--ac-muted);
 }
+
+/* ── Barre de session (components/layout/SessionPlayersBar.jsx, spec_session_bar.md) ─ */
+/* ── Achtung : repris du slug : bandeau en négatif (ac-section-header), ac-card, Oswald
+   (ac-label) et Special Elite (ac-font-title), rayons 3-5 px ; ✦ papiers d'identité WWII :
+   avatars en photos à bord blanc, carte en laissez-passer (guilloché, champs libellés,
+   photo agrafée, cachet rond, tampon) ── */
+.vtt-session-bar { background: var(--ac-surface); border-right: 1px solid var(--ac-border-strong); font-family: var(--ac-font-body); }
+.vtt-session-bar-header { border-bottom-color: var(--ac-border); }
+.vtt-session-bar-eyebrow {   /* ac-section-header */
+    display: inline-block; margin-bottom: .3rem; padding: .1rem .5rem;
+    font-family: var(--ac-font-heading); font-size: .6rem; font-weight: 700; letter-spacing: .22em;
+    color: var(--ac-bg); background: var(--ac-primary);
+}
+.vtt-session-bar-title { font-family: var(--ac-font-title); font-weight: 400; font-size: 1.05rem; color: var(--ac-text); }
+.vtt-session-bar-toggle { border-radius: var(--ac-radius); border-color: var(--ac-border); }
+.vtt-session-bar-player { border-radius: var(--ac-radius); border-left: 3px solid transparent; }
+.vtt-session-bar-player[data-me] { background: var(--ac-surface-alt); border-left-color: var(--ac-primary); }   /* ac-card */
+.vtt-session-bar[data-mode="rail"] .vtt-session-bar-player { border-left: none; }
+.vtt-session-bar-name { font-family: var(--ac-font-title); font-size: .9rem; }
+.vtt-session-bar-player-name { font-family: var(--ac-font-heading); font-size: .62rem; font-weight: 600; letter-spacing: .1em; text-transform: uppercase; }   /* ac-label */
+.vtt-session-bar-player[data-online] .vtt-session-bar-player-name { color: var(--ac-secondary); }
+/* ✦ Avatars : petites photos d'identité à bord blanc */
+.vtt-session-bar-frame { border-radius: 1px; padding: 3px; background: #f4efe0; box-shadow: 0 1px 3px rgba(0,0,0,.35); }
+.vtt-session-bar-player[data-online] .vtt-session-bar-frame { background: #f4efe0; box-shadow: 0 0 0 2px var(--ac-primary), 0 1px 3px rgba(0,0,0,.35); }
+.vtt-session-bar-player[data-me] .vtt-session-bar-frame { padding: 3px; background: #f4efe0; box-shadow: 0 0 0 2px var(--ac-secondary), 0 1px 3px rgba(0,0,0,.35); }
+.vtt-session-bar-image, .vtt-session-bar-initials { border-radius: 0; }
+.vtt-session-bar-image { filter: sepia(.3) contrast(1.05); }
+.vtt-session-bar-player:not([data-online]):not([data-me]) .vtt-session-bar-frame { filter: grayscale(1) sepia(.4); }
+.vtt-session-bar-initials { font-family: var(--ac-font-title); color: var(--ac-primary); background: #e9e1c8; }
+.vtt-session-bar-reopen { border-radius: var(--ac-radius); }
+
+/* ✦ Carte : laissez-passer. Papier ivoire guilloché (identique jour et nuit, comme un vrai document) */
+.vtt-session-bar-card {
+    --ac-paper: #efe7cf; --ac-ink: #2a2618; --ac-ink-soft: #6a6040;
+    position: relative; border-radius: 4px; padding: .9rem 1rem 1.1rem;
+    color: var(--ac-ink); border: 1px solid #b8a878;
+    background:
+        repeating-radial-gradient(circle at 50% 120%, transparent 0 6px, rgba(74, 88, 48, .07) 6px 7px),
+        repeating-linear-gradient(45deg, transparent 0 9px, rgba(122, 104, 48, .05) 9px 10px),
+        var(--ac-paper);
+    box-shadow: inset 0 0 0 4px var(--ac-paper), inset 0 0 0 5px rgba(74, 88, 48, .45), 0 18px 40px rgba(0,0,0,.45);
+    font-family: var(--ac-font-title);
+}
+.vtt-session-bar-card::before {   /* intitulé du document */
+    content: 'Laissez-passer'; display: block; margin: 0 0 .6rem; padding-bottom: .35rem; text-align: center;
+    font-family: var(--ac-font-heading); font-size: .7rem; font-weight: 700; letter-spacing: .32em; text-transform: uppercase;
+    color: #4a5830; border-bottom: 1px solid rgba(74, 88, 48, .45);
+}
+.vtt-session-bar-card-image {   /* photo agrafée */
+    position: relative; overflow: visible; border-radius: 0; padding: 5px; background: #faf6ea;
+    box-shadow: 0 1px 4px rgba(0,0,0,.35); font-family: var(--ac-font-title); color: #4a5830;
+}
+.vtt-session-bar-card-image img { filter: sepia(.35) contrast(1.05); }
+.vtt-session-bar-card-image::before {   /* agrafe */
+    content: ''; position: absolute; top: -4px; left: 22px; width: 26px; height: 6px; border-radius: 2px;
+    background: linear-gradient(180deg, #d8d8d8, #8a8a8a); box-shadow: 0 1px 2px rgba(0,0,0,.4); transform: rotate(-8deg);
+}
+.vtt-session-bar-card-image::after {   /* cachet rond à cheval sur la photo */
+    content: ''; position: absolute; right: -14px; bottom: -14px; width: 70px; height: 70px; border-radius: 50%;
+    border: 2px solid rgba(139, 26, 26, .55); box-shadow: inset 0 0 0 4px transparent, inset 0 0 0 5px rgba(139, 26, 26, .45);
+    transform: rotate(-12deg); pointer-events: none;
+}
+.vtt-session-bar-card-name,
+.vtt-session-bar-card-player-name {   /* champs libellés */
+    margin-top: .45rem; padding-bottom: .15rem; border-bottom: 1px dotted rgba(42, 38, 24, .45);
+    font-family: var(--ac-font-title); font-weight: 400; font-size: 1.05rem; color: var(--ac-ink);
+}
+.vtt-session-bar-card-name { margin-top: .85rem; }
+.vtt-session-bar-card-player-name { font-size: .9rem; }
+.vtt-session-bar-card-name::before,
+.vtt-session-bar-card-player-name::before {
+    display: block; font-family: var(--ac-font-heading); font-size: .55rem; font-weight: 600; letter-spacing: .16em;
+    text-transform: uppercase; color: var(--ac-ink-soft);
+}
+.vtt-session-bar-card-name::before { content: 'Nom'; }
+.vtt-session-bar-card-player-name::before { content: 'Titulaire'; }
+.vtt-session-bar-card-status {   /* tampon (ac-brand-stamp) */
+    margin-top: .75rem; padding: .1rem .45rem; transform: rotate(-4deg);
+    font-family: var(--ac-font-title); font-weight: 400; letter-spacing: .18em;
+    color: #4a5830; border: 2px solid currentColor; opacity: .85;
+}
+.vtt-session-bar-card-status::before { display: none; }
+.vtt-session-bar-card:not([data-online]):not([data-me]) .vtt-session-bar-card-status { color: #8b1a1a; }
