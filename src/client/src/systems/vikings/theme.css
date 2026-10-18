@@ -11,7 +11,8 @@
      ne pas combiner une classe .vk-* qui fixe display avec flex / grid / block.
    ─────────────────────────────────────────────────────────────────────────── */
 
-@import url('https://fonts.googleapis.com/css2?family=Alegreya:ital,wght@0,400;0,500;0,700;1,400&family=Eagle+Lake&family=Grenze+Gotisch:wght@400;600;700&family=Noto+Sans+Runic&display=swap');
+/* Marque du slug (titre des pages d'accès) et polices Google */
+@import './Brand.css';
 
 /* ── Mode JOUR — bois et or ─────────────────────────────────────────── */
 :root {

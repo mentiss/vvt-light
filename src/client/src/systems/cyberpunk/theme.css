@@ -5,6 +5,9 @@
    Mode nuit  : bitume pur, neons électriques, glow agressif
    ─────────────────────────────────────────────────────────────────────────── */
 
+/* Marque du slug : logo néon (fiche, MJ, pages d'accès) et police de titre */
+@import './Brand.css';
+
 /* Safelist Tailwind v4 — classes dynamiques utilisées dans les composants */
 @source inline("bg-health-{0,1,2,3,4,5} text-health-{0,1,2,3,4,5} border-health-{0,1,2,3,4,5}");
 
@@ -128,10 +131,6 @@
 .cp-font-mono {
     font-family: 'CyberConsole', 'Share Tech Mono', 'JetBrains Mono', ui-monospace, monospace;
     letter-spacing: 0.03em;
-}
-
-.cp-font-title {
-    font-family: 'Cyberpunk', ui-monospace, monospace;
 }
 
 /* ── Utilitaires slug-spécifiques ────────────────────────────────────────── */
@@ -542,47 +541,7 @@
         padding: 0 10px;
     }
 
-    /* 1. L'Effet d'aberration chromatique (Le vrai glitch cyberpunk) */
-    .logo-chromatic-glitch {
-        animation: chromatic-jump 8s step-end infinite;
-    }
-
-    @keyframes chromatic-jump {
-        0%, 98%, 100% { text-shadow: 0 0 5px var(--color-accent); transform: translate(0); }
-        98.5% {
-            text-shadow: 2px 0 0 #ff0055, -2px 0 0 #00ffcc;
-            transform: translate(1px, -1px);
-        }
-        99% {
-            text-shadow: -3px 0 0 #ff0055, 3px 0 0 #00ffcc;
-            transform: translate(-2px, 1px);
-        }
-    }
-
-    .logo-title-base {
-        position: relative;
-        /* Le secret : un contour noir net pour détacher les lettres */
-        -webkit-text-stroke: 0.25px var(--cp-matos-color);
-        text-stroke: 0.25px var(--cp-matos-color);
-    }
-
-    /* 2. La Pulsation Stabilisée (Plus de phase éteinte) */
-    .logo-neon-pulse {
-        animation: neon-stable-breathing 4s ease-in-out infinite;
-    }
-
-    @keyframes neon-stable-breathing {
-        0%, 100% {
-            /* Fond de cuve : Ton Glow de base costaud */
-            text-shadow: 0 0 7px #fff, 0 0 10px var(--cp-neon-cyan), 0 0 21px var(--cp-neon-cyan), 0 0 42px rgba(0, 229, 255, 0.8), 0 0 82px rgba(247, 255, 0, 0.5);
-            filter: brightness(1);
-        }
-        50% {
-            /* La Surcharge : On booste l'intensité sans éteindre */
-            text-shadow: 0 0 15px #fff, 0 0 30px var(--cp-neon-cyan), 0 0 50px var(--cp-neon-cyan), 0 0 100px rgba(0, 229, 255, 1), 0 0 150px rgba(247, 255, 0, 0.8);
-            filter: brightness(1.3) saturate(1.1);
-        }
-    }
+    /* Logo néon (glitch, pulsation, contour, éclairs) : Brand.css */
 
     .move-button {
         transition: all 0.3s ease-in-out;
@@ -620,26 +579,5 @@
         25% { transform: translate(-2px, 1px); filter: hue-rotate(90deg); }
         50% { transform: translate(2px, -1px); filter: brightness(1.5); }
         100% { transform: translate(0); filter: hue-rotate(0deg); }
-    }
-
-    /* 3. Le Mega Glow des éclairs SVG (drop-shadow sur le path) */
-    .mega-glow-bolt {
-        stroke: #fff; /* Cœur blanc */
-        filter:
-                drop-shadow(0 0 5px #fff)
-                drop-shadow(0 0 15px var(--cp-neon-cyan))
-                drop-shadow(0 0 30px var(--cp-neon-cyan));
-        stroke-width: 1.5;
-        stroke-linecap: round;
-        stroke-linejoin: round;
-        opacity: 0;
-    }
-
-    /* 4. Animation de Zap : Nerf et Saccades (step-end) */
-    @keyframes zap-vibe {
-        0%, 2.5%, 100% { opacity: 0; }
-        1% { opacity: 1; transform: scale(var(--zap-scale, 1)) rotate(var(--zap-rotate, 0deg)) translate(2px, -2px); }
-        1.5% { opacity: 0.7; transform: scale(0.9) translate(-1px, 1px); }
-        2% { opacity: 1; transform: scale(1.1) rotate(5deg); }
     }
 }

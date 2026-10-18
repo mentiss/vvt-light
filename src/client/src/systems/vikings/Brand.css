@@ -1,0 +1,36 @@
+/* src/client/src/systems/vikings/Brand.css */
+/* ─────────────────────────────────────────────────────────────────────────────
+   Marque Pure Vikings (spec_plateforme_accueil.md §5) : carte de l'accueil et
+   titre des pages d'accès. Importé par Brand.jsx (accueil) et par theme.css.
+   Classes .vk-brand-* uniquement, aucune couleur globale (--color-* lues, jamais
+   définies). Source validée : documentations/refonte_plateforme/brand-vikings.css
+   ─────────────────────────────────────────────────────────────────────────── */
+
+/* Polices du slug (marque et fiche) */
+@import url('https://fonts.googleapis.com/css2?family=Alegreya:ital,wght@0,400;0,500;0,700;1,400&family=Eagle+Lake&family=Grenze+Gotisch:wght@400;600;700&family=Noto+Sans+Runic&display=swap');
+
+/* ── Carte : bois sombre, coins ornés, titre or ───────────────────────── */
+.vk-brand {
+    height: 100%; position: relative; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 0.2rem;
+    background: radial-gradient(ellipse at 50% 30%, #3a2c1e, #1a1410 75%);
+    color: #e8dcc8; font-family: 'Alegreya', Georgia, serif;
+}
+.vk-brand::before, .vk-brand::after, .vk-brand > .vk-brand-c::before, .vk-brand > .vk-brand-c::after {
+    content: ''; position: absolute; width: 44px; height: 44px; background-size: contain; background-repeat: no-repeat; pointer-events: none;
+}
+.vk-brand::before { top: 6px; left: 6px; background-image: url('./assets/corner-light-tl.png'); }
+.vk-brand::after  { top: 6px; right: 6px; background-image: url('./assets/corner-light-tr.png'); }
+.vk-brand-c { position: absolute; inset: 0; pointer-events: none; }
+.vk-brand > .vk-brand-c::before { bottom: 6px; left: 6px; background-image: url('./assets/corner-light-bl.png'); }
+.vk-brand > .vk-brand-c::after  { bottom: 6px; right: 6px; background-image: url('./assets/corner-light-br.png'); }
+.vk-brand-runes { font-family: 'Noto Sans Runic', 'Segoe UI Historic', sans-serif; font-size: 1.2rem; letter-spacing: 0.3em; color: #d4a017; text-shadow: 0 0 8px rgba(212, 160, 23, .4); }
+.vk-brand-title { font-family: 'Eagle Lake', Georgia, serif; font-size: 2rem; line-height: 1.15; color: #d4a017; text-shadow: 0 2px 8px rgba(0, 0, 0, .6); }
+.vk-brand-sub { font-style: italic; font-size: 0.85rem; color: #a08b6e; }
+
+/* ── Titre (pages d'accès, Reprendre) : une ligne, taille relative au conteneur,
+      couleur primaire du thème courant (or le jour, or pâle en fer la nuit) ── */
+.vk-brand.is-title { height: auto; background: none; flex-direction: row; flex-wrap: nowrap; white-space: nowrap; justify-content: center; align-items: baseline; gap: 0 0.6rem; }
+.vk-brand.is-title::before, .vk-brand.is-title::after, .vk-brand.is-title > .vk-brand-c { display: none; }
+.vk-brand.is-title .vk-brand-title { font-size: 1.3em; text-shadow: none; color: var(--color-primary, #d4a017); }
+.vk-brand.is-title .vk-brand-runes { font-size: 0.9em; text-shadow: none; color: var(--color-primary, #d4a017); }
+.vk-brand.is-title .vk-brand-sub { display: none; }

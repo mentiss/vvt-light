@@ -19,13 +19,13 @@ const BoltFarm = () => {
                 return (
                     <svg
                         key={i}
-                        className="absolute mega-glow-bolt"
+                        className="absolute cp-brand-bolt"
                         style={{
                             top: `${Math.random() * 80}%`,
                             left: `${Math.random() * 80}%`,
                             width: `${20 + Math.random() * 20}%`,
                             height: `${20 + Math.random() * 20}%`,
-                            animation: `zap-vibe ${duration}s step-end infinite ${delay}s`,
+                            animation: `cp-brand-zap ${duration}s step-end infinite ${delay}s`,
                             transform: `rotate(${Math.random() * 360}deg)`
                         }}
                         viewBox="0 0 100 100"

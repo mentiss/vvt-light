@@ -316,10 +316,10 @@ const Sheet = ({
             >
                 <div className="text-center ml-3 gap-0 min-w-0 group relative flex flex-col items-center">
 
-                    <div  className="relative logo-chromatic-glitch logo-neon-pulse">
+                    <div  className="relative cp-brand-glitch cp-brand-pulse">
                         <BoltFarm />
 
-                        <div className="text-[38px] cp-font-title text-accent tracking-widest logo-title-base relative z-10">
+                        <div className="text-[38px] cp-font-title text-accent tracking-widest cp-brand-stroke relative z-10">
                             CyberPunk
                         </div>
                     </div>

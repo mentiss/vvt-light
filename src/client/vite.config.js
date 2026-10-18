@@ -1,6 +1,7 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 import { execSync } from 'node:child_process'
+import process from 'node:process'
 
 // Version affichée en pied de page de l'accueil : dernier commit au moment du build
 // (« hash|AAAA-MM-JJ ») ; « dev » si git n'est pas disponible.
