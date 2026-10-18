@@ -269,9 +269,9 @@ const TabSession = ({ activeSession, onlineCharacters }) => {
 
                             <button
                                 onClick={() => patch(char.id, { is_fracture: char.is_fracture ? 0 : 1 })}
-                                className={!!char.is_fracture ? 'ns-btn-fracture' : 'ns-btn-ghost'}
+                                className={char.is_fracture ? 'ns-btn-fracture' : 'ns-btn-ghost'}
                             >
-                                {!!char.is_fracture ? '⬡ Fracturé' : '○ Fracturé'}
+                                {char.is_fracture ?'⬡ Fracturé' : '○ Fracturé'}
                             </button>
 
                             <button

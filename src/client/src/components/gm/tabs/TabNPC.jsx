@@ -916,13 +916,13 @@ const TabNPC = ({ npc: npcConfig = {}, sessionId = null, GMDiceModal = null, cur
                     </button>
                     <div className="flex gap-2">
                         <button
-                            onClick={() => openEditSet(detailSet)}
+                            onClick={() => openSet(detailSet, 'setform')}
                             className="px-3 py-1.5 rounded text-sm font-semibold bg-surface-alt text-base"
                         >
                             ✏️ Éditer
                         </button>
                         <button
-                            onClick={() => openCopySet(detailSet)}
+                            onClick={() => openSet(detailSet, 'setcopy')}
                             className="px-3 py-1.5 rounded text-sm font-semibold bg-surface-alt text-base"
                         >
                             📋 Copier

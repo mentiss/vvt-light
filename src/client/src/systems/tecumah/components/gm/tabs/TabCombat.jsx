@@ -16,6 +16,7 @@ const TabCombat = ({
                        // State
                        combatState,
                        onlineCharacters,
+                       sessionId,
                        combatConfig,
                        pendingAttacks,
                        // Handlers combat
@@ -62,7 +63,8 @@ const TabCombat = ({
             <OnlinePlayersPanel
                 onlineCharacters={onlineCharacters}
                 combatState={combatState}
-                onAddPlayer={onAddPlayerToCombat}
+                onAddPlayerToCombat={onAddPlayerToCombat}
+                sessionId={sessionId}
             />
 
             {/* ── Bouton ajouter NPC ──────────────────────────────────────── */}

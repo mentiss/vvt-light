@@ -2,23 +2,22 @@
 import React from 'react';
 import useSystem from "../../hooks/useSystem.js";
 import {useSession} from "../../context/SessionContext.jsx";
-import {useGMSession} from "../../hooks/useGMSession.js";
-import {useParams} from "react-router-dom";
 
+// sessionId : session active du MJ, fournie par le GMApp du slug (ne pas instancier
+// useGMSession ici : son démontage ferait quitter la session au MJ)
 const OnlinePlayersPanel = ({
                                 onlineCharacters,
                                 combatState,
                                 onAddPlayerToCombat,
+                                sessionId,
                             }) => {
+    // Hooks avant tout return anticipé (règle des hooks)
+    const { slug } = useSystem();
     if (onlineCharacters.length === 0 || combatState.active) {
         return null;
     }
     const combatants = combatState.combatants ?? [];
-    const { slug } = useSystem();
-    const { system } = useParams();
-    const apiBase = `/api/${system}`;
-    const { activeSession } = useGMSession({apiBase});
-    const currentOnlineCharacters = onlineCharacters.filter((c) => c.slug === slug && c.sessionId === activeSession?.id);
+    const currentOnlineCharacters = onlineCharacters.filter((c) => c.slug === slug && c.sessionId === sessionId);
     return (
         <div className="bg-white dark:bg-viking-brown rounded-lg shadow-lg border-2 border-viking-bronze p-4 mb-4">
             <h2 className="text-xl font-bold text-viking-brown dark:text-viking-parchment mb-4">

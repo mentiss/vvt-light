@@ -256,6 +256,7 @@ const GMView = ({ activeSession, onSessionChange, onlineCharacters, darkMode, on
                         <TabCombat
                             combatState={combatState}
                             onlineCharacters={onlineCharacters}
+                            sessionId={activeSession?.id ?? null}
                             combatConfig={tecumahConfig.combat}
                             pendingAttacks={combatState.pendingAttacks ?? []}
                             onStartCombat={startCombat}

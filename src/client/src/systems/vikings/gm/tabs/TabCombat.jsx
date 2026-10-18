@@ -19,6 +19,7 @@ const TabCombat = ({
                        // State combat
                        combatState,
                        onlineCharacters,
+                       sessionId,
                        combatConfig,
                        pendingAttacks,
                        // Handlers combat
@@ -65,6 +66,7 @@ const TabCombat = ({
                 onlineCharacters={onlineCharacters}
                 combatState={combatState}
                 onAddPlayerToCombat={onAddPlayerToCombat}
+                sessionId={sessionId}
             />
 
             {/* Liste combattants */}

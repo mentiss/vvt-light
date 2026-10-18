@@ -127,7 +127,7 @@ const GMApp = ({ activeSession, onSessionChange, onlineCharacters, characterUpda
                 {activeTab === 'session' && (
                     <TabSession activeSession={activeSession} onlineCharacters={onlineCharacters} characterUpdates={characterUpdates} />
                 )}
-                {activeTab === 'combat' && <TabCombat {...combat} />}
+                {activeTab === 'combat' && <TabCombat {...combat} sessionId={sessionId} />}
                 {activeTab === 'journal' && (
                     <div className="max-w-4xl mx-auto">
                         {/* TabJournal force characterId={-1} en interne */}
