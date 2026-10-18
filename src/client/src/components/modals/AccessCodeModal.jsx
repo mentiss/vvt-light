@@ -16,6 +16,7 @@
 import React, { useState } from 'react';
 import { useSystem } from '../../hooks/useSystem.js';
 import { useFetch }  from '../../hooks/useFetch.js';
+import Modal from '../ui/Modal.jsx';
 
 const CODE_LENGTH = 6;
 const sanitize = (value) => value.toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, CODE_LENGTH);
@@ -76,19 +77,37 @@ const AccessCodeModal = ({ isOpen, character, onClose, onSuccess }) => {
         setTimeout(() => setCopied(false), 2000);
     };
 
-    return (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[60]">
-            <div className="bg-surface rounded-lg shadow-2xl p-6 max-w-md w-full mx-4 border-4 border-default">
+    // Le bouton de validation, dans le pied, est rattaché au formulaire par son id
+    const footer = !saved ? (
+        <>
+            <button type="button" onClick={handleClose} className="vtt-btn flex-1">
+                Annuler
+            </button>
+            <button type="submit" form="access-code-form" disabled={loading} className="vtt-btn vtt-btn-primary flex-1">
+                {loading ? 'Sauvegarde…' : 'Valider'}
+            </button>
+        </>
+    ) : (
+        <>
+            <button type="button" onClick={copyCode} className="vtt-btn flex-1">
+                {copied ? 'Copié !' : 'Copier'}
+            </button>
+            <button type="button" onClick={handleClose} className="vtt-btn vtt-btn-primary flex-1">
+                Fermer
+            </button>
+        </>
+    );
 
+    return (
+        <Modal title="Code d'accès" size="sm" onClose={handleClose} footer={footer}>
                 <div className="mb-4">
-                    <h2 className="text-2xl font-bold text-default mb-2">🔑 Code d'accès</h2>
                     <p className="text-muted">
-                        Choisissez le nouveau code d'accès de <span className="text-accent font-semibold">{character.name ?? character.nom ?? character.playerName}</span>.
+                        Choisissez le nouveau code d'accès de <span className="text-primary font-semibold">{character.name ?? character.nom ?? character.playerName}</span>.
                     </p>
                 </div>
 
                 {!saved ? (
-                    <form onSubmit={handleSubmit} className="space-y-4">
+                    <form id="access-code-form" onSubmit={handleSubmit} className="space-y-4">
                         <div>
                             <input
                                 type="text"
@@ -96,7 +115,7 @@ const AccessCodeModal = ({ isOpen, character, onClose, onSuccess }) => {
                                 onChange={(e) => setCode(sanitize(e.target.value))}
                                 placeholder="ABC123"
                                 maxLength={CODE_LENGTH}
-                                className="w-full px-4 py-3 border-2 border-default rounded-lg bg-surface text-default uppercase text-center text-2xl font-bold tracking-widest"
+                                className="vtt-input uppercase text-center text-2xl font-bold tracking-widest"
                                 autoFocus
                             />
                             <p className="text-xs text-muted mt-2 text-center">
@@ -104,50 +123,17 @@ const AccessCodeModal = ({ isOpen, character, onClose, onSuccess }) => {
                             </p>
                         </div>
 
-                        {error && <p className="text-sm text-danger text-center">{error}</p>}
-
-                        <div className="flex gap-3">
-                            <button
-                                type="button"
-                                onClick={handleClose}
-                                className="flex-1 px-4 py-2 bg-surface-alt text-default rounded font-semibold hover:bg-surface-alt/70"
-                            >
-                                Annuler
-                            </button>
-                            <button
-                                type="submit"
-                                disabled={loading}
-                                className="flex-1 px-4 py-2 bg-primary text-white rounded font-semibold hover:bg-primary/90 disabled:opacity-50"
-                            >
-                                {loading ? 'Sauvegarde…' : 'Valider'}
-                            </button>
-                        </div>
+                        {error && <div className="vtt-callout vtt-callout-danger">{error}</div>}
                     </form>
                 ) : (
                     <div className="text-center space-y-4">
-                        <div className="text-4xl">✅</div>
-                        <p className="text-default">Code d'accès mis à jour :</p>
-                        <div className="font-mono text-3xl font-bold tracking-widest text-accent">
+                        <p>Code d'accès mis à jour :</p>
+                        <div className="font-mono text-3xl font-bold tracking-widest text-primary">
                             {code}
-                        </div>
-                        <div className="flex gap-3">
-                            <button
-                                onClick={copyCode}
-                                className="flex-1 px-4 py-2 border-2 border-default text-default rounded font-semibold hover:bg-surface-alt"
-                            >
-                                {copied ? '✅ Copié !' : '📋 Copier'}
-                            </button>
-                            <button
-                                onClick={handleClose}
-                                className="flex-1 px-4 py-2 bg-primary text-white rounded font-semibold hover:bg-primary/90"
-                            >
-                                Fermer
-                            </button>
                         </div>
                     </div>
                 )}
-            </div>
-        </div>
+        </Modal>
     );
 };
 

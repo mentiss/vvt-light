@@ -3,6 +3,7 @@ import { useSystem } from '../../hooks/useSystem.js';
 import useDiceConfig, {COLORSET_PRESETS, DICE_FALLBACK_CONFIG, readDiceConfig, writeDiceConfig} from "../../hooks/useDiceConfig.js";
 import useSlugConfig from "../../hooks/useSlugConfig.js";
 import useConfirm from "../../hooks/useConfirm.jsx";
+import Modal from '../ui/Modal.jsx';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Sous-composants UI
@@ -111,50 +112,38 @@ const DiceConfigModal = ({ onClose, slugDefaults }) => {
     return (
         <>
             {confirmEl}
-            <div
-                className="fixed inset-0 z-[150] flex items-center justify-center p-4 bg-black/75"
-                style={{ backdropFilter: 'blur(6px)' }}
-                onClick={onClose}
-            >
-                <div
-                    className="relative w-full max-w-lg max-h-[92vh] flex flex-col rounded-2xl overflow-hidden bg-surface border border-base"
-                    onClick={e => e.stopPropagation()}
-                >
-                    {/* En-tête */}
-                    <div className="flex items-center justify-between px-6 py-4 shrink-0 border-b border-base">
-                        <div className="flex items-center gap-3">
-                            <div className="w-9 h-9 rounded-xl flex items-center justify-center text-xl bg-surface-alt border border-base">
-                                🎲
-                            </div>
-                            <div>
-                                <h2 className="text-sm font-bold text-primary tracking-wider uppercase">Mes dés</h2>
-                                <p className="text-xs text-muted mt-0.5">Apparence de l'animation</p>
-                            </div>
-                        </div>
-                        <button
-                            onClick={onClose}
-                            className="w-8 h-8 flex items-center justify-center rounded-lg text-muted hover:text-default hover:bg-surface-alt transition-all text-sm cursor-pointer"
-                        >
-                            ✕
+            <Modal
+                title="Mes dés"
+                subtitle="Apparence de l'animation"
+                size="md"
+                expandable
+                onClose={onClose}
+                footer={
+                    <>
+                        <button type="button" onClick={handleReset} className="vtt-btn">
+                            Réinitialiser
                         </button>
-                    </div>
-
-                    {/* Corps scrollable */}
-                    <div className="flex-1 overflow-y-auto px-6 py-5 space-y-6">
+                        <button type="button" onClick={onClose} className="vtt-btn">
+                            Annuler
+                        </button>
+                        <button type="button" onClick={handleSave} className="vtt-btn vtt-btn-primary flex-1">
+                            Appliquer
+                        </button>
+                    </>
+                }
+            >
+                    <div className="space-y-6">
 
                         {/* Switcher preset / custom */}
-                        <div className="flex gap-1 p-1 rounded-xl bg-surface-alt border border-base">
-                            {[{ key: 'preset', icon: '🎨', label: 'Preset' }, { key: 'custom', icon: '🛠', label: 'Personnalisé' }].map(m => (
+                        <div className="vtt-segmented">
+                            {[{ key: 'preset', label: 'Preset' }, { key: 'custom', label: 'Personnalisé' }].map(m => (
                                 <button
+                                    type="button"
                                     key={m.key}
                                     onClick={() => updateDraft({ mode: m.key })}
-                                    className={`flex-1 flex items-center justify-center gap-2 py-2 rounded-lg text-xs font-semibold tracking-wide uppercase transition-all cursor-pointer ${
-                                        draft.mode === m.key
-                                            ? 'bg-primary text-base shadow-lg'
-                                            : 'text-muted hover:text-default hover:bg-surface'
-                                    }`}
+                                    className={`vtt-segment ${draft.mode === m.key ? 'is-active' : ''}`}
                                 >
-                                    <span>{m.icon}</span><span>{m.label}</span>
+                                    {m.label}
                                 </button>
                             ))}
                         </div>
@@ -166,13 +155,10 @@ const DiceConfigModal = ({ onClose, slugDefaults }) => {
                                 <div className="flex flex-wrap gap-1.5">
                                     {categories.map(cat => (
                                         <button
+                                            type="button"
                                             key={cat}
                                             onClick={() => setActiveCategory(cat)}
-                                            className={`px-3 py-1 rounded-full text-xs font-medium transition-all cursor-pointer border ${
-                                                activeCategory === cat
-                                                    ? 'bg-primary text-base border-primary'
-                                                    : 'bg-surface-alt text-muted border-base hover:border-accent hover:text-default'
-                                            }`}
+                                            className={`vtt-pill ${activeCategory === cat ? 'is-selected' : ''}`}
                                         >
                                             {cat}
                                         </button>
@@ -185,13 +171,10 @@ const DiceConfigModal = ({ onClose, slugDefaults }) => {
                                         const selected = draft.preset === p.key;
                                         return (
                                             <button
+                                                type="button"
                                                 key={p.key}
                                                 onClick={() => updateDraft({ preset: p.key })}
-                                                className={`flex flex-col gap-1.5 p-2 rounded-xl border transition-all cursor-pointer ${
-                                                    selected
-                                                        ? 'border-primary bg-surface-alt'
-                                                        : 'border-base bg-surface hover:border-accent'
-                                                }`}
+                                                className={`vtt-list-item flex-col gap-1.5 p-2 ${selected ? 'is-selected' : ''}`}
                                             >
                                                 <div className="w-full h-8 rounded-lg overflow-hidden">
                                                     <PreviewSwatch colors={p.preview.bg} />
@@ -216,10 +199,10 @@ const DiceConfigModal = ({ onClose, slugDefaults }) => {
                                     { key: 'edge',       label: 'Tranche (optionnel)' },
                                 ].map(({ key, label }) => (
                                     <div key={key} className="flex items-center justify-between gap-3">
-                                        <span className="text-xs text-muted">{label}</span>
+                                        <span className="vtt-field-label mb-0">{label}</span>
                                         <div className="flex items-center gap-2">
                                             <div
-                                                className="w-8 h-8 rounded-lg border border-base"
+                                                className="w-8 h-8 rounded-lg border border-default"
                                                 style={{ background: draft.custom[key] || 'transparent' }}
                                             />
                                             <input
@@ -234,17 +217,14 @@ const DiceConfigModal = ({ onClose, slugDefaults }) => {
 
                                 {/* Matière */}
                                 <div>
-                                    <span className="text-xs text-muted block mb-1.5">Matière</span>
+                                    <span className="vtt-field-label">Matière</span>
                                     <div className="flex flex-wrap gap-1.5">
                                         {['metal', 'wood', 'glass', 'plastic', 'pristine'].map(mat => (
                                             <button
+                                                type="button"
                                                 key={mat}
                                                 onClick={() => updateDraft({ custom: { material: mat } })}
-                                                className={`px-3 py-1 rounded-lg text-xs font-medium border transition-all cursor-pointer ${
-                                                    draft.custom.material === mat
-                                                        ? 'bg-primary text-base border-primary'
-                                                        : 'bg-surface-alt text-muted border-base hover:border-accent'
-                                                }`}
+                                                className={`vtt-pill ${draft.custom.material === mat ? 'is-selected' : ''}`}
                                             >
                                                 {mat}
                                             </button>
@@ -255,7 +235,7 @@ const DiceConfigModal = ({ onClose, slugDefaults }) => {
                         )}
 
                         {/* Physique */}
-                        <div className="space-y-4 pt-2 border-t border-base">
+                        <div className="space-y-4 pt-2 border-t border-default">
                             <SliderField
                                 label="Force de lancer"
                                 value={draft.strength}
@@ -272,10 +252,10 @@ const DiceConfigModal = ({ onClose, slugDefaults }) => {
                         </div>
 
                         {/* Lumière */}
-                        <div className="flex items-center justify-between gap-3 pt-2 border-t border-base">
-                            <span className="text-xs text-muted">Couleur lumière</span>
+                        <div className="flex items-center justify-between gap-3 pt-2 border-t border-default">
+                            <span className="vtt-field-label mb-0">Couleur lumière</span>
                             <div className="flex items-center gap-2">
-                                <div className="w-8 h-8 rounded-lg border border-base" style={{ background: draft.lightColor }} />
+                                <div className="w-8 h-8 rounded-lg border border-default" style={{ background: draft.lightColor }} />
                                 <input
                                     type="color"
                                     value={draft.lightColor}
@@ -286,17 +266,15 @@ const DiceConfigModal = ({ onClose, slugDefaults }) => {
                         </div>
 
                         {/* Sons */}
-                        <div className="pt-2 border-t border-base">
+                        <div className="pt-2 border-t border-default">
                             <button
+                                type="button"
                                 onClick={() => updateDraft({ sounds: !draft.sounds })}
-                                className="w-full flex items-center justify-between p-3 rounded-xl bg-surface-alt border border-base hover:border-accent transition-all cursor-pointer"
+                                className="vtt-list-item justify-between"
                             >
-                                <div className="flex items-center gap-3">
-                                    <span className="text-lg">{draft.sounds ? '🔊' : '🔇'}</span>
-                                    <div className="text-left">
-                                        <div className="text-sm font-medium text-default">Sons</div>
-                                        <div className="text-xs text-muted">{draft.sounds ? 'Activés' : 'Désactivés'}</div>
-                                    </div>
+                                <div className="text-left">
+                                    <div className="text-sm font-medium">Sons</div>
+                                    <div className="text-xs text-muted">{draft.sounds ? 'Activés' : 'Désactivés'}</div>
                                 </div>
                                 <div className={`w-11 h-6 rounded-full transition-all duration-200 relative shrink-0 ${draft.sounds ? 'bg-primary' : 'bg-surface'}`}>
                                     <div className={`absolute top-1 w-4 h-4 rounded-full bg-white shadow-md transition-all duration-200 ${draft.sounds ? 'left-6' : 'left-1'}`} />
@@ -304,30 +282,7 @@ const DiceConfigModal = ({ onClose, slugDefaults }) => {
                             </button>
                         </div>
                     </div>
-
-                    {/* Pied de page */}
-                    <div className="flex gap-2 px-6 py-4 shrink-0 border-t border-base">
-                        <button
-                            onClick={handleReset}
-                            className="px-4 py-2 rounded-lg text-xs text-muted hover:text-default transition-colors cursor-pointer"
-                        >
-                            Réinitialiser
-                        </button>
-                        <button
-                            onClick={onClose}
-                            className="px-4 py-2 rounded-lg text-xs text-muted hover:text-default border border-base hover:border-accent transition-all cursor-pointer"
-                        >
-                            Annuler
-                        </button>
-                        <button
-                            onClick={handleSave}
-                            className="flex-1 py-2 rounded-lg text-sm font-bold bg-primary text-default hover:opacity-90 transition-all cursor-pointer shadow-lg"
-                        >
-                            Appliquer
-                        </button>
-                    </div>
-                </div>
-            </div>
+            </Modal>
         </>
     );
 };

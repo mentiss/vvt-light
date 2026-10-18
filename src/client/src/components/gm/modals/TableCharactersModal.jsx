@@ -10,6 +10,7 @@ import React, { useState, useEffect } from 'react';
 import { useFetch } from '../../../hooks/useFetch.js';
 import AlertModal from '../../modals/AlertModal.jsx';
 import Modal from '../../ui/Modal.jsx';
+import useConfirm from '../../../hooks/useConfirm.jsx';
 
 // ─── Composant principal ──────────────────────────────────────────────────────
 
@@ -21,6 +22,7 @@ const TableCharactersModal = ({ isOpen, onClose, session, onSessionUpdated }) =>
     const [alertMessage,   setAlertMessage]   = useState(null);
 
     const fetchWithAuth = useFetch();
+    const { confirm, confirmEl } = useConfirm();
 
     useEffect(() => {
         if (isOpen && session) loadData();
@@ -73,7 +75,13 @@ const TableCharactersModal = ({ isOpen, onClose, session, onSessionUpdated }) =>
     };
 
     const handleRemoveCharacter = async (characterId) => {
-        if (!confirm('Retirer ce personnage de la table ?')) return;
+        const ok = await confirm({
+            title:       'Retirer le personnage',
+            message:     'Retirer ce personnage de la table ?',
+            confirmText: 'Retirer',
+            danger:      true,
+        });
+        if (!ok) return;
         try {
             const response = await fetchWithAuth(
                 `/api/sessions/${session.id}/characters/${characterId}`,
@@ -152,6 +160,8 @@ const TableCharactersModal = ({ isOpen, onClose, session, onSessionUpdated }) =>
                     onClose={() => setAlertMessage(null)}
                 />
             )}
+
+            {confirmEl}
         </>
     );
 };

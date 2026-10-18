@@ -4,6 +4,7 @@ import { useFetch } from '../../../hooks/useFetch.js';
 import TableCharactersModal from './TableCharactersModal.jsx';
 import AlertModal from "../../modals/AlertModal.jsx";
 import Modal from '../../ui/Modal.jsx';
+import useConfirm from '../../../hooks/useConfirm.jsx';
 
 const TableManagementModal = ({ isOpen, onClose, onSelectTable, activeSessionId }) => {
     const [sessions, setSessions] = useState([]);
@@ -16,6 +17,7 @@ const TableManagementModal = ({ isOpen, onClose, onSelectTable, activeSessionId 
     const [alertMessage, setAlertMessage] = useState(null);
 
     const fetchWithAuth = useFetch();
+    const { confirm, confirmEl } = useConfirm();
 
     useEffect(() => {
         if (isOpen) loadSessions();
@@ -68,7 +70,13 @@ const TableManagementModal = ({ isOpen, onClose, onSelectTable, activeSessionId 
     };
 
     const handleDeleteSession = async (sessionId) => {
-        if (!confirm('Êtes-vous sûr de vouloir supprimer cette table ?')) return;
+        const ok = await confirm({
+            title:       'Supprimer la table',
+            message:     'Êtes-vous sûr de vouloir supprimer cette table ?',
+            confirmText: 'Supprimer',
+            danger:      true,
+        });
+        if (!ok) return;
         try {
             const response = await fetchWithAuth(`/api/sessions/${sessionId}`, {
                 method: 'DELETE'
@@ -230,6 +238,8 @@ const TableManagementModal = ({ isOpen, onClose, onSelectTable, activeSessionId 
                     onClose={() => setAlertMessage(null)}
                 />
             )}
+
+            {confirmEl}
         </>
     );
 };

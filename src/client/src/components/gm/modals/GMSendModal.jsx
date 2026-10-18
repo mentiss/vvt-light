@@ -1,16 +1,18 @@
 // src/client/src/components/gm/modals/GMSendModal.jsx
 // Modale envoi message GM (V2 : nouveau + depuis notes)
-// CSS : classes génériques index.css uniquement — aucune classe viking-*, aucun style= pour les couleurs.
+// CSS : composant Modal et classes vtt-* (habillables par le theme.css du slug).
+// Pas de fermeture au clic sur le fond : le message en cours serait perdu.
 
 import React, { useState, useEffect, useRef } from 'react';
 import { useFetch } from '../../../hooks/useFetch.js';
 import useSystem from "../../../hooks/useSystem.js";
+import Modal from '../../ui/Modal.jsx';
 
 const TOAST_ANIMATIONS = [
-    { id: 'default', label: 'Classique', icon: '📬' },
-    { id: 'shake',   label: 'Tremblement', icon: '💥' },
-    { id: 'flash',   label: 'Flash', icon: '⚡' },
-    { id: 'glitter', label: 'Doré', icon: '✨' },
+    { id: 'default', label: 'Classique' },
+    { id: 'shake',   label: 'Tremblement' },
+    { id: 'flash',   label: 'Flash' },
+    { id: 'glitter', label: 'Doré' },
 ];
 
 const GMSendModal = ({ onClose, onSend, sessionCharacters = [], preSelectedCharId = null }) => {
@@ -132,14 +134,25 @@ const GMSendModal = ({ onClose, onSend, sessionCharacters = [], preSelectedCharI
     const canSend = selectedTargets.size > 0 && (title.trim() || body.trim());
 
     return (
-        <div
-            className="fixed inset-0 flex items-center justify-center z-50"
-            style={{ background: 'rgba(0,0,0,0.6)' }}
-            onClick={onClose}
+        <Modal
+            title="Envoyer un message"
+            size="md"
+            closeOnBackdrop={false}
+            onClose={onClose}
+            footer={
+                <>
+                    <button type="button" onClick={onClose} className="vtt-btn flex-1">
+                        Annuler
+                    </button>
+                    <button type="button" onClick={handleSend} disabled={!canSend || sending} className="vtt-btn vtt-btn-primary flex-1">
+                        {sending ? 'Envoi…' : `Envoyer (${selectedTargets.size})`}
+                    </button>
+                </>
+            }
         >
+            {/* Zone de dépôt d'image : tout le corps de la modale */}
             <div
-                className="bg-surface rounded-xl shadow-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto relative border border-base"
-                onClick={e => e.stopPropagation()}
+                className="relative"
                 onDragOver={(e)  => { e.preventDefault(); setIsDragging(true); }}
                 onDragLeave={(e) => { if (!e.currentTarget.contains(e.relatedTarget)) setIsDragging(false); }}
                 onDrop={(e) => {
@@ -156,37 +169,21 @@ const GMSendModal = ({ onClose, onSend, sessionCharacters = [], preSelectedCharI
             >
                 {/* Overlay drag */}
                 {isDragging && (
-                    <div className="absolute inset-0 z-10 flex items-center justify-center rounded-xl border-2 border-primary"
-                         style={{ background: 'rgba(0,0,0,0.5)' }}>
-                        <div className="text-center">
-                            <div className="text-4xl mb-2">📎</div>
-                            <div className="text-lg font-bold text-primary">Déposez votre image ici</div>
-                        </div>
+                    <div className="absolute inset-0 z-10 flex items-center justify-center rounded-lg border-2 border-dashed border-primary bg-surface/90">
+                        <div className="text-lg font-bold text-primary">Déposez votre image ici</div>
                     </div>
                 )}
 
-                {/* ── Header ───────────────────────────────────────────── */}
-                <div className="flex justify-between items-center p-4 border-b border-base">
-                    <h3 className="text-lg font-bold text-base">📨 Envoyer un message</h3>
-                    <button onClick={onClose} className="text-muted hover:text-base transition-colors bg-transparent border-none ">
-                        ✕
-                    </button>
-                </div>
-
-                <div className="p-4 flex flex-col gap-4">
+                <div className="flex flex-col gap-4">
 
                     {/* ── Toggle mode ──────────────────────────────────── */}
-                    <div className="flex gap-1 bg-surface-alt rounded-lg p-1">
+                    <div className="vtt-segmented">
                         {[
-                            { id: 'new',        label: '✏️ Nouveau'          },
-                            { id: 'from_notes', label: '📓 Depuis mes notes' },
+                            { id: 'new',        label: 'Nouveau'          },
+                            { id: 'from_notes', label: 'Depuis mes notes' },
                         ].map(m => (
-                            <button key={m.id} onClick={() => switchMode(m.id)}
-                                    className={`flex-1 px-3 py-1.5 rounded font-semibold transition-colors border-none ${
-                                        mode === m.id
-                                            ? 'bg-primary text-base'
-                                            : 'bg-transparent text-muted hover:text-base'
-                                    }`}
+                            <button type="button" key={m.id} onClick={() => switchMode(m.id)}
+                                    className={`vtt-segment ${mode === m.id ? 'is-active' : ''}`}
                             >
                                 {m.label}
                             </button>
@@ -196,15 +193,12 @@ const GMSendModal = ({ onClose, onSend, sessionCharacters = [], preSelectedCharI
                     {/* ── Sélection note ───────────────────────────────── */}
                     {mode === 'from_notes' && (
                         <div className="flex flex-col gap-2">
-                            <div className="relative">
-                                <input type="text" value={noteSearch} onChange={e => setNoteSearch(e.target.value)}
-                                       placeholder="Rechercher dans mes notes..."
-                                       className="w-full pl-8 pr-3 py-2 text-sm rounded-lg border border-base bg-surface-alt text-base outline-none"
-                                />
-                                <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-sm text-muted">🔍</span>
-                            </div>
+                            <input type="text" value={noteSearch} onChange={e => setNoteSearch(e.target.value)}
+                                   placeholder="Rechercher dans mes notes..."
+                                   className="vtt-input"
+                            />
 
-                            <div className="max-h-40 overflow-y-auto rounded-lg border border-base divide-y" style={{ '--tw-divide-opacity': 1 }}>
+                            <div className="max-h-40 overflow-y-auto rounded-lg border border-default divide-y divide-default">
                                 {notesLoading ? (
                                     <div className="p-3 text-center text-sm text-muted">Chargement…</div>
                                 ) : filteredNotes.length === 0 ? (
@@ -212,12 +206,12 @@ const GMSendModal = ({ onClose, onSend, sessionCharacters = [], preSelectedCharI
                                         {noteSearch ? 'Aucune note trouvée' : 'Aucune note disponible'}
                                     </div>
                                 ) : filteredNotes.map(note => (
-                                    <button key={note.id} onClick={() => selectNote(note)}
+                                    <button type="button" key={note.id} onClick={() => selectNote(note)}
                                             className={`w-full text-left px-3 py-2 border-none transition-colors ${
-                                                selectedNoteId === note.id ? 'bg-surface-alt' : 'bg-transparent hover:bg-surface-alt'
+                                                selectedNoteId === note.id ? 'bg-primary/15' : 'bg-transparent hover:bg-surface-alt'
                                             }`}
                                     >
-                                        <div className="font-semibold text-sm text-base truncate">{note.title || 'Sans titre'}</div>
+                                        <div className="font-semibold text-sm truncate">{note.title || 'Sans titre'}</div>
                                         {note.body && (
                                             <div className="text-xs text-muted truncate mt-0.5">{note.body.substring(0, 60)}</div>
                                         )}
@@ -229,14 +223,10 @@ const GMSendModal = ({ onClose, onSend, sessionCharacters = [], preSelectedCharI
 
                     {/* ── Destinataires ────────────────────────────────── */}
                     <div>
-                        <label className="block text-sm font-semibold text-base mb-2">Destinataires</label>
+                        <label className="vtt-field-label">Destinataires</label>
                         <div className="flex flex-wrap gap-2">
-                            <button onClick={toggleAll}
-                                    className={`flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-semibold border transition-colors ${
-                                        allSelected
-                                            ? 'bg-primary text-base border-primary'
-                                            : 'bg-transparent text-muted border-base hover:border-primary hover:text-primary'
-                                    }`}
+                            <button type="button" onClick={toggleAll}
+                                    className={`vtt-pill ${allSelected ? 'is-selected' : ''}`}
                             >
                                 Tous
                             </button>
@@ -244,12 +234,8 @@ const GMSendModal = ({ onClose, onSend, sessionCharacters = [], preSelectedCharI
                             {sessionCharacters.map(char => {
                                 const selected = selectedTargets.has(char.id);
                                 return (
-                                    <button key={char.id} onClick={() => toggleTarget(char.id)}
-                                            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold border transition-colors ${
-                                                selected
-                                                    ? 'bg-surface-alt text-primary border-primary'
-                                                    : 'bg-transparent text-muted border-base hover:border-primary hover:text-primary'
-                                            }`}
+                                    <button type="button" key={char.id} onClick={() => toggleTarget(char.id)}
+                                            className={`vtt-pill ${selected ? 'is-selected' : ''}`}
                                     >
                                         {char.avatar ? (
                                             <img src={char.avatar} alt="" className="w-5 h-5 rounded-full object-cover" />
@@ -258,7 +244,7 @@ const GMSendModal = ({ onClose, onSend, sessionCharacters = [], preSelectedCharI
                                                 {char.name?.[0]?.toUpperCase() || '?'}
                                             </span>
                                         )}
-                                        {selected ? '☑' : '☐'} {char.name}
+                                        {char.name}
                                     </button>
                                 );
                             })}
@@ -270,37 +256,37 @@ const GMSendModal = ({ onClose, onSend, sessionCharacters = [], preSelectedCharI
 
                     {/* ── Titre ────────────────────────────────────────── */}
                     <div>
-                        <label className="block text-sm font-semibold text-base mb-1">Titre</label>
+                        <label className="vtt-field-label">Titre</label>
                         <input type="text" value={title} onChange={e => setTitle(e.target.value)}
                                placeholder="Titre du message (optionnel)…"
-                               className="w-full px-3 py-2 text-sm rounded-lg border border-base bg-surface-alt text-base outline-none focus:border-primary transition-colors"
+                               className="vtt-input"
                         />
                     </div>
 
                     {/* ── Corps ────────────────────────────────────────── */}
                     <div>
-                        <label className="block text-sm font-semibold text-base mb-1">Message</label>
+                        <label className="vtt-field-label">Message</label>
                         <textarea value={body} onChange={e => setBody(e.target.value)}
                                   placeholder="Contenu du message…" rows={4}
-                                  className="w-full px-3 py-2 text-sm rounded-lg border border-base bg-surface-alt text-base outline-none focus:border-primary transition-colors resize-y"
+                                  className="vtt-input"
                         />
                     </div>
 
                     {/* ── Image optionnelle ────────────────────────────── */}
                     <div>
-                        <label className="block text-sm font-semibold text-base mb-1">Image (optionnel)</label>
+                        <label className="vtt-field-label">Image (optionnel)</label>
                         {imagePreview ? (
                             <div className="relative inline-block">
-                                <img src={imagePreview} alt="Aperçu" className="max-h-32 rounded-lg border border-base" />
-                                <button onClick={removeImage}
-                                        className="absolute -top-2 -right-2 w-6 h-6 bg-danger text-base rounded-full text-xs font-bold border-none">
-                                    ✕
+                                <img src={imagePreview} alt="Aperçu" className="max-h-32 rounded-lg border border-default" />
+                                <button type="button" onClick={removeImage} title="Retirer l'image"
+                                        className="vtt-btn vtt-btn-danger vtt-btn-icon vtt-btn-sm absolute -top-2 -right-2">
+                                    <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18" /></svg>
                                 </button>
                             </div>
                         ) : (
-                            <button onClick={() => fileInputRef.current?.click()}
-                                    className="w-full py-3 rounded-lg text-sm text-muted bg-surface-alt border border-base hover:border-primary hover:text-primary transition-colors">
-                                📎 Cliquez ou glissez une image
+                            <button type="button" onClick={() => fileInputRef.current?.click()}
+                                    className="vtt-btn w-full py-3 border-dashed">
+                                Cliquez ou glissez une image
                             </button>
                         )}
                         <input ref={fileInputRef} type="file" accept="image/*" onChange={handleImageSelect} className="hidden" />
@@ -308,44 +294,20 @@ const GMSendModal = ({ onClose, onSend, sessionCharacters = [], preSelectedCharI
 
                     {/* ── Animation toast ───────────────────────────────── */}
                     <div>
-                        <label className="block text-sm font-semibold text-base mb-2">Animation de notification</label>
+                        <label className="vtt-field-label">Animation de notification</label>
                         <div className="flex gap-2 flex-wrap">
-                            {TOAST_ANIMATIONS.map(anim => {
-                                const active = toastAnimation === anim.id;
-                                return (
-                                    <button key={anim.id} onClick={() => setToastAnimation(anim.id)}
-                                            className={`flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-semibold border transition-colors ${
-                                                active
-                                                    ? 'bg-primary text-base border-primary'
-                                                    : 'bg-transparent text-muted border-base hover:border-primary hover:text-primary'
-                                            }`}
-                                    >
-                                        {anim.icon} {anim.label}
-                                    </button>
-                                );
-                            })}
+                            {TOAST_ANIMATIONS.map(anim => (
+                                <button type="button" key={anim.id} onClick={() => setToastAnimation(anim.id)}
+                                        className={`vtt-pill ${toastAnimation === anim.id ? 'is-selected' : ''}`}
+                                >
+                                    {anim.label}
+                                </button>
+                            ))}
                         </div>
                     </div>
                 </div>
-
-                {/* ── Footer ───────────────────────────────────────────── */}
-                <div className="flex gap-3 p-4 border-t border-base">
-                    <button onClick={onClose}
-                            className="flex-1 px-4 py-2 rounded-lg font-semibold text-sm bg-surface-alt text-base border border-base hover:bg-surface transition-colors">
-                        Annuler
-                    </button>
-                    <button onClick={handleSend} disabled={!canSend || sending}
-                            className={`flex-1 px-4 py-2 rounded-lg font-semibold text-sm transition-colors ${
-                                canSend && !sending
-                                    ? 'bg-success text-base border-none hover:opacity-90'
-                                    : 'bg-surface-alt text-muted border border-base cursor-not-allowed'
-                            }`}
-                    >
-                        {sending ? '⏳ Envoi…' : `📨 Envoyer (${selectedTargets.size})`}
-                    </button>
-                </div>
             </div>
-        </div>
+        </Modal>
     );
 };
 

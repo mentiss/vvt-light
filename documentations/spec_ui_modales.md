@@ -2,7 +2,7 @@
 
 ## Statut
 
-**Validée par le MJ le 2026-10-18** (décisions M-1 à M-7 au §1, questions U-1 à U-4 tranchées au §10). Lot pilote implémenté ; lot 2 à venir.
+**Validée par le MJ le 2026-10-18** (décisions M-1 à M-7 au §1, questions U-1 à U-4 tranchées au §10). Lot pilote et lot 2 implémentés.
 
 Brique de plateforme : concerne tous les slugs.
 
@@ -162,7 +162,7 @@ Pour chaque modale migrée : fond opaque corrigé, couleurs codées en dur et al
 
 ## 8. Lot 2
 
-`CharacterListModal`, `CodeModal`, `AccessCodeModal`, `ConfirmModal`, `DiceConfigModal`, `FreeDiceModal`, `GMSendModal` (habillage seul, M-7). Chaque slug peut ensuite habiller ses modales génériques dans son `theme.css`, au rythme de ses propres refontes.
+`CharacterListModal`, `CodeModal`, `AccessCodeModal`, `ConfirmModal`, `DiceConfigModal`, `FreeDiceModal`, `GMSendModal` (habillage seul, M-7). Les confirmations natives du navigateur de la gestion des tables (suppression d'une table, retrait d'un personnage) passent par `ConfirmModal`. Chaque slug peut ensuite habiller ses modales génériques dans son `theme.css`, au rythme de ses propres refontes.
 
 ---
 

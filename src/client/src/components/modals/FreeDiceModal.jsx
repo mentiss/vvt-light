@@ -7,7 +7,7 @@
 //   characterId?   {number}   — pour persist historique
 //   characterName? {string}   — pour persist historique
 //   sessionId?     {number}   — pour persist historique
-//   isGM?          {boolean}  — affiche la case "Jet public" (défaut : false)
+//   isGM?          {boolean}  — affiche le choix "Jet secret / public" (défaut : false)
 //   defaultLabel?  {string}   — label par défaut (défaut : "Jet libre")
 //   onClose        {function}
 // ─────────────────────────────────────────────────────────────────────────────
@@ -16,6 +16,7 @@ import React, { useState, useCallback } from 'react';
 import { roll }      from '../../tools/diceEngine.js';
 import { useSystem } from '../../hooks/useSystem.js';
 import { useFetch }  from '../../hooks/useFetch.js';
+import Modal         from '../ui/Modal.jsx';
 
 // ── Constantes ────────────────────────────────────────────────────────────────
 
@@ -67,11 +68,8 @@ const buildFreeDiceAnimSeq = (raw, ctx) => {
 
 // ── SVG des dés — niveau module ───────────────────────────────────────────────
 
-const DieSVG = ({ type, active }) => {
-    const color = active
-        ? 'var(--color-accent)'
-        : 'var(--color-text-muted)';
-
+// Couleur héritée du bouton parent (currentColor)
+const DieSVG = ({ type }) => {
     const shapes = {
         d4: (
             <>
@@ -172,49 +170,44 @@ const DieSVG = ({ type, active }) => {
 // ── Sous-composant compteur de dé — niveau module ─────────────────────────────
 
 const DieCounter = ({ type, count, onChange }) => {
-    const active = count > 0;
+    const active    = count > 0;
+    const tone      = active ? 'text-primary' : 'text-muted';
     return (
         <div className="flex flex-col items-center gap-1">
             {/* Icône cliquable → ajoute 1 */}
             <button
+                type="button"
                 onClick={() => onChange(count + 1)}
-                className="transition-opacity hover:opacity-80"
+                className={`${tone} hover:text-primary transition-colors`}
                 title={`Ajouter un ${type}`}
             >
-                <DieSVG type={type} active={active} />
+                <DieSVG type={type} />
             </button>
 
             {/* Label */}
-            <span
-                className="text-[10px] font-mono font-bold"
-                style={{ color: active ? 'var(--color-accent)' : 'var(--color-text-muted)' }}
-            >
+            <span className={`text-[10px] font-mono font-bold ${tone}`}>
                 {type.toUpperCase()}
             </span>
 
             {/* Contrôles count */}
             <div className="flex items-center gap-1">
                 <button
+                    type="button"
                     onClick={() => onChange(Math.max(0, count - 1))}
                     disabled={count === 0}
-                    className="w-5 h-5 text-xs font-bold border border-default flex items-center justify-center
-                               hover:border-danger hover:text-danger disabled:opacity-30 disabled:cursor-not-allowed
-                               transition-colors"
-                    style={{ color: 'var(--color-text-muted)' }}
+                    className="vtt-btn vtt-btn-icon vtt-btn-sm"
+                    title="Retirer"
                 >−</button>
 
-                <span
-                    className="w-5 text-center text-xs font-mono font-bold tabular-nums"
-                    style={{ color: active ? 'var(--color-accent)' : 'var(--color-text-muted)' }}
-                >
+                <span className={`w-5 text-center text-xs font-mono font-bold tabular-nums ${tone}`}>
                     {count}
                 </span>
 
                 <button
+                    type="button"
                     onClick={() => onChange(count + 1)}
-                    className="w-5 h-5 text-xs font-bold border border-default flex items-center justify-center
-                               hover:border-success hover:text-success transition-colors"
-                    style={{ color: 'var(--color-text-muted)' }}
+                    className="vtt-btn vtt-btn-icon vtt-btn-sm"
+                    title="Ajouter"
                 >+</button>
             </div>
         </div>
@@ -337,41 +330,29 @@ const FreeDiceModal = ({
     const getDiceValues = (group) => group.values ?? [];
 
     // ── Rendu ─────────────────────────────────────────────────────────────────
-    return (
-        <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4">
-            <div
-                className="rounded-lg shadow-2xl w-full max-w-md flex flex-col"
-                style={{
-                    background: 'var(--color-surface)',
-                    border:     '1px solid var(--color-border)',
-                    fontFamily: 'var(--font-mono, monospace)',
-                    maxHeight:  '90vh',
-                }}
-                onClick={e => e.stopPropagation()}
-            >
-                {/* ── Header ───────────────────────────────────────────────── */}
-                <div
-                    className="flex items-center justify-between px-5 py-4 shrink-0"
-                    style={{ borderBottom: '1px solid var(--color-border)' }}
-                >
-                    <h2
-                        className="text-sm font-bold uppercase tracking-widest"
-                        style={{ color: 'var(--color-primary)' }}
-                    >
-                        🎲 Lanceur de dés
-                    </h2>
-                    <button
-                        onClick={onClose}
-                        className="text-lg leading-none hover:opacity-70 transition-opacity"
-                        style={{ color: 'var(--color-text-muted)' }}
-                    >✕</button>
-                </div>
+    const modifierTone = modifier > 0 ? 'text-success' : modifier < 0 ? 'text-danger' : '';
 
-                <div className="flex-1 overflow-y-auto">
+    const footer = !result ? (
+        <>
+            <button type="button" onClick={onClose} className="vtt-btn flex-1">Annuler</button>
+            <button type="button" onClick={() => handleRoll(false)} disabled={!canRoll} className="vtt-btn vtt-btn-primary flex-[2]">
+                {rolling ? 'Lancer…' : 'Lancer'}
+            </button>
+        </>
+    ) : (
+        <>
+            <button type="button" onClick={() => setResult(null)} className="vtt-btn flex-1">Modifier</button>
+            <button type="button" onClick={handleReroll} disabled={rolling} className="vtt-btn flex-1">Relancer</button>
+            <button type="button" onClick={onClose} className="vtt-btn vtt-btn-primary flex-1">Fermer</button>
+        </>
+    );
+
+    return (
+        <Modal title="Lanceur de dés" size="md" onClose={onClose} footer={footer}>
 
                     {/* ── État : COMPOSE ────────────────────────────────────── */}
                     {!result && (
-                        <div className="px-5 py-4 space-y-5">
+                        <div className="space-y-5">
 
                             {/* Grille de dés */}
                             <div className="grid grid-cols-4 gap-3 justify-items-center">
@@ -386,10 +367,9 @@ const FreeDiceModal = ({
                                 {/* Bouton reset — 8e cellule */}
                                 <div className="flex flex-col items-center justify-end pb-1">
                                     <button
+                                        type="button"
                                         onClick={() => { setCounts({ ...INITIAL_COUNTS }); setModifier(0); }}
-                                        className="text-[10px] font-mono border border-default px-2 py-1
-                                                   hover:border-danger hover:text-danger transition-colors"
-                                        style={{ color: 'var(--color-text-muted)' }}
+                                        className="vtt-btn vtt-btn-sm"
                                         title="Réinitialiser"
                                     >Reset</button>
                                 </div>
@@ -397,105 +377,59 @@ const FreeDiceModal = ({
 
                             {/* Modificateur */}
                             <div>
-                                <label
-                                    className="block text-[10px] font-mono uppercase tracking-widest mb-1.5"
-                                    style={{ color: 'var(--color-text-muted)' }}
-                                >
-                                    Modificateur
-                                </label>
+                                <label className="vtt-field-label">Modificateur</label>
                                 <div className="flex items-center gap-2">
-                                    <button
-                                        onClick={() => setModifier(m => m - 1)}
-                                        className="w-8 h-8 border border-default font-mono font-bold
-                                                   hover:border-danger hover:text-danger transition-colors"
-                                        style={{ color: 'var(--color-text-muted)' }}
-                                    >−</button>
+                                    <button type="button" onClick={() => setModifier(m => m - 1)} className="vtt-btn vtt-btn-icon">−</button>
                                     <input
                                         type="number"
                                         value={modifier}
                                         onChange={e => setModifier(Number(e.target.value))}
-                                        className="w-16 text-center font-mono font-bold text-sm border px-2 py-1.5 rounded"
-                                        style={{
-                                            background:   'var(--color-surface-alt)',
-                                            border:       '1px solid var(--color-border)',
-                                            color:        modifier > 0
-                                                ? 'var(--color-success)'
-                                                : modifier < 0
-                                                    ? 'var(--color-danger)'
-                                                    : 'var(--color-text)',
-                                        }}
+                                        className={`vtt-input w-20 text-center font-mono font-bold ${modifierTone}`}
                                     />
-                                    <button
-                                        onClick={() => setModifier(m => m + 1)}
-                                        className="w-8 h-8 border border-default font-mono font-bold
-                                                   hover:border-success hover:text-success transition-colors"
-                                        style={{ color: 'var(--color-text-muted)' }}
-                                    >+</button>
+                                    <button type="button" onClick={() => setModifier(m => m + 1)} className="vtt-btn vtt-btn-icon">+</button>
 
                                     {modifier !== 0 && (
-                                        <button
-                                            onClick={() => setModifier(0)}
-                                            className="text-[10px] font-mono ml-1"
-                                            style={{ color: 'var(--color-text-muted)' }}
-                                        >↺ 0</button>
+                                        <button type="button" onClick={() => setModifier(0)} className="vtt-btn vtt-btn-sm ml-1">↺ 0</button>
                                     )}
                                 </div>
                             </div>
 
                             {/* Label */}
                             <div>
-                                <label
-                                    className="block text-[10px] font-mono uppercase tracking-widest mb-1.5"
-                                    style={{ color: 'var(--color-text-muted)' }}
-                                >
-                                    Label <span className="normal-case">(optionnel)</span>
+                                <label className="vtt-field-label">
+                                    Label <span className="text-muted">(optionnel)</span>
                                 </label>
                                 <input
                                     type="text"
                                     value={label}
                                     onChange={e => setLabel(e.target.value)}
                                     placeholder={defaultLabel}
-                                    className="w-full px-3 py-1.5 text-sm border rounded"
-                                    style={{
-                                        background: 'var(--color-surface-alt)',
-                                        border:     '1px solid var(--color-border)',
-                                        color:      'var(--color-text)',
-                                    }}
+                                    className="vtt-input"
                                 />
                             </div>
 
-                            {/* Case "Jet public" — GM uniquement */}
+                            {/* Jet secret ou public — MJ uniquement (pastilles, pas de case à cocher) */}
                             {isGM && (
-                                <label className="flex items-center gap-2 cursor-pointer">
-                                    <input
-                                        type="checkbox"
-                                        checked={isPublic}
-                                        onChange={e => setIsPublic(e.target.checked)}
-                                        className="w-4 h-4 cursor-pointer"
-                                        style={{ accentColor: 'var(--color-primary)' }}
-                                    />
-                                    <span
-                                        className="text-xs font-mono"
-                                        style={{ color: 'var(--color-text-muted)' }}
-                                    >
-                                        Jet public <span className="opacity-60">(visible dans l'historique)</span>
-                                    </span>
-                                </label>
+                                <div className="flex flex-wrap gap-1.5">
+                                    <button type="button" onClick={() => setIsPublic(false)} className={`vtt-pill ${!isPublic ? 'is-selected' : ''}`}>
+                                        Jet secret
+                                    </button>
+                                    <button type="button" onClick={() => setIsPublic(true)} className={`vtt-pill ${isPublic ? 'is-selected' : ''}`}>
+                                        Jet public (visible dans l'historique)
+                                    </button>
+                                </div>
                             )}
 
                             {/* Résumé notation */}
                             {totalDice > 0 && (
-                                <p
-                                    className="text-xs font-mono text-center"
-                                    style={{ color: 'var(--color-text-muted)' }}
-                                >
+                                <p className="text-xs font-mono text-center text-muted">
                                     {DICE_TYPES
                                         .filter(d => counts[d] > 0)
                                         .map(d => `${counts[d]}${d.toUpperCase()}`)
                                         .join(' + ')
                                     }
                                     {modifier !== 0 && (
-                                        <span style={{ color: modifier > 0 ? 'var(--color-success)' : 'var(--color-danger)' }}>
+                                        <span className={modifierTone}>
                                             {modifier > 0 ? ` +${modifier}` : ` ${modifier}`}
                                         </span>
                                     )}
@@ -503,22 +437,16 @@ const FreeDiceModal = ({
                             )}
 
                             {error && (
-                                <p className="text-xs font-mono text-center"
-                                   style={{ color: 'var(--color-danger)' }}>
-                                    ⚠ {error}
-                                </p>
+                                <div className="vtt-callout vtt-callout-danger">{error}</div>
                             )}
                         </div>
                     )}
 
                     {/* ── État : RESULT ─────────────────────────────────────── */}
                     {result && (
-                        <div className="px-5 py-4 space-y-4">
+                        <div className="space-y-4">
                             {/* Label du jet */}
-                            <p
-                                className="text-xs font-mono uppercase tracking-widest text-center"
-                                style={{ color: 'var(--color-text-muted)' }}
-                            >
+                            <p className="text-xs uppercase tracking-widest text-center text-muted">
                                 {result.label}
                             </p>
 
@@ -533,56 +461,28 @@ const FreeDiceModal = ({
                                     const faceSum  = diceVals.reduce((s, v) => s + v, 0);
 
                                     return (
-                                        <div
-                                            key={i}
-                                            className="flex items-center gap-3 py-1.5 border-b"
-                                            style={{ borderColor: 'var(--color-border)' }}
-                                        >
-                                            <span
-                                                className="text-[10px] font-mono w-12 shrink-0"
-                                                style={{ color: 'var(--color-text-muted)' }}
-                                            >
+                                        <div key={i} className="flex items-center gap-3 py-1.5 border-b border-default">
+                                            <span className="text-[10px] font-mono w-12 shrink-0 text-muted">
                                                 {dLabel}
                                             </span>
                                             <div className="flex flex-wrap gap-1.5 flex-1">
                                                 {diceVals.map((v, j) => (
                                                     <span
                                                         key={j}
-                                                        className="w-8 h-8 flex items-center justify-center text-sm font-mono font-bold border rounded"
-                                                        style={{
-                                                            background: 'var(--color-surface-alt)',
-                                                            border:     '1px solid var(--color-border)',
-                                                            color:      'var(--color-text)',
-                                                        }}
+                                                        className="w-8 h-8 flex items-center justify-center text-sm font-mono font-bold rounded border border-default bg-surface-alt"
                                                     >{v}</span>
                                                 ))}
                                             </div>
-                                            <span
-                                                className="text-xs font-mono tabular-nums shrink-0"
-                                                style={{ color: 'var(--color-text-muted)' }}
-                                            >{faceSum}</span>
+                                            <span className="text-xs font-mono tabular-nums shrink-0 text-muted">{faceSum}</span>
                                         </div>
                                     );
                                 })}
 
                                 {/* Ligne modificateur si présent */}
                                 {result.modifier !== 0 && (
-                                    <div
-                                        className="flex items-center justify-between py-1.5 border-b"
-                                        style={{ borderColor: 'var(--color-border)' }}
-                                    >
-                                        <span
-                                            className="text-[10px] font-mono"
-                                            style={{ color: 'var(--color-text-muted)' }}
-                                        >Modificateur</span>
-                                        <span
-                                            className="text-xs font-mono font-bold tabular-nums"
-                                            style={{
-                                                color: result.modifier > 0
-                                                    ? 'var(--color-success)'
-                                                    : 'var(--color-danger)',
-                                            }}
-                                        >
+                                    <div className="flex items-center justify-between py-1.5 border-b border-default">
+                                        <span className="text-[10px] font-mono text-muted">Modificateur</span>
+                                        <span className={`text-xs font-mono font-bold tabular-nums ${result.modifier > 0 ? 'text-success' : 'text-danger'}`}>
                                             {result.modifier > 0 ? `+${result.modifier}` : result.modifier}
                                         </span>
                                     </div>
@@ -591,87 +491,14 @@ const FreeDiceModal = ({
 
                             {/* Total */}
                             <div className="text-center pt-1">
-                                <p
-                                    className="text-[10px] font-mono uppercase tracking-widest mb-1"
-                                    style={{ color: 'var(--color-text-muted)' }}
-                                >Total</p>
-                                <p
-                                    className="text-5xl font-black font-mono tabular-nums"
-                                    style={{ color: 'var(--color-primary)' }}
-                                >
+                                <p className="text-[10px] uppercase tracking-widest mb-1 text-muted">Total</p>
+                                <p className="text-5xl font-black font-mono tabular-nums text-primary">
                                     {result.total}
                                 </p>
                             </div>
                         </div>
                     )}
-                </div>
-
-                {/* ── Footer actions ────────────────────────────────────────── */}
-                <div
-                    className="shrink-0 px-5 py-4 flex gap-2"
-                    style={{ borderTop: '1px solid var(--color-border)' }}
-                >
-                    {!result ? (
-                        <>
-                            <button
-                                onClick={onClose}
-                                className="flex-1 py-2.5 text-sm font-mono border rounded transition-colors"
-                                style={{
-                                    border:  '1px solid var(--color-border)',
-                                    color:   'var(--color-text-muted)',
-                                    background: 'transparent',
-                                }}
-                            >Annuler</button>
-                            <button
-                                onClick={() => handleRoll(false)}
-                                disabled={!canRoll}
-                                className="flex-2 px-6 py-2.5 text-sm font-bold uppercase tracking-wide rounded transition-all"
-                                style={{
-                                    flex:       2,
-                                    background: canRoll ? 'var(--color-primary)' : 'var(--color-border)',
-                                    color:      canRoll ? 'var(--color-bg, #fff)' : 'var(--color-text-muted)',
-                                    border:     'none',
-                                    cursor:     canRoll ? 'pointer' : 'not-allowed',
-                                }}
-                            >
-                                {rolling ? 'Lancer…' : 'Lancer'}
-                            </button>
-                        </>
-                    ) : (
-                        <>
-                            <button
-                                onClick={() => setResult(null)}
-                                className="flex-1 py-2.5 text-sm font-mono border rounded transition-colors"
-                                style={{
-                                    border:     '1px solid var(--color-border)',
-                                    color:      'var(--color-text-muted)',
-                                    background: 'transparent',
-                                }}
-                            >Modifier</button>
-                            <button
-                                onClick={handleReroll}
-                                disabled={rolling}
-                                className="flex-1 py-2.5 text-sm font-mono border rounded transition-colors"
-                                style={{
-                                    border:     '1px solid var(--color-border)',
-                                    color:      'var(--color-accent)',
-                                    background: 'transparent',
-                                }}
-                            >Relancer</button>
-                            <button
-                                onClick={onClose}
-                                className="flex-1 py-2.5 text-sm font-bold uppercase tracking-wide rounded"
-                                style={{
-                                    background: 'var(--color-primary)',
-                                    color:      'var(--color-bg, #fff)',
-                                    border:     'none',
-                                }}
-                            >Fermer</button>
-                        </>
-                    )}
-                </div>
-            </div>
-        </div>
+        </Modal>
     );
 };
 
