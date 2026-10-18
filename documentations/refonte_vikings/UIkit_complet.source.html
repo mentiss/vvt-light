@@ -21,6 +21,157 @@
     <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
     <link rel="stylesheet" href="../../src/client/src/generated-css-utils.css">
 
+    <style id="vtt-defaults">
+        /* Copie de src/client/src/index.css (style par défaut des modales génériques) */
+        /* ── Modales génériques (documentations/spec_ui_modales.md) ─────────────── */
+        /* Style par défaut, en couche « components » : le theme.css d'un slug (hors
+           couche) le surcharge toujours, et les utilitaires Tailwind restent
+           applicables sur les classes vtt-*. Uniquement les variables --color-*. */
+        @layer components {
+          :root {
+            --vtt-z-modal: 150;          /* sous l'animation des dés (200) */
+            --vtt-z-alert: 9999;         /* alerte : au-dessus de tout */
+            --vtt-modal-gutter: 16px;
+          }
+
+          /* Fond et fenêtre */
+          .vtt-modal-backdrop {
+            position: fixed; inset: 0; z-index: var(--vtt-z-modal);
+            display: flex; align-items: center; justify-content: center;
+            padding: var(--vtt-modal-gutter);
+            background: rgba(0, 0, 0, 0.7);
+            backdrop-filter: blur(6px);
+          }
+          .vtt-modal-backdrop.vtt-modal-alert { z-index: var(--vtt-z-alert); }
+
+          .vtt-modal-panel {
+            position: relative; display: flex; flex-direction: column;
+            width: 100%; max-height: 100%; overflow: hidden;
+            background: var(--color-surface); color: var(--color-text);
+            border: 1px solid var(--color-border); border-radius: 1rem;
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.45);
+          }
+          .vtt-modal-deco { position: absolute; inset: 0; pointer-events: none; }
+
+          /* Tailles (§3.3) : relèvent de l'ergonomie, les slugs ne les redéfinissent pas */
+          .vtt-modal-sm   { max-width: 24rem; }
+          .vtt-modal-md   { max-width: 32rem; }
+          .vtt-modal-lg   { max-width: 48rem; }
+          .vtt-modal-xl   { max-width: 64rem; }
+          .vtt-modal-full { max-width: none; height: 100%; }
+
+          /* En-tête, corps, pied */
+          .vtt-modal-header {
+            display: flex; align-items: center; gap: 0.75rem; flex-shrink: 0;
+            padding: 1rem 1.25rem; border-bottom: 1px solid var(--color-border);
+          }
+          .vtt-modal-heading { flex: 1; min-width: 0; }
+          .vtt-modal-icon {
+            width: 2.25rem; height: 2.25rem; flex-shrink: 0;
+            display: flex; align-items: center; justify-content: center;
+            border-radius: 0.75rem; border: 1px solid var(--color-border);
+            background: var(--color-surface-alt); color: var(--color-primary);
+          }
+          .vtt-modal-title {
+            font-size: 0.875rem; font-weight: 700; line-height: 1.3;
+            letter-spacing: 0.08em; text-transform: uppercase;
+            color: var(--color-primary); overflow-wrap: anywhere;
+          }
+          .vtt-modal-subtitle { font-size: 0.75rem; margin-top: 0.125rem; color: var(--color-text-muted); }
+          .vtt-modal-close, .vtt-modal-expand {
+            width: 2rem; height: 2rem; flex-shrink: 0;
+            display: inline-flex; align-items: center; justify-content: center;
+            border-radius: 0.5rem; color: var(--color-text-muted); background: transparent;
+            transition: color 0.15s, background-color 0.15s;
+          }
+          .vtt-modal-close:hover, .vtt-modal-expand:hover { color: var(--color-text); background: var(--color-surface-alt); }
+          .vtt-modal-body { flex: 1 1 auto; min-height: 0; overflow-y: auto; padding: 1.25rem; }
+          .vtt-modal-footer {
+            display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 0.75rem; flex-shrink: 0;
+            padding: 1rem 1.25rem; border-top: 1px solid var(--color-border);
+          }
+
+          /* Petit écran : toute la largeur, Agrandir sans effet donc masqué */
+          @media (max-width: 639px) {
+            .vtt-modal-panel { max-width: none; }
+            .vtt-modal-expand { display: none; }
+          }
+
+          /* Barres de défilement (§3.4) : épaisseur et couleurs uniquement.
+             Les zones qui défilent à l'intérieur (listes) en héritent. */
+          .vtt-scroll, .vtt-scroll * { scrollbar-width: thin; }
+          .vtt-scroll { scrollbar-color: var(--color-border) transparent; }
+          .vtt-scroll:hover { scrollbar-color: var(--color-primary) transparent; }
+
+          /* Boutons */
+          .vtt-btn {
+            display: inline-flex; align-items: center; justify-content: center; gap: 0.4rem;
+            padding: 0.5rem 1rem; border-radius: 0.5rem; font-size: 0.875rem; font-weight: 600;
+            border: 1px solid var(--color-border); background: var(--color-surface-alt); color: var(--color-text);
+            transition: border-color 0.15s, background-color 0.15s, filter 0.15s, opacity 0.15s;
+          }
+          .vtt-btn:hover:not(:disabled) { border-color: var(--color-primary); }
+          .vtt-btn:focus-visible { outline: 2px solid var(--color-primary); outline-offset: 2px; }
+          .vtt-btn:disabled { opacity: 0.5; }
+          .vtt-btn-primary { background: var(--color-primary); border-color: var(--color-primary); color: var(--color-on-primary, #fff); }
+          .vtt-btn-primary:hover:not(:disabled) { filter: brightness(1.1); }
+          .vtt-btn-danger { background: var(--color-danger); border-color: var(--color-danger); color: #fff; }
+          .vtt-btn-danger:hover:not(:disabled) { border-color: var(--color-danger); filter: brightness(1.1); }
+          .vtt-btn-sm { padding: 0.25rem 0.65rem; font-size: 0.8rem; }
+          .vtt-btn-icon { padding: 0; width: 2rem; height: 2rem; }
+          .vtt-btn-icon.vtt-btn-sm { width: 1.75rem; height: 1.75rem; }
+
+          /* Champs */
+          .vtt-field-label { display: block; margin-bottom: 0.25rem; font-size: 0.875rem; font-weight: 600; color: var(--color-text); }
+          .vtt-input {
+            width: 100%; padding: 0.5rem 0.75rem; border-radius: 0.5rem; font-size: 0.9rem;
+            border: 1px solid var(--color-border); background: var(--color-surface-alt); color: var(--color-text);
+          }
+          .vtt-input::placeholder { color: var(--color-text-muted); opacity: 0.8; }
+          .vtt-input:focus { outline: none; border-color: var(--color-primary); box-shadow: 0 0 0 2px color-mix(in srgb, var(--color-primary) 25%, transparent); }
+          textarea.vtt-input { resize: vertical; }
+
+          /* Pastilles et segments (pas de <select> ni de case à cocher) */
+          .vtt-pill {
+            display: inline-flex; align-items: center; gap: 0.3rem;
+            padding: 0.25rem 0.75rem; border-radius: 999px; font-size: 0.8rem; font-weight: 500;
+            border: 1px solid var(--color-border); background: var(--color-surface-alt); color: var(--color-text-muted);
+            transition: color 0.15s, border-color 0.15s, background-color 0.15s;
+          }
+          .vtt-pill:hover { color: var(--color-text); border-color: var(--color-primary); }
+          .vtt-pill.is-selected { background: var(--color-primary); border-color: var(--color-primary); color: var(--color-on-primary, #fff); }
+          .vtt-segmented {
+            display: flex; gap: 0.25rem; padding: 0.25rem; border-radius: 0.75rem;
+            border: 1px solid var(--color-border); background: var(--color-surface-alt);
+          }
+          .vtt-segment {
+            flex: 1; display: inline-flex; align-items: center; justify-content: center; gap: 0.5rem;
+            padding: 0.5rem; border-radius: 0.5rem; font-size: 0.75rem; font-weight: 600;
+            letter-spacing: 0.04em; text-transform: uppercase; color: var(--color-text-muted);
+            transition: color 0.15s, background-color 0.15s;
+          }
+          .vtt-segment:hover { color: var(--color-text); background: var(--color-surface); }
+          .vtt-segment.is-active { background: var(--color-primary); color: var(--color-on-primary, #fff); }
+
+          /* Ligne de liste (table, personnage) */
+          .vtt-list-item {
+            display: flex; align-items: center; gap: 0.75rem; width: 100%; padding: 0.75rem;
+            border-radius: 0.75rem; border: 1px solid var(--color-border);
+            background: var(--color-surface-alt); color: var(--color-text); text-align: left;
+            transition: border-color 0.15s, background-color 0.15s;
+          }
+          button.vtt-list-item:hover { border-color: var(--color-primary); }
+          .vtt-list-item.is-selected { border-color: var(--color-primary); background: color-mix(in srgb, var(--color-primary) 15%, transparent); }
+
+          /* Encadrés */
+          .vtt-callout {
+            padding: 0.6rem 0.85rem; border-radius: 0.5rem; font-size: 0.875rem;
+            border-left: 3px solid var(--color-primary);
+            background: color-mix(in srgb, var(--color-primary) 10%, transparent);
+          }
+          .vtt-callout-danger { border-left-color: var(--color-danger); background: color-mix(in srgb, var(--color-danger) 12%, transparent); }
+        }
+    </style>
     <style id="theme">
         /* ═════════════════════════════════════════════════════════════════════
            FUTUR systems/vikings/theme.css
@@ -44,6 +195,8 @@
             --color-border:      rgba(200, 169, 110, 0.35);
 
             /* Spécifique Vikings */
+            --color-on-primary:  #1a1410;   /* texte sur fond or (modales génériques) */
+
             --vk-on-primary:     #1a1410;   /* texte sur fond or */
             --vk-gold-dim:       #b8942a;
             --vk-border-soft:    rgba(200, 169, 110, 0.15);
@@ -84,6 +237,8 @@
             --color-text:        #d8dee9;
             --color-text-muted:  #81a1c1;
             --color-border:      rgba(150, 160, 180, 0.28);
+
+            --color-on-primary:  #0f1419;
 
             --vk-on-primary:     #0f1419;
             --vk-gold-dim:       #c9ad74;
@@ -183,42 +338,42 @@
                 linear-gradient(90deg, transparent 0%, var(--vk-border-soft) 25%, var(--vk-border-soft) 75%, transparent 100%) bottom / 100% 1px no-repeat;
         }
 
-        /* ── Boutons ────────────────────────────────────────────────────────── */
-        .vk-btn {
+        /* ── Boutons (partagés avec les .vtt-btn* des modales génériques) ───── */
+        .vk-btn, .vtt-btn {
             display: inline-flex; align-items: center; justify-content: center; gap: .4rem;
             font-family: var(--vk-font-body); font-weight: 700; font-size: .9rem;
             padding: .45rem .95rem; border: 1px solid var(--color-border); border-radius: 2px;
             background: transparent; color: var(--color-text); cursor: pointer;
             transition: background-color .15s, border-color .15s, color .15s, box-shadow .2s, transform .15s, filter .2s;
         }
-        .vk-btn:hover:not(:disabled)  { border-color: var(--color-primary); background-color: color-mix(in srgb, var(--color-primary) 10%, transparent); }
-        .vk-btn:focus-visible         { outline: 2px solid var(--color-primary); outline-offset: 2px; }
-        .vk-btn:disabled              { opacity: .4; cursor: not-allowed; }
+        .vk-btn:hover:not(:disabled), .vtt-btn:hover:not(:disabled) { border-color: var(--color-primary); background-color: color-mix(in srgb, var(--color-primary) 10%, transparent); }
+        .vk-btn:focus-visible, .vtt-btn:focus-visible { outline: 2px solid var(--color-primary); outline-offset: 2px; }
+        .vk-btn:disabled, .vtt-btn:disabled { opacity: .4; cursor: not-allowed; }
         /* Bouton principal (Lancer les dés…) : survol nettement différencié — éclat doré, léger soulèvement */
-        .vk-btn-primary {
+        .vk-btn-primary, .vtt-btn-primary {
             font-family: var(--vk-font-label); font-weight: 600; font-size: 1.02rem; letter-spacing: .03em;
             background-image: linear-gradient(180deg, var(--color-primary), var(--vk-gold-dim));
             border-color: var(--vk-gold-dim); color: var(--vk-on-primary);
             box-shadow: inset 0 1px 0 rgba(255,255,255,.25), 0 2px 6px rgba(0,0,0,.35);
         }
-        .vk-btn-primary:hover:not(:disabled) {
+        .vk-btn-primary:hover:not(:disabled), .vtt-btn-primary:hover:not(:disabled) {
             border-color: var(--color-primary);
             filter: brightness(1.12) saturate(1.1);
             transform: translateY(-1px);
             box-shadow: inset 0 1px 0 rgba(255,255,255,.35), 0 0 0 1px var(--color-primary), 0 4px 18px color-mix(in srgb, var(--color-primary) 45%, transparent);
         }
-        .vk-btn-primary:active:not(:disabled) {
+        .vk-btn-primary:active:not(:disabled), .vtt-btn-primary:active:not(:disabled) {
             transform: translateY(1px); filter: brightness(.95);
             box-shadow: inset 0 2px 5px rgba(0,0,0,.4);
         }
-        .vk-btn-danger  { border-color: color-mix(in srgb, var(--color-danger) 60%, transparent); color: var(--color-danger); }
-        .vk-btn-danger:hover:not(:disabled)  { background-color: color-mix(in srgb, var(--color-danger) 15%, transparent); border-color: var(--color-danger); }
+        .vk-btn-danger, .vtt-btn-danger { border-color: color-mix(in srgb, var(--color-danger) 60%, transparent); color: var(--color-danger); }
+        .vk-btn-danger:hover:not(:disabled), .vtt-btn-danger:hover:not(:disabled) { background-color: color-mix(in srgb, var(--color-danger) 15%, transparent); border-color: var(--color-danger); }
         .vk-btn-success { border-color: color-mix(in srgb, var(--color-success) 60%, transparent); color: var(--color-success); }
         .vk-btn-success:hover:not(:disabled) { background-color: color-mix(in srgb, var(--color-success) 15%, transparent); border-color: var(--color-success); }
-        .vk-btn-sm   { font-size: .78rem; padding: .25rem .6rem; }
-        .vk-btn-primary.vk-btn-sm { font-size: .9rem; }
-        .vk-btn-icon { padding: 0; width: 2rem; height: 2rem; }
-        .vk-btn-icon.vk-btn-sm { width: 1.6rem; height: 1.6rem; }
+        .vk-btn-sm, .vtt-btn-sm { font-size: .78rem; padding: .25rem .6rem; }
+        .vk-btn-primary.vk-btn-sm, .vtt-btn-primary.vtt-btn-sm { font-size: .9rem; }
+        .vk-btn-icon, .vtt-btn-icon { padding: 0; width: 2rem; height: 2rem; }
+        .vk-btn-icon.vk-btn-sm, .vtt-btn-icon.vtt-btn-sm { width: 1.6rem; height: 1.6rem; }
 
         /* Bouton de jet discret sur une ligne (carac, compétence) */
         .vk-roll {
@@ -229,29 +384,29 @@
         }
         .vk-roll:hover { border-color: var(--color-primary); background: color-mix(in srgb, var(--color-primary) 12%, transparent); transform: rotate(-8deg); }
 
-        /* ── Champs ─────────────────────────────────────────────────────────── */
-        .vk-field-label { display: block; font-family: var(--vk-font-label); font-size: .98rem; letter-spacing: .03em; color: var(--color-text-muted); margin-bottom: .2rem; }
-        .vk-input {
+        /* ── Champs (partagés avec les .vtt-* des modales génériques) ───────── */
+        .vk-field-label, .vtt-field-label { display: block; font-family: var(--vk-font-label); font-size: .98rem; letter-spacing: .03em; color: var(--color-text-muted); margin-bottom: .2rem; }
+        .vk-input, .vtt-input {
             width: 100%; font-family: var(--vk-font-body); font-size: .95rem; color: var(--color-text);
             background: var(--vk-field-bg); border: 1px solid var(--vk-border-soft);
             border-bottom-color: var(--color-border); border-radius: 2px; padding: .4rem .6rem;
         }
-        .vk-input::placeholder { color: var(--color-text-muted); opacity: .7; font-style: italic; }
-        .vk-input:focus { outline: none; border-color: var(--color-primary); box-shadow: 0 0 0 2px color-mix(in srgb, var(--color-primary) 20%, transparent); }
-        textarea.vk-input { resize: vertical; min-height: 4.5rem; }
+        .vk-input::placeholder, .vtt-input::placeholder { color: var(--color-text-muted); opacity: .7; font-style: italic; }
+        .vk-input:focus, .vtt-input:focus { outline: none; border-color: var(--color-primary); box-shadow: 0 0 0 2px color-mix(in srgb, var(--color-primary) 20%, transparent); }
+        textarea.vk-input, textarea.vtt-input { resize: vertical; min-height: 4.5rem; }
         .vk-input-icon { position: relative; }
         .vk-input-icon .vk-icon { position: absolute; left: .6rem; top: 50%; transform: translateY(-50%); color: var(--color-text-muted); }
         .vk-input-icon .vk-input { padding-left: 2rem; }
 
         /* Pastilles de choix (pas de <select> ni de case à cocher) */
-        .vk-pill {
+        .vk-pill, .vtt-pill {
             display: inline-flex; align-items: center; gap: .3rem; cursor: pointer;
             font-size: .82rem; padding: .25rem .7rem; border-radius: 999px;
             border: 1px solid var(--color-border); color: var(--color-text-muted); background: transparent;
             transition: color .15s, border-color .15s, background-color .15s;
         }
-        .vk-pill:hover { color: var(--color-text); border-color: var(--color-primary); }
-        .vk-pill.is-selected { background: var(--color-primary); border-color: var(--color-primary); color: var(--vk-on-primary); font-weight: 700; }
+        .vk-pill:hover, .vtt-pill:hover { color: var(--color-text); border-color: var(--color-primary); }
+        .vk-pill.is-selected, .vtt-pill.is-selected { background: var(--color-primary); border-color: var(--color-primary); color: var(--vk-on-primary); font-weight: 700; }
 
         /* Stepper −/+ (valeurs numériques : visée, ajustements, actions de table…) */
         .vk-stepper { display: inline-flex; align-items: center; border: 1px solid var(--color-border); border-radius: 2px; }
@@ -392,9 +547,9 @@
         .vk-tag-muted  { color: var(--color-text-muted); border-color: var(--vk-border-soft); }
         .vk-text-warn  { color: var(--vk-warn); }   /* malus (fatigue, blessures) dans un texte */
 
-        .vk-callout { border-left: 3px solid var(--color-primary); background: color-mix(in srgb, var(--color-primary) 8%, transparent); padding: .55rem .8rem; font-size: .9rem; }
+        .vk-callout, .vtt-callout { border-radius: 0; border-left: 3px solid var(--color-primary); background: color-mix(in srgb, var(--color-primary) 8%, transparent); padding: .55rem .8rem; font-size: .9rem; }
         .vk-callout-warn   { border-left-color: var(--vk-warn); background: color-mix(in srgb, var(--vk-warn) 12%, transparent); }
-        .vk-callout-danger { border-left-color: var(--color-danger); background: color-mix(in srgb, var(--color-danger) 12%, transparent); }
+        .vk-callout-danger, .vtt-callout-danger { border-left-color: var(--color-danger); background: color-mix(in srgb, var(--color-danger) 12%, transparent); }
 
         /* ── Dés ────────────────────────────────────────────────────────────── */
         .vk-die {
@@ -428,6 +583,59 @@
         /* En-tête : le bouton de fermeture reste à l'écart des coins ornés */
         .vk-modal-header { display: flex; align-items: center; justify-content: space-between; gap: .75rem; padding: 0 30px .6rem 6px; margin-bottom: .8rem; border-bottom: 1px solid var(--vk-border-soft); }
         .vk-light > .vk-modal-header { padding-right: 16px; }
+
+        /* ── Modales génériques (components/ui/Modal.jsx, spec_ui_modales.md) ─
+           Cadre à coins légers du kit : coins du haut sur le panneau, coins du bas
+           sur .vtt-modal-deco. Boutons, champs, pastilles et encadrés : partagés
+           plus haut avec les classes vk-. Les tailles restent celles du générique. */
+        .vtt-modal-backdrop { background: rgba(0,0,0,.65); backdrop-filter: blur(2px); }
+        .vtt-modal-panel {
+            overflow: visible; border-radius: 0;
+            background: var(--color-surface); border: 2px solid var(--color-border);
+            box-shadow: var(--vk-panel-shadow);
+        }
+        .vtt-modal-panel::before, .vtt-modal-panel::after,
+        .vtt-modal-deco::before, .vtt-modal-deco::after {
+            content: ''; position: absolute; pointer-events: none; z-index: 5;
+            width: 55px; height: 55px; background-size: contain; background-repeat: no-repeat;
+            filter: var(--vk-ornament-filter);
+        }
+        .vtt-modal-panel::before { top: -5px;    left: -5px;  background-image: var(--vk-corner-l-tl); }
+        .vtt-modal-panel::after  { top: -5px;    right: -5px; background-image: var(--vk-corner-l-tr); }
+        .vtt-modal-deco::before  { bottom: -5px; left: -5px;  background-image: var(--vk-corner-l-bl); }
+        .vtt-modal-deco::after   { bottom: -5px; right: -5px; background-image: var(--vk-corner-l-br); }
+        @media (max-width: 640px) {
+            .vtt-modal-panel::before, .vtt-modal-panel::after,
+            .vtt-modal-deco::before, .vtt-modal-deco::after { width: 40px; height: 40px; }
+        }
+        /* En-tête et pied tenus à l'écart des coins */
+        .vtt-modal-header { padding: 1rem 2.25rem .7rem 1.5rem; border-bottom-color: var(--vk-border-soft); }
+        .vtt-modal-title {
+            font-family: var(--vk-font-title); font-size: 1.25rem; font-weight: 400;
+            letter-spacing: 0; text-transform: none; text-shadow: 0 2px 8px rgba(0,0,0,.45);
+        }
+        .vtt-modal-subtitle { font-size: .85rem; font-style: italic; }
+        .vtt-modal-icon { border-radius: 2px; border-color: var(--vk-border-soft); background: transparent; }
+        .vtt-modal-close, .vtt-modal-expand { width: 1.6rem; height: 1.6rem; border-radius: 2px; border: 1px solid var(--color-border); }
+        .vtt-modal-close:hover, .vtt-modal-expand:hover { color: var(--color-text); border-color: var(--color-primary); background: color-mix(in srgb, var(--color-primary) 10%, transparent); }
+        .vtt-modal-body { padding: 1.1rem 1.5rem; }
+        .vtt-modal-body:last-child { padding-bottom: 2rem; }   /* sans pied : les coins du bas ne touchent pas le contenu */
+        .vtt-modal-footer { padding: .8rem 1.5rem 1.6rem; border-top-color: var(--vk-border-soft); }
+
+        /* Lignes de liste (tables, personnages) et segments */
+        .vtt-list-item {
+            border-radius: 0; border: 1px solid var(--vk-border-soft); border-left: 3px solid transparent;
+            background: color-mix(in srgb, var(--color-primary) 4%, transparent);
+        }
+        button.vtt-list-item:hover { border-color: var(--vk-border-soft); border-left-color: var(--color-primary); background: color-mix(in srgb, var(--color-primary) 10%, transparent); }
+        .vtt-list-item.is-selected { border-color: var(--vk-border-soft); border-left-color: var(--color-primary); background: color-mix(in srgb, var(--color-primary) 12%, transparent); }
+        .vtt-segmented { border-radius: 2px; background: var(--vk-field-bg); border-color: var(--vk-border-soft); }
+        .vtt-segment { border-radius: 2px; font-family: var(--vk-font-label); font-size: .98rem; letter-spacing: .03em; text-transform: none; }
+        .vtt-segment.is-active { background: var(--color-primary); color: var(--vk-on-primary); }
+
+        /* Barres de défilement (modales génériques et VkModal) : bois et or */
+        .vtt-scroll { scrollbar-color: color-mix(in srgb, var(--color-primary) 45%, transparent) transparent; }
+        .vtt-scroll:hover { scrollbar-color: var(--color-primary) transparent; }
 
         /* ── Historique / notifications ─────────────────────────────────────── */
         .vk-entry { border: 1px solid var(--vk-border-soft); background: var(--color-surface); }
@@ -514,6 +722,7 @@
         <a class="vk-pill" href="#jet">Jet</a>
         <a class="vk-pill" href="#historique">Historique</a>
         <a class="vk-pill" href="#mj">MJ</a>
+        <a class="vk-pill" href="#modales">Modales</a>
     </div>
     <button id="themeToggle" class="vk-btn vk-btn-primary vk-btn-sm"><svg class="vk-icon"><use href="#i-moon"/></svg><span>Mode nuit (fer)</span></button>
 </nav>
@@ -1120,6 +1329,102 @@
             </div>
         </div>
         <p class="kit-code mt-2">.vk-tile(.is-selected) · .vk-avatar · .vk-presence(.is-online) · modales = .vk-panel + .vk-modal-header (fermeture à l'écart des coins)</p>
+    </section>
+
+    <!-- ═══ 10. Modales génériques (spec_ui_modales.md) ═══════════════════════ -->
+    <section id="modales" class="kit-section">
+        <h2 class="vk-title text-2xl mb-1">10. Modales génériques</h2>
+        <p class="kit-note mb-6">Modales communes à tous les slugs (gestion des tables, avatar, alerte…) : composant Modal et classes vtt-*,
+            habillées ici par le theme.css de Vikings (cadre à coins légers, boutons et champs partagés avec les classes vk-).
+            Les tailles (sm 24rem · md 32rem · lg 48rem · xl 64rem · full) restent celles du générique.</p>
+        <div class="grid xl:grid-cols-2 gap-10 items-start">
+            <div class="vtt-modal-panel vtt-modal-lg mx-auto" style="max-height: 30rem">
+                <span class="vtt-modal-deco"></span>
+                <header class="vtt-modal-header">
+                    <div class="vtt-modal-heading">
+                        <h2 class="vtt-modal-title">Gestion des tables</h2>
+                    </div>
+                    <button type="button" class="vtt-modal-expand" title="Agrandir"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg></button>
+                    <button type="button" class="vtt-modal-close" title="Fermer"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
+                </header>
+                <div class="vtt-modal-body vtt-scroll">
+                    <div class="mb-4 space-y-3">
+                        <input type="text" class="vtt-input" placeholder="Rechercher une table...">
+                        <button class="vtt-btn vtt-btn-primary w-full">Créer une nouvelle table</button>
+                    </div>
+                    <div class="space-y-2">
+                        <div class="vtt-list-item is-selected">
+                            <div class="flex flex-wrap justify-between items-start gap-2 w-full">
+                                <div class="flex-1 min-w-0">
+                                    <div class="flex items-center gap-2 mb-1"><div class="text-lg font-bold">Campagne principale</div><span class="px-2 py-0.5 text-xs font-bold uppercase rounded border border-primary text-primary">Active</span></div>
+                                    <div class="text-sm text-muted">5 personnages</div>
+                                </div>
+                                <div class="flex flex-wrap gap-2"><button class="vtt-btn vtt-btn-sm">Personnages</button><button class="vtt-btn vtt-btn-sm">Modifier</button><button class="vtt-btn vtt-btn-danger vtt-btn-sm">Supprimer</button></div>
+                            </div>
+                        </div>
+                        <div class="vtt-list-item">
+                            <div class="flex flex-wrap justify-between items-start gap-2 w-full">
+                                <div class="flex-1 min-w-0">
+                                    <div class="flex items-center gap-2 mb-1"><div class="text-lg font-bold">Les fils de Ragnar</div></div>
+                                    <div class="text-sm text-muted">4 personnages</div>
+                                </div>
+                                <div class="flex flex-wrap gap-2"><button class="vtt-btn vtt-btn-primary vtt-btn-sm">Activer</button><button class="vtt-btn vtt-btn-sm">Personnages</button><button class="vtt-btn vtt-btn-sm">Modifier</button><button class="vtt-btn vtt-btn-danger vtt-btn-sm">Supprimer</button></div>
+                            </div>
+                        </div>
+                        <div class="vtt-list-item">
+                            <div class="flex flex-wrap justify-between items-start gap-2 w-full">
+                                <div class="flex-1 min-w-0">
+                                    <div class="flex items-center gap-2 mb-1"><div class="text-lg font-bold">One-shot Jól</div></div>
+                                    <div class="text-sm text-muted">3 personnages</div>
+                                </div>
+                                <div class="flex flex-wrap gap-2"><button class="vtt-btn vtt-btn-primary vtt-btn-sm">Activer</button><button class="vtt-btn vtt-btn-sm">Personnages</button><button class="vtt-btn vtt-btn-sm">Modifier</button><button class="vtt-btn vtt-btn-danger vtt-btn-sm">Supprimer</button></div>
+                            </div>
+                        </div>
+                        <div class="vtt-list-item">
+                            <div class="flex flex-wrap justify-between items-start gap-2 w-full">
+                                <div class="flex-1 min-w-0">
+                                    <div class="flex items-center gap-2 mb-1"><div class="text-lg font-bold">Table de test</div></div>
+                                    <div class="text-sm text-muted">1 personnages</div>
+                                </div>
+                                <div class="flex flex-wrap gap-2"><button class="vtt-btn vtt-btn-primary vtt-btn-sm">Activer</button><button class="vtt-btn vtt-btn-sm">Personnages</button><button class="vtt-btn vtt-btn-sm">Modifier</button><button class="vtt-btn vtt-btn-danger vtt-btn-sm">Supprimer</button></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="space-y-10">
+                <div class="vtt-modal-panel vtt-modal-md mx-auto">
+                    <span class="vtt-modal-deco"></span>
+                <header class="vtt-modal-header">
+                    <div class="vtt-modal-heading">
+                        <h2 class="vtt-modal-title">Créer une nouvelle table</h2>
+                    </div>
+                    <button type="button" class="vtt-modal-close" title="Fermer"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
+                </header>
+                    <div class="vtt-modal-body vtt-scroll">
+                        <div class="space-y-4">
+                            <div><label class="vtt-field-label">Nom de la table *</label><input type="text" class="vtt-input" placeholder="Campagne principale"></div>
+                            <div><label class="vtt-field-label">Notes (optionnel)</label><textarea class="vtt-input" rows="3" placeholder="Session hebdomadaire du mercredi..."></textarea></div>
+                            <div class="flex flex-wrap gap-1.5"><button class="vtt-pill is-selected">Pastille choisie</button><button class="vtt-pill">Autre choix</button></div>
+                            <div class="vtt-segmented"><button class="vtt-segment is-active">Preset</button><button class="vtt-segment">Personnalisé</button></div>
+                        </div>
+                    </div>
+                    <footer class="vtt-modal-footer"><button class="vtt-btn flex-1">Annuler</button><button class="vtt-btn vtt-btn-primary flex-1">Créer</button></footer>
+                </div>
+                <div class="vtt-modal-panel vtt-modal-sm mx-auto">
+                    <span class="vtt-modal-deco"></span>
+                <header class="vtt-modal-header">
+                    <div class="vtt-modal-heading">
+                        <h2 class="vtt-modal-title">Attention</h2>
+                    </div>
+                    <button type="button" class="vtt-modal-close" title="Fermer"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
+                </header>
+                    <div class="vtt-modal-body vtt-scroll"><p>Le nom de la table est requis</p></div>
+                    <footer class="vtt-modal-footer"><button class="vtt-btn vtt-btn-primary">OK</button></footer>
+                </div>
+            </div>
+        </div>
+        <p class="kit-code mt-4">.vtt-modal-backdrop · .vtt-modal-panel.vtt-modal-{sm|md|lg|xl|full} · .vtt-modal-deco (coins du bas) · .vtt-modal-header / -title / -subtitle / -expand / -close · .vtt-modal-body · .vtt-modal-footer · .vtt-btn(-primary|-danger|-sm|-icon) · .vtt-input · .vtt-field-label · .vtt-pill · .vtt-segmented / .vtt-segment · .vtt-list-item(.is-selected) · .vtt-callout · .vtt-scroll</p>
     </section>
 
 </main>

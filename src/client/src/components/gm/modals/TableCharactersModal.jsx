@@ -9,6 +9,7 @@
 import React, { useState, useEffect } from 'react';
 import { useFetch } from '../../../hooks/useFetch.js';
 import AlertModal from '../../modals/AlertModal.jsx';
+import Modal from '../../ui/Modal.jsx';
 
 // ─── Composant principal ──────────────────────────────────────────────────────
 
@@ -96,31 +97,14 @@ const TableCharactersModal = ({ isOpen, onClose, session, onSessionUpdated }) =>
 
     return (
         <>
-            <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[60] p-4">
-                <div className="bg-surface rounded-lg shadow-2xl max-w-3xl w-full max-h-[90vh] flex flex-col border-4 border-default">
-
-                    {/* En-tête */}
-                    <div className="p-4 border-b-2 border-default flex-shrink-0">
-                        <div className="flex justify-between items-center">
-                            <div>
-                                <h2 className="text-2xl font-bold text-default">
-                                    👥 Personnages de la table
-                                </h2>
-                                <p className="text-sm text-muted">
-                                    {session.name}
-                                </p>
-                            </div>
-                            <button
-                                onClick={onClose}
-                                className="text-2xl text-muted hover:text-danger"
-                            >
-                                ✕
-                            </button>
-                        </div>
-                    </div>
-
-                    {/* Contenu */}
-                    <div className="p-4 overflow-y-auto flex-1">
+            <Modal
+                title="Personnages de la table"
+                subtitle={session.name}
+                size="lg"
+                expandable
+                onClose={onClose}
+                footer={<button type="button" onClick={onClose} className="vtt-btn w-full">Fermer</button>}
+            >
                         {loading ? (
                             <div className="text-center py-8 text-muted">
                                 Chargement...
@@ -128,10 +112,11 @@ const TableCharactersModal = ({ isOpen, onClose, session, onSessionUpdated }) =>
                         ) : (
                             <>
                                 <button
+                                    type="button"
                                     onClick={() => setShowAddModal(true)}
-                                    className="w-full mb-4 px-4 py-3 bg-primary text-accent rounded-lg font-semibold hover:opacity-90"
+                                    className="vtt-btn vtt-btn-primary w-full mb-4"
                                 >
-                                    ➕ Ajouter un personnage
+                                    Ajouter un personnage
                                 </button>
 
                                 {!sessionData?.characters?.length ? (
@@ -151,19 +136,7 @@ const TableCharactersModal = ({ isOpen, onClose, session, onSessionUpdated }) =>
                                 )}
                             </>
                         )}
-                    </div>
-
-                    {/* Pied */}
-                    <div className="p-4 border-t-2 border-default bg-surface-alt flex-shrink-0">
-                        <button
-                            onClick={onClose}
-                            className="w-full px-4 py-2 bg-primary text-accent rounded-lg font-semibold hover:opacity-90"
-                        >
-                            Fermer
-                        </button>
-                    </div>
-                </div>
-            </div>
+            </Modal>
 
             {showAddModal && (
                 <AddCharacterModal
@@ -189,22 +162,27 @@ function getDisplayName(char) {
     return char.nom || char.name || char.playerName || '—';
 }
 
+// Avatar ou initiale du personnage
+const CharacterAvatar = ({ char }) => (
+    char.avatar ? (
+        <img
+            src={char.avatar}
+            alt={getDisplayName(char)}
+            className="w-12 h-12 rounded-full border-2 border-default shrink-0 object-cover"
+        />
+    ) : (
+        <div className="w-12 h-12 rounded-full border-2 border-dashed border-default bg-surface flex items-center justify-center shrink-0 text-lg font-bold text-muted">
+            {getDisplayName(char).charAt(0).toUpperCase()}
+        </div>
+    )
+);
+
 const CharacterRow = ({ char, onRemove }) => (
-    <div className="flex items-center gap-3 p-3 bg-surface-alt rounded-lg border-2 border-default">
-        {char.avatar ? (
-            <img
-                src={char.avatar}
-                alt={getDisplayName(char)}
-                className="w-12 h-12 rounded-full border-2 border-default flex-shrink-0 object-cover"
-            />
-        ) : (
-            <div className="w-12 h-12 rounded-full border-2 border-dashed border-default bg-surface flex items-center justify-center flex-shrink-0">
-                <span className="text-xl">👤</span>
-            </div>
-        )}
+    <div className="vtt-list-item">
+        <CharacterAvatar char={char} />
 
         <div className="flex-1 min-w-0">
-            <div className="font-bold text-default truncate">
+            <div className="font-bold truncate">
                 {getDisplayName(char)}
             </div>
             <div className="text-sm text-muted">
@@ -213,10 +191,11 @@ const CharacterRow = ({ char, onRemove }) => (
         </div>
 
         <button
+            type="button"
             onClick={onRemove}
-            className="px-3 py-2 bg-red-600 text-white rounded hover:bg-red-700 flex-shrink-0 text-sm"
+            className="vtt-btn vtt-btn-danger vtt-btn-sm shrink-0"
         >
-            🗑️ Retirer
+            Retirer
         </button>
     </div>
 );
@@ -234,30 +213,19 @@ const AddCharacterModal = ({ onClose, availableCharacters, onAddCharacter }) => 
     });
 
     return (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[70] p-4">
-            <div className="bg-surface rounded-lg shadow-2xl max-w-2xl w-full max-h-[80vh] flex flex-col border-4 border-default">
-
-                {/* En-tête */}
-                <div className="p-4 border-b-2 border-default flex-shrink-0 flex justify-between items-center">
-                    <h3 className="text-xl font-bold text-default">
-                        Ajouter un personnage
-                    </h3>
-                    <button
-                        onClick={onClose}
-                        className="text-2xl text-muted hover:text-danger"
-                    >
-                        ✕
-                    </button>
-                </div>
-
-                {/* Contenu */}
-                <div className="p-4 overflow-y-auto flex-1">
+        <>
+            <Modal
+                title="Ajouter un personnage"
+                size="lg"
+                onClose={onClose}
+                footer={<button type="button" onClick={onClose} className="vtt-btn w-full">Annuler</button>}
+            >
                     <input
                         type="text"
-                        placeholder="🔍 Rechercher un personnage..."
+                        placeholder="Rechercher un personnage..."
                         value={filter}
                         onChange={e => setFilter(e.target.value)}
-                        className="w-full mb-4 px-4 py-2 border-2 border-default rounded-lg bg-surface text-default"
+                        className="vtt-input mb-4"
                         autoFocus
                     />
 
@@ -269,24 +237,15 @@ const AddCharacterModal = ({ onClose, availableCharacters, onAddCharacter }) => 
                         <div className="space-y-2">
                             {filtered.map(char => (
                                 <button
+                                    type="button"
                                     key={char.id}
                                     onClick={() => onAddCharacter(char.id)}
-                                    className="w-full flex items-center gap-3 p-3 bg-surface-alt rounded-lg border-2 border-default hover:border-primary hover:shadow-lg transition-all text-left"
+                                    className="vtt-list-item"
                                 >
-                                    {char.avatar ? (
-                                        <img
-                                            src={char.avatar}
-                                            alt={getDisplayName(char)}
-                                            className="w-12 h-12 rounded-full border-2 border-default flex-shrink-0 object-cover"
-                                        />
-                                    ) : (
-                                        <div className="w-12 h-12 rounded-full border-2 border-dashed border-default bg-surface flex items-center justify-center flex-shrink-0">
-                                            <span className="text-xl">👤</span>
-                                        </div>
-                                    )}
+                                    <CharacterAvatar char={char} />
 
                                     <div className="flex-1 min-w-0">
-                                        <div className="font-bold text-default truncate">
+                                        <div className="font-bold truncate">
                                             {getDisplayName(char)}
                                         </div>
                                         <div className="text-sm text-muted">
@@ -294,23 +253,12 @@ const AddCharacterModal = ({ onClose, availableCharacters, onAddCharacter }) => 
                                         </div>
                                     </div>
 
-                                    <div className="text-accent text-xl flex-shrink-0">➕</div>
+                                    <span className="text-sm font-semibold text-primary shrink-0">Ajouter</span>
                                 </button>
                             ))}
                         </div>
                     )}
-                </div>
-
-                {/* Pied */}
-                <div className="p-4 border-t-2 border-default bg-surface-alt flex-shrink-0">
-                    <button
-                        onClick={onClose}
-                        className="w-full px-4 py-2 bg-gray-500 text-white rounded-lg font-semibold hover:bg-gray-600"
-                    >
-                        Annuler
-                    </button>
-                </div>
-            </div>
+            </Modal>
 
             {alertMessage && (
                 <AlertModal
@@ -318,7 +266,7 @@ const AddCharacterModal = ({ onClose, availableCharacters, onAddCharacter }) => 
                     onClose={() => setAlertMessage(null)}
                 />
             )}
-        </div>
+        </>
     );
 };
 

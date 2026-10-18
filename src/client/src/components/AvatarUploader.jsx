@@ -2,6 +2,7 @@
 import React, { useState, useCallback } from 'react';
 import Cropper from 'react-easy-crop';
 import AlertModal from "./modals/AlertModal.jsx";
+import Modal from './ui/Modal.jsx';
 
 const AvatarUploader = ({ currentAvatar, onAvatarChange, onClose }) => {
     const [imageSrc,          setImageSrc]          = useState(null);
@@ -77,19 +78,32 @@ const AvatarUploader = ({ currentAvatar, onAvatarChange, onClose }) => {
         onClose();
     };
 
+    const footer = imageSrc ? (
+        <>
+            <button type="button" onClick={() => setImageSrc(null)} className="vtt-btn flex-1">
+                Choisir une autre image
+            </button>
+            <button type="button" onClick={createCroppedImage} disabled={loading} className="vtt-btn vtt-btn-primary flex-1">
+                {loading ? 'Traitement...' : 'Valider'}
+            </button>
+        </>
+    ) : (
+        <>
+            <button type="button" onClick={onClose} className="vtt-btn flex-1">
+                Annuler
+            </button>
+            {currentAvatar && (
+                <button type="button" onClick={handleRemoveAvatar} className="vtt-btn vtt-btn-danger flex-1">
+                    Supprimer l'avatar
+                </button>
+            )}
+        </>
+    );
+
+    // Pas de fermeture au clic sur le fond : le recadrage en cours serait perdu (U-1)
     return (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[60] p-4">
-            <div className="bg-surface rounded-lg shadow-2xl max-w-2xl w-full max-h-[90vh] flex flex-col border-4 border-default">
-
-                {/* Header */}
-                <div className="p-4 border-b-2 border-default flex-shrink-0">
-                    <h2 className="text-2xl font-bold text-default">
-                        🖼️ Avatar du personnage
-                    </h2>
-                </div>
-
-                {/* Content */}
-                <div className="p-4 overflow-y-auto flex-1">
+        <>
+            <Modal title="Avatar du personnage" size="lg" closeOnBackdrop={false} onClose={onClose} footer={footer}>
                     {!imageSrc ? (
                         <div className="space-y-4">
                             {currentAvatar && (
@@ -98,7 +112,7 @@ const AvatarUploader = ({ currentAvatar, onAvatarChange, onClose }) => {
                                     <img
                                         src={currentAvatar}
                                         alt="Avatar actuel"
-                                        className="w-32 h-32 rounded-full mx-auto border-4 border-default"
+                                        className="w-32 h-32 rounded-full mx-auto border-2 border-default object-cover"
                                     />
                                 </div>
                             )}
@@ -122,7 +136,9 @@ const AvatarUploader = ({ currentAvatar, onAvatarChange, onClose }) => {
                                     id="avatar-upload"
                                 />
                                 <label htmlFor="avatar-upload" className="cursor-pointer block">
-                                    <div className="text-6xl mb-2">{isDragging ? '📥' : '📸'}</div>
+                                    <svg viewBox="0 0 24 24" width="48" height="48" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="mx-auto mb-2 text-muted" aria-hidden="true">
+                                        <path d="M12 16V4M7 9l5-5 5 5M4 16v3a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-3" />
+                                    </svg>
                                     <div className="text-default font-semibold mb-2">
                                         {isDragging ? 'Déposez l\'image ici' : 'Choisir une image'}
                                     </div>
@@ -152,8 +168,8 @@ const AvatarUploader = ({ currentAvatar, onAvatarChange, onClose }) => {
                             </div>
 
                             <div className="px-4">
-                                <label className="block text-sm font-semibold text-default mb-2">
-                                    🔍 Zoom
+                                <label className="vtt-field-label">
+                                    Zoom
                                 </label>
                                 <input
                                     type="range"
@@ -165,50 +181,11 @@ const AvatarUploader = ({ currentAvatar, onAvatarChange, onClose }) => {
                             </div>
 
                             <div className="text-center text-sm text-muted">
-                                💡 Faites glisser pour repositionner, utilisez le zoom pour ajuster
+                                Faites glisser pour repositionner, utilisez le zoom pour ajuster
                             </div>
                         </div>
                     )}
-                </div>
-
-                {/* Footer */}
-                <div className="p-4 border-t-2 border-default bg-surface-alt flex gap-3 flex-shrink-0">
-                    {imageSrc ? (
-                        <>
-                            <button
-                                onClick={() => setImageSrc(null)}
-                                className="flex-1 px-4 py-2 bg-gray-500 text-white rounded-lg font-semibold hover:bg-gray-600"
-                            >
-                                ← Choisir une autre image
-                            </button>
-                            <button
-                                onClick={createCroppedImage}
-                                disabled={loading}
-                                className="flex-1 px-4 py-2 bg-primary text-accent rounded-lg font-semibold hover:opacity-90 disabled:opacity-50"
-                            >
-                                {loading ? 'Traitement...' : '✓ Valider'}
-                            </button>
-                        </>
-                    ) : (
-                        <>
-                            <button
-                                onClick={onClose}
-                                className="flex-1 px-4 py-2 bg-gray-500 text-white rounded-lg font-semibold hover:bg-gray-600"
-                            >
-                                Annuler
-                            </button>
-                            {currentAvatar && (
-                                <button
-                                    onClick={handleRemoveAvatar}
-                                    className="flex-1 px-4 py-2 bg-red-600 text-white rounded-lg font-semibold hover:bg-red-700"
-                                >
-                                    🗑️ Supprimer l'avatar
-                                </button>
-                            )}
-                        </>
-                    )}
-                </div>
-            </div>
+            </Modal>
 
             {alertMessage && (
                 <AlertModal
@@ -216,7 +193,7 @@ const AvatarUploader = ({ currentAvatar, onAvatarChange, onClose }) => {
                     onClose={() => setAlertMessage(null)}
                 />
             )}
-        </div>
+        </>
     );
 };
 

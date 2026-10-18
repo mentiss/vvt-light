@@ -3,6 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { useFetch } from '../../../hooks/useFetch.js';
 import TableCharactersModal from './TableCharactersModal.jsx';
 import AlertModal from "../../modals/AlertModal.jsx";
+import Modal from '../../ui/Modal.jsx';
 
 const TableManagementModal = ({ isOpen, onClose, onSelectTable, activeSessionId }) => {
     const [sessions, setSessions] = useState([]);
@@ -93,41 +94,23 @@ const TableManagementModal = ({ isOpen, onClose, onSelectTable, activeSessionId 
 
     return (
         <>
-            <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-                <div className="bg-surface rounded-lg shadow-2xl max-w-4xl w-full max-h-[90vh] flex flex-col border-4 border-default">
-
-                    {/* Header */}
-                    <div className="p-4 border-b-2 border-default flex-shrink-0">
-                        <div className="flex justify-between items-center">
-                            <h2 className="text-2xl font-bold text-default">
-                                📋 Gestion des tables
-                            </h2>
-                            <button
-                                onClick={onClose}
-                                className="text-2xl text-muted hover:text-danger"
-                            >
-                                ✕
-                            </button>
-                        </div>
-                    </div>
-
-                    {/* Content */}
-                    <div className="p-4 overflow-y-auto flex-1">
+            <Modal title="Gestion des tables" size="lg" expandable onClose={onClose}>
 
                         {/* Recherche + Créer */}
                         <div className="mb-4 space-y-3">
                             <input
                                 type="text"
-                                placeholder="🔍 Rechercher une table..."
+                                placeholder="Rechercher une table..."
                                 value={filter}
                                 onChange={(e) => setFilter(e.target.value)}
-                                className="w-full px-4 py-2 border-2 border-default rounded-lg bg-surface text-default"
+                                className="vtt-input"
                             />
                             <button
+                                type="button"
                                 onClick={() => setShowCreateModal(true)}
-                                className="w-full px-4 py-3 bg-primary text-accent rounded-lg font-semibold hover:opacity-90"
+                                className="vtt-btn vtt-btn-primary w-full"
                             >
-                                ✨ Créer une nouvelle table
+                                Créer une nouvelle table
                             </button>
                         </div>
 
@@ -147,21 +130,17 @@ const TableManagementModal = ({ isOpen, onClose, onSelectTable, activeSessionId 
                                     return (
                                         <div
                                             key={session.id}
-                                            className={`p-4 rounded-lg border-2 ${
-                                                isActive
-                                                    ? 'bg-primary/20 border-primary'
-                                                    : 'bg-surface-alt border-default'
-                                            }`}
+                                            className={`vtt-list-item ${isActive ? 'is-selected' : ''}`}
                                         >
-                                            <div className="flex justify-between items-start">
-                                                <div className="flex-1">
+                                            <div className="flex flex-wrap justify-between items-start gap-2 w-full">
+                                                <div className="flex-1 min-w-0">
                                                     <div className="flex items-center gap-2 mb-1">
-                                                        <div className="text-lg font-bold text-default">
+                                                        <div className="text-lg font-bold">
                                                             {session.name}
                                                         </div>
                                                         {isActive && (
-                                                            <span className="px-2 py-0.5 bg-primary text-accent text-xs font-bold rounded">
-                                                                ACTIVE
+                                                            <span className="px-2 py-0.5 text-xs font-bold uppercase rounded border border-primary text-primary">
+                                                                Active
                                                             </span>
                                                         )}
                                                     </div>
@@ -175,32 +154,36 @@ const TableManagementModal = ({ isOpen, onClose, onSelectTable, activeSessionId 
                                                     )}
                                                 </div>
 
-                                                <div className="flex gap-2">
+                                                <div className="flex flex-wrap gap-2">
                                                     {!isActive && (
                                                         <button
+                                                            type="button"
                                                             onClick={() => { onSelectTable(session); onClose(); }}
-                                                            className="px-3 py-1 bg-green-600 text-white rounded text-sm hover:bg-green-700"
+                                                            className="vtt-btn vtt-btn-primary vtt-btn-sm"
                                                         >
-                                                            ✓ Activer
+                                                            Activer
                                                         </button>
                                                     )}
                                                     <button
+                                                        type="button"
                                                         onClick={() => setShowCharactersModal(session)}
-                                                        className="px-3 py-1 bg-blue-600 text-white rounded text-sm hover:bg-blue-700"
+                                                        className="vtt-btn vtt-btn-sm"
                                                     >
-                                                        👥 Persos
+                                                        Personnages
                                                     </button>
                                                     <button
+                                                        type="button"
                                                         onClick={() => { setEditingSession(session); setShowEditModal(true); }}
-                                                        className="px-3 py-1 bg-orange-600 text-white rounded text-sm hover:bg-orange-700"
+                                                        className="vtt-btn vtt-btn-sm"
                                                     >
-                                                        ✏️
+                                                        Modifier
                                                     </button>
                                                     <button
+                                                        type="button"
                                                         onClick={() => handleDeleteSession(session.id)}
-                                                        className="px-3 py-1 bg-red-600 text-white rounded text-sm hover:bg-red-700"
+                                                        className="vtt-btn vtt-btn-danger vtt-btn-sm"
                                                     >
-                                                        🗑️
+                                                        Supprimer
                                                     </button>
                                                 </div>
                                             </div>
@@ -209,9 +192,7 @@ const TableManagementModal = ({ isOpen, onClose, onSelectTable, activeSessionId 
                                 })}
                             </div>
                         )}
-                    </div>
-                </div>
-            </div>
+            </Modal>
 
             {showCreateModal && (
                 <SessionFormModal
@@ -271,55 +252,52 @@ const SessionFormModal = ({ isOpen, onClose, onSubmit, initialData = null, title
         onSubmit(formData);
     };
 
+    // Pas de fermeture au clic sur le fond : la saisie serait perdue (U-1).
+    // Le bouton d'envoi, dans le pied, est rattaché au formulaire par son id.
     return (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[60]">
-            <div className="bg-surface rounded-lg shadow-2xl max-w-md w-full mx-4 border-4 border-default p-6">
-                <h3 className="text-2xl font-bold text-default mb-4">
-                    {title}
-                </h3>
-                <form onSubmit={handleSubmit} className="space-y-4">
+        <Modal
+            title={title}
+            size="md"
+            closeOnBackdrop={false}
+            onClose={onClose}
+            footer={
+                <>
+                    <button type="button" onClick={onClose} className="vtt-btn flex-1">
+                        Annuler
+                    </button>
+                    <button type="submit" form="session-form" className="vtt-btn vtt-btn-primary flex-1">
+                        {initialData ? 'Modifier' : 'Créer'}
+                    </button>
+                </>
+            }
+        >
+                <form id="session-form" onSubmit={handleSubmit} className="space-y-4">
                     <div>
-                        <label className="block text-sm font-semibold text-default mb-1">
+                        <label className="vtt-field-label">
                             Nom de la table *
                         </label>
                         <input
                             type="text"
                             value={formData.name}
                             onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                            className="w-full px-3 py-2 border-2 border-default rounded bg-surface text-default"
+                            className="vtt-input"
                             placeholder="Campagne principale"
                         />
                     </div>
                     <div>
-                        <label className="block text-sm font-semibold text-default mb-1">
+                        <label className="vtt-field-label">
                             Notes (optionnel)
                         </label>
                         <textarea
                             value={formData.notes}
                             onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
-                            className="w-full px-3 py-2 border-2 border-default rounded bg-surface text-default"
+                            className="vtt-input"
                             rows="3"
                             placeholder="Session hebdomadaire du mercredi..."
                         />
                     </div>
-                    <div className="flex gap-3">
-                        <button
-                            type="button"
-                            onClick={onClose}
-                            className="flex-1 px-4 py-2 bg-gray-500 text-white rounded-lg font-semibold hover:bg-gray-600"
-                        >
-                            Annuler
-                        </button>
-                        <button
-                            type="submit"
-                            className="flex-1 px-4 py-2 bg-primary text-accent rounded-lg font-semibold hover:opacity-90"
-                        >
-                            {initialData ? 'Modifier' : 'Créer'}
-                        </button>
-                    </div>
                 </form>
-            </div>
-        </div>
+        </Modal>
     );
 };
 
