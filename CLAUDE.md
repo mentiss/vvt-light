@@ -42,13 +42,13 @@ node src/client/scripts/copy-dice-assets.js  # obligatoire après chaque npm ins
 # Développement
 npm run dev        # backend (nodemon :3001) + frontend (vite :5173)
 
-# Production
+# Production (voir documentations/spec_release.md, ou la commande /release)
+npm run release    # vérifs + version + build + archive + envoi + migrations + redémarrage
 npm run build      # build front dans src/client/dist/
 npm start          # backend qui sert le front buildé (déployé via pm2)
 
 # Base de données
-npm run init-db                              # initialise toutes les bases
-npm run migrate 27022025_add_quoi.sql        # joue une migration précise
+npm run migrate 27022025_add_quoi.sql        # joue une migration précise (les bases se créent seules à la première ouverture)
 
 # Lint (front uniquement)
 cd src/client && npm run lint
@@ -102,6 +102,7 @@ Tous sont des systèmes en usage réel, aucun n'est un brouillon :
 - Une base SQLite par slug, connexion paresseuse fermée après 5 min d'inactivité (`src/server/db/index.js`), créée depuis le schéma à la première ouverture.
 - Tables partagées, définies dans `database-template/base.sql` : `characters`, `game_sessions`, `session_characters`, `dice_history`, `character_journal`, `refresh_tokens`. Ne les redéfinis jamais dans un schéma de slug.
 - **Toute modification de structure** se fait à deux endroits : le schéma (`base.sql` ou `:slug-schema.sql`) pour les nouvelles bases, **et** une migration `database-template/migrations/DDMMYYYY_description.sql` pour les bases existantes.
+- Chaque nouvelle migration déclare ses slugs dans son en-tête de commentaires : `-- systems: vikings` (ou `vikings,achtung`, ou `all`). Sans cette ligne, `npm run release` refuse de partir. `migrations/released.txt` liste les migrations déjà en prod : ne l'édite pas à la main, la release le tient à jour.
 - Dans les migrations et seeds, référence les lignes par sous-SELECT, jamais par ID en dur.
 
 ### Temps réel

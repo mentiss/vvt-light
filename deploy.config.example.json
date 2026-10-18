@@ -1,0 +1,9 @@
+{
+  "host": "jdr.grossak.fr",
+  "port": 22,
+  "user": "ubuntu",
+  "identityFile": "C:/Users/<utilisateur>/.ssh/<cle>",
+  "appDir": "/home/ubuntu/app-pure-viking",
+  "pm2Name": "viking-prod",
+  "healthUrl": "https://localhost:9999/"
+}

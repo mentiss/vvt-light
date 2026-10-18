@@ -153,10 +153,7 @@ npm install
 node scripts/copy-dice-assets.js   # copie les assets de dice-box-threejs dans public/dice-assets/
 cd ../..
 
-# 3. Initialiser la base de données
-npm run init-db
-
-# 4. Lancer en développement
+# 3. Lancer en développement (les bases SQLite se créent à la première ouverture)
 npm run dev
 ```
 
@@ -167,6 +164,10 @@ Le backend démarre sur **http://localhost:3001**.
 Le frontend Vite démarre sur **http://localhost:5173** (proxy vers le backend).
 
 ### Build & déploiement production
+
+**Mise en production courante** : `npm run release` depuis le poste de dev (vérifications, version, build, archive, envoi par SSH, migrations, redémarrage pm2). Configuration dans `deploy.config.json` (modèle : `deploy.config.example.json`). Détails, rollback et renouvellement des certificats : `documentations/spec_release.md`.
+
+Installation initiale du serveur :
 
 ```bash
 # 1. Build du frontend (depuis la racine)
@@ -310,5 +311,4 @@ Le moteur (`diceEngine.js`) est générique. Chaque système déclare ses propre
 |--------------------------------|------------------------------------------|
 | `npm run dev`                  | Lance backend + frontend en développement |
 | `npm start`                    | Lance le serveur en production           |
-| `npm run init-db`              | Initialise la base de données            |
 | `npm run migrate <fichier.sql>`| Joue une migration sur la BDD            |

@@ -1,4 +1,4 @@
-// src/server/migrate.js
+// scripts/migrate.js
 // ─────────────────────────────────────────────────────────────────────────────
 // Script de migration générique — multi-système.
 // S'appuie sur le loader existant pour découvrir les BDD disponibles.
@@ -21,10 +21,10 @@
 const fs   = require('fs');
 const path = require('path');
 
-const { loadAllSystems, getAllSystems } = require('./systems/Loader');
-const { getDbForSystem }               = require('./db/index');
+const { loadAllSystems, getAllSystems } = require('../src/server/systems/Loader');
+const { getDbForSystem }               = require('../src/server/db/index');
 
-const MIGRATIONS_DIR = path.join(__dirname, '../../database-template/migrations');
+const MIGRATIONS_DIR = path.join(__dirname, '../database-template/migrations');
 
 // ─── Parse --system=xxx depuis argv ──────────────────────────────────────────
 

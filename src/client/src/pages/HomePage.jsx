@@ -21,6 +21,8 @@ const GITHUB_URL = 'https://github.com/mentiss/vvt-light';
 
 // « hash|AAAA-MM-JJ » injecté au build (vite.config.js)
 const [VERSION_HASH, VERSION_DATE] = (import.meta.env.VITE_APP_VERSION ?? 'dev').split('|');
+// Version de release, fournie par scripts/release.js au build (absente en dev)
+const RELEASE_VERSION = import.meta.env.VITE_RELEASE_VERSION;
 
 const Icon = ({ d, children }) => (
     <svg className="vtt-icon-line" viewBox="0 0 24 24" aria-hidden="true">{d ? <path d={d} /> : children}</svg>
@@ -117,7 +119,7 @@ const HomePage = ({ darkMode, onToggleDarkMode }) => {
                     <Icon d="M9 19c-4.3 1.4-4.3-2.5-6-3m12 5v-3.5c0-1 .1-1.4-.5-2 2.8-.3 5.5-1.4 5.5-6a4.6 4.6 0 0 0-1.3-3.2 4.2 4.2 0 0 0-.1-3.2s-1.1-.3-3.5 1.3a12 12 0 0 0-6.2 0C6.5 2.8 5.4 3.1 5.4 3.1a4.2 4.2 0 0 0-.1 3.2A4.6 4.6 0 0 0 4 9.5c0 4.6 2.7 5.7 5.5 6-.6.6-.6 1.2-.5 2V21" />
                     Code source sur GitHub
                 </a>
-                <span>Version {VERSION_HASH}{VERSION_DATE && ` · ${new Date(VERSION_DATE).toLocaleDateString('fr-FR')}`}</span>
+                <span>Version {RELEASE_VERSION && `v${RELEASE_VERSION} · `}{VERSION_HASH}{VERSION_DATE && ` · ${new Date(VERSION_DATE).toLocaleDateString('fr-FR')}`}</span>
                 <span>{listed.length} système{listed.length > 1 ? 's' : ''}</span>
             </footer>
 

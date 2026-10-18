@@ -13,17 +13,4 @@ function getDb() {
     return getDbForSystem(system);
 }
 
-// initDatabase et closeDb délèguent au loader/pool
-function initDatabase() {
-    // Le chargement des systèmes est fait dans server.js via loadAllSystems()
-    // Cette fonction est conservée pour compatibilité avec init-db.js
-    const { loadAllSystems } = require('../systems/Loader');
-    loadAllSystems();
-}
-
-function closeDb() {
-    const { closeAllDatabases } = require('../db/index');
-    closeAllDatabases();
-}
-
-module.exports = { getDb, initDatabase, closeDb, ensureUniqueCode };
+module.exports = { getDb, ensureUniqueCode };

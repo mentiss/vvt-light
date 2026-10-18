@@ -9,8 +9,8 @@
     "server-dev": "nodemon src/server/server.js",
     "client-dev": "cd src/client && npm run dev",
     "build": "cd src/client && npm run build",
-    "init-db": "node src/server/init-db.js",
-    "migrate": "node src/server/migrate.js"
+    "migrate": "node scripts/migrate.js",
+    "release": "node scripts/release.js"
   },
   "keywords": [
     "vikings",
