@@ -1,0 +1,665 @@
+<!DOCTYPE html>
+<html lang="fr" data-slug="default">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Barre de session des joueurs</title>
+    <!--
+        Planche de la barre de session (documentations/spec_session_bar.md).
+          • bloc « vtt-session-bar-defaults » = futur bloc d'index.css (@layer components) ;
+          • blocs « skin-vikings » / « skin-cyberpunk » = futures surcharges des theme.css
+            (ici préfixées par html[data-slug=…] pour cohabiter sur une seule page) ;
+          • les VRAIS theme.css des pilotes sont chargés à la volée ;
+          • avatars de démonstration générés en SVG (les vrais avatars sont des images).
+        La barre est ici collante (sticky) ; dans l'appli, le comportement au défilement
+        reste celui des props actuelles.
+    -->
+    <link rel="stylesheet" href="../../src/client/public/fonts/fonts.css">
+    <link id="slug-theme" rel="stylesheet" href="" disabled>
+    <style>
+        @layer components;
+
+        /* ── Palette « Défaut » (plateforme anthracite / laiton) ─────────── */
+        html[data-slug="default"] {
+            --color-primary: #c9a227; --color-on-primary: #1b1d21;
+            --color-bg: #1b1d21; --color-surface: #24262b; --color-surface-alt: #2d3036;
+            --color-text: #e6e2d8; --color-text-muted: #9a968c;
+            --color-border: rgba(201, 162, 39, 0.25); --color-success: #5fae6e;
+        }
+        html[data-slug="default"][data-theme="light"] {
+            --color-primary: #9a7a14; --color-on-primary: #fff;
+            --color-bg: #f3f0e8; --color-surface: #ffffff; --color-surface-alt: #f0ece2;
+            --color-text: #2a2a2a; --color-text-muted: #6d6a63;
+            --color-border: rgba(0, 0, 0, 0.12); --color-success: #2f8a45;
+        }
+
+        /* ── Habillage de la planche (hors composant) ─────────────────────── */
+        * { box-sizing: border-box; }
+        /* L'attribut hidden doit l'emporter sur le display des classes (bouton de réouverture).
+           Dans l'appli, ce bouton n'est simplement pas rendu hors du mode masqué. */
+        [hidden] { display: none !important; }
+        body { margin: 0; background: var(--color-bg); color: var(--color-text); font-family: system-ui, sans-serif; }
+        .board-toolbar {
+            position: sticky; top: 0; z-index: 300; height: 44px;
+            display: flex; align-items: center; gap: 1.25rem; padding: 0 1rem;
+            background: #0b0b0d; color: #ddd; font: 13px/1 system-ui, sans-serif;
+            border-bottom: 1px solid #333; overflow-x: auto; white-space: nowrap;
+        }
+        .board-toolbar strong { color: #fff; margin-right: .25rem; }
+        .board-group { display: flex; align-items: center; gap: .35rem; }
+        .board-group span { color: #888; margin-right: .2rem; }
+        .board-toolbar button {
+            font: inherit; color: #ccc; background: #1d1d22; border: 1px solid #3a3a40;
+            border-radius: 6px; padding: .3rem .6rem; cursor: pointer;
+        }
+        .board-toolbar button.is-on { background: #c9a227; border-color: #c9a227; color: #111; }
+        .board-hint { color: #888; }
+
+        .demo-header {
+            position: sticky; top: 44px; z-index: 30; height: 52px;
+            display: flex; align-items: center; justify-content: space-between; padding: 0 1rem;
+            background: var(--color-surface); border-bottom: 1px solid var(--color-border);
+        }
+        .demo-header .demo-title { font-weight: 700; color: var(--color-primary); letter-spacing: .04em; }
+        .demo-header .demo-tabs { display: flex; gap: .4rem; }
+        .demo-header .demo-tabs span {
+            padding: .3rem .7rem; border-radius: 6px; font-size: .85rem; color: var(--color-text-muted);
+            border: 1px solid var(--color-border);
+        }
+        .demo-header .demo-tabs span:first-child { color: var(--color-on-primary, #fff); background: var(--color-primary); border-color: var(--color-primary); }
+        .demo-main { display: flex; align-items: flex-start; }
+        .demo-sheet { flex: 1; min-width: 0; padding: 1.25rem; display: grid; gap: 1rem; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); }
+        .demo-card {
+            background: var(--color-surface); border: 1px solid var(--color-border); border-radius: 10px;
+            padding: 1rem; min-height: 160px;
+        }
+        .demo-card h3 { margin: 0 0 .6rem; font-size: .95rem; color: var(--color-primary); }
+        .demo-card p { margin: 0 0 .5rem; font-size: .88rem; line-height: 1.5; color: var(--color-text-muted); }
+        .demo-bar-line { height: 8px; border-radius: 4px; background: var(--color-surface-alt); margin: .5rem 0; }
+        .demo-bar-line i { display: block; height: 100%; border-radius: 4px; background: var(--color-primary); }
+        html[data-slug="vikings"] .demo-card { border-radius: 0; }
+        html[data-slug="cyberpunk"] .demo-card { border-radius: 0; }
+    </style>
+
+    <style id="vtt-session-bar-defaults">
+        /* ═══ Futur bloc d'index.css ═══════════════════════════════════════════ */
+        /* ── Barre de session des joueurs (documentations/spec_session_bar.md) ── */
+        /* Style par défaut, en couche « components » : le theme.css d'un slug le
+           surcharge toujours. Uniquement les variables --color-*. */
+        @layer components {
+          :root {
+            --vtt-session-bar-width: 14rem;
+            --vtt-session-bar-rail-width: 3.5rem;
+            --vtt-session-bar-avatar: 3rem;
+            --vtt-session-bar-rail-avatar: 2.25rem;
+            --vtt-session-bar-ring: 2px;
+            --vtt-session-bar-ring-me: 3px;
+            --vtt-session-bar-card-image: 220px;
+            --vtt-z-session-card: 120;   /* au-dessus de la fiche, sous les modales (150) */
+          }
+
+          /* Conteneur et modes */
+          .vtt-session-bar {
+            position: relative; flex-shrink: 0; display: flex; flex-direction: column;
+            width: var(--vtt-session-bar-width);
+            background: var(--color-surface); color: var(--color-text);
+            border-right: 1px solid var(--color-border);
+            box-shadow: 4px 0 24px rgba(0, 0, 0, 0.18);
+            transition: width 0.25s ease;
+          }
+          .vtt-session-bar[data-mode="rail"]   { width: var(--vtt-session-bar-rail-width); }
+          .vtt-session-bar[data-mode="hidden"] { display: none; }
+
+          /* En-tête */
+          .vtt-session-bar-header {
+            display: flex; align-items: flex-start; gap: 0.5rem; flex-shrink: 0;
+            padding: 0.6rem 0.6rem 0.6rem 0.85rem; border-bottom: 1px solid var(--color-border);
+          }
+          /* Sur-titre « Table » + nom de la session */
+          .vtt-session-bar-heading { flex: 1; min-width: 0; padding-top: 0.15rem; }
+          .vtt-session-bar-eyebrow {
+            font-size: 0.65rem; font-weight: 600; letter-spacing: 0.12em; text-transform: uppercase;
+            color: var(--color-text-muted);
+          }
+          /* Nom sur plusieurs lignes, équilibrées ; au-delà de 3 lignes, coupé
+             avec points de suspension (nom complet au survol, attribut title) */
+          .vtt-session-bar-title {
+            display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 3; overflow: hidden;
+            text-wrap: balance; overflow-wrap: anywhere; line-height: 1.3;
+            font-size: 0.85rem; font-weight: 700; color: var(--color-primary);
+          }
+          .vtt-session-bar-actions { display: flex; gap: 0.25rem; flex-shrink: 0; }
+          .vtt-session-bar-toggle {
+            width: 1.75rem; height: 1.75rem; display: inline-flex; align-items: center; justify-content: center;
+            border-radius: 0.4rem; border: 1px solid transparent; background: transparent;
+            color: var(--color-text-muted); cursor: pointer; transition: color 0.15s, background-color 0.15s, border-color 0.15s;
+          }
+          .vtt-session-bar-toggle:hover { color: var(--color-text); background: var(--color-surface-alt); border-color: var(--color-border); }
+          .vtt-session-bar-toggle:focus-visible { outline: 2px solid var(--color-primary); outline-offset: 1px; }
+          .vtt-session-bar-toggle svg { width: 1rem; height: 1rem; }
+          .vtt-session-bar[data-mode="rail"] .vtt-session-bar-header { flex-direction: column; padding: 0.5rem 0; }
+          .vtt-session-bar[data-mode="rail"] .vtt-session-bar-heading { display: none; }
+          .vtt-session-bar[data-mode="rail"] .vtt-session-bar-actions { flex-direction: column; }
+
+          /* Liste */
+          .vtt-session-bar-list {
+            flex: 1; min-height: 0; overflow-y: auto; overflow-x: hidden;
+            display: flex; flex-direction: column; gap: 0.25rem; padding: 0.5rem;
+            scrollbar-width: thin; scrollbar-color: var(--color-border) transparent;
+          }
+          .vtt-session-bar[data-mode="rail"] .vtt-session-bar-list { padding: 0.5rem 0; align-items: center; gap: 0.6rem; }
+
+          .vtt-session-bar-player {
+            display: flex; align-items: center; gap: 0.65rem; min-width: 0;
+            padding: 0.35rem 0.4rem; border-radius: 0.6rem;
+          }
+          .vtt-session-bar-player[data-me] { background: color-mix(in srgb, var(--color-primary) 10%, transparent); }
+          .vtt-session-bar[data-mode="rail"] .vtt-session-bar-player { padding: 0; background: none; }
+          .vtt-session-bar-text { min-width: 0; display: flex; flex-direction: column; gap: 0.1rem; }
+          .vtt-session-bar[data-mode="rail"] .vtt-session-bar-text { display: none; }
+          .vtt-session-bar-name {
+            font-size: 0.85rem; font-weight: 700; line-height: 1.2;
+            overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+          }
+          .vtt-session-bar-player-name {
+            font-size: 0.72rem; color: var(--color-text-muted);
+            overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+          }
+          .vtt-session-bar-player[data-online] .vtt-session-bar-player-name { color: var(--color-primary); }
+          .vtt-session-bar-player:not([data-online]):not([data-me]) .vtt-session-bar-name { color: var(--color-text-muted); }
+
+          /* Avatar : conteneur (point de présence) > cadre (anneau) > image ou initiales */
+          .vtt-session-bar-avatar { position: relative; flex-shrink: 0; cursor: default; }
+          .vtt-session-bar-frame {
+            display: block; width: var(--vtt-session-bar-avatar); height: var(--vtt-session-bar-avatar);
+            padding: var(--vtt-session-bar-ring); border-radius: 50%;
+            background: var(--color-border);
+            transition: filter 0.2s, opacity 0.2s;
+          }
+          .vtt-session-bar[data-mode="rail"] .vtt-session-bar-frame { width: var(--vtt-session-bar-rail-avatar); height: var(--vtt-session-bar-rail-avatar); }
+          .vtt-session-bar-player[data-online] .vtt-session-bar-frame { background: var(--color-primary); }
+          .vtt-session-bar-player[data-me] .vtt-session-bar-frame { background: var(--color-primary); padding: var(--vtt-session-bar-ring-me); }
+          .vtt-session-bar-player:not([data-online]):not([data-me]) .vtt-session-bar-frame { filter: grayscale(1); opacity: 0.55; }
+          .vtt-session-bar-image, .vtt-session-bar-initials {
+            display: flex; align-items: center; justify-content: center;
+            width: 100%; height: 100%; border-radius: inherit; object-fit: cover;
+            background: var(--color-surface-alt);
+          }
+          .vtt-session-bar-initials { font-size: 0.85rem; font-weight: 700; color: var(--color-text); letter-spacing: 0.02em; }
+          .vtt-session-bar[data-mode="rail"] .vtt-session-bar-initials { font-size: 0.7rem; }
+          .vtt-session-bar-presence {
+            position: absolute; right: 0; bottom: 0; width: 0.7rem; height: 0.7rem; border-radius: 50%;
+            background: var(--color-success); border: 2px solid var(--color-surface);
+          }
+
+          /* Bouton flottant (mode masqué) */
+          .vtt-session-bar-reopen {
+            position: fixed; left: 0.5rem; z-index: 40;
+            width: 2rem; height: 2rem; display: inline-flex; align-items: center; justify-content: center;
+            border-radius: 50%; border: 1px solid var(--color-border); cursor: pointer;
+            background: var(--color-primary); color: var(--color-on-primary, #fff);
+            box-shadow: 0 4px 14px rgba(0, 0, 0, 0.35);
+          }
+          .vtt-session-bar-reopen svg { width: 1rem; height: 1rem; }
+
+          /* Carte flottante (zoom) */
+          /* Largeur = celle de l'image + marges du slug (min-content) : contenu toujours centré,
+             quels que soient le padding et la bordure choisis par le thème */
+          .vtt-session-bar-card {
+            position: fixed; z-index: var(--vtt-z-session-card); pointer-events: none;
+            width: min-content; overflow-wrap: anywhere;
+            padding: 0.75rem; border-radius: 0.9rem;
+            background: var(--color-surface); color: var(--color-text);
+            border: 1px solid var(--color-border);
+            box-shadow: 0 18px 40px rgba(0, 0, 0, 0.45);
+            opacity: 0; transform: translateX(-6px); transition: opacity 0.15s, transform 0.15s;
+          }
+          .vtt-session-bar-card.is-open { opacity: 1; transform: none; }
+          .vtt-session-bar-card-deco { position: absolute; inset: 0; pointer-events: none; }
+          .vtt-session-bar-card-image {
+            display: flex; align-items: center; justify-content: center; overflow: hidden; flex-shrink: 0;
+            width: var(--vtt-session-bar-card-image); height: var(--vtt-session-bar-card-image);
+            border-radius: 0.6rem; background: var(--color-surface-alt);
+            font-size: 4rem; font-weight: 700; color: var(--color-text-muted);
+          }
+          .vtt-session-bar-card-image img { width: 100%; height: 100%; object-fit: cover; display: block; }
+          .vtt-session-bar-card-name { margin-top: 0.65rem; font-size: 1rem; font-weight: 700; line-height: 1.2; }
+          .vtt-session-bar-card-player-name { font-size: 0.8rem; color: var(--color-text-muted); margin-top: 0.1rem; }
+          .vtt-session-bar-card-status {
+            display: inline-flex; align-items: center; gap: 0.35rem; margin-top: 0.5rem;
+            font-size: 0.72rem; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase;
+            color: var(--color-text-muted);
+          }
+          .vtt-session-bar-card-status::before {
+            content: ''; width: 0.5rem; height: 0.5rem; border-radius: 50%; background: var(--color-text-muted);
+          }
+          .vtt-session-bar-card[data-online] .vtt-session-bar-card-status,
+          .vtt-session-bar-card[data-me] .vtt-session-bar-card-status { color: var(--color-success); }
+          .vtt-session-bar-card[data-online] .vtt-session-bar-card-status::before,
+          .vtt-session-bar-card[data-me] .vtt-session-bar-card-status::before { background: var(--color-success); }
+        }
+    </style>
+
+    <style id="skin-vikings">
+        /* ═══ Futur ajout de systems/vikings/theme.css (sans le préfixe html[data-slug]) ═══ */
+        /* ── Barre de session (spec_session_bar.md), d'après la refonte (spec_vikings_lot4_graphisme.md) :
+           panneau vk-panel à coins légers (vk-light-sm), filet en dégradé (vk-sep-line), sur-titre
+           vk-eyebrow + intitulé en Grenze Gotisch (vk-section-title), avatars vk-avatar ── */
+        html[data-slug="vikings"] .vtt-session-bar {
+            background: var(--color-surface); border-right: 2px solid var(--color-border);
+            box-shadow: var(--vk-panel-shadow); font-family: var(--vk-font-body);
+        }
+        /* Coins légers côté fiche (le bord gauche touche l'écran) */
+        html[data-slug="vikings"] .vtt-session-bar::before, html[data-slug="vikings"] .vtt-session-bar::after {
+            content: ''; position: absolute; right: -4px; width: 40px; height: 40px; z-index: 5; pointer-events: none;
+            background-size: contain; background-repeat: no-repeat; filter: var(--vk-ornament-filter);
+        }
+        html[data-slug="vikings"] .vtt-session-bar::before { top: -4px;    background-image: var(--vk-corner-l-tr); }
+        html[data-slug="vikings"] .vtt-session-bar::after  { bottom: -4px; background-image: var(--vk-corner-l-br); }
+        html[data-slug="vikings"] .vtt-session-bar[data-mode="rail"]::before,
+        html[data-slug="vikings"] .vtt-session-bar[data-mode="rail"]::after { width: 28px; height: 28px; }
+
+        html[data-slug="vikings"] .vtt-session-bar-header { position: relative; border-bottom: none; padding: 1rem 1.6rem .7rem 1rem; }
+        html[data-slug="vikings"] .vtt-session-bar[data-mode="rail"] .vtt-session-bar-header { padding: 1.4rem 0 .7rem; }
+        html[data-slug="vikings"] .vtt-session-bar-header::after {   /* vk-sep-line */
+            content: ''; position: absolute; left: 10%; right: 10%; bottom: 0; height: 1px;
+            background: linear-gradient(90deg, transparent 0%, var(--color-border) 20%, var(--color-border) 80%, transparent 100%);
+        }
+        html[data-slug="vikings"] .vtt-session-bar-eyebrow {   /* vk-eyebrow */
+            font-family: var(--vk-font-body); font-size: .72rem; font-weight: 400; letter-spacing: .12em;
+        }
+        html[data-slug="vikings"] .vtt-session-bar-title {   /* vk-section-title */
+            font-family: var(--vk-font-label); font-weight: 400; font-size: 1.2rem; line-height: 1.15; letter-spacing: .03em;
+        }
+        html[data-slug="vikings"] .vtt-session-bar-toggle {   /* vk-btn-icon vk-btn-sm */
+            width: 1.6rem; height: 1.6rem; border-radius: 2px; border-color: var(--color-border); background: transparent;
+        }
+        html[data-slug="vikings"] .vtt-session-bar-toggle:hover { color: var(--color-text); border-color: var(--color-primary); background: color-mix(in srgb, var(--color-primary) 10%, transparent); }
+
+        html[data-slug="vikings"] .vtt-session-bar-list { padding: .6rem 1.1rem 1.6rem .6rem; }
+        html[data-slug="vikings"] .vtt-session-bar[data-mode="rail"] .vtt-session-bar-list { padding: .7rem 0 1.6rem; }
+        html[data-slug="vikings"] .vtt-session-bar-player { border-radius: 0; }
+        html[data-slug="vikings"] .vtt-session-bar-player[data-me] { background: color-mix(in srgb, var(--color-primary) 7%, transparent); }
+        html[data-slug="vikings"] .vtt-session-bar-name { font-size: .95rem; }
+        html[data-slug="vikings"] .vtt-session-bar-player-name { font-size: .78rem; font-style: italic; }
+
+        /* Avatars : rendu de vk-avatar (rond, liseré or de 2 px, initiales Eagle Lake) */
+        html[data-slug="vikings"] .vtt-session-bar-frame { padding: 2px; }
+        html[data-slug="vikings"] .vtt-session-bar-player[data-me] .vtt-session-bar-frame { padding: 2px; box-shadow: 0 0 0 2px color-mix(in srgb, var(--color-primary) 30%, transparent); }
+        html[data-slug="vikings"] .vtt-session-bar-player:not([data-online]):not([data-me]) .vtt-session-bar-frame { background: var(--color-border); }
+        html[data-slug="vikings"] .vtt-session-bar-initials { font-family: var(--vk-font-title); font-weight: 400; color: var(--color-primary); }
+        html[data-slug="vikings"] .vtt-session-bar-reopen {
+            border-radius: 2px; border: 2px solid var(--color-border); background: var(--color-surface);
+            color: var(--color-primary); box-shadow: var(--vk-panel-shadow);
+        }
+
+        /* Carte : vk-panel vk-light-sm (coins du haut sur la carte, du bas sur la déco) */
+        html[data-slug="vikings"] .vtt-session-bar-card {
+            border-radius: 0; border: 2px solid var(--color-border); font-family: var(--vk-font-body);
+            box-shadow: var(--vk-panel-shadow), 0 18px 40px rgba(0,0,0,.45);
+            padding: 12px 12px 16px;
+        }
+        html[data-slug="vikings"] .vtt-session-bar-card::before, html[data-slug="vikings"] .vtt-session-bar-card::after,
+        html[data-slug="vikings"] .vtt-session-bar-card-deco::before, html[data-slug="vikings"] .vtt-session-bar-card-deco::after {
+            content: ''; position: absolute; width: 40px; height: 40px; z-index: 5; pointer-events: none;
+            background-size: contain; background-repeat: no-repeat; filter: var(--vk-ornament-filter);
+        }
+        html[data-slug="vikings"] .vtt-session-bar-card::before      { top: -4px;    left: -4px;  background-image: var(--vk-corner-l-tl); }
+        html[data-slug="vikings"] .vtt-session-bar-card::after       { top: -4px;    right: -4px; background-image: var(--vk-corner-l-tr); }
+        html[data-slug="vikings"] .vtt-session-bar-card-deco::before { bottom: -4px; left: -4px;  background-image: var(--vk-corner-l-bl); }
+        html[data-slug="vikings"] .vtt-session-bar-card-deco::after  { bottom: -4px; right: -4px; background-image: var(--vk-corner-l-br); }
+        html[data-slug="vikings"] .vtt-session-bar-card-image {
+            border-radius: 2px; border: 1px solid var(--color-border);
+            font-family: var(--vk-font-title); font-weight: 400; color: var(--color-primary);
+        }
+        html[data-slug="vikings"] .vtt-session-bar-card-name { font-family: var(--vk-font-title); font-weight: 400; font-size: 1.2rem; color: var(--color-primary); text-shadow: 0 2px 8px rgba(0,0,0,.45); text-align: center; }
+        html[data-slug="vikings"] .vtt-session-bar-card-player-name { font-style: italic; text-align: center; }
+        html[data-slug="vikings"] .vtt-session-bar-card-status {   /* vk-eyebrow, centré sous un filet */
+            display: flex; justify-content: center; font-family: var(--vk-font-body); font-weight: 400; letter-spacing: .12em;
+            padding-top: .5rem; margin-top: .55rem;
+            background: linear-gradient(90deg, transparent 0%, var(--color-border) 20%, var(--color-border) 80%, transparent 100%) top / 100% 1px no-repeat;
+        }
+    </style>
+
+    <style id="skin-cyberpunk">
+        /* ═══ Futur ajout de systems/cyberpunk/theme.css (sans le préfixe html[data-slug]) ═══ */
+        /* ── Barre de session (spec_session_bar.md), d'après la fiche réelle : coins arrondis
+           (rounded-lg / rounded-xl), intitulés cp-font-ui en capitales espacées, filet cp-divider,
+           élément actif encadré en cyan avec cp-glow-cyan, avatar comme IdentityCard ── */
+        html[data-slug="cyberpunk"] .vtt-session-bar { background: var(--color-surface); border-right: 1px solid var(--color-border); }
+        html[data-slug="cyberpunk"] .vtt-session-bar-header { position: relative; border-bottom: none; }
+        html[data-slug="cyberpunk"] .vtt-session-bar-header::after {   /* cp-divider */
+            content: ''; position: absolute; left: 0; right: 0; bottom: 0; height: 1px; opacity: .4;
+            background: linear-gradient(to right, transparent, var(--color-primary) 30%, var(--color-primary) 70%, transparent);
+        }
+        html[data-slug="cyberpunk"] .vtt-session-bar-eyebrow { font-family: 'Rajdhani', sans-serif; font-size: .62rem; letter-spacing: .2em; }
+        html[data-slug="cyberpunk"] .vtt-session-bar-title {   /* cp-font-ui uppercase tracking-widest */
+            font-family: 'Rajdhani', 'Orbitron', 'Share Tech Mono', ui-monospace, monospace;
+            font-size: .95rem; letter-spacing: .1em; text-transform: uppercase;
+        }
+        html[data-slug="cyberpunk"] .vtt-session-bar-toggle {   /* boutons du bandeau de la fiche */
+            border-radius: .5rem; background: var(--color-surface-alt); border-color: var(--color-border);
+        }
+        html[data-slug="cyberpunk"] .vtt-session-bar-toggle:hover { border-color: var(--color-accent); background: var(--color-surface); color: var(--color-text); box-shadow: var(--cp-glow-cyan); }
+
+        html[data-slug="cyberpunk"] .vtt-session-bar-player { border-radius: 0; }
+        html[data-slug="cyberpunk"] .vtt-session-bar-player[data-me] {   /* dégradé néon, sans encadré (retour MJ) */
+            background: linear-gradient(90deg, color-mix(in srgb, var(--color-primary) 16%, transparent), transparent);
+            box-shadow: inset 2px 0 0 var(--color-primary);
+        }
+        html[data-slug="cyberpunk"] .vtt-session-bar[data-mode="rail"] .vtt-session-bar-player[data-me] { box-shadow: none; background: none; }
+        html[data-slug="cyberpunk"] .vtt-session-bar-name { font-family: 'Rajdhani', sans-serif; font-size: .95rem; letter-spacing: .05em; text-transform: uppercase; }
+        html[data-slug="cyberpunk"] .vtt-session-bar-player-name { font-family: 'Rajdhani', sans-serif; font-size: .72rem; letter-spacing: .08em; text-transform: uppercase; }
+
+        /* Avatars : rounded-lg, liseré 1 px (cyan en ligne, néon pour « moi »), comme IdentityCard */
+        html[data-slug="cyberpunk"] .vtt-session-bar-frame { padding: 1px; border-radius: .5rem; }
+        html[data-slug="cyberpunk"] .vtt-session-bar-player[data-me] .vtt-session-bar-frame { padding: 1px; }
+        html[data-slug="cyberpunk"] .vtt-session-bar-player[data-online] .vtt-session-bar-avatar,
+        html[data-slug="cyberpunk"] .vtt-session-bar-player[data-me] .vtt-session-bar-avatar {   /* halo néon (retour MJ) */
+            filter: drop-shadow(0 0 5px color-mix(in srgb, var(--color-primary) 70%, transparent));
+        }
+        html[data-slug="cyberpunk"] .vtt-session-bar-image, html[data-slug="cyberpunk"] .vtt-session-bar-initials { border-radius: calc(.5rem - 1px); }
+        html[data-slug="cyberpunk"] .vtt-session-bar-initials { font-family: 'Rajdhani', sans-serif; color: var(--color-primary); }
+        html[data-slug="cyberpunk"] .vtt-session-bar-presence { border-color: var(--color-surface); right: -2px; bottom: -2px; }
+        /* Bouton de réouverture et carte à coins coupés (retour MJ : la découpe casse la bordure aux angles) */
+        html[data-slug="cyberpunk"] .vtt-session-bar-reopen {
+            border-radius: 0; border: none; box-shadow: none;
+            clip-path: polygon(22% 0, 100% 0, 100% 78%, 78% 100%, 0 100%, 0 22%);
+        }
+        html[data-slug="cyberpunk"] .vtt-session-bar-card {
+            border-radius: 0; border: 1px solid var(--color-primary);
+            clip-path: polygon(14px 0, 100% 0, 100% calc(100% - 14px), calc(100% - 14px) 100%, 0 100%, 0 14px);
+            background: repeating-linear-gradient(0deg, rgba(255,255,255,.025) 0 1px, transparent 1px 3px), var(--color-surface);
+            box-shadow: inset 0 0 8px rgba(0, 229, 255, .05), 0 0 24px color-mix(in srgb, var(--color-primary) 25%, transparent);
+        }
+        /* Portrait découpé, avec lignes de balayage par-dessus (retour MJ) */
+        html[data-slug="cyberpunk"] .vtt-session-bar-card-image {
+            position: relative; border-radius: 0;
+            clip-path: polygon(14px 0, 100% 0, 100% calc(100% - 14px), calc(100% - 14px) 100%, 0 100%, 0 14px);
+            font-family: 'Rajdhani', sans-serif; color: var(--color-primary);
+        }
+        html[data-slug="cyberpunk"] .vtt-session-bar-card-image::after {
+            content: ''; position: absolute; inset: 0; pointer-events: none;
+            background: repeating-linear-gradient(0deg, rgba(0,0,0,.18) 0 1px, transparent 1px 3px);
+        }
+        html[data-slug="cyberpunk"] .vtt-session-bar-card-name {
+            padding-top: .65rem; margin-top: .65rem;
+            background: linear-gradient(to right, transparent, color-mix(in srgb, var(--color-primary) 40%, transparent) 30%, color-mix(in srgb, var(--color-primary) 40%, transparent) 70%, transparent) top / 100% 1px no-repeat;
+            font-family: 'Rajdhani', sans-serif; font-size: 1.15rem; letter-spacing: .1em; text-transform: uppercase;
+            color: var(--color-primary); text-shadow: 0 0 8px rgba(0, 229, 255, .7);   /* cp-text-glow-cyan */
+        }
+        html[data-slug="cyberpunk"] .vtt-session-bar-card-player-name { font-family: 'Rajdhani', sans-serif; letter-spacing: .08em; text-transform: uppercase; }
+        html[data-slug="cyberpunk"] .vtt-session-bar-card-status {   /* cp-stat-badge */
+            padding: 1px 6px; border-radius: 3px; font-size: .65rem; letter-spacing: .08em;
+            border: 1px solid color-mix(in srgb, var(--color-text-muted) 40%, transparent);
+        }
+        html[data-slug="cyberpunk"] .vtt-session-bar-card[data-online] .vtt-session-bar-card-status,
+        html[data-slug="cyberpunk"] .vtt-session-bar-card[data-me] .vtt-session-bar-card-status {
+            background: var(--cp-tag-positive-bg); border-color: color-mix(in srgb, var(--color-success) 40%, transparent);
+        }
+    </style>
+</head>
+<body>
+
+<div class="board-toolbar">
+    <strong>Barre de session</strong>
+    <div class="board-group" data-control="slug"><span>Slug</span>
+        <button data-value="default" class="is-on">Défaut</button>
+        <button data-value="vikings">Vikings</button>
+        <button data-value="cyberpunk">Cyberpunk</button>
+    </div>
+    <div class="board-group" data-control="theme"><span>Thème</span>
+        <button data-value="dark" class="is-on">Nuit</button>
+        <button data-value="light">Jour</button>
+    </div>
+    <div class="board-group" data-control="title"><span>Titre</span>
+        <button data-value="short" class="is-on">Court</button>
+        <button data-value="long">Long</button>
+        <button data-value="xl">À rallonge</button>
+    </div>
+    <div class="board-group" data-control="mode"><span>Mode</span>
+        <button data-value="panel" class="is-on">Panneau</button>
+        <button data-value="rail">Rail</button>
+        <button data-value="hidden">Masqué</button>
+    </div>
+    <span class="board-hint">Survolez un avatar pour la carte · Échap la ferme</span>
+</div>
+
+<div id="app-root">
+    <header class="demo-header">
+        <span class="demo-title">Fiche de personnage</span>
+        <div class="demo-tabs"><span>Fiche</span><span>Inventaire</span><span>Journal</span></div>
+    </header>
+
+    <main class="demo-main">
+        <aside class="vtt-session-bar" data-mode="panel" id="bar">
+            <div class="vtt-session-bar-header">
+                <div class="vtt-session-bar-heading">
+                    <div class="vtt-session-bar-eyebrow">Table</div>
+                    <div class="vtt-session-bar-title">La Saga du Nord</div>
+                </div>
+                <div class="vtt-session-bar-actions" id="bar-actions"></div>
+            </div>
+            <div class="vtt-session-bar-list" id="bar-list"></div>
+        </aside>
+
+        <section class="demo-sheet" id="sheet"></section>
+    </main>
+</div>
+
+<button class="vtt-session-bar-reopen" id="reopen" title="Afficher la table" hidden>
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5l7 7-7 7"/></svg>
+</button>
+
+<div class="vtt-session-bar-card" id="card" aria-hidden="true">
+    <div class="vtt-session-bar-card-deco"></div>
+    <div class="vtt-session-bar-card-image" id="card-image"></div>
+    <div class="vtt-session-bar-card-name" id="card-name"></div>
+    <div class="vtt-session-bar-card-player-name" id="card-player"></div>
+    <div class="vtt-session-bar-card-status" id="card-status"></div>
+</div>
+
+<script>
+    // ── Données de démonstration ──────────────────────────────────────────────
+    // Portraits SVG générés (fond, buste, cheveux) : pour juger la carte, pas le dessin.
+    function portrait(bg1, bg2, skin, hair, cloth) {
+        const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 400">
+            <defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="${bg1}"/><stop offset="1" stop-color="${bg2}"/></linearGradient></defs>
+            <rect width="400" height="400" fill="url(#g)"/>
+            <circle cx="320" cy="70" r="120" fill="#fff" opacity=".06"/>
+            <path d="M60 400 C70 300 130 270 200 270 C270 270 330 300 340 400Z" fill="${cloth}"/>
+            <rect x="178" y="215" width="44" height="60" rx="18" fill="${skin}"/>
+            <ellipse cx="200" cy="170" rx="72" ry="86" fill="${skin}"/>
+            <path d="M126 170 C120 90 170 70 200 72 C245 72 285 100 274 175 C262 130 236 116 200 118 C164 120 140 132 126 170Z" fill="${hair}"/>
+            <ellipse cx="174" cy="175" rx="7" ry="5" fill="#2b1d14"/><ellipse cx="226" cy="175" rx="7" ry="5" fill="#2b1d14"/>
+            <path d="M182 222 Q200 232 218 222" stroke="#7a3d2c" stroke-width="4" fill="none" stroke-linecap="round"/>
+        </svg>`;
+        return 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svg);
+    }
+
+    const PLAYERS = [
+        { id: 1, name: 'Ingrid Solberg',     playerName: 'Alice',   isMe: true,  isOnline: true,  avatar: portrait('#3b4d61', '#1d2833', '#e8c4a0', '#c8902e', '#5b3a29') },
+        { id: 2, name: 'Marcus Vale',        playerName: 'Bastien', isMe: false, isOnline: true,  avatar: portrait('#5a3b2e', '#2a1a14', '#c99a74', '#2b2220', '#2f4a3a') },
+        { id: 3, name: 'Nyx',                playerName: 'Chloé',   isMe: false, isOnline: true,  avatar: null },
+        { id: 4, name: 'Torvald le Muet',    playerName: 'David',   isMe: false, isOnline: true,  avatar: portrait('#2e4a3f', '#14241e', '#f0d2b4', '#8a8f96', '#6b2f2f') },
+        { id: 5, name: 'Élise Marchand',     playerName: 'Emma',    isMe: false, isOnline: false, avatar: portrait('#4a3a5c', '#211a2b', '#a87452', '#1b1414', '#3c4f6b') },
+        { id: 6, name: 'Kenji Ward',         playerName: 'Florian', isMe: false, isOnline: false, avatar: null },
+    ];
+
+    const initials = name => name.split(/[\s-]+/).filter(w => /^\p{Lu}/u.test(w)).slice(0, 2).map(w => w[0]).join('') || name[0].toUpperCase();
+
+    const ICONS = {
+        rail:   '<path d="M11 17l-5-5 5-5M18 17l-5-5 5-5"/>',
+        panel:  '<path d="M13 7l5 5-5 5M6 7l5 5-5 5"/>',
+        hide:   '<path d="M3 3l18 18M10.6 10.6a2 2 0 0 0 2.8 2.8M9.9 5.1A9.8 9.8 0 0 1 12 5c5 0 9 4.5 10 7a12.8 12.8 0 0 1-3.2 4.2M6.6 6.6C4.3 8 2.7 10.2 2 12c1 2.5 5 7 10 7a9.7 9.7 0 0 0 5.4-1.6"/>',
+    };
+    const icon = d => `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${d}</svg>`;
+
+    // ── Rendu de la barre ─────────────────────────────────────────────────────
+    const bar = document.getElementById('bar');
+    let mode = 'panel', lastVisible = 'panel';
+
+    function renderActions() {
+        const actions = mode === 'rail'
+            ? [['panel', 'Déplier la barre'], ['hide', 'Masquer la barre']]
+            : [['rail', 'Réduire en rail'], ['hide', 'Masquer la barre']];
+        document.getElementById('bar-actions').innerHTML = actions.map(([a, t]) =>
+            `<button class="vtt-session-bar-toggle" data-action="${a}" title="${t}" aria-label="${t}">${icon(ICONS[a])}</button>`).join('');
+    }
+
+    function renderList() {
+        document.getElementById('bar-list').innerHTML = PLAYERS.map(p => `
+            <div class="vtt-session-bar-player" ${p.isMe ? 'data-me' : ''} ${p.isOnline ? 'data-online' : ''}>
+                <div class="vtt-session-bar-avatar" data-id="${p.id}">
+                    <span class="vtt-session-bar-frame">
+                        ${p.avatar
+                            ? `<img class="vtt-session-bar-image" src="${p.avatar}" alt="${p.name}">`
+                            : `<span class="vtt-session-bar-initials">${initials(p.name)}</span>`}
+                    </span>
+                    ${p.isOnline ? '<span class="vtt-session-bar-presence"></span>' : ''}
+                </div>
+                <div class="vtt-session-bar-text">
+                    <div class="vtt-session-bar-name">${p.name}</div>
+                    <div class="vtt-session-bar-player-name">${p.playerName}</div>
+                </div>
+            </div>`).join('');
+    }
+
+    function setMode(next) {
+        mode = next;
+        if (next !== 'hidden') lastVisible = next;
+        bar.dataset.mode = next;
+        document.getElementById('reopen').hidden = next !== 'hidden';
+        renderActions();
+        hideCard(true);
+        syncToolbar('mode', next);
+    }
+
+    bar.addEventListener('click', e => {
+        const btn = e.target.closest('[data-action]');
+        if (!btn) return;
+        setMode(btn.dataset.action === 'hide' ? 'hidden' : btn.dataset.action);
+    });
+    document.getElementById('reopen').addEventListener('click', () => setMode(lastVisible));
+
+    // ── Carte flottante ───────────────────────────────────────────────────────
+    const card = document.getElementById('card');
+    let openTimer = null, closeTimer = null, openId = null;
+
+    function showCard(avatarEl) {
+        const p = PLAYERS.find(x => x.id === Number(avatarEl.dataset.id));
+        document.getElementById('card-image').innerHTML = p.avatar ? `<img src="${p.avatar}" alt="">` : initials(p.name);
+        document.getElementById('card-name').textContent = p.name;
+        document.getElementById('card-player').textContent = p.playerName;
+        document.getElementById('card-status').textContent = p.isMe ? 'Vous' : p.isOnline ? 'En ligne' : 'Hors ligne';
+        card.toggleAttribute('data-me', p.isMe);
+        card.toggleAttribute('data-online', p.isOnline);
+
+        // À droite de la barre, centrée sur l'avatar, recalée dans l'espace visible de la barre :
+        // jamais sous les bandeaux collants (dans l'appli : sous headerHeight), ni sous le bas de l'écran
+        const barRect = bar.getBoundingClientRect();
+        const aRect   = avatarEl.getBoundingClientRect();
+        const h       = card.offsetHeight;
+        const minTop  = Math.max(barRect.top, 0) + 8;
+        const maxTop  = Math.min(barRect.bottom, window.innerHeight) - h - 8;
+        const top     = Math.max(minTop, Math.min(aRect.top + aRect.height / 2 - h / 2, maxTop));
+        card.style.left = `${barRect.right + 12}px`;
+        card.style.top  = `${top}px`;
+        card.classList.add('is-open');
+        openId = p.id;
+    }
+
+    function hideCard(now = false) {
+        clearTimeout(openTimer);
+        clearTimeout(closeTimer);
+        const close = () => { card.classList.remove('is-open'); openId = null; };
+        if (now) close(); else closeTimer = setTimeout(close, 80);
+    }
+
+    bar.addEventListener('mouseover', e => {
+        const avatar = e.target.closest('.vtt-session-bar-avatar');
+        if (!avatar) return;
+        clearTimeout(closeTimer);
+        clearTimeout(openTimer);
+        // Carte déjà ouverte : bascule immédiate d'un avatar à l'autre
+        if (openId !== null) showCard(avatar);
+        else openTimer = setTimeout(() => showCard(avatar), 150);
+    });
+    bar.addEventListener('mouseout', e => {
+        const avatar = e.target.closest('.vtt-session-bar-avatar');
+        if (avatar && !avatar.contains(e.relatedTarget)) hideCard();
+    });
+    document.addEventListener('keydown', e => { if (e.key === 'Escape') hideCard(true); });
+    window.addEventListener('scroll', () => hideCard(true), { passive: true });
+
+    // ── Planche : slug, thème, mode ──────────────────────────────────────────
+    const THEMES = {
+        vikings:   '../../src/client/src/systems/vikings/theme.css',
+        cyberpunk: '../../src/client/src/systems/cyberpunk/theme.css',
+    };
+    const SESSION_NAMES = {
+        short: { default: 'Table du jeudi', vikings: 'La Saga du Nord', cyberpunk: 'Opération Néon' },
+        long:  { default: 'Campagne du jeudi soir, saison 2', vikings: 'Le Serment des Neuf Royaumes', cyberpunk: 'Opération Néon : les fantômes de Night City' },
+        xl:    {
+            default:   'Campagne du jeudi soir, saison 2 : le retour des anciens personnages et la grande réunion',
+            vikings:   'La Chute de la Maison Ragnarsson et le Serment des Neuf Royaumes, deuxième hiver',
+            cyberpunk: 'Opération Néon : les fantômes de Night City, extraction au cœur de la tour Arasaka',
+        },
+    };
+    let slug = 'default', theme = 'dark', titleLength = 'short';
+
+    function applyTitle() {
+        const el = document.querySelector('.vtt-session-bar-title');
+        el.textContent = el.title = SESSION_NAMES[titleLength][slug];
+    }
+
+    function applyTheme() {
+        const link = document.getElementById('slug-theme');
+        if (THEMES[slug]) { link.href = THEMES[slug]; link.disabled = false; }
+        else { link.disabled = true; link.removeAttribute('href'); }
+        document.documentElement.dataset.slug = slug;
+        // Vikings : nuit = data-theme="dark" (fer) ; Cyberpunk : idem ; Défaut : data-theme="light" pour le jour
+        if (theme === 'dark') document.documentElement.dataset.theme = 'dark';
+        else if (slug === 'default') document.documentElement.dataset.theme = 'light';
+        else delete document.documentElement.dataset.theme;
+        document.getElementById('app-root').className = slug === 'vikings' ? 'vk-root' : '';
+        applyTitle();
+        hideCard(true);
+    }
+
+    function syncToolbar(control, value) {
+        document.querySelectorAll(`[data-control="${control}"] button`).forEach(b => b.classList.toggle('is-on', b.dataset.value === value));
+    }
+
+    document.querySelector('.board-toolbar').addEventListener('click', e => {
+        const btn = e.target.closest('button[data-value]');
+        if (!btn) return;
+        const control = btn.closest('[data-control]').dataset.control;
+        if (control === 'slug')  { slug = btn.dataset.value;  applyTheme(); }
+        if (control === 'theme') { theme = btn.dataset.value; applyTheme(); }
+        if (control === 'mode')  setMode(btn.dataset.value);
+        if (control === 'title') { titleLength = btn.dataset.value; applyTitle(); }
+        syncToolbar(control, btn.dataset.value);
+    });
+
+    // ── Fausse fiche (contexte) ───────────────────────────────────────────────
+    const SECTIONS = ['Caractéristiques', 'Compétences', 'Équipement', 'Blessures', 'Notes de session', 'Liens', 'Inventaire', 'Historique'];
+    document.getElementById('sheet').innerHTML = SECTIONS.map((s, i) => `
+        <div class="demo-card">
+            <h3>${s}</h3>
+            <p>Contenu de la fiche pour juger la place prise par la barre dans chacun de ses modes.</p>
+            <div class="demo-bar-line"><i style="width:${30 + (i * 17) % 60}%"></i></div>
+            <div class="demo-bar-line"><i style="width:${55 + (i * 23) % 40}%"></i></div>
+            <p>La carte flottante passe au-dessus de ce contenu sans le décaler.</p>
+        </div>`).join('');
+
+    // Barre collante sous les deux bandeaux (planche) ; dans l'appli : props headerHeight / bottomHeight
+    Object.assign(bar.style, { position: 'sticky', top: '96px', height: 'calc(100vh - 96px)' });
+    document.getElementById('reopen').style.top = '104px';
+
+    renderList();
+    setMode('panel');
+    applyTheme();
+</script>
+</body>
+</html>

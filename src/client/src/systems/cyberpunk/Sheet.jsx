@@ -300,11 +300,6 @@ const Sheet = ({
                 }}
             />
 
-            {/* ── SessionPlayersBar ─────────────────────────────────────── */}
-            {activeGMSession && (
-                <SessionPlayersBar sessionName={activeSessionName} />
-            )}
-
             {/* ── Header ───────────────────────────────────────────────── */}
             <header
                 className="flex items-center justify-between px-2 py-1 sticky top-0 z-30"

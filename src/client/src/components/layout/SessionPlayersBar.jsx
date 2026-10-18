@@ -1,37 +1,123 @@
 // src/client/src/components/layout/SessionPlayersBar.jsx
-// Panneau latéral des personnages de la session.
-// Composant générique — utilise exclusivement var(--color-*) définis par chaque thème slug.
-// Ne contient aucune classe Tailwind spécifique à un slug (plus de bg-viking-*, etc.)
+// Panneau latéral des personnages de la session (fiche joueur, tous les slugs).
+// Composant générique habillable : classes vtt-session-bar-* (style par défaut dans
+// index.css, surcharges dans le theme.css du slug). Voir documentations/spec_session_bar.md.
+// Trois modes mémorisés par slug : panneau, rail, masqué. Survol d'un avatar : carte flottante.
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useLayoutEffect, useRef } from 'react';
+import { createPortal }      from 'react-dom';
 import { useSocket }         from '../../context/SocketContext.jsx';
 import { toSystemUrl, useFetch } from '../../hooks/useFetch.js';
 import useSystem from "../../hooks/useSystem.js";
+
+const MODES            = ['panel', 'rail', 'hidden'];
+const CARD_OPEN_DELAY  = 150;   // ms de survol avant d'ouvrir la carte
+const CARD_CLOSE_DELAY = 80;    // laisse passer d'un avatar au voisin sans clignotement
+
+const ICONS = {
+    rail:   'M11 17l-5-5 5-5M18 17l-5-5 5-5',
+    panel:  'M13 7l5 5-5 5M6 7l5 5-5 5',
+    hidden: 'M3 3l18 18M10.6 10.6a2 2 0 0 0 2.8 2.8M9.9 5.1A9.8 9.8 0 0 1 12 5c5 0 9 4.5 10 7a12.8 12.8 0 0 1-3.2 4.2M6.6 6.6C4.3 8 2.7 10.2 2 12c1 2.5 5 7 10 7a9.7 9.7 0 0 0 5.4-1.6',
+    reopen: 'M9 5l7 7-7 7',
+};
+
+// Mode mémorisé ; reprend les anciennes valeurs (« 1 » = réduit → masqué, « 0 » = ouvert → panneau)
+function readMode(key) {
+    try {
+        const value = localStorage.getItem(key);
+        if (value === '1') return 'hidden';
+        return MODES.includes(value) ? value : 'panel';
+    } catch {
+        return 'panel';
+    }
+}
+
+// Initiales du personnage (deux au plus), affichées quand il n'a pas d'avatar
+function getInitials(name = '') {
+    const words = name.split(/[\s-]+/).filter(w => /^\p{Lu}/u.test(w));
+    return (words.length ? words.slice(0, 2).map(w => w[0]).join('') : name.charAt(0)).toUpperCase();
+}
+
+const Icon = ({ d }) => (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+        <path d={d} />
+    </svg>
+);
+
+const ToggleButton = ({ mode, label, onClick }) => (
+    <button type="button" className="vtt-session-bar-toggle" onClick={() => onClick(mode)} title={label} aria-label={label}>
+        <Icon d={ICONS[mode]} />
+    </button>
+);
+
+const PlayerAvatar = ({ char }) => (
+    <>
+        <span className="vtt-session-bar-frame">
+            {char.avatar
+                ? <img className="vtt-session-bar-image" src={char.avatar} alt={char.name} />
+                : <span className="vtt-session-bar-initials">{getInitials(char.name)}</span>}
+        </span>
+        {char.isOnline && <span className="vtt-session-bar-presence" />}
+    </>
+);
+
+const PlayerCard = ({ char, ref }) => (
+    <div
+        ref={ref}
+        className="vtt-session-bar-card"
+        data-me={char.isMe || undefined}
+        data-online={char.isOnline || undefined}
+        aria-hidden="true"
+    >
+        <div className="vtt-session-bar-card-deco" />
+        <div className="vtt-session-bar-card-image">
+            {char.avatar ? <img src={char.avatar} alt="" /> : getInitials(char.name)}
+        </div>
+        <div className="vtt-session-bar-card-name">{char.name}</div>
+        {char.playerName && <div className="vtt-session-bar-card-player-name">{char.playerName}</div>}
+        <div className="vtt-session-bar-card-status">
+            {char.isMe ? 'Vous' : char.isOnline ? 'En ligne' : 'Hors ligne'}
+        </div>
+    </div>
+);
 
 const SessionPlayersBar = ({ character, sessionId, sessionName, headerHeight = null, bottomHeight = null, noWidthWhenCollapsed = false }) => {
     const [sessionCharacters, setSessionCharacters] = useState([]);
     const [onlineCharacters,  setOnlineCharacters]  = useState([]);
     const [isListFixed,       setIsListFixed]        = useState(false);
     const [isButtonScrolled,  setIsButtonScrolled]   = useState(false);
+    const [hovered,           setHovered]            = useState(null);   // { char, anchor } de la carte ouverte
 
     const socket        = useSocket();
     const fetchWithAuth = useFetch();
     const {slug} = useSystem();
     const STORAGE_KEY = `${slug}_player_session_bar`;
 
-    const [isCollapsed,       setIsCollapsed]        = useState(localStorage.getItem(STORAGE_KEY) === '1');
+    const [mode,        setMode]        = useState(() => readMode(STORAGE_KEY));
+    const [lastVisible, setLastVisible] = useState(mode === 'rail' ? 'rail' : 'panel');
+    const isHidden = mode === 'hidden';
+
+    const barRef    = useRef(null);
+    const listRef   = useRef(null);
+    const cardRef   = useRef(null);
+    const timersRef = useRef({});
+
+    // Mémoriser le mode
+    useEffect(() => {
+        try { localStorage.setItem(STORAGE_KEY, mode); } catch { /* stockage indisponible */ }
+    }, [mode, STORAGE_KEY]);
 
     // Détecter le scroll pour fixer la liste
     useEffect(() => {
-        localStorage.setItem(STORAGE_KEY, isCollapsed ? '1' : '0');
-        if(bottomHeight !== null && isCollapsed) return;
+        if (bottomHeight !== null && isHidden) return;
         const handleScroll = () => {
-            setIsListFixed(window.scrollY > 100 && !isCollapsed);
-            setIsButtonScrolled(window.scrollY > 100 && isCollapsed);
+            setIsListFixed(window.scrollY > 100 && !isHidden);
+            setIsButtonScrolled(window.scrollY > 100 && isHidden);
         };
+        handleScroll();
         window.addEventListener('scroll', handleScroll);
         return () => window.removeEventListener('scroll', handleScroll);
-    }, [isCollapsed]);
+    }, [isHidden, bottomHeight]);
 
     // Charger les personnages de la session
     useEffect(() => {
@@ -54,191 +140,151 @@ const SessionPlayersBar = ({ character, sessionId, sessionName, headerHeight = n
         return () => socket.off('online-characters-update', handleOnlineUpdate);
     }, [socket]);
 
+    // ── Carte flottante ───────────────────────────────────────────────────────
+    const closeCard = (now = false) => {
+        clearTimeout(timersRef.current.open);
+        clearTimeout(timersRef.current.close);
+        if (now) setHovered(null);
+        else timersRef.current.close = setTimeout(() => setHovered(null), CARD_CLOSE_DELAY);
+    };
+
+    const openCard = (char, anchor) => {
+        clearTimeout(timersRef.current.open);
+        clearTimeout(timersRef.current.close);
+        // Carte déjà ouverte : bascule immédiate d'un avatar à l'autre
+        if (hovered) setHovered({ char, anchor });
+        else timersRef.current.open = setTimeout(() => setHovered({ char, anchor }), CARD_OPEN_DELAY);
+    };
+
+    // Position : à droite de la liste, centrée sur l'avatar, dans l'espace visible
+    // (sous le bandeau du slug, au-dessus du bas de l'écran)
+    useLayoutEffect(() => {
+        const card = cardRef.current;
+        if (!hovered || !card || !listRef.current) return;
+        const barRect  = barRef.current.getBoundingClientRect();
+        const listRect = listRef.current.getBoundingClientRect();
+        const anchor   = hovered.anchor.getBoundingClientRect();
+        const height   = card.offsetHeight;
+        const minTop   = Math.max(barRect.top, headerHeight ?? 0, 0) + 8;
+        const maxTop   = window.innerHeight - (bottomHeight ?? 0) - height - 8;
+        // Position et plan posés ici : la carte est un enfant direct de <body>, qu'un thème
+        // peut viser sans couche (ex. Achtung : body > * { position: relative })
+        card.style.position = 'fixed';
+        card.style.zIndex   = 'var(--vtt-z-session-card)';
+        card.style.left = `${listRect.right + 12}px`;
+        card.style.top  = `${Math.max(minTop, Math.min(anchor.top + anchor.height / 2 - height / 2, maxTop))}px`;
+        card.classList.add('is-open');
+    }, [hovered, headerHeight, bottomHeight]);
+
+    // Fermeture : Échap, défilement
+    useEffect(() => {
+        if (!hovered) return;
+        const close = () => setHovered(null);
+        const onKey = (e) => { if (e.key === 'Escape') close(); };
+        window.addEventListener('keydown', onKey);
+        window.addEventListener('scroll', close, { passive: true });
+        return () => {
+            window.removeEventListener('keydown', onKey);
+            window.removeEventListener('scroll', close);
+        };
+    }, [hovered]);
+
+    // Minuteries annulées au démontage
+    useEffect(() => () => {
+        clearTimeout(timersRef.current.open);
+        clearTimeout(timersRef.current.close);
+    }, []);
+
+    const changeMode = (next) => {
+        if (next !== 'hidden') setLastVisible(next);
+        setMode(next);
+        closeCard(true);
+    };
+
     const charactersWithStatus = sessionCharacters.map(char => ({
         ...char,
         isOnline: onlineCharacters.some(oc => oc.characterId === char.id),
         isMe:     char.id === character?.id,
     }));
 
-    //console.log(sessionCharacters, charactersWithStatus);
-
     if (!sessionId || sessionCharacters.length === 0) return null;
 
-    // ── Styles partagés calculés depuis les variables CSS génériques ──────
-    const panelStyle = {
-        background:   'var(--color-surface)',
-        borderRight:  isCollapsed ? 'none' : '4px solid var(--color-border)',
-        boxShadow:    '4px 0 24px rgba(0,0,0,0.18)',
-        transition:   'width 0.3s',
-        width:        isCollapsed ? 0 : '14rem',
-        overflow:     'hidden',
-        flexShrink:   0,
-    };
-
-    const headerStyle = {
-        background:   'var(--color-surface)',
-        borderBottom: '2px solid var(--color-border)',
-        padding:      '0.75rem',
-    };
-
-    const btnCollapseStyle = {
-        background: 'var(--color-primary)',
-        color:      'var(--color-primary-dark, #fff)',
-        width:      '100%',
-        padding:    '0.25rem 0.5rem',
-        borderRadius: '0.375rem',
-        fontWeight:  600,
-        fontSize:    '0.875rem',
-        display:     'flex',
-        alignItems:  'center',
-        justifyContent: 'center',
-        gap:         '0.25rem',
-        border:      'none',
-        cursor:      'pointer',
-    };
+    const title = sessionName || 'Session active';
 
     // Liste fixée au défilement : sous le bandeau collant du slug s'il fournit
-    // headerHeight (sinon tout en haut, comme avant).
-    const listContainerStyle = isListFixed ? {
-        position: 'fixed',
-        top: headerHeight ?? 0,
-        left: 0,
-        width: '14rem',
+    // headerHeight (sinon tout en haut).
+    const listFixedStyle = isListFixed ? {
+        top:    headerHeight ?? 0,
         height: headerHeight ? `calc(100vh - ${headerHeight}px)` : '100vh',
-        overflowY: 'auto',
-        zIndex: 50,
-        borderRight: '4px solid var(--color-border)',
-        background: 'var(--color-surface)',
-        padding: '0.5rem',
-    } : {
-        maxHeight: '100vh',
-        overflowY: 'auto',
-        background: 'var(--color-surface)',
-        padding: '0.5rem',
-    };
-
-    const getAvatarBorderStyle = (char) => {
-        if (char.isMe)     return '4px solid var(--color-primary)';
-        if (char.isOnline) return '2px solid var(--color-primary)';
-        return '2px solid #9ca3af'; // gray-400 neutre
-    };
+    } : undefined;
 
     return (
         <>
-            {/* Panneau */}
-            <div style={panelStyle}>
-                {/* Header */}
-                <div style={headerStyle}>
-                    <div
-                        className="font-bold text-sm mb-2 truncate"
-                        style={{ color: 'var(--color-text)' }}
-                    >
-                        📋 {sessionName || 'Session active'}
+            <aside ref={barRef} className="vtt-session-bar" data-mode={mode}>
+                <div className="vtt-session-bar-header">
+                    <div className="vtt-session-bar-heading">
+                        <div className="vtt-session-bar-eyebrow">Table</div>
+                        <div className="vtt-session-bar-title" title={title}>{title}</div>
                     </div>
-                    <button
-                        onClick={() => setIsCollapsed(true)}
-                        style={btnCollapseStyle}
-                    >
-                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-                        </svg>
-                        <span>Réduire</span>
-                    </button>
+                    <div className="vtt-session-bar-actions">
+                        {mode === 'rail'
+                            ? <ToggleButton mode="panel" label="Déplier la barre" onClick={changeMode} />
+                            : <ToggleButton mode="rail"  label="Réduire en rail"  onClick={changeMode} />}
+                        <ToggleButton mode="hidden" label="Masquer la barre" onClick={changeMode} />
+                    </div>
                 </div>
 
-                {/* Liste des personnages */}
-                <div style={listContainerStyle}>
-                    <div className="space-y-3">
-                        {charactersWithStatus.map(char => (
-                            <div key={char.id} className="flex flex-col items-center gap-1">
-                                {/* Avatar */}
-                                <div
-                                    className="relative"
-                                    style={{ transition: 'transform 0.2s ease, z-index 0s', zIndex: 1 }}
-                                    onMouseEnter={e => { e.currentTarget.style.transform = 'scale(2.5)'; e.currentTarget.style.zIndex = 50; }}
-                                    onMouseLeave={e => { e.currentTarget.style.transform = 'scale(1)';   e.currentTarget.style.zIndex = 1;  }}
-                                >
-                                    {char.avatar ? (
-                                        <img
-                                            src={char.avatar}
-                                            alt={char.name}
-                                            className={`w-12 h-12 rounded-full object-cover ${!char.isOnline && !char.isMe ? 'grayscale opacity-60' : ''}`}
-                                            style={{ border: getAvatarBorderStyle(char)}}
-                                            title={char.name}
-                                        />
-                                    ) : (
-                                        <div
-                                            className={`w-12 h-12 rounded-full flex items-center justify-center ${!char.isOnline && !char.isMe ? 'grayscale opacity-60' : ''}`}
-                                            style={{
-                                                border:     getAvatarBorderStyle(char),
-                                                background: 'var(--color-surface)',
-                                            }}
-                                            title={char.name}
-                                        >
-                                            <span className="text-xl">👤</span>
-                                        </div>
-                                    )}
-                                    {/* Indicateur en ligne */}
-                                    {char.isOnline && (
-                                        <div
-                                            className="absolute bottom-0 right-0 w-3 h-3 rounded-full border-2"
-                                            style={{
-                                                background:   '#22c55e',
-                                                borderColor:  'var(--color-surface)',
-                                            }}
-                                        />
-                                    )}
-                                </div>
-
-                                {/* Nom du perso */}
-                                <div
-                                    className="text-xs font-bold text-center max-w-full truncate px-1"
-                                    style={{ color: char.isOnline || char.isMe ? 'var(--color-text)' : '#6b7280' }}
-                                >
-                                    {char.name}
-                                </div>
-
-                                {/* Nom du joueur */}
-                                <div
-                                    className="text-[10px] text-center max-w-full truncate px-1"
-                                    style={{ color: char.isOnline ? 'var(--color-primary)' : '#9ca3af' }}
-                                >
-                                    {char.playerName}
-                                </div>
+                <div ref={listRef} className={`vtt-session-bar-list${isListFixed ? ' is-fixed' : ''}`} style={listFixedStyle}>
+                    {charactersWithStatus.map(char => (
+                        <div
+                            key={char.id}
+                            className="vtt-session-bar-player"
+                            data-me={char.isMe || undefined}
+                            data-online={char.isOnline || undefined}
+                        >
+                            <div
+                                className="vtt-session-bar-avatar"
+                                onMouseEnter={e => openCard(char, e.currentTarget)}
+                                onMouseLeave={() => closeCard()}
+                            >
+                                <PlayerAvatar char={char} />
                             </div>
-                        ))}
-                    </div>
+                            <div className="vtt-session-bar-text">
+                                <div className="vtt-session-bar-name">{char.name}</div>
+                                <div className="vtt-session-bar-player-name">{char.playerName}</div>
+                            </div>
+                        </div>
+                    ))}
                 </div>
-            </div>
+            </aside>
 
-            {/* Spacer pour garder la marge en mode collapsed */}
+            {/* Spacer pour garder la marge en mode masqué */}
             {!noWidthWhenCollapsed && (
                 <div
-                    className="flex-shrink-0 transition-all duration-300"
-                    style={{ width: isCollapsed ? '3rem' : 0 }}
+                    className="shrink-0 transition-all duration-300"
+                    style={{ width: isHidden ? '3rem' : 0 }}
                 />
             )}
 
-
-            {/* Bouton flottant pour rouvrir */}
-            {isCollapsed && (
+            {/* Bouton flottant pour rouvrir (dernier mode visible) */}
+            {isHidden && (
                 <button
-                    onClick={() => setIsCollapsed(false)}
-                    className={`fixed left-2 z-40 w-8 h-8 rounded-full shadow-lg flex items-center justify-center ${!headerHeight && isButtonScrolled ? 'top-0' : ''}`}
+                    type="button"
+                    onClick={() => changeMode(lastVisible)}
+                    className="vtt-session-bar-reopen"
                     style={{
-                        top:        headerHeight !== null ? `${headerHeight + 8}px` : undefined,
-                        bottom:     bottomHeight !== null ? `${bottomHeight + 8}px` : undefined,
-                        background: 'var(--color-primary)',
-                        color:      'var(--color-primary-dark, #fff)',
-                        border:     '2px solid var(--color-border)',
+                        top:    headerHeight !== null ? `${headerHeight + 8}px` : (isButtonScrolled ? 0 : undefined),
+                        bottom: bottomHeight !== null ? `${bottomHeight + 8}px` : undefined,
                     }}
                     title="Afficher la table"
+                    aria-label="Afficher la table"
                 >
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                    </svg>
+                    <Icon d={ICONS.reopen} />
                 </button>
             )}
+
+            {/* Carte flottante : rendue dans <body> pour n'être rognée par aucun conteneur */}
+            {hovered && createPortal(<PlayerCard ref={cardRef} char={hovered.char} />, document.body)}
         </>
     );
 };

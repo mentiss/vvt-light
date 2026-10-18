@@ -480,6 +480,69 @@ button.vtt-list-item:hover { border-color: var(--vk-border-soft); border-left-co
 .vtt-scroll { scrollbar-color: color-mix(in srgb, var(--color-primary) 45%, transparent) transparent; }
 .vtt-scroll:hover { scrollbar-color: var(--color-primary) transparent; }
 
+/* ── Barre de session (components/layout/SessionPlayersBar.jsx, spec_session_bar.md) ─
+   Panneau vk-panel à coins légers côté fiche, filet vk-sep-line sous l'en-tête,
+   sur-titre vk-eyebrow + nom de la table en Grenze (vk-section-title), boutons
+   vk-btn-icon, avatars au rendu de vk-avatar ; carte vk-light-sm aux quatre coins. */
+.vtt-session-bar {
+    background: var(--color-surface); border-right: 2px solid var(--color-border);
+    box-shadow: var(--vk-panel-shadow); font-family: var(--vk-font-body);
+}
+.vtt-session-bar::before, .vtt-session-bar::after {
+    content: ''; position: absolute; right: -4px; width: 40px; height: 40px; z-index: 5; pointer-events: none;
+    background-size: contain; background-repeat: no-repeat; filter: var(--vk-ornament-filter);
+}
+.vtt-session-bar::before { top: -4px;    background-image: var(--vk-corner-l-tr); }
+.vtt-session-bar::after  { bottom: -4px; background-image: var(--vk-corner-l-br); }
+.vtt-session-bar[data-mode="rail"]::before, .vtt-session-bar[data-mode="rail"]::after { width: 28px; height: 28px; }
+
+.vtt-session-bar-header { position: relative; border-bottom: none; padding: 1rem 1.6rem .7rem 1rem; }
+.vtt-session-bar[data-mode="rail"] .vtt-session-bar-header { padding: 1.4rem 0 .7rem; }
+.vtt-session-bar-header::after {
+    content: ''; position: absolute; left: 10%; right: 10%; bottom: 0; height: 1px;
+    background: linear-gradient(90deg, transparent 0%, var(--color-border) 20%, var(--color-border) 80%, transparent 100%);
+}
+.vtt-session-bar-eyebrow { font-family: var(--vk-font-body); font-size: .72rem; font-weight: 400; letter-spacing: .12em; }
+.vtt-session-bar-title { font-family: var(--vk-font-label); font-weight: 400; font-size: 1.2rem; line-height: 1.15; letter-spacing: .03em; }
+.vtt-session-bar-toggle { width: 1.6rem; height: 1.6rem; border-radius: 2px; border-color: var(--color-border); background: transparent; }
+.vtt-session-bar-toggle:hover { color: var(--color-text); border-color: var(--color-primary); background: color-mix(in srgb, var(--color-primary) 10%, transparent); }
+
+.vtt-session-bar-list { padding: .6rem 1.1rem 1.6rem .6rem; }
+.vtt-session-bar[data-mode="rail"] .vtt-session-bar-list { padding: .7rem 0 1.6rem; }
+.vtt-session-bar-player { border-radius: 0; }
+.vtt-session-bar-player[data-me] { background: color-mix(in srgb, var(--color-primary) 7%, transparent); }
+.vtt-session-bar-name { font-size: .95rem; }
+.vtt-session-bar-player-name { font-size: .78rem; font-style: italic; }
+
+.vtt-session-bar-frame { padding: 2px; }
+.vtt-session-bar-player[data-me] .vtt-session-bar-frame { padding: 2px; box-shadow: 0 0 0 2px color-mix(in srgb, var(--color-primary) 30%, transparent); }
+.vtt-session-bar-player:not([data-online]):not([data-me]) .vtt-session-bar-frame { background: var(--color-border); }
+.vtt-session-bar-initials { font-family: var(--vk-font-title); font-weight: 400; color: var(--color-primary); }
+.vtt-session-bar-reopen { border-radius: 2px; border: 2px solid var(--color-border); background: var(--color-surface); color: var(--color-primary); box-shadow: var(--vk-panel-shadow); }
+
+.vtt-session-bar-card {
+    border-radius: 0; border: 2px solid var(--color-border); font-family: var(--vk-font-body);
+    box-shadow: var(--vk-panel-shadow), 0 18px 40px rgba(0,0,0,.45);
+    padding: 12px 12px 16px;
+}
+.vtt-session-bar-card::before, .vtt-session-bar-card::after,
+.vtt-session-bar-card-deco::before, .vtt-session-bar-card-deco::after {
+    content: ''; position: absolute; width: 40px; height: 40px; z-index: 5; pointer-events: none;
+    background-size: contain; background-repeat: no-repeat; filter: var(--vk-ornament-filter);
+}
+.vtt-session-bar-card::before      { top: -4px;    left: -4px;  background-image: var(--vk-corner-l-tl); }
+.vtt-session-bar-card::after       { top: -4px;    right: -4px; background-image: var(--vk-corner-l-tr); }
+.vtt-session-bar-card-deco::before { bottom: -4px; left: -4px;  background-image: var(--vk-corner-l-bl); }
+.vtt-session-bar-card-deco::after  { bottom: -4px; right: -4px; background-image: var(--vk-corner-l-br); }
+.vtt-session-bar-card-image { border-radius: 2px; border: 1px solid var(--color-border); font-family: var(--vk-font-title); font-weight: 400; color: var(--color-primary); }
+.vtt-session-bar-card-name { font-family: var(--vk-font-title); font-weight: 400; font-size: 1.2rem; color: var(--color-primary); text-shadow: 0 2px 8px rgba(0,0,0,.45); text-align: center; }
+.vtt-session-bar-card-player-name { font-style: italic; text-align: center; }
+.vtt-session-bar-card-status {
+    display: flex; justify-content: center; font-family: var(--vk-font-body); font-weight: 400; letter-spacing: .12em;
+    padding-top: .5rem; margin-top: .55rem;
+    background: linear-gradient(90deg, transparent 0%, var(--color-border) 20%, var(--color-border) 80%, transparent 100%) top / 100% 1px no-repeat;
+}
+
 /* ── Historique / notifications ─────────────────────────────────────── */
 .vk-entry { border: 1px solid var(--vk-border-soft); background: var(--color-surface); }
 .vk-entry-meta { display: flex; justify-content: space-between; font-size: .72rem; color: var(--color-text-muted); padding: .3rem .7rem; background: var(--color-surface-alt); }

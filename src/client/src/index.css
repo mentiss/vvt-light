@@ -311,6 +311,160 @@ select:disabled {
   input.vtt-journal-title:focus { border-bottom-color: var(--color-primary); }
   .vtt-journal-editor { border: 1px solid var(--color-border); border-radius: 0.5rem; background: var(--color-bg); }
 
+  /* ── Barre de session des joueurs (spec_session_bar.md) ─────────────────── */
+  /* Modes panneau / rail / masqué (data-mode), statuts data-me / data-online.
+     Dimensions en variables, redéfinissables par un slug. */
+  :root {
+    --vtt-session-bar-width: 14rem;
+    --vtt-session-bar-rail-width: 3.5rem;
+    --vtt-session-bar-avatar: 3rem;
+    --vtt-session-bar-rail-avatar: 2.25rem;
+    --vtt-session-bar-ring: 2px;
+    --vtt-session-bar-ring-me: 3px;
+    --vtt-session-bar-card-image: 220px;
+    --vtt-z-session-card: 120;   /* au-dessus de la fiche, sous les modales (150) */
+  }
+
+  .vtt-session-bar {
+    position: relative; flex-shrink: 0; display: flex; flex-direction: column;
+    width: var(--vtt-session-bar-width);
+    background: var(--color-surface); color: var(--color-text);
+    border-right: 1px solid var(--color-border);
+    box-shadow: 4px 0 24px rgba(0, 0, 0, 0.18);
+    transition: width 0.25s ease;
+  }
+  .vtt-session-bar[data-mode="rail"]   { width: var(--vtt-session-bar-rail-width); }
+  .vtt-session-bar[data-mode="hidden"] { display: none; }
+
+  /* En-tête : sur-titre « Table » + nom de la session, boutons */
+  .vtt-session-bar-header {
+    display: flex; align-items: flex-start; gap: 0.5rem; flex-shrink: 0;
+    padding: 0.6rem 0.6rem 0.6rem 0.85rem; border-bottom: 1px solid var(--color-border);
+  }
+  .vtt-session-bar-heading { flex: 1; min-width: 0; padding-top: 0.15rem; }
+  .vtt-session-bar-eyebrow {
+    font-size: 0.65rem; font-weight: 600; letter-spacing: 0.12em; text-transform: uppercase;
+    color: var(--color-text-muted);
+  }
+  /* Nom sur plusieurs lignes équilibrées ; au-delà de 3, coupé (nom complet au survol) */
+  .vtt-session-bar-title {
+    display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 3; overflow: hidden;
+    text-wrap: balance; overflow-wrap: anywhere; line-height: 1.3;
+    font-size: 0.85rem; font-weight: 700; color: var(--color-primary);
+  }
+  .vtt-session-bar-actions { display: flex; gap: 0.25rem; flex-shrink: 0; }
+  .vtt-session-bar-toggle {
+    width: 1.75rem; height: 1.75rem; display: inline-flex; align-items: center; justify-content: center;
+    border-radius: 0.4rem; border: 1px solid transparent; background: transparent;
+    color: var(--color-text-muted); cursor: pointer; transition: color 0.15s, background-color 0.15s, border-color 0.15s;
+  }
+  .vtt-session-bar-toggle:hover { color: var(--color-text); background: var(--color-surface-alt); border-color: var(--color-border); }
+  .vtt-session-bar-toggle:focus-visible { outline: 2px solid var(--color-primary); outline-offset: 1px; }
+  .vtt-session-bar-toggle svg { width: 1rem; height: 1rem; }
+  .vtt-session-bar[data-mode="rail"] .vtt-session-bar-header { flex-direction: column; align-items: center; padding: 0.5rem 0; }
+  .vtt-session-bar[data-mode="rail"] .vtt-session-bar-heading { display: none; }
+  .vtt-session-bar[data-mode="rail"] .vtt-session-bar-actions { flex-direction: column; }
+
+  /* Liste ; fixée au défilement (is-fixed, top et hauteur posés par le composant) */
+  .vtt-session-bar-list {
+    flex: 1; min-height: 0; max-height: 100vh; overflow-y: auto; overflow-x: hidden;
+    display: flex; flex-direction: column; gap: 0.25rem; padding: 0.5rem;
+    background: inherit; scrollbar-width: thin; scrollbar-color: var(--color-border) transparent;
+  }
+  .vtt-session-bar-list.is-fixed {
+    position: fixed; left: 0; z-index: 50; max-height: none;
+    width: var(--vtt-session-bar-width); border-right: inherit;
+  }
+  .vtt-session-bar[data-mode="rail"] .vtt-session-bar-list { padding: 0.5rem 0; align-items: center; gap: 0.6rem; }
+  .vtt-session-bar[data-mode="rail"] .vtt-session-bar-list.is-fixed { width: var(--vtt-session-bar-rail-width); }
+
+  .vtt-session-bar-player {
+    display: flex; align-items: center; gap: 0.65rem; min-width: 0;
+    padding: 0.35rem 0.4rem; border-radius: 0.6rem;
+  }
+  .vtt-session-bar-player[data-me] { background: color-mix(in srgb, var(--color-primary) 10%, transparent); }
+  .vtt-session-bar[data-mode="rail"] .vtt-session-bar-player { padding: 0; background: none; }
+  .vtt-session-bar-text { min-width: 0; display: flex; flex-direction: column; gap: 0.1rem; }
+  .vtt-session-bar[data-mode="rail"] .vtt-session-bar-text { display: none; }
+  .vtt-session-bar-name {
+    font-size: 0.85rem; font-weight: 700; line-height: 1.2;
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  }
+  .vtt-session-bar-player-name {
+    font-size: 0.72rem; color: var(--color-text-muted);
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  }
+  .vtt-session-bar-player[data-online] .vtt-session-bar-player-name { color: var(--color-primary); }
+  .vtt-session-bar-player:not([data-online]):not([data-me]) .vtt-session-bar-name { color: var(--color-text-muted); }
+
+  /* Avatar : conteneur (présence, survol) > cadre (anneau, forme) > image ou initiales */
+  .vtt-session-bar-avatar { position: relative; flex-shrink: 0; }
+  .vtt-session-bar-frame {
+    display: block; width: var(--vtt-session-bar-avatar); height: var(--vtt-session-bar-avatar);
+    padding: var(--vtt-session-bar-ring); border-radius: 50%;
+    background: var(--color-border);
+    transition: filter 0.2s, opacity 0.2s;
+  }
+  .vtt-session-bar[data-mode="rail"] .vtt-session-bar-frame { width: var(--vtt-session-bar-rail-avatar); height: var(--vtt-session-bar-rail-avatar); }
+  .vtt-session-bar-player[data-online] .vtt-session-bar-frame { background: var(--color-primary); }
+  .vtt-session-bar-player[data-me] .vtt-session-bar-frame { background: var(--color-primary); padding: var(--vtt-session-bar-ring-me); }
+  .vtt-session-bar-player:not([data-online]):not([data-me]) .vtt-session-bar-frame { filter: grayscale(1); opacity: 0.55; }
+  .vtt-session-bar-image, .vtt-session-bar-initials {
+    display: flex; align-items: center; justify-content: center;
+    width: 100%; height: 100%; border-radius: inherit; object-fit: cover;
+    background: var(--color-surface-alt);
+  }
+  .vtt-session-bar-initials { font-size: 0.85rem; font-weight: 700; color: var(--color-text); letter-spacing: 0.02em; }
+  .vtt-session-bar[data-mode="rail"] .vtt-session-bar-initials { font-size: 0.7rem; }
+  .vtt-session-bar-presence {
+    position: absolute; right: 0; bottom: 0; width: 0.7rem; height: 0.7rem; border-radius: 50%;
+    background: var(--color-success); border: 2px solid var(--color-surface);
+  }
+
+  /* Bouton flottant (mode masqué) ; top / bottom posés par le composant */
+  .vtt-session-bar-reopen {
+    position: fixed; left: 0.5rem; z-index: 40;
+    width: 2rem; height: 2rem; display: inline-flex; align-items: center; justify-content: center;
+    border-radius: 50%; border: 1px solid var(--color-border); cursor: pointer;
+    background: var(--color-primary); color: var(--color-on-primary, #fff);
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.35);
+  }
+  .vtt-session-bar-reopen svg { width: 1rem; height: 1rem; }
+
+  /* Carte flottante (zoom) : largeur de l'image + marges du thème, contenu toujours centré */
+  .vtt-session-bar-card {
+    position: fixed; z-index: var(--vtt-z-session-card); pointer-events: none;
+    width: min-content; overflow-wrap: anywhere;
+    padding: 0.75rem; border-radius: 0.9rem;
+    background: var(--color-surface); color: var(--color-text);
+    border: 1px solid var(--color-border);
+    box-shadow: 0 18px 40px rgba(0, 0, 0, 0.45);
+    opacity: 0; transform: translateX(-6px); transition: opacity 0.15s, transform 0.15s;
+  }
+  .vtt-session-bar-card.is-open { opacity: 1; transform: none; }
+  .vtt-session-bar-card-deco { position: absolute; inset: 0; pointer-events: none; }
+  .vtt-session-bar-card-image {
+    display: flex; align-items: center; justify-content: center; overflow: hidden; flex-shrink: 0;
+    width: var(--vtt-session-bar-card-image); height: var(--vtt-session-bar-card-image);
+    border-radius: 0.6rem; background: var(--color-surface-alt);
+    font-size: 4rem; font-weight: 700; color: var(--color-text-muted);
+  }
+  .vtt-session-bar-card-image img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .vtt-session-bar-card-name { margin-top: 0.65rem; font-size: 1rem; font-weight: 700; line-height: 1.2; }
+  .vtt-session-bar-card-player-name { font-size: 0.8rem; color: var(--color-text-muted); margin-top: 0.1rem; }
+  .vtt-session-bar-card-status {
+    display: inline-flex; align-items: center; gap: 0.35rem; margin-top: 0.5rem;
+    font-size: 0.72rem; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase;
+    color: var(--color-text-muted);
+  }
+  .vtt-session-bar-card-status::before {
+    content: ''; width: 0.5rem; height: 0.5rem; border-radius: 50%; background: var(--color-text-muted);
+  }
+  .vtt-session-bar-card[data-online] .vtt-session-bar-card-status,
+  .vtt-session-bar-card[data-me] .vtt-session-bar-card-status { color: var(--color-success); }
+  .vtt-session-bar-card[data-online] .vtt-session-bar-card-status::before,
+  .vtt-session-bar-card[data-me] .vtt-session-bar-card-status::before { background: var(--color-success); }
+
   /* ── Thème de la plateforme (spec_plateforme_accueil.md §3) ─────────────── */
   /* Palette anthracite / laiton, posée sur l'enveloppe des pages hors slug : définies
      ici, ces couleurs l'emportent sur celles d'un thème de slug resté chargé.

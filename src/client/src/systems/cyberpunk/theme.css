@@ -313,6 +313,81 @@
 .cp-outcome-partial { background: rgba(255, 170, 0, 0.15); color: var(--cp-neon-amber);   border: 1px solid rgba(255, 170, 0, 0.4); }
 .cp-outcome-failure { background: rgba(255, 45, 120, 0.15); color: var(--cp-neon-magenta); border: 1px solid rgba(255, 45, 120, 0.4); }
 
+/* ── Barre de session (components/layout/SessionPlayersBar.jsx, spec_session_bar.md) ─
+   Coins arrondis comme la fiche, intitulés cp-font-ui, filet cp-divider, « moi » en
+   dégradé néon, halo cyan sur les avatars en ligne ; carte cp-border-neon. */
+.vtt-session-bar { background: var(--color-surface); border-right: 1px solid var(--color-border); }
+.vtt-session-bar-header { position: relative; border-bottom: none; }
+.vtt-session-bar-header::after {
+    content: ''; position: absolute; left: 0; right: 0; bottom: 0; height: 1px; opacity: .4;
+    background: linear-gradient(to right, transparent, var(--color-primary) 30%, var(--color-primary) 70%, transparent);
+}
+.vtt-session-bar-eyebrow { font-family: 'Rajdhani', sans-serif; font-size: .62rem; letter-spacing: .2em; }
+.vtt-session-bar-title {
+    font-family: 'Rajdhani', 'Orbitron', 'Share Tech Mono', ui-monospace, monospace;
+    font-size: .95rem; letter-spacing: .1em; text-transform: uppercase;
+}
+.vtt-session-bar-toggle { border-radius: .5rem; background: var(--color-surface-alt); border-color: var(--color-border); }
+.vtt-session-bar-toggle:hover { border-color: var(--color-accent); background: var(--color-surface); color: var(--color-text); box-shadow: var(--cp-glow-cyan); }
+
+.vtt-session-bar-player { border-radius: 0; }
+.vtt-session-bar-player[data-me] {
+    background: linear-gradient(90deg, color-mix(in srgb, var(--color-primary) 16%, transparent), transparent);
+    box-shadow: inset 2px 0 0 var(--color-primary);
+}
+.vtt-session-bar[data-mode="rail"] .vtt-session-bar-player[data-me] { box-shadow: none; background: none; }
+.vtt-session-bar-name { font-family: 'Rajdhani', sans-serif; font-size: .95rem; letter-spacing: .05em; text-transform: uppercase; }
+.vtt-session-bar-player-name { font-family: 'Rajdhani', sans-serif; font-size: .72rem; letter-spacing: .08em; text-transform: uppercase; }
+
+.vtt-session-bar-frame { padding: 1px; border-radius: .5rem; }
+.vtt-session-bar-player[data-me] .vtt-session-bar-frame { padding: 1px; }
+.vtt-session-bar-image, .vtt-session-bar-initials { border-radius: calc(.5rem - 1px); }
+.vtt-session-bar-player[data-online] .vtt-session-bar-avatar,
+.vtt-session-bar-player[data-me] .vtt-session-bar-avatar {
+    filter: drop-shadow(0 0 5px color-mix(in srgb, var(--color-primary) 70%, transparent));
+}
+.vtt-session-bar-initials { font-family: 'Rajdhani', sans-serif; color: var(--color-primary); }
+.vtt-session-bar-presence { border-color: var(--color-surface); right: -2px; bottom: -2px; }
+/* Bouton de réouverture et carte à coins coupés (la découpe casse la bordure aux angles) */
+.vtt-session-bar-reopen {
+    border-radius: 0; border: none; box-shadow: none;
+    clip-path: polygon(22% 0, 100% 0, 100% 78%, 78% 100%, 0 100%, 0 22%);
+}
+
+.vtt-session-bar-card {
+    border-radius: 0; border: 1px solid var(--color-primary);
+    clip-path: polygon(14px 0, 100% 0, 100% calc(100% - 14px), calc(100% - 14px) 100%, 0 100%, 0 14px);
+    background:
+        repeating-linear-gradient(0deg, rgba(255, 255, 255, .025) 0 1px, transparent 1px 3px),
+        var(--color-surface);
+    box-shadow: inset 0 0 8px rgba(0, 229, 255, .05), 0 0 24px color-mix(in srgb, var(--color-primary) 25%, transparent);
+}
+/* Portrait découpé, avec lignes de balayage par-dessus */
+.vtt-session-bar-card-image {
+    position: relative; border-radius: 0;
+    clip-path: polygon(14px 0, 100% 0, 100% calc(100% - 14px), calc(100% - 14px) 100%, 0 100%, 0 14px);
+    font-family: 'Rajdhani', sans-serif; color: var(--color-primary);
+}
+.vtt-session-bar-card-image::after {
+    content: ''; position: absolute; inset: 0; pointer-events: none;
+    background: repeating-linear-gradient(0deg, rgba(0, 0, 0, .18) 0 1px, transparent 1px 3px);
+}
+.vtt-session-bar-card-name {
+    padding-top: .65rem; margin-top: .65rem;
+    background: linear-gradient(to right, transparent, color-mix(in srgb, var(--color-primary) 40%, transparent) 30%, color-mix(in srgb, var(--color-primary) 40%, transparent) 70%, transparent) top / 100% 1px no-repeat;
+    font-family: 'Rajdhani', sans-serif; font-size: 1.15rem; letter-spacing: .1em; text-transform: uppercase;
+    color: var(--color-primary); text-shadow: 0 0 8px rgba(0, 229, 255, .7);
+}
+.vtt-session-bar-card-player-name { font-family: 'Rajdhani', sans-serif; letter-spacing: .08em; text-transform: uppercase; }
+.vtt-session-bar-card-status {
+    padding: 1px 6px; border-radius: 3px; font-size: .65rem; letter-spacing: .08em;
+    border: 1px solid color-mix(in srgb, var(--color-text-muted) 40%, transparent);
+}
+.vtt-session-bar-card[data-online] .vtt-session-bar-card-status,
+.vtt-session-bar-card[data-me] .vtt-session-bar-card-status {
+    background: var(--cp-tag-positive-bg); border-color: color-mix(in srgb, var(--color-success) 40%, transparent);
+}
+
 /* ── Statut menace ───────────────────────────────────────────────────────── */
 .cp-threat-active      { color: var(--cp-neon-magenta); border-color: rgba(255,45,120,0.4); }
 .cp-threat-dormante    { color: var(--cp-neon-amber);   border-color: rgba(255,170,0,0.4);  }
