@@ -4,7 +4,8 @@
 // Un système invalide logue un warning et est ignoré — le serveur continue.
 //
 // Contrat d'un système : son dossier DOIT contenir :
-//   config.js              → { slug, label, dbPath, schemaPath[, generateAccessUrl] }
+//   config.js              → { slug, label, dbPath, schemaPath[, generateAccessUrl][, hidden] }
+//                            hidden: true → slug absent de la page d'accueil, accessible par son adresse
 //   routes/characters.js   → router Express spécifique
 //
 // Routes génériques montées automatiquement (pas besoin de les déclarer) :

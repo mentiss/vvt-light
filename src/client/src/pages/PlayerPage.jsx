@@ -12,6 +12,10 @@ import CharacterListModal   from '../components/modals/CharacterListModal.jsx';
 import CodeModal            from '../components/modals/CodeModal.jsx';
 import DiceAnimationOverlay from "../components/shared/DiceAnimationOverlay.jsx";
 import LoadingScreen from "../components/gm/layout/LoadingScreen.jsx";
+import SlugPage             from '../components/platform/SlugPage.jsx';
+import SystemBrand          from '../components/platform/SystemBrand.jsx';
+import ErrorPage            from '../components/platform/ErrorPage.jsx';
+import { useSystem }        from '../hooks/useSystem.js';
 
 const SHEETS    = import.meta.glob('../systems/*/Sheet.jsx');
 const THEMES    = import.meta.glob('../systems/*/theme.css');
@@ -41,6 +45,9 @@ const PlayerPage = () => {
     const [showCharacterList,  setShowCharacterList]  = useState(false);
     const [selectedCharForCode, setSelectedCharForCode] = useState(null);
     const [showCodeModal,       setShowCodeModal]       = useState(false);
+    // Lien de personnage de l'adresse introuvable : signalé sur l'écran d'arrivée
+    const [invalidLink,         setInvalidLink]         = useState(false);
+    const { label } = useSystem();
 
     useEffect(() => {
         const key = `../systems/${system}/theme.css`;
@@ -79,7 +86,7 @@ const PlayerPage = () => {
                             setAppState('selecting');
                         }
                     } else {
-                        if (!cancelled) setAppState('selecting');
+                        if (!cancelled) { setInvalidLink(res.status === 404); setAppState('selecting'); }
                     }
                 } catch {
                     if (!cancelled) setAppState('selecting');
@@ -158,15 +165,11 @@ const PlayerPage = () => {
 
     if (!SHEETS[sheetKey]) {
         return (
-            <div className="min-h-screen flex items-center justify-center bg-gray-900 text-white">
-                <div className="text-center">
-                    <div className="text-5xl mb-4">⚔️</div>
-                    <h1 className="text-2xl font-bold mb-2">Système incomplet</h1>
-                    <p className="text-gray-400">
-                        Le système <code className="bg-gray-700 px-1 rounded">"{system}"</code> n'a pas tous ses composants (Sheet, Creation).
-                    </p>
-                </div>
-            </div>
+            <ErrorPage
+                title="Système incomplet"
+                message={`Le système « ${label || system} » n'a pas encore sa fiche de personnage.`}
+                actions={<a href="/" className="vtt-btn vtt-btn-primary">Accueil de la plateforme</a>}
+            />
         );
     }
 
@@ -178,24 +181,31 @@ const PlayerPage = () => {
     if (appState === 'selecting') {
         return (
             <>
-                {/* Écran d'accueil générique */}
-                <div className="min-h-screen bg-gray-900 flex items-center justify-center p-4">
-                    <div className="text-center space-y-4">
-                        <div className="text-5xl mb-6">🎲</div>
-                        <button
-                            onClick={() => navigate(`/${system}/creation`)}
-                            className="w-full px-6 py-4 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-semibold text-lg transition-colors block"
-                        >
-                            ⚔️ Créer un nouveau personnage
-                        </button>
-                        <button
-                            onClick={() => setShowCharacterList(true)}
-                            className="w-full px-6 py-4 bg-gray-700 hover:bg-gray-600 text-white rounded-lg font-semibold text-lg transition-colors block"
-                        >
-                            📋 Se connecter
-                        </button>
+                {/* Écran d'arrivée du joueur : thème et marque du slug (spec_plateforme_accueil.md §6) */}
+                <SlugPage>
+                    <div className="vtt-panel w-full max-w-md p-6 text-center space-y-5">
+                        <div className="text-3xl"><SystemBrand variant="title" slug={system} label={label} /></div>
+                        {invalidLink ? (
+                            <div className="vtt-callout vtt-callout-danger text-left">
+                                Ce lien de personnage n'existe pas ou plus. Demandez le bon lien à votre MJ, ou connectez-vous avec votre personnage.
+                            </div>
+                        ) : (
+                            <p className="text-muted">Choisissez votre personnage ou créez-en un nouveau.</p>
+                        )}
+                        <div className="space-y-2">
+                            <button type="button" onClick={() => navigate(`/${system}/creation`)} className="vtt-btn vtt-btn-primary w-full">
+                                Créer un nouveau personnage
+                            </button>
+                            <button type="button" onClick={() => setShowCharacterList(true)} className="vtt-btn w-full">
+                                Se connecter
+                            </button>
+                        </div>
+                        <div className="flex justify-center gap-4 text-xs">
+                            <a href={`/${system}/gm`} className="text-muted hover:text-primary">Accès MJ</a>
+                            <a href="/" className="text-muted hover:text-primary">Accueil de la plateforme</a>
+                        </div>
                     </div>
-                </div>
+                </SlugPage>
 
                 {/* Modale liste — comportement identique à App.jsx */}
                 <CharacterListModal

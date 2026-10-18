@@ -310,4 +310,94 @@ select:disabled {
   }
   input.vtt-journal-title:focus { border-bottom-color: var(--color-primary); }
   .vtt-journal-editor { border: 1px solid var(--color-border); border-radius: 0.5rem; background: var(--color-bg); }
+
+  /* ── Thème de la plateforme (spec_plateforme_accueil.md §3) ─────────────── */
+  /* Palette anthracite / laiton, posée sur l'enveloppe des pages hors slug : définies
+     ici, ces couleurs l'emportent sur celles d'un thème de slug resté chargé.
+     Nuit : .dark sur <html> (préférence « global »). */
+  .vtt-platform {
+    --color-primary:     #9a7a3a;
+    --color-on-primary:  #fffdf8;
+    --color-secondary:   #5f6b73;
+    --color-accent:      #9a7a3a;
+    --color-danger:      #b3412f;
+    --color-success:     #5d8a4a;
+    --color-bg:          #f6f3ec;
+    --color-surface:     #fffdf8;
+    --color-surface-alt: #ede8dc;
+    --color-text:        #26241f;
+    --color-text-muted:  #6f6a5f;
+    --color-border:      #dcd5c5;
+    --vtt-platform-glow: rgba(154, 122, 58, 0.12);
+    min-height: 100vh;
+    background: radial-gradient(ellipse at top, var(--vtt-platform-glow), transparent 60%), var(--color-bg);
+    color: var(--color-text);
+    font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  }
+  .dark .vtt-platform {
+    --color-primary:     #c9a45c;
+    --color-on-primary:  #17181a;
+    --color-secondary:   #8b97a0;
+    --color-accent:      #c9a45c;
+    --color-danger:      #e06a55;
+    --color-success:     #86b86f;
+    --color-bg:          #17181a;
+    --color-surface:     #202225;
+    --color-surface-alt: #2a2c30;
+    --color-text:        #ece8df;
+    --color-text-muted:  #9c978c;
+    --color-border:      #36383d;
+    --vtt-platform-glow: rgba(201, 164, 92, 0.10);
+  }
+
+  /* ── Pages génériques (accueil, accès d'un slug, erreurs) ────────────────── */
+  .vtt-page-header { display: flex; align-items: center; justify-content: space-between; gap: 1rem; padding: 1rem 1.5rem; border-bottom: 1px solid var(--color-border); }
+  .vtt-brand-name { font-size: 1.35rem; font-weight: 700; letter-spacing: 0.02em; color: var(--color-text); }
+  .vtt-brand-name span { color: var(--color-primary); }
+  .vtt-section-title { font-size: 0.75rem; font-weight: 600; letter-spacing: 0.12em; text-transform: uppercase; color: var(--color-text-muted); margin-bottom: 0.75rem; }
+  .vtt-page-footer { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 0.5rem 1.25rem; padding: 1rem 1.5rem; font-size: 0.75rem; color: var(--color-text-muted); border-top: 1px solid var(--color-border); }
+  .vtt-page-footer a { display: inline-flex; align-items: center; gap: 0.35rem; color: var(--color-text-muted); }
+  .vtt-page-footer a:hover { color: var(--color-primary); }
+  .vtt-icon-line { width: 1.1em; height: 1.1em; display: inline-block; vertical-align: -0.18em; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+
+  /* Carte de slug : zone de marque (lien principal) + bande générique (adresse, lien MJ) */
+  .vtt-system-card {
+    display: flex; flex-direction: column; width: 100%; height: 15rem; overflow: hidden;
+    border-radius: 0.9rem; border: 1px solid var(--color-border); background: var(--color-surface);
+    transition: transform 0.2s, box-shadow 0.2s, border-color 0.2s;
+  }
+  .vtt-system-card:hover { transform: translateY(-3px); border-color: var(--color-primary); box-shadow: 0 12px 30px rgba(0, 0, 0, 0.25); }
+  .vtt-system-card-main { display: block; flex: 1; min-height: 0; color: inherit; }
+  .vtt-system-card-main:focus-visible { outline: 2px solid var(--color-primary); outline-offset: -2px; }
+  .vtt-system-card-foot {
+    display: flex; align-items: center; justify-content: space-between; gap: 0.5rem; flex-shrink: 0;
+    padding: 0.45rem 0.85rem; font-size: 0.75rem; color: var(--color-text-muted);
+    border-top: 1px solid var(--color-border); background: var(--color-surface);
+  }
+  .vtt-system-card-foot code { font-family: ui-monospace, monospace; }
+  .vtt-system-card-gm { font-weight: 600; color: var(--color-text-muted); padding: 0.1rem 0.5rem; border-radius: 999px; border: 1px solid var(--color-border); }
+  .vtt-system-card-gm:hover, .vtt-system-card-gm:focus-visible { color: var(--color-primary); border-color: var(--color-primary); }
+
+  /* Carte et titre par défaut (slug sans Brand.jsx) */
+  .vtt-system-default { height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 0.75rem; padding: 1rem; }
+  .vtt-system-monogram {
+    width: 4rem; height: 4rem; border-radius: 999px; display: flex; align-items: center; justify-content: center;
+    font-size: 1.8rem; font-weight: 700; color: var(--color-primary);
+    border: 2px solid var(--color-primary); background: color-mix(in srgb, var(--color-primary) 10%, transparent);
+  }
+  .vtt-system-default-label { font-size: 1.1rem; font-weight: 700; text-align: center; }
+  .vtt-system-default-title { font-weight: 700; font-size: 1.3em; color: var(--color-primary); }
+
+  /* Reprendre */
+  .vtt-resume {
+    display: flex; align-items: center; gap: 1rem; width: 100%; padding: 0.75rem 1rem;
+    border-radius: 0.9rem; border: 1px solid var(--color-border); background: var(--color-surface); color: inherit;
+    transition: border-color 0.15s, background-color 0.15s;
+  }
+  .vtt-resume:hover { border-color: var(--color-primary); background: color-mix(in srgb, var(--color-primary) 6%, var(--color-surface)); }
+  .vtt-resume-brand { width: 11rem; flex-shrink: 0; display: flex; align-items: center; justify-content: center; overflow: hidden; white-space: nowrap; font-size: 0.85rem; }
+
+  /* Page d'erreur */
+  .vtt-error-code { font-size: 4.5rem; font-weight: 700; line-height: 1; color: var(--color-primary); letter-spacing: 0.05em; }
+  .vtt-error-title { font-size: 1.3rem; font-weight: 700; margin: 0.75rem 0 0.5rem; }
 }

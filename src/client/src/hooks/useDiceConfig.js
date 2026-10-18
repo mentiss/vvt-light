@@ -8,6 +8,7 @@
  */
 
 import {useState, useCallback, useRef, useEffect} from 'react';
+import { useParams } from 'react-router-dom';
 import useSystem from "./useSystem.js";
 import useSlugConfig from "./useSlugConfig.js";
 
@@ -132,6 +133,14 @@ export const DICE_FALLBACK_CONFIG = {
 
 export const diceStorageKey = (slug) => `${slug}_vtt-dice_config`;
 
+// Configuration des dés de la plateforme (pages hors slug, ex. accueil) :
+// rangée à part, sans les dés par défaut d'un slug (spec_plateforme_accueil.md §4).
+export const PLATFORM_DICE_SCOPE = 'platform';
+
+// Portée de la configuration d'après l'adresse : slug de l'adresse, sinon plateforme
+export const getDiceScope = (pathname = window.location.pathname) =>
+    pathname.split('/').filter(Boolean)[0] ?? PLATFORM_DICE_SCOPE;
+
 // ─────────────────────────────────────────────────────────────────────────────
 // buildDiceBoxConfig : traduit notre format → format API de la lib
 // ─────────────────────────────────────────────────────────────────────────────
@@ -210,18 +219,22 @@ export const writeDiceConfig = (slug, config) => {
 // ─────────────────────────────────────────────────────────────────────────────
 
 const useDiceConfig = () => {
-    const { slug } = useSystem();
+    const { system }   = useParams();
+    const { slug: systemSlug } = useSystem();
+    // Hors slug (accueil) : configuration de la plateforme, sans défauts de slug
+    const slug         = system ? systemSlug : PLATFORM_DICE_SCOPE;
     const slugConfig   = useSlugConfig();
-    const slugDefaults = slugConfig?.diceConfigDefault ?? {};
+    const slugDefaults = system ? (slugConfig?.diceConfigDefault ?? {}) : {};
 
     // ← null tant que slugConfig n'est pas chargé
     const [config, setConfig] = useState(null);
 
-    // ← se déclenche dès que slugConfig arrive
+    // ← se déclenche dès que slugConfig arrive (immédiatement hors slug)
     useEffect(() => {
+        if (!system) { setConfig(readDiceConfig(PLATFORM_DICE_SCOPE, {})); return; }
         if (!slugConfig) return;
         setConfig(readDiceConfig(slug, slugDefaults));
-    }, [slug, slugConfig]);
+    }, [system, slug, slugConfig]);
 
     const updateConfig = useCallback((updates) => {
         setConfig(prev => {

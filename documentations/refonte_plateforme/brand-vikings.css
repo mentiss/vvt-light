@@ -1,0 +1,24 @@
+/* ═══ FUTUR systems/vikings/Brand.css — titre runique et Eagle Lake du kit ═══
+   Classes préfixées .vk-brand-*, aucune couleur globale. Dans l'app, les coins pointeront vers ./assets/. */
+.vk-brand {
+    height: 100%; position: relative; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 0.2rem;
+    background: radial-gradient(ellipse at 50% 30%, #3a2c1e, #1a1410 75%);
+    color: #e8dcc8; font-family: 'Alegreya', Georgia, serif;
+}
+.vk-brand::before, .vk-brand::after, .vk-brand > .vk-brand-c::before, .vk-brand > .vk-brand-c::after {
+    content: ''; position: absolute; width: 44px; height: 44px; background-size: contain; background-repeat: no-repeat; pointer-events: none;
+}
+.vk-brand::before { top: 6px; left: 6px; background-image: url('../refonte_vikings/assets/corner-light-tl.png'); }
+.vk-brand::after  { top: 6px; right: 6px; background-image: url('../refonte_vikings/assets/corner-light-tr.png'); }
+.vk-brand-c { position: absolute; inset: 0; pointer-events: none; }
+.vk-brand > .vk-brand-c::before { bottom: 6px; left: 6px; background-image: url('../refonte_vikings/assets/corner-light-bl.png'); }
+.vk-brand > .vk-brand-c::after  { bottom: 6px; right: 6px; background-image: url('../refonte_vikings/assets/corner-light-br.png'); }
+.vk-brand-runes { font-family: 'Noto Sans Runic', sans-serif; font-size: 1.2rem; letter-spacing: 0.3em; color: #d4a017; text-shadow: 0 0 8px rgba(212,160,23,.4); }
+.vk-brand-title { font-family: 'Eagle Lake', Georgia, serif; font-size: 2rem; line-height: 1.15; color: #d4a017; text-shadow: 0 2px 8px rgba(0,0,0,.6); }
+.vk-brand-sub { font-style: italic; font-size: 0.85rem; color: #a08b6e; }
+/* Mode titre (pages d'accès, Reprendre) : sur une ligne, taille relative (la page choisit l'échelle) */
+.vk-brand.is-title { height: auto; background: none; flex-direction: row; flex-wrap: nowrap; white-space: nowrap; justify-content: center; align-items: baseline; gap: 0 0.6rem; }
+.vk-brand.is-title::before, .vk-brand.is-title::after, .vk-brand.is-title > .vk-brand-c { display: none; }
+.vk-brand.is-title .vk-brand-title { font-size: 1.3em; text-shadow: none; }
+.vk-brand.is-title .vk-brand-runes { font-size: 0.9em; }
+.vk-brand.is-title .vk-brand-sub { display: none; }

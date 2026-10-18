@@ -13,8 +13,14 @@ export const AuthProvider = ({ children }) => {
     const [accessToken, setAccessToken] = useState(null);
     const [loading, setLoading]         = useState(true);
 
-    // Auto-refresh au montage
+    // Auto-refresh au montage. Pas sur l'accueil de la plateforme (aucun slug dans
+    // l'adresse) : on interrogerait le slug par défaut. Les cartes de l'accueil
+    // ouvrent les slugs en navigation complète, qui remonte ce contexte.
     useEffect(() => {
+        if (window.location.pathname.split('/').filter(Boolean).length === 0) {
+            setLoading(false);
+            return;
+        }
         refreshAccessToken();
     }, []);
 

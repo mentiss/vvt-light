@@ -10,6 +10,7 @@ import GMPage       from './pages/GMPage.jsx';
 import PlayerPage   from './pages/PlayerPage.jsx';
 import HomePage     from './pages/HomePage.jsx';
 import CreationPage from './pages/CreationPage.jsx';
+import { SlugNotFound, RouteErrorPage } from './components/platform/ErrorPage.jsx';
 
 const AppRouter = () => {
     const [darkMode, setDarkMode] = useState(false);
@@ -32,6 +33,7 @@ const AppRouter = () => {
         {
             path: '/',
             element: <HomePage darkMode={darkMode} onToggleDarkMode={toggleDarkMode} />,
+            errorElement: <RouteErrorPage />,
         },
 
         // Redirections legacy
@@ -42,11 +44,14 @@ const AppRouter = () => {
         {
             path: '/:system',
             element: <SystemLayout />,
+            errorElement: <RouteErrorPage />,
             children: [
                 { index: true,        element: <PlayerPage /> },
                 { path: 'gm',         element: <GMPage /> },
                 { path: ':accessUrl', element: <PlayerPage /> },
                 { path: 'creation',   element: <CreationPage /> },
+                // Adresse plus profonde inconnue (ex. /vikings/x/y) : 404 dans le slug
+                { path: '*',          element: <SlugNotFound /> },
             ],
         },
     ]);

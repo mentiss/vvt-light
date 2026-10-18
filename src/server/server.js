@@ -16,6 +16,9 @@ const systemResolver       = require('./middlewares/systemResolver');
 const { closeAllDatabases } = require('./db/index');
 const authRouter           = require('./routes/auth');
 const {getDbForSystem} = require("./db");
+const { cookieName }       = require('./utils/auth');
+const { checkRefreshToken } = require('./utils/jwt');
+const { getCharNameExpr }   = require('./utils/characters');
 const {initSocket} = require("./socket/index");
 
 // ─── App & Server ────────────────────────────────────────────────────────────
@@ -99,9 +102,36 @@ for (const [slug] of getAllSystems()) {
     console.log(`🗺️  Routes mounted for [${slug}]: ${prefix}/{auth,characters,combat,sessions,journal,dice${extraNames}}`);
 }
 
+// hidden : slug absent de la page d'accueil, toujours accessible par son adresse
 app.get('/api/systems', (req, res) => {
-    const systems = [...getAllSystems().values()].map(({ slug, label }) => ({ slug, label }));
+    const systems = [...getAllSystems().values()].map(({ slug, label, hidden }) => ({ slug, label, hidden: !!hidden }));
     res.json(systems);
+});
+
+// Connexions encore valides de cet appareil (« Reprendre » sur l'accueil) :
+// lit les cookies de reconnexion des joueurs (un par slug), sans créer ni renouveler de jeton.
+app.get('/api/resume', (req, res) => {
+    try {
+        const resumes = [];
+        for (const [slug, config] of getAllSystems()) {
+            const token = req.cookies?.[cookieName(slug, false)];
+            if (!token) continue;
+            const db = getDbForSystem(config);
+            const tokenData = checkRefreshToken(token, db);
+            if (!tokenData || tokenData.character_id === -1) continue;
+            const char = db.prepare(`
+                SELECT c.access_url, (${getCharNameExpr(db)}) AS name
+                FROM characters c WHERE c.id = ?
+            `).get(tokenData.character_id);
+            if (!char) continue;
+            resumes.push({ slug, name: char.name, accessUrl: char.access_url, connectedAt: tokenData.created_at });
+        }
+        resumes.sort((a, b) => String(b.connectedAt).localeCompare(String(a.connectedAt)));
+        res.json(resumes);
+    } catch (error) {
+        console.error('Error listing resumable characters:', error);
+        res.status(500).json({ error: 'Internal server error' });
+    }
 });
 
 // ─── Health ──────────────────────────────────────────────────────────────────

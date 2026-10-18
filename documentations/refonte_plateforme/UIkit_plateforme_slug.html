@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Plateforme — pages d'un slug (lot 1)</title>
+    <!--
+        Pages d'accès d'un slug (spec_plateforme_accueil.md §6 et §6 bis), avec le VRAI thème de Vikings :
+          • theme.css de Vikings (couleurs, surcharges des classes vtt-*) ;
+          • bloc vtt-* par défaut (copie d'index.css, injectée) ;
+          • brand-vikings.css = futur systems/vikings/Brand.css, que theme.css importera ;
+          • aucune classe propre au slug dans le balisage : uniquement vtt-* et la marque en mode titre.
+        Ouverte seule ou intégrée dans UIkit_plateforme.html.
+    -->
+    <link rel="stylesheet" href="../../src/client/src/generated-css-utils.css">
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <style>
+        @layer theme, base, components, utilities;
+    </style>
+    <style id="vtt-defaults">
+        /* Copie de src/client/src/index.css (bloc vtt-*) */
+        /* ── Modales génériques (documentations/spec_ui_modales.md) ─────────────── */
+        /* Style par défaut, en couche « components » : le theme.css d'un slug (hors
+           couche) le surcharge toujours, et les utilitaires Tailwind restent
+           applicables sur les classes vtt-*. Uniquement les variables --color-*. */
+        @layer components {
+          :root {
+            --vtt-z-modal: 150;          /* sous l'animation des dés (200) */
+            --vtt-z-alert: 9999;         /* alerte : au-dessus de tout */
+            --vtt-modal-gutter: 16px;
+          }
+
+          /* Fond et fenêtre */
+          .vtt-modal-backdrop {
+            position: fixed; inset: 0; z-index: var(--vtt-z-modal);
+            display: flex; align-items: center; justify-content: center;
+            padding: var(--vtt-modal-gutter);
+            background: rgba(0, 0, 0, 0.7);
+            backdrop-filter: blur(6px);
+          }
+          .vtt-modal-backdrop.vtt-modal-alert { z-index: var(--vtt-z-alert); }
+
+          .vtt-modal-panel {
+            position: relative; display: flex; flex-direction: column;
+            width: 100%; max-height: 100%; overflow: hidden;
+            background: var(--color-surface); color: var(--color-text);
+            border: 1px solid var(--color-border); border-radius: 1rem;
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.45);
+          }
+          .vtt-modal-deco { position: absolute; inset: 0; pointer-events: none; }
+
+          /* Tailles (§3.3) : relèvent de l'ergonomie, les slugs ne les redéfinissent pas */
+          .vtt-modal-sm   { max-width: 24rem; }
+          .vtt-modal-md   { max-width: 32rem; }
+          .vtt-modal-lg   { max-width: 48rem; }
+          .vtt-modal-xl   { max-width: 64rem; }
+          .vtt-modal-full { max-width: none; height: 100%; }
+
+          /* En-tête, corps, pied */
+          .vtt-modal-header {
+            display: flex; align-items: center; gap: 0.75rem; flex-shrink: 0;
+            padding: 1rem 1.25rem; border-bottom: 1px solid var(--color-border);
+          }
+          .vtt-modal-heading { flex: 1; min-width: 0; }
+          .vtt-modal-icon {
+            width: 2.25rem; height: 2.25rem; flex-shrink: 0;
+            display: flex; align-items: center; justify-content: center;
+            border-radius: 0.75rem; border: 1px solid var(--color-border);
+            background: var(--color-surface-alt); color: var(--color-primary);
+          }
+          .vtt-modal-title {
+            font-size: 0.875rem; font-weight: 700; line-height: 1.3;
+            letter-spacing: 0.08em; text-transform: uppercase;
+            color: var(--color-primary); overflow-wrap: anywhere;
+          }
+          .vtt-modal-subtitle { font-size: 0.75rem; margin-top: 0.125rem; color: var(--color-text-muted); }
+          .vtt-modal-close, .vtt-modal-expand {
+            width: 2rem; height: 2rem; flex-shrink: 0;
+            display: inline-flex; align-items: center; justify-content: center;
+            border-radius: 0.5rem; color: var(--color-text-muted); background: transparent;
+            transition: color 0.15s, background-color 0.15s;
+          }
+          .vtt-modal-close:hover, .vtt-modal-expand:hover { color: var(--color-text); background: var(--color-surface-alt); }
+          .vtt-modal-body { flex: 1 1 auto; min-height: 0; overflow-y: auto; padding: 1.25rem; }
+          .vtt-modal-footer {
+            display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 0.75rem; flex-shrink: 0;
+            padding: 1rem 1.25rem; border-top: 1px solid var(--color-border);
+          }
+
+          /* Petit écran : toute la largeur, Agrandir sans effet donc masqué */
+          @media (max-width: 639px) {
+            .vtt-modal-panel { max-width: none; }
+            .vtt-modal-expand { display: none; }
+          }
+
+          /* Barres de défilement (§3.4) : épaisseur et couleurs uniquement.
+             Les zones qui défilent à l'intérieur (listes) en héritent. */
+          .vtt-scroll, .vtt-scroll * { scrollbar-width: thin; }
+          .vtt-scroll { scrollbar-color: var(--color-border) transparent; }
+          .vtt-scroll:hover { scrollbar-color: var(--color-primary) transparent; }
+
+          /* Boutons */
+          .vtt-btn {
+            display: inline-flex; align-items: center; justify-content: center; gap: 0.4rem;
+            padding: 0.5rem 1rem; border-radius: 0.5rem; font-size: 0.875rem; font-weight: 600;
+            border: 1px solid var(--color-border); background: var(--color-surface-alt); color: var(--color-text);
+            transition: border-color 0.15s, background-color 0.15s, filter 0.15s, opacity 0.15s;
+          }
+          .vtt-btn:hover:not(:disabled) { border-color: var(--color-primary); }
+          .vtt-btn:focus-visible { outline: 2px solid var(--color-primary); outline-offset: 2px; }
+          .vtt-btn:disabled { opacity: 0.5; }
+          .vtt-btn-primary { background: var(--color-primary); border-color: var(--color-primary); color: var(--color-on-primary, #fff); }
+          .vtt-btn-primary:hover:not(:disabled) { filter: brightness(1.1); }
+          .vtt-btn-danger { background: var(--color-danger); border-color: var(--color-danger); color: #fff; }
+          .vtt-btn-danger:hover:not(:disabled) { border-color: var(--color-danger); filter: brightness(1.1); }
+          .vtt-btn-sm { padding: 0.25rem 0.65rem; font-size: 0.8rem; }
+          .vtt-btn-icon { padding: 0; width: 2rem; height: 2rem; }
+          .vtt-btn-icon.vtt-btn-sm { width: 1.75rem; height: 1.75rem; }
+
+          /* Champs */
+          .vtt-field-label { display: block; margin-bottom: 0.25rem; font-size: 0.875rem; font-weight: 600; color: var(--color-text); }
+          .vtt-input {
+            width: 100%; padding: 0.5rem 0.75rem; border-radius: 0.5rem; font-size: 0.9rem;
+            border: 1px solid var(--color-border); background: var(--color-surface-alt); color: var(--color-text);
+          }
+          .vtt-input::placeholder { color: var(--color-text-muted); opacity: 0.8; }
+          .vtt-input:focus { outline: none; border-color: var(--color-primary); box-shadow: 0 0 0 2px color-mix(in srgb, var(--color-primary) 25%, transparent); }
+          textarea.vtt-input { resize: vertical; }
+
+          /* Pastilles et segments (pas de <select> ni de case à cocher) */
+          .vtt-pill {
+            display: inline-flex; align-items: center; gap: 0.3rem;
+            padding: 0.25rem 0.75rem; border-radius: 999px; font-size: 0.8rem; font-weight: 500;
+            border: 1px solid var(--color-border); background: var(--color-surface-alt); color: var(--color-text-muted);
+            transition: color 0.15s, border-color 0.15s, background-color 0.15s;
+          }
+          .vtt-pill:hover { color: var(--color-text); border-color: var(--color-primary); }
+          .vtt-pill.is-selected { background: var(--color-primary); border-color: var(--color-primary); color: var(--color-on-primary, #fff); }
+          .vtt-segmented {
+            display: flex; gap: 0.25rem; padding: 0.25rem; border-radius: 0.75rem;
+            border: 1px solid var(--color-border); background: var(--color-surface-alt);
+          }
+          .vtt-segment {
+            flex: 1; display: inline-flex; align-items: center; justify-content: center; gap: 0.5rem;
+            padding: 0.5rem; border-radius: 0.5rem; font-size: 0.75rem; font-weight: 600;
+            letter-spacing: 0.04em; text-transform: uppercase; color: var(--color-text-muted);
+            transition: color 0.15s, background-color 0.15s;
+          }
+          .vtt-segment:hover { color: var(--color-text); background: var(--color-surface); }
+          .vtt-segment.is-active { background: var(--color-primary); color: var(--color-on-primary, #fff); }
+
+          /* Ligne de liste (table, personnage) */
+          .vtt-list-item {
+            display: flex; align-items: center; gap: 0.75rem; width: 100%; padding: 0.75rem;
+            border-radius: 0.75rem; border: 1px solid var(--color-border);
+            background: var(--color-surface-alt); color: var(--color-text); text-align: left;
+            transition: border-color 0.15s, background-color 0.15s;
+          }
+          button.vtt-list-item:hover { border-color: var(--color-primary); }
+          .vtt-list-item.is-selected { border-color: var(--color-primary); background: color-mix(in srgb, var(--color-primary) 15%, transparent); }
+
+          /* Encadrés */
+          .vtt-callout {
+            padding: 0.6rem 0.85rem; border-radius: 0.5rem; font-size: 0.875rem;
+            border-left: 3px solid var(--color-primary);
+            background: color-mix(in srgb, var(--color-primary) 10%, transparent);
+          }
+          .vtt-callout-danger { border-left-color: var(--color-danger); background: color-mix(in srgb, var(--color-danger) 12%, transparent); }
+
+          /* Panneaux, étiquettes, pastille « non lu » (journal, spec_journal.md §3) */
+          .vtt-panel { background: var(--color-surface); color: var(--color-text); border: 1px solid var(--color-border); border-radius: 0.75rem; }
+          .vtt-tag {
+            display: inline-flex; align-items: center; padding: 0.05rem 0.4rem; border-radius: 0.25rem;
+            font-size: 0.65rem; font-weight: 600; color: var(--color-primary);
+            background: color-mix(in srgb, var(--color-primary) 15%, transparent);
+          }
+          .vtt-unread { width: 0.5rem; height: 0.5rem; flex-shrink: 0; border-radius: 999px; background: var(--color-primary); }
+
+          /* Journal */
+          .vtt-journal-list-toggle {
+            display: flex; align-items: center; gap: 0.5rem; flex-shrink: 0; padding: 0.5rem;
+            font-size: 0.75rem; font-weight: 600; color: var(--color-text-muted);
+            background: var(--color-surface-alt); border-bottom: 1px solid var(--color-border);
+          }
+          .vtt-journal-list-toggle:hover { color: var(--color-text); }
+          .vtt-journal-title {
+            display: block; width: 100%; padding: 0.25rem 0; font-size: 1.25rem; font-weight: 700;
+            color: var(--color-text); background: transparent; border: 0; border-bottom: 2px solid transparent; outline: none;
+          }
+          input.vtt-journal-title:focus { border-bottom-color: var(--color-primary); }
+          .vtt-journal-editor { border: 1px solid var(--color-border); border-radius: 0.5rem; background: var(--color-bg); }
+        }
+    </style>
+    <link rel="stylesheet" href="../../src/client/src/systems/vikings/theme.css">
+    <link rel="stylesheet" href="brand-vikings.css">
+    <style>
+        /* Futures classes génériques des pages (copie de la planche principale) */
+        @layer components {
+            .vtt-error-code { font-size: 4.5rem; font-weight: 700; line-height: 1; color: var(--color-primary); letter-spacing: 0.05em; }
+            .vtt-error-title { font-size: 1.3rem; font-weight: 700; margin: 0.75rem 0 0.5rem; }
+        }
+        /* Planche */
+        .kit-label { font: 600 11px system-ui, sans-serif; letter-spacing: 0.1em; text-transform: uppercase; color: var(--color-text-muted); margin-bottom: 0.6rem; }
+    </style>
+</head>
+
+<body class="vk-root min-h-screen p-6">
+
+<div class="flex justify-end mb-4">
+    <button class="vtt-btn vtt-btn-sm" id="themeToggle">Mode nuit (fer)</button>
+</div>
+
+<div class="grid gap-8 lg:grid-cols-2 items-start max-w-5xl mx-auto">
+
+    <!-- Arrivée du joueur -->
+    <section>
+        <div class="kit-label">Arrivée du joueur</div>
+        <div class="vtt-panel p-6 text-center space-y-5">
+            <div class="text-3xl"><span class="vk-brand is-title"><span class="vk-brand-runes">ᚢᛁᚲᛁᛜ</span><span class="vk-brand-title">Pure Vikings</span></span></div>
+            <p class="text-muted">Choisissez votre personnage ou créez-en un nouveau.</p>
+            <div class="space-y-2">
+                <button class="vtt-btn vtt-btn-primary w-full">Créer un nouveau personnage</button>
+                <button class="vtt-btn w-full">Se connecter</button>
+            </div>
+            <a href="#" class="text-xs text-muted hover:text-primary">Accès MJ</a>
+        </div>
+    </section>
+
+    <!-- Lien de personnage invalide -->
+    <section>
+        <div class="kit-label">Arrivée avec un lien de personnage invalide</div>
+        <div class="vtt-panel p-6 text-center space-y-5">
+            <div class="text-3xl"><span class="vk-brand is-title"><span class="vk-brand-runes">ᚢᛁᚲᛁᛜ</span><span class="vk-brand-title">Pure Vikings</span></span></div>
+            <div class="vtt-callout vtt-callout-danger text-left">Ce lien de personnage n'existe pas ou plus. Demandez le bon lien à votre MJ, ou connectez-vous avec votre personnage.</div>
+            <div class="space-y-2">
+                <button class="vtt-btn vtt-btn-primary w-full">Créer un nouveau personnage</button>
+                <button class="vtt-btn w-full">Se connecter</button>
+            </div>
+        </div>
+    </section>
+
+    <!-- Connexion MJ -->
+    <section>
+        <div class="kit-label">Connexion du MJ</div>
+        <div class="vtt-panel p-6 text-center space-y-5">
+            <div class="text-3xl"><span class="vk-brand is-title"><span class="vk-brand-runes">ᚢᛁᚲᛁᛜ</span><span class="vk-brand-title">Pure Vikings</span></span></div>
+            <div>
+                <div class="font-bold text-lg">Interface du meneur</div>
+                <p class="text-sm text-muted mt-1">Le code d'accès du MJ est demandé pour continuer.</p>
+            </div>
+            <div class="space-y-2">
+                <button class="vtt-btn vtt-btn-primary w-full">Se connecter</button>
+                <button class="vtt-btn w-full">Retour à l'espace joueur</button>
+            </div>
+        </div>
+    </section>
+
+    <!-- Erreur dans un slug -->
+    <section>
+        <div class="kit-label">Erreur dans un slug (adresse inconnue)</div>
+        <div class="vtt-panel p-6 text-center">
+            <div class="text-xl mb-4"><span class="vk-brand is-title"><span class="vk-brand-runes">ᚢᛁᚲᛁᛜ</span><span class="vk-brand-title">Pure Vikings</span></span></div>
+            <div class="vtt-error-code">404</div>
+            <div class="vtt-error-title">Page introuvable</div>
+            <p class="text-sm text-muted mb-6">Cette page n'existe pas dans Pure Vikings.</p>
+            <div class="flex flex-wrap justify-center gap-2">
+                <a href="#" class="vtt-btn vtt-btn-primary">Retour à Pure Vikings</a>
+                <a href="#" class="vtt-btn">Accueil de la plateforme</a>
+            </div>
+        </div>
+    </section>
+
+    <!-- Chargement -->
+    <section class="lg:col-span-2">
+        <div class="kit-label">Chargement</div>
+        <div class="vtt-panel p-10 flex flex-col items-center gap-3">
+            <div class="text-2xl"><span class="vk-brand is-title"><span class="vk-brand-runes">ᚢᛁᚲᛁᛜ</span><span class="vk-brand-title">Pure Vikings</span></span></div>
+            <div class="text-muted animate-pulse">Chargement…</div>
+        </div>
+    </section>
+</div>
+
+<script>
+    const btn = document.getElementById('themeToggle');
+    btn.addEventListener('click', () => {
+        const dark = document.documentElement.getAttribute('data-theme') === 'dark';
+        document.documentElement.setAttribute('data-theme', dark ? 'light' : 'dark');
+        btn.textContent = dark ? 'Mode nuit (fer)' : 'Mode jour (bois)';
+    });
+</script>
+</body>
+</html>

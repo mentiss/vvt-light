@@ -23,8 +23,7 @@
 
 import { DiceRoll } from '@dice-roller/rpg-dice-roller';
 import { diceAnimBridge } from './diceAnimBridge.js';
-import useDiceConfig, {DICE_FALLBACK_CONFIG, diceStorageKey} from "../hooks/useDiceConfig.js";
-import {getSystemFromPath} from "../hooks/useSystem.js";
+import useDiceConfig, {DICE_FALLBACK_CONFIG, diceStorageKey, getDiceScope} from "../hooks/useDiceConfig.js";
 
 // ─── Erreur métier ────────────────────────────────────────────────────────────
 
@@ -85,7 +84,7 @@ const DEFAULT_HOOKS = {
  */
 export async function roll(notation, ctx, hooks = {}) {
     const h = { ...DEFAULT_HOOKS, ...hooks };
-    const slug = getSystemFromPath();
+    const slug = getDiceScope(); // slug de l'adresse, sinon configuration de la plateforme
     let animationEnabled = DICE_FALLBACK_CONFIG.animationEnabled;
     try {
         const raw_config = localStorage.getItem(diceStorageKey(slug));

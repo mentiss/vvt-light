@@ -10,6 +10,10 @@ import { useGMSession } from '../hooks/useGMSession.js';
 import CodeModal from '../components/modals/CodeModal.jsx';
 import DiceAnimationOverlay from "../components/shared/DiceAnimationOverlay.jsx";
 import LoadingScreen from "../components/gm/layout/LoadingScreen.jsx";
+import SlugPage      from '../components/platform/SlugPage.jsx';
+import SystemBrand   from '../components/platform/SystemBrand.jsx';
+import ErrorPage     from '../components/platform/ErrorPage.jsx';
+import { useSystem } from '../hooks/useSystem.js';
 
 const SYSTEM_GM_APPS = import.meta.glob('../systems/*/GMApp.jsx');
 const THEMES    = import.meta.glob('../systems/*/theme.css');
@@ -28,6 +32,7 @@ const GMPage = () => {
     const { user }                       = useAuth();
     const [gmCharacter,    setGmCharacter]    = useState(null);
     const [showCodeModal,  setShowCodeModal]  = useState(false);
+    const { label } = useSystem();
 
     const apiBase   = `/api/${system}`;
     const moduleKey = `../systems/${system}/GMApp.jsx`;
@@ -55,15 +60,12 @@ const GMPage = () => {
 
     if (!loader) {
         return (
-            <div className="min-h-screen flex items-center justify-center bg-gray-900 text-white">
-                <div className="text-center">
-                    <div className="text-5xl mb-4">🎭</div>
-                    <h1 className="text-2xl font-bold mb-2">Interface GM indisponible</h1>
-                    <p className="text-gray-400">
-                        Le système <code className="bg-gray-700 px-1 rounded">"{system}"</code> n'a pas d'interface GM.
-                    </p>
-                </div>
-            </div>
+            <ErrorPage
+                title="Interface MJ indisponible"
+                message={`Le système « ${label || system} » n'a pas encore d'interface MJ.`}
+                slug={system}
+                label={label}
+            />
         );
     }
 
@@ -92,25 +94,24 @@ const GMPage = () => {
 
     return (
         <>
-            <div className="min-h-screen bg-gray-900 flex items-center justify-center">
-                <div className="max-w-md text-center p-6 bg-gray-800 rounded-lg border border-gray-600">
-                    <div className="text-6xl mb-4">🎭</div>
-                    <h2 className="text-2xl font-bold text-white mb-4">Interface Maître de Jeu</h2>
-                    <p className="text-gray-400 mb-6">Authentification requise pour accéder à la vue MJ</p>
-                    <button
-                        onClick={() => setShowCodeModal(true)}
-                        className="px-6 py-3 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 w-full"
-                    >
-                        🔐 S'authentifier comme MJ
-                    </button>
-                    <a
-                        href={`/${system}/`}
-                        className="block mt-3 px-6 py-3 bg-gray-600 text-white rounded-lg font-semibold hover:bg-gray-500 w-full text-center"
-                    >
-                        Retour à l'accueil
-                    </a>
+            {/* Connexion du MJ : thème et marque du slug (spec_plateforme_accueil.md §6) */}
+            <SlugPage>
+                <div className="vtt-panel w-full max-w-md p-6 text-center space-y-5">
+                    <div className="text-3xl"><SystemBrand variant="title" slug={system} label={label} /></div>
+                    <div>
+                        <h2 className="font-bold text-lg">Interface du meneur</h2>
+                        <p className="text-sm text-muted mt-1">Le code d'accès du MJ est demandé pour continuer.</p>
+                    </div>
+                    <div className="space-y-2">
+                        <button type="button" onClick={() => setShowCodeModal(true)} className="vtt-btn vtt-btn-primary w-full">
+                            Se connecter
+                        </button>
+                        <a href={`/${system}/`} className="vtt-btn w-full">
+                            Retour à l'espace joueur
+                        </a>
+                    </div>
                 </div>
-            </div>
+            </SlugPage>
             <CodeModal
                 isOpen={showCodeModal}
                 onClose={() => setShowCodeModal(false)}

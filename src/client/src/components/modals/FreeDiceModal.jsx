@@ -9,6 +9,8 @@
 //   sessionId?     {number}   — pour persist historique
 //   isGM?          {boolean}  — affiche le choix "Jet secret / public" (défaut : false)
 //   defaultLabel?  {string}   — label par défaut (défaut : "Jet libre")
+//   persist?       {boolean}  — false : jet jamais enregistré dans un historique
+//                               (accueil de la plateforme, hors slug) ; défaut : true
 //   onClose        {function}
 // ─────────────────────────────────────────────────────────────────────────────
 
@@ -222,6 +224,7 @@ const FreeDiceModal = ({
                            sessionId     = null,
                            isGM          = false,
                            defaultLabel  = 'Jet libre',
+                           persist       = true,
                            onClose,
                        }) => {
     const { apiBase }   = useSystem();
@@ -272,7 +275,7 @@ const FreeDiceModal = ({
 
         const effectiveLabel = label.trim() || defaultLabel;
         console.log(`hasContext: ${hasContext}`);
-        const shouldPersist  = hasContext && (!isGM || isPublic);
+        const shouldPersist  = persist && hasContext && (!isGM || isPublic);
 
         const ctx = {
             apiBase,
@@ -307,7 +310,7 @@ const FreeDiceModal = ({
         }
     }, [
         canRoll, buildNotation, label, defaultLabel, hasContext,
-        isGM, isPublic, apiBase, fetchWithAuth, characterId,
+        isGM, isPublic, persist, apiBase, fetchWithAuth, characterId,
         characterName, sessionId, counts, modifier,
     ]);
 

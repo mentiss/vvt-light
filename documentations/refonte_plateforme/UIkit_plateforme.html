@@ -1,0 +1,489 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Plateforme — planche (lot 1)</title>
+    <!--
+        Planche de validation du lot 1 (spec_plateforme_accueil.md).
+        Construite avec le système CSS de l'app :
+          • Tailwind (navigateur) pour la mise en page, comme dans l'app ;
+          • <style id="vtt-defaults"> = copie du bloc vtt-* de src/client/src/index.css ;
+          • <style id="platform-theme"> = futur thème plateforme (index.css, enveloppe .vtt-platform),
+            avec les DEUX palettes à comparer (A : bleu nuit / or, B : anthracite / laiton) ;
+          • brand-cyberpunk.css et brand-vikings.css = futurs Brand.css des slugs
+            (classes préfixées, aucune couleur globale) ; carte par défaut = générique.
+        Les pages d'un slug (Vikings, avec son vrai theme.css) sont dans UIkit_plateforme_slug.html,
+        intégrée plus bas. À ouvrir depuis le dépôt (chemins relatifs vers les polices et le thème Vikings).
+    -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Eagle+Lake&family=Alegreya:ital@0;1&family=Noto+Sans+Runic&family=Rajdhani:wght@500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../../src/client/public/fonts/fonts.css">
+    <link rel="stylesheet" href="../../src/client/src/generated-css-utils.css">
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+
+    <style>
+        /* Ordre des couches identique à l'app : les utilitaires Tailwind l'emportent sur vtt-* */
+        @layer theme, base, components, utilities;
+    </style>
+
+    <style id="vtt-defaults">
+        /* Copie de src/client/src/index.css (bloc vtt-*) */
+        /* ── Modales génériques (documentations/spec_ui_modales.md) ─────────────── */
+        /* Style par défaut, en couche « components » : le theme.css d'un slug (hors
+           couche) le surcharge toujours, et les utilitaires Tailwind restent
+           applicables sur les classes vtt-*. Uniquement les variables --color-*. */
+        @layer components {
+          :root {
+            --vtt-z-modal: 150;          /* sous l'animation des dés (200) */
+            --vtt-z-alert: 9999;         /* alerte : au-dessus de tout */
+            --vtt-modal-gutter: 16px;
+          }
+
+          /* Fond et fenêtre */
+          .vtt-modal-backdrop {
+            position: fixed; inset: 0; z-index: var(--vtt-z-modal);
+            display: flex; align-items: center; justify-content: center;
+            padding: var(--vtt-modal-gutter);
+            background: rgba(0, 0, 0, 0.7);
+            backdrop-filter: blur(6px);
+          }
+          .vtt-modal-backdrop.vtt-modal-alert { z-index: var(--vtt-z-alert); }
+
+          .vtt-modal-panel {
+            position: relative; display: flex; flex-direction: column;
+            width: 100%; max-height: 100%; overflow: hidden;
+            background: var(--color-surface); color: var(--color-text);
+            border: 1px solid var(--color-border); border-radius: 1rem;
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.45);
+          }
+          .vtt-modal-deco { position: absolute; inset: 0; pointer-events: none; }
+
+          /* Tailles (§3.3) : relèvent de l'ergonomie, les slugs ne les redéfinissent pas */
+          .vtt-modal-sm   { max-width: 24rem; }
+          .vtt-modal-md   { max-width: 32rem; }
+          .vtt-modal-lg   { max-width: 48rem; }
+          .vtt-modal-xl   { max-width: 64rem; }
+          .vtt-modal-full { max-width: none; height: 100%; }
+
+          /* En-tête, corps, pied */
+          .vtt-modal-header {
+            display: flex; align-items: center; gap: 0.75rem; flex-shrink: 0;
+            padding: 1rem 1.25rem; border-bottom: 1px solid var(--color-border);
+          }
+          .vtt-modal-heading { flex: 1; min-width: 0; }
+          .vtt-modal-icon {
+            width: 2.25rem; height: 2.25rem; flex-shrink: 0;
+            display: flex; align-items: center; justify-content: center;
+            border-radius: 0.75rem; border: 1px solid var(--color-border);
+            background: var(--color-surface-alt); color: var(--color-primary);
+          }
+          .vtt-modal-title {
+            font-size: 0.875rem; font-weight: 700; line-height: 1.3;
+            letter-spacing: 0.08em; text-transform: uppercase;
+            color: var(--color-primary); overflow-wrap: anywhere;
+          }
+          .vtt-modal-subtitle { font-size: 0.75rem; margin-top: 0.125rem; color: var(--color-text-muted); }
+          .vtt-modal-close, .vtt-modal-expand {
+            width: 2rem; height: 2rem; flex-shrink: 0;
+            display: inline-flex; align-items: center; justify-content: center;
+            border-radius: 0.5rem; color: var(--color-text-muted); background: transparent;
+            transition: color 0.15s, background-color 0.15s;
+          }
+          .vtt-modal-close:hover, .vtt-modal-expand:hover { color: var(--color-text); background: var(--color-surface-alt); }
+          .vtt-modal-body { flex: 1 1 auto; min-height: 0; overflow-y: auto; padding: 1.25rem; }
+          .vtt-modal-footer {
+            display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 0.75rem; flex-shrink: 0;
+            padding: 1rem 1.25rem; border-top: 1px solid var(--color-border);
+          }
+
+          /* Petit écran : toute la largeur, Agrandir sans effet donc masqué */
+          @media (max-width: 639px) {
+            .vtt-modal-panel { max-width: none; }
+            .vtt-modal-expand { display: none; }
+          }
+
+          /* Barres de défilement (§3.4) : épaisseur et couleurs uniquement.
+             Les zones qui défilent à l'intérieur (listes) en héritent. */
+          .vtt-scroll, .vtt-scroll * { scrollbar-width: thin; }
+          .vtt-scroll { scrollbar-color: var(--color-border) transparent; }
+          .vtt-scroll:hover { scrollbar-color: var(--color-primary) transparent; }
+
+          /* Boutons */
+          .vtt-btn {
+            display: inline-flex; align-items: center; justify-content: center; gap: 0.4rem;
+            padding: 0.5rem 1rem; border-radius: 0.5rem; font-size: 0.875rem; font-weight: 600;
+            border: 1px solid var(--color-border); background: var(--color-surface-alt); color: var(--color-text);
+            transition: border-color 0.15s, background-color 0.15s, filter 0.15s, opacity 0.15s;
+          }
+          .vtt-btn:hover:not(:disabled) { border-color: var(--color-primary); }
+          .vtt-btn:focus-visible { outline: 2px solid var(--color-primary); outline-offset: 2px; }
+          .vtt-btn:disabled { opacity: 0.5; }
+          .vtt-btn-primary { background: var(--color-primary); border-color: var(--color-primary); color: var(--color-on-primary, #fff); }
+          .vtt-btn-primary:hover:not(:disabled) { filter: brightness(1.1); }
+          .vtt-btn-danger { background: var(--color-danger); border-color: var(--color-danger); color: #fff; }
+          .vtt-btn-danger:hover:not(:disabled) { border-color: var(--color-danger); filter: brightness(1.1); }
+          .vtt-btn-sm { padding: 0.25rem 0.65rem; font-size: 0.8rem; }
+          .vtt-btn-icon { padding: 0; width: 2rem; height: 2rem; }
+          .vtt-btn-icon.vtt-btn-sm { width: 1.75rem; height: 1.75rem; }
+
+          /* Champs */
+          .vtt-field-label { display: block; margin-bottom: 0.25rem; font-size: 0.875rem; font-weight: 600; color: var(--color-text); }
+          .vtt-input {
+            width: 100%; padding: 0.5rem 0.75rem; border-radius: 0.5rem; font-size: 0.9rem;
+            border: 1px solid var(--color-border); background: var(--color-surface-alt); color: var(--color-text);
+          }
+          .vtt-input::placeholder { color: var(--color-text-muted); opacity: 0.8; }
+          .vtt-input:focus { outline: none; border-color: var(--color-primary); box-shadow: 0 0 0 2px color-mix(in srgb, var(--color-primary) 25%, transparent); }
+          textarea.vtt-input { resize: vertical; }
+
+          /* Pastilles et segments (pas de <select> ni de case à cocher) */
+          .vtt-pill {
+            display: inline-flex; align-items: center; gap: 0.3rem;
+            padding: 0.25rem 0.75rem; border-radius: 999px; font-size: 0.8rem; font-weight: 500;
+            border: 1px solid var(--color-border); background: var(--color-surface-alt); color: var(--color-text-muted);
+            transition: color 0.15s, border-color 0.15s, background-color 0.15s;
+          }
+          .vtt-pill:hover { color: var(--color-text); border-color: var(--color-primary); }
+          .vtt-pill.is-selected { background: var(--color-primary); border-color: var(--color-primary); color: var(--color-on-primary, #fff); }
+          .vtt-segmented {
+            display: flex; gap: 0.25rem; padding: 0.25rem; border-radius: 0.75rem;
+            border: 1px solid var(--color-border); background: var(--color-surface-alt);
+          }
+          .vtt-segment {
+            flex: 1; display: inline-flex; align-items: center; justify-content: center; gap: 0.5rem;
+            padding: 0.5rem; border-radius: 0.5rem; font-size: 0.75rem; font-weight: 600;
+            letter-spacing: 0.04em; text-transform: uppercase; color: var(--color-text-muted);
+            transition: color 0.15s, background-color 0.15s;
+          }
+          .vtt-segment:hover { color: var(--color-text); background: var(--color-surface); }
+          .vtt-segment.is-active { background: var(--color-primary); color: var(--color-on-primary, #fff); }
+
+          /* Ligne de liste (table, personnage) */
+          .vtt-list-item {
+            display: flex; align-items: center; gap: 0.75rem; width: 100%; padding: 0.75rem;
+            border-radius: 0.75rem; border: 1px solid var(--color-border);
+            background: var(--color-surface-alt); color: var(--color-text); text-align: left;
+            transition: border-color 0.15s, background-color 0.15s;
+          }
+          button.vtt-list-item:hover { border-color: var(--color-primary); }
+          .vtt-list-item.is-selected { border-color: var(--color-primary); background: color-mix(in srgb, var(--color-primary) 15%, transparent); }
+
+          /* Encadrés */
+          .vtt-callout {
+            padding: 0.6rem 0.85rem; border-radius: 0.5rem; font-size: 0.875rem;
+            border-left: 3px solid var(--color-primary);
+            background: color-mix(in srgb, var(--color-primary) 10%, transparent);
+          }
+          .vtt-callout-danger { border-left-color: var(--color-danger); background: color-mix(in srgb, var(--color-danger) 12%, transparent); }
+
+          /* Panneaux, étiquettes, pastille « non lu » (journal, spec_journal.md §3) */
+          .vtt-panel { background: var(--color-surface); color: var(--color-text); border: 1px solid var(--color-border); border-radius: 0.75rem; }
+          .vtt-tag {
+            display: inline-flex; align-items: center; padding: 0.05rem 0.4rem; border-radius: 0.25rem;
+            font-size: 0.65rem; font-weight: 600; color: var(--color-primary);
+            background: color-mix(in srgb, var(--color-primary) 15%, transparent);
+          }
+          .vtt-unread { width: 0.5rem; height: 0.5rem; flex-shrink: 0; border-radius: 999px; background: var(--color-primary); }
+
+          /* Journal */
+          .vtt-journal-list-toggle {
+            display: flex; align-items: center; gap: 0.5rem; flex-shrink: 0; padding: 0.5rem;
+            font-size: 0.75rem; font-weight: 600; color: var(--color-text-muted);
+            background: var(--color-surface-alt); border-bottom: 1px solid var(--color-border);
+          }
+          .vtt-journal-list-toggle:hover { color: var(--color-text); }
+          .vtt-journal-title {
+            display: block; width: 100%; padding: 0.25rem 0; font-size: 1.25rem; font-weight: 700;
+            color: var(--color-text); background: transparent; border: 0; border-bottom: 2px solid transparent; outline: none;
+          }
+          input.vtt-journal-title:focus { border-bottom-color: var(--color-primary); }
+          .vtt-journal-editor { border: 1px solid var(--color-border); border-radius: 0.5rem; background: var(--color-bg); }
+        }
+    </style>
+
+    <style id="platform-theme">
+        /* ═══ FUTUR thème plateforme (index.css) — enveloppe .vtt-platform ═══
+           Définies sur l'enveloppe, ces couleurs l'emportent sur celles d'un thème de slug resté chargé.
+           Nuit : .dark sur <html> (préférence « global »). La planche compare deux palettes (data-palette). */
+
+        /* Palette B — anthracite / laiton (recommandée) */
+        .vtt-platform {
+            --color-primary:     #9a7a3a;   /* laiton */
+            --color-on-primary:  #fffdf8;
+            --color-secondary:   #5f6b73;
+            --color-accent:      #9a7a3a;
+            --color-danger:      #b3412f;
+            --color-success:     #5d8a4a;
+            --color-bg:          #f6f3ec;   /* blanc cassé chaud */
+            --color-surface:     #fffdf8;
+            --color-surface-alt: #ede8dc;
+            --color-text:        #26241f;   /* encre */
+            --color-text-muted:  #6f6a5f;
+            --color-border:      #dcd5c5;
+            --vtt-platform-glow: rgba(154, 122, 58, 0.12);
+        }
+        .dark .vtt-platform {
+            --color-primary:     #c9a45c;
+            --color-on-primary:  #17181a;
+            --color-secondary:   #8b97a0;
+            --color-accent:      #c9a45c;
+            --color-danger:      #e06a55;
+            --color-success:     #86b86f;
+            --color-bg:          #17181a;   /* anthracite */
+            --color-surface:     #202225;
+            --color-surface-alt: #2a2c30;
+            --color-text:        #ece8df;   /* ivoire */
+            --color-text-muted:  #9c978c;
+            --color-border:      #36383d;
+            --vtt-platform-glow: rgba(201, 164, 92, 0.10);
+        }
+
+        /* Palette A — bleu nuit / or (actuelle, déclinée en jour) */
+        .vtt-platform[data-palette="a"] {
+            --color-primary:     #a3802a;
+            --color-on-primary:  #ffffff;
+            --color-accent:      #a3802a;
+            --color-bg:          #f2f0ea;
+            --color-surface:     #ffffff;
+            --color-surface-alt: #e6e4f0;
+            --color-text:        #20203a;
+            --color-text-muted:  #66668a;
+            --color-border:      #d6d4e4;
+            --vtt-platform-glow: rgba(163, 128, 42, 0.12);
+        }
+        .dark .vtt-platform[data-palette="a"] {
+            --color-primary:     #e8c96e;
+            --color-on-primary:  #1a1a2e;
+            --color-accent:      #e8c96e;
+            --color-bg:          #1a1a2e;
+            --color-surface:     #222240;
+            --color-surface-alt: #2b2b4d;
+            --color-text:        #e6e6f0;
+            --color-text-muted:  #9a9ab8;
+            --color-border:      #383860;
+            --vtt-platform-glow: rgba(232, 201, 110, 0.10);
+        }
+
+        .vtt-platform {
+            min-height: 100vh;
+            background:
+                radial-gradient(ellipse at top, var(--vtt-platform-glow), transparent 60%),
+                var(--color-bg);
+            color: var(--color-text);
+            font-family: 'Inter', system-ui, sans-serif;
+        }
+
+        /* ═══ FUTURES classes génériques des pages plateforme (index.css, @layer components) ═══ */
+        @layer components {
+            .vtt-page-header { display: flex; align-items: center; justify-content: space-between; gap: 1rem; padding: 1rem 1.5rem; border-bottom: 1px solid var(--color-border); }
+            .vtt-brand-name { font-size: 1.35rem; font-weight: 700; letter-spacing: 0.02em; color: var(--color-text); }
+            .vtt-brand-name span { color: var(--color-primary); }
+            .vtt-section-title { font-size: 0.75rem; font-weight: 600; letter-spacing: 0.12em; text-transform: uppercase; color: var(--color-text-muted); margin-bottom: 0.75rem; }
+
+            /* Carte de slug : cadre générique, intérieur fourni par la marque du slug */
+            /* Zone de marque (lien principal) + bande générique en bas (adresse, lien MJ) :
+               le lien MJ ne recouvre jamais le visuel de la marque */
+            .vtt-system-card {
+                display: flex; flex-direction: column; width: 100%; height: 15rem; overflow: hidden;
+                border-radius: 0.9rem; border: 1px solid var(--color-border); background: var(--color-surface);
+                transition: transform 0.2s, box-shadow 0.2s, border-color 0.2s;
+            }
+            .vtt-system-card:hover { transform: translateY(-3px); border-color: var(--color-primary); box-shadow: 0 12px 30px rgba(0,0,0,0.25); }
+            .vtt-system-card-main { display: block; flex: 1; min-height: 0; color: inherit; text-decoration: none; }
+            .vtt-system-card-main:focus-visible { outline: 2px solid var(--color-primary); outline-offset: -2px; }
+            .vtt-system-card-foot {
+                display: flex; align-items: center; justify-content: space-between; gap: 0.5rem; flex-shrink: 0;
+                padding: 0.45rem 0.85rem; font-size: 0.75rem; color: var(--color-text-muted);
+                border-top: 1px solid var(--color-border); background: var(--color-surface);
+            }
+            .vtt-system-card-foot code { font-family: ui-monospace, monospace; }
+            .vtt-system-card-gm { font-weight: 600; color: var(--color-text-muted); text-decoration: none; padding: 0.1rem 0.5rem; border-radius: 999px; border: 1px solid var(--color-border); }
+            .vtt-system-card-gm:hover, .vtt-system-card-gm:focus-visible { color: var(--color-primary); border-color: var(--color-primary); }
+
+            /* Carte par défaut (slug sans Brand.jsx) */
+            .vtt-system-default { height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 0.75rem; padding: 1rem; }
+            .vtt-system-monogram {
+                width: 4rem; height: 4rem; border-radius: 999px; display: flex; align-items: center; justify-content: center;
+                font-size: 1.8rem; font-weight: 700; color: var(--color-primary);
+                border: 2px solid var(--color-primary); background: color-mix(in srgb, var(--color-primary) 10%, transparent);
+            }
+            .vtt-system-default-label { font-size: 1.1rem; font-weight: 700; }
+            .vtt-system-default-slug { font-size: 0.75rem; color: var(--color-text-muted); font-family: ui-monospace, monospace; }
+
+            /* Reprendre */
+            .vtt-resume {
+                display: flex; align-items: center; gap: 1rem; width: 100%; padding: 0.75rem 1rem; text-align: left;
+                border-radius: 0.9rem; border: 1px solid var(--color-border); background: var(--color-surface);
+                transition: border-color 0.15s, background-color 0.15s;
+            }
+            .vtt-resume:hover { border-color: var(--color-primary); background: color-mix(in srgb, var(--color-primary) 6%, var(--color-surface)); }
+            .vtt-resume-brand { width: 11rem; flex-shrink: 0; display: flex; align-items: center; justify-content: center; overflow: hidden; white-space: nowrap; font-size: 0.85rem; }
+
+            .vtt-page-footer { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 0.5rem 1.25rem; padding: 1rem 1.5rem; font-size: 0.75rem; color: var(--color-text-muted); border-top: 1px solid var(--color-border); }
+            .vtt-page-footer a { color: var(--color-text-muted); text-decoration: none; display: inline-flex; align-items: center; gap: 0.35rem; }
+            .vtt-page-footer a:hover { color: var(--color-primary); }
+
+            /* Page d'erreur */
+            .vtt-error { max-width: 28rem; margin: 0 auto; text-align: center; padding: 2.5rem 1.5rem; }
+            .vtt-error-code { font-size: 4.5rem; font-weight: 700; line-height: 1; color: var(--color-primary); letter-spacing: 0.05em; }
+            .vtt-error-title { font-size: 1.3rem; font-weight: 700; margin: 0.75rem 0 0.5rem; }
+        }
+    </style>
+
+    <link rel="stylesheet" href="brand-cyberpunk.css">   <!-- futur systems/cyberpunk/Brand.css -->
+
+    <link rel="stylesheet" href="brand-vikings.css">     <!-- futur systems/vikings/Brand.css -->
+
+    <style>
+        /* Habillage de la planche elle-même (pas dans l'app) */
+        .kit-bar { position: sticky; top: 0; z-index: 50; display: flex; flex-wrap: wrap; gap: 0.5rem 1rem; align-items: center; padding: 0.5rem 1rem; background: #0d0d0d; color: #ddd; font: 13px system-ui, sans-serif; }
+        .kit-bar button { padding: 0.2rem 0.7rem; border-radius: 999px; border: 1px solid #555; color: #ddd; }
+        .kit-bar button.on { background: #ddd; color: #111; border-color: #ddd; }
+        .kit-sep { padding: 0.75rem 1.5rem; font: 600 12px system-ui, sans-serif; letter-spacing: 0.1em; text-transform: uppercase; color: #888; background: #0d0d0d; border-top: 1px solid #333; }
+        .kit-note { font: italic 12px system-ui, sans-serif; color: #999; padding: 0 1.5rem 0.75rem; background: #0d0d0d; }
+        .vtt-icon { width: 1.1em; height: 1.1em; display: inline-block; vertical-align: -0.18em; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+    </style>
+</head>
+
+<body class="bg-[#0d0d0d]">
+
+<!-- ═══ Contrôles de la planche ═══ -->
+<div class="kit-bar">
+    <strong>Planche plateforme · lot 1</strong>
+    <span>Palette :</span>
+    <button data-palette-btn="b" class="on">B — anthracite / laiton</button>
+    <button data-palette-btn="a">A — bleu nuit / or</button>
+    <span class="ml-2">Mode :</span>
+    <button data-mode-btn="light" class="on">Jour</button>
+    <button data-mode-btn="dark">Nuit</button>
+</div>
+
+<!-- ═══ 1. Accueil ═══════════════════════════════════════════════════════════ -->
+<div class="kit-sep">1. Page d'accueil</div>
+
+<div class="vtt-platform flex flex-col" data-palette="b">
+    <header class="vtt-page-header">
+        <div>
+            <div class="vtt-brand-name">Mentiss <span>VTT</span></div>
+            <div class="text-xs text-muted mt-0.5">Plateforme de jeu de rôle</div>
+        </div>
+        <div class="flex items-center gap-2">
+            <button class="vtt-btn vtt-btn-sm" title="Lancer des dés (jamais enregistré)">
+                <svg class="vtt-icon" viewBox="0 0 24 24"><rect x="4" y="4" width="16" height="16" rx="3"/><circle cx="9" cy="9" r="1" fill="currentColor"/><circle cx="15" cy="15" r="1" fill="currentColor"/><circle cx="15" cy="9" r="1" fill="currentColor"/><circle cx="9" cy="15" r="1" fill="currentColor"/></svg>
+                <span class="hidden sm:inline">Lancer des dés</span>
+            </button>
+            <button class="vtt-btn vtt-btn-sm vtt-btn-icon" title="Mes dés (configuration de la plateforme)">
+                <svg class="vtt-icon" viewBox="0 0 24 24"><path d="M4 7h10M18 7h2M4 17h4M12 17h8"/><circle cx="16" cy="7" r="2"/><circle cx="10" cy="17" r="2"/></svg>
+            </button>
+            <button class="vtt-btn vtt-btn-sm vtt-btn-icon" title="Mode nuit" data-mode-toggle>
+                <svg class="vtt-icon" viewBox="0 0 24 24"><path d="M16 3.5A8.5 8.5 0 1 0 20.5 16 7 7 0 0 1 16 3.5z"/></svg>
+            </button>
+        </div>
+    </header>
+
+    <main class="flex-1 w-full max-w-5xl mx-auto px-4 sm:px-6 py-8 space-y-10">
+
+        <!-- Reprendre -->
+        <section>
+            <div class="vtt-section-title">Reprendre</div>
+            <div class="grid gap-3 md:grid-cols-2">
+                <button class="vtt-resume">
+                    <span class="vtt-resume-brand"><span class="vk-brand is-title"><span class="vk-brand-runes">ᚢᛁᚲᛁᛜ</span><span class="vk-brand-title">Pure Vikings</span></span></span>
+                    <span class="flex-1 min-w-0">
+                        <span class="block font-semibold truncate">Bjorn Ragnarsson</span>
+                        <span class="block text-xs text-muted">Connecté le 12/10/2026</span>
+                    </span>
+                    <svg class="vtt-icon text-primary" viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></svg>
+                </button>
+                <button class="vtt-resume">
+                    <span class="vtt-resume-brand"><span class="cp-brand is-title"><span class="cp-brand-title">CyberPunk</span></span></span>
+                    <span class="flex-1 min-w-0">
+                        <span class="block font-semibold truncate">Nyx « Glitch » Okada</span>
+                        <span class="block text-xs text-muted">Connecté le 02/10/2026</span>
+                    </span>
+                    <svg class="vtt-icon text-primary" viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></svg>
+                </button>
+            </div>
+        </section>
+
+        <!-- Systèmes -->
+        <section>
+            <div class="vtt-section-title">Choisissez votre système</div>
+            <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                <div class="vtt-system-card">
+                    <a class="vtt-system-card-main" href="#" aria-label="Cyberpunk">
+                        <span class="cp-brand">
+                            <span class="cp-brand-title">CyberPunk</span>
+                            <span class="cp-brand-divider"></span>
+                            <span class="cp-brand-sub">The Sprawl — édition Ré²</span>
+                        </span>
+                    </a>
+                    <div class="vtt-system-card-foot"><code>/cyberpunk</code><a class="vtt-system-card-gm" href="#" title="Interface MJ">MJ</a></div>
+                </div>
+                <div class="vtt-system-card">
+                    <a class="vtt-system-card-main" href="#" aria-label="Pure Vikings">
+                        <span class="vk-brand"><span class="vk-brand-c"></span>
+                            <span class="vk-brand-runes">ᛈᚢᚱᛖ ᛊᚨᚷᚨ</span>
+                            <span class="vk-brand-title">Pure Vikings</span>
+                            <span class="vk-brand-sub">Les sagas du Nord</span>
+                        </span>
+                    </a>
+                    <div class="vtt-system-card-foot"><code>/vikings</code><a class="vtt-system-card-gm" href="#" title="Interface MJ">MJ</a></div>
+                </div>
+                <div class="vtt-system-card">
+                    <a class="vtt-system-card-main" href="#" aria-label="Noctis Solis">
+                        <span class="vtt-system-default">
+                            <span class="vtt-system-monogram">N</span>
+                            <span class="vtt-system-default-label">Noctis Solis</span>
+                        </span>
+                    </a>
+                    <div class="vtt-system-card-foot"><code>/noctis</code><a class="vtt-system-card-gm" href="#" title="Interface MJ">MJ</a></div>
+                </div>
+            </div>
+            <p class="text-xs text-muted mt-3">Cartes 1 et 2 : marques des slugs (Brand.jsx, mode carte). Carte 3 : carte par défaut d'un slug sans marque (Noctis en attendant sa refonte).</p>
+        </section>
+    </main>
+
+    <footer class="vtt-page-footer">
+        <a href="https://github.com/mentiss/vvt-light" target="_blank" rel="noopener">
+            <svg class="vtt-icon" viewBox="0 0 24 24"><path d="M9 19c-4.3 1.4-4.3-2.5-6-3m12 5v-3.5c0-1 .1-1.4-.5-2 2.8-.3 5.5-1.4 5.5-6a4.6 4.6 0 0 0-1.3-3.2 4.2 4.2 0 0 0-.1-3.2s-1.1-.3-3.5 1.3a12 12 0 0 0-6.2 0C6.5 2.8 5.4 3.1 5.4 3.1a4.2 4.2 0 0 0-.1 3.2A4.6 4.6 0 0 0 4 9.5c0 4.6 2.7 5.7 5.5 6-.6.6-.6 1.2-.5 2V21"/></svg>
+            Code source sur GitHub
+        </a>
+        <span>Version a1b2c3d · 18/10/2026</span>
+        <span>9 systèmes</span>
+    </footer>
+</div>
+
+<!-- ═══ 2. Page d'erreur (plateforme) ═══════════════════════════════════════ -->
+<div class="kit-sep">2. Page d'erreur hors slug (adresse inconnue)</div>
+<div class="vtt-platform flex items-center justify-center" data-palette="b" style="min-height: 26rem">
+    <div class="vtt-panel vtt-error">
+        <div class="vtt-error-code">404</div>
+        <div class="vtt-error-title">Page introuvable</div>
+        <p class="text-sm text-muted mb-6">L'adresse demandée n'existe pas. Le lien est peut-être incomplet ou ancien.</p>
+        <a href="#" class="vtt-btn vtt-btn-primary">Retour à l'accueil</a>
+    </div>
+</div>
+
+<!-- ═══ 3. Pages d'un slug (Vikings) ═════════════════════════════════════════ -->
+<div class="kit-sep">3. Pages d'accès d'un slug — Vikings, avec son thème</div>
+<p class="kit-note">Fichier séparé (UIkit_plateforme_slug.html) : il charge le vrai theme.css de Vikings, qui redéfinit les couleurs globales et ne doit pas déteindre sur l'accueil.</p>
+<iframe src="UIkit_plateforme_slug.html" title="Pages d'accès Vikings" class="w-full block border-0" style="height: 1500px"></iframe>
+
+<script>
+    // Palette (A / B) et mode jour / nuit de la planche (dans l'app : .dark sur <html>, une seule palette)
+    const platforms = document.querySelectorAll('.vtt-platform');
+    document.querySelectorAll('[data-palette-btn]').forEach(btn => btn.addEventListener('click', () => {
+        platforms.forEach(p => p.dataset.palette = btn.dataset.paletteBtn);
+        document.querySelectorAll('[data-palette-btn]').forEach(b => b.classList.toggle('on', b === btn));
+    }));
+    const setMode = (mode) => {
+        document.documentElement.classList.toggle('dark', mode === 'dark');
+        document.querySelectorAll('[data-mode-btn]').forEach(b => b.classList.toggle('on', b.dataset.modeBtn === mode));
+    };
+    document.querySelectorAll('[data-mode-btn]').forEach(btn => btn.addEventListener('click', () => setMode(btn.dataset.modeBtn)));
+    document.querySelector('[data-mode-toggle]').addEventListener('click', () =>
+        setMode(document.documentElement.classList.contains('dark') ? 'light' : 'dark'));
+</script>
+</body>
+</html>
