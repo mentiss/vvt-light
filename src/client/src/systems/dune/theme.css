@@ -172,3 +172,34 @@
     --color-bg:             var(--dune-bg);
     --color-surface-alt:    var(--dune-surface-alt);
 }
+
+/* ── Barre de session (components/layout/SessionPlayersBar.jsx, spec_session_bar.md) ─ */
+/* ── Dune : DuneRise (dune-font), dune-card (liseré 1,5 px, rayon .5rem), dune-label, or ;
+   ✦ liseré épice pour « moi », crépuscule sous le portrait ── */
+.vtt-session-bar { background: var(--dune-surface); border-right: 1.5px solid var(--dune-border); }
+.vtt-session-bar-header { border-bottom: 1.5px solid var(--dune-border); }
+.vtt-session-bar-eyebrow { font-size: .65rem; font-weight: 700; letter-spacing: .08em; color: var(--dune-text-muted); }   /* dune-label */
+.vtt-session-bar-title { font-family: var(--font-dune); font-weight: 400; font-size: 1.05rem; letter-spacing: .04em; color: var(--dune-gold); }
+.vtt-session-bar-toggle { border-radius: .375rem; border: 1.5px solid var(--dune-border); }
+.vtt-session-bar-player { border-radius: .5rem; border: 1.5px solid transparent; }
+.vtt-session-bar-player[data-me] { background: var(--dune-surface-alt); border-color: var(--dune-border); }   /* dune-card-alt */
+.vtt-session-bar[data-mode="rail"] .vtt-session-bar-player { border: none; }
+.vtt-session-bar-player-name { font-size: .65rem; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; }
+.vtt-session-bar-player[data-online] .vtt-session-bar-player-name { color: var(--dune-ochre); }
+.vtt-session-bar-frame { padding: 1.5px; }
+.vtt-session-bar-player[data-online] .vtt-session-bar-frame { background: var(--dune-gold); }
+.vtt-session-bar-player[data-me] .vtt-session-bar-frame { padding: 2.5px; background: var(--dune-spice); }   /* ✦ épice */
+.vtt-session-bar-initials { font-family: var(--font-dune); color: var(--dune-gold); }
+.vtt-session-bar-reopen { border-radius: .375rem; background: var(--dune-gold); color: var(--dune-dark); }
+.vtt-session-bar-card { border-radius: .5rem; border: 1.5px solid var(--dune-border); background: var(--dune-surface); }
+.vtt-session-bar-card-image { position: relative; border-radius: .375rem; border: 1.5px solid var(--dune-border); font-family: var(--font-dune); color: var(--dune-gold); }
+.vtt-session-bar-card-image::after {   /* ✦ crépuscule et dunes de la marque */
+    content: ''; position: absolute; inset: auto 0 0 0; height: 32%; pointer-events: none;
+    background:
+        radial-gradient(ellipse 160% 70% at 20% 125%, rgba(139, 111, 71, .9) 50%, transparent 51%),
+        radial-gradient(ellipse 140% 65% at 85% 120%, rgba(181, 101, 29, .85) 50%, transparent 51%),
+        linear-gradient(180deg, transparent, rgba(44, 26, 14, .35));
+}
+.vtt-session-bar-card-name { font-family: var(--font-dune); font-weight: 400; font-size: 1.25rem; letter-spacing: .04em; color: var(--dune-gold); }
+.vtt-session-bar-card-player-name { font-size: .7rem; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; }
+.vtt-session-bar-card-status { letter-spacing: .08em; }
