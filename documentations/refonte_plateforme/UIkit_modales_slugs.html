@@ -1,0 +1,843 @@
+<!DOCTYPE html>
+<html lang="fr" data-slug="default" data-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Modales des slugs</title>
+    <!--
+        Planche de l'habillage des modales génériques et du journal par slug
+        (documentations/spec_ui_modales.md, lot d'habillage des slugs).
+          • bloc « vtt-defaults » = copie du bloc vtt-* d'index.css (généré) ;
+          • bloc « skins » = futurs ajouts des theme.css, préfixés html[data-slug=…] ;
+          • les VRAIS theme.css sont chargés à la volée ; Vikings sert de référence (déjà habillé).
+        Les modales sont affichées ouvertes, côte à côte, dans un fond limité à la planche.
+        Limite connue : les coins de Vikings (images en variables relatives du thème) ne
+        s'affichent pas ici, seulement dans l'appli.
+    -->
+    <link rel="stylesheet" href="../../src/client/public/fonts/fonts.css">
+    <link id="slug-theme" rel="stylesheet" href="" disabled>
+    <style>
+        @layer base, components;
+        /* Équivalent minimal du preflight de Tailwind (présent dans l'appli) : sans lui, les
+           boutons gardent la bordure en relief du navigateur */
+        @layer base {
+            button, input, textarea { margin: 0; padding: 0; border: 0 solid; background: transparent; color: inherit; font: inherit; }
+            h2, p { margin: 0; }
+        }
+        html[data-slug="default"] {
+            --color-primary: #c9a227; --color-on-primary: #1b1d21; --color-secondary: #8b97a0; --color-accent: #c9a227;
+            --color-danger: #c0503c; --color-success: #5fae6e;
+            --color-bg: #1b1d21; --color-surface: #24262b; --color-surface-alt: #2d3036;
+            --color-text: #e6e2d8; --color-text-muted: #9a968c; --color-border: rgba(201, 162, 39, 0.25);
+        }
+        html[data-slug="default"][data-theme="light"] {
+            --color-primary: #9a7a14; --color-on-primary: #fff;
+            --color-bg: #f3f0e8; --color-surface: #ffffff; --color-surface-alt: #f0ece2;
+            --color-text: #2a2a2a; --color-text-muted: #6d6a63; --color-border: rgba(0, 0, 0, 0.12);
+        }
+        * { box-sizing: border-box; }
+        [hidden] { display: none !important; }
+        body { margin: 0; background: var(--color-bg); color: var(--color-text); font-family: system-ui, sans-serif; }
+        button { font: inherit; cursor: pointer; }
+        .board-toolbar {
+            position: sticky; top: 0; z-index: 300; display: flex; align-items: center; gap: 1.1rem; flex-wrap: wrap;
+            padding: .5rem 1rem; background: #0b0b0d; color: #ddd; font: 13px/1.2 system-ui, sans-serif; border-bottom: 1px solid #333;
+        }
+        .board-toolbar strong { color: #fff; }
+        .board-group { display: flex; align-items: center; gap: .3rem; flex-wrap: wrap; }
+        .board-group > span { color: #888; margin-right: .2rem; }
+        .board-toolbar button { font: inherit; color: #ccc; background: #1d1d22; border: 1px solid #3a3a40; border-radius: 6px; padding: .3rem .6rem; }
+        .board-toolbar button.is-on { background: #c9a227; border-color: #c9a227; color: #111; }
+        .board-proposals {
+            position: relative; z-index: 299; display: flex; flex-wrap: wrap; gap: .4rem 1rem; align-items: center;
+            padding: .45rem 1rem; background: #1a1608; color: #e8d49a; font: 12px/1.3 system-ui, sans-serif; border-bottom: 1px solid #4a3f17;
+        }
+        .board-proposals span::before { content: '✦ '; color: #c9a227; }
+        .board-stage { display: grid; gap: 1.25rem; padding: 1.25rem; grid-template-columns: repeat(auto-fit, minmax(340px, 1fr)); align-items: start; }
+        .board-cell h4 { margin: 0 0 .5rem; font: 600 12px/1 system-ui, sans-serif; letter-spacing: .08em; text-transform: uppercase; color: #8a8a8a; }
+        /* Planche : le fond des modales est limité à sa case au lieu de couvrir l'écran */
+        .board-stage .vtt-modal-backdrop { position: relative; inset: auto; z-index: auto; padding: 1.5rem 1rem; border-radius: 8px; flex-direction: column; gap: 1rem; }
+        .board-stack { display: flex; flex-direction: column; gap: 1rem; width: 100%; align-items: center; }
+        .demo-journal { display: grid; grid-template-columns: 15rem 1fr; gap: .75rem; padding: .75rem; border-radius: 8px; background: var(--color-bg); min-height: 22rem; }
+    </style>
+    <style id="vtt-defaults">
+/* Copie générée du bloc vtt-* d'index.css (modales, contrôles, journal) */
+/* ── Modales génériques (documentations/spec_ui_modales.md) ─────────────── */
+/* Style par défaut, en couche « components » : le theme.css d'un slug (hors
+   couche) le surcharge toujours, et les utilitaires Tailwind restent
+   applicables sur les classes vtt-*. Uniquement les variables --color-*. */
+@layer components {
+  :root {
+    --vtt-z-modal: 150;          /* sous l'animation des dés (200) */
+    --vtt-z-alert: 9999;         /* alerte : au-dessus de tout */
+    --vtt-modal-gutter: 16px;
+  }
+
+  /* Fond et fenêtre */
+  .vtt-modal-backdrop {
+    position: fixed; inset: 0; z-index: var(--vtt-z-modal);
+    display: flex; align-items: center; justify-content: center;
+    padding: var(--vtt-modal-gutter);
+    background: rgba(0, 0, 0, 0.7);
+    backdrop-filter: blur(6px);
+  }
+  .vtt-modal-backdrop.vtt-modal-alert { z-index: var(--vtt-z-alert); }
+
+  .vtt-modal-panel {
+    position: relative; display: flex; flex-direction: column;
+    width: 100%; max-height: 100%; overflow: hidden;
+    background: var(--color-surface); color: var(--color-text);
+    border: 1px solid var(--color-border); border-radius: 1rem;
+    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.45);
+  }
+  .vtt-modal-deco { position: absolute; inset: 0; pointer-events: none; }
+
+  /* Tailles (§3.3) : relèvent de l'ergonomie, les slugs ne les redéfinissent pas */
+  .vtt-modal-sm   { max-width: 24rem; }
+  .vtt-modal-md   { max-width: 32rem; }
+  .vtt-modal-lg   { max-width: 48rem; }
+  .vtt-modal-xl   { max-width: 64rem; }
+  .vtt-modal-full { max-width: none; height: 100%; }
+
+  /* En-tête, corps, pied */
+  .vtt-modal-header {
+    display: flex; align-items: center; gap: 0.75rem; flex-shrink: 0;
+    padding: 1rem 1.25rem; border-bottom: 1px solid var(--color-border);
+  }
+  .vtt-modal-heading { flex: 1; min-width: 0; }
+  .vtt-modal-icon {
+    width: 2.25rem; height: 2.25rem; flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center;
+    border-radius: 0.75rem; border: 1px solid var(--color-border);
+    background: var(--color-surface-alt); color: var(--color-primary);
+  }
+  .vtt-modal-title {
+    font-size: 0.875rem; font-weight: 700; line-height: 1.3;
+    letter-spacing: 0.08em; text-transform: uppercase;
+    color: var(--color-primary); overflow-wrap: anywhere;
+  }
+  .vtt-modal-subtitle { font-size: 0.75rem; margin-top: 0.125rem; color: var(--color-text-muted); }
+  .vtt-modal-close, .vtt-modal-expand {
+    width: 2rem; height: 2rem; flex-shrink: 0;
+    display: inline-flex; align-items: center; justify-content: center;
+    border-radius: 0.5rem; color: var(--color-text-muted); background: transparent;
+    transition: color 0.15s, background-color 0.15s;
+  }
+  .vtt-modal-close:hover, .vtt-modal-expand:hover { color: var(--color-text); background: var(--color-surface-alt); }
+  .vtt-modal-body { flex: 1 1 auto; min-height: 0; overflow-y: auto; padding: 1.25rem; }
+  .vtt-modal-footer {
+    display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 0.75rem; flex-shrink: 0;
+    padding: 1rem 1.25rem; border-top: 1px solid var(--color-border);
+  }
+
+  /* Petit écran : toute la largeur, Agrandir sans effet donc masqué */
+  @media (max-width: 639px) {
+    .vtt-modal-panel { max-width: none; }
+    .vtt-modal-expand { display: none; }
+  }
+
+  /* Barres de défilement (§3.4) : épaisseur et couleurs uniquement.
+     Les zones qui défilent à l'intérieur (listes) en héritent. */
+  .vtt-scroll, .vtt-scroll * { scrollbar-width: thin; }
+  .vtt-scroll { scrollbar-color: var(--color-border) transparent; }
+  .vtt-scroll:hover { scrollbar-color: var(--color-primary) transparent; }
+
+  /* Boutons */
+  .vtt-btn {
+    display: inline-flex; align-items: center; justify-content: center; gap: 0.4rem;
+    padding: 0.5rem 1rem; border-radius: 0.5rem; font-size: 0.875rem; font-weight: 600;
+    border: 1px solid var(--color-border); background: var(--color-surface-alt); color: var(--color-text);
+    transition: border-color 0.15s, background-color 0.15s, filter 0.15s, opacity 0.15s;
+  }
+  .vtt-btn:hover:not(:disabled) { border-color: var(--color-primary); }
+  .vtt-btn:focus-visible { outline: 2px solid var(--color-primary); outline-offset: 2px; }
+  .vtt-btn:disabled { opacity: 0.5; }
+  .vtt-btn-primary { background: var(--color-primary); border-color: var(--color-primary); color: var(--color-on-primary, #fff); }
+  .vtt-btn-primary:hover:not(:disabled) { filter: brightness(1.1); }
+  .vtt-btn-danger { background: var(--color-danger); border-color: var(--color-danger); color: #fff; }
+  .vtt-btn-danger:hover:not(:disabled) { border-color: var(--color-danger); filter: brightness(1.1); }
+  .vtt-btn-sm { padding: 0.25rem 0.65rem; font-size: 0.8rem; }
+  .vtt-btn-icon { padding: 0; width: 2rem; height: 2rem; }
+  .vtt-btn-icon.vtt-btn-sm { width: 1.75rem; height: 1.75rem; }
+
+  /* Champs */
+  .vtt-field-label { display: block; margin-bottom: 0.25rem; font-size: 0.875rem; font-weight: 600; color: var(--color-text); }
+  .vtt-input {
+    width: 100%; padding: 0.5rem 0.75rem; border-radius: 0.5rem; font-size: 0.9rem;
+    border: 1px solid var(--color-border); background: var(--color-surface-alt); color: var(--color-text);
+  }
+  .vtt-input::placeholder { color: var(--color-text-muted); opacity: 0.8; }
+  .vtt-input:focus { outline: none; border-color: var(--color-primary); box-shadow: 0 0 0 2px color-mix(in srgb, var(--color-primary) 25%, transparent); }
+  textarea.vtt-input { resize: vertical; }
+
+  /* Pastilles et segments (pas de <select> ni de case à cocher) */
+  .vtt-pill {
+    display: inline-flex; align-items: center; gap: 0.3rem;
+    padding: 0.25rem 0.75rem; border-radius: 999px; font-size: 0.8rem; font-weight: 500;
+    border: 1px solid var(--color-border); background: var(--color-surface-alt); color: var(--color-text-muted);
+    transition: color 0.15s, border-color 0.15s, background-color 0.15s;
+  }
+  .vtt-pill:hover { color: var(--color-text); border-color: var(--color-primary); }
+  .vtt-pill.is-selected { background: var(--color-primary); border-color: var(--color-primary); color: var(--color-on-primary, #fff); }
+  .vtt-segmented {
+    display: flex; gap: 0.25rem; padding: 0.25rem; border-radius: 0.75rem;
+    border: 1px solid var(--color-border); background: var(--color-surface-alt);
+  }
+  .vtt-segment {
+    flex: 1; display: inline-flex; align-items: center; justify-content: center; gap: 0.5rem;
+    padding: 0.5rem; border-radius: 0.5rem; font-size: 0.75rem; font-weight: 600;
+    letter-spacing: 0.04em; text-transform: uppercase; color: var(--color-text-muted);
+    transition: color 0.15s, background-color 0.15s;
+  }
+  .vtt-segment:hover { color: var(--color-text); background: var(--color-surface); }
+  .vtt-segment.is-active { background: var(--color-primary); color: var(--color-on-primary, #fff); }
+
+  /* Ligne de liste (table, personnage) */
+  .vtt-list-item {
+    display: flex; align-items: center; gap: 0.75rem; width: 100%; padding: 0.75rem;
+    border-radius: 0.75rem; border: 1px solid var(--color-border);
+    background: var(--color-surface-alt); color: var(--color-text); text-align: left;
+    transition: border-color 0.15s, background-color 0.15s;
+  }
+  button.vtt-list-item:hover { border-color: var(--color-primary); }
+  .vtt-list-item.is-selected { border-color: var(--color-primary); background: color-mix(in srgb, var(--color-primary) 15%, transparent); }
+
+  /* Encadrés */
+  .vtt-callout {
+    padding: 0.6rem 0.85rem; border-radius: 0.5rem; font-size: 0.875rem;
+    border-left: 3px solid var(--color-primary);
+    background: color-mix(in srgb, var(--color-primary) 10%, transparent);
+  }
+  .vtt-callout-danger { border-left-color: var(--color-danger); background: color-mix(in srgb, var(--color-danger) 12%, transparent); }
+
+  /* Panneaux, étiquettes, pastille « non lu » (journal, spec_journal.md §3) */
+  .vtt-panel { background: var(--color-surface); color: var(--color-text); border: 1px solid var(--color-border); border-radius: 0.75rem; }
+  .vtt-tag {
+    display: inline-flex; align-items: center; padding: 0.05rem 0.4rem; border-radius: 0.25rem;
+    font-size: 0.65rem; font-weight: 600; color: var(--color-primary);
+    background: color-mix(in srgb, var(--color-primary) 15%, transparent);
+  }
+  .vtt-unread { width: 0.5rem; height: 0.5rem; flex-shrink: 0; border-radius: 999px; background: var(--color-primary); }
+
+  /* Journal */
+  .vtt-journal-list-toggle {
+    display: flex; align-items: center; gap: 0.5rem; flex-shrink: 0; padding: 0.5rem;
+    font-size: 0.75rem; font-weight: 600; color: var(--color-text-muted);
+    background: var(--color-surface-alt); border-bottom: 1px solid var(--color-border);
+  }
+  .vtt-journal-list-toggle:hover { color: var(--color-text); }
+  .vtt-journal-title {
+    display: block; width: 100%; padding: 0.25rem 0; font-size: 1.25rem; font-weight: 700;
+    color: var(--color-text); background: transparent; border: 0; border-bottom: 2px solid transparent; outline: none;
+  }
+  input.vtt-journal-title:focus { border-bottom-color: var(--color-primary); }
+  .vtt-journal-editor { border: 1px solid var(--color-border); border-radius: 0.5rem; background: var(--color-bg); }
+}
+    </style>
+    <style id="skins">
+/* ── Cyberpunk : coins coupés, néon cyan, cp-font-ui (Rajdhani) en capitales, cp-divider,
+   cp-glow-cyan ; ✦ boutons principaux en contour néon, lignes de balayage sur le panneau ── */
+html[data-slug="cyberpunk"] .vtt-modal-backdrop { background: rgba(5, 5, 8, .8); backdrop-filter: blur(3px); }
+html[data-slug="cyberpunk"] .vtt-modal-panel {   /* ✦ coins coupés + balayage (comme la carte de la barre) */
+    border-radius: 0; border: 1px solid var(--color-primary);
+    clip-path: polygon(16px 0, 100% 0, 100% calc(100% - 16px), calc(100% - 16px) 100%, 0 100%, 0 16px);
+    background: repeating-linear-gradient(0deg, rgba(255,255,255,.02) 0 1px, transparent 1px 3px), var(--color-surface);
+    box-shadow: inset 0 0 12px rgba(0, 229, 255, .06);
+}
+html[data-slug="cyberpunk"] .vtt-modal-header,
+html[data-slug="cyberpunk"] .vtt-modal-footer {   /* cp-divider */
+    border-color: transparent;
+    background: linear-gradient(to right, transparent, color-mix(in srgb, var(--color-primary) 40%, transparent) 30%, color-mix(in srgb, var(--color-primary) 40%, transparent) 70%, transparent) bottom / 100% 1px no-repeat;
+}
+html[data-slug="cyberpunk"] .vtt-modal-footer { background-position: top; }
+html[data-slug="cyberpunk"] .vtt-modal-title {
+    font-family: 'Rajdhani', 'Orbitron', sans-serif; font-size: 1rem; letter-spacing: .16em;
+    text-shadow: 0 0 8px rgba(0, 229, 255, .6);
+}
+html[data-slug="cyberpunk"] .vtt-modal-subtitle { font-family: 'Rajdhani', sans-serif; letter-spacing: .08em; text-transform: uppercase; }
+html[data-slug="cyberpunk"] .vtt-modal-close, html[data-slug="cyberpunk"] .vtt-modal-expand { border: 1px solid var(--color-border); }
+html[data-slug="cyberpunk"] .vtt-modal-close:hover, html[data-slug="cyberpunk"] .vtt-modal-expand:hover { border-color: var(--color-accent); box-shadow: var(--cp-glow-cyan); }
+html[data-slug="cyberpunk"] .vtt-btn {   /* boutons du bandeau de la fiche */
+    font-family: 'Rajdhani', sans-serif; font-weight: 700; letter-spacing: .08em; text-transform: uppercase;
+    background: var(--color-surface-alt); border-color: var(--color-border);
+}
+html[data-slug="cyberpunk"] .vtt-btn:hover:not(:disabled) { border-color: var(--color-accent); background: var(--color-surface); box-shadow: var(--cp-glow-cyan); }
+html[data-slug="cyberpunk"] .vtt-btn-primary {   /* ✦ contour néon */
+    color: var(--color-primary); border-color: var(--color-primary);
+    background: color-mix(in srgb, var(--color-primary) 14%, transparent); box-shadow: var(--cp-glow-cyan);
+}
+html[data-slug="cyberpunk"] .vtt-btn-primary:hover:not(:disabled) { background: var(--color-primary); color: var(--color-bg); filter: none; }
+html[data-slug="cyberpunk"] .vtt-btn-danger { color: var(--color-secondary); border-color: var(--color-secondary); background: color-mix(in srgb, var(--color-secondary) 14%, transparent); box-shadow: var(--cp-glow-magenta); }
+html[data-slug="cyberpunk"] .vtt-btn-danger:hover:not(:disabled) { background: var(--color-secondary); color: #fff; filter: none; }
+html[data-slug="cyberpunk"] .vtt-field-label {   /* libellés d'IdentityCard */
+    font-family: 'Rajdhani', sans-serif; font-size: .72rem; letter-spacing: .1em; text-transform: uppercase; color: var(--color-text-muted);
+}
+html[data-slug="cyberpunk"] .vtt-input:focus { border-color: var(--color-primary); box-shadow: var(--cp-glow-cyan); }
+html[data-slug="cyberpunk"] .vtt-pill { font-family: 'Rajdhani', sans-serif; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; border-radius: .5rem; }
+html[data-slug="cyberpunk"] .vtt-pill.is-selected { background: color-mix(in srgb, var(--color-primary) 18%, transparent); color: var(--color-primary); border-color: var(--color-primary); box-shadow: var(--cp-glow-cyan); }
+html[data-slug="cyberpunk"] .vtt-segment { font-family: 'Rajdhani', sans-serif; letter-spacing: .1em; }
+html[data-slug="cyberpunk"] .vtt-segment.is-active { box-shadow: var(--cp-glow-cyan); }
+html[data-slug="cyberpunk"] .vtt-list-item.is-selected { border-color: var(--color-primary); box-shadow: var(--cp-glow-cyan); }   /* vignette active */
+html[data-slug="cyberpunk"] .vtt-callout { border-radius: 0; }
+html[data-slug="cyberpunk"] .vtt-callout-danger { border-left-color: var(--color-secondary); background: color-mix(in srgb, var(--color-secondary) 12%, transparent); }
+html[data-slug="cyberpunk"] .vtt-panel { border-color: var(--color-border); }
+html[data-slug="cyberpunk"] .vtt-tag {   /* cp-stat-badge */
+    border-radius: 3px; border: 1px solid rgba(0, 229, 255, .3); background: rgba(0, 229, 255, .12);
+    font-family: 'Rajdhani', sans-serif; letter-spacing: .08em; text-transform: uppercase;
+}
+html[data-slug="cyberpunk"] .vtt-unread { box-shadow: var(--cp-glow-cyan); }
+html[data-slug="cyberpunk"] .vtt-journal-title { font-family: 'Rajdhani', sans-serif; letter-spacing: .06em; text-transform: uppercase; }
+html[data-slug="cyberpunk"] .vtt-scroll { scrollbar-color: var(--color-border) transparent; }
+html[data-slug="cyberpunk"] .vtt-scroll:hover { scrollbar-color: var(--color-primary) transparent; }
+
+/* ── Fabula : ✦ fenêtres de menu JRPG (comme la barre de session), en jour comme en nuit ;
+   Antonio (fu-font-title), or des points Fabula ; ✦ curseur ▶ sur l'élément survolé ── */
+html[data-slug="fabula"] {
+    --fu-win-top: #34489e; --fu-win-bottom: #121a52; --fu-win-edge: #eef0fa; --fu-win-shadow: #070b2a;
+    --fu-win-text: #ffffff; --fu-win-muted: #aeb8ec; --fu-win-gold: #f2d27a; --fu-win-field: #0c1240;
+}
+/* Couleurs du thème redéfinies dans les fenêtres JRPG (retour MJ : texte secondaire illisible) */
+html[data-slug="fabula"] .vtt-modal-panel, html[data-slug="fabula"] .vtt-panel {
+    --color-text: var(--fu-win-text); --color-text-muted: var(--fu-win-muted); --color-primary: var(--fu-win-gold);
+    --color-border: rgba(238, 240, 250, .3); --color-surface: var(--fu-win-bottom); --color-surface-alt: var(--fu-win-field);
+}
+html[data-slug="fabula"] .vtt-modal-backdrop { background: rgba(4, 6, 30, .6); backdrop-filter: blur(2px); }
+html[data-slug="fabula"] .vtt-modal-panel {
+    border-radius: 10px; border: 2px solid var(--fu-win-edge);
+    background: linear-gradient(180deg, var(--fu-win-top), var(--fu-win-bottom));
+    box-shadow: 0 0 0 1px var(--fu-win-shadow), inset 0 0 0 1px var(--fu-win-shadow), 0 20px 50px rgba(0,0,0,.5);
+    color: var(--fu-win-text); font-family: 'PT Sans Narrow', Arial, sans-serif;
+}
+html[data-slug="fabula"] .vtt-modal-header, html[data-slug="fabula"] .vtt-modal-footer { border-color: rgba(238, 240, 250, .22); }
+html[data-slug="fabula"] .vtt-modal-title {
+    font-family: 'Antonio', 'Arial Narrow', sans-serif; font-weight: 600; font-size: 1.05rem; letter-spacing: .05em;
+    color: var(--fu-win-gold); text-shadow: 1px 1px 0 var(--fu-win-shadow);
+}
+html[data-slug="fabula"] .vtt-modal-subtitle { color: var(--fu-win-muted); }
+html[data-slug="fabula"] .vtt-modal-close, html[data-slug="fabula"] .vtt-modal-expand { color: var(--fu-win-muted); }
+html[data-slug="fabula"] .vtt-modal-close:hover, html[data-slug="fabula"] .vtt-modal-expand:hover { color: var(--fu-win-text); background: rgba(255,255,255,.12); }
+html[data-slug="fabula"] .vtt-btn {   /* option de menu */
+    position: relative; border-radius: 4px; border-color: rgba(238, 240, 250, .4); background: transparent; color: var(--fu-win-text);
+    font-family: 'Antonio', 'Arial Narrow', sans-serif; font-weight: 600; letter-spacing: .06em; text-transform: uppercase;
+    text-shadow: 1px 1px 0 var(--fu-win-shadow);
+}
+html[data-slug="fabula"] .vtt-btn:hover:not(:disabled) { border-color: var(--fu-win-edge); background: linear-gradient(90deg, rgba(255,255,255,.2), rgba(255,255,255,.06)); }
+html[data-slug="fabula"] .vtt-btn:hover:not(:disabled)::before {   /* ✦ curseur de menu */
+    content: '▶'; position: absolute; left: -1rem; top: 50%; transform: translateY(-50%); font-size: .6rem; color: var(--fu-win-text);
+}
+html[data-slug="fabula"] .vtt-btn-primary { color: var(--fu-win-bottom); text-shadow: none; border-color: var(--fu-win-edge); background: linear-gradient(180deg, #f8e3a2, #d9b24e); }
+html[data-slug="fabula"] .vtt-btn-primary:hover:not(:disabled) { background: linear-gradient(180deg, #fff0c4, #e6c264); filter: none; }
+html[data-slug="fabula"] .vtt-btn-danger { background: linear-gradient(180deg, #e0525a, #a8323a); border-color: var(--fu-win-edge); color: #fff; }
+html[data-slug="fabula"] .vtt-field-label { font-family: 'Antonio', sans-serif; font-weight: 600; font-size: .78rem; letter-spacing: .12em; text-transform: uppercase; color: var(--fu-win-muted); }
+html[data-slug="fabula"] .vtt-input {
+    background: var(--fu-win-field); border-color: rgba(238, 240, 250, .45); border-radius: 3px; color: var(--fu-win-text);
+    font-family: 'PT Sans Narrow', Arial, sans-serif; font-size: 1rem;
+}
+html[data-slug="fabula"] .vtt-input::placeholder { color: var(--fu-win-muted); }
+html[data-slug="fabula"] .vtt-input:focus { border-color: var(--fu-win-edge); box-shadow: 0 0 0 2px rgba(242, 210, 122, .35); }
+html[data-slug="fabula"] .vtt-pill { background: transparent; color: var(--fu-win-text); border-color: rgba(238, 240, 250, .4); font-family: 'Antonio', sans-serif; letter-spacing: .05em; text-transform: uppercase; }
+html[data-slug="fabula"] .vtt-pill:hover { border-color: var(--fu-win-edge); color: var(--fu-win-text); }
+html[data-slug="fabula"] .vtt-pill.is-selected { background: linear-gradient(90deg, rgba(255,255,255,.3), rgba(255,255,255,.1)); border-color: var(--fu-win-edge); color: var(--fu-win-gold); }
+html[data-slug="fabula"] .vtt-segmented { background: var(--fu-win-field); border-color: rgba(238, 240, 250, .35); }
+html[data-slug="fabula"] .vtt-segment { color: var(--fu-win-muted); font-family: 'Antonio', sans-serif; }
+html[data-slug="fabula"] .vtt-segment:hover { color: var(--fu-win-text); background: rgba(255,255,255,.08); }
+html[data-slug="fabula"] .vtt-segment.is-active { background: linear-gradient(180deg, #f8e3a2, #d9b24e); color: var(--fu-win-bottom); }
+html[data-slug="fabula"] .vtt-list-item { position: relative; background: rgba(255,255,255,.04); border-color: rgba(238, 240, 250, .22); color: var(--fu-win-text); border-radius: 4px; }
+html[data-slug="fabula"] button.vtt-list-item:hover { border-color: var(--fu-win-edge); }
+html[data-slug="fabula"] .vtt-list-item.is-selected { background: linear-gradient(90deg, rgba(255,255,255,.22), rgba(255,255,255,.04)); border-color: var(--fu-win-edge); }
+html[data-slug="fabula"] .vtt-list-item.is-selected::before { content: '▶'; position: absolute; left: -.9rem; top: 50%; transform: translateY(-50%); font-size: .6rem; color: var(--fu-win-text); }   /* ✦ */
+html[data-slug="fabula"] .vtt-callout { background: rgba(255,255,255,.08); border-left-color: var(--fu-win-gold); }
+html[data-slug="fabula"] .vtt-callout-danger { border-left-color: #e0525a; background: rgba(224, 82, 90, .15); }
+html[data-slug="fabula"] .vtt-panel {
+    border-radius: 10px; border: 2px solid var(--fu-win-edge); color: var(--fu-win-text);
+    background: linear-gradient(180deg, var(--fu-win-top), var(--fu-win-bottom));
+    box-shadow: 0 0 0 1px var(--fu-win-shadow), inset 0 0 0 1px var(--fu-win-shadow);
+}
+html[data-slug="fabula"] .vtt-tag { background: rgba(242, 210, 122, .15); color: var(--fu-win-gold); border: 1px solid var(--fu-win-gold); border-radius: 999px; }
+html[data-slug="fabula"] .vtt-unread { background: var(--fu-win-gold); }
+html[data-slug="fabula"] .vtt-journal-title { font-family: 'Antonio', sans-serif; text-transform: uppercase; letter-spacing: .04em; color: var(--fu-win-text); }
+html[data-slug="fabula"] .vtt-journal-editor { background: var(--fu-win-field); border-color: rgba(238, 240, 250, .35); color: var(--fu-win-text); }
+html[data-slug="fabula"] .vtt-journal-list-toggle { background: rgba(255,255,255,.06); color: var(--fu-win-muted); border-color: rgba(238, 240, 250, .22); }
+html[data-slug="fabula"] .vtt-scroll { scrollbar-color: var(--fu-win-muted) transparent; }
+
+/* ── Zone Blanche : partage avec zb-modal (bord gauche accent, en-tête zb-bar), zb-btn-*,
+   zb-input, zb-pill / zb-select, zb-card, zb-eyebrow, zb-display, angles quasi droits ;
+   ✦ vignettage et lignes de balayage de zb-panel sur la fenêtre ── */
+html[data-slug="zoneblanche"] .vtt-modal-backdrop { background: rgba(0, 0, 0, .72); backdrop-filter: none; }   /* zb-modal-backdrop */
+html[data-slug="zoneblanche"] .vtt-modal-panel {   /* zb-modal */
+    border-radius: 0; border: 1px solid var(--color-border); border-left: 4px solid var(--color-accent);
+    box-shadow: 0 24px 64px rgba(0, 0, 0, .5); font-family: var(--zb-font-body);
+}
+html[data-slug="zoneblanche"] .vtt-modal-deco { z-index: 3; background: var(--zb-vignette); }   /* ✦ zb-panel */
+html[data-slug="zoneblanche"] .vtt-modal-deco::after {
+    content: ''; position: absolute; inset: 0; opacity: var(--zb-scanline-opacity);
+    background: repeating-linear-gradient(to bottom, rgba(255,255,255,.5) 0, rgba(255,255,255,.5) 1px, transparent 1px, transparent 3px);
+}
+html[data-slug="zoneblanche"] .vtt-modal-header { background: var(--zb-bar-bg); color: var(--zb-bar-text); border-bottom-color: var(--color-border); }   /* zb-modal-header */
+html[data-slug="zoneblanche"] .vtt-modal-title { font-family: var(--zb-font-display); font-size: 1.05rem; letter-spacing: .06em; color: var(--zb-bar-text); }
+html[data-slug="zoneblanche"] .vtt-modal-subtitle { font-family: var(--zb-font-mono); letter-spacing: .12em; text-transform: uppercase; color: var(--zb-bar-text); opacity: .7; }
+html[data-slug="zoneblanche"] .vtt-modal-icon { border-radius: 2px; }
+html[data-slug="zoneblanche"] .vtt-modal-close, html[data-slug="zoneblanche"] .vtt-modal-expand {   /* affichage de caméscope */
+    width: 1.6rem; height: 1.6rem; border-radius: 0; background: transparent; color: var(--zb-bar-text); opacity: .6;
+}
+html[data-slug="zoneblanche"] .vtt-modal-close:hover, html[data-slug="zoneblanche"] .vtt-modal-expand:hover { opacity: 1; background: transparent; color: var(--zb-rec-dot); }
+html[data-slug="zoneblanche"] .vtt-modal-footer { background: var(--color-surface-alt); }   /* zb-modal-footer */
+html[data-slug="zoneblanche"] .vtt-btn {   /* zb-btn-ghost */
+    border-radius: 2px; background: var(--color-surface-alt); border-color: var(--color-border);
+    font-family: var(--zb-font-mono); font-size: .78rem; letter-spacing: .08em; text-transform: uppercase;
+}
+html[data-slug="zoneblanche"] .vtt-btn-primary { background: var(--color-primary); border-color: var(--color-primary); color: var(--color-bg); }   /* zb-btn-primary */
+html[data-slug="zoneblanche"] .vtt-btn-danger { background: var(--color-accent); border-color: var(--color-accent); color: #fff; }   /* zb-btn-accent */
+html[data-slug="zoneblanche"] .vtt-field-label { font-family: var(--zb-font-mono); font-size: .68rem; font-weight: 500; letter-spacing: .18em; text-transform: uppercase; opacity: .7; }   /* zb-eyebrow */
+html[data-slug="zoneblanche"] .vtt-input { border-radius: 2px; }   /* zb-input */
+html[data-slug="zoneblanche"] .vtt-pill { border-radius: 2px; color: var(--color-text); }   /* zb-pill */
+html[data-slug="zoneblanche"] .vtt-pill.is-selected,
+html[data-slug="zoneblanche"] .vtt-segment.is-active { background: var(--zb-select-bg); color: var(--zb-select-text); border-color: var(--zb-select-border); }
+html[data-slug="zoneblanche"] .vtt-segmented, html[data-slug="zoneblanche"] .vtt-segment { border-radius: 2px; }
+html[data-slug="zoneblanche"] .vtt-segment { font-family: var(--zb-font-mono); }
+html[data-slug="zoneblanche"] .vtt-list-item { border-radius: 2px; border-left: 4px solid var(--color-primary); }   /* zb-card */
+html[data-slug="zoneblanche"] .vtt-list-item.is-selected { background: var(--zb-select-bg); color: var(--zb-select-text); border-color: var(--zb-select-border); }
+html[data-slug="zoneblanche"] .vtt-callout { border-radius: 2px; border-left-width: 4px; }
+html[data-slug="zoneblanche"] .vtt-callout-danger { border-left-color: var(--color-accent); background: color-mix(in srgb, var(--color-accent) 12%, transparent); }
+html[data-slug="zoneblanche"] .vtt-panel { border-radius: 2px; }
+html[data-slug="zoneblanche"] .vtt-tag { border-radius: 2px; font-family: var(--zb-font-mono); letter-spacing: .08em; text-transform: uppercase; }
+html[data-slug="zoneblanche"] .vtt-unread { border-radius: 0; background: var(--zb-rec-dot); animation: zb-brand-pulse 1.4s ease-in-out infinite; }   /* ✦ REC */
+html[data-slug="zoneblanche"] .vtt-journal-title { font-family: var(--zb-font-display); text-transform: uppercase; letter-spacing: .04em; }
+html[data-slug="zoneblanche"] .vtt-journal-editor { border-radius: 2px; }
+html[data-slug="zoneblanche"] .vtt-journal-list-toggle { font-family: var(--zb-font-mono); letter-spacing: .1em; text-transform: uppercase; }
+
+/* ── Achtung : ✦ réquisition papier de la Seconde Guerre mondiale (retour MJ : la première
+   version faisait jeu de stratégie des années 90). Document imprimé et tapé à la machine :
+   papier ivoire identique jour et nuit, encre brune, Special Elite pour le tapé, Oswald réservé
+   aux petits libellés imprimés, filets doubles, boutons en encre (contour), options entourées.
+   Repris du slug : Special Elite (ac-font-title), Oswald (ac-label), grain de ac-card-alt,
+   rouge du tampon de la marque (ac-brand-stamp) ── */
+html[data-slug="achtung"] {
+    --ac-paper: #efe7cf; --ac-paper-edge: #b8a878; --ac-ink: #2a2618; --ac-ink-soft: #6a6040;
+    --ac-ink-olive: #3c4a26; --ac-ink-red: #8b1a1a;
+}
+html[data-slug="achtung"] .vtt-modal-backdrop { background: rgba(20, 16, 8, .72); backdrop-filter: none; }
+html[data-slug="achtung"] .vtt-modal-panel {   /* feuille de papier, double cadre imprimé, pli horizontal */
+    border-radius: 2px; border: 1px solid var(--ac-paper-edge); color: var(--ac-ink);
+    background:
+        linear-gradient(180deg, transparent calc(50% - 1px), rgba(0,0,0,.05) 50%, rgba(255,255,255,.25) calc(50% + 1px), transparent calc(50% + 2px)),
+        url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='200' height='200' filter='url(%23noise)' opacity='0.05'/%3E%3C/svg%3E"),
+        var(--ac-paper);
+    box-shadow: inset 0 0 0 6px var(--ac-paper), inset 0 0 0 7px rgba(42, 38, 24, .35), 0 18px 44px rgba(0,0,0,.55);
+    font-family: var(--ac-font-title);
+}
+html[data-slug="achtung"] .vtt-modal-header { border-bottom: 3px double rgba(42, 38, 24, .55); margin: 0 .5rem; padding-left: .75rem; padding-right: .5rem; }
+html[data-slug="achtung"] .vtt-modal-title { font-family: var(--ac-font-title); font-weight: 400; font-size: 1.15rem; letter-spacing: .03em; text-transform: none; color: var(--ac-ink); }
+html[data-slug="achtung"] .vtt-modal-subtitle { font-family: var(--ac-font-heading); font-size: .62rem; letter-spacing: .14em; text-transform: uppercase; color: var(--ac-ink-soft); }
+html[data-slug="achtung"] .vtt-modal-close, html[data-slug="achtung"] .vtt-modal-expand { color: var(--ac-ink-soft); border-radius: 2px; }
+html[data-slug="achtung"] .vtt-modal-close:hover, html[data-slug="achtung"] .vtt-modal-expand:hover { color: var(--ac-ink); background: rgba(42, 38, 24, .08); }
+html[data-slug="achtung"] .vtt-modal-body { padding-left: 1.6rem; padding-right: 1.6rem; }
+html[data-slug="achtung"] .vtt-modal-footer { border-top: 1px solid rgba(42, 38, 24, .35); margin: 0 .5rem; }
+html[data-slug="achtung"] .vtt-modal-footer:has(> :nth-child(2))::before {   /* ✦ ligne de visa */
+    content: 'Visa'; margin-right: auto; align-self: flex-end; min-width: 8rem; padding-right: 1.5rem;
+    border-bottom: 1px dotted var(--ac-ink-soft); font-family: var(--ac-font-heading); font-size: .58rem;
+    letter-spacing: .14em; text-transform: uppercase; color: var(--ac-ink-soft);
+}
+html[data-slug="achtung"] .vtt-btn {   /* ✦ encre : contour, texte tapé */
+    border-radius: 2px; border: 1.5px solid var(--ac-ink); background: transparent; color: var(--ac-ink);
+    font-family: var(--ac-font-title); font-weight: 400; font-size: .9rem;
+}
+html[data-slug="achtung"] .vtt-btn:hover:not(:disabled) { border-color: var(--ac-ink); background: rgba(42, 38, 24, .07); }
+html[data-slug="achtung"] .vtt-btn-primary { background: var(--ac-ink-olive); border-color: var(--ac-ink-olive); color: var(--ac-paper); }
+html[data-slug="achtung"] .vtt-btn-primary:hover:not(:disabled) { background: var(--ac-ink-olive); filter: brightness(1.15); }
+html[data-slug="achtung"] .vtt-btn-danger {   /* encre rouge du tampon */
+    background: transparent; color: var(--ac-ink-red); border: 2px solid var(--ac-ink-red); letter-spacing: .12em; text-transform: uppercase; font-size: .8rem;
+}
+html[data-slug="achtung"] .vtt-btn-danger:hover:not(:disabled) { background: rgba(139, 26, 26, .08); border-color: var(--ac-ink-red); filter: none; }
+html[data-slug="achtung"] .vtt-field-label {   /* libellé imprimé du formulaire (ac-label) */
+    font-family: var(--ac-font-heading); font-size: .6rem; font-weight: 600; letter-spacing: .12em; text-transform: uppercase; color: var(--ac-ink-soft);
+}
+html[data-slug="achtung"] .vtt-input {   /* champ tapé sur la ligne */
+    border: none; border-bottom: 1px solid var(--ac-ink); border-radius: 0; background: transparent; padding-left: .2rem;
+    font-family: var(--ac-font-title); font-size: .95rem; color: var(--ac-ink);
+}
+html[data-slug="achtung"] textarea.vtt-input {   /* lignes réglées */
+    border: 1px solid rgba(42, 38, 24, .3);
+    background: repeating-linear-gradient(180deg, transparent 0 1.45rem, rgba(42, 38, 24, .18) 1.45rem calc(1.45rem + 1px));
+    line-height: 1.45rem;
+}
+html[data-slug="achtung"] .vtt-input::placeholder { color: var(--ac-ink-soft); }
+html[data-slug="achtung"] .vtt-input:focus { border-bottom-color: var(--ac-ink-olive); box-shadow: none; background-color: rgba(74, 88, 48, .06); }
+html[data-slug="achtung"] .vtt-pill {   /* ✦ option à entourer */
+    border-radius: 999px; border: 1.5px solid transparent; background: transparent; color: var(--ac-ink);
+    font-family: var(--ac-font-title); font-size: .88rem; font-weight: 400;
+}
+html[data-slug="achtung"] .vtt-pill:hover { border-color: rgba(42, 38, 24, .35); color: var(--ac-ink); }
+html[data-slug="achtung"] .vtt-pill.is-selected { border-color: var(--ac-ink); background: transparent; color: var(--ac-ink); }
+html[data-slug="achtung"] .vtt-segmented { border-radius: 0; background: transparent; border: none; border-bottom: 1px solid rgba(42, 38, 24, .35); padding: 0 0 .25rem; }
+html[data-slug="achtung"] .vtt-segment { border-radius: 999px; border: 1.5px solid transparent; color: var(--ac-ink-soft); font-family: var(--ac-font-heading); letter-spacing: .1em; }
+html[data-slug="achtung"] .vtt-segment:hover { background: transparent; color: var(--ac-ink); }
+html[data-slug="achtung"] .vtt-segment.is-active { background: transparent; border-color: var(--ac-ink); color: var(--ac-ink); }
+html[data-slug="achtung"] .vtt-list-item {   /* ligne du registre */
+    position: relative; border-radius: 0; background: transparent; border: none; border-bottom: 1px dotted var(--ac-ink-soft);
+    color: var(--ac-ink); padding-left: 1.6rem;
+}
+html[data-slug="achtung"] button.vtt-list-item:hover { border-color: var(--ac-ink); background: rgba(42, 38, 24, .05); }
+html[data-slug="achtung"] .vtt-list-item.is-selected { border-color: var(--ac-ink); background: rgba(74, 88, 48, .1); }
+html[data-slug="achtung"] .vtt-list-item.is-selected::before {   /* coche à l'encre */
+    content: '✓'; position: absolute; left: .45rem; top: 50%; transform: translateY(-50%) rotate(-6deg); font-size: 1rem; color: var(--ac-ink-olive);
+}
+html[data-slug="achtung"] .vtt-callout {   /* note tapée */
+    border-radius: 0; border-left: 2px solid var(--ac-ink); background: rgba(42, 38, 24, .05); color: var(--ac-ink); font-family: var(--ac-font-title);
+}
+html[data-slug="achtung"] .vtt-callout-danger { border-left-color: var(--ac-ink-red); color: var(--ac-ink-red); background: rgba(139, 26, 26, .06); }
+/* Journal : feuilles du même papier */
+html[data-slug="achtung"] .vtt-panel {
+    border-radius: 2px; border: 1px solid var(--ac-paper-edge); color: var(--ac-ink); font-family: var(--ac-font-title);
+    background: var(--ac-paper); box-shadow: inset 0 0 0 4px var(--ac-paper), inset 0 0 0 5px rgba(42, 38, 24, .25);
+}
+html[data-slug="achtung"] .vtt-tag { border-radius: 0; border: 1px solid var(--ac-ink-soft); background: transparent; color: var(--ac-ink-soft); font-family: var(--ac-font-heading); letter-spacing: .08em; text-transform: uppercase; }
+html[data-slug="achtung"] .vtt-unread { background: var(--ac-ink-red); }
+html[data-slug="achtung"] .vtt-journal-title { font-family: var(--ac-font-title); font-weight: 400; color: var(--ac-ink); border-bottom: 1px solid var(--ac-ink); }
+html[data-slug="achtung"] .vtt-journal-editor { border-radius: 0; border-color: rgba(42, 38, 24, .3); background: rgba(255, 255, 255, .35); color: var(--ac-ink); }
+html[data-slug="achtung"] .vtt-journal-list-toggle { background: transparent; color: var(--ac-ink-soft); border-bottom-color: rgba(42, 38, 24, .35); font-family: var(--ac-font-heading); letter-spacing: .1em; text-transform: uppercase; }
+html[data-slug="achtung"] .vtt-scroll { scrollbar-color: rgba(42, 38, 24, .4) transparent; }
+
+/* ── Delta Green : ✦ procédure administrative des années 90 (comme la barre) ; bandeau
+   dg-header, dg-field-input, dg-section-label, dg-stamp ; ✦ agrafe et tampon « Confidentiel »
+   sur la fenêtre, cases à cocher sur les pastilles, surligneur sur la ligne choisie,
+   dégradation par palier ── */
+html[data-slug="deltagreen"] .vtt-modal-backdrop { background: rgba(12, 12, 10, .72); backdrop-filter: none; }
+html[data-slug="deltagreen"] .vtt-modal-panel {
+    border-radius: 0; border: 1px solid var(--dg-field-border); font-family: var(--dg-font-body);
+    background: radial-gradient(circle at 12% 18%, var(--dg-paper-noise) 0 1px, transparent 2px) 0 0 / 7px 7px, var(--color-bg);
+    box-shadow: 4px 5px 0 rgba(0,0,0,.12), 0 20px 50px rgba(0,0,0,.45);
+}
+html[data-slug="deltagreen"] .vtt-modal-deco::before {   /* ✦ agrafe */
+    content: ''; position: absolute; top: -3px; left: 1.6rem; width: 34px; height: 6px; z-index: 6;
+    background: linear-gradient(180deg, #e6e6e6, #8c8c8c); border-radius: 1px; transform: rotate(-6deg); box-shadow: 0 1px 1px rgba(0,0,0,.4);
+}
+html[data-slug="deltagreen"] .vtt-modal-deco::after {   /* ✦ tampon « Confidentiel » */
+    content: 'Confidentiel'; position: absolute; top: 4.2rem; right: 1.2rem; padding: .1em .5em; transform: rotate(-8deg);
+    font-family: var(--dg-font-stamp); font-weight: 900; font-size: .8rem; letter-spacing: .15em; text-transform: uppercase;
+    color: var(--dg-stamp-red); border: 2px solid currentColor; opacity: .22;
+}
+html[data-slug="deltagreen"] .vtt-modal-header { background: var(--dg-header-bg); color: var(--dg-header-text); border-bottom: none; }   /* dg-header */
+html[data-slug="deltagreen"] .vtt-modal-title { font-family: var(--dg-font-stamp); font-weight: 400; font-size: .95rem; letter-spacing: .12em; color: inherit; }
+html[data-slug="deltagreen"] .vtt-modal-subtitle { font-family: var(--dg-font-body); color: inherit; opacity: .7; }
+html[data-slug="deltagreen"] .vtt-modal-icon { border-radius: 0; }
+html[data-slug="deltagreen"] .vtt-modal-close, html[data-slug="deltagreen"] .vtt-modal-expand { border-radius: 0; color: inherit; opacity: .75; }
+html[data-slug="deltagreen"] .vtt-modal-close:hover, html[data-slug="deltagreen"] .vtt-modal-expand:hover { opacity: 1; color: inherit; background: rgba(255,255,255,.12); }
+html[data-slug="deltagreen"] .vtt-modal-footer { border-top: 3px double var(--color-text); }
+html[data-slug="deltagreen"] .vtt-btn {
+    border-radius: 0; border: 1px solid var(--color-text); background: var(--dg-field-bg); color: var(--color-text);
+    font-family: var(--dg-font-body); font-size: .78rem; font-weight: 700; letter-spacing: .08em; text-transform: uppercase;
+}
+html[data-slug="deltagreen"] .vtt-btn:hover:not(:disabled) { background: var(--color-surface-alt); border-color: var(--color-text); }
+html[data-slug="deltagreen"] .vtt-btn-primary { background: var(--dg-header-bg); color: var(--dg-header-text); border-color: var(--dg-header-bg); }
+html[data-slug="deltagreen"] .vtt-btn-primary:hover:not(:disabled) { background: var(--dg-header-bg); filter: brightness(1.25); }
+html[data-slug="deltagreen"] .vtt-btn-danger {   /* dg-stamp-red */
+    background: transparent; color: var(--dg-stamp-red); border: 2px solid var(--dg-stamp-red);
+    font-family: var(--dg-font-stamp); font-weight: 900; letter-spacing: .15em;
+}
+html[data-slug="deltagreen"] .vtt-btn-danger:hover:not(:disabled) { background: color-mix(in srgb, var(--dg-stamp-red) 10%, transparent); border-color: var(--dg-stamp-red); filter: none; }
+html[data-slug="deltagreen"] .vtt-field-label { font-family: var(--dg-font-body); font-size: .65rem; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; color: var(--color-text); }   /* dg-section-label */
+html[data-slug="deltagreen"] .vtt-input {   /* dg-field-input */
+    border-radius: 0; background: var(--dg-field-bg); border: 1px solid var(--dg-field-border);
+    font-family: var(--dg-font-body); font-size: .85rem; color: var(--color-text);
+}
+html[data-slug="deltagreen"] .vtt-input:focus { border-color: var(--color-text); box-shadow: none; }
+html[data-slug="deltagreen"] .vtt-pill { border-radius: 0; background: transparent; border-color: transparent; color: var(--color-text); font-family: var(--dg-font-body); padding-left: .35rem; }
+html[data-slug="deltagreen"] .vtt-pill::before { content: '☐'; font-size: 1rem; line-height: 1; }   /* ✦ case de formulaire */
+html[data-slug="deltagreen"] .vtt-pill.is-selected { background: transparent; border-color: transparent; color: var(--color-text); font-weight: 700; }
+html[data-slug="deltagreen"] .vtt-pill.is-selected::before { content: '☒'; }
+html[data-slug="deltagreen"] .vtt-pill:hover { border-color: transparent; color: var(--color-text); text-decoration: underline; }
+html[data-slug="deltagreen"] .vtt-segmented { border-radius: 0; background: var(--dg-field-bg); border-color: var(--dg-field-border); }
+html[data-slug="deltagreen"] .vtt-segment { border-radius: 0; font-family: var(--dg-font-body); }
+html[data-slug="deltagreen"] .vtt-segment.is-active { background: var(--dg-header-bg); color: var(--dg-header-text); }
+html[data-slug="deltagreen"] .vtt-list-item { border-radius: 0; background: transparent; border: none; border-bottom: 1px dashed var(--dg-field-border); }
+html[data-slug="deltagreen"] button.vtt-list-item:hover { border-color: var(--dg-field-border); background: var(--color-surface-alt); }
+html[data-slug="deltagreen"] .vtt-list-item.is-selected {   /* ✦ surligneur */
+    border-color: var(--dg-field-border); color: #1a1a1a;
+    background: linear-gradient(100deg, transparent 1%, rgba(255, 236, 60, .8) 2%, rgba(255, 230, 40, .75) 97%, transparent 99%);
+}
+html[data-slug="deltagreen"] .vtt-callout { border-radius: 0; border: 1px dashed var(--dg-field-border); border-left: 3px solid var(--color-text); background: transparent; }
+html[data-slug="deltagreen"] .vtt-callout-danger { border-color: var(--dg-stamp-red); color: var(--dg-stamp-red); }
+html[data-slug="deltagreen"] .vtt-panel { border-radius: 0; border-color: var(--dg-field-border); background: var(--color-bg); }
+html[data-slug="deltagreen"] .vtt-tag {   /* petit dg-stamp */
+    border-radius: 0; border: 1px solid currentColor; background: transparent; color: var(--dg-stamp-blue);
+    font-family: var(--dg-font-stamp); letter-spacing: .1em; text-transform: uppercase;
+}
+html[data-slug="deltagreen"] .vtt-unread { border-radius: 0; background: var(--dg-stamp-red); }
+html[data-slug="deltagreen"] .vtt-journal-title { font-family: var(--dg-font-stamp); font-weight: 400; text-transform: uppercase; letter-spacing: .06em; }
+html[data-slug="deltagreen"] .vtt-journal-editor { border-radius: 0; background: var(--dg-field-bg); border-color: var(--dg-field-border); }
+html[data-slug="deltagreen"] .vtt-journal-list-toggle { font-family: var(--dg-font-body); letter-spacing: .1em; text-transform: uppercase; }
+html[data-slug="deltagreen"] .vtt-scroll { scrollbar-color: var(--dg-field-border) transparent; }
+/* ✦ Dégradation : les fenêtres suivent le palier de la fiche */
+html[data-slug="deltagreen"] body:has([data-palier="3"]) .vtt-modal-panel { filter: saturate(.2) contrast(1.2) sepia(.2); }
+html[data-slug="deltagreen"] body:has([data-palier="4"]) .vtt-modal-panel { filter: grayscale(1) contrast(1.5) brightness(.9); }
+
+/* ── Dune : ✦ Arrakis (retour MJ : la première version était trop ronde, sans univers).
+   Géométrie monolithique et angulaire, filets d'or fins, capitales très espacées, grain de
+   sable, horizon au crépuscule ; boutons à pans coupés. Repris du slug : DuneRise, or impérial
+   (dune-gold), épice, poussière, ocre, dune-label ── */
+html[data-slug="dune"] { --dune-cut: polygon(7px 0, calc(100% - 7px) 0, 100% 50%, calc(100% - 7px) 100%, 7px 100%, 0 50%); }
+html[data-slug="dune"] .vtt-modal-backdrop {   /* nuit du désert, brume de sable */
+    background: radial-gradient(ellipse at 50% 120%, rgba(181, 101, 29, .35), transparent 60%), rgba(20, 11, 4, .78); backdrop-filter: blur(2px);
+}
+html[data-slug="dune"] .vtt-modal-panel {   /* monolithe : angles vifs, double filet d'or, grain */
+    border-radius: 0; border: 1px solid var(--dune-gold);
+    background:
+        url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='s'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='1.2' numOctaves='2'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23s)' opacity='0.06'/%3E%3C/svg%3E"),
+        var(--dune-surface);
+    box-shadow: inset 0 0 0 3px var(--dune-surface), inset 0 0 0 4px color-mix(in srgb, var(--dune-gold) 45%, transparent), 0 24px 60px rgba(0,0,0,.55);
+}
+html[data-slug="dune"] .vtt-modal-header {   /* ✦ horizon : bande de crépuscule et soleil */
+    position: relative; border-bottom: none; padding-top: 1.1rem; padding-bottom: 1.1rem;
+    background: linear-gradient(180deg, color-mix(in srgb, var(--dune-ochre) 22%, transparent), transparent);
+}
+html[data-slug="dune"] .vtt-modal-header::after {
+    content: ''; position: absolute; left: 1.25rem; right: 1.25rem; bottom: 0; height: 9px; pointer-events: none;
+    background:
+        radial-gradient(circle at 50% 100%, var(--dune-gold) 0 4px, transparent 4.5px),
+        linear-gradient(90deg, transparent, var(--dune-gold) 20%, var(--dune-gold) 80%, transparent) bottom / 100% 1px no-repeat;
+}
+html[data-slug="dune"] .vtt-modal-title {
+    font-family: var(--font-dune); font-weight: 400; font-size: 1rem; letter-spacing: .28em; text-transform: uppercase; color: var(--dune-gold);
+}
+html[data-slug="dune"] .vtt-modal-subtitle { font-size: .62rem; font-weight: 700; letter-spacing: .3em; text-transform: uppercase; color: var(--dune-text-muted); }
+html[data-slug="dune"] .vtt-modal-icon { border-radius: 0; border-color: var(--dune-gold); }
+html[data-slug="dune"] .vtt-modal-close, html[data-slug="dune"] .vtt-modal-expand { border-radius: 0; color: var(--dune-text-muted); }
+html[data-slug="dune"] .vtt-modal-close:hover, html[data-slug="dune"] .vtt-modal-expand:hover { color: var(--dune-gold); background: color-mix(in srgb, var(--dune-gold) 12%, transparent); }
+html[data-slug="dune"] .vtt-modal-footer {
+    border-top: none; background: linear-gradient(90deg, transparent, color-mix(in srgb, var(--dune-gold) 50%, transparent) 20%, color-mix(in srgb, var(--dune-gold) 50%, transparent) 80%, transparent) top / 100% 1px no-repeat;
+}
+html[data-slug="dune"] .vtt-btn {   /* ✦ pans coupés, capitales espacées, contour sable */
+    border-radius: 0; clip-path: var(--dune-cut); padding-left: 1.3rem; padding-right: 1.3rem;
+    border: none; background: color-mix(in srgb, var(--dune-sand) 22%, transparent); color: var(--dune-text);
+    font-size: .72rem; font-weight: 700; letter-spacing: .22em; text-transform: uppercase;
+}
+html[data-slug="dune"] .vtt-btn:hover:not(:disabled) { border: none; background: color-mix(in srgb, var(--dune-sand) 38%, transparent); }
+html[data-slug="dune"] .vtt-btn-primary { background: var(--dune-gold); color: var(--dune-dark); }   /* dune-btn-primary */
+html[data-slug="dune"] .vtt-btn-primary:hover:not(:disabled) { background: var(--dune-spice); filter: none; }
+html[data-slug="dune"] .vtt-btn-danger { background: var(--dune-red); color: var(--dune-parchment); }
+html[data-slug="dune"] .vtt-btn-danger:hover:not(:disabled) { background: var(--dune-red); filter: brightness(1.2); }
+html[data-slug="dune"] .vtt-field-label { font-size: .62rem; font-weight: 700; letter-spacing: .24em; text-transform: uppercase; color: var(--dune-text-muted); }   /* dune-label, plus espacé */
+html[data-slug="dune"] .vtt-input {   /* trait d'or sous un fond de sable */
+    border: none; border-bottom: 1px solid var(--dune-gold); border-radius: 0; color: var(--dune-text);
+    background: color-mix(in srgb, var(--dune-sand) 14%, transparent);
+}
+html[data-slug="dune"] .vtt-input:focus { border-bottom-color: var(--dune-spice); box-shadow: 0 1px 0 var(--dune-spice); }
+html[data-slug="dune"] .vtt-pill {
+    border-radius: 0; clip-path: var(--dune-cut); border: none; padding-left: 1rem; padding-right: 1rem;
+    background: color-mix(in srgb, var(--dune-sand) 18%, transparent); color: var(--dune-text-muted);
+    font-size: .7rem; font-weight: 700; letter-spacing: .16em; text-transform: uppercase;
+}
+html[data-slug="dune"] .vtt-pill:hover { border: none; color: var(--dune-text); }
+html[data-slug="dune"] .vtt-pill.is-selected, html[data-slug="dune"] .vtt-segment.is-active { background: var(--dune-gold); color: var(--dune-dark); }
+html[data-slug="dune"] .vtt-segmented { border-radius: 0; border: 1px solid color-mix(in srgb, var(--dune-gold) 45%, transparent); background: transparent; }
+html[data-slug="dune"] .vtt-segment { border-radius: 0; letter-spacing: .2em; }
+html[data-slug="dune"] .vtt-list-item {   /* rangée gravée : filet d'or à gauche */
+    border-radius: 0; border: none; border-left: 2px solid color-mix(in srgb, var(--dune-gold) 40%, transparent);
+    background: color-mix(in srgb, var(--dune-sand) 12%, transparent);
+}
+html[data-slug="dune"] button.vtt-list-item:hover { border-left-color: var(--dune-gold); }
+html[data-slug="dune"] .vtt-list-item.is-selected { border-left: 2px solid var(--dune-spice); background: color-mix(in srgb, var(--dune-spice) 16%, transparent); }
+html[data-slug="dune"] .vtt-callout { border-radius: 0; border-left: 2px solid var(--dune-gold); background: color-mix(in srgb, var(--dune-gold) 10%, transparent); }
+html[data-slug="dune"] .vtt-callout-danger { border-left-color: var(--dune-red); background: color-mix(in srgb, var(--dune-red) 12%, transparent); }
+html[data-slug="dune"] .vtt-panel { border-radius: 0; border: 1px solid color-mix(in srgb, var(--dune-gold) 45%, transparent); background: var(--dune-surface); }
+html[data-slug="dune"] .vtt-tag { border-radius: 0; background: transparent; border: 1px solid color-mix(in srgb, var(--dune-gold) 55%, transparent); color: var(--dune-gold); letter-spacing: .14em; text-transform: uppercase; }
+html[data-slug="dune"] .vtt-unread { border-radius: 0; transform: rotate(45deg); background: var(--dune-spice); }
+html[data-slug="dune"] .vtt-journal-title { font-family: var(--font-dune); font-weight: 400; letter-spacing: .2em; text-transform: uppercase; color: var(--dune-gold); }
+html[data-slug="dune"] .vtt-journal-editor { border-radius: 0; border: 1px solid color-mix(in srgb, var(--dune-gold) 35%, transparent); background: color-mix(in srgb, var(--dune-sand) 10%, var(--dune-bg)); }
+html[data-slug="dune"] .vtt-journal-list-toggle { background: transparent; border-bottom-color: color-mix(in srgb, var(--dune-gold) 35%, transparent); letter-spacing: .18em; text-transform: uppercase; }
+html[data-slug="dune"] .vtt-scroll { scrollbar-color: color-mix(in srgb, var(--dune-gold) 45%, transparent) transparent; }
+html[data-slug="dune"] .vtt-scroll:hover { scrollbar-color: var(--dune-gold) transparent; }
+
+    </style>
+</head>
+<body>
+
+<div class="board-toolbar">
+    <strong>Modales des slugs</strong>
+    <div class="board-group" data-control="slug"><span>Slug</span>
+        <button data-value="default" class="is-on">Défaut</button>
+        <button data-value="vikings">Vikings (réf.)</button>
+        <button data-value="cyberpunk">Cyberpunk</button>
+        <button data-value="fabula">Fabula</button>
+        <button data-value="zoneblanche">Zone Blanche</button>
+        <button data-value="achtung">Achtung</button>
+        <button data-value="deltagreen">Delta Green</button>
+        <button data-value="dune">Dune</button>
+    </div>
+    <div class="board-group" data-control="theme"><span>Thème</span>
+        <button data-value="dark" class="is-on">Nuit</button>
+        <button data-value="light">Jour</button>
+    </div>
+    <div class="board-group" data-control="palier" id="palier-group" hidden><span>Dégradation</span>
+        <button data-value="0" class="is-on">0</button>
+        <button data-value="3">3</button>
+        <button data-value="4">4</button>
+    </div>
+</div>
+<div class="board-proposals" id="proposals" hidden></div>
+
+<div id="app-root">
+<div class="board-stage">
+
+    <!-- 1. Modale type : tous les contrôles -->
+    <div class="board-cell">
+        <h4>Modale type (configuration, formulaire)</h4>
+        <div class="vtt-modal-backdrop">
+            <div class="vtt-modal-panel vtt-modal-md">
+                <span class="vtt-modal-deco" aria-hidden="true"></span>
+                <header class="vtt-modal-header">
+                    <div class="vtt-modal-heading">
+                        <h2 class="vtt-modal-title">Configuration des dés</h2>
+                        <p class="vtt-modal-subtitle">Apparence de l'animation</p>
+                    </div>
+                    <button type="button" class="vtt-modal-expand" title="Agrandir">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg>
+                    </button>
+                    <button type="button" class="vtt-modal-close" title="Fermer">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6 6 18M6 6l12 12"/></svg>
+                    </button>
+                </header>
+                <div class="vtt-modal-body vtt-scroll">
+                    <div class="vtt-segmented" style="margin-bottom:1rem">
+                        <button type="button" class="vtt-segment is-active">Préréglage</button>
+                        <button type="button" class="vtt-segment">Personnalisé</button>
+                    </div>
+                    <label class="vtt-field-label">Nom de la table</label>
+                    <input class="vtt-input" value="La Saga du Nord" style="margin-bottom:.9rem">
+                    <label class="vtt-field-label">Notes</label>
+                    <textarea class="vtt-input" rows="2" placeholder="Notes de préparation…" style="margin-bottom:.9rem"></textarea>
+                    <label class="vtt-field-label">Texture</label>
+                    <div style="display:flex;flex-wrap:wrap;gap:.4rem;margin-bottom:1rem">
+                        <button type="button" class="vtt-pill is-selected">Bronze</button>
+                        <button type="button" class="vtt-pill">Astral</button>
+                        <button type="button" class="vtt-pill">Nuageux</button>
+                    </div>
+                    <label class="vtt-field-label">Personnages</label>
+                    <div style="display:flex;flex-direction:column;gap:.5rem;margin-bottom:1rem">
+                        <button type="button" class="vtt-list-item is-selected">Ingrid Solberg <span style="opacity:.6;margin-left:auto">Alice</span></button>
+                        <button type="button" class="vtt-list-item">Marcus Vale <span style="opacity:.6;margin-left:auto">Bastien</span></button>
+                    </div>
+                    <div class="vtt-callout" style="margin-bottom:.6rem">Les réglages sont enregistrés dans ce navigateur.</div>
+                    <div class="vtt-callout vtt-callout-danger">Le nom de la table est obligatoire.</div>
+                </div>
+                <footer class="vtt-modal-footer">
+                    <button type="button" class="vtt-btn vtt-btn-danger vtt-btn-sm">Supprimer</button>
+                    <button type="button" class="vtt-btn">Annuler</button>
+                    <button type="button" class="vtt-btn vtt-btn-primary">Enregistrer</button>
+                </footer>
+            </div>
+        </div>
+    </div>
+
+    <!-- 2. Alerte et confirmation -->
+    <div class="board-cell">
+        <h4>Alerte et confirmation</h4>
+        <div class="vtt-modal-backdrop">
+            <div class="board-stack">
+                <div class="vtt-modal-panel vtt-modal-sm">
+                    <span class="vtt-modal-deco" aria-hidden="true"></span>
+                    <header class="vtt-modal-header">
+                        <div class="vtt-modal-heading"><h2 class="vtt-modal-title">Attention</h2></div>
+                        <button type="button" class="vtt-modal-close" title="Fermer">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6 6 18M6 6l12 12"/></svg>
+                        </button>
+                    </header>
+                    <div class="vtt-modal-body vtt-scroll">Ce personnage fait déjà partie de la table.</div>
+                    <footer class="vtt-modal-footer"><button type="button" class="vtt-btn vtt-btn-primary">OK</button></footer>
+                </div>
+                <div class="vtt-modal-panel vtt-modal-sm">
+                    <span class="vtt-modal-deco" aria-hidden="true"></span>
+                    <header class="vtt-modal-header">
+                        <div class="vtt-modal-heading"><h2 class="vtt-modal-title">Retirer le personnage ?</h2></div>
+                        <button type="button" class="vtt-modal-close" title="Fermer">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6 6 18M6 6l12 12"/></svg>
+                        </button>
+                    </header>
+                    <div class="vtt-modal-body vtt-scroll">Marcus Vale ne fera plus partie de « La Saga du Nord ».</div>
+                    <footer class="vtt-modal-footer">
+                        <button type="button" class="vtt-btn">Annuler</button>
+                        <button type="button" class="vtt-btn vtt-btn-danger">Retirer</button>
+                    </footer>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 3. Journal (dans la fiche) -->
+    <div class="board-cell" style="grid-column: 1 / -1">
+        <h4>Journal (onglet de la fiche)</h4>
+        <div class="demo-journal">
+            <div class="vtt-panel" style="display:flex;flex-direction:column;overflow:hidden">
+                <button type="button" class="vtt-journal-list-toggle">◀ Entrées (3)</button>
+                <div class="vtt-scroll" style="padding:.5rem;display:flex;flex-direction:column;gap:.4rem">
+                    <button type="button" class="vtt-list-item is-selected" style="flex-direction:column;align-items:stretch;gap:.25rem;padding:.6rem">
+                        <span style="display:flex;align-items:center;gap:.4rem"><span class="vtt-unread"></span><strong>Message du MJ</strong></span>
+                        <span style="display:flex;gap:.3rem"><span class="vtt-tag">Message</span><span class="vtt-tag">Séance 4</span></span>
+                    </button>
+                    <button type="button" class="vtt-list-item" style="flex-direction:column;align-items:stretch;gap:.25rem;padding:.6rem">
+                        <strong>Notes sur le jarl</strong>
+                        <span style="display:flex;gap:.3rem"><span class="vtt-tag">Note</span></span>
+                    </button>
+                    <button type="button" class="vtt-list-item" style="flex-direction:column;align-items:stretch;gap:.25rem;padding:.6rem">
+                        <strong>Hache runique</strong>
+                        <span style="display:flex;gap:.3rem"><span class="vtt-tag">Objet</span></span>
+                    </button>
+                </div>
+            </div>
+            <div class="vtt-panel" style="display:flex;flex-direction:column;gap:.6rem;padding:1rem">
+                <input class="vtt-journal-title" value="Message du MJ">
+                <div style="display:flex;gap:.3rem"><span class="vtt-tag">Message</span><span class="vtt-tag">Séance 4</span></div>
+                <div class="vtt-callout">Envoyé par le MJ pendant la séance.</div>
+                <div class="vtt-journal-editor" style="flex:1;padding:.75rem;min-height:7rem">Le jarl vous attend à l'aube devant la maison longue. Venez armés, mais sans bouclier : c'est une audience, pas un combat.</div>
+                <div style="display:flex;justify-content:flex-end"><button type="button" class="vtt-btn vtt-btn-danger vtt-btn-sm">Supprimer</button></div>
+            </div>
+        </div>
+    </div>
+
+</div>
+</div>
+
+<script>
+    const SLUGS = ['vikings', 'cyberpunk', 'fabula', 'zoneblanche', 'achtung', 'deltagreen', 'dune'];
+    const PROPOSALS = {
+        cyberpunk:   ['Fenêtre à coins coupés avec lignes de balayage (comme la carte de la barre)', 'Boutons principaux en contour néon'],
+        fabula:      ['Fenêtres de menu JRPG bleu nuit, en jour comme en nuit (comme la barre)', 'Curseur ▶ sur le bouton survolé et la ligne choisie', 'Bouton principal doré'],
+        zoneblanche: ['Vignettage et lignes de balayage de zb-panel sur la fenêtre (la nuit)', 'Pastille « non lu » du journal en point REC clignotant', 'Boutons fermer / agrandir façon affichage de caméscope (survol en rouge)'],
+        achtung:     ['Réquisition papier WWII : feuille ivoire identique jour et nuit, double cadre imprimé, pli, texte tapé', 'Boutons à l\'encre (contour), options entourées, lignes de registre cochées', 'Ligne « Visa » dans le pied des fenêtres à plusieurs boutons'],
+        deltagreen:  ['Formulaire des années 90 : agrafe, tampon « Confidentiel » en filigrane, double filet de pied', 'Pastilles en cases à cocher ☐ / ☒', 'Ligne choisie au surligneur', 'Les fenêtres suivent la dégradation de la fiche (paliers 3 et 4)'],
+        dune:        ['Arrakis : fenêtre monolithique à angles vifs, double filet d\'or, grain de sable', 'Horizon au crépuscule et soleil sous l\'en-tête, capitales très espacées', 'Boutons et pastilles à pans coupés, champs soulignés d\'or'],
+    };
+    let slug = 'default', theme = 'dark';
+
+    function apply() {
+        const html = document.documentElement;
+        const link = document.getElementById('slug-theme');
+        if (SLUGS.includes(slug)) { link.href = `../../src/client/src/systems/${slug}/theme.css`; link.disabled = false; }
+        else { link.disabled = true; link.removeAttribute('href'); }
+        html.dataset.slug = slug;
+        if (theme === 'dark') html.dataset.theme = 'dark';
+        else if (slug === 'default') html.dataset.theme = 'light';
+        else delete html.dataset.theme;
+        html.classList.toggle('dark', theme === 'dark');
+        document.getElementById('app-root').className = slug === 'vikings' ? 'vk-root' : '';
+        document.getElementById('palier-group').hidden = slug !== 'deltagreen';
+        const p = document.getElementById('proposals');
+        p.hidden = !PROPOSALS[slug];
+        p.innerHTML = PROPOSALS[slug] ? `<strong>✦ Propositions</strong> ${PROPOSALS[slug].map(x => `<span>${x}</span>`).join('')}` : '';
+    }
+
+    document.querySelector('.board-toolbar').addEventListener('click', e => {
+        const btn = e.target.closest('button[data-value]');
+        if (!btn) return;
+        const control = btn.closest('[data-control]').dataset.control;
+        if (control === 'slug')   slug = btn.dataset.value;
+        if (control === 'theme')  theme = btn.dataset.value;
+        if (control === 'palier') document.getElementById('app-root').dataset.palier = btn.dataset.value;
+        btn.parentElement.querySelectorAll('button').forEach(b => b.classList.toggle('is-on', b === btn));
+        apply();
+    });
+    apply();
+</script>
+</body>
+</html>

@@ -625,3 +625,78 @@ body:has([data-palier="4"]) .vtt-session-bar-card:not([data-me]) .vtt-session-ba
     clip-path: none;
     background: linear-gradient(var(--dg-censure-color), var(--dg-censure-color)) .4rem 70% / calc(100% - .8rem) 45% no-repeat, var(--dg-field-bg);
 }
+
+/* ── Modales génériques et journal (components/ui/Modal.jsx, spec_ui_modales.md §11) ─ */
+/* ── Delta Green : ✦ procédure administrative des années 90 (comme la barre) ; bandeau
+   dg-header, dg-field-input, dg-section-label, dg-stamp ; ✦ agrafe et tampon « Confidentiel »
+   sur la fenêtre, cases à cocher sur les pastilles, surligneur sur la ligne choisie,
+   dégradation par palier ── */
+.vtt-modal-backdrop { background: rgba(12, 12, 10, .72); backdrop-filter: none; }
+.vtt-modal-panel {
+    border-radius: 0; border: 1px solid var(--dg-field-border); font-family: var(--dg-font-body);
+    background: radial-gradient(circle at 12% 18%, var(--dg-paper-noise) 0 1px, transparent 2px) 0 0 / 7px 7px, var(--color-bg);
+    box-shadow: 4px 5px 0 rgba(0,0,0,.12), 0 20px 50px rgba(0,0,0,.45);
+}
+.vtt-modal-deco::before {   /* ✦ agrafe */
+    content: ''; position: absolute; top: -3px; left: 1.6rem; width: 34px; height: 6px; z-index: 6;
+    background: linear-gradient(180deg, #e6e6e6, #8c8c8c); border-radius: 1px; transform: rotate(-6deg); box-shadow: 0 1px 1px rgba(0,0,0,.4);
+}
+.vtt-modal-deco::after {   /* ✦ tampon « Confidentiel » */
+    content: 'Confidentiel'; position: absolute; top: 4.2rem; right: 1.2rem; padding: .1em .5em; transform: rotate(-8deg);
+    font-family: var(--dg-font-stamp); font-weight: 900; font-size: .8rem; letter-spacing: .15em; text-transform: uppercase;
+    color: var(--dg-stamp-red); border: 2px solid currentColor; opacity: .22;
+}
+.vtt-modal-header { background: var(--dg-header-bg); color: var(--dg-header-text); border-bottom: none; }   /* dg-header */
+.vtt-modal-title { font-family: var(--dg-font-stamp); font-weight: 400; font-size: .95rem; letter-spacing: .12em; color: inherit; }
+.vtt-modal-subtitle { font-family: var(--dg-font-body); color: inherit; opacity: .7; }
+.vtt-modal-icon { border-radius: 0; }
+.vtt-modal-close, .vtt-modal-expand { border-radius: 0; color: inherit; opacity: .75; }
+.vtt-modal-close:hover, .vtt-modal-expand:hover { opacity: 1; color: inherit; background: rgba(255,255,255,.12); }
+.vtt-modal-footer { border-top: 3px double var(--color-text); }
+.vtt-btn {
+    border-radius: 0; border: 1px solid var(--color-text); background: var(--dg-field-bg); color: var(--color-text);
+    font-family: var(--dg-font-body); font-size: .78rem; font-weight: 700; letter-spacing: .08em; text-transform: uppercase;
+}
+.vtt-btn:hover:not(:disabled) { background: var(--color-surface-alt); border-color: var(--color-text); }
+.vtt-btn-primary { background: var(--dg-header-bg); color: var(--dg-header-text); border-color: var(--dg-header-bg); }
+.vtt-btn-primary:hover:not(:disabled) { background: var(--dg-header-bg); filter: brightness(1.25); }
+.vtt-btn-danger {   /* dg-stamp-red */
+    background: transparent; color: var(--dg-stamp-red); border: 2px solid var(--dg-stamp-red);
+    font-family: var(--dg-font-stamp); font-weight: 900; letter-spacing: .15em;
+}
+.vtt-btn-danger:hover:not(:disabled) { background: color-mix(in srgb, var(--dg-stamp-red) 10%, transparent); border-color: var(--dg-stamp-red); filter: none; }
+.vtt-field-label { font-family: var(--dg-font-body); font-size: .65rem; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; color: var(--color-text); }   /* dg-section-label */
+.vtt-input {   /* dg-field-input */
+    border-radius: 0; background: var(--dg-field-bg); border: 1px solid var(--dg-field-border);
+    font-family: var(--dg-font-body); font-size: .85rem; color: var(--color-text);
+}
+.vtt-input:focus { border-color: var(--color-text); box-shadow: none; }
+.vtt-pill { border-radius: 0; background: transparent; border-color: transparent; color: var(--color-text); font-family: var(--dg-font-body); padding-left: .35rem; }
+.vtt-pill::before { content: '☐'; font-size: 1rem; line-height: 1; }   /* ✦ case de formulaire */
+.vtt-pill.is-selected { background: transparent; border-color: transparent; color: var(--color-text); font-weight: 700; }
+.vtt-pill.is-selected::before { content: '☒'; }
+.vtt-pill:hover { border-color: transparent; color: var(--color-text); text-decoration: underline; }
+.vtt-segmented { border-radius: 0; background: var(--dg-field-bg); border-color: var(--dg-field-border); }
+.vtt-segment { border-radius: 0; font-family: var(--dg-font-body); }
+.vtt-segment.is-active { background: var(--dg-header-bg); color: var(--dg-header-text); }
+.vtt-list-item { border-radius: 0; background: transparent; border: none; border-bottom: 1px dashed var(--dg-field-border); }
+button.vtt-list-item:hover { border-color: var(--dg-field-border); background: var(--color-surface-alt); }
+.vtt-list-item.is-selected {   /* ✦ surligneur */
+    border-color: var(--dg-field-border); color: #1a1a1a;
+    background: linear-gradient(100deg, transparent 1%, rgba(255, 236, 60, .8) 2%, rgba(255, 230, 40, .75) 97%, transparent 99%);
+}
+.vtt-callout { border-radius: 0; border: 1px dashed var(--dg-field-border); border-left: 3px solid var(--color-text); background: transparent; }
+.vtt-callout-danger { border-color: var(--dg-stamp-red); color: var(--dg-stamp-red); }
+.vtt-panel { border-radius: 0; border-color: var(--dg-field-border); background: var(--color-bg); }
+.vtt-tag {   /* petit dg-stamp */
+    border-radius: 0; border: 1px solid currentColor; background: transparent; color: var(--dg-stamp-blue);
+    font-family: var(--dg-font-stamp); letter-spacing: .1em; text-transform: uppercase;
+}
+.vtt-unread { border-radius: 0; background: var(--dg-stamp-red); }
+.vtt-journal-title { font-family: var(--dg-font-stamp); font-weight: 400; text-transform: uppercase; letter-spacing: .06em; }
+.vtt-journal-editor { border-radius: 0; background: var(--dg-field-bg); border-color: var(--dg-field-border); }
+.vtt-journal-list-toggle { font-family: var(--dg-font-body); letter-spacing: .1em; text-transform: uppercase; }
+.vtt-scroll { scrollbar-color: var(--dg-field-border) transparent; }
+/* ✦ Dégradation : les fenêtres suivent le palier de la fiche */
+body:has([data-palier="3"]) .vtt-modal-panel { filter: saturate(.2) contrast(1.2) sepia(.2); }
+body:has([data-palier="4"]) .vtt-modal-panel { filter: grayscale(1) contrast(1.5) brightness(.9); }

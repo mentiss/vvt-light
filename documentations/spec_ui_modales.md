@@ -182,3 +182,31 @@ Pour chaque modale migrée : fond opaque corrigé, couleurs codées en dur et al
 | U-2 | L'alerte (`AlertModal`) passe-t-elle au-dessus de tout, y compris l'animation des dés, comme aujourd'hui (z-index 9999) ? | **Oui** : une variante « alerte » du z-index (`--vtt-z-alert`), seule exception à la règle du z-index unique. | Oui comme le suggère la reco               |
 | U-3 | Agrandir / Réduire : la taille choisie est-elle mémorisée d'une ouverture à l'autre ? | **Non** : la modale rouvre à sa taille d'origine. La mémoriser (par modale, dans le navigateur de chaque joueur) reste possible plus tard si le besoin se fait sentir. | OK |
 | U-4 | Quelles modales du pilote sont agrandissables ? | **Gestion des tables** et **composition de table** (listes qui peuvent s'allonger). Pas l'alerte ni les formulaires courts. Au lot 2 : liste des personnages, configuration des dés. | OK |
+
+---
+
+## 11. Habillage des slugs (validé sur la planche et implémenté le 2026-10-18)
+
+Planche : `documentations/refonte_plateforme/UIkit_modales_slugs.html` (modale type avec tous les contrôles, alerte et confirmation, journal ; Vikings en référence).
+
+### 11.1 Décisions (validées par le MJ le 2026-10-18)
+
+| # | Sujet | Décision |
+|---|---|---|
+| H-1 | Slugs | Cyberpunk, Fabula, Zone Blanche, Achtung, Delta Green, Dune. Hors périmètre : Tecumah (décision du MJ), Noctis (refonte à venir). Vikings est déjà habillé (lot pilote). |
+| H-2 | Classes | Modales (`vtt-modal-*`), contrôles (§4), barres de défilement (`vtt-scroll`) **et journal** (`vtt-panel`, `vtt-tag`, `vtt-unread`, `vtt-journal-*`). |
+| H-3 | Identité | Cohérente avec la barre de session de chaque slug (`spec_session_bar.md` §7 et §7 bis) ; les motifs forts restent sur le cadre, le corps reste lisible. |
+| H-4 | Achtung | Formulaire militaire, façon réquisition (et non passeport, réservé à la carte de la barre). Première version refusée (« jeu de stratégie des années 90 ») : refaite en document papier WWII. |
+| H-5 | Partage | Quand le slug a déjà ses modales et contrôles (`zb-*`, `ac-*`, `dune-*`), les classes génériques en reprennent le rendu. |
+| H-6 | Méthode | Propositions au-delà de l'existant signalées ✦ sur la planche ; un commit par slug. |
+
+### 11.2 Habillages
+
+| Slug | Repris du slug | ✦ Propositions |
+|---|---|---|
+| Cyberpunk | Rajdhani en capitales (`cp-font-ui`), `cp-divider` en en-tête et pied, boutons du bandeau de la fiche, `cp-glow-cyan` sur la sélection, badges `cp-stat-badge` pour les étiquettes du journal | Fenêtre à coins coupés avec lignes de balayage (comme la carte de la barre), boutons principaux en contour néon (magenta pour le danger) |
+| Fabula | Antonio (`fu-font-title`), PT Sans Narrow, or des points Fabula | Fenêtres de menu JRPG bleu nuit en jour comme en nuit (modales et panneaux du journal), curseur ▶ sur le bouton survolé et la ligne choisie, bouton principal doré |
+| Zone Blanche | `zb-modal` (bord gauche accent, en-tête `zb-bar`, pied `surface-alt`), `zb-btn-*`, `zb-input`, `zb-pill` / `zb-select`, `zb-card`, `zb-eyebrow`, `zb-display` | Vignettage et lignes de balayage de `zb-panel` sur la fenêtre, pastille « non lu » en point REC, boutons fermer / agrandir façon affichage de caméscope (survol en rouge) |
+| Achtung | Special Elite (`ac-font-title`), Oswald pour les petits libellés (`ac-label`), grain de `ac-card-alt`, rouge du tampon de la marque | Réquisition papier WWII : feuille ivoire identique jour et nuit, double cadre imprimé, pli, texte tapé, boutons à l'encre (contour), options entourées, lignes de registre cochées, ligne « Visa » dans le pied |
+| Delta Green | Bandeau `dg-header`, `dg-field-input`, `dg-section-label`, `dg-stamp` (bouton de danger, étiquettes) | Agrafe et tampon « Confidentiel » en filigrane, double filet de pied, pastilles en cases ☐ / ☒, ligne choisie au surligneur, fenêtres qui suivent la dégradation de la fiche (paliers 3 et 4) |
+| Dune | DuneRise, or impérial, épice, poussière, ocre, `dune-label` (retour du MJ : la première version, calquée sur `dune-card`, était trop ronde et sans univers) | Arrakis : fenêtre monolithique à angles vifs, double filet d'or, grain de sable, horizon au crépuscule et soleil sous l'en-tête, capitales très espacées, boutons et pastilles à pans coupés, champs soulignés d'or |

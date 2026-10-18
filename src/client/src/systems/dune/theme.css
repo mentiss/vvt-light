@@ -203,3 +203,83 @@
 .vtt-session-bar-card-name { font-family: var(--font-dune); font-weight: 400; font-size: 1.25rem; letter-spacing: .04em; color: var(--dune-gold); }
 .vtt-session-bar-card-player-name { font-size: .7rem; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; }
 .vtt-session-bar-card-status { letter-spacing: .08em; }
+
+/* ── Modales génériques et journal (components/ui/Modal.jsx, spec_ui_modales.md §11) ─ */
+/* ── Dune : ✦ Arrakis (retour MJ : la première version était trop ronde, sans univers).
+   Géométrie monolithique et angulaire, filets d'or fins, capitales très espacées, grain de
+   sable, horizon au crépuscule ; boutons à pans coupés. Repris du slug : DuneRise, or impérial
+   (dune-gold), épice, poussière, ocre, dune-label ── */
+:root { --dune-cut: polygon(7px 0, calc(100% - 7px) 0, 100% 50%, calc(100% - 7px) 100%, 7px 100%, 0 50%); }
+.vtt-modal-backdrop {   /* nuit du désert, brume de sable */
+    background: radial-gradient(ellipse at 50% 120%, rgba(181, 101, 29, .35), transparent 60%), rgba(20, 11, 4, .78); backdrop-filter: blur(2px);
+}
+.vtt-modal-panel {   /* monolithe : angles vifs, double filet d'or, grain */
+    border-radius: 0; border: 1px solid var(--dune-gold);
+    background:
+        url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='s'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='1.2' numOctaves='2'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23s)' opacity='0.06'/%3E%3C/svg%3E"),
+        var(--dune-surface);
+    box-shadow: inset 0 0 0 3px var(--dune-surface), inset 0 0 0 4px color-mix(in srgb, var(--dune-gold) 45%, transparent), 0 24px 60px rgba(0,0,0,.55);
+}
+.vtt-modal-header {   /* ✦ horizon : bande de crépuscule et soleil */
+    position: relative; border-bottom: none; padding-top: 1.1rem; padding-bottom: 1.1rem;
+    background: linear-gradient(180deg, color-mix(in srgb, var(--dune-ochre) 22%, transparent), transparent);
+}
+.vtt-modal-header::after {
+    content: ''; position: absolute; left: 1.25rem; right: 1.25rem; bottom: 0; height: 9px; pointer-events: none;
+    background:
+        radial-gradient(circle at 50% 100%, var(--dune-gold) 0 4px, transparent 4.5px),
+        linear-gradient(90deg, transparent, var(--dune-gold) 20%, var(--dune-gold) 80%, transparent) bottom / 100% 1px no-repeat;
+}
+.vtt-modal-title {
+    font-family: var(--font-dune); font-weight: 400; font-size: 1rem; letter-spacing: .28em; text-transform: uppercase; color: var(--dune-gold);
+}
+.vtt-modal-subtitle { font-size: .62rem; font-weight: 700; letter-spacing: .3em; text-transform: uppercase; color: var(--dune-text-muted); }
+.vtt-modal-icon { border-radius: 0; border-color: var(--dune-gold); }
+.vtt-modal-close, .vtt-modal-expand { border-radius: 0; color: var(--dune-text-muted); }
+.vtt-modal-close:hover, .vtt-modal-expand:hover { color: var(--dune-gold); background: color-mix(in srgb, var(--dune-gold) 12%, transparent); }
+.vtt-modal-footer {
+    border-top: none; background: linear-gradient(90deg, transparent, color-mix(in srgb, var(--dune-gold) 50%, transparent) 20%, color-mix(in srgb, var(--dune-gold) 50%, transparent) 80%, transparent) top / 100% 1px no-repeat;
+}
+.vtt-btn {   /* ✦ pans coupés, capitales espacées, contour sable */
+    border-radius: 0; clip-path: var(--dune-cut); padding-left: 1.3rem; padding-right: 1.3rem;
+    border: none; background: color-mix(in srgb, var(--dune-sand) 22%, transparent); color: var(--dune-text);
+    font-size: .72rem; font-weight: 700; letter-spacing: .22em; text-transform: uppercase;
+}
+.vtt-btn:hover:not(:disabled) { border: none; background: color-mix(in srgb, var(--dune-sand) 38%, transparent); }
+.vtt-btn-primary { background: var(--dune-gold); color: var(--dune-dark); }   /* dune-btn-primary */
+.vtt-btn-primary:hover:not(:disabled) { background: var(--dune-spice); filter: none; }
+.vtt-btn-danger { background: var(--dune-red); color: var(--dune-parchment); }
+.vtt-btn-danger:hover:not(:disabled) { background: var(--dune-red); filter: brightness(1.2); }
+.vtt-field-label { font-size: .62rem; font-weight: 700; letter-spacing: .24em; text-transform: uppercase; color: var(--dune-text-muted); }   /* dune-label, plus espacé */
+.vtt-input {   /* trait d'or sous un fond de sable */
+    border: none; border-bottom: 1px solid var(--dune-gold); border-radius: 0; color: var(--dune-text);
+    background: color-mix(in srgb, var(--dune-sand) 14%, transparent);
+}
+.vtt-input:focus { border-bottom-color: var(--dune-spice); box-shadow: 0 1px 0 var(--dune-spice); }
+.vtt-pill {
+    border-radius: 0; clip-path: var(--dune-cut); border: none; padding-left: 1rem; padding-right: 1rem;
+    background: color-mix(in srgb, var(--dune-sand) 18%, transparent); color: var(--dune-text-muted);
+    font-size: .7rem; font-weight: 700; letter-spacing: .16em; text-transform: uppercase;
+}
+.vtt-pill:hover { border: none; color: var(--dune-text); }
+.vtt-pill.is-selected, .vtt-segment.is-active { background: var(--dune-gold); color: var(--dune-dark); }
+.vtt-segmented { border-radius: 0; border: 1px solid color-mix(in srgb, var(--dune-gold) 45%, transparent); background: transparent; }
+.vtt-segment { border-radius: 0; letter-spacing: .2em; }
+.vtt-list-item {   /* rangée gravée : filet d'or à gauche */
+    border-radius: 0; border: none; border-left: 2px solid color-mix(in srgb, var(--dune-gold) 40%, transparent);
+    background: color-mix(in srgb, var(--dune-sand) 12%, transparent);
+}
+button.vtt-list-item:hover { border-left-color: var(--dune-gold); }
+.vtt-list-item.is-selected { border-left: 2px solid var(--dune-spice); background: color-mix(in srgb, var(--dune-spice) 16%, transparent); }
+.vtt-callout { border-radius: 0; border-left: 2px solid var(--dune-gold); background: color-mix(in srgb, var(--dune-gold) 10%, transparent); }
+.vtt-callout-danger { border-left-color: var(--dune-red); background: color-mix(in srgb, var(--dune-red) 12%, transparent); }
+.vtt-panel { border-radius: 0; border: 1px solid color-mix(in srgb, var(--dune-gold) 45%, transparent); background: var(--dune-surface); }
+.vtt-tag { border-radius: 0; background: transparent; border: 1px solid color-mix(in srgb, var(--dune-gold) 55%, transparent); color: var(--dune-gold); letter-spacing: .14em; text-transform: uppercase; }
+.vtt-unread { border-radius: 0; transform: rotate(45deg); background: var(--dune-spice); }
+.vtt-journal-title { font-family: var(--font-dune); font-weight: 400; letter-spacing: .2em; text-transform: uppercase; color: var(--dune-gold); }
+.vtt-journal-editor { border-radius: 0; border: 1px solid color-mix(in srgb, var(--dune-gold) 35%, transparent); background: color-mix(in srgb, var(--dune-sand) 10%, var(--dune-bg)); }
+.vtt-journal-list-toggle { background: transparent; border-bottom-color: color-mix(in srgb, var(--dune-gold) 35%, transparent); letter-spacing: .18em; text-transform: uppercase; }
+.vtt-scroll { scrollbar-color: color-mix(in srgb, var(--dune-gold) 45%, transparent) transparent; }
+.vtt-scroll:hover { scrollbar-color: var(--dune-gold) transparent; }
+
+    

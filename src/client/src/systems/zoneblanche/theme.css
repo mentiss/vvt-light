@@ -896,3 +896,50 @@
 .vtt-session-bar-card-status { font-family: var(--zb-font-mono); letter-spacing: .18em; }
 .vtt-session-bar-card[data-online] .vtt-session-bar-card-status { color: var(--zb-rec-dot); }
 .vtt-session-bar-card[data-online] .vtt-session-bar-card-status::before { background: var(--zb-rec-dot); animation: zb-brand-pulse 1.4s ease-in-out infinite; }
+
+/* ── Modales génériques et journal (components/ui/Modal.jsx, spec_ui_modales.md §11) ─ */
+/* ── Zone Blanche : partage avec zb-modal (bord gauche accent, en-tête zb-bar), zb-btn-*,
+   zb-input, zb-pill / zb-select, zb-card, zb-eyebrow, zb-display, angles quasi droits ;
+   ✦ vignettage et lignes de balayage de zb-panel sur la fenêtre ── */
+.vtt-modal-backdrop { background: rgba(0, 0, 0, .72); backdrop-filter: none; }   /* zb-modal-backdrop */
+.vtt-modal-panel {   /* zb-modal */
+    border-radius: 0; border: 1px solid var(--color-border); border-left: 4px solid var(--color-accent);
+    box-shadow: 0 24px 64px rgba(0, 0, 0, .5); font-family: var(--zb-font-body);
+}
+.vtt-modal-deco { z-index: 3; background: var(--zb-vignette); }   /* ✦ zb-panel */
+.vtt-modal-deco::after {
+    content: ''; position: absolute; inset: 0; opacity: var(--zb-scanline-opacity);
+    background: repeating-linear-gradient(to bottom, rgba(255,255,255,.5) 0, rgba(255,255,255,.5) 1px, transparent 1px, transparent 3px);
+}
+.vtt-modal-header { background: var(--zb-bar-bg); color: var(--zb-bar-text); border-bottom-color: var(--color-border); }   /* zb-modal-header */
+.vtt-modal-title { font-family: var(--zb-font-display); font-size: 1.05rem; letter-spacing: .06em; color: var(--zb-bar-text); }
+.vtt-modal-subtitle { font-family: var(--zb-font-mono); letter-spacing: .12em; text-transform: uppercase; color: var(--zb-bar-text); opacity: .7; }
+.vtt-modal-icon { border-radius: 2px; }
+.vtt-modal-close, .vtt-modal-expand {   /* affichage de caméscope */
+    width: 1.6rem; height: 1.6rem; border-radius: 0; background: transparent; color: var(--zb-bar-text); opacity: .6;
+}
+.vtt-modal-close:hover, .vtt-modal-expand:hover { opacity: 1; background: transparent; color: var(--zb-rec-dot); }
+.vtt-modal-footer { background: var(--color-surface-alt); }   /* zb-modal-footer */
+.vtt-btn {   /* zb-btn-ghost */
+    border-radius: 2px; background: var(--color-surface-alt); border-color: var(--color-border);
+    font-family: var(--zb-font-mono); font-size: .78rem; letter-spacing: .08em; text-transform: uppercase;
+}
+.vtt-btn-primary { background: var(--color-primary); border-color: var(--color-primary); color: var(--color-bg); }   /* zb-btn-primary */
+.vtt-btn-danger { background: var(--color-accent); border-color: var(--color-accent); color: #fff; }   /* zb-btn-accent */
+.vtt-field-label { font-family: var(--zb-font-mono); font-size: .68rem; font-weight: 500; letter-spacing: .18em; text-transform: uppercase; opacity: .7; }   /* zb-eyebrow */
+.vtt-input { border-radius: 2px; }   /* zb-input */
+.vtt-pill { border-radius: 2px; color: var(--color-text); }   /* zb-pill */
+.vtt-pill.is-selected,
+.vtt-segment.is-active { background: var(--zb-select-bg); color: var(--zb-select-text); border-color: var(--zb-select-border); }
+.vtt-segmented, .vtt-segment { border-radius: 2px; }
+.vtt-segment { font-family: var(--zb-font-mono); }
+.vtt-list-item { border-radius: 2px; border-left: 4px solid var(--color-primary); }   /* zb-card */
+.vtt-list-item.is-selected { background: var(--zb-select-bg); color: var(--zb-select-text); border-color: var(--zb-select-border); }
+.vtt-callout { border-radius: 2px; border-left-width: 4px; }
+.vtt-callout-danger { border-left-color: var(--color-accent); background: color-mix(in srgb, var(--color-accent) 12%, transparent); }
+.vtt-panel { border-radius: 2px; }
+.vtt-tag { border-radius: 2px; font-family: var(--zb-font-mono); letter-spacing: .08em; text-transform: uppercase; }
+.vtt-unread { border-radius: 0; background: var(--zb-rec-dot); animation: zb-brand-pulse 1.4s ease-in-out infinite; }   /* ✦ REC */
+.vtt-journal-title { font-family: var(--zb-font-display); text-transform: uppercase; letter-spacing: .04em; }
+.vtt-journal-editor { border-radius: 2px; }
+.vtt-journal-list-toggle { font-family: var(--zb-font-mono); letter-spacing: .1em; text-transform: uppercase; }

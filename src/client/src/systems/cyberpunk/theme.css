@@ -656,3 +656,59 @@
         100% { transform: translate(0); filter: hue-rotate(0deg); }
     }
 }
+
+/* ── Modales génériques et journal (components/ui/Modal.jsx, spec_ui_modales.md §11) ─ */
+/* ── Cyberpunk : coins coupés, néon cyan, cp-font-ui (Rajdhani) en capitales, cp-divider,
+   cp-glow-cyan ; ✦ boutons principaux en contour néon, lignes de balayage sur le panneau ── */
+.vtt-modal-backdrop { background: rgba(5, 5, 8, .8); backdrop-filter: blur(3px); }
+.vtt-modal-panel {   /* ✦ coins coupés + balayage (comme la carte de la barre) */
+    border-radius: 0; border: 1px solid var(--color-primary);
+    clip-path: polygon(16px 0, 100% 0, 100% calc(100% - 16px), calc(100% - 16px) 100%, 0 100%, 0 16px);
+    background: repeating-linear-gradient(0deg, rgba(255,255,255,.02) 0 1px, transparent 1px 3px), var(--color-surface);
+    box-shadow: inset 0 0 12px rgba(0, 229, 255, .06);
+}
+.vtt-modal-header,
+.vtt-modal-footer {   /* cp-divider */
+    border-color: transparent;
+    background: linear-gradient(to right, transparent, color-mix(in srgb, var(--color-primary) 40%, transparent) 30%, color-mix(in srgb, var(--color-primary) 40%, transparent) 70%, transparent) bottom / 100% 1px no-repeat;
+}
+.vtt-modal-footer { background-position: top; }
+.vtt-modal-title {
+    font-family: 'Rajdhani', 'Orbitron', sans-serif; font-size: 1rem; letter-spacing: .16em;
+    text-shadow: 0 0 8px rgba(0, 229, 255, .6);
+}
+.vtt-modal-subtitle { font-family: 'Rajdhani', sans-serif; letter-spacing: .08em; text-transform: uppercase; }
+.vtt-modal-close, .vtt-modal-expand { border: 1px solid var(--color-border); }
+.vtt-modal-close:hover, .vtt-modal-expand:hover { border-color: var(--color-accent); box-shadow: var(--cp-glow-cyan); }
+.vtt-btn {   /* boutons du bandeau de la fiche */
+    font-family: 'Rajdhani', sans-serif; font-weight: 700; letter-spacing: .08em; text-transform: uppercase;
+    background: var(--color-surface-alt); border-color: var(--color-border);
+}
+.vtt-btn:hover:not(:disabled) { border-color: var(--color-accent); background: var(--color-surface); box-shadow: var(--cp-glow-cyan); }
+.vtt-btn-primary {   /* ✦ contour néon */
+    color: var(--color-primary); border-color: var(--color-primary);
+    background: color-mix(in srgb, var(--color-primary) 14%, transparent); box-shadow: var(--cp-glow-cyan);
+}
+.vtt-btn-primary:hover:not(:disabled) { background: var(--color-primary); color: var(--color-bg); filter: none; }
+.vtt-btn-danger { color: var(--color-secondary); border-color: var(--color-secondary); background: color-mix(in srgb, var(--color-secondary) 14%, transparent); box-shadow: var(--cp-glow-magenta); }
+.vtt-btn-danger:hover:not(:disabled) { background: var(--color-secondary); color: #fff; filter: none; }
+.vtt-field-label {   /* libellés d'IdentityCard */
+    font-family: 'Rajdhani', sans-serif; font-size: .72rem; letter-spacing: .1em; text-transform: uppercase; color: var(--color-text-muted);
+}
+.vtt-input:focus { border-color: var(--color-primary); box-shadow: var(--cp-glow-cyan); }
+.vtt-pill { font-family: 'Rajdhani', sans-serif; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; border-radius: .5rem; }
+.vtt-pill.is-selected { background: color-mix(in srgb, var(--color-primary) 18%, transparent); color: var(--color-primary); border-color: var(--color-primary); box-shadow: var(--cp-glow-cyan); }
+.vtt-segment { font-family: 'Rajdhani', sans-serif; letter-spacing: .1em; }
+.vtt-segment.is-active { box-shadow: var(--cp-glow-cyan); }
+.vtt-list-item.is-selected { border-color: var(--color-primary); box-shadow: var(--cp-glow-cyan); }   /* vignette active */
+.vtt-callout { border-radius: 0; }
+.vtt-callout-danger { border-left-color: var(--color-secondary); background: color-mix(in srgb, var(--color-secondary) 12%, transparent); }
+.vtt-panel { border-color: var(--color-border); }
+.vtt-tag {   /* cp-stat-badge */
+    border-radius: 3px; border: 1px solid rgba(0, 229, 255, .3); background: rgba(0, 229, 255, .12);
+    font-family: 'Rajdhani', sans-serif; letter-spacing: .08em; text-transform: uppercase;
+}
+.vtt-unread { box-shadow: var(--cp-glow-cyan); }
+.vtt-journal-title { font-family: 'Rajdhani', sans-serif; letter-spacing: .06em; text-transform: uppercase; }
+.vtt-scroll { scrollbar-color: var(--color-border) transparent; }
+.vtt-scroll:hover { scrollbar-color: var(--color-primary) transparent; }
