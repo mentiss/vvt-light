@@ -5,15 +5,16 @@
  * Contient les structures d'état partagées entre handlers.
  *
  * Structures :
- *   onlineCharacters : Map<characterId, { socketId, system, name, playerName, ... }>
+ *   onlineCharacters : Map<presenceKey, { socketId, slug, characterId, name, playerName, ... }>
+ *                      presenceKey = `${slug}:${characterId}` (un id n'est unique que dans la base de son slug)
  *   activeSessions   : Map<socketId, Set<{ system, sessionId }>>
  *   sessionTimers    : Map<`${system}_${sessionId}`, TimeoutId>
  */
 
-const { registerHandlers } = require('./handlers');
+const { registerHandlers, presenceKey } = require('./handlers');
 
 /* ── Structures partagées ───────────────────────────────────────────────────── */
-const onlineCharacters = new Map(); // characterId → données présence
+const onlineCharacters = new Map(); // presenceKey → données présence
 const activeSessions   = new Map(); // socketId    → Set<{ system, sessionId }>
 const sessionTimers    = new Map(); // `${system}_${sessionId}` → TimeoutId
 
@@ -27,4 +28,4 @@ function initSocket(io) {
     });
 }
 
-module.exports = { initSocket, sharedState };
+module.exports = { initSocket, sharedState, presenceKey };

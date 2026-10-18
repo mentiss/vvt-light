@@ -213,7 +213,7 @@ const SessionPlayersBar = ({ character, sessionId, sessionName, headerHeight = n
 
     const charactersWithStatus = sessionCharacters.map(char => ({
         ...char,
-        isOnline: onlineCharacters.some(oc => oc.characterId === char.id),
+        isOnline: onlineCharacters.some(oc => oc.slug === slug && oc.characterId === char.id),   // id unique par slug seulement
         isMe:     char.id === character?.id,
     }));
 

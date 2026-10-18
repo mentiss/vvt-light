@@ -13,7 +13,7 @@ const express = require('express');
 const router = express.Router();
 const { authenticate, requireGM } = require('../middlewares/auth');
 const { ensureUniqueCode, getCharNameExpr} = require('../utils/characters');
-const { sharedState } = require('../socket/index');
+const { sharedState, presenceKey } = require('../socket/index');
 
 // ─── Helper ─────────────────────────────────────────────────────────────────
 
@@ -78,8 +78,8 @@ function broadcastComposition(req, sessionId, characterId, session) {
     io.to(`${system}_session_${sessionId}`)
         .emit('session-characters-update', { system, sessionId: Number(sessionId), session });
 
-    const presence = sharedState.onlineCharacters.get(Number(characterId));
-    if (presence?.slug === system) {
+    const presence = sharedState.onlineCharacters.get(presenceKey(system, characterId));
+    if (presence) {
         io.to(presence.socketId).emit('character-sessions-changed', { system, characterId: Number(characterId) });
     }
 }

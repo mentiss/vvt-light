@@ -41,7 +41,7 @@ Middlewares dans `middlewares/auth.js` : `authenticate`, `requireOwnerOrGM`, `re
 
 - **Une seule room par session**, partagée par le MJ et les joueurs : `${slug}_session_${sessionId}`. Il n'existe pas de room réservée au MJ.
 - On y entre et on en sort via `join-session` / `leave-session` `{ sessionId, system }`, émis par les hooks génériques (`useGMSession` côté MJ, `SessionContext` côté joueur). Le serveur ne vérifie pas l'appartenance : le contrôle « ce personnage fait partie de la session » est fait côté client.
-- Présence : `character-loaded` / `character-left` mettent à jour `onlineCharacters` et diffusent `online-characters-update` à tout le monde.
+- Présence : `character-loaded` / `character-left` mettent à jour `onlineCharacters` et diffusent `online-characters-update` à tout le monde. La clé est `presenceKey(slug, characterId)` : un id n'est unique que dans la base de son slug. Côté client, toute comparaison de présence filtre aussi sur `slug` (`useGMSession` ne transmet que les présences du slug courant).
 - Session MJ active : `gm-set-active-session` / `gm-clear-session` mettent à jour `activeSessions` (avec un timer de nettoyage à la déconnexion) et diffusent `gm-session-active` à tout le monde.
 - État partagé (personnages en ligne, sessions actives, timers) dans `socket/index.js`.
 

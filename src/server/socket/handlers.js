@@ -71,6 +71,9 @@ function startSessionCleanupTimer(io, activeSessions, sessionTimers, system, ses
     sessionTimers.set(key, timer);
 }
 
+/** Clé de présence : slug + id, un id n'étant unique que dans la base de son slug. */
+const presenceKey = (slug, characterId) => `${slug}:${characterId}`;
+
 /* ── Enregistrement des handlers ────────────────────────────────────────────── */
 
 /**
@@ -96,7 +99,7 @@ function registerHandlers(io, socket, { onlineCharacters, activeSessions, sessio
     socket.on('character-loaded', (data) => {
         if (!data?.characterId) return;
 
-        onlineCharacters.set(data.characterId, {
+        onlineCharacters.set(presenceKey(data.slug, data.characterId), {
             ...data,
             socketId: socket.id,
         });
@@ -112,9 +115,14 @@ function registerHandlers(io, socket, { onlineCharacters, activeSessions, sessio
 
     /**
      * character-left — émis par usePlayerSession à la déconnexion volontaire.
+     * Ne retire que l'entrée de ce socket : le même id peut exister dans un autre slug.
      */
     socket.on('character-left', (charId) => {
-        if (charId) onlineCharacters.delete(charId);
+        for (const [key, char] of onlineCharacters.entries()) {
+            if (String(char.characterId) === String(charId) && char.socketId === socket.id) {
+                onlineCharacters.delete(key);
+            }
+        }
         io.emit('online-characters-update', Array.from(onlineCharacters.values()));
     });
 
@@ -208,9 +216,9 @@ function registerHandlers(io, socket, { onlineCharacters, activeSessions, sessio
         console.log('🔌 Client disconnected:', socket.id);
 
         // ── Nettoyage présence ──────────────────────────────────────────────
-        for (const [charId, char] of onlineCharacters.entries()) {
+        for (const [key, char] of onlineCharacters.entries()) {
             if (char.socketId === socket.id) {
-                onlineCharacters.delete(charId);
+                onlineCharacters.delete(key);
             }
         }
         io.emit('online-characters-update', Array.from(onlineCharacters.values()));
@@ -242,4 +250,4 @@ function registerHandlers(io, socket, { onlineCharacters, activeSessions, sessio
     }
 }
 
-module.exports = { registerHandlers, getActiveSessionsForSlug };
+module.exports = { registerHandlers, getActiveSessionsForSlug, presenceKey };

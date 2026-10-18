@@ -57,17 +57,20 @@ export function useGMSession({ apiBase }) {
     useEffect(() => {
         if (!socket) return;
 
+        // Présences de ce slug uniquement : un même id peut exister dans un autre slug
+        const ofThisSlug = (chars) => setOnlineCharacters((chars ?? []).filter(c => c.slug === slug));
+
         // Charger l'état initial
         fetch('/api/online-characters')
             .then(r => r.json())
-            .then(setOnlineCharacters)
+            .then(ofThisSlug)
             .catch(console.error);
 
-        const handleOnlineUpdate = (chars) => setOnlineCharacters(chars);
+        const handleOnlineUpdate = ofThisSlug;
         socket.on('online-characters-update', handleOnlineUpdate);
 
         return () => socket.off('online-characters-update', handleOnlineUpdate);
-    }, [socket]);
+    }, [socket, slug]);
 
     // ── Mises à jour personnage temps réel (corrigé) ─────────────────────────
     useEffect(() => {
