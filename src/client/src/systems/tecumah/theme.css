@@ -54,3 +54,36 @@
 .tecumah-title-font {
     font-family: 'DayRoman', Georgia, serif;
 }
+
+/* ── Barre de session (components/layout/SessionPlayersBar.jsx, spec_session_bar.md) ─ */
+/* ── Tecumah : BleedingCowboys / DayRoman (tecumah-font / tecumah-title-font), palette
+   canyon ; ✦ avis de recherche, sépia hors ligne, double filet ── */
+.vtt-session-bar { background: var(--color-surface); border-right: 2px solid var(--color-border); }
+.vtt-session-bar-header { border-bottom: 3px double var(--color-border); }   /* ✦ double filet */
+.vtt-session-bar-eyebrow { font-family: 'DayRoman', Georgia, serif; font-weight: 400; font-size: .7rem; letter-spacing: .25em; }
+.vtt-session-bar-title { font-family: 'BleedingCowboys', Georgia, serif; font-weight: 400; font-size: 1.3rem; line-height: 1.45; padding: .1em .25em .15em; margin: 0 -.25em; }   /* traits de la police dans le cadre */
+.vtt-session-bar-toggle { border-radius: .5rem; border-color: var(--color-border); }
+.vtt-session-bar-player { border-radius: .5rem; }
+.vtt-session-bar-player[data-me] { background: color-mix(in srgb, var(--color-primary) 12%, transparent); box-shadow: inset 3px 0 0 var(--color-primary); }
+.vtt-session-bar[data-mode="rail"] .vtt-session-bar-player[data-me] { box-shadow: none; }
+.vtt-session-bar-name { font-family: 'DayRoman', Georgia, serif; font-weight: 400; font-size: .95rem; }
+.vtt-session-bar-player-name { font-style: italic; }
+.vtt-session-bar-player:not([data-online]):not([data-me]) .vtt-session-bar-frame { filter: sepia(.85) saturate(.8); opacity: .65; }   /* ✦ sépia */
+.vtt-session-bar-initials { font-family: 'DayRoman', Georgia, serif; font-weight: 400; color: var(--color-primary); }
+.vtt-session-bar-card {   /* ✦ avis de recherche */
+    border-radius: 2px; border: 2px solid var(--color-border); padding: .9rem .9rem 1.1rem;
+    background:
+        url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='2'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23n)' opacity='0.06'/%3E%3C/svg%3E"),
+        var(--color-surface);
+    text-align: center;
+}
+.vtt-session-bar-card::before {
+    content: 'Avis de recherche'; display: block; margin-bottom: .55rem;
+    font-family: 'DayRoman', Georgia, serif; font-size: .78rem; letter-spacing: .3em; text-transform: uppercase;
+    padding-bottom: .4rem; border-bottom: 3px double var(--color-border);
+}
+.vtt-session-bar-card-image { border-radius: 0; border: 3px solid var(--color-text); font-family: 'BleedingCowboys', Georgia, serif; color: var(--color-primary); }
+.vtt-session-bar-card-image img { filter: sepia(.35) contrast(1.05); }
+.vtt-session-bar-card-name { font-family: 'BleedingCowboys', Georgia, serif; font-weight: 400; font-size: 1.6rem; line-height: 1.4; padding: .1em .3em; color: var(--color-primary); }
+.vtt-session-bar-card-player-name { font-family: 'DayRoman', Georgia, serif; font-size: .85rem; }
+.vtt-session-bar-card-status { font-family: 'DayRoman', Georgia, serif; font-weight: 400; letter-spacing: .2em; }
