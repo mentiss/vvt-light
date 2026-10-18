@@ -15,6 +15,7 @@ import FreeDiceModal  from '../components/modals/FreeDiceModal.jsx';
 import DiceConfigModal from '../components/modals/DiceConfigModal.jsx';
 import DiceAnimationOverlay from '../components/shared/DiceAnimationOverlay.jsx';
 import { parseServerDate } from '../tools/utils.js';
+import useSlugGuard from '../hooks/useSlugGuard.js';
 
 const GITHUB_URL = 'https://github.com/mentiss/vvt-light';
 
@@ -26,8 +27,9 @@ const Icon = ({ d, children }) => (
 );
 
 const HomePage = ({ darkMode, onToggleDarkMode }) => {
+    const mustReload = useSlugGuard();
     const { systems, error } = useSystems();
-    const [resumes,        setResumes]        = useState([]);
+    const [resumes,       setResumes]        = useState([]);
     const [showFreeDice,   setShowFreeDice]   = useState(false);
     const [showDiceConfig, setShowDiceConfig] = useState(false);
 
@@ -42,6 +44,9 @@ const HomePage = ({ darkMode, onToggleDarkMode }) => {
     const labelOf      = (slug) => systems?.find(s => s.slug === slug)?.label ?? slug;
     const listed       = (systems ?? []).filter(s => !s.hidden);
     const formatDay    = (d) => parseServerDate(d)?.toLocaleDateString('fr-FR') ?? '';
+
+    // Arrivée par navigation interne depuis un slug : rechargement en cours
+    if (mustReload) return null;
 
     return (
         <div className="vtt-platform flex flex-col">

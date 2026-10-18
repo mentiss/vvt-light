@@ -6,6 +6,7 @@ Règles React / CSS. Complète le CLAUDE.md racine.
 
 - Entrée : `src/main.jsx` → `AppRouter.jsx`.
 - `/:system` → `SystemLayout` (valide le slug auprès du backend) → `PlayerPage` / `GMPage` / `CreationPage`.
+- **Une page = un slug** : un `theme.css` chargé n'est jamais retiré. Tout lien qui change de slug (ou mène à l'accueil) est un `<a href>`, pas un `navigate()` / `<Link>`. Le garde-fou `useSlugGuard` (accueil, `SystemLayout`) recharge la page si ça arrive quand même.
 - `useSystem()` lit le param `:system` et le valide via `/api/systems` ; `getSystemFromPath()` est la version hors React.
 - `systems/:slug/config.jsx` exporte `default { slug, label, dice, combat, diceConfigDefault }`.
 

@@ -9,11 +9,13 @@ import { useParams, Outlet } from 'react-router-dom';
 import { useSystems } from '../context/SystemsContext.jsx';
 import {loadTheme, saveTheme} from "../tools/utils.js";
 import ErrorPage from '../components/platform/ErrorPage.jsx';
+import useSlugGuard from '../hooks/useSlugGuard.js';
 
 const THEMES = import.meta.glob('../systems/*/theme.css');
 
 const SystemLayout = () => {
     const { system } = useParams();
+    const mustReload = useSlugGuard();
     const { systems, error } = useSystems();
     const [darkMode, setDarkMode] = useState(() => false);
 
@@ -40,6 +42,9 @@ const SystemLayout = () => {
         saveTheme(next, system);
         document.documentElement.classList.toggle('dark', next);
     };
+
+    // Arrivée par navigation interne depuis un autre slug ou l'accueil : rechargement en cours
+    if (mustReload) return null;
 
     // Chargement initial
     if (systems === null) {

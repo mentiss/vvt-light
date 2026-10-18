@@ -2,7 +2,7 @@
 
 ## Statut
 
-**Validée par le MJ le 2026-10-18** (décisions au §1, questions au §12 ; palette B anthracite / laiton retenue sur la planche du lot 1). Lots 1 et 2 réalisés ; lots 3 et 4 à venir.
+**Validée par le MJ le 2026-10-18** (décisions au §1, questions au §12 ; palette B anthracite / laiton retenue sur la planche du lot 1). Lots 1 à 4 réalisés.
 
 Choix d'implémentation du lot 2 :
 - les cartes et « Reprendre » ouvrent les slugs en navigation complète (et non interne) : chaque slug démarre avec sa propre connexion et son propre thème ;
@@ -143,7 +143,15 @@ Constat : une adresse plus profonde qu'un slug (`/vikings/x/y`) ou un plantage d
 
 ## 8. Fuite de thème entre slugs (H-7, lot 4)
 
-Diagnostic et correction dans un lot dédié en fin de chantier : en passant d'un slug à l'autre sans recharger, le thème du premier ne doit plus influencer le second.
+En passant d'un slug à l'autre sans recharger, le thème du premier ne doit plus influencer le second.
+
+**Cause** : le `theme.css` d'un slug, une fois chargé, n'est jamais retiré de la page ; il redéfinit les couleurs de la page entière, surcharge des classes communes (`vtt-*`) et pose parfois un décor sur `body` (drapé d'Achtung). Deux thèmes chargés dans la même page se mélangent.
+
+**Règle retenue : une page = un slug.** Tout changement de slug (y compris vers ou depuis l'accueil) est un chargement complet de la page :
+- les liens de la plateforme qui changent de slug sont des liens classiques (`<a href>`), pas des navigations internes ;
+- garde-fou générique (`hooks/useSlugGuard.js`, appelé par l'accueil et `SystemLayout`) : une navigation interne qui change de slug est transformée en chargement complet de la même adresse. Il protège les liens futurs (ex. bascule d'un personnage vers un autre système au cours d'une campagne).
+
+Alternative écartée : isoler chaque `theme.css` dans son slug ou le retirer au changement de slug (réécriture de neuf thèmes, retrait non fiable avec Vite).
 
 ---
 
@@ -154,7 +162,7 @@ Diagnostic et correction dans un lot dédié en fin de chantier : en passant d'u
 | 1 | Planche HTML : accueil jour / nuit avec les deux palettes, carte par défaut, cartes Cyberpunk et Vikings en exemple, carte « Reprendre », page d'arrivée d'un slug avec sa marque en mode titre, page d'erreur. À valider. |
 | 2 | Socle : thème plateforme et enveloppe, accueil (en-tête, dés, Reprendre, grille, lien MJ, pied de page, version), option `hidden`, mécanisme `Brand` et carte par défaut, pages d'accès d'un slug, pages d'erreur, configuration des dés de la plateforme. |
 | 3 | Marques : `Brand.jsx` / `Brand.css` pour Achtung, Cyberpunk, Delta Green, Dune, Fabula, Tecumah, Vikings, Zone Blanche, en reprenant titres et polices de leurs thèmes ; `theme.css` de chacun branché sur `Brand.css`. |
-| 4 | Fuite de thème entre slugs. |
+| 4 | Fuite de thème entre slugs : garde-fou « une page = un slug » (§8). |
 
 ---
 
@@ -162,6 +170,7 @@ Diagnostic et correction dans un lot dédié en fin de chantier : en passant d'u
 
 - Lot 2 : `AppRouter.jsx` (route « tout le reste », gestion d'erreur), nouveau composant de page d'erreur, `pages/HomePage.jsx`, `pages/SystemLayout.jsx`, `pages/PlayerPage.jsx`, `pages/GMPage.jsx`, `components/gm/layout/LoadingScreen.jsx`, `index.css`, `hooks/useDiceConfig.js`, `components/modals/FreeDiceModal.jsx` (option sans enregistrement), `context/SystemsContext.jsx`, `vite.config.js` (version), `context/AuthContext.jsx` (pas de vérification de connexion sur l'accueil), `src/server/server.js` (API des systèmes, route des connexions actives), `src/server/systems/Loader.js` (option `hidden` documentée), nouveau composant de carte générique.
 - Lot 3 : `systems/:slug/Brand.jsx`, `Brand.css`, `theme.css` des huit slugs.
+- Lot 4 : nouveau `hooks/useSlugGuard.js`, `pages/HomePage.jsx`, `pages/SystemLayout.jsx`, `src/client/CLAUDE.md` (règle).
 
 ---
 
