@@ -17,7 +17,7 @@
 import React, { useState, useEffect } from 'react';
 import { useSocket } from '../../context/SocketContext.jsx';
 import { useAuth }   from '../../context/AuthContext.jsx';
-import {stripHtml} from "../shared/RichTextEditor.jsx";
+import {stripHtml, firstImageSrc} from "../shared/RichTextEditor.jsx";
 
 const TOAST_DICE_TTL    = 5000;
 const TOAST_MESSAGE_TTL = 8000;
@@ -63,7 +63,8 @@ const ToastNotifications = ({
                 animation: data.toastAnimation ?? 'default',
                 title:     data.entry?.title   ?? 'Message du MJ',
                 body:      data.entry?.body    ?? '',
-                imageUrl:  data.entry?.metadata?.imageUrl ?? null,
+                // Image jointe (anciens messages) ou première image du texte (spec_journal.md §2.8)
+                imageUrl:  data.entry?.metadata?.imageUrl ?? firstImageSrc(data.entry?.body),
             }, TOAST_MESSAGE_TTL);
         };
 

@@ -10,11 +10,18 @@
 //   sessionId          — session active, transmise avec le message
 //   onSend?            — (sendData) => Promise ; facultatif : sans lui, la modale
 //                        envoie elle-même à la route commune POST journal/gm-send
+//
+// Message : éditeur de texte riche du journal (HTML, images insérées dans le texte),
+// une note choisie « depuis mes notes » s'y charge mise en forme (spec_journal.md §2.8).
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useFetch } from '../../../hooks/useFetch.js';
 import useSystem from "../../../hooks/useSystem.js";
 import Modal from '../../ui/Modal.jsx';
+import RichTextEditor, { stripHtml } from '../../shared/RichTextEditor.jsx';
+
+// Le message a un contenu : du texte ou au moins une image
+const hasContent = (html) => !!stripHtml(html) || /<img/i.test(html || '');
 
 const TOAST_ANIMATIONS = [
     { id: 'default', label: 'Classique' },
@@ -33,8 +40,6 @@ const GMSendModal = ({ onClose, onSend, sessionCharacters = [], preSelectedCharI
 
     const [title,          setTitle]          = useState('');
     const [body,           setBody]           = useState('');
-    const [imageData,      setImageData]      = useState(null);
-    const [imagePreview,   setImagePreview]   = useState(null);
     const [toastAnimation, setToastAnimation] = useState('default');
     const [sending,        setSending]        = useState(false);
 
@@ -42,9 +47,7 @@ const GMSendModal = ({ onClose, onSend, sessionCharacters = [], preSelectedCharI
     const [notesLoading,   setNotesLoading]   = useState(false);
     const [noteSearch,     setNoteSearch]     = useState('');
     const [selectedNoteId, setSelectedNoteId] = useState(null);
-    const [isDragging,     setIsDragging]     = useState(false);
 
-    const fileInputRef  = useRef(null);
     const fetchWithAuth = useFetch();
     const { apiBase }   = useSystem();
 
@@ -68,17 +71,13 @@ const GMSendModal = ({ onClose, onSend, sessionCharacters = [], preSelectedCharI
         if (!noteSearch.trim()) return true;
         const q = noteSearch.toLowerCase();
         return (note.title || '').toLowerCase().includes(q) ||
-            (note.body  || '').toLowerCase().includes(q);
+            stripHtml(note.body).toLowerCase().includes(q);
     });
 
     const selectNote = (note) => {
         setSelectedNoteId(note.id);
         setTitle(note.title || '');
         setBody(note.body   || '');
-        if (note.metadata?.imageUrl) {
-            setImageData(note.metadata.imageUrl);
-            setImagePreview(note.metadata.imageUrl);
-        }
     };
 
     const toggleTarget = (charId) => {
@@ -100,30 +99,14 @@ const GMSendModal = ({ onClose, onSend, sessionCharacters = [], preSelectedCharI
 
     const allSelected = selectedTargets.size === sessionCharacters.length;
 
-    const handleImageSelect = (e) => {
-        const file = e.target.files?.[0];
-        if (!file) return;
-        if (file.size > 20 * 1024 * 1024) { alert('Image trop volumineuse (max 20 Mo)'); return; }
-        const reader = new FileReader();
-        reader.onload = (ev) => { setImageData(ev.target.result); setImagePreview(ev.target.result); };
-        reader.readAsDataURL(file);
-    };
-
-    const removeImage = () => {
-        setImageData(null);
-        setImagePreview(null);
-        if (fileInputRef.current) fileInputRef.current.value = '';
-    };
-
     const handleSend = async () => {
         if (selectedTargets.size === 0) return;
-        if (!title.trim() && !body.trim()) return;
+        if (!title.trim() && !hasContent(body)) return;
         setSending(true);
         const sendData = {
             targetCharacterIds: Array.from(selectedTargets),
             title:          title.trim() || null,
-            body:           body.trim()  || null,
-            imageData:      imageData    || null,
+            body:           hasContent(body) ? body : null,
             toastAnimation,
         };
         try {
@@ -137,7 +120,6 @@ const GMSendModal = ({ onClose, onSend, sessionCharacters = [], preSelectedCharI
                         sessionId,
                         title:          sendData.title,
                         body:           sendData.body,
-                        metadata:       sendData.imageData ? { imageUrl: sendData.imageData } : null,
                         toastAnimation: sendData.toastAnimation,
                     }),
                 });
@@ -155,12 +137,13 @@ const GMSendModal = ({ onClose, onSend, sessionCharacters = [], preSelectedCharI
         if (newMode === 'new') setSelectedNoteId(null);
     };
 
-    const canSend = selectedTargets.size > 0 && (title.trim() || body.trim());
+    const canSend = selectedTargets.size > 0 && (title.trim() || hasContent(body));
 
     return (
         <Modal
             title="Envoyer un message"
-            size="md"
+            size="lg"
+            expandable
             closeOnBackdrop={false}
             onClose={onClose}
             footer={
@@ -174,30 +157,6 @@ const GMSendModal = ({ onClose, onSend, sessionCharacters = [], preSelectedCharI
                 </>
             }
         >
-            {/* Zone de dépôt d'image : tout le corps de la modale */}
-            <div
-                className="relative"
-                onDragOver={(e)  => { e.preventDefault(); setIsDragging(true); }}
-                onDragLeave={(e) => { if (!e.currentTarget.contains(e.relatedTarget)) setIsDragging(false); }}
-                onDrop={(e) => {
-                    e.preventDefault();
-                    setIsDragging(false);
-                    const file = e.dataTransfer?.files?.[0];
-                    if (file && file.type.startsWith('image/')) {
-                        if (file.size > 20 * 1024 * 1024) { alert('Image trop volumineuse (max 20 Mo)'); return; }
-                        const reader = new FileReader();
-                        reader.onload = (ev) => { setImageData(ev.target.result); setImagePreview(ev.target.result); };
-                        reader.readAsDataURL(file);
-                    }
-                }}
-            >
-                {/* Overlay drag */}
-                {isDragging && (
-                    <div className="absolute inset-0 z-10 flex items-center justify-center rounded-lg border-2 border-dashed border-primary bg-surface/90">
-                        <div className="text-lg font-bold text-primary">Déposez votre image ici</div>
-                    </div>
-                )}
-
                 <div className="flex flex-col gap-4">
 
                     {/* ── Toggle mode ──────────────────────────────────── */}
@@ -236,8 +195,8 @@ const GMSendModal = ({ onClose, onSend, sessionCharacters = [], preSelectedCharI
                                             }`}
                                     >
                                         <div className="font-semibold text-sm truncate">{note.title || 'Sans titre'}</div>
-                                        {note.body && (
-                                            <div className="text-xs text-muted truncate mt-0.5">{note.body.substring(0, 60)}</div>
+                                        {stripHtml(note.body) && (
+                                            <div className="text-xs text-muted truncate mt-0.5">{stripHtml(note.body).substring(0, 80)}</div>
                                         )}
                                     </button>
                                 ))}
@@ -290,30 +249,15 @@ const GMSendModal = ({ onClose, onSend, sessionCharacters = [], preSelectedCharI
                     {/* ── Corps ────────────────────────────────────────── */}
                     <div>
                         <label className="vtt-field-label">Message</label>
-                        <textarea value={body} onChange={e => setBody(e.target.value)}
-                                  placeholder="Contenu du message…" rows={4}
-                                  className="vtt-input"
-                        />
-                    </div>
-
-                    {/* ── Image optionnelle ────────────────────────────── */}
-                    <div>
-                        <label className="vtt-field-label">Image (optionnel)</label>
-                        {imagePreview ? (
-                            <div className="relative inline-block">
-                                <img src={imagePreview} alt="Aperçu" className="max-h-32 rounded-lg border border-default" />
-                                <button type="button" onClick={removeImage} title="Retirer l'image"
-                                        className="vtt-btn vtt-btn-danger vtt-btn-icon vtt-btn-sm absolute -top-2 -right-2">
-                                    <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18" /></svg>
-                                </button>
-                            </div>
-                        ) : (
-                            <button type="button" onClick={() => fileInputRef.current?.click()}
-                                    className="vtt-btn w-full py-3 border-dashed">
-                                Cliquez ou glissez une image
-                            </button>
-                        )}
-                        <input ref={fileInputRef} type="file" accept="image/*" onChange={handleImageSelect} className="hidden" />
+                        <div className="h-64">
+                            <RichTextEditor
+                                content={body}
+                                onUpdate={setBody}
+                                editable
+                                placeholder="Contenu du message…"
+                                className="h-full border border-default rounded-lg bg-surface-alt"
+                            />
+                        </div>
                     </div>
 
                     {/* ── Animation toast ───────────────────────────────── */}
@@ -330,7 +274,6 @@ const GMSendModal = ({ onClose, onSend, sessionCharacters = [], preSelectedCharI
                         </div>
                     </div>
                 </div>
-            </div>
         </Modal>
     );
 };

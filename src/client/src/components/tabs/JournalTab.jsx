@@ -8,8 +8,9 @@ import { useSession } from '../../context/SessionContext.jsx';
 import ConfirmModal   from '../modals/ConfirmModal.jsx';
 import { useSocket }  from '../../context/SocketContext.jsx';
 import RichTextEditor, { stripHtml } from '../shared/RichTextEditor.jsx';
-import useImageLightbox from "../../hooks/useImageLightbox.js";
 import ImageLightbox from "../ui/ImageLightbox.jsx";
+import AlertModal     from '../modals/AlertModal.jsx';
+import { parseServerDate } from '../../tools/utils.js';
 
 const JournalTab = ({ characterId }) => {
     const [entries,       setEntries]       = useState([]);
@@ -32,9 +33,11 @@ const JournalTab = ({ characterId }) => {
     const { activeGMSession } = useSession();
     const socket              = useSocket();
 
-    const { lightboxSrc, openLightbox, closeLightbox, containerRef } = useImageLightbox();
+    // Agrandissement d'une image (double-clic dans l'éditeur ou sur l'image jointe d'un ancien message)
+    const [lightboxSrc,   setLightboxSrc]   = useState(null);
+    const [alertMessage,  setAlertMessage]  = useState(null);
 
-    // ── Socket : messages GM entrants ────────────────────────────────────────
+    // ── Socket : messages et objets envoyés par le MJ ────────────────────────
     useEffect(() => {
         if (!socket || !characterId) return;
         const handleGMMessage = (data) => {
@@ -42,8 +45,17 @@ const JournalTab = ({ characterId }) => {
                 setEntries(prev => [data.entry, ...prev]);
             }
         };
+        const handleGMItem = (data) => {
+            if (data.characterId === characterId && data.journalEntry) {
+                setEntries(prev => [data.journalEntry, ...prev]);
+            }
+        };
         socket.on('gm-message-received', handleGMMessage);
-        return () => socket.off('gm-message-received', handleGMMessage);
+        socket.on('gm-item-received',    handleGMItem);
+        return () => {
+            socket.off('gm-message-received', handleGMMessage);
+            socket.off('gm-item-received',    handleGMItem);
+        };
     }, [socket, characterId]);
 
     // ── Chargement des entrées ────────────────────────────────────────────────
@@ -69,23 +81,20 @@ const JournalTab = ({ characterId }) => {
     };
 
     // ── Filtrage local ────────────────────────────────────────────────────────
+    // Jour local (AAAA-MM-JJ) d'une date serveur, comparable aux champs de date
+    const localDay = (dateStr) => parseServerDate(dateStr)?.toLocaleDateString('sv-SE') ?? '';
+
     const filteredEntries = entries.filter(entry => {
         if (searchQuery.trim()) {
             const q = searchQuery.toLowerCase();
             if (
                 !(entry.title || '').toLowerCase().includes(q) &&
-                !(entry.body  || '').toLowerCase().includes(q)
+                !stripHtml(entry.body).toLowerCase().includes(q)
             ) return false;
         }
         if (sessionFilter === 'none' && entry.sessionId) return false;
-        if (dateFrom) {
-            const d = new Date(entry.createdAt).toISOString().split('T')[0];
-            if (d < dateFrom) return false;
-        }
-        if (dateTo) {
-            const d = new Date(entry.createdAt).toISOString().split('T')[0];
-            if (d > dateTo) return false;
-        }
+        if (dateFrom && localDay(entry.createdAt) < dateFrom) return false;
+        if (dateTo   && localDay(entry.createdAt) > dateTo)   return false;
         return true;
     });
 
@@ -124,13 +133,14 @@ const JournalTab = ({ characterId }) => {
                 method: 'PUT',
                 body: JSON.stringify(updates),
             });
-            if (response.ok) {
-                const updated = await response.json();
-                setEntries(prev => prev.map(e => e.id === entryId ? updated : e));
-                if (selectedEntry?.id === entryId) setSelectedEntry(updated);
-            }
+            if (!response.ok) throw new Error(`HTTP ${response.status}`);
+            const updated = await response.json();
+            setEntries(prev => prev.map(e => e.id === entryId ? updated : e));
+            if (selectedEntry?.id === entryId) setSelectedEntry(updated);
         } catch (error) {
+            // Échec visible (taille, réseau, serveur) : sinon la saisie disparaît au rechargement
             console.error('[JournalTab] Error saving entry:', error);
+            setAlertMessage('La note n\'a pas pu être enregistrée.');
         }
     };
 
@@ -186,19 +196,18 @@ const JournalTab = ({ characterId }) => {
     const hasActiveFilters = searchQuery || sessionFilter !== 'all' || dateFrom || dateTo;
 
     // ── Formatters date ───────────────────────────────────────────────────────
+    // Dates serveur en UTC, affichées en heure locale (spec_journal.md §2.4)
     const formatDate = (dateStr) => {
-        if (!dateStr) return '';
-        return new Date(dateStr).toLocaleDateString('fr-FR', {
+        return parseServerDate(dateStr)?.toLocaleDateString('fr-FR', {
             day: '2-digit', month: '2-digit', year: 'numeric',
             hour: '2-digit', minute: '2-digit',
-        });
+        }) ?? '';
     };
 
     const formatDateShort = (dateStr) => {
-        if (!dateStr) return '';
-        return new Date(dateStr).toLocaleDateString('fr-FR', {
+        return parseServerDate(dateStr)?.toLocaleDateString('fr-FR', {
             day: '2-digit', month: '2-digit', year: '2-digit',
-        });
+        }) ?? '';
     };
 
     // ── Render ────────────────────────────────────────────────────────────────
@@ -394,9 +403,9 @@ const JournalTab = ({ characterId }) => {
                                                         </span>
                                                     )}
                                                 </div>
-                                                {entry.body && (
+                                                {stripHtml(entry.body) && (
                                                     <div className="text-[11px] mt-1 line-clamp-2 text-muted">
-                                                        {stripHtml(entry.body).substring(0, 60)}{entry.body.length > 60 ? '...' : ''}
+                                                        {stripHtml(entry.body).substring(0, 60)}{stripHtml(entry.body).length > 60 ? '…' : ''}
                                                     </div>
                                                 )}
                                             </button>
@@ -430,7 +439,8 @@ const JournalTab = ({ characterId }) => {
                                         />
                                     ) : (
                                         <div className="text-xl font-bold py-1 flex items-center gap-2 text-default">
-                                            📨 {selectedEntry.title || 'Message du MJ'}
+                                            {selectedEntry.type === 'gm_message' ? '📨 ' : ''}
+                                            {selectedEntry.title || (selectedEntry.type === 'gm_item' ? 'Objet reçu' : 'Message du MJ')}
                                         </div>
                                     )}
                                     <div className="flex items-center gap-3 mt-2 text-xs text-muted">
@@ -439,14 +449,14 @@ const JournalTab = ({ characterId }) => {
                                                 ? `📜 ${selectedEntry.sessionName}`
                                                 : '📓 Hors session'}
                                         </span>
-                                        {selectedEntry.type === 'gm_message' && (
+                                        {selectedEntry.type !== 'note' && (
                                             <span
                                                 className="px-1.5 py-0.5 rounded text-[10px] font-semibold text-primary"
                                                 style={{
                                                     background: 'color-mix(in srgb, var(--color-primary) 20%, transparent)',
                                                 }}
                                             >
-                                                Message du MJ
+                                                {selectedEntry.type === 'gm_item' ? 'Objet reçu' : 'Message du MJ'}
                                             </span>
                                         )}
                                         <span>•</span>
@@ -461,7 +471,7 @@ const JournalTab = ({ characterId }) => {
                                 </div>
 
                                 {/* Corps — flex-1 min-h-0 pour que le scroll fonctionne */}
-                                <div ref={containerRef} className="flex-1 min-h-0 overflow-hidden flex flex-col p-4">
+                                <div className="flex-1 min-h-0 overflow-hidden flex flex-col p-4">
                                     {selectedEntry.type === 'note' ? (
                                         /* ── Note éditable ── */
                                         <RichTextEditor
@@ -469,19 +479,32 @@ const JournalTab = ({ characterId }) => {
                                             onUpdate={html => handleFieldChange('body', html)}
                                             onBlur={flushPendingSave}
                                             editable={true}
-                                            onImageDoubleClick={openLightbox}
+                                            onImageDoubleClick={setLightboxSrc}
                                             placeholder="Écrivez vos notes ici..."
                                             className="w-full h-full border-2 rounded-lg transition-colors border-default bg-default"
                                         />
                                     ) : (
-                                        /* ── Message GM (lecture + image éventuelle) ── */
-                                        <div ref={containerRef} className="flex flex-col flex-1 min-h-0 gap-3">
-                                            <RichTextEditor
-                                                content={selectedEntry.body || ''}
-                                                editable={false}
-                                                onImageDoubleClick={openLightbox}
-                                                className="flex-1 min-h-0 border-2 rounded-lg border-default bg-default opacity-0.9"
-                                            />
+                                        /* ── Message ou objet du MJ (lecture + image jointe des anciens messages) ── */
+                                        <div className="flex flex-col flex-1 min-h-0 gap-3">
+                                            {selectedEntry.type === 'gm_item' && selectedEntry.metadata?.item && (
+                                                <div className="shrink-0 rounded-lg border-2 p-3 border-default bg-default">
+                                                    <div className="font-bold text-default">
+                                                        {selectedEntry.metadata.item.name}
+                                                        {selectedEntry.metadata.item.quantity > 1 && ` × ${selectedEntry.metadata.item.quantity}`}
+                                                    </div>
+                                                    {selectedEntry.metadata.item.category && (
+                                                        <div className="text-xs text-muted mt-0.5">{selectedEntry.metadata.item.category}</div>
+                                                    )}
+                                                </div>
+                                            )}
+                                            {(selectedEntry.type !== 'gm_item' || stripHtml(selectedEntry.body)) && (
+                                                <RichTextEditor
+                                                    content={selectedEntry.body || ''}
+                                                    editable={false}
+                                                    onImageDoubleClick={setLightboxSrc}
+                                                    className="flex-1 min-h-0 border-2 rounded-lg border-default bg-default"
+                                                />
+                                            )}
                                             {selectedEntry.metadata?.imageUrl && (
                                                 <div
                                                     className="shrink-0 overflow-y-auto rounded-lg border-2 p-2 border-default bg-default"
@@ -496,7 +519,7 @@ const JournalTab = ({ characterId }) => {
                                                         style={{
                                                             cursor: 'zoom-in',
                                                         }}
-                                                        onDoubleClick={() => openLightbox(selectedEntry.metadata.imageUrl)}
+                                                        onDoubleClick={() => setLightboxSrc(selectedEntry.metadata.imageUrl)}
                                                     />
                                                 </div>
                                             )}
@@ -545,7 +568,10 @@ const JournalTab = ({ characterId }) => {
                 />
             )}
             {lightboxSrc && (
-                <ImageLightbox src={lightboxSrc} onClose={closeLightbox} />
+                <ImageLightbox src={lightboxSrc} onClose={() => setLightboxSrc(null)} />
+            )}
+            {alertMessage && (
+                <AlertModal message={alertMessage} onClose={() => setAlertMessage(null)} />
             )}
         </div>
     );

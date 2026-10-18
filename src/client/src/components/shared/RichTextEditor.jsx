@@ -32,6 +32,58 @@ const Separator = () => (
     <div className="w-px h-5 bg-muted/20 mx-0.5" />
 );
 
+// --- Image : affichage toujours fidèle à la source ---
+// L'extension Image (TipTap 3.22, redimensionnement activé) réutilise l'image déjà
+// affichée quand le contenu change, sans mettre à jour sa source : au changement de
+// note, l'image de la note précédente restait affichée (spec_journal.md §2.1).
+// On force la reconstruction de l'affichage dès que la source change.
+const SourceAwareImage = Image.extend({
+    addNodeView() {
+        const createView = this.parent?.();
+        if (!createView) return null;
+        return (props) => {
+            const view = createView(props);
+            const update = view.update.bind(view);
+            view.update = (node, ...rest) =>
+                node.attrs.src === view.node.attrs.src && update(node, ...rest);
+            return view;
+        };
+    },
+});
+
+// --- Réduction des images à l'insertion (spec_journal.md §2.3) ---
+// Plus grand côté ramené à 1600 px, format d'origine gardé ; GIF gardés tels quels (animation).
+const MAX_IMAGE_SIDE = 1600;
+const MAX_GIF_SIZE   = 5 * 1024 * 1024;
+const KEPT_FORMATS   = ['image/jpeg', 'image/png', 'image/webp'];
+
+const readAsDataUrl = (file) => new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload  = () => resolve(reader.result);
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+});
+
+const loadImage = (src) => new Promise((resolve, reject) => {
+    const img = new window.Image();
+    img.onload  = () => resolve(img);
+    img.onerror = reject;
+    img.src = src;
+});
+
+const prepareImage = async (file) => {
+    const src = await readAsDataUrl(file);
+    if (file.type === 'image/gif') return src;
+    const img   = await loadImage(src);
+    const scale = Math.min(1, MAX_IMAGE_SIDE / Math.max(img.naturalWidth, img.naturalHeight));
+    if (scale === 1) return src;
+    const canvas  = document.createElement('canvas');
+    canvas.width  = Math.round(img.naturalWidth  * scale);
+    canvas.height = Math.round(img.naturalHeight * scale);
+    canvas.getContext('2d').drawImage(img, 0, 0, canvas.width, canvas.height);
+    return canvas.toDataURL(KEPT_FORMATS.includes(file.type) ? file.type : 'image/jpeg', 0.85);
+};
+
 const RichTextEditor = ({
                             content = '',
                             onUpdate,
@@ -60,7 +112,7 @@ const RichTextEditor = ({
             Highlight.configure({
                 multicolor: false,
             }),
-            Image.configure({
+            SourceAwareImage.configure({
                 inline: false,
                 allowBase64: true,
                 resize: {
@@ -129,28 +181,31 @@ const RichTextEditor = ({
         },
     });
 
-    const processImage = useCallback((file) => {
+    const processImage = useCallback(async (file) => {
         if (!file || !file.type.startsWith('image/')) return;
-        if (file.size > maxImageSize) {
-            setAlertMessage(`Image trop volumineuse (max ${Math.round(maxImageSize / 1024 / 1024)} Mo)`);
+        const limit = file.type === 'image/gif' ? MAX_GIF_SIZE : maxImageSize;
+        if (file.size > limit) {
+            setAlertMessage(`Image trop volumineuse (max ${Math.round(limit / 1024 / 1024)} Mo)`);
             return;
         }
-        const reader = new FileReader();
-        reader.onload = (e) => {
-            if (editor) {
-                editor.chain().focus().setImage({ src: e.target.result }).run();
-            }
-        };
-        reader.readAsDataURL(file);
+        try {
+            const src = await prepareImage(file);
+            editor?.chain().focus().setImage({ src }).run();
+        } catch (error) {
+            console.error('[RichTextEditor] Error reading image:', error);
+            setAlertMessage('L\'image n\'a pas pu être lue');
+        }
     }, [editor, maxImageSize]);
 
-    // Mettre à jour le contenu si la prop change (changement de note)
+    // Mettre à jour le contenu si la prop change (changement de note).
+    // Sans émettre de mise à jour : un simple changement de note n'est pas une saisie
+    // (sinon la note consultée serait renvoyée au serveur, spec_journal.md §2.2).
     useEffect(() => {
         if (editor && content !== undefined) {
             const normalized = normalizeContent(content);
             const currentHTML = editor.getHTML();
             if (normalized !== currentHTML) {
-                editor.commands.setContent(normalized, false);
+                editor.commands.setContent(normalized, { emitUpdate: false });
             }
         }
     }, [editor, content]);
@@ -314,5 +369,8 @@ export const stripHtml = (html) => {
         .replace(/\s+/g, ' ')
         .trim();
 };
+
+// Helper : source de la première image du HTML (aperçu des notifications)
+export const firstImageSrc = (html) => html?.match(/<img[^>]+src="([^"]+)"/i)?.[1] ?? null;
 
 export default RichTextEditor;
