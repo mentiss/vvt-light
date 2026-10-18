@@ -421,9 +421,10 @@ select:disabled {
     background: var(--color-success); border: 2px solid var(--color-surface);
   }
 
-  /* Bouton flottant (mode masqué) ; top / bottom posés par le composant */
+  /* Bouton flottant (mode masqué) ; top / bottom posés par le composant. La marge haute
+     le décolle de la barre d'onglets du slug (position par défaut ou sous headerHeight) */
   .vtt-session-bar-reopen {
-    position: fixed; left: 0.5rem; z-index: 40;
+    position: fixed; left: 0.5rem; z-index: 40; margin-top: 0.5rem;
     width: 2rem; height: 2rem; display: inline-flex; align-items: center; justify-content: center;
     border-radius: 50%; border: 1px solid var(--color-border); cursor: pointer;
     background: var(--color-primary); color: var(--color-on-primary, #fff);

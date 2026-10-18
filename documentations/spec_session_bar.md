@@ -110,6 +110,22 @@ Rendu exact : voir la planche.
 
 Noctis est exclu : il sera entièrement refait (changement de système de jeu). Il garde le style par défaut.
 
+### Lot 2 (validé sur la planche et implémenté le 2026-10-18)
+
+Décisions du MJ (2026-10-18) : barre uniquement (les modales génériques de ces slugs feront un lot à part) ; une seule planche pour les six slugs ; propositions au-delà du vocabulaire existant bienvenues, signalées ✦ sur la planche ; un commit par slug.
+
+| Slug | Repris du slug | ✦ Propositions |
+|---|---|---|
+| Fabula | Antonio / PT Sans Narrow (`fu-font-title` / `fu-font-body`), or des points Fabula, filet à gemme de la marque | Barre et carte en fenêtres de menu JRPG (dégradé bleu nuit, liseré argent, texte blanc ombré) en jour comme en nuit, curseur ▶ et ligne sélectionnée pour « moi », statut en option de menu (retour du MJ : première version sans identité JRPG) |
+| Zone Blanche | `zb-panel` (vignettage, lignes de balayage), `zb-eyebrow`, `zb-display`, `zb-mono`, `zb-card` à bord gauche épais, angles quasi droits | Présence en « REC » rouge clignotant, viseur de caméra sur le portrait |
+| Achtung | Bandeau en négatif (`ac-section-header`) pour « Table », `ac-card`, Oswald (`ac-label`) et Special Elite | Papiers d'identité WWII (retour du MJ) : avatars en photos à bord blanc ; carte en laissez-passer (papier guilloché, photo agrafée, cachet rond, champs « Nom » et « Titulaire »), statut en tampon |
+| Delta Green | Bandeau `dg-header`, `dg-section-label`, `dg-form-line`, `dg-stamp`, `dg-censured`, dégradation par palier | Procédure administrative des années 90 (retour du MJ : trop proche d'Achtung) : référence de formulaire, lignes pointillées, photos photocopiées, « moi » au surligneur ; carte en fiche de personnel (bandeau confidentiel, cases libellées, agrafe, code-barres, tampon) |
+| Delta Green (dégradation) | Paliers du slug repris sur la barre (`[data-palier]` posé sur l'enveloppe de la fiche, qui contient la barre) et sur la carte (`body:has([data-palier])`, la carte étant rendue dans `<body>`) : fatigue oculaire (1-2), tremblement (2), désaturation et glitch chromatique (3), noir et blanc contrasté (4) | Palier 4 : noms des autres agents caviardés |
+| Dune | DuneRise (`dune-font`), `dune-card` / `dune-card-alt`, `dune-label`, or | Liseré épice pour « moi », crépuscule et dunes de la marque sous le portrait |
+| Tecumah | BleedingCowboys / DayRoman, palette canyon ; marge intérieure et interligne pour que les traits de BleedingCowboys restent dans le cadre (retour du MJ) | Carte en « Avis de recherche », avatars hors ligne en sépia, double filet sous l'en-tête |
+
+Achtung : la règle `body > * { position: relative; z-index: 1; }` de son thème est resserrée sur `#root` (déjà présent), pour ne plus toucher les éléments rendus directement dans `<body>`.
+
 ---
 
 ## 8. Questions ouvertes

@@ -54,6 +54,12 @@
         }
         .board-toolbar button.is-on { background: #c9a227; border-color: #c9a227; color: #111; }
         .board-hint { color: #888; }
+        .board-proposals {
+            position: relative; z-index: 299; display: flex; flex-wrap: wrap; gap: .4rem 1rem; align-items: center;
+            padding: .45rem 1rem; background: #1a1608; color: #e8d49a; font: 12px/1.3 system-ui, sans-serif;
+            border-bottom: 1px solid #4a3f17;
+        }
+        .board-proposals span::before { content: '✦ '; color: #c9a227; }
 
         .demo-header {
             position: sticky; top: 44px; z-index: 30; height: 52px;
@@ -398,15 +404,426 @@
             background: var(--cp-tag-positive-bg); border-color: color-mix(in srgb, var(--color-success) 40%, transparent);
         }
     </style>
+    <style id="skin-lot2">
+        /* ═══ Lot 2 : futurs ajouts des theme.css (sans le préfixe html[data-slug]) ═══
+           Chaque bloc reprend d'abord les classes du slug ; ✦ = proposition au-delà de l'existant. */
+
+        /* ── Fabula : ✦ fenêtres de menu JRPG (dégradé bleu nuit, liseré argent, texte blanc ombré,
+           curseur ▶), quel que soit le mode jour / nuit ; repris du slug : Antonio / PT Sans Narrow
+           (fu-font-title / fu-font-body), or des points Fabula, filet à gemme de la marque ── */
+        html[data-slug="fabula"] {
+            --fu-win-top:    #34489e;
+            --fu-win-bottom: #121a52;
+            --fu-win-edge:   #eef0fa;
+            --fu-win-shadow: #070b2a;
+            --fu-win-text:   #ffffff;
+            --fu-win-muted:  #aeb8ec;
+            --fu-win-gold:   #f2d27a;
+        }
+        html[data-slug="fabula"] .vtt-session-bar {   /* ✦ fenêtre flottante */
+            margin: .5rem 0 .5rem .5rem; border-radius: 10px;
+            background: linear-gradient(180deg, var(--fu-win-top), var(--fu-win-bottom));
+            border: 2px solid var(--fu-win-edge);
+            box-shadow: 0 0 0 1px var(--fu-win-shadow), inset 0 0 0 1px var(--fu-win-shadow), 0 6px 18px rgba(0,0,0,.35);
+            color: var(--fu-win-text); text-shadow: 1px 1px 0 var(--fu-win-shadow);
+            font-family: 'PT Sans Narrow', Arial, sans-serif;
+        }
+        html[data-slug="fabula"] .vtt-session-bar-header { position: relative; border-bottom: none; padding-bottom: .95rem; }
+        html[data-slug="fabula"] .vtt-session-bar-header::after {   /* fu-brand-divider */
+            content: ''; position: absolute; left: 12%; right: 12%; bottom: 3px; height: 1px;
+            background: linear-gradient(90deg, transparent, var(--fu-win-gold) 42%, transparent 42%, transparent 58%, var(--fu-win-gold) 58%, transparent);
+        }
+        html[data-slug="fabula"] .vtt-session-bar-header::before {   /* fu-brand-gem */
+            content: ''; position: absolute; left: 50%; bottom: 0; width: 7px; height: 7px; margin-left: -3.5px;
+            transform: rotate(45deg); background: #E0525A; box-shadow: 0 0 6px rgba(224, 82, 90, .7);
+        }
+        html[data-slug="fabula"] .vtt-session-bar-eyebrow { font-family: 'Antonio', 'Arial Narrow', sans-serif; font-weight: 600; letter-spacing: .22em; color: var(--fu-win-muted); }
+        html[data-slug="fabula"] .vtt-session-bar-title { font-family: 'Antonio', 'Arial Narrow', sans-serif; font-weight: 600; font-size: 1.05rem; letter-spacing: .03em; text-transform: uppercase; color: var(--fu-win-gold); }
+        html[data-slug="fabula"] .vtt-session-bar-toggle { border-radius: 4px; color: var(--fu-win-muted); border-color: color-mix(in srgb, var(--fu-win-edge) 35%, transparent); }
+        html[data-slug="fabula"] .vtt-session-bar-toggle:hover { color: var(--fu-win-text); background: rgba(255,255,255,.12); border-color: var(--fu-win-edge); }
+        html[data-slug="fabula"] .vtt-session-bar-list { scrollbar-color: var(--fu-win-muted) transparent; }
+        html[data-slug="fabula"] .vtt-session-bar-player { position: relative; padding-left: 1.2rem; border-radius: 4px; }
+        html[data-slug="fabula"] .vtt-session-bar-player[data-me] { background: linear-gradient(90deg, rgba(255,255,255,.16), transparent); }   /* ligne sélectionnée */
+        html[data-slug="fabula"] .vtt-session-bar-player[data-me]::before {   /* ✦ curseur de menu */
+            content: '▶'; position: absolute; left: .3rem; top: 50%; transform: translateY(-50%);
+            font-size: .62rem; color: var(--fu-win-text); animation: fu-cursor .9s ease-in-out infinite;
+        }
+        @keyframes fu-cursor { 0%, 100% { transform: translate(0, -50%); } 50% { transform: translate(3px, -50%); } }
+        html[data-slug="fabula"] .vtt-session-bar[data-mode="rail"] .vtt-session-bar-player { padding-left: 0; background: none; }
+        html[data-slug="fabula"] .vtt-session-bar[data-mode="rail"] .vtt-session-bar-player[data-me]::before { display: none; }
+        html[data-slug="fabula"] .vtt-session-bar-name { font-family: 'Antonio', 'Arial Narrow', sans-serif; font-weight: 600; font-size: .95rem; letter-spacing: .04em; text-transform: uppercase; }
+        html[data-slug="fabula"] .vtt-session-bar-player-name,
+        html[data-slug="fabula"] .vtt-session-bar-player[data-online] .vtt-session-bar-player-name { font-size: .8rem; color: var(--fu-win-muted); }
+        html[data-slug="fabula"] .vtt-session-bar-player:not([data-online]):not([data-me]) .vtt-session-bar-name { color: color-mix(in srgb, var(--fu-win-muted) 70%, transparent); }
+        html[data-slug="fabula"] .vtt-session-bar-frame { border-radius: 4px; background: color-mix(in srgb, var(--fu-win-edge) 40%, transparent); }
+        html[data-slug="fabula"] .vtt-session-bar-player[data-online] .vtt-session-bar-frame,
+        html[data-slug="fabula"] .vtt-session-bar-player[data-me] .vtt-session-bar-frame { background: var(--fu-win-edge); }
+        html[data-slug="fabula"] .vtt-session-bar-image, html[data-slug="fabula"] .vtt-session-bar-initials { border-radius: 2px; }
+        html[data-slug="fabula"] .vtt-session-bar-initials { font-family: 'Antonio', sans-serif; background: var(--fu-win-bottom); color: var(--fu-win-gold); }
+        html[data-slug="fabula"] .vtt-session-bar-presence { border-color: var(--fu-win-bottom); background: #7FBF8A; }
+        html[data-slug="fabula"] .vtt-session-bar-reopen {
+            border-radius: 6px; border: 2px solid var(--fu-win-edge); color: var(--fu-win-text);
+            background: linear-gradient(180deg, var(--fu-win-top), var(--fu-win-bottom));
+            box-shadow: 0 0 0 1px var(--fu-win-shadow), 0 4px 12px rgba(0,0,0,.35);
+        }
+        html[data-slug="fabula"] .vtt-session-bar-card {   /* ✦ fenêtre de statut */
+            border-radius: 10px; border: 2px solid var(--fu-win-edge);
+            background: linear-gradient(180deg, var(--fu-win-top), var(--fu-win-bottom));
+            box-shadow: 0 0 0 1px var(--fu-win-shadow), inset 0 0 0 1px var(--fu-win-shadow), 0 18px 40px rgba(0,0,0,.5);
+            color: var(--fu-win-text); text-shadow: 1px 1px 0 var(--fu-win-shadow); font-family: 'PT Sans Narrow', sans-serif;
+        }
+        html[data-slug="fabula"] .vtt-session-bar-card-image {
+            border-radius: 4px; border: 2px solid var(--fu-win-edge); background: var(--fu-win-bottom);
+            font-family: 'Antonio', sans-serif; color: var(--fu-win-gold);
+        }
+        html[data-slug="fabula"] .vtt-session-bar-card-name { font-family: 'Antonio', 'Arial Narrow', sans-serif; font-weight: 600; font-size: 1.25rem; letter-spacing: .04em; text-transform: uppercase; }
+        html[data-slug="fabula"] .vtt-session-bar-card-player-name { font-size: .9rem; color: var(--fu-win-muted); }
+        html[data-slug="fabula"] .vtt-session-bar-card-status {   /* ✦ option de menu avec curseur */
+            font-family: 'Antonio', sans-serif; letter-spacing: .12em; color: var(--fu-win-muted);
+        }
+        html[data-slug="fabula"] .vtt-session-bar-card-status::before {
+            content: '▶'; width: auto; height: auto; border-radius: 0; background: none; font-size: .6rem; color: var(--fu-win-text);
+        }
+        html[data-slug="fabula"] .vtt-session-bar-card[data-online] .vtt-session-bar-card-status { color: #9fe0a8; }
+        html[data-slug="fabula"] .vtt-session-bar-card[data-me] .vtt-session-bar-card-status { color: var(--fu-win-gold); }
+        html[data-slug="fabula"] .vtt-session-bar-card[data-online] .vtt-session-bar-card-status::before,
+        html[data-slug="fabula"] .vtt-session-bar-card[data-me] .vtt-session-bar-card-status::before { background: none; }
+
+        /* ── Zone Blanche : zb-panel (vignettage, lignes de balayage), zb-eyebrow, zb-display,
+           zb-mono, zb-card (bord gauche épais), angles quasi droits ; ✦ REC, viseur ── */
+        html[data-slug="zoneblanche"] .vtt-session-bar { background: var(--color-surface); border-right: 1px solid var(--color-border); font-family: var(--zb-font-body); }
+        html[data-slug="zoneblanche"] .vtt-session-bar::before {   /* zb-panel::before */
+            content: ''; position: absolute; inset: 0; pointer-events: none; z-index: 2; background: var(--zb-vignette);
+        }
+        html[data-slug="zoneblanche"] .vtt-session-bar::after {   /* zb-panel::after */
+            content: ''; position: absolute; inset: 0; pointer-events: none; z-index: 1; opacity: var(--zb-scanline-opacity);
+            background: repeating-linear-gradient(to bottom, rgba(255,255,255,.5) 0, rgba(255,255,255,.5) 1px, transparent 1px, transparent 3px);
+        }
+        html[data-slug="zoneblanche"] .vtt-session-bar-header { position: relative; z-index: 3; }
+        html[data-slug="zoneblanche"] .vtt-session-bar-eyebrow { font-family: var(--zb-font-mono); font-size: .68rem; letter-spacing: .18em; font-weight: 500; color: inherit; opacity: .7; }
+        html[data-slug="zoneblanche"] .vtt-session-bar-title { font-family: var(--zb-font-display); font-size: 1.1rem; letter-spacing: .06em; text-transform: uppercase; }
+        html[data-slug="zoneblanche"] .vtt-session-bar-toggle { border-radius: 2px; border-color: var(--color-border); }
+        html[data-slug="zoneblanche"] .vtt-session-bar-list { position: relative; z-index: 3; }
+        html[data-slug="zoneblanche"] .vtt-session-bar-player { border-radius: 2px; border-left: 4px solid transparent; }
+        html[data-slug="zoneblanche"] .vtt-session-bar-player[data-me] { background: var(--color-surface-alt); border-left-color: var(--color-primary); }   /* zb-card */
+        html[data-slug="zoneblanche"] .vtt-session-bar[data-mode="rail"] .vtt-session-bar-player { border-left: none; }
+        html[data-slug="zoneblanche"] .vtt-session-bar-name { font-family: var(--zb-font-display); font-size: .98rem; letter-spacing: .06em; text-transform: uppercase; }
+        html[data-slug="zoneblanche"] .vtt-session-bar-player-name { font-family: var(--zb-font-mono); font-size: .68rem; letter-spacing: .06em; }
+        html[data-slug="zoneblanche"] .vtt-session-bar-frame,
+        html[data-slug="zoneblanche"] .vtt-session-bar-image,
+        html[data-slug="zoneblanche"] .vtt-session-bar-initials { border-radius: 2px; }
+        html[data-slug="zoneblanche"] .vtt-session-bar-initials { font-family: var(--zb-font-mono); }
+        html[data-slug="zoneblanche"] .vtt-session-bar-presence {   /* ✦ REC */
+            background: var(--zb-rec-dot); border-color: var(--color-surface); animation: zb-brand-pulse 1.4s ease-in-out infinite;
+        }
+        html[data-slug="zoneblanche"] .vtt-session-bar-reopen { border-radius: 2px; }
+        html[data-slug="zoneblanche"] .vtt-session-bar-card { border-radius: 2px; font-family: var(--zb-font-body); }
+        html[data-slug="zoneblanche"] .vtt-session-bar-card-deco { background: var(--zb-vignette); }
+        html[data-slug="zoneblanche"] .vtt-session-bar-card-image { position: relative; border-radius: 2px; font-family: var(--zb-font-mono); }
+        html[data-slug="zoneblanche"] .vtt-session-bar-card-image::after {   /* ✦ viseur : quatre coins */
+            content: ''; position: absolute; inset: 10px; pointer-events: none;
+            --zb-vf: color-mix(in srgb, #fff 85%, transparent);
+            background:
+                linear-gradient(var(--zb-vf), var(--zb-vf)) top left / 18px 2px no-repeat,
+                linear-gradient(var(--zb-vf), var(--zb-vf)) top left / 2px 18px no-repeat,
+                linear-gradient(var(--zb-vf), var(--zb-vf)) top right / 18px 2px no-repeat,
+                linear-gradient(var(--zb-vf), var(--zb-vf)) top right / 2px 18px no-repeat,
+                linear-gradient(var(--zb-vf), var(--zb-vf)) bottom left / 18px 2px no-repeat,
+                linear-gradient(var(--zb-vf), var(--zb-vf)) bottom left / 2px 18px no-repeat,
+                linear-gradient(var(--zb-vf), var(--zb-vf)) bottom right / 18px 2px no-repeat,
+                linear-gradient(var(--zb-vf), var(--zb-vf)) bottom right / 2px 18px no-repeat;
+            filter: drop-shadow(0 0 2px rgba(0,0,0,.6));
+        }
+        html[data-slug="zoneblanche"] .vtt-session-bar-card-name { font-family: var(--zb-font-display); font-size: 1.25rem; letter-spacing: .06em; text-transform: uppercase; }
+        html[data-slug="zoneblanche"] .vtt-session-bar-card-player-name { font-family: var(--zb-font-mono); letter-spacing: .06em; }
+        html[data-slug="zoneblanche"] .vtt-session-bar-card-status { font-family: var(--zb-font-mono); letter-spacing: .18em; }
+        html[data-slug="zoneblanche"] .vtt-session-bar-card[data-online] .vtt-session-bar-card-status { color: var(--zb-rec-dot); }
+        html[data-slug="zoneblanche"] .vtt-session-bar-card[data-online] .vtt-session-bar-card-status::before { background: var(--zb-rec-dot); animation: zb-brand-pulse 1.4s ease-in-out infinite; }
+
+        /* ── Achtung : repris du slug : bandeau en négatif (ac-section-header), ac-card, Oswald
+           (ac-label) et Special Elite (ac-font-title), rayons 3-5 px ; ✦ papiers d'identité WWII :
+           avatars en photos à bord blanc, carte en laissez-passer (guilloché, champs libellés,
+           photo agrafée, cachet rond, tampon) ── */
+        html[data-slug="achtung"] .vtt-session-bar { background: var(--ac-surface); border-right: 1px solid var(--ac-border-strong); font-family: var(--ac-font-body); }
+        html[data-slug="achtung"] .vtt-session-bar-header { border-bottom-color: var(--ac-border); }
+        html[data-slug="achtung"] .vtt-session-bar-eyebrow {   /* ac-section-header */
+            display: inline-block; margin-bottom: .3rem; padding: .1rem .5rem;
+            font-family: var(--ac-font-heading); font-size: .6rem; font-weight: 700; letter-spacing: .22em;
+            color: var(--ac-bg); background: var(--ac-primary);
+        }
+        html[data-slug="achtung"] .vtt-session-bar-title { font-family: var(--ac-font-title); font-weight: 400; font-size: 1.05rem; color: var(--ac-text); }
+        html[data-slug="achtung"] .vtt-session-bar-toggle { border-radius: var(--ac-radius); border-color: var(--ac-border); }
+        html[data-slug="achtung"] .vtt-session-bar-player { border-radius: var(--ac-radius); border-left: 3px solid transparent; }
+        html[data-slug="achtung"] .vtt-session-bar-player[data-me] { background: var(--ac-surface-alt); border-left-color: var(--ac-primary); }   /* ac-card */
+        html[data-slug="achtung"] .vtt-session-bar[data-mode="rail"] .vtt-session-bar-player { border-left: none; }
+        html[data-slug="achtung"] .vtt-session-bar-name { font-family: var(--ac-font-title); font-size: .9rem; }
+        html[data-slug="achtung"] .vtt-session-bar-player-name { font-family: var(--ac-font-heading); font-size: .62rem; font-weight: 600; letter-spacing: .1em; text-transform: uppercase; }   /* ac-label */
+        html[data-slug="achtung"] .vtt-session-bar-player[data-online] .vtt-session-bar-player-name { color: var(--ac-secondary); }
+        /* ✦ Avatars : petites photos d'identité à bord blanc */
+        html[data-slug="achtung"] .vtt-session-bar-frame { border-radius: 1px; padding: 3px; background: #f4efe0; box-shadow: 0 1px 3px rgba(0,0,0,.35); }
+        html[data-slug="achtung"] .vtt-session-bar-player[data-online] .vtt-session-bar-frame { background: #f4efe0; box-shadow: 0 0 0 2px var(--ac-primary), 0 1px 3px rgba(0,0,0,.35); }
+        html[data-slug="achtung"] .vtt-session-bar-player[data-me] .vtt-session-bar-frame { padding: 3px; background: #f4efe0; box-shadow: 0 0 0 2px var(--ac-secondary), 0 1px 3px rgba(0,0,0,.35); }
+        html[data-slug="achtung"] .vtt-session-bar-image, html[data-slug="achtung"] .vtt-session-bar-initials { border-radius: 0; }
+        html[data-slug="achtung"] .vtt-session-bar-image { filter: sepia(.3) contrast(1.05); }
+        html[data-slug="achtung"] .vtt-session-bar-player:not([data-online]):not([data-me]) .vtt-session-bar-frame { filter: grayscale(1) sepia(.4); }
+        html[data-slug="achtung"] .vtt-session-bar-initials { font-family: var(--ac-font-title); color: var(--ac-primary); background: #e9e1c8; }
+        html[data-slug="achtung"] .vtt-session-bar-reopen { border-radius: var(--ac-radius); }
+
+        /* ✦ Carte : laissez-passer. Papier ivoire guilloché (identique jour et nuit, comme un vrai document) */
+        html[data-slug="achtung"] .vtt-session-bar-card {
+            --ac-paper: #efe7cf; --ac-ink: #2a2618; --ac-ink-soft: #6a6040;
+            position: relative; border-radius: 4px; padding: .9rem 1rem 1.1rem;
+            color: var(--ac-ink); border: 1px solid #b8a878;
+            background:
+                repeating-radial-gradient(circle at 50% 120%, transparent 0 6px, rgba(74, 88, 48, .07) 6px 7px),
+                repeating-linear-gradient(45deg, transparent 0 9px, rgba(122, 104, 48, .05) 9px 10px),
+                var(--ac-paper);
+            box-shadow: inset 0 0 0 4px var(--ac-paper), inset 0 0 0 5px rgba(74, 88, 48, .45), 0 18px 40px rgba(0,0,0,.45);
+            font-family: var(--ac-font-title);
+        }
+        html[data-slug="achtung"] .vtt-session-bar-card::before {   /* intitulé du document */
+            content: 'Laissez-passer'; display: block; margin: 0 0 .6rem; padding-bottom: .35rem; text-align: center;
+            font-family: var(--ac-font-heading); font-size: .7rem; font-weight: 700; letter-spacing: .32em; text-transform: uppercase;
+            color: #4a5830; border-bottom: 1px solid rgba(74, 88, 48, .45);
+        }
+        html[data-slug="achtung"] .vtt-session-bar-card-image {   /* photo agrafée */
+            position: relative; overflow: visible; border-radius: 0; padding: 5px; background: #faf6ea;
+            box-shadow: 0 1px 4px rgba(0,0,0,.35); font-family: var(--ac-font-title); color: #4a5830;
+        }
+        html[data-slug="achtung"] .vtt-session-bar-card-image img { filter: sepia(.35) contrast(1.05); }
+        html[data-slug="achtung"] .vtt-session-bar-card-image::before {   /* agrafe */
+            content: ''; position: absolute; top: -4px; left: 22px; width: 26px; height: 6px; border-radius: 2px;
+            background: linear-gradient(180deg, #d8d8d8, #8a8a8a); box-shadow: 0 1px 2px rgba(0,0,0,.4); transform: rotate(-8deg);
+        }
+        html[data-slug="achtung"] .vtt-session-bar-card-image::after {   /* cachet rond à cheval sur la photo */
+            content: ''; position: absolute; right: -14px; bottom: -14px; width: 70px; height: 70px; border-radius: 50%;
+            border: 2px solid rgba(139, 26, 26, .55); box-shadow: inset 0 0 0 4px transparent, inset 0 0 0 5px rgba(139, 26, 26, .45);
+            transform: rotate(-12deg); pointer-events: none;
+        }
+        html[data-slug="achtung"] .vtt-session-bar-card-name,
+        html[data-slug="achtung"] .vtt-session-bar-card-player-name {   /* champs libellés */
+            margin-top: .45rem; padding-bottom: .15rem; border-bottom: 1px dotted rgba(42, 38, 24, .45);
+            font-family: var(--ac-font-title); font-weight: 400; font-size: 1.05rem; color: var(--ac-ink);
+        }
+        html[data-slug="achtung"] .vtt-session-bar-card-name { margin-top: .85rem; }
+        html[data-slug="achtung"] .vtt-session-bar-card-player-name { font-size: .9rem; }
+        html[data-slug="achtung"] .vtt-session-bar-card-name::before,
+        html[data-slug="achtung"] .vtt-session-bar-card-player-name::before {
+            display: block; font-family: var(--ac-font-heading); font-size: .55rem; font-weight: 600; letter-spacing: .16em;
+            text-transform: uppercase; color: var(--ac-ink-soft);
+        }
+        html[data-slug="achtung"] .vtt-session-bar-card-name::before { content: 'Nom'; }
+        html[data-slug="achtung"] .vtt-session-bar-card-player-name::before { content: 'Titulaire'; }
+        html[data-slug="achtung"] .vtt-session-bar-card-status {   /* tampon (ac-brand-stamp) */
+            margin-top: .75rem; padding: .1rem .45rem; transform: rotate(-4deg);
+            font-family: var(--ac-font-title); font-weight: 400; letter-spacing: .18em;
+            color: #4a5830; border: 2px solid currentColor; opacity: .85;
+        }
+        html[data-slug="achtung"] .vtt-session-bar-card-status::before { display: none; }
+        html[data-slug="achtung"] .vtt-session-bar-card:not([data-online]):not([data-me]) .vtt-session-bar-card-status { color: #8b1a1a; }
+
+        /* ── Delta Green : ✦ procédure administrative des années 90 (formulaire photocopié, Courier,
+           cases libellées, surligneur, agrafe, code-barres) ; repris du slug : bandeau dg-header,
+           dg-section-label, dg-form-line, dg-stamp, dg-censured, dégradation par palier ── */
+        html[data-slug="deltagreen"] .vtt-session-bar { background: var(--color-surface); border-right: 1px solid var(--dg-divider); font-family: var(--dg-font-body); }
+        html[data-slug="deltagreen"] .vtt-session-bar-header {   /* en-tête de formulaire : filet épais + filet fin */
+            border-bottom: 3px double var(--color-text); padding-top: .5rem;
+        }
+        html[data-slug="deltagreen"] .vtt-session-bar-eyebrow {   /* ✦ référence de formulaire */
+            font-family: var(--dg-font-body); font-size: .6rem; font-weight: 700; letter-spacing: .14em; color: var(--color-text-muted);
+        }
+        html[data-slug="deltagreen"] .vtt-session-bar-eyebrow::after { content: ' · Formulaire DG-114 · Liste nominative'; font-weight: 400; letter-spacing: .04em; text-transform: none; }
+        html[data-slug="deltagreen"] .vtt-session-bar-title { font-family: var(--dg-font-body); font-weight: 700; font-size: .95rem; letter-spacing: .06em; text-transform: uppercase; color: var(--color-text); }
+        html[data-slug="deltagreen"] .vtt-session-bar-toggle { border-radius: 0; border-color: var(--dg-field-border); background: var(--dg-field-bg); }
+        html[data-slug="deltagreen"] .vtt-session-bar-player {   /* dg-form-line */
+            border-radius: 0; border-bottom: 1px dashed var(--dg-field-border); padding: .4rem .3rem;
+        }
+        html[data-slug="deltagreen"] .vtt-session-bar-player:last-child { border-bottom: none; }
+        html[data-slug="deltagreen"] .vtt-session-bar[data-mode="rail"] .vtt-session-bar-player { border-bottom: none; padding: 0; }
+        html[data-slug="deltagreen"] .vtt-session-bar-player[data-me] { background: none; }
+        html[data-slug="deltagreen"] .vtt-session-bar-player[data-me] .vtt-session-bar-name {   /* ✦ surligneur fluo */
+            align-self: flex-start; width: fit-content; max-width: 100%; padding: 0 .2rem; color: #1a1a1a;
+            background: linear-gradient(100deg, transparent 2%, rgba(255, 236, 60, .85) 4%, rgba(255, 230, 40, .8) 94%, transparent 97%);
+        }
+        html[data-slug="deltagreen"] .vtt-session-bar-name { font-family: var(--dg-font-body); font-weight: 700; font-size: .78rem; letter-spacing: .06em; text-transform: uppercase; }   /* dg-section-label */
+        html[data-slug="deltagreen"] .vtt-session-bar-player-name { font-family: var(--dg-font-stamp); font-size: .72rem; }
+        html[data-slug="deltagreen"] .vtt-session-bar-player[data-online] .vtt-session-bar-player-name { color: var(--color-text); }
+        html[data-slug="deltagreen"] .vtt-session-bar-frame,
+        html[data-slug="deltagreen"] .vtt-session-bar-image,
+        html[data-slug="deltagreen"] .vtt-session-bar-initials { border-radius: 0; }
+        html[data-slug="deltagreen"] .vtt-session-bar-frame { padding: 1px; background: var(--dg-field-border); }
+        html[data-slug="deltagreen"] .vtt-session-bar-player[data-online] .vtt-session-bar-frame,
+        html[data-slug="deltagreen"] .vtt-session-bar-player[data-me] .vtt-session-bar-frame { padding: 2px; background: var(--color-text); }
+        html[data-slug="deltagreen"] .vtt-session-bar-image { filter: grayscale(1) contrast(1.35) brightness(1.05); }   /* ✦ photocopie */
+        html[data-slug="deltagreen"] .vtt-session-bar-initials { font-family: var(--dg-font-body); font-weight: 700; background: var(--dg-field-bg); color: var(--color-text); }
+        html[data-slug="deltagreen"] .vtt-session-bar-presence { border-radius: 0; width: .6rem; height: .6rem; background: var(--dg-stamp-blue); }
+        html[data-slug="deltagreen"] .vtt-session-bar-reopen { border-radius: 0; background: var(--dg-header-bg); color: var(--dg-header-text); }
+
+        /* ✦ Carte : fiche de personnel photocopiée */
+        html[data-slug="deltagreen"] .vtt-session-bar-card {
+            position: relative; border-radius: 0; padding: 0 .8rem 2.4rem;
+            border: 1px solid var(--dg-field-border); color: var(--color-text);
+            background:
+                radial-gradient(circle at 12% 18%, var(--dg-paper-noise) 0 1px, transparent 2px) 0 0 / 7px 7px,
+                var(--color-bg);
+            box-shadow: 3px 4px 0 rgba(0,0,0,.08), 0 18px 40px rgba(0,0,0,.45);
+            font-family: var(--dg-font-body);
+        }
+        html[data-slug="deltagreen"] .vtt-session-bar-card::before {   /* bandeau dg-header */
+            content: 'Fiche de personnel · Confidentiel'; display: block; margin: 0 -.8rem .8rem; padding: .35rem .8rem;
+            background: var(--dg-header-bg); color: var(--dg-header-text);
+            font-family: var(--dg-font-stamp); font-size: .66rem; letter-spacing: .14em; text-transform: uppercase; white-space: nowrap;
+        }
+        html[data-slug="deltagreen"] .vtt-session-bar-card-deco::before {   /* agrafe */
+            content: ''; position: absolute; top: 2.05rem; left: 1.4rem; width: 30px; height: 5px; z-index: 3;
+            background: linear-gradient(180deg, #e6e6e6, #8c8c8c); border-radius: 1px; transform: rotate(-24deg);
+            box-shadow: 0 1px 1px rgba(0,0,0,.4);
+        }
+        html[data-slug="deltagreen"] .vtt-session-bar-card-deco::after {   /* code-barres */
+            content: ''; position: absolute; left: .8rem; right: .8rem; bottom: .7rem; height: 1.1rem; opacity: .85;
+            background: repeating-linear-gradient(90deg,
+                var(--color-text) 0 2px, transparent 2px 3px, var(--color-text) 3px 4px, transparent 4px 7px,
+                var(--color-text) 7px 10px, transparent 10px 11px, var(--color-text) 11px 12px, transparent 12px 15px);
+        }
+        html[data-slug="deltagreen"] .vtt-session-bar-card-image {
+            border-radius: 0; border: 1px solid var(--color-text); background: var(--dg-field-bg);
+            font-family: var(--dg-font-body); font-weight: 700; color: var(--color-text);
+        }
+        html[data-slug="deltagreen"] .vtt-session-bar-card-image img { filter: grayscale(1) contrast(1.35) brightness(1.05); }   /* photocopie */
+        html[data-slug="deltagreen"] .vtt-session-bar-card-name,
+        html[data-slug="deltagreen"] .vtt-session-bar-card-player-name {   /* cases libellées (dg-field-input) */
+            margin-top: .45rem; padding: .95rem .4rem .25rem; position: relative;
+            border: 1px solid var(--dg-field-border); background: var(--dg-field-bg);
+            font-family: var(--dg-font-stamp); font-weight: 400; font-size: .95rem; color: var(--color-text);
+        }
+        html[data-slug="deltagreen"] .vtt-session-bar-card-name { margin-top: .7rem; text-transform: uppercase; letter-spacing: .04em; }
+        html[data-slug="deltagreen"] .vtt-session-bar-card-player-name { margin-top: -1px; font-size: .85rem; }
+        html[data-slug="deltagreen"] .vtt-session-bar-card-name::before,
+        html[data-slug="deltagreen"] .vtt-session-bar-card-player-name::before {
+            position: absolute; top: .18rem; left: .4rem;
+            font-family: var(--dg-font-body); font-size: .52rem; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; color: var(--color-text-muted);
+        }
+        html[data-slug="deltagreen"] .vtt-session-bar-card-name::before { content: '1. Nom de code'; }
+        html[data-slug="deltagreen"] .vtt-session-bar-card-player-name::before { content: '2. Agent traitant'; }
+        html[data-slug="deltagreen"] .vtt-session-bar-card-status {   /* dg-stamp incliné, à cheval sur la photo */
+            position: absolute; right: 1.3rem; top: 11.5rem; padding: .1em .5em; transform: rotate(-9deg);
+            font-family: var(--dg-font-stamp); font-weight: 900; font-size: .78rem; letter-spacing: .15em;
+            color: var(--dg-stamp-red); border: 2px solid currentColor; opacity: var(--dg-stamp-opacity);
+            background: color-mix(in srgb, var(--color-bg) 35%, transparent);
+        }
+        html[data-slug="deltagreen"] .vtt-session-bar-card-status::before { display: none; }
+        html[data-slug="deltagreen"] .vtt-session-bar-card[data-online] .vtt-session-bar-card-status,
+        html[data-slug="deltagreen"] .vtt-session-bar-card[data-me] .vtt-session-bar-card-status { color: var(--dg-stamp-blue); }
+
+        /* Dégradation (data-palier sur l'enveloppe de la fiche, qui contient la barre ;
+           la carte, rendue dans <body>, est atteinte par body:has) */
+        html[data-slug="deltagreen"] [data-palier="1"] .vtt-session-bar,
+        html[data-slug="deltagreen"] [data-palier="2"] .vtt-session-bar,
+        html[data-slug="deltagreen"] body:has([data-palier="1"]) .vtt-session-bar-card,
+        html[data-slug="deltagreen"] body:has([data-palier="2"]) .vtt-session-bar-card { animation: dg-eye-strain 12s infinite alternate ease-in-out; }
+        html[data-slug="deltagreen"] [data-palier="2"] .vtt-session-bar-name,
+        html[data-slug="deltagreen"] [data-palier="2"] .vtt-session-bar-title { animation: dg-tremble-micro 5s infinite; }
+        html[data-slug="deltagreen"] [data-palier="3"] .vtt-session-bar,
+        html[data-slug="deltagreen"] body:has([data-palier="3"]) .vtt-session-bar-card { filter: saturate(.2) contrast(1.2) sepia(.2); }
+        html[data-slug="deltagreen"] [data-palier="3"] .vtt-session-bar-name,
+        html[data-slug="deltagreen"] [data-palier="3"] .vtt-session-bar-title,
+        html[data-slug="deltagreen"] body:has([data-palier="3"]) .vtt-session-bar-card-name { animation: dg-chromatic-glitch 4s infinite step-end; }
+        html[data-slug="deltagreen"] [data-palier="4"] .vtt-session-bar,
+        html[data-slug="deltagreen"] body:has([data-palier="4"]) .vtt-session-bar-card { filter: grayscale(1) contrast(1.5) brightness(.9); }
+        /* ✦ Palier 4 : les autres agents sont caviardés (dg-censured) */
+        html[data-slug="deltagreen"] [data-palier="4"] .vtt-session-bar-player:not([data-me]) .vtt-session-bar-name,
+        html[data-slug="deltagreen"] [data-palier="4"] .vtt-session-bar-player:not([data-me]) .vtt-session-bar-player-name,
+        html[data-slug="deltagreen"] body:has([data-palier="4"]) .vtt-session-bar-card:not([data-me]) .vtt-session-bar-card-name,
+        html[data-slug="deltagreen"] body:has([data-palier="4"]) .vtt-session-bar-card:not([data-me]) .vtt-session-bar-card-player-name {
+            color: transparent; text-shadow: none;
+            background: linear-gradient(var(--dg-censure-color), var(--dg-censure-color)) 0 50% / 100% 72% no-repeat;
+            clip-path: polygon(0% 12%, 100% 0%, 98% 88%, 3% 100%);
+        }
+        html[data-slug="deltagreen"] body:has([data-palier="4"]) .vtt-session-bar-card:not([data-me]) .vtt-session-bar-card-name,
+        html[data-slug="deltagreen"] body:has([data-palier="4"]) .vtt-session-bar-card:not([data-me]) .vtt-session-bar-card-player-name {
+            clip-path: none;
+            background: linear-gradient(var(--dg-censure-color), var(--dg-censure-color)) .4rem 70% / calc(100% - .8rem) 45% no-repeat, var(--dg-field-bg);
+        }
+
+        /* ── Dune : DuneRise (dune-font), dune-card (liseré 1,5 px, rayon .5rem), dune-label, or ;
+           ✦ liseré épice pour « moi », crépuscule sous le portrait ── */
+        html[data-slug="dune"] .vtt-session-bar { background: var(--dune-surface); border-right: 1.5px solid var(--dune-border); }
+        html[data-slug="dune"] .vtt-session-bar-header { border-bottom: 1.5px solid var(--dune-border); }
+        html[data-slug="dune"] .vtt-session-bar-eyebrow { font-size: .65rem; font-weight: 700; letter-spacing: .08em; color: var(--dune-text-muted); }   /* dune-label */
+        html[data-slug="dune"] .vtt-session-bar-title { font-family: var(--font-dune); font-weight: 400; font-size: 1.05rem; letter-spacing: .04em; color: var(--dune-gold); }
+        html[data-slug="dune"] .vtt-session-bar-toggle { border-radius: .375rem; border: 1.5px solid var(--dune-border); }
+        html[data-slug="dune"] .vtt-session-bar-player { border-radius: .5rem; border: 1.5px solid transparent; }
+        html[data-slug="dune"] .vtt-session-bar-player[data-me] { background: var(--dune-surface-alt); border-color: var(--dune-border); }   /* dune-card-alt */
+        html[data-slug="dune"] .vtt-session-bar[data-mode="rail"] .vtt-session-bar-player { border: none; }
+        html[data-slug="dune"] .vtt-session-bar-player-name { font-size: .65rem; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; }
+        html[data-slug="dune"] .vtt-session-bar-player[data-online] .vtt-session-bar-player-name { color: var(--dune-ochre); }
+        html[data-slug="dune"] .vtt-session-bar-frame { padding: 1.5px; }
+        html[data-slug="dune"] .vtt-session-bar-player[data-online] .vtt-session-bar-frame { background: var(--dune-gold); }
+        html[data-slug="dune"] .vtt-session-bar-player[data-me] .vtt-session-bar-frame { padding: 2.5px; background: var(--dune-spice); }   /* ✦ épice */
+        html[data-slug="dune"] .vtt-session-bar-initials { font-family: var(--font-dune); color: var(--dune-gold); }
+        html[data-slug="dune"] .vtt-session-bar-reopen { border-radius: .375rem; background: var(--dune-gold); color: var(--dune-dark); }
+        html[data-slug="dune"] .vtt-session-bar-card { border-radius: .5rem; border: 1.5px solid var(--dune-border); background: var(--dune-surface); }
+        html[data-slug="dune"] .vtt-session-bar-card-image { position: relative; border-radius: .375rem; border: 1.5px solid var(--dune-border); font-family: var(--font-dune); color: var(--dune-gold); }
+        html[data-slug="dune"] .vtt-session-bar-card-image::after {   /* ✦ crépuscule et dunes de la marque */
+            content: ''; position: absolute; inset: auto 0 0 0; height: 32%; pointer-events: none;
+            background:
+                radial-gradient(ellipse 160% 70% at 20% 125%, rgba(139, 111, 71, .9) 50%, transparent 51%),
+                radial-gradient(ellipse 140% 65% at 85% 120%, rgba(181, 101, 29, .85) 50%, transparent 51%),
+                linear-gradient(180deg, transparent, rgba(44, 26, 14, .35));
+        }
+        html[data-slug="dune"] .vtt-session-bar-card-name { font-family: var(--font-dune); font-weight: 400; font-size: 1.25rem; letter-spacing: .04em; color: var(--dune-gold); }
+        html[data-slug="dune"] .vtt-session-bar-card-player-name { font-size: .7rem; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; }
+        html[data-slug="dune"] .vtt-session-bar-card-status { letter-spacing: .08em; }
+
+        /* ── Tecumah : BleedingCowboys / DayRoman (tecumah-font / tecumah-title-font), palette
+           canyon ; ✦ avis de recherche, sépia hors ligne, double filet ── */
+        html[data-slug="tecumah"] .vtt-session-bar { background: var(--color-surface); border-right: 2px solid var(--color-border); }
+        html[data-slug="tecumah"] .vtt-session-bar-header { border-bottom: 3px double var(--color-border); }   /* ✦ double filet */
+        html[data-slug="tecumah"] .vtt-session-bar-eyebrow { font-family: 'DayRoman', Georgia, serif; font-weight: 400; font-size: .7rem; letter-spacing: .25em; }
+        html[data-slug="tecumah"] .vtt-session-bar-title { font-family: 'BleedingCowboys', Georgia, serif; font-weight: 400; font-size: 1.3rem; line-height: 1.45; padding: .1em .25em .15em; margin: 0 -.25em; }   /* traits de la police dans le cadre */
+        html[data-slug="tecumah"] .vtt-session-bar-toggle { border-radius: .5rem; border-color: var(--color-border); }
+        html[data-slug="tecumah"] .vtt-session-bar-player { border-radius: .5rem; }
+        html[data-slug="tecumah"] .vtt-session-bar-player[data-me] { background: color-mix(in srgb, var(--color-primary) 12%, transparent); box-shadow: inset 3px 0 0 var(--color-primary); }
+        html[data-slug="tecumah"] .vtt-session-bar[data-mode="rail"] .vtt-session-bar-player[data-me] { box-shadow: none; }
+        html[data-slug="tecumah"] .vtt-session-bar-name { font-family: 'DayRoman', Georgia, serif; font-weight: 400; font-size: .95rem; }
+        html[data-slug="tecumah"] .vtt-session-bar-player-name { font-style: italic; }
+        html[data-slug="tecumah"] .vtt-session-bar-player:not([data-online]):not([data-me]) .vtt-session-bar-frame { filter: sepia(.85) saturate(.8); opacity: .65; }   /* ✦ sépia */
+        html[data-slug="tecumah"] .vtt-session-bar-initials { font-family: 'DayRoman', Georgia, serif; font-weight: 400; color: var(--color-primary); }
+        html[data-slug="tecumah"] .vtt-session-bar-card {   /* ✦ avis de recherche */
+            border-radius: 2px; border: 2px solid var(--color-border); padding: .9rem .9rem 1.1rem;
+            background:
+                url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='2'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23n)' opacity='0.06'/%3E%3C/svg%3E"),
+                var(--color-surface);
+            text-align: center;
+        }
+        html[data-slug="tecumah"] .vtt-session-bar-card::before {
+            content: 'Avis de recherche'; display: block; margin-bottom: .55rem;
+            font-family: 'DayRoman', Georgia, serif; font-size: .78rem; letter-spacing: .3em; text-transform: uppercase;
+            padding-bottom: .4rem; border-bottom: 3px double var(--color-border);
+        }
+        html[data-slug="tecumah"] .vtt-session-bar-card-image { border-radius: 0; border: 3px solid var(--color-text); font-family: 'BleedingCowboys', Georgia, serif; color: var(--color-primary); }
+        html[data-slug="tecumah"] .vtt-session-bar-card-image img { filter: sepia(.35) contrast(1.05); }
+        html[data-slug="tecumah"] .vtt-session-bar-card-name { font-family: 'BleedingCowboys', Georgia, serif; font-weight: 400; font-size: 1.6rem; line-height: 1.4; padding: .1em .3em; color: var(--color-primary); }
+        html[data-slug="tecumah"] .vtt-session-bar-card-player-name { font-family: 'DayRoman', Georgia, serif; font-size: .85rem; }
+        html[data-slug="tecumah"] .vtt-session-bar-card-status { font-family: 'DayRoman', Georgia, serif; font-weight: 400; letter-spacing: .2em; }
+    </style>
 </head>
 <body>
 
-<div class="board-toolbar">
+<!-- Position posée en ligne : le thème d'Achtung vise body > * -->
+<div class="board-toolbar" style="position: sticky; z-index: 300;">
     <strong>Barre de session</strong>
     <div class="board-group" data-control="slug"><span>Slug</span>
         <button data-value="default" class="is-on">Défaut</button>
         <button data-value="vikings">Vikings</button>
         <button data-value="cyberpunk">Cyberpunk</button>
+        <span>· lot 2</span>
+        <button data-value="fabula">Fabula</button>
+        <button data-value="zoneblanche">Zone Blanche</button>
+        <button data-value="achtung">Achtung</button>
+        <button data-value="deltagreen">Delta Green</button>
+        <button data-value="dune">Dune</button>
+        <button data-value="tecumah">Tecumah</button>
     </div>
     <div class="board-group" data-control="theme"><span>Thème</span>
         <button data-value="dark" class="is-on">Nuit</button>
@@ -417,6 +834,13 @@
         <button data-value="long">Long</button>
         <button data-value="xl">À rallonge</button>
     </div>
+    <div class="board-group" data-control="palier" id="palier-group" hidden><span>Dégradation</span>
+        <button data-value="0" class="is-on">0</button>
+        <button data-value="1">1</button>
+        <button data-value="2">2</button>
+        <button data-value="3">3</button>
+        <button data-value="4">4</button>
+    </div>
     <div class="board-group" data-control="mode"><span>Mode</span>
         <button data-value="panel" class="is-on">Panneau</button>
         <button data-value="rail">Rail</button>
@@ -424,6 +848,7 @@
     </div>
     <span class="board-hint">Survolez un avatar pour la carte · Échap la ferme</span>
 </div>
+<div class="board-proposals" id="proposals" hidden></div>
 
 <div id="app-root">
     <header class="demo-header">
@@ -445,11 +870,12 @@
 
         <section class="demo-sheet" id="sheet"></section>
     </main>
-</div>
 
-<button class="vtt-session-bar-reopen" id="reopen" title="Afficher la table" hidden>
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5l7 7-7 7"/></svg>
-</button>
+    <!-- Dans #app-root comme dans l'appli (pas enfant direct de body) -->
+    <button class="vtt-session-bar-reopen" id="reopen" title="Afficher la table" hidden>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5l7 7-7 7"/></svg>
+    </button>
+</div>
 
 <div class="vtt-session-bar-card" id="card" aria-hidden="true">
     <div class="vtt-session-bar-card-deco"></div>
@@ -563,6 +989,8 @@
         const minTop  = Math.max(barRect.top, 0) + 8;
         const maxTop  = Math.min(barRect.bottom, window.innerHeight) - h - 8;
         const top     = Math.max(minTop, Math.min(aRect.top + aRect.height / 2 - h / 2, maxTop));
+        card.style.position = 'fixed';   // comme le composant : un thème peut viser body > *
+        card.style.zIndex   = 'var(--vtt-z-session-card)';
         card.style.left = `${barRect.right + 12}px`;
         card.style.top  = `${top}px`;
         card.classList.add('is-open');
@@ -593,9 +1021,18 @@
     window.addEventListener('scroll', () => hideCard(true), { passive: true });
 
     // ── Planche : slug, thème, mode ──────────────────────────────────────────
-    const THEMES = {
-        vikings:   '../../src/client/src/systems/vikings/theme.css',
-        cyberpunk: '../../src/client/src/systems/cyberpunk/theme.css',
+    const THEMES = Object.fromEntries(
+        ['vikings', 'cyberpunk', 'fabula', 'zoneblanche', 'achtung', 'deltagreen', 'dune', 'tecumah']
+            .map(s => [s, `../../src/client/src/systems/${s}/theme.css`]));
+
+    // Propositions ✦ (au-delà du vocabulaire existant du slug), affichées sous la barre d'outils
+    const PROPOSALS = {
+        fabula:      ['Barre et carte en fenêtres de menu JRPG (bleu nuit, liseré argent, texte ombré), en jour comme en nuit', 'Curseur ▶ et ligne sélectionnée pour « moi »', 'Statut en option de menu avec curseur'],
+        zoneblanche: ['Point de présence en « REC » rouge clignotant', 'Viseur de caméra (coins) sur le portrait de la carte'],
+        achtung:     ['Avatars en petites photos d\'identité à bord blanc', 'Carte en laissez-passer : papier guilloché, photo agrafée, cachet rond, champs « Nom » et « Titulaire »', 'Statut en tampon (repris de la marque)'],
+        deltagreen:  ['Procédure des années 90 : référence de formulaire, lignes pointillées, photos photocopiées', '« Moi » au surligneur fluo', 'Carte en fiche de personnel : bandeau confidentiel, cases libellées, agrafe, code-barres, tampon', 'Palier 4 : les autres agents sont caviardés'],
+        dune:        ['Liseré épice pour « moi »', 'Crépuscule et dunes sous le portrait de la carte (repris de la marque)'],
+        tecumah:     ['Carte en « Avis de recherche »', 'Avatars hors ligne en sépia au lieu du gris', 'Double filet sous l\'en-tête'],
     };
     const SESSION_NAMES = {
         short: { default: 'Table du jeudi', vikings: 'La Saga du Nord', cyberpunk: 'Opération Néon' },
@@ -610,7 +1047,7 @@
 
     function applyTitle() {
         const el = document.querySelector('.vtt-session-bar-title');
-        el.textContent = el.title = SESSION_NAMES[titleLength][slug];
+        el.textContent = el.title = SESSION_NAMES[titleLength][slug] ?? SESSION_NAMES[titleLength].default;
     }
 
     function applyTheme() {
@@ -622,6 +1059,11 @@
         if (theme === 'dark') document.documentElement.dataset.theme = 'dark';
         else if (slug === 'default') document.documentElement.dataset.theme = 'light';
         else delete document.documentElement.dataset.theme;
+        document.documentElement.classList.toggle('dark', theme === 'dark');   // Dune (et Vikings) : classe .dark
+        document.getElementById('palier-group').hidden = slug !== 'deltagreen';
+        const proposals = document.getElementById('proposals');
+        proposals.hidden = !PROPOSALS[slug];
+        proposals.innerHTML = PROPOSALS[slug] ? `<strong>✦ Propositions</strong> ${PROPOSALS[slug].map(p => `<span>${p}</span>`).join('')}` : '';
         document.getElementById('app-root').className = slug === 'vikings' ? 'vk-root' : '';
         applyTitle();
         hideCard(true);
@@ -639,6 +1081,7 @@
         if (control === 'theme') { theme = btn.dataset.value; applyTheme(); }
         if (control === 'mode')  setMode(btn.dataset.value);
         if (control === 'title') { titleLength = btn.dataset.value; applyTitle(); }
+        if (control === 'palier') document.getElementById('app-root').dataset.palier = btn.dataset.value;
         syncToolbar(control, btn.dataset.value);
     });
 
