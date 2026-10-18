@@ -214,6 +214,7 @@ const TabSession = ({ activeSession, onlineCharacters, characterUpdates }) => {
     const sessionCharsForModal = (activeSession?.characters ?? []).map(sc => ({
         id: sc.id,
         name: characters[sc.id]?.nom ?? `#${sc.id}`,
+        avatar: sc.avatar,
     }));
 
     const openDiceModal = (attr1 = 'dex', attr2 = 'int') => setDiceModalAttrs({ attr1, attr2 });
@@ -331,11 +332,10 @@ const TabSession = ({ activeSession, onlineCharacters, characterUpdates }) => {
             {/* ── Modales ──────────────────────────────────────────────────── */}
             {showSendModal && (
                 <GMSendModal
-                    isOpen
                     onClose={() => setShowSendModal(false)}
-                    preSelectedCharacterId={selectedId}
+                    preSelectedCharId={selectedId}
                     sessionId={activeSession?.id ?? null}
-                    characters={sessionCharsForModal}
+                    sessionCharacters={sessionCharsForModal}
                 />
             )}
             {showAvatarUploader && char && (

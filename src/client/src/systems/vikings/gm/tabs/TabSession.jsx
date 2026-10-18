@@ -204,19 +204,7 @@ const TabSession = ({ activeSession, onlineCharacters = [], characterUpdates }) 
         });
     };
 
-    // ── Envois au journal (routes génériques) ─────────────────────────────
-    const handleGMSend = async (sendData) => {
-        const response = await fetchWithAuth('/api/journal/gm-send', {
-            method: 'POST',
-            body: JSON.stringify({
-                ...sendData,
-                sessionId,
-                metadata: sendData.imageData ? { imageUrl: sendData.imageData } : null,
-            }),
-        });
-        if (!response.ok) throw new Error('Send failed');
-    };
-
+    // ── Envoi d'objet au journal (route générique ; les messages sont envoyés par GMSendModal) ──
     const handleGMSendItem = async (sendData) => {
         const response = await fetchWithAuth('/api/journal/gm-send-item', {
             method: 'POST',
@@ -302,7 +290,7 @@ const TabSession = ({ activeSession, onlineCharacters = [], characterUpdates }) 
             {showSendModal && (
                 <GMSendModal
                     onClose={() => setShowSendModal(false)}
-                    onSend={handleGMSend}
+                    sessionId={sessionId}
                     sessionCharacters={sessionCharacters}
                     preSelectedCharId={selectedId}
                 />

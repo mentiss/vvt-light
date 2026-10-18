@@ -328,21 +328,6 @@ const TabSession = ({ activeSession, onlineCharacters, onSessionChange }) => {
     const movesDisplay  = movesTab === 'base' ? baseMoves : movesTab === 'playbook' ? playbookMoves : allOffPlaybook;
 
     // Envoi note
-    const handleGMSend = useCallback(async (sendData) => {
-        const r = await fetchWithAuth(`${apiBase}/journal/gm-send`, {
-            method: 'POST',
-            body:   JSON.stringify({
-                targetCharacterIds: sendData.targetCharacterIds,
-                sessionId:          activeSession?.id ?? null,
-                title:              sendData.title ?? null,
-                body:               sendData.body  ?? null,
-                metadata:           sendData.imageData ? { imageUrl: sendData.imageData } : null,
-                toastAnimation:     sendData.toastAnimation ?? 'default',
-            }),
-        });
-        if (!r.ok) throw new Error('Envoi échoué');
-    }, [apiBase, fetchWithAuth, activeSession?.id]);
-
     // Envoi item
     const handleSendItem = async () => {
         if (!sendItemForm.name.trim() || !char) return;
@@ -380,6 +365,7 @@ const TabSession = ({ activeSession, onlineCharacters, onSessionChange }) => {
         name: characters[sc.id]
             ? [characters[sc.id].prenom, characters[sc.id].nom].filter(Boolean).join(' ') || sc.name
             : (sc.name ?? sc.id),
+        avatar: sc.avatar,
     }));
 
     // ── Etats vides ───────────────────────────────────────────────────────────
@@ -840,7 +826,7 @@ const TabSession = ({ activeSession, onlineCharacters, onSessionChange }) => {
             {showSendNote && (
                 <GMSendModal
                     onClose={() => setShowSendNote(false)}
-                    onSend={handleGMSend}
+                    sessionId={activeSession?.id ?? null}
                     sessionCharacters={sessionCharacters}
                     preSelectedCharId={selectedId}
                 />

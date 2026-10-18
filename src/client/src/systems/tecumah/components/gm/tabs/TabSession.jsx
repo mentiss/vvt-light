@@ -88,24 +88,11 @@ const TabSession = ({ activeSession, onlineCharacters }) => {
     }, [characters]);
 
     // ── Envoi note ────────────────────────────────────────────────────────
-    const handleGMSend = useCallback(async (sendData) => {
-        const r = await fetchWithAuth(`${apiBase}/journal/gm-send`, {
-            method: 'POST', headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                targetCharacterIds: sendData.targetCharacterIds,
-                sessionId:      activeSession?.id ?? null,
-                title:          sendData.title ?? null,
-                body:           sendData.body  ?? null,
-                metadata:       sendData.imageData ? { imageUrl: sendData.imageData } : null,
-                toastAnimation: sendData.toastAnimation ?? 'default',
-            }),
-        });
-        if (!r.ok) throw new Error('Envoi échoué');
-    }, [activeSession?.id]);
-
+    // Destinataires de GMSendModal (qui envoie elle-même)
     const sessionCharacters = (activeSession?.characters ?? []).map(sc => ({
-        id:   sc.id,
-        name: `${characters[sc.id]?.prenom ?? ''} ${characters[sc.id]?.nom ?? sc.name ?? `Perso ${sc.id}`}`.trim(),
+        id:     sc.id,
+        name:   `${characters[sc.id]?.prenom ?? ''} ${characters[sc.id]?.nom ?? sc.name ?? `Perso ${sc.id}`}`.trim(),
+        avatar: sc.avatar,
     }));
 
     // ── Pas de session ────────────────────────────────────────────────────
@@ -178,7 +165,7 @@ const TabSession = ({ activeSession, onlineCharacters }) => {
             {showSendModal && (
                 <GMSendModal
                     onClose={() => { setShowSendModal(false); setSendPreSelected(null); }}
-                    onSend={handleGMSend}
+                    sessionId={activeSession?.id ?? null}
                     sessionCharacters={sessionCharacters}
                     preSelectedCharId={sendPreSelected}
                 />

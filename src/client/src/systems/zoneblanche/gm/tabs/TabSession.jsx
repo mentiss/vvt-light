@@ -200,6 +200,7 @@ const TabSession = ({
         () => Object.values(characters).map(c => ({
             id:   c.id,
             name: [c.prenom, c.nom].filter(Boolean).join(' ') || 'Sans nom',
+            avatar: c.avatar,
         })),
         [characters],
     );
@@ -293,11 +294,10 @@ const TabSession = ({
             {/* ── Modales ──────────────────────────────────────────────────── */}
             {showSendModal && (
                 <GMSendModal
-                    isOpen
                     onClose={() => setShowSendModal(false)}
-                    preSelectedCharacterId={selectedId}
+                    preSelectedCharId={selectedId}
                     sessionId={sessionId}
-                    characters={sessionCharsForModal}
+                    sessionCharacters={sessionCharsForModal}
                 />
             )}
 

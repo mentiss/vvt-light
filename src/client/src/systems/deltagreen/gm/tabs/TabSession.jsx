@@ -788,8 +788,12 @@ const TabSession = ({ activeSession, onlineCharacters }) => {
             {showSendNote && (
                 <GMSendModal
                     sessionId={activeSession?.id}
-                    characters={Object.values(characters)}
-                    preSelectedCharacterId={sendPreselect}
+                    sessionCharacters={Object.values(characters).map(c => ({
+                        id:     c.id,
+                        name:   [c.nom, c.prenom].filter(Boolean).join(' ') || `#${c.id}`,
+                        avatar: c.avatar,
+                    }))}
+                    preSelectedCharId={sendPreselect}
                     onClose={() => { setShowSendNote(false); setSendPreselect(null); }}
                 />
             )}

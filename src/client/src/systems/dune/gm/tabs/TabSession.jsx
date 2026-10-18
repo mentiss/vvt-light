@@ -86,28 +86,11 @@ const TabSession = ({ activeSession, onlineCharacters }) => {
         setEditModal(null);
     }, [apiBase, fetchWithAuth]);
 
-    // ── Envoi note GM via GMSendModal ─────────────────────────────────────
-    // onSend reçoit { targetCharacterIds, title, body, imageData, toastAnimation }
-    const handleGMSend = useCallback(async (sendData) => {
-        const r = await fetchWithAuth(`${apiBase}/journal/gm-send`, {
-            method:  'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                targetCharacterIds: sendData.targetCharacterIds,
-                sessionId:   activeSession?.id ?? null,
-                title:       sendData.title     ?? null,
-                body:        sendData.body       ?? null,
-                metadata:    sendData.imageData ? { imageUrl: sendData.imageData } : null,
-                toastAnimation: sendData.toastAnimation ?? 'default',
-            }),
-        });
-        if (!r.ok) throw new Error('Envoi échoué');
-    }, [apiBase, fetchWithAuth, activeSession?.id]);
-
-    // ── sessionCharacters au format attendu par GMSendModal ──────────────
+    // ── sessionCharacters au format attendu par GMSendModal (qui envoie elle-même) ──
     const sessionCharacters = (activeSession?.characters ?? []).map(sc => ({
-        id:   sc.id,
-        name: characters[sc.id]?.nom ?? sc.name ?? `Perso ${sc.id}`,
+        id:     sc.id,
+        name:   characters[sc.id]?.nom ?? sc.name ?? `Perso ${sc.id}`,
+        avatar: sc.avatar,
     }));
 
     // ── États vides ───────────────────────────────────────────────────────
@@ -212,7 +195,7 @@ const TabSession = ({ activeSession, onlineCharacters }) => {
             {showSendModal && (
                 <GMSendModal
                     onClose={() => { setShowSendModal(false); setSendPreSelectedId(null); }}
-                    onSend={handleGMSend}
+                    sessionId={activeSession?.id ?? null}
                     sessionCharacters={sessionCharacters}
                     preSelectedCharId={sendPreSelectedId}
                 />

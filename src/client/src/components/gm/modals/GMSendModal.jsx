@@ -2,6 +2,14 @@
 // Modale envoi message GM (V2 : nouveau + depuis notes)
 // CSS : composant Modal et classes vtt-* (habillables par le theme.css du slug).
 // Pas de fermeture au clic sur le fond : le message en cours serait perdu.
+//
+// Contrat :
+//   onClose            — () => void
+//   sessionCharacters  — destinataires possibles : [{ id, name, avatar? }]
+//   preSelectedCharId  — personnage coché d'office (sinon tous)
+//   sessionId          — session active, transmise avec le message
+//   onSend?            — (sendData) => Promise ; facultatif : sans lui, la modale
+//                        envoie elle-même à la route commune POST journal/gm-send
 
 import React, { useState, useEffect, useRef } from 'react';
 import { useFetch } from '../../../hooks/useFetch.js';
@@ -15,7 +23,7 @@ const TOAST_ANIMATIONS = [
     { id: 'glitter', label: 'Doré' },
 ];
 
-const GMSendModal = ({ onClose, onSend, sessionCharacters = [], preSelectedCharId = null }) => {
+const GMSendModal = ({ onClose, onSend, sessionCharacters = [], preSelectedCharId = null, sessionId = null }) => {
     const [mode, setMode] = useState('new');
 
     const [selectedTargets, setSelectedTargets] = useState(() => {
@@ -111,14 +119,30 @@ const GMSendModal = ({ onClose, onSend, sessionCharacters = [], preSelectedCharI
         if (selectedTargets.size === 0) return;
         if (!title.trim() && !body.trim()) return;
         setSending(true);
+        const sendData = {
+            targetCharacterIds: Array.from(selectedTargets),
+            title:          title.trim() || null,
+            body:           body.trim()  || null,
+            imageData:      imageData    || null,
+            toastAnimation,
+        };
         try {
-            await onSend({
-                targetCharacterIds: Array.from(selectedTargets),
-                title:          title.trim() || null,
-                body:           body.trim()  || null,
-                imageData:      imageData    || null,
-                toastAnimation,
-            });
+            if (onSend) {
+                await onSend(sendData);
+            } else {
+                const response = await fetchWithAuth(`${apiBase}/journal/gm-send`, {
+                    method: 'POST',
+                    body: JSON.stringify({
+                        targetCharacterIds: sendData.targetCharacterIds,
+                        sessionId,
+                        title:          sendData.title,
+                        body:           sendData.body,
+                        metadata:       sendData.imageData ? { imageUrl: sendData.imageData } : null,
+                        toastAnimation: sendData.toastAnimation,
+                    }),
+                });
+                if (!response.ok) throw new Error('Envoi échoué');
+            }
             onClose();
         } catch (error) {
             console.error('[GMSendModal] Error sending:', error);

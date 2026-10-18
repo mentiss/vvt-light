@@ -332,6 +332,7 @@ const TabSession = ({ activeSession, onSessionChange, onlineCharacters }) => {
         name: characters[sc.id]
             ? [characters[sc.id].prenom, characters[sc.id].nom].filter(Boolean).join(' ') || 'Anonyme'
             : '…',
+        avatar: sc.avatar,
     }));
 
     // ── Rendu ─────────────────────────────────────────────────────────────────
@@ -541,11 +542,10 @@ const TabSession = ({ activeSession, onSessionChange, onlineCharacters }) => {
 
             {showSendModal && (
                 <GMSendModal
-                    isOpen
                     onClose={() => setShowSendModal(false)}
-                    preSelectedCharacterId={selectedId}
+                    preSelectedCharId={selectedId}
                     sessionId={activeSession?.id ?? null}
-                    characters={sessionCharsForModal}
+                    sessionCharacters={sessionCharsForModal}
                 />
             )}
         </div>
