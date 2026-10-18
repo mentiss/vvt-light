@@ -501,3 +501,127 @@
 [data-theme="dark"] .dg-feuillet::after {
     color: rgba(160, 200, 160, 0.2);
 }
+
+/* ── Barre de session (components/layout/SessionPlayersBar.jsx, spec_session_bar.md) ─ */
+/* ── Delta Green : ✦ procédure administrative des années 90 (formulaire photocopié, Courier,
+   cases libellées, surligneur, agrafe, code-barres) ; repris du slug : bandeau dg-header,
+   dg-section-label, dg-form-line, dg-stamp, dg-censured, dégradation par palier ── */
+.vtt-session-bar { background: var(--color-surface); border-right: 1px solid var(--dg-divider); font-family: var(--dg-font-body); }
+.vtt-session-bar-header {   /* en-tête de formulaire : filet épais + filet fin */
+    border-bottom: 3px double var(--color-text); padding-top: .5rem;
+}
+.vtt-session-bar-eyebrow {   /* ✦ référence de formulaire */
+    font-family: var(--dg-font-body); font-size: .6rem; font-weight: 700; letter-spacing: .14em; color: var(--color-text-muted);
+}
+.vtt-session-bar-eyebrow::after { content: ' · Formulaire DG-114 · Liste nominative'; font-weight: 400; letter-spacing: .04em; text-transform: none; }
+.vtt-session-bar-title { font-family: var(--dg-font-body); font-weight: 700; font-size: .95rem; letter-spacing: .06em; text-transform: uppercase; color: var(--color-text); }
+.vtt-session-bar-toggle { border-radius: 0; border-color: var(--dg-field-border); background: var(--dg-field-bg); }
+.vtt-session-bar-player {   /* dg-form-line */
+    border-radius: 0; border-bottom: 1px dashed var(--dg-field-border); padding: .4rem .3rem;
+}
+.vtt-session-bar-player:last-child { border-bottom: none; }
+.vtt-session-bar[data-mode="rail"] .vtt-session-bar-player { border-bottom: none; padding: 0; }
+.vtt-session-bar-player[data-me] { background: none; }
+.vtt-session-bar-player[data-me] .vtt-session-bar-name {   /* ✦ surligneur fluo */
+    align-self: flex-start; width: fit-content; max-width: 100%; padding: 0 .2rem; color: #1a1a1a;
+    background: linear-gradient(100deg, transparent 2%, rgba(255, 236, 60, .85) 4%, rgba(255, 230, 40, .8) 94%, transparent 97%);
+}
+.vtt-session-bar-name { font-family: var(--dg-font-body); font-weight: 700; font-size: .78rem; letter-spacing: .06em; text-transform: uppercase; }   /* dg-section-label */
+.vtt-session-bar-player-name { font-family: var(--dg-font-stamp); font-size: .72rem; }
+.vtt-session-bar-player[data-online] .vtt-session-bar-player-name { color: var(--color-text); }
+.vtt-session-bar-frame,
+.vtt-session-bar-image,
+.vtt-session-bar-initials { border-radius: 0; }
+.vtt-session-bar-frame { padding: 1px; background: var(--dg-field-border); }
+.vtt-session-bar-player[data-online] .vtt-session-bar-frame,
+.vtt-session-bar-player[data-me] .vtt-session-bar-frame { padding: 2px; background: var(--color-text); }
+.vtt-session-bar-image { filter: grayscale(1) contrast(1.35) brightness(1.05); }   /* ✦ photocopie */
+.vtt-session-bar-initials { font-family: var(--dg-font-body); font-weight: 700; background: var(--dg-field-bg); color: var(--color-text); }
+.vtt-session-bar-presence { border-radius: 0; width: .6rem; height: .6rem; background: var(--dg-stamp-blue); }
+.vtt-session-bar-reopen { border-radius: 0; background: var(--dg-header-bg); color: var(--dg-header-text); }
+
+/* ✦ Carte : fiche de personnel photocopiée */
+.vtt-session-bar-card {
+    position: relative; border-radius: 0; padding: 0 .8rem 2.4rem;
+    border: 1px solid var(--dg-field-border); color: var(--color-text);
+    background:
+        radial-gradient(circle at 12% 18%, var(--dg-paper-noise) 0 1px, transparent 2px) 0 0 / 7px 7px,
+        var(--color-bg);
+    box-shadow: 3px 4px 0 rgba(0,0,0,.08), 0 18px 40px rgba(0,0,0,.45);
+    font-family: var(--dg-font-body);
+}
+.vtt-session-bar-card::before {   /* bandeau dg-header */
+    content: 'Fiche de personnel · Confidentiel'; display: block; margin: 0 -.8rem .8rem; padding: .35rem .8rem;
+    background: var(--dg-header-bg); color: var(--dg-header-text);
+    font-family: var(--dg-font-stamp); font-size: .66rem; letter-spacing: .14em; text-transform: uppercase; white-space: nowrap;
+}
+.vtt-session-bar-card-deco::before {   /* agrafe */
+    content: ''; position: absolute; top: 2.05rem; left: 1.4rem; width: 30px; height: 5px; z-index: 3;
+    background: linear-gradient(180deg, #e6e6e6, #8c8c8c); border-radius: 1px; transform: rotate(-24deg);
+    box-shadow: 0 1px 1px rgba(0,0,0,.4);
+}
+.vtt-session-bar-card-deco::after {   /* code-barres */
+    content: ''; position: absolute; left: .8rem; right: .8rem; bottom: .7rem; height: 1.1rem; opacity: .85;
+    background: repeating-linear-gradient(90deg,
+        var(--color-text) 0 2px, transparent 2px 3px, var(--color-text) 3px 4px, transparent 4px 7px,
+        var(--color-text) 7px 10px, transparent 10px 11px, var(--color-text) 11px 12px, transparent 12px 15px);
+}
+.vtt-session-bar-card-image {
+    border-radius: 0; border: 1px solid var(--color-text); background: var(--dg-field-bg);
+    font-family: var(--dg-font-body); font-weight: 700; color: var(--color-text);
+}
+.vtt-session-bar-card-image img { filter: grayscale(1) contrast(1.35) brightness(1.05); }   /* photocopie */
+.vtt-session-bar-card-name,
+.vtt-session-bar-card-player-name {   /* cases libellées (dg-field-input) */
+    margin-top: .45rem; padding: .95rem .4rem .25rem; position: relative;
+    border: 1px solid var(--dg-field-border); background: var(--dg-field-bg);
+    font-family: var(--dg-font-stamp); font-weight: 400; font-size: .95rem; color: var(--color-text);
+}
+.vtt-session-bar-card-name { margin-top: .7rem; text-transform: uppercase; letter-spacing: .04em; }
+.vtt-session-bar-card-player-name { margin-top: -1px; font-size: .85rem; }
+.vtt-session-bar-card-name::before,
+.vtt-session-bar-card-player-name::before {
+    position: absolute; top: .18rem; left: .4rem;
+    font-family: var(--dg-font-body); font-size: .52rem; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; color: var(--color-text-muted);
+}
+.vtt-session-bar-card-name::before { content: '1. Nom de code'; }
+.vtt-session-bar-card-player-name::before { content: '2. Agent traitant'; }
+.vtt-session-bar-card-status {   /* dg-stamp incliné, à cheval sur la photo */
+    position: absolute; right: 1.3rem; top: 11.5rem; padding: .1em .5em; transform: rotate(-9deg);
+    font-family: var(--dg-font-stamp); font-weight: 900; font-size: .78rem; letter-spacing: .15em;
+    color: var(--dg-stamp-red); border: 2px solid currentColor; opacity: var(--dg-stamp-opacity);
+    background: color-mix(in srgb, var(--color-bg) 35%, transparent);
+}
+.vtt-session-bar-card-status::before { display: none; }
+.vtt-session-bar-card[data-online] .vtt-session-bar-card-status,
+.vtt-session-bar-card[data-me] .vtt-session-bar-card-status { color: var(--dg-stamp-blue); }
+
+/* Dégradation (data-palier sur l'enveloppe de la fiche, qui contient la barre ;
+   la carte, rendue dans <body>, est atteinte par body:has) */
+[data-palier="1"] .vtt-session-bar,
+[data-palier="2"] .vtt-session-bar,
+body:has([data-palier="1"]) .vtt-session-bar-card,
+body:has([data-palier="2"]) .vtt-session-bar-card { animation: dg-eye-strain 12s infinite alternate ease-in-out; }
+[data-palier="2"] .vtt-session-bar-name,
+[data-palier="2"] .vtt-session-bar-title { animation: dg-tremble-micro 5s infinite; }
+[data-palier="3"] .vtt-session-bar,
+body:has([data-palier="3"]) .vtt-session-bar-card { filter: saturate(.2) contrast(1.2) sepia(.2); }
+[data-palier="3"] .vtt-session-bar-name,
+[data-palier="3"] .vtt-session-bar-title,
+body:has([data-palier="3"]) .vtt-session-bar-card-name { animation: dg-chromatic-glitch 4s infinite step-end; }
+[data-palier="4"] .vtt-session-bar,
+body:has([data-palier="4"]) .vtt-session-bar-card { filter: grayscale(1) contrast(1.5) brightness(.9); }
+/* ✦ Palier 4 : les autres agents sont caviardés (dg-censured) */
+[data-palier="4"] .vtt-session-bar-player:not([data-me]) .vtt-session-bar-name,
+[data-palier="4"] .vtt-session-bar-player:not([data-me]) .vtt-session-bar-player-name,
+body:has([data-palier="4"]) .vtt-session-bar-card:not([data-me]) .vtt-session-bar-card-name,
+body:has([data-palier="4"]) .vtt-session-bar-card:not([data-me]) .vtt-session-bar-card-player-name {
+    color: transparent; text-shadow: none;
+    background: linear-gradient(var(--dg-censure-color), var(--dg-censure-color)) 0 50% / 100% 72% no-repeat;
+    clip-path: polygon(0% 12%, 100% 0%, 98% 88%, 3% 100%);
+}
+body:has([data-palier="4"]) .vtt-session-bar-card:not([data-me]) .vtt-session-bar-card-name,
+body:has([data-palier="4"]) .vtt-session-bar-card:not([data-me]) .vtt-session-bar-card-player-name {
+    clip-path: none;
+    background: linear-gradient(var(--dg-censure-color), var(--dg-censure-color)) .4rem 70% / calc(100% - .8rem) 45% no-repeat, var(--dg-field-bg);
+}
