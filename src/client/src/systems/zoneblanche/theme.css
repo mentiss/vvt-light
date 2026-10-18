@@ -844,3 +844,55 @@
 
 /* Les jauges de régie s'alignent et respirent, budget compris */
 .zb-gauges .zb-gauge { min-width: 12rem; }
+
+/* ── Barre de session (components/layout/SessionPlayersBar.jsx, spec_session_bar.md) ─ */
+/* ── Zone Blanche : zb-panel (vignettage, lignes de balayage), zb-eyebrow, zb-display,
+   zb-mono, zb-card (bord gauche épais), angles quasi droits ; ✦ REC, viseur ── */
+.vtt-session-bar { background: var(--color-surface); border-right: 1px solid var(--color-border); font-family: var(--zb-font-body); }
+.vtt-session-bar::before {   /* zb-panel::before */
+    content: ''; position: absolute; inset: 0; pointer-events: none; z-index: 2; background: var(--zb-vignette);
+}
+.vtt-session-bar::after {   /* zb-panel::after */
+    content: ''; position: absolute; inset: 0; pointer-events: none; z-index: 1; opacity: var(--zb-scanline-opacity);
+    background: repeating-linear-gradient(to bottom, rgba(255,255,255,.5) 0, rgba(255,255,255,.5) 1px, transparent 1px, transparent 3px);
+}
+.vtt-session-bar-header { position: relative; z-index: 3; }
+.vtt-session-bar-eyebrow { font-family: var(--zb-font-mono); font-size: .68rem; letter-spacing: .18em; font-weight: 500; color: inherit; opacity: .7; }
+.vtt-session-bar-title { font-family: var(--zb-font-display); font-size: 1.1rem; letter-spacing: .06em; text-transform: uppercase; }
+.vtt-session-bar-toggle { border-radius: 2px; border-color: var(--color-border); }
+.vtt-session-bar-list { position: relative; z-index: 3; }
+.vtt-session-bar-player { border-radius: 2px; border-left: 4px solid transparent; }
+.vtt-session-bar-player[data-me] { background: var(--color-surface-alt); border-left-color: var(--color-primary); }   /* zb-card */
+.vtt-session-bar[data-mode="rail"] .vtt-session-bar-player { border-left: none; }
+.vtt-session-bar-name { font-family: var(--zb-font-display); font-size: .98rem; letter-spacing: .06em; text-transform: uppercase; }
+.vtt-session-bar-player-name { font-family: var(--zb-font-mono); font-size: .68rem; letter-spacing: .06em; }
+.vtt-session-bar-frame,
+.vtt-session-bar-image,
+.vtt-session-bar-initials { border-radius: 2px; }
+.vtt-session-bar-initials { font-family: var(--zb-font-mono); }
+.vtt-session-bar-presence {   /* ✦ REC */
+    background: var(--zb-rec-dot); border-color: var(--color-surface); animation: zb-brand-pulse 1.4s ease-in-out infinite;
+}
+.vtt-session-bar-reopen { border-radius: 2px; }
+.vtt-session-bar-card { border-radius: 2px; font-family: var(--zb-font-body); }
+.vtt-session-bar-card-deco { background: var(--zb-vignette); }
+.vtt-session-bar-card-image { position: relative; border-radius: 2px; font-family: var(--zb-font-mono); }
+.vtt-session-bar-card-image::after {   /* ✦ viseur : quatre coins */
+    content: ''; position: absolute; inset: 10px; pointer-events: none;
+    --zb-vf: color-mix(in srgb, #fff 85%, transparent);
+    background:
+        linear-gradient(var(--zb-vf), var(--zb-vf)) top left / 18px 2px no-repeat,
+        linear-gradient(var(--zb-vf), var(--zb-vf)) top left / 2px 18px no-repeat,
+        linear-gradient(var(--zb-vf), var(--zb-vf)) top right / 18px 2px no-repeat,
+        linear-gradient(var(--zb-vf), var(--zb-vf)) top right / 2px 18px no-repeat,
+        linear-gradient(var(--zb-vf), var(--zb-vf)) bottom left / 18px 2px no-repeat,
+        linear-gradient(var(--zb-vf), var(--zb-vf)) bottom left / 2px 18px no-repeat,
+        linear-gradient(var(--zb-vf), var(--zb-vf)) bottom right / 18px 2px no-repeat,
+        linear-gradient(var(--zb-vf), var(--zb-vf)) bottom right / 2px 18px no-repeat;
+    filter: drop-shadow(0 0 2px rgba(0,0,0,.6));
+}
+.vtt-session-bar-card-name { font-family: var(--zb-font-display); font-size: 1.25rem; letter-spacing: .06em; text-transform: uppercase; }
+.vtt-session-bar-card-player-name { font-family: var(--zb-font-mono); letter-spacing: .06em; }
+.vtt-session-bar-card-status { font-family: var(--zb-font-mono); letter-spacing: .18em; }
+.vtt-session-bar-card[data-online] .vtt-session-bar-card-status { color: var(--zb-rec-dot); }
+.vtt-session-bar-card[data-online] .vtt-session-bar-card-status::before { background: var(--zb-rec-dot); animation: zb-brand-pulse 1.4s ease-in-out infinite; }
