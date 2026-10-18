@@ -129,6 +129,20 @@ router.post('/gm-send-item', authenticate, requireGM, (req, res) => {
 
 // ─── Routes CRUD (/:characterId en dernier pour ne pas capturer les routes statiques) ───
 
+// Nombre de messages et objets du MJ non lus (compteur de l'onglet Journal)
+router.get('/:characterId/unread-count', authenticate, requireOwnerOrGM, (req, res) => {
+    try {
+        const { count } = req.db.prepare(`
+            SELECT COUNT(*) AS count FROM character_journal
+            WHERE character_id = ? AND type IN ('gm_message', 'gm_item') AND is_read = 0
+        `).get(req.params.characterId);
+        res.json({ count });
+    } catch (error) {
+        console.error('Error counting unread journal entries:', error);
+        res.status(500).json({ error: error.message });
+    }
+});
+
 router.get('/:characterId', authenticate, requireOwnerOrGM, (req, res) => {
     try {
         const { characterId } = req.params;

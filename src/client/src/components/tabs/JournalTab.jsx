@@ -1,6 +1,6 @@
 // components/JournalTab.jsx - Onglet Journal V2 (split layout, recherche, filtres)
-// Utilise uniquement les variables CSS génériques des themes (--color-*).
-// Aucune classe Tailwind système-spécifique (viking-*, dune-*, etc.).
+// Habillage : classes vtt-* (index.css, surchargeables par le theme.css du slug),
+// aucune classe propre à un slug (spec_journal.md §3).
 
 import React, { useState, useEffect, useRef } from 'react';
 import { useFetch }   from '../../hooks/useFetch.js';
@@ -12,8 +12,8 @@ import ImageLightbox from "../ui/ImageLightbox.jsx";
 import AlertModal     from '../modals/AlertModal.jsx';
 import { parseServerDate } from '../../tools/utils.js';
 
-// onRead? — appelé quand une entrée non lue (message ou objet du MJ) est ouverte :
-//           la fiche remet à zéro le compteur de l'onglet Journal.
+// onRead?(entryId) — appelé quand une entrée non lue (message ou objet du MJ) est
+//                    ouverte : le compteur de l'onglet Journal baisse d'une unité.
 const JournalTab = ({ characterId, onRead }) => {
     const [entries,       setEntries]       = useState([]);
     const [selectedEntry, setSelectedEntry] = useState(null);
@@ -186,7 +186,7 @@ const JournalTab = ({ characterId, onRead }) => {
     const markAsRead = async (entry) => {
         const read = { ...entry, isRead: true };
         setEntries(prev => prev.map(e => e.id === entry.id ? read : e));
-        onRead?.();
+        onRead?.(entry.id);
         try {
             await fetchWithAuth(`/api/journal/${characterId}/${entry.id}`, {
                 method: 'PUT',
@@ -229,88 +229,73 @@ const JournalTab = ({ characterId, onRead }) => {
     };
 
     // ── Render ────────────────────────────────────────────────────────────────
+    // Classes vtt-* habillables par le theme.css du slug (spec_journal.md §3)
+    const typeLabel = (entry) =>
+        entry.type === 'gm_item' ? 'Objet reçu' : entry.type === 'gm_message' ? 'Message du MJ' : null;
+    const isUnread = (entry) => entry.type !== 'note' && !entry.isRead;
+
     return (
         <div className="w-full flex flex-col" style={{ height: 'calc(100vh - 130px)' }}>
 
             {/* ── Barre d'outils ──────────────────────────────────────────── */}
             <div className="shrink-0 mb-3 space-y-2">
                 <div className="flex gap-2 items-center">
-                    {/* Recherche */}
-                    <div className="relative flex-1">
+                    <div className="flex-1 min-w-0">
                         <input
                             type="text"
                             value={searchQuery}
                             onChange={e => setSearchQuery(e.target.value)}
                             placeholder="Rechercher dans le journal..."
-                            className="w-full pl-8 pr-3 py-2 text-sm border-2 rounded-lg outline-none bg-default text-default border-default"
+                            className="vtt-input"
                         />
-                        <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-sm text-muted">🔍</span>
                     </div>
-
-                    {/* Toggle filtres */}
                     <button
+                        type="button"
                         onClick={() => setShowFilters(!showFilters)}
-                        className={`px-3 py-2 rounded-lg text-sm font-semibold border text-muted transition-colors ${hasActiveFilters ? 'bg-default border-secondary' : 'bg-surface border-default'} hover:text-default hover:bg-surface-alt hover:border-accent`}
+                        className="vtt-btn shrink-0"
                         title="Filtres avancés"
                     >
-                        🔍 {hasActiveFilters ? '●' : ''}
+                        Filtres{hasActiveFilters ? ' (actifs)' : ''}
                     </button>
-
-                    {/* Créer */}
-                    <button
-                        onClick={createNote}
-                        className="px-4 py-2 rounded-lg text-sm font-semibold shrink-0 border border-default text-muted transition-colors bg-surface hover:text-default hover:bg-surface-alt hover:border-accent"
-                    >
-                        ✏️ Nouvelle note
+                    <button type="button" onClick={createNote} className="vtt-btn vtt-btn-primary shrink-0">
+                        Nouvelle note
                     </button>
                 </div>
 
                 {/* Filtres avancés */}
                 {showFilters && (
-                    <div
-                        className="flex flex-wrap gap-3 items-center rounded-lg border p-3 bg-surface border-default"
-                    >
-                        {/* Filtre session */}
-                        <div className="flex gap-1">
+                    <div className="vtt-panel flex flex-wrap gap-3 items-center p-3">
+                        <div className="flex flex-wrap gap-1.5">
                             {[
                                 { value: 'all',     label: 'Toutes' },
                                 ...(activeGMSession ? [{ value: 'session', label: 'Session' }] : []),
                                 { value: 'none',    label: 'Hors session' },
                             ].map(opt => (
                                 <button
+                                    type="button"
                                     key={opt.value}
                                     onClick={() => setSessionFilter(opt.value)}
-                                    className={`px-2.5 py-1 rounded text-xs font-semibold transition-opacity ${sessionFilter === opt.value ? 'text-default bg-primary' : 'bg-surface-alt text-muted border border-transparent hover:border-accent hover:bg-surface'}`}
+                                    className={`vtt-pill ${sessionFilter === opt.value ? 'is-selected' : ''}`}
                                 >
                                     {opt.label}
                                 </button>
                             ))}
                         </div>
 
-                        {/* Filtre date */}
                         <div className="flex items-center gap-1.5 text-xs text-muted">
                             <span>Du</span>
-                            <input
-                                type="date"
-                                value={dateFrom}
-                                onChange={e => setDateFrom(e.target.value)}
-                                className="px-2 py-1 rounded border text-xs border-default text-default bg-default"
-                            />
+                            <span className="w-36">
+                                <input type="date" value={dateFrom} onChange={e => setDateFrom(e.target.value)} className="vtt-input" />
+                            </span>
                             <span>au</span>
-                            <input
-                                type="date"
-                                value={dateTo}
-                                onChange={e => setDateTo(e.target.value)}
-                                className="px-2 py-1 rounded border text-xs border-default text-default bg-default"
-                            />
+                            <span className="w-36">
+                                <input type="date" value={dateTo} onChange={e => setDateTo(e.target.value)} className="vtt-input" />
+                            </span>
                         </div>
 
                         {hasActiveFilters && (
-                            <button
-                                onClick={clearFilters}
-                                className="px-2.5 py-1 text-xs font-semibold rounded transition-opacity hover:opacity-75 text-danger"
-                            >
-                                ✕ Réinitialiser
+                            <button type="button" onClick={clearFilters} className="vtt-btn vtt-btn-sm">
+                                Réinitialiser
                             </button>
                         )}
                     </div>
@@ -319,28 +304,21 @@ const JournalTab = ({ characterId, onRead }) => {
 
             {/* ── Loading ──────────────────────────────────────────────────── */}
             {loading && entries.length === 0 && (
-                <div className="flex-1 flex items-center justify-center">
-                    <div className="text-center">
-                        <div className="text-2xl animate-pulse mb-2">⏳</div>
-                        <p className="text-muted">Chargement du journal...</p>
-                    </div>
+                <div className="flex-1 flex items-center justify-center text-muted">
+                    Chargement du journal...
                 </div>
             )}
 
             {/* ── Journal vide ──────────────────────────────────────────────── */}
             {!loading && entries.length === 0 && (
                 <div className="flex-1 flex items-center justify-center">
-                    <div className="text-center">
-                        <div className="text-4xl mb-4">📓</div>
-                        <h3 className="text-xl font-bold mb-2 text-default">Journal vide</h3>
+                    <div className="text-center max-w-sm">
+                        <h3 className="vtt-journal-title mb-2">Journal vide</h3>
                         <p className="mb-4 text-muted">
                             Créez votre première note pour garder une trace de vos aventures.
                         </p>
-                        <button
-                            onClick={createNote}
-                            className="px-6 py-2 rounded-lg font-semibold transition-opacity hover:opacity-85 text-primary"
-                        >
-                            ✏️ Créer une note
+                        <button type="button" onClick={createNote} className="vtt-btn vtt-btn-primary">
+                            Créer une note
                         </button>
                     </div>
                 </div>
@@ -351,79 +329,59 @@ const JournalTab = ({ characterId, onRead }) => {
                 <div className="flex-1 flex gap-3 min-h-0">
 
                     {/* ── PANNEAU GAUCHE : Liste ──────────────────────────── */}
-                    <div
-                        className={`shrink-0 flex flex-col rounded-lg border-2 overflow-hidden transition-all ${
-                            listCollapsed ? 'w-10' : 'w-72'
-                        } border-primary bg-surface`}
-                    >
+                    <div className={`vtt-panel shrink-0 flex flex-col overflow-hidden transition-all ${listCollapsed ? 'w-10' : 'w-72'}`}>
                         {/* Bouton collapse */}
                         <button
+                            type="button"
                             onClick={() => setListCollapsed(!listCollapsed)}
-                            className="shrink-0 px-2 py-2 border-b text-sm transition-opacity hover:opacity-75 flex items-center gap-2 bg-surface-alt text-muted border-default"
+                            className="vtt-journal-list-toggle"
                             title={listCollapsed ? 'Afficher la liste' : 'Masquer la liste'}
                         >
-                            {listCollapsed ? (
-                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                                </svg>
-                            ) : (
-                                <>
-                                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-                                    </svg>
-                                    <span className="text-xs font-semibold">
-                                        {filteredEntries.length} note{filteredEntries.length > 1 ? 's' : ''}
-                                        {hasActiveFilters && ` (filtrée${filteredEntries.length > 1 ? 's' : ''})`}
-                                    </span>
-                                </>
+                            <svg className="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d={listCollapsed ? 'M9 5l7 7-7 7' : 'M15 19l-7-7 7-7'} />
+                            </svg>
+                            {!listCollapsed && (
+                                <span>
+                                    {filteredEntries.length} entrée{filteredEntries.length > 1 ? 's' : ''}
+                                    {hasActiveFilters && ` (filtrée${filteredEntries.length > 1 ? 's' : ''})`}
+                                </span>
                             )}
                         </button>
 
                         {!listCollapsed && (
-                            <div className="flex-1 overflow-y-auto divide-y border-default">
+                            <div className="flex-1 overflow-y-auto vtt-scroll p-2 space-y-1.5">
                                 {filteredEntries.length === 0 ? (
                                     <div className="p-4 text-center text-xs text-muted">
-                                        Aucune note ne correspond aux filtres.
+                                        Aucune entrée ne correspond aux filtres.
                                     </div>
                                 ) : (
                                     filteredEntries.map(entry => {
-                                        const isSelected = selectedEntry?.id === entry.id;
+                                        const preview = stripHtml(entry.body);
                                         return (
                                             <button
+                                                type="button"
                                                 key={entry.id}
                                                 onClick={() => selectEntry(entry)}
-                                                className={`w-full text-left px-3 py-2.5 transition-opacity border-l-4`}
-                                                style={{
-                                                    background: isSelected
-                                                        ? 'color-mix(in srgb, var(--color-primary) 15%, transparent)'
-                                                        : 'transparent',
-                                                    borderLeftColor: isSelected
-                                                        ? 'var(--color-primary)'
-                                                        : 'transparent',
-                                                }}
+                                                className={`vtt-list-item flex-col items-stretch gap-1 p-2.5 ${selectedEntry?.id === entry.id ? 'is-selected' : ''}`}
                                             >
-                                                <div className="font-semibold text-sm truncate text-default">
-                                                    {entry.type === 'gm_message' ? '📨 ' : ''}
-                                                    {entry.title || 'Sans titre'}
+                                                <div className="flex items-center gap-1.5 min-w-0">
+                                                    {isUnread(entry) && <span className="vtt-unread" title="Non lu" />}
+                                                    <span className={`text-sm truncate ${isUnread(entry) ? 'font-bold' : 'font-semibold'}`}>
+                                                        {entry.title || 'Sans titre'}
+                                                    </span>
                                                 </div>
-                                                <div className="flex items-center gap-1.5 mt-0.5">
+                                                <div className="flex flex-wrap items-center gap-1.5">
                                                     <span className="text-[10px] text-muted">
                                                         {formatDateShort(entry.updatedAt)}
                                                     </span>
+                                                    {typeLabel(entry) && <span className="vtt-tag">{typeLabel(entry)}</span>}
                                                     {entry.sessionName && (
-                                                        <span
-                                                            className="text-[10px] px-1 rounded truncate max-w-[100px] text-primary"
-                                                            style={{
-                                                                background: 'color-mix(in srgb, var(--color-primary) 20%, transparent)',
-                                                            }}
-                                                        >
-                                                            {entry.sessionName}
-                                                        </span>
+                                                        <span className="vtt-tag truncate max-w-[100px]">{entry.sessionName}</span>
                                                     )}
                                                 </div>
-                                                {stripHtml(entry.body) && (
-                                                    <div className="text-[11px] mt-1 line-clamp-2 text-muted">
-                                                        {stripHtml(entry.body).substring(0, 60)}{stripHtml(entry.body).length > 60 ? '…' : ''}
+                                                {preview && (
+                                                    <div className="text-[11px] line-clamp-2 text-muted">
+                                                        {preview.substring(0, 60)}{preview.length > 60 ? '…' : ''}
                                                     </div>
                                                 )}
                                             </button>
@@ -437,51 +395,34 @@ const JournalTab = ({ characterId, onRead }) => {
                     {/* ── PANNEAU DROIT : Détail / Édition ───────────────── */}
                     <div className="flex-1 min-w-0">
                         {selectedEntry ? (
-                            <div
-                                className="h-full flex flex-col rounded-lg border-2 bg-surface border-primary"
-                            >
+                            <div className="vtt-panel h-full flex flex-col">
                                 {/* Header */}
-                                <div
-                                    className="shrink-0 p-4 border-b border-default"
-                                >
+                                <div className="shrink-0 p-4 border-b border-default">
                                     {selectedEntry.type === 'note' ? (
                                         <input
                                             ref={titleRef}
                                             type="text"
                                             value={selectedEntry.title || ''}
                                             onChange={e => handleFieldChange('title', e.target.value)}
+                                            onBlur={flushPendingSave}
                                             placeholder="Titre de la note..."
-                                            className="w-full text-xl font-bold px-0 py-1 bg-transparent border-0 border-b-2 border-transparent outline-none transition-colors text-default border-b-transparent"
-                                            onFocus={e => { e.target.style.borderBottomColor = 'var(--color-primary)'; }}
-                                            onBlur={e => { e.target.style.borderBottomColor = 'transparent'; flushPendingSave(); }}
+                                            className="vtt-journal-title"
                                         />
                                     ) : (
-                                        <div className="text-xl font-bold py-1 flex items-center gap-2 text-default">
-                                            {selectedEntry.type === 'gm_message' ? '📨 ' : ''}
-                                            {selectedEntry.title || (selectedEntry.type === 'gm_item' ? 'Objet reçu' : 'Message du MJ')}
-                                        </div>
+                                        <h2 className="vtt-journal-title">
+                                            {selectedEntry.title || typeLabel(selectedEntry)}
+                                        </h2>
                                     )}
-                                    <div className="flex items-center gap-3 mt-2 text-xs text-muted">
+                                    <div className="flex flex-wrap items-center gap-2 mt-2 text-xs text-muted">
                                         <span>
-                                            {selectedEntry.sessionName
-                                                ? `📜 ${selectedEntry.sessionName}`
-                                                : '📓 Hors session'}
+                                            {selectedEntry.sessionName ? `Session : ${selectedEntry.sessionName}` : 'Hors session'}
                                         </span>
-                                        {selectedEntry.type !== 'note' && (
-                                            <span
-                                                className="px-1.5 py-0.5 rounded text-[10px] font-semibold text-primary"
-                                                style={{
-                                                    background: 'color-mix(in srgb, var(--color-primary) 20%, transparent)',
-                                                }}
-                                            >
-                                                {selectedEntry.type === 'gm_item' ? 'Objet reçu' : 'Message du MJ'}
-                                            </span>
-                                        )}
-                                        <span>•</span>
+                                        {typeLabel(selectedEntry) && <span className="vtt-tag">{typeLabel(selectedEntry)}</span>}
+                                        <span>·</span>
                                         <span>Créée le {formatDate(selectedEntry.createdAt)}</span>
                                         {selectedEntry.updatedAt !== selectedEntry.createdAt && (
                                             <>
-                                                <span>•</span>
+                                                <span>·</span>
                                                 <span>Modifiée le {formatDate(selectedEntry.updatedAt)}</span>
                                             </>
                                         )}
@@ -499,14 +440,14 @@ const JournalTab = ({ characterId, onRead }) => {
                                             editable={true}
                                             onImageDoubleClick={setLightboxSrc}
                                             placeholder="Écrivez vos notes ici..."
-                                            className="w-full h-full border-2 rounded-lg transition-colors border-default bg-default"
+                                            className="vtt-journal-editor w-full h-full"
                                         />
                                     ) : (
                                         /* ── Message ou objet du MJ (lecture + image jointe des anciens messages) ── */
                                         <div className="flex flex-col flex-1 min-h-0 gap-3">
                                             {selectedEntry.type === 'gm_item' && selectedEntry.metadata?.item && (
-                                                <div className="shrink-0 rounded-lg border-2 p-3 border-default bg-default">
-                                                    <div className="font-bold text-default">
+                                                <div className="vtt-callout shrink-0">
+                                                    <div className="font-bold">
                                                         {selectedEntry.metadata.item.name}
                                                         {selectedEntry.metadata.item.quantity > 1 && ` × ${selectedEntry.metadata.item.quantity}`}
                                                     </div>
@@ -520,23 +461,15 @@ const JournalTab = ({ characterId, onRead }) => {
                                                     content={selectedEntry.body || ''}
                                                     editable={false}
                                                     onImageDoubleClick={setLightboxSrc}
-                                                    className="flex-1 min-h-0 border-2 rounded-lg border-default bg-default"
+                                                    className="vtt-journal-editor flex-1 min-h-0"
                                                 />
                                             )}
                                             {selectedEntry.metadata?.imageUrl && (
-                                                <div
-                                                    className="shrink-0 overflow-y-auto rounded-lg border-2 p-2 border-default bg-default"
-                                                    style={{
-                                                        maxHeight: '220px',
-                                                    }}
-                                                >
+                                                <div className="vtt-journal-editor shrink-0 overflow-y-auto vtt-scroll p-2" style={{ maxHeight: '220px' }}>
                                                     <img
                                                         src={selectedEntry.metadata.imageUrl}
                                                         alt=""
-                                                        className="max-w-full rounded-lg border-2 border-primary"
-                                                        style={{
-                                                            cursor: 'zoom-in',
-                                                        }}
+                                                        className="max-w-full rounded-lg border border-default cursor-zoom-in"
                                                         onDoubleClick={() => setLightboxSrc(selectedEntry.metadata.imageUrl)}
                                                     />
                                                 </div>
@@ -546,27 +479,17 @@ const JournalTab = ({ characterId, onRead }) => {
                                 </div>
 
                                 {/* Footer */}
-                                <div
-                                    className="shrink-0 px-4 py-3 border-t flex justify-end border-default"
-                                >
-                                    <button
-                                        onClick={() => setDeleteTarget(selectedEntry)}
-                                        className="px-4 py-1.5 text-sm rounded font-semibold transition-opacity hover:opacity-75 text-danger"
-                                    >
-                                        🗑️ Supprimer
+                                <div className="shrink-0 px-4 py-3 border-t border-default flex justify-end">
+                                    <button type="button" onClick={() => setDeleteTarget(selectedEntry)} className="vtt-btn vtt-btn-danger vtt-btn-sm">
+                                        Supprimer
                                     </button>
                                 </div>
                             </div>
                         ) : (
-                            <div
-                                className="h-full flex items-center justify-center rounded-lg border-2 text-surface border-primary"
-                            >
-                                <div className="text-center">
-                                    <div className="text-3xl mb-2 opacity-30">📝</div>
-                                    <p className="text-sm text-muted">
-                                        Sélectionnez une note ou créez-en une nouvelle
-                                    </p>
-                                </div>
+                            <div className="vtt-panel h-full flex items-center justify-center p-4">
+                                <p className="text-sm text-muted text-center">
+                                    Sélectionnez une entrée ou créez une nouvelle note
+                                </p>
                             </div>
                         )}
                     </div>
@@ -576,7 +499,7 @@ const JournalTab = ({ characterId, onRead }) => {
             {/* ── Confirmation suppression ──────────────────────────────────── */}
             {deleteTarget && (
                 <ConfirmModal
-                    title="Supprimer la note"
+                    title="Supprimer l'entrée"
                     message={`Voulez-vous vraiment supprimer « ${deleteTarget.title || 'Sans titre'} » ? Cette action est irréversible.`}
                     onConfirm={() => deleteEntry(deleteTarget.id)}
                     onCancel={() => setDeleteTarget(null)}

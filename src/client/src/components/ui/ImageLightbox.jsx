@@ -1,6 +1,7 @@
 // src/client/src/components/ui/ImageLightbox.jsx
 // Lightbox plein écran pour afficher une image en grand.
-// Fermeture : clic sur l'overlay, touche Escape, ou bouton ✕.
+// Fermeture : clic sur l'overlay, touche Escape, ou bouton de fermeture.
+// Habillage : fond assombri et bouton vtt-btn (spec_journal.md §3), au-dessus de tout.
 
 import React, { useEffect, useCallback } from 'react';
 
@@ -24,32 +25,22 @@ const ImageLightbox = ({ src, onClose }) => {
     }, [handleKeyDown]);
 
     return (
-        <div
-            className="fixed inset-0 z-[9999] flex items-center justify-center"
-            style={{ background: 'rgba(0, 0, 0, 0.85)' }}
-            onClick={onClose}
-        >
+        <div className="vtt-modal-backdrop vtt-modal-alert" onClick={onClose}>
             {/* Bouton fermer */}
             <button
+                type="button"
                 onClick={onClose}
-                className="absolute top-4 right-4 w-10 h-10 rounded-full flex items-center justify-center text-xl font-bold transition-opacity hover:opacity-75 z-10"
-                style={{ background: 'rgba(255,255,255,0.15)', color: '#fff' }}
+                className="vtt-btn vtt-btn-icon absolute top-4 right-4 z-10"
                 title="Fermer (Échap)"
             >
-                ✕
+                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18" /></svg>
             </button>
 
             {/* Image — stoppe la propagation pour éviter de fermer au clic sur l'image */}
             <img
                 src={src}
                 alt=""
-                className="rounded-lg shadow-2xl"
-                style={{
-                    maxWidth:  '90vw',
-                    maxHeight: '90vh',
-                    objectFit: 'contain',
-                    cursor: 'default',
-                }}
+                className="rounded-lg shadow-2xl max-w-[90vw] max-h-[90vh] object-contain cursor-default"
                 onClick={e => e.stopPropagation()}
             />
         </div>

@@ -16,11 +16,7 @@ const ToolbarButton = ({ onClick, active, title, children }) => (
     <button
         type="button"
         onMouseDown={(e) => { e.preventDefault(); onClick(); }}
-        className={`px-1.5 py-1 rounded text-xs font-semibold transition-colors ${
-            active
-                ? 'bg-primary text-accent'
-                : 'text-muted hover:bg-primary/20'
-        }`}
+        className={`rich-editor-btn ${active ? 'is-active' : ''}`}
         title={title}
     >
         {children}
@@ -29,7 +25,14 @@ const ToolbarButton = ({ onClick, active, title, children }) => (
 
 // --- Séparateur ---
 const Separator = () => (
-    <div className="w-px h-5 bg-muted/20 mx-0.5" />
+    <div className="rich-editor-sep" />
+);
+
+// --- Icône image (au trait, pas d'emoji) ---
+const ImageIcon = () => (
+    <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+        <rect x="3" y="4" width="18" height="16" rx="2" /><circle cx="9" cy="10" r="1.6" /><path d="M21 16l-5-5-9 9" />
+    </svg>
 );
 
 // --- Image : affichage toujours fidèle à la source ---
@@ -279,7 +282,7 @@ const RichTextEditor = ({
                         active={editor.isActive('highlight')}
                         title="Surligné"
                     >
-                        <span className="bg-yellow-200 px-0.5">H</span>
+                        <mark>H</mark>
                     </ToolbarButton>
 
                     <Separator />
@@ -322,7 +325,7 @@ const RichTextEditor = ({
                         onClick={handleImageButton}
                         title="Insérer une image"
                     >
-                        📎
+                        <ImageIcon />
                     </ToolbarButton>
                 </BubbleMenu>
             )}
@@ -336,12 +339,12 @@ const RichTextEditor = ({
                     <button
                         type="button"
                         onClick={handleImageButton}
-                        className="px-2 py-1 text-xs text-muted hover:bg-primary/20 rounded transition-colors"
+                        className="rich-editor-btn"
                         title="Ajouter une image"
                     >
-                        📎 Image
+                        <ImageIcon /> Image
                     </button>
-                    <span className="text-[10px] text-muted/50">
+                    <span className="rich-editor-hint">
                         Sélectionnez du texte pour formater • Glissez-déposez des images • Redimensionnez par les bords
                     </span>
                 </div>

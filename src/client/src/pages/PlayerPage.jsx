@@ -118,7 +118,7 @@ const PlayerPage = () => {
     };
 
     // ── Sockets génériques ───────────────────────────────────────────────────
-    const { journalUnread, resetJournalUnread } = usePlayerSession({
+    const { journalUnread, markJournalRead } = usePlayerSession({
         character:          appState === 'playing' ? character : null,
         onCharacterUpdate:      handleCharacterUpdate,
         onCharacterReload:      handleCharacterReload,
@@ -224,7 +224,7 @@ const PlayerPage = () => {
                     onCharacterUpdate={handleCharacterUpdate}
                     onLogout={handleLogout}
                     journalUnread={journalUnread}
-                    onJournalRead={resetJournalUnread}
+                    onJournalRead={markJournalRead}
                     darkMode={darkMode}
                     onToggleDarkMode={onToggleDarkMode}
                 />

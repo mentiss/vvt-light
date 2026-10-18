@@ -287,4 +287,27 @@ select:disabled {
     background: color-mix(in srgb, var(--color-primary) 10%, transparent);
   }
   .vtt-callout-danger { border-left-color: var(--color-danger); background: color-mix(in srgb, var(--color-danger) 12%, transparent); }
+
+  /* Panneaux, étiquettes, pastille « non lu » (journal, spec_journal.md §3) */
+  .vtt-panel { background: var(--color-surface); color: var(--color-text); border: 1px solid var(--color-border); border-radius: 0.75rem; }
+  .vtt-tag {
+    display: inline-flex; align-items: center; padding: 0.05rem 0.4rem; border-radius: 0.25rem;
+    font-size: 0.65rem; font-weight: 600; color: var(--color-primary);
+    background: color-mix(in srgb, var(--color-primary) 15%, transparent);
+  }
+  .vtt-unread { width: 0.5rem; height: 0.5rem; flex-shrink: 0; border-radius: 999px; background: var(--color-primary); }
+
+  /* Journal */
+  .vtt-journal-list-toggle {
+    display: flex; align-items: center; gap: 0.5rem; flex-shrink: 0; padding: 0.5rem;
+    font-size: 0.75rem; font-weight: 600; color: var(--color-text-muted);
+    background: var(--color-surface-alt); border-bottom: 1px solid var(--color-border);
+  }
+  .vtt-journal-list-toggle:hover { color: var(--color-text); }
+  .vtt-journal-title {
+    display: block; width: 100%; padding: 0.25rem 0; font-size: 1.25rem; font-weight: 700;
+    color: var(--color-text); background: transparent; border: 0; border-bottom: 2px solid transparent; outline: none;
+  }
+  input.vtt-journal-title:focus { border-bottom-color: var(--color-primary); }
+  .vtt-journal-editor { border: 1px solid var(--color-border); border-radius: 0.5rem; background: var(--color-bg); }
 }

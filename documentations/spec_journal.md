@@ -2,7 +2,7 @@
 
 ## Statut
 
-**Validée par le MJ le 2026-10-18** (décisions au §1, questions Q-1 et Q-2 au §5). Lot A implémenté ; lot B à venir.
+**Validée par le MJ le 2026-10-18** (décisions au §1, questions Q-1 et Q-2 au §5). Lots A et B implémentés.
 
 Brique de plateforme : concerne tous les slugs (onglet Journal du joueur, onglet Journal du MJ, modale d'envoi de message du MJ).
 
@@ -88,7 +88,7 @@ Même démarche que les modales génériques (`spec_ui_modales.md`) : classes st
 - `RichTextEditor` : couleurs de l'éditeur (barre flottante, barre d'outils, titres, citations, sélection d'image, poignées de redimensionnement) sur les variables `--color-*`, au lieu de l'or de Vikings et du fond blanc codés en dur ; plus d'emoji sur le bouton Image.
 - `ImageLightbox` (agrandissement d'une image) : bouton de fermeture et fond sur les mêmes conventions.
 - Vikings : les surcharges déjà présentes dans son `theme.css` s'appliquent ; ajout éventuel des classes propres au journal si le rendu le demande.
-- Compteur persistant de l'onglet Journal : calculé au chargement de la fiche à partir des entrées non lues, qui sont signalées dans la liste du journal (voir 2.6 bis).
+- Compteur persistant de l'onglet Journal : calculé au chargement de la fiche à partir des entrées non lues (route `GET journal/:characterId/unread-count`), qui sont signalées dans la liste du journal (pastille, titre en gras). Le compteur baisse d'une unité à l'ouverture de chaque entrée non lue ; passer sur l'onglet ne le remet plus à zéro, sans quoi il réapparaîtrait au rechargement (remplace le comportement du 2.6 bis).
 
 ---
 

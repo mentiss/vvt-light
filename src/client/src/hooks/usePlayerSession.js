@@ -8,6 +8,10 @@
 //   - Écouter gm-item-received → onCharacterReload + badge journal
 //   - Écouter gm-message-received → badge journal
 //   - Charger les sessions du personnage dans SessionContext
+//
+// Badge journal = messages et objets du MJ non lus : chargé depuis le serveur à
+// l'ouverture de la fiche, +1 à chaque réception, −1 quand une entrée non lue est
+// ouverte dans le journal (spec_journal.md §2.6 bis et §3).
 
 import { useEffect, useState } from 'react';
 import { useSocket } from '../context/SocketContext.jsx';
@@ -20,7 +24,7 @@ import useSystem from "./useSystem.js";
  * @param {function}    onCharacterUpdate - callback(updatedCharacter) — mise à jour temps réel
  * @param {function}    onCharacterReload  - callback() — recharger le perso complet depuis l'API
  * @param {string}      apiBase            - ex: '/api/vikings'
- * @returns {{ journalUnread: number, resetJournalUnread: function }}
+ * @returns {{ journalUnread: number, markJournalRead: function }}
  */
 export function usePlayerSession({ character, onCharacterUpdate, onCharacterReload, apiBase }) {
     const socket = useSocket();
@@ -37,6 +41,16 @@ export function usePlayerSession({ character, onCharacterUpdate, onCharacterRelo
             .then(r => r.json())
             .then(sessions => updateCharacterSessions(sessions))
             .catch(err => console.error('[usePlayerSession] Error loading sessions:', err));
+    }, [character?.id, apiBase]);
+
+    // ── Charger le nombre d'entrées du journal non lues ─────────────────────
+    useEffect(() => {
+        if (!character?.id || character.id === -1) return;
+
+        fetchWithAuth(`${apiBase}/journal/${character.id}/unread-count`)
+            .then(r => r.ok ? r.json() : { count: 0 })
+            .then(({ count }) => setJournalUnread(count ?? 0))
+            .catch(err => console.error('[usePlayerSession] Error loading unread journal count:', err));
     }, [character?.id, apiBase]);
 
     // ── Présence en ligne ───────────────────────────────────────────────────
@@ -108,6 +122,11 @@ export function usePlayerSession({ character, onCharacterUpdate, onCharacterRelo
 
     return {
         journalUnread,
-        resetJournalUnread: () => setJournalUnread(0),
+        // Appelé avec l'id d'une entrée ouverte dans le journal ; sans id (changement
+        // d'onglet, appel historique des fiches), le compteur ne bouge pas : les non lus
+        // restent signalés jusqu'à leur lecture.
+        markJournalRead: (entryId) => {
+            if (entryId) setJournalUnread(n => Math.max(0, n - 1));
+        },
     };
 }
