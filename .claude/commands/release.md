@@ -1,9 +1,9 @@
 ---
 description: Mettre en production la version actuelle (archive, migrations, envoi, redémarrage)
-argument-hint: [patch|minor|major] [fast]
+argument-hint: [minor|patch|major] [fast]
 ---
 
-Mise en production : **$ARGUMENTS** (par défaut : `patch`, vérifications complètes).
+Mise en production : **$ARGUMENTS** (par défaut : `minor`, vérifications complètes).
 
 Référence : `documentations/spec_release.md`. La commande technique est `npm run release` (`scripts/release.js`), qui exécute `scripts/install.sh` sur le VPS. **Ne lance jamais la release sans ma validation explicite dans la conversation.**
 
@@ -23,7 +23,7 @@ Présente en une fois : version cible, migrations et bases visées, fichiers non
 
 ## 4. Lancement
 
-Écris le message dans un fichier temporaire de ton scratchpad, puis lance (option `--minor`/`--major`/`--fast` selon les arguments) :
+Écris le message dans un fichier temporaire de ton scratchpad, puis lance (option `--patch`/`--major`/`--fast` selon les arguments ; sans option, version mineure) :
 
 ```
 npm run release -- --yes --message-file=<chemin du fichier>

@@ -19,7 +19,7 @@ Hors périmètre : intégration continue (GitHub Actions), mise à jour sans cou
 | R-3 | Commande | Une seule (`npm run release`) : vérifications, version, archive, envoi, installation, redémarrage. |
 | R-4 | Migrations | L'archive porte elle-même la liste des migrations à jouer et leurs slugs. Aucun suivi dans les bases ; seules les bases visées sont ouvertes. |
 | R-5 | Fichiers non commités | Pas de refus : avertissement et confirmation s'ils font partie de ce qui part. |
-| R-6 | Version | Incrément à chaque release (patch par défaut). |
+| R-6 | Version | Incrément à chaque release (mineure par défaut depuis le 2026-10-18, auparavant patch). |
 | R-7 | Commit après release | Oui : commit limité aux fichiers de la release (version, liste des migrations parties) et tag `vX.Y.Z`. Le chantier en cours n'est jamais commité. |
 | R-8 | Version affichée | Pied de page de l'accueil : version de release **en plus** du hash et de la date. |
 | R-9 | Accès au VPS | SSH par clé. Paramètres dans un fichier local non versionné. |
@@ -32,9 +32,9 @@ Hors périmètre : intégration continue (GitHub Actions), mise à jour sans cou
 ## 2. La commande
 
 ```
-npm run release              # 4.4.0 → 4.4.1
-npm run release -- --minor   # 4.4.0 → 4.5.0
-npm run release -- --major   # 4.4.0 → 5.0.0
+npm run release              # 5.0.0 → 5.1.0 (mineure, par défaut)
+npm run release -- --patch   # 5.0.0 → 5.0.1
+npm run release -- --major   # 5.0.0 → 6.0.0
 ```
 
 Déroulé sur le poste de dev, arrêt au premier échec :
@@ -182,7 +182,7 @@ Le pied de page de l'accueil affiche la version de release en plus du hash et de
 
 ## 12. Commande Claude `/release`
 
-Fichier `.claude/commands/release.md`, sur le modèle de `/new-slug`. Argument facultatif : `patch` (défaut), `minor`, `major`, `fast`.
+Fichier `.claude/commands/release.md`, sur le modèle de `/new-slug`. Argument facultatif : `minor` (défaut), `patch`, `major`, `fast`.
 
 Ce que Claude fait, dans l'ordre :
 

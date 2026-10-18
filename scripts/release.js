@@ -5,8 +5,8 @@
 // install.sh), l'envoie sur le VPS par une seule connexion SSH et l'y installe.
 //
 // Usage :
-//   npm run release                         → patch (4.4.0 → 4.4.1)
-//   npm run release -- --minor | --major
+//   npm run release                         → mineure (5.0.0 → 5.1.0)
+//   npm run release -- --patch | --major
 //   npm run release -- --fast               → saute lint et tests (hotfix)
 //   npm run release -- --yes                → aucune confirmation (utilisé par /release)
 //   npm run release -- --message-file=f.txt → message du commit de release
@@ -36,7 +36,7 @@ const has      = flag => args.includes(flag);
 const valueOf  = name => (args.find(a => a.startsWith(`--${name}=`)) || '').split('=').slice(1).join('=') || null;
 
 const opts = {
-    bump:        has('--major') ? 'major' : has('--minor') ? 'minor' : 'patch',
+    bump:        has('--major') ? 'major' : has('--patch') ? 'patch' : 'minor',   // --minor accepté, c'est le défaut
     fast:        has('--fast'),
     yes:         has('--yes'),
     rollback:    has('--rollback'),
