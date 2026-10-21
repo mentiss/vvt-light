@@ -14,6 +14,34 @@ export const CARACNAMES = {
     chance: "Chance"
 };
 
+// Description courte et usages en jeu des caractéristiques (vault 01, spec §4.1)
+export const CARAC_DETAILS = {
+    force: {
+        description: "Force physique brute et endurance musculaire.",
+        usages: "Porter des charges lourdes, briser une porte, retenir un animal sauvage, soulever un rocher, tirer/pousser un objet massif, intimider par la présence physique, résister à la fatigue physique prolongée, manier des armes lourdes à deux mains, maintenir une prise en lutte, escalader en force brute.",
+    },
+    agilite: {
+        description: "Coordination motrice, dextérité manuelle, réflexes et souplesse.",
+        usages: "Esquiver une attaque, se déplacer silencieusement, garder l'équilibre sur terrain instable, réaliser un travail manuel précis (forge, sculpture, couture), grimper avec agilité, effectuer une acrobatie, crocheter une serrure rudimentaire, dégainer rapidement, rattraper un objet au vol, danser lors des fêtes.",
+    },
+    perception: {
+        description: "Acuité sensorielle et capacité à remarquer les détails.",
+        usages: "Repérer des traces au sol, entendre un bruit suspect, sentir une odeur inhabituelle (fumée, sang, pourriture), détecter une embuscade, remarquer un détail discordant dans une scène, lire le langage corporel d'un interlocuteur, évaluer la qualité d'un objet, repérer un suiveur, trouver des ressources naturelles (plantes, minerai), anticiper un danger imminent.",
+    },
+    intelligence: {
+        description: "Mémoire, raisonnement, connaissances et capacité d'apprentissage.",
+        usages: "Se souvenir d'une saga complexe, comprendre une langue étrangère, déchiffrer des runes, élaborer une stratégie, connaître les lois et coutumes, identifier une plante médicinale, résoudre une énigme, évaluer une situation tactique, apprendre une nouvelle compétence, naviguer en mer selon les étoiles, comprendre les croyances d'autres peuples.",
+    },
+    charisme: {
+        description: "Présence, éloquence, influence sur autrui et magnétisme.",
+        usages: "Convaincre quelqu'un lors d'une négociation, inspirer des alliés avant la bataille, mentir de façon crédible, séduire, intimider par la seule présence (sans violence), apaiser une situation tendue, rallier des soutiens politiques, chanter/conter une saga devant une assemblée, obtenir un meilleur prix en marchandage, commander le respect, dresser un animal.",
+    },
+    chance: {
+        description: "Faveur du destin (Wyrd), lien au surnaturel, être au bon endroit au bon moment.",
+        usages: "Trouver un objet précieux par hasard, éviter un danger imprévu, réussir aux jeux de hasard, obtenir une vision prophétique, résister à une influence mystique, percevoir la présence du surnaturel, être sauvé par une coïncidence favorable, déterminer si un événement favorable se produit (jet narratif MJ), pêcher au bon moment, tomber sur les bonnes personnes lors d'un voyage.",
+    },
+};
+
 export const COMPETENCES = [
     { 
         name: "Combat CàC (armé)",

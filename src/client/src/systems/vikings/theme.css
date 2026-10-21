@@ -331,6 +331,7 @@ textarea.vk-input, textarea.vtt-input { resize: vertical; min-height: 4.5rem; }
 .vk-stat .sub { font-size: .72rem; color: var(--color-text-muted); }
 .vk-stat.is-rollable { cursor: pointer; transition: border-color .15s, background-color .15s; }
 .vk-stat.is-rollable:hover { border-color: var(--color-primary); background: color-mix(in srgb, var(--color-primary) 12%, transparent); }
+.vk-stat.is-active { border-color: var(--color-primary); }   /* création : carac dont les usages sont affichés */
 
 .vk-row { display: flex; align-items: center; gap: .6rem; padding: .35rem .25rem; border-bottom: 1px solid var(--vk-border-soft); }
 .vk-row:last-child { border-bottom: none; }
@@ -479,6 +480,15 @@ button.vtt-list-item:hover { border-color: var(--vk-border-soft); border-left-co
 /* Barres de défilement (modales génériques et VkModal) : bois et or */
 .vtt-scroll { scrollbar-color: color-mix(in srgb, var(--color-primary) 45%, transparent) transparent; }
 .vtt-scroll:hover { scrollbar-color: var(--color-primary) transparent; }
+
+/* Ascenseurs de tout le slug (spec_vikings.md §4.1) : fins, or du thème sur fond discret.
+   Propriétés standard seules (Firefox, Chrome, Opera). Le thème n'est jamais déchargé
+   (une page = un slug) : viser <html> n'affecte pas les autres slugs.
+   scrollbar-color s'hérite, scrollbar-width non (d'où le sélecteur *), en :where()
+   pour ne pas écraser les zones qui masquent leur ascenseur (.vk-tabs). */
+:where(html, .vk-root, .vk-root *) { scrollbar-width: thin; }
+html { scrollbar-color: color-mix(in srgb, var(--color-primary) 45%, transparent) var(--color-bg); }
+.vk-root { scrollbar-color: color-mix(in srgb, var(--color-primary) 45%, transparent) transparent; }
 
 /* ── Barre de session (components/layout/SessionPlayersBar.jsx, spec_session_bar.md) ─
    Panneau vk-panel à coins légers côté fiche, filet vk-sep-line sous l'en-tête,

@@ -185,6 +185,25 @@ Accès par trait « livre de sort » : *Leader né* 3 pts (galdr uniquement), *C
 
 L'assistant comporte 6 étapes ; un code d'accès est généré à la fin.
 
+### 4.1 Ergonomie de l'assistant (validée le 2026-10-22)
+
+Les règles ci-dessus ne changent pas ; seuls l'ordre et l'affichage évoluent.
+
+| # | Étape | Précision |
+|---|---|---|
+| 1 | Caractéristiques | porte le bouton « ← Retour » (quitter l'assistant) |
+| 2 | Compétences | |
+| 3 | Traits | |
+| 4 | Runes | |
+| 5 | Identité | on nomme son personnage à la fin ; prénom et nom du parent obligatoires pour continuer |
+| 6 | Finalisation | récapitulatif, code d'accès |
+
+- **Caractéristiques** : chaque carte affiche sous le nom la description courte du vault `01`. Une zone sous les cartes affiche les usages en jeu (vault `01`) de la caractéristique survolée ou de la dernière modifiée (utilisable à la souris comme au doigt).
+- **Compétences** : la description apparaît sous le nom, dans la liste d'ajout comme dans les compétences choisies. Recherche sur le nom et la description, insensible à la casse et aux accents.
+- **Traits et backgrounds** : champ de recherche sur le nom, la description et les effets, insensible à la casse et aux accents. Les traits choisis restent visibles quelle que soit la recherche. Pas de filtre par famille (aucun classement validé).
+- **Jour / nuit** : même bascule que la fiche, dans l'en-tête de l'assistant.
+- **Ascenseurs** (tout le slug : page, création, fiche, MJ, modales) : fins, couleur or du thème sur fond discret, via les seules propriétés standard (épaisseur, couleur) pour un rendu identique sous Firefox, Chrome et Opera. Les autres slugs ne changent pas.
+
 ---
 
 ## 5. Évolution

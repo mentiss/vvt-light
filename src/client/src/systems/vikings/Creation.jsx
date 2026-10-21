@@ -1,13 +1,14 @@
 // src/client/src/systems/vikings/Creation.jsx
 // ─────────────────────────────────────────────────────────────────────────────
-// Assistant de création Vikings (spec_vikings.md §4) : identité, 14 points de
+// Assistant de création Vikings (spec_vikings.md §4) : 14 points de
 // caractéristiques (max 4), 10 points de compétences (max 3), 2 à 4 traits
-// (conditions et incompatibilités), runes si livre de sort, récapitulatif.
+// (conditions et incompatibilités), runes si livre de sort, identité (en fin
+// de parcours, §4.1), récapitulatif.
 // À la fin : « SAGA +N » des traits appliqué à la SAGA de départ (D-9, D-11)
 // et valeurs de combat dérivées (L3-6).
 // Habillage : planche du lot 4. « Fils de / fille de » se déduit du sexe (D-17).
 //
-// Props (CreationPage) : onCreated, onCancel, darkMode
+// Props (CreationPage) : onCreated, onCancel, darkMode, onToggleDarkMode
 // ─────────────────────────────────────────────────────────────────────────────
 
 import React, { useState } from "react";
@@ -16,7 +17,7 @@ import {
     gainSaga, getTraitSagaBonus, withDerivedValues,
 } from "./config/rules.js";
 import { formatExplosion, formatFullName, formatSkillName, getSkillExamples, isSpecializableSkill } from "./config/utils.js";
-import { CARACNAMES, COMPETENCES } from "./config/competences.js";
+import { CARAC_DETAILS, CARACNAMES, COMPETENCES } from "./config/competences.js";
 import { RUNES, RUNE_LEVELS } from "./config/runes.js";
 import { TRAITS } from "./config/traits.js";
 import useSystem from "../../hooks/useSystem.js";
@@ -31,7 +32,7 @@ const MAX_CARAC_CREATION = 4;
 const MAX_SKILL_CREATION = 3;
 const MIN_TRAITS = 2;
 const MAX_TRAITS = 4;
-const STEPS = ['Identité', 'Caractéristiques', 'Compétences', 'Traits', 'Runes', 'Finalisation'];
+const STEPS = ['Caractéristiques', 'Compétences', 'Traits', 'Runes', 'Identité', 'Finalisation'];
 
 const INITIAL_CHARACTER = {
     prenom: '', surnom: '', nom: '',   // nom du parent (« fils/fille de » selon le sexe)
@@ -51,6 +52,10 @@ const effectsText = (effects) => [
     effects.sagaBonus  && `Saga +${effects.sagaBonus}`,
     effects.description,
 ].filter(Boolean).join(' · ');
+
+// Recherche insensible à la casse et aux accents (« foret » trouve « forêt »)
+const normalize = (text) => (text || '').normalize('NFD').replace(/\p{Diacritic}/gu, '').toLowerCase();
+const matches = (query, ...texts) => texts.some(text => normalize(text).includes(normalize(query)));
 
 // ── Petits composants de module ──────────────────────────────────────────────
 const Field = ({ label, children }) => (
@@ -76,14 +81,14 @@ const LevelStepper = ({ value, onMinus, onPlus, minusDisabled, plusDisabled }) =
     </div>
 );
 
-const NavButtons = ({ onPrev, onNext, nextDisabled, nextLabel = 'Suivant →' }) => (
+const NavButtons = ({ onPrev, onNext, nextDisabled, nextLabel = 'Suivant →', prevLabel = '← Précédent' }) => (
     <div className="flex gap-2 mt-6">
-        {onPrev && <button type="button" className="vk-btn flex-1" onClick={onPrev}>← Précédent</button>}
+        {onPrev && <button type="button" className="vk-btn flex-1" onClick={onPrev}>{prevLabel}</button>}
         <button type="button" className="vk-btn vk-btn-primary flex-1" onClick={onNext} disabled={nextDisabled}>{nextLabel}</button>
     </div>
 );
 
-const Creation = ({ onCreated, onCancel, darkMode }) => {
+const Creation = ({ onCreated, onCancel, darkMode, onToggleDarkMode }) => {
     const { apiBase } = useSystem();
     const [created,  setCreated]  = useState(null);
     const [loading,  setLoading]  = useState(false);
@@ -92,6 +97,8 @@ const Creation = ({ onCreated, onCancel, darkMode }) => {
     const [step, setStep] = useState(1);
     const [customCode, setCustomCode] = useState('');
     const [skillSearch, setSkillSearch] = useState('');
+    const [traitSearch, setTraitSearch] = useState('');
+    const [activeCarac, setActiveCarac] = useState(null);   // carac dont la zone affiche les usages
     const [pendingSkill, setPendingSkill] = useState(null);   // compétence spécialisable en attente
     const [specValue, setSpecValue] = useState('');
     const [specError, setSpecError] = useState('');
@@ -105,8 +112,8 @@ const Creation = ({ onCreated, onCancel, darkMode }) => {
         sum + (TRAITS.find(t => t.name === trait.name)?.effects?.runePoints || 0), 0);
     const usedRunePoints  = character.runes.reduce((sum, rune) => sum + rune.level, 0);
 
-    // ── Étape 1 : identité ───────────────────────────────────────────────────
-    const renderStep1 = () => (
+    // ── Étape 5 : identité (on nomme son personnage à la fin, §4.1) ──────────
+    const renderIdentity = () => (
         <div className="space-y-4">
             <div className="grid sm:grid-cols-2 gap-4">
                 <Field label="Prénom *"><input className="vk-input" value={character.prenom} onChange={e => set('prenom', e.target.value)} /></Field>
@@ -133,15 +140,12 @@ const Creation = ({ onCreated, onCancel, darkMode }) => {
             {character.prenom && (
                 <p className="text-center vk-title text-xl">{formatFullName(character)}</p>
             )}
-            <div className="flex gap-2 mt-6">
-                {onCancel && <button type="button" className="vk-btn flex-1" onClick={onCancel}>← Retour</button>}
-                <button type="button" className="vk-btn vk-btn-primary flex-1" onClick={() => setStep(2)} disabled={!character.prenom || !character.nom}>Suivant →</button>
-            </div>
+            <NavButtons onPrev={() => setStep(4)} onNext={() => setStep(6)} nextDisabled={!character.prenom || !character.nom} />
         </div>
     );
 
-    // ── Étape 2 : caractéristiques ───────────────────────────────────────────
-    const renderStep2 = () => {
+    // ── Étape 1 : caractéristiques ───────────────────────────────────────────
+    const renderCaracs = () => {
         const remaining = TOTAL_CARAC_POINTS - usedCaracPoints;
         return (
             <div className="space-y-4">
@@ -151,9 +155,11 @@ const Creation = ({ onCreated, onCancel, darkMode }) => {
                     {Object.entries(CARACNAMES).map(([key, label]) => {
                         const level = character[key];
                         return (
-                            <div key={key} className="vk-stat">
+                            <div key={key} className={`vk-stat ${activeCarac === key ? 'is-active' : ''}`}
+                                 onMouseEnter={() => setActiveCarac(key)} onClick={() => setActiveCarac(key)}>
                                 <div className="val">{level}</div>
                                 <div className="lbl">{label}</div>
+                                <div className="text-xs text-muted px-1 mb-0.5">{CARAC_DETAILS[key].description}</div>
                                 <div className="sub">expl. {formatExplosion(level)}</div>
                                 <div className="mt-1">
                                     <LevelStepper value={level}
@@ -164,12 +170,18 @@ const Creation = ({ onCreated, onCancel, darkMode }) => {
                         );
                     })}
                 </div>
-                <NavButtons onPrev={() => setStep(1)} onNext={() => setStep(3)} nextDisabled={remaining !== 0} />
+                {/* Usages en jeu de la carac survolée ou touchée (souris comme doigt, §4.1) */}
+                <div className="vk-callout text-sm min-h-[4.5rem]">
+                    {activeCarac
+                        ? <><span className="vk-label text-primary">{CARACNAMES[activeCarac]} en jeu : </span>{CARAC_DETAILS[activeCarac].usages}</>
+                        : <span className="text-muted italic">Survolez ou touchez une caractéristique pour voir ses usages en jeu.</span>}
+                </div>
+                <NavButtons onPrev={onCancel} prevLabel="← Retour" onNext={() => setStep(2)} nextDisabled={remaining !== 0} />
             </div>
         );
     };
 
-    // ── Étape 3 : compétences ────────────────────────────────────────────────
+    // ── Étape 2 : compétences ────────────────────────────────────────────────
     const addSkill = (skillName) => {
         if (isSpecializableSkill(skillName)) {
             setPendingSkill(skillName);
@@ -192,7 +204,7 @@ const Creation = ({ onCreated, onCancel, darkMode }) => {
         setPendingSkill(null);
     };
 
-    const renderStep3 = () => {
+    const renderSkills = () => {
         const remaining = TOTAL_SKILL_POINTS - usedSkillPoints;
         const sameSkill = (a, b) => a.name === b.name && a.specialization === b.specialization;
         const changeSkillLevel = (skill, delta) => set('skills', character.skills.map(s => {
@@ -202,7 +214,7 @@ const Creation = ({ onCreated, onCancel, darkMode }) => {
         }));
         const removeSkill = (skill) => set('skills', character.skills.filter(s => !sameSkill(s, skill)));
         const available = COMPETENCES.filter(c =>
-            c.name.toLowerCase().includes(skillSearch.toLowerCase())
+            matches(skillSearch, c.name, c.description)
             && (isSpecializableSkill(c.name) || !character.skills.some(s => s.name === c.name)));
 
         return (
@@ -219,10 +231,17 @@ const Creation = ({ onCreated, onCancel, darkMode }) => {
                         </span>
                         <div className="grid grid-cols-1 gap-1 max-h-80 overflow-y-auto pr-1">
                             {available.map(c => (
-                                <button key={c.name} type="button" className="vk-pill w-full justify-between text-left" onClick={() => addSkill(c.name)}>
-                                    <span>{c.name}</span><span className="text-xs opacity-75">{c.caracs.map(k => CARACNAMES[k]).join(' / ')}</span>
+                                <button key={c.name} type="button" className="vk-row w-full text-left cursor-pointer" onClick={() => addSkill(c.name)}>
+                                    <div className="flex-1 min-w-0">
+                                        <div className="flex justify-between gap-2">
+                                            <span className="font-bold">{c.name}</span>
+                                            <span className="text-xs text-muted shrink-0">{c.caracs.map(k => CARACNAMES[k]).join(' / ')}</span>
+                                        </div>
+                                        <div className="text-xs text-muted">{c.description}</div>
+                                    </div>
                                 </button>
                             ))}
+                            {available.length === 0 && <p className="text-sm text-muted italic">Aucune compétence ne correspond à la recherche.</p>}
                         </div>
                     </div>
 
@@ -233,6 +252,7 @@ const Creation = ({ onCreated, onCancel, darkMode }) => {
                             <div key={`${skill.name}-${skill.specialization || 'default'}`} className="vk-row">
                                 <div className="flex-1 min-w-0">
                                     <div className="font-bold">{formatSkillName(skill)}</div>
+                                    <div className="text-xs text-muted">{COMPETENCES.find(c => c.name === skill.name)?.description}</div>
                                     <div className="text-xs text-muted">seuil {getSuccessThreshold(skill.level)}+</div>
                                 </div>
                                 <LevelStepper value={skill.level}
@@ -244,13 +264,13 @@ const Creation = ({ onCreated, onCancel, darkMode }) => {
                     </div>
                 </div>
 
-                <NavButtons onPrev={() => setStep(2)} onNext={() => setStep(4)} nextDisabled={remaining !== 0} />
+                <NavButtons onPrev={() => setStep(1)} onNext={() => setStep(3)} nextDisabled={remaining !== 0} />
             </div>
         );
     };
 
-    // ── Étape 4 : traits ─────────────────────────────────────────────────────
-    const renderStep4 = () => {
+    // ── Étape 3 : traits ─────────────────────────────────────────────────────
+    const renderTraits = () => {
         const toggleTrait = (trait) => {
             if (character.traits.some(t => t.name === trait.name)) {
                 set('traits', character.traits.filter(t => t.name !== trait.name));
@@ -258,13 +278,21 @@ const Creation = ({ onCreated, onCancel, darkMode }) => {
                 set('traits', [...character.traits, trait]);
             }
         };
+        // Recherche sur nom, description et effets ; les traits choisis restent toujours visibles
+        const shown = TRAITS.filter(trait => character.traits.some(t => t.name === trait.name)
+            || matches(traitSearch, trait.name, trait.description, trait.effects && effectsText(trait.effects)));
 
         return (
             <div className="space-y-4">
                 <Budget label="Traits sélectionnés" remaining={character.traits.length} total={MAX_TRAITS} />
                 <p className="text-sm text-muted text-center">Entre {MIN_TRAITS} et {MAX_TRAITS} traits ou backgrounds, en respectant conditions et incompatibilités.</p>
+                <span className="vk-input-icon block">
+                    <VkIcon name="eye" />
+                    <input className="vk-input" value={traitSearch} onChange={e => setTraitSearch(e.target.value)} placeholder="Rechercher un trait ou un background…" />
+                </span>
+                {shown.length === 0 && <p className="text-sm text-muted italic text-center">Aucun trait ne correspond à la recherche.</p>}
                 <div className="grid md:grid-cols-2 gap-2 max-h-[32rem] overflow-y-auto pr-1">
-                    {TRAITS.map(trait => {
+                    {shown.map(trait => {
                         const isSelected = character.traits.some(t => t.name === trait.name);
                         const canSelect = canSelectTrait(character, trait, MAX_TRAITS);
                         const conditions = formatTraitConditions(trait);
@@ -285,14 +313,14 @@ const Creation = ({ onCreated, onCancel, darkMode }) => {
                         );
                     })}
                 </div>
-                <NavButtons onPrev={() => setStep(3)} onNext={() => setStep(5)}
+                <NavButtons onPrev={() => setStep(2)} onNext={() => setStep(4)}
                             nextDisabled={character.traits.length < MIN_TRAITS || character.traits.length > MAX_TRAITS} />
             </div>
         );
     };
 
-    // ── Étape 5 : runes ──────────────────────────────────────────────────────
-    const renderStep5 = () => {
+    // ── Étape 4 : runes ──────────────────────────────────────────────────────
+    const renderRunes = () => {
         const remaining = totalRunePoints - usedRunePoints;
         const changeRuneLevel = (runeName, delta) => {
             const existing = character.runes.find(r => r.name === runeName);
@@ -308,7 +336,7 @@ const Creation = ({ onCreated, onCancel, darkMode }) => {
             return (
                 <div className="space-y-4">
                     <div className="vk-callout">Aucun trait choisi ne donne de livre de sort : pas de runes à la création. Elles pourront s'apprendre en jeu.</div>
-                    <NavButtons onPrev={() => setStep(4)} onNext={() => setStep(6)} />
+                    <NavButtons onPrev={() => setStep(3)} onNext={() => setStep(5)} />
                 </div>
             );
         }
@@ -334,13 +362,13 @@ const Creation = ({ onCreated, onCancel, darkMode }) => {
                         );
                     })}
                 </div>
-                <NavButtons onPrev={() => setStep(4)} onNext={() => setStep(6)} nextDisabled={remaining !== 0} />
+                <NavButtons onPrev={() => setStep(3)} onNext={() => setStep(5)} nextDisabled={remaining !== 0} />
             </div>
         );
     };
 
     // ── Étape 6 : finalisation ───────────────────────────────────────────────
-    const renderStep6 = () => {
+    const renderFinal = () => {
         // Personnage final : « SAGA +N » des traits choisis appliqué à la SAGA de
         // départ (D-9, D-11) et valeurs de combat dérivées des traits (L3-6)
         const finalChar = withDerivedValues({
@@ -468,9 +496,15 @@ const Creation = ({ onCreated, onCancel, darkMode }) => {
     return (
         <div className="vk-root min-h-screen p-4 md:p-6" data-theme={darkMode ? 'dark' : 'light'}>
             <div className="max-w-5xl mx-auto">
-                <div className="text-center mb-4">
+                <div className="text-center mb-4 relative">
                     <div className="vk-rune text-3xl">ᚢᛁᚲᛁᛜ</div>
                     <h1 className="vk-title text-3xl">Naissance d'un Viking</h1>
+                    <div className="absolute right-0 top-0">
+                        <button type="button" onClick={onToggleDarkMode} className="vk-btn vk-btn-icon"
+                                title={darkMode ? 'Mode jour (bois)' : 'Mode nuit (fer)'}>
+                            <VkIcon name={darkMode ? 'sun' : 'moon'} />
+                        </button>
+                    </div>
                 </div>
 
                 <VkPanel variant="heavy">
@@ -483,12 +517,12 @@ const Creation = ({ onCreated, onCancel, darkMode }) => {
                         ))}
                     </nav>
 
-                    {step === 1 && renderStep1()}
-                    {step === 2 && renderStep2()}
-                    {step === 3 && renderStep3()}
-                    {step === 4 && renderStep4()}
-                    {step === 5 && renderStep5()}
-                    {step === 6 && renderStep6()}
+                    {step === 1 && renderCaracs()}
+                    {step === 2 && renderSkills()}
+                    {step === 3 && renderTraits()}
+                    {step === 4 && renderRunes()}
+                    {step === 5 && renderIdentity()}
+                    {step === 6 && renderFinal()}
                 </VkPanel>
             </div>
 
