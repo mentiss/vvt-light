@@ -1,5 +1,6 @@
 import {useMemo, useState} from "react";
 import {ITEM_AND_CYBERWARE_CATEGORY_LABEL, TAG_VARIANT_CLASS} from "../../config.jsx";
+import Modal from "../../../../components/ui/Modal.jsx";
 
 const BrowseModal = ({ title, items, groupKey, onAdd, onClose }) => {
     const [query,    setQuery]    = useState('');
@@ -49,10 +50,7 @@ const BrowseModal = ({ title, items, groupKey, onAdd, onClose }) => {
     const renderItem = (item) => (
         <div
             key={item.name}
-            className="flex items-start gap-3 px-4 py-3 transition-colors"
-            style={{ borderBottom: '1px solid var(--color-border)' }}
-            onMouseEnter={e => e.currentTarget.style.background = 'var(--color-surface-alt)'}
-            onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
+            className="flex items-start gap-3 px-4 py-3 transition-colors border-b border-default hover:bg-surface-alt"
         >
             <div className="flex-1 min-w-0 flex flex-col gap-1">
                 <span className="text-sm font-semibold" style={{ color: 'var(--color-text)' }}>
@@ -95,85 +93,38 @@ const BrowseModal = ({ title, items, groupKey, onAdd, onClose }) => {
         </div>
     );
 
+    // Fenêtre à hauteur fixe (h-full) : la recherche et les filtres restent en
+    // place, seule la liste défile, et la fenêtre ne saute pas quand on filtre.
     return (
-        <>
-            <div
-                className="fixed inset-0 z-40"
-                style={{ background: 'rgba(0,0,0,0.7)' }}
-                onClick={onClose}
-            />
-            <div
-                className="fixed inset-x-4 top-16 bottom-8 z-50 flex flex-col rounded-2xl overflow-hidden shadow-2xl"
-                style={{
-                    background: 'var(--color-surface)',
-                    border:     '1px solid var(--color-border)',
-                    maxWidth:   '640px',
-                    margin:     '0 auto',
-                }}
-            >
-                {/* Header */}
-                <div
-                    className="flex items-center justify-between px-5 py-4 shrink-0"
-                    style={{ borderBottom: '1px solid var(--color-border)', background: 'var(--color-surface-alt)' }}
-                >
-                    <h2 className="text-sm font-bold cp-font-ui uppercase tracking-widest"
-                        style={{ color: 'var(--color-primary)' }}>
-                        ⊞ {title}
-                    </h2>
-                    <button
-                        onClick={onClose}
-                        className="w-7 h-7 rounded-lg flex items-center justify-center text-sm"
-                        style={{ background: 'var(--color-surface)', border: '1px solid var(--color-border)', color: 'var(--color-text-muted)', cursor: 'pointer' }}
-                    >
-                        ✕
-                    </button>
-                </div>
-
+        <Modal onClose={onClose} size="lg" expandable title={title} className="h-full">
+            <div className="flex flex-col h-full min-h-0 gap-3">
                 {/* Recherche */}
-                <div
-                    className="px-4 pt-3 pb-2 shrink-0"
-                    style={{ borderBottom: '1px solid var(--color-border)' }}
-                >
+                <div className="shrink-0">
                     <input
                         type="text"
                         value={query}
                         onChange={e => setQuery(e.target.value)}
                         placeholder="Rechercher…"
                         autoFocus
-                        className="w-full rounded-lg px-3 py-2 text-sm outline-none"
-                        style={{
-                            background: 'var(--color-surface-alt)',
-                            border:     '1px solid var(--color-border)',
-                            color:      'var(--color-text)',
-                        }}
+                        className="vtt-input"
                     />
 
                     {/* Filtres catégorie */}
                     {categories.length > 0 && (
-                        <div className="flex flex-wrap gap-1.5 mt-2 pb-1">
+                        <div className="flex flex-wrap gap-1.5 mt-2">
                             <button
+                                type="button"
                                 onClick={() => setCategory(null)}
-                                className="text-xs px-2.5 py-1 rounded-full transition-all"
-                                style={{
-                                    background: !category ? 'var(--color-primary)' : 'var(--color-surface-alt)',
-                                    border:     `1px solid ${!category ? 'var(--color-primary)' : 'var(--color-border)'}`,
-                                    color:      !category ? 'var(--color-bg)' : 'var(--color-text-muted)',
-                                    cursor:     'pointer',
-                                }}
+                                className={`vtt-pill ${!category ? 'is-selected' : ''}`}
                             >
                                 Tous
                             </button>
                             {categories.map(cat => (
                                 <button
+                                    type="button"
                                     key={cat}
                                     onClick={() => setCategory(prev => prev === cat ? null : cat)}
-                                    className="text-xs px-2.5 py-1 rounded-full transition-all"
-                                    style={{
-                                        background: category === cat ? 'var(--color-primary)' : 'var(--color-surface-alt)',
-                                        border:     `1px solid ${category === cat ? 'var(--color-primary)' : 'var(--color-border)'}`,
-                                        color:      category === cat ? 'var(--color-bg)' : 'var(--color-text-muted)',
-                                        cursor:     'pointer',
-                                    }}
+                                    className={`vtt-pill ${category === cat ? 'is-selected' : ''}`}
                                 >
                                     {ITEM_AND_CYBERWARE_CATEGORY_LABEL[cat] ?? cat}
                                 </button>
@@ -183,7 +134,7 @@ const BrowseModal = ({ title, items, groupKey, onAdd, onClose }) => {
                 </div>
 
                 {/* Liste scrollable */}
-                <div className="flex-1 overflow-y-auto cp-scroll">
+                <div className="flex-1 min-h-0 overflow-y-auto vtt-scroll -mx-5 border-t border-default">
                     {filtered.length === 0 && (
                         <p className="text-sm text-center py-8" style={{ color: 'var(--color-text-muted)' }}>
                             Aucun résultat.
@@ -209,7 +160,7 @@ const BrowseModal = ({ title, items, groupKey, onAdd, onClose }) => {
                     }
                 </div>
             </div>
-        </>
+        </Modal>
     );
 };
 

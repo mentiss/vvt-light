@@ -314,6 +314,10 @@ Sur un 10-14 : l'intervention se fait mais avec une complication (travail bâcl�
 ### 6.3 Moves de Playbook
 Voir section 7 pour les listes par archétype. À la création, le joueur choisit 2 moves dans la liste de son Playbook.
 
+### 6.4 Affichage sur la fiche *(2026-10-23)*
+- La description d'un move est coupée au-delà de quelques lignes, avec un lien « Voir plus » pour la lire en entier : c'est le seul moyen de consulter un move **passif** (sans stat), qui n'ouvre pas de jet.
+- Un clic sur un move avec stat ouvre la fenêtre de jet ; le lien « Voir plus » ne la déclenche pas, pas plus qu'il ne coche le move en mode édition.
+
 ---
 
 ## 8. Les Playbooks et leurs Moves
@@ -1045,6 +1049,14 @@ Après **5 avancements de base**, accès aux avancements majeurs :
 ### 14.4 Ce qui n'est pas mécanique
 - Changer de personnage ou en créer un second → décision narrative entre le joueur et le MC, sans coût mécanique
 - Changer de Playbook → décision narrative, discutée à la table
+
+### 14.5 Fenêtre de dépense d'XP *(2026-10-23)*
+- Chaque move proposé affiche sa description, coupée avec un lien « Voir plus » pour la lire en entier.
+- L'achat passe par le bouton de coût (« −10 XP ») de la ligne, jamais par un clic sur la description, puis par une confirmation.
+- Les moves du playbook du personnage sont rangés dans un accordéon, comme ceux des autres playbooks : déplié à l'ouverture tant que les avancements majeurs sont verrouillés, replié dès qu'ils sont débloqués (5 avancements de base). L'état n'est pas mémorisé.
+- Une fois les avancements majeurs débloqués, deux raccourcis « Base » et « Majeurs » dans l'en-tête de la fenêtre mènent directement à chaque section.
+- La fenêtre peut être agrandie en plein écran.
+- Chaque stat est une carte : valeur actuelle en gros, jauge de -2 à +3 centrée sur un marqueur 0 bien visible (crans négatifs à gauche en rouge, positifs à droite ; le cran que l'achat change clignote, +3 est séparé par un filet discret), puis l'action en toutes lettres (« Passer à +2 ») ou la raison du blocage : « Maximum de base » ; pour les majeurs « Déjà à +3 », « +3 déjà pris (Stat) », « Doit d'abord être à +2 ». Cyan pour les avancements de base, ambre pour les majeurs.
 
 ---
 

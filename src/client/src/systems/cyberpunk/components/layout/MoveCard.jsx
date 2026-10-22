@@ -1,4 +1,5 @@
 import {STAT_LABELS} from "../../config.jsx";
+import ExpandableText from "../../../../components/ui/ExpandableText.jsx";
 
 const STAT_BADGE_CLASS = {
     cran:   'cp-stat-badge-cran',
@@ -24,9 +25,18 @@ export const MoveCard = ({ move, isUnlocked, onClick, showFull = false, isEditMo
         opacity:    isUnlocked ? 1 : 0.35,
     };
 
+    // div et non button : la description contient le lien « Voir plus » (bouton)
+    const isInteractive = isClickable || isEditMode;
+
     return (
-        <button
+        <div
             onClick={onClick}
+            role={isInteractive ? 'button' : undefined}
+            tabIndex={isInteractive ? 0 : undefined}
+            onKeyDown={isInteractive ? e => {
+                if (e.target !== e.currentTarget) return;
+                if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onClick?.(); }
+            } : undefined}
             className={`
                 group w-full text-left rounded-lg px-3 py-2.5 
                 flex flex-col gap-1 transition-all
@@ -69,11 +79,11 @@ export const MoveCard = ({ move, isUnlocked, onClick, showFull = false, isEditMo
 
             </div>
             {(isUnlocked || showFull || isEditMode) && (
-                <p className={`text-xs leading-relaxed line-clamp-3 text-muted ${isClickable ? 'group-hover:text-default' : ''}`}>
-                    {move.description}
+                <p className={`text-xs leading-relaxed text-muted ${isClickable ? 'group-hover:text-default' : ''}`}>
+                    <ExpandableText text={move.description} maxLength={160} />
                 </p>
             )}
-        </button>
+        </div>
     )
 };
 

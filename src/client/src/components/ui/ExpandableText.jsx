@@ -12,16 +12,11 @@ const ExpandableText = ({ text, maxLength = 120, className = '', style = {} }) =
     return (
         <span className={className} style={style}>
             {expanded ? text : `${text.slice(0, maxLength)}…`}
+            {/* stopPropagation : le texte peut vivre dans une carte cliquable */}
             <button
-                onClick={() => setExpanded(v => !v)}
-                className="ml-1 text-xs"
-                style={{
-                    color:      'var(--color-primary)',
-                    background: 'none',
-                    border:     'none',
-                    cursor:     'pointer',
-                    padding:    0,
-                }}
+                type="button"
+                onClick={e => { e.stopPropagation(); setExpanded(v => !v); }}
+                className="ml-1 text-xs text-primary bg-transparent border-0 p-0 cursor-pointer"
             >
                 {expanded ? 'Voir moins' : 'Voir plus'}
             </button>

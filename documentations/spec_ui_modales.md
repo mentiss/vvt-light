@@ -199,6 +199,7 @@ Planche : `documentations/refonte_plateforme/UIkit_modales_slugs.html` (modale t
 | H-4 | Achtung | Formulaire militaire, façon réquisition (et non passeport, réservé à la carte de la barre). Première version refusée (« jeu de stratégie des années 90 ») : refaite en document papier WWII. |
 | H-5 | Partage | Quand le slug a déjà ses modales et contrôles (`zb-*`, `ac-*`, `dune-*`), les classes génériques en reprennent le rendu. |
 | H-6 | Méthode | Propositions au-delà de l'existant signalées ✦ sur la planche ; un commit par slug. |
+| H-7 | Modales propres à un slug (2026-10-23) | Elles passent par le composant `Modal` et les classes `vtt-*` pour prendre l'habillage du slug ; les confirmations passent par `ConfirmModal`, rendue à côté de la modale parente (jamais dedans : un `clip-path` de thème la couperait). Fait pour Cyberpunk : jet de move, dépense d'XP (agrandissable), catalogue cyberware / inventaire (hauteur fixe, seule la liste défile), retrait d'un implant côté MJ. |
 
 ### 11.2 Habillages
 

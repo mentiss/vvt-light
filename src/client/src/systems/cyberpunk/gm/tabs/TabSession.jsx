@@ -43,6 +43,7 @@ import {useSocket} from "../../../../context/SocketContext.jsx";
 import GMSendModal from "../../../../components/gm/modals/GMSendModal.jsx";
 import {useParams} from "react-router-dom";
 import BrowseModal from "../../components/modals/BrowseModal.jsx";
+import ConfirmModal from "../../../../components/modals/ConfirmModal.jsx";
 
 // ── Constantes ────────────────────────────────────────────────────────────────
 
@@ -869,49 +870,17 @@ const TabSession = ({ activeSession, onlineCharacters, onSessionChange }) => {
                 />
             )}
             {confirmDelete && (
-                <>
-                    <div
-                        className="fixed inset-0 z-40"
-                        style={{ background: 'rgba(0,0,0,0.7)' }}
-                        onClick={() => setConfirmDelete(null)}
-                    />
-                    <div
-                        className="fixed z-50 rounded-xl p-5 flex flex-col gap-4 shadow-2xl"
-                        style={{
-                            background: 'var(--color-surface)',
-                            border:     '1px solid var(--color-border)',
-                            top:        '50%',
-                            left:       '50%',
-                            transform:  'translate(-50%, -50%)',
-                            minWidth:   '280px',
-                            maxWidth:   '360px',
-                        }}
-                    >
-                        <div>
-                            <p className="text-sm font-bold cp-font-ui uppercase tracking-wide mb-1"
-                               style={{ color: 'var(--color-danger)' }}>
-                                Supprimer l'implant
-                            </p>
-                            <p className="text-sm" style={{ color: 'var(--color-text)' }}>
-                                Retirer <strong>{confirmDelete.item.name}</strong> du personnage ?
-                            </p>
-                            <p className="text-xs mt-1" style={{ color: 'var(--color-text-muted)' }}>
-                                Cette action est immédiate et irréversible.
-                            </p>
-                        </div>
-                        <div className="flex gap-2 justify-end">
-                            <Btn small variant="ghost" onClick={() => setConfirmDelete(null)}>
-                                Annuler
-                            </Btn>
-                            <Btn small variant="danger" onClick={() => {
-                                removeCyberware(confirmDelete.item);
-                                setConfirmDelete(null);
-                            }}>
-                                Supprimer
-                            </Btn>
-                        </div>
-                    </div>
-                </>
+                <ConfirmModal
+                    title="Supprimer l'implant"
+                    message={`Retirer ${confirmDelete.item.name} du personnage ? Cette action est immédiate et irréversible.`}
+                    confirmText="Supprimer"
+                    danger
+                    onConfirm={() => {
+                        removeCyberware(confirmDelete.item);
+                        setConfirmDelete(null);
+                    }}
+                    onCancel={() => setConfirmDelete(null)}
+                />
             )}
         </div>
     );
