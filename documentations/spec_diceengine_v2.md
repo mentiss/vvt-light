@@ -465,3 +465,28 @@ const buildBoxNotation = (diceValues, diceType) => {
 Aucun fork de `dice-box-threejs` n'est nécessaire. Le parser `DiceNotation` de la lib
 supporte nativement les notations composites multi-type. Le blocage était uniquement dans
 notre `buildBoxNotation` qui ne généraient que des notations mono-type.
+
+---
+
+## Jet libre (`free_roll`) dans les historiques *(2026-10-23)*
+
+### Enregistrement
+
+`FreeDiceModal` fournit son propre `afterRoll` : le résultat enregistré (`roll_result`) contient, en plus de `allDice`, `groups` et `flags`, le **total**, le **modificateur** et le **libellé** saisi. Avant le 2026-10-23, seuls les dés étaient enregistrés.
+
+### Lecture : `tools/freeRoll.js`
+
+`parseFreeRoll(entry)` renvoie `{ label, total, modifier, groups: [{ notation, values, subtotal }] }`, ou `null` si l'entrée n'est pas un jet libre lisible. Les anciens jets restent lisibles : total recalculé à partir des dés, modificateur lu dans la notation du dernier groupe (« 1d8+3 »), libellé « Jet libre ». Test : `tests/tools/freeRoll.test.js`.
+
+### Rendu : chaque slug, dans son style
+
+- Le composant d'historique du slug traite le jet libre **en premier** (`parseFreeRoll`), puis ses propres jets.
+- Les trois affichages du slug passent `renderAllRollTypes` : onglet Historique (`DiceHistoryPage`), panneau latéral (`HistoryPanel`) s'il en a un, notifications (`ToastNotifications`).
+- Contenu : libellé et total en évidence, dés regroupés par type avec leur notation (« 2d6 »), modificateur s'il y en a un.
+- **Rendu identique** dans l'historique et dans la notification : pas de mode resserré (`compact`), retiré de Fabula, Vikings et Zone Blanche le 2026-10-23 (décision du MJ).
+- Le rendu générique de la plateforme reste le filet de sécurité, notamment pour **Noctis** (refonte à venir).
+
+### Marges : portées par la plateforme
+
+- La carte d'historique (`DiceHistoryPage`, `HistoryPanel`) pose la marge intérieure via la classe habillable `vtt-history-entry` (`index.css`) ; la notification a la sienne (`ToastShell`).
+- Les rendus des slugs (`renderHistoryEntry`, `renderDiceToast`) **ne mettent aucune marge extérieure**. Seul un décor propre au slug garde un espacement interne au décor : bande teintée et filet gauche de Delta Green, bloc encadré `zb-history-entry` de Zone Blanche.

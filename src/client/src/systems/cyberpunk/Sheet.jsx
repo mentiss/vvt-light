@@ -21,7 +21,7 @@ import AvatarUploader      from '../../components/AvatarUploader.jsx';
 import { HamburgerMenu, HamburgerMenuSeparator } from '../../components/ui/HamburgerMenu.jsx';
 import {
     HamburgerMenuItemCreateCharacter, HamburgerMenuItemSwitchCharacter, HamburgerMenuItemAccessCode,
-    HamburgerMenuItemDiceConfig, HamburgerMenuItemGMInterface, HamburgerMenuItemLogout,
+    HamburgerMenuItemFreeDice, HamburgerMenuItemDiceConfig, HamburgerMenuItemGMInterface, HamburgerMenuItemLogout,
 } from '../../components/ui/HamburgerMenuItems.jsx';
 
 // Composants Cyberpunk
@@ -280,6 +280,7 @@ const Sheet = ({
                 renderDiceToast={(entry) => {
                     return (<DiceEntryHistory roll={entry}  />)
                 }}
+                renderAllRollTypes
             />
 
             {/* ── Header ───────────────────────────────────────────────── */}
@@ -356,19 +357,24 @@ const Sheet = ({
                         ✦ XP
                     </button>
 
-                    {/* Hamburger : générique, sans habillage au lot pilote (spec_ui_menu.md §8) ;
-                        les emojis d'origine reviennent avec l'habillage du lot 2 */}
+                    {/* Hamburger générique (spec_ui_menu.md), habillé dans theme.css, emojis du slug */}
                     <HamburgerMenu>
-                        <HamburgerMenuItemCreateCharacter />
-                        <HamburgerMenuItemSwitchCharacter currentCharId={character?.id} />
+                        <HamburgerMenuItemCreateCharacter icon="✨" />
+                        <HamburgerMenuItemSwitchCharacter icon="👤" currentCharId={character?.id} />
                         <HamburgerMenuSeparator />
-                        <HamburgerMenuItemAccessCode character={character} onSuccess={onCharacterUpdate} />
+                        <HamburgerMenuItemAccessCode icon="🔑" character={character} onSuccess={onCharacterUpdate} />
                         <HamburgerMenuSeparator />
-                        <HamburgerMenuItemDiceConfig />
+                        <HamburgerMenuItemFreeDice
+                            icon="⬡"
+                            characterId={character.id}
+                            characterName={character.prenom || character.nom || 'Anonyme'}
+                            sessionId={activeGMSession}
+                        />
+                        <HamburgerMenuItemDiceConfig icon="🎲" />
                         <HamburgerMenuSeparator />
-                        <HamburgerMenuItemGMInterface />
+                        <HamburgerMenuItemGMInterface icon="🎭" />
                         <HamburgerMenuSeparator />
-                        <HamburgerMenuItemLogout />
+                        <HamburgerMenuItemLogout icon="🔒" />
                     </HamburgerMenu>
 
                 </div>
@@ -994,6 +1000,7 @@ const Sheet = ({
                             <DiceHistoryPage
                                 sessionId={activeGMSession}
                                 renderHistoryEntry={cyberpunkConfig.dice.renderHistoryEntry}
+                                renderAllRollTypes
                             />
                         </div>
                     )}

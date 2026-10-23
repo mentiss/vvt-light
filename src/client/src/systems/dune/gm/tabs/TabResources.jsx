@@ -9,6 +9,7 @@ import { useSocket }    from '../../../../context/SocketContext.jsx';
 import { useFetch }     from '../../../../hooks/useFetch.js';
 import { useSystem }    from '../../../../hooks/useSystem.js';
 import HistoryPanel     from '../../../../components/layout/HistoryPanel.jsx';
+import DuneHistoryEntry from '../../components/DuneHistoryEntry.jsx';
 import VerticalGauge    from '../../components/VerticalGauge.jsx';
 
 const MAX_IMPULSIONS = 6;
@@ -266,6 +267,8 @@ const TabResources = ({ activeSession }) => {
                 isOpen={historyOpen}
                 onClose={() => setHistoryOpen(false)}
                 sessionId={sessionId}
+                renderHistoryEntry={(roll) => <DuneHistoryEntry roll={roll} />}
+                renderAllRollTypes
             />
         </div>
     );

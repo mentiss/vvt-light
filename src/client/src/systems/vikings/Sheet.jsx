@@ -240,6 +240,7 @@ const Sheet = ({
                         <DiceHistoryPage
                             sessionId={activeGMSession}
                             renderHistoryEntry={vikingsConfig.dice.renderHistoryEntry}
+                            renderAllRollTypes
                         />
                     )}
                 </main>
@@ -269,7 +270,7 @@ const Sheet = ({
                 masquait sa propre notification). */}
             <ToastNotifications
                 sessionId={activeGMSession}
-                renderDiceToast={(toast) => <VikingsHistoryEntry entry={toast} compact />}
+                renderDiceToast={(toast) => <VikingsHistoryEntry entry={toast} />}
                 renderAllRollTypes
             />
         </div>

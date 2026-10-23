@@ -24,9 +24,11 @@ import ThemeToggle          from '../../components/ui/ThemeToggle.jsx';
 import ToastNotifications   from '../../components/layout/ToastNotifications.jsx';
 import TabJournal           from '../../components/gm/tabs/TabJournal.jsx';
 import DiceHistoryPage      from '../../components/layout/DiceHistoryPage.jsx';
-import DiceConfigModal      from '../../components/modals/DiceConfigModal.jsx';
-import FreeDiceModal        from '../../components/modals/FreeDiceModal.jsx';
-import TableManagementModal from '../../components/gm/modals/TableManagementModal.jsx';
+import { HamburgerMenu, HamburgerMenuSeparator } from '../../components/ui/HamburgerMenu.jsx';
+import {
+    HamburgerMenuItemTableManagement, HamburgerMenuItemFreeDice, HamburgerMenuItemDiceConfig,
+    HamburgerMenuItemLogout,
+} from '../../components/ui/HamburgerMenuItems.jsx';
 
 import TabSession                from './gm/tabs/TabSession.jsx';
 import { BUDGET_PRESETS }        from './config.jsx';
@@ -157,10 +159,7 @@ const GMApp = ({
 
     const [activeTab, setActiveTab] = useState('session');
 
-    const [showMenu,       setShowMenu]       = useState(false);
-    const [showTableMgmt,  setShowTableMgmt]  = useState(false);
-    const [showDiceConfig, setShowDiceConfig] = useState(false);
-    const [showFreeDice,   setShowFreeDice]   = useState(false);
+    // Modales du menu : dans ses éléments (spec_ui_menu.md)
     const [showGMDice,     setShowGMDice]     = useState(false);
 
     const [resources, setResources] = useState({ audimat: 0, stress: 6 });
@@ -246,7 +245,7 @@ const GMApp = ({
 
             <ToastNotifications
                 sessionId={sessionId}
-                renderDiceToast={(toast) => <ZoneBlancheHistoryEntry entry={toast} compact />}
+                renderDiceToast={(toast) => <ZoneBlancheHistoryEntry entry={toast} />}
                 renderAllRollTypes
             />
 
@@ -275,20 +274,19 @@ const GMApp = ({
 
                     <ThemeToggle darkMode={darkMode} onToggle={onToggleDarkMode} />
 
-                    <div className="relative">
-                        <button type="button" onClick={() => setShowMenu(v => !v)}
-                                className="zb-btn-ghost px-3 py-2 rounded-sm" title="Menu">☰</button>
-                        {showMenu && (
-                            <>
-                                <div className="fixed inset-0 z-40" onClick={() => setShowMenu(false)} />
-                                <div className="zb-menu">
-                                    <button className="zb-menu-item" onClick={() => { setShowMenu(false); setShowTableMgmt(true); }}>Gestion des tables</button>
-                                    <button className="zb-menu-item" onClick={() => { setShowMenu(false); setShowFreeDice(true); }}>Jet de dés libre</button>
-                                    <button className="zb-menu-item" onClick={() => { setShowMenu(false); setShowDiceConfig(true); }}>Config animations dés</button>
-                                </div>
-                            </>
-                        )}
-                    </div>
+                    {/* Menu hamburger générique (spec_ui_menu.md), sans icônes comme avant ;
+                        déconnexion ajoutée (D-4) */}
+                    <HamburgerMenu button="☰" buttonClassName="zb-btn-ghost rounded-sm">
+                        <HamburgerMenuItemTableManagement
+                            icon={null}
+                            activeSessionId={sessionId}
+                            onSelectTable={(session) => onSessionChange?.(session)}
+                        />
+                        <HamburgerMenuItemFreeDice icon={null} sessionId={sessionId} isGM />
+                        <HamburgerMenuItemDiceConfig icon={null} />
+                        <HamburgerMenuSeparator />
+                        <HamburgerMenuItemLogout icon={null} />
+                    </HamburgerMenu>
                 </div>
             </header>
 
@@ -346,15 +344,6 @@ const GMApp = ({
                 Jet MJ
             </button>
 
-            {showTableMgmt && (
-                <TableManagementModal
-                    isOpen
-                    onClose={() => setShowTableMgmt(false)}
-                    activeSessionId={sessionId}
-                    onSelectTable={(session) => { onSessionChange?.(session); setShowTableMgmt(false); }}
-                />
-            )}
-
             {showGMDice && (
                 <ZoneBlancheGMDiceModal
                     sessionId={sessionId}
@@ -364,15 +353,6 @@ const GMApp = ({
                 />
             )}
 
-            {showDiceConfig && <DiceConfigModal onClose={() => setShowDiceConfig(false)} />}
-
-            {showFreeDice && (
-                <FreeDiceModal
-                    sessionId={sessionId}
-                    isGM
-                    onClose={() => setShowFreeDice(false)}
-                />
-            )}
         </div>
     );
 };

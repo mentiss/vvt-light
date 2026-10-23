@@ -27,6 +27,18 @@ const DICE_TYPES = ['d4', 'd6', 'd8', 'd10', 'd12', 'd20', 'd100'];
 const INITIAL_COUNTS = Object.fromEntries(DICE_TYPES.map(d => [d, 0]));
 
 
+// ── Hook interprétation — résultat enregistré dans l'historique ──────────────
+// Total global : somme des totaux de groupe (le modificateur est déjà dans la
+// notation du dernier groupe).
+const freeRollAfterRoll = (raw, ctx) => ({
+    allDice:  raw.allDice,
+    groups:   raw.groups,
+    flags:    raw.flags,
+    total:    raw.groups.reduce((s, g) => s + g.total, 0),
+    modifier: ctx.systemData.modifier,
+    label:    ctx.label,
+});
+
 // ── Hook animation — fusionne tous les types en un seul groupe/wave ───────────
 const buildFreeDiceAnimSeq = (raw, ctx) => {
     const { counts } = ctx.systemData;
@@ -290,17 +302,18 @@ const FreeDiceModal = ({
         };
 
         try {
-            const raw = await roll(notation, ctx, {buildAnimationSequence: buildFreeDiceAnimSeq,});
-            // Calcul du total global : somme des totaux de chaque groupe + modifier
-            // (le modifier est déjà dans le dernier groupe via la notation,
-            //  donc on prend la somme brute des groupes)
-            const diceTotal = raw.groups.reduce((s, g) => s + g.total, 0);
+            // afterRoll : total, modificateur et libellé enregistrés avec le jet, pour
+            // l'historique des slugs (tools/freeRoll.js, spec_diceengine_v2.md « Jet libre »)
+            const res = await roll(notation, ctx, {
+                afterRoll:              freeRollAfterRoll,
+                buildAnimationSequence: buildFreeDiceAnimSeq,
+            });
 
             setResult({
-                groups:   raw.groups,
-                modifier,
-                total:    diceTotal,
-                label:    effectiveLabel,
+                groups:   res.groups,
+                modifier: res.modifier,
+                total:    res.total,
+                label:    res.label,
                 notation: Array.isArray(notation) ? notation : [notation],
             });
         } catch (err) {

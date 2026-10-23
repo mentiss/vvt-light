@@ -2,7 +2,7 @@
 
 ## Statut
 
-**Proposée le 2026-10-23** (décisions D-1 à D-8 au §1 issues du diagnostic). Questions Q-1 à Q-4 tranchées par le MJ le 2026-10-23 (§11). **Lot pilote implémenté le 2026-10-23**, en attente du contrôle visuel du MJ.
+**Proposée le 2026-10-23** (décisions D-1 à D-8 au §1 issues du diagnostic). Questions Q-1 à Q-4 tranchées par le MJ le 2026-10-23 (§11). **Lot pilote implémenté et validé le 2026-10-23** (commit fd7e26c). **Lot 2 implémenté le 2026-10-23**, en attente du contrôle visuel du MJ.
 
 Brique de plateforme : concerne les menus joueur (`Sheet.jsx`) et MJ (`GMApp.jsx` / `gm/GMView.jsx`) des 9 slugs.
 
@@ -127,7 +127,7 @@ Props communes à tous : `label` (libellé par défaut ci-dessous), `icon` (abse
 
 - Jeu d'icônes SVG au trait de la plateforme, dans le style de celles de l'accueil (`vtt-icon-line`) : menu, créer, personnes, portrait, clé, dé, réglages, couronne (MJ), œil (vue joueur), tables, maison, porte (déconnexion).
 - Pas d'emoji dans le générique (comme M-4 des modales) ; un slug qui veut ses emojis ou ses propres icônes les passe en `icon`.
-- Migration (Q-3) : Achtung, Cyberpunk, Delta Green, Dune, Fabula, Tecumah gardent leurs emojis actuels, Vikings ses `VkIcon` ; Zone Blanche et Noctis, sans icônes aujourd'hui, prennent l'icône standard ou aucune, choix fait dans leur lot.
+- Migration (Q-3) : Achtung, Cyberpunk, Dune, Fabula, Tecumah gardent leurs emojis actuels, Vikings ses `VkIcon` ; Delta Green, Zone Blanche et Noctis, sans icônes, restent sans icônes (`icon={null}`).
 
 ---
 

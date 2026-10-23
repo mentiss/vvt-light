@@ -8,8 +8,36 @@
 import React from 'react';
 import { pipsToNotation, BLESSURE_LABELS } from '../config.jsx';
 import DieFace from "./DieFace.jsx";
+import { parseFreeRoll } from '../../../tools/freeRoll.js';
+
+// Jet libre (FreeDiceModal) : libellé, dés normaux par type, total
+const FreeRollEntry = ({ free }) => (
+    <div style={{ fontSize: '0.82rem', lineHeight: 1.7, color: 'var(--color-text)' }}>
+        <span style={{ fontWeight: 700 }}>{free.label}</span>
+        {free.groups.map((g, gi) => (
+            <div key={gi} style={{ color: 'var(--color-text-muted)', fontSize: '0.78rem' }}>
+                <p style={{ fontSize: '0.8rem', color: 'var(--color-text-muted)' }}>{g.notation}</p>
+                <div className="flex flex-wrap gap-2 mt-1">
+                    {g.values.map((v, i) => <DieFace key={i} value={v} />)}
+                    <span style={{ alignSelf: 'center', fontSize: '0.85rem' }}>= {g.subtotal}</span>
+                </div>
+            </div>
+        ))}
+        <div style={{ fontWeight: 700, fontSize: '0.95rem' }}>
+            {free.modifier !== 0 && (
+                <span style={{ color: free.modifier > 0 ? 'var(--color-success)' : 'var(--color-danger)' }}>
+                    {free.modifier > 0 ? `+${free.modifier} ` : `${free.modifier} `}
+                </span>
+            )}
+            = {free.total}
+        </div>
+    </div>
+);
 
 const TecumahHistoryEntry = ({ entry }) => {
+    const free = parseFreeRoll(entry);
+    if (free) return <FreeRollEntry free={free} />;
+
     // Parsing défensif — le serveur envoie roll_result ou result_json
     let result = null;
     try {
@@ -76,7 +104,7 @@ const TecumahHistoryEntry = ({ entry }) => {
     const labelSt = { fontSize: '0.8rem', color: 'var(--color-text-muted)' };
 
     return (
-        <div className="pl-2" style={{ fontSize: '0.82rem', lineHeight: 1.7, color: 'var(--color-text)' }}>
+        <div style={{ fontSize: '0.82rem', lineHeight: 1.7, color: 'var(--color-text)' }}>
 
             {/* ── Ligne 1 : label + pool de base + ressource ─────────────── */}
             <div className="flex items-center gap-2 flex-wrap">

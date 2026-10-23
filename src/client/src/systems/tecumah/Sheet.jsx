@@ -1,8 +1,6 @@
 // src/client/src/systems/tecumah/Sheet.jsx
 
 import React, { useState, useEffect, useCallback } from 'react';
-import { useParams }   from 'react-router-dom';
-import { useAuth }     from '../../context/AuthContext.jsx';
 import { useSocket }   from '../../context/SocketContext.jsx';
 import { useFetch }    from '../../hooks/useFetch.js';
 import { useSystem }   from '../../hooks/useSystem.js';
@@ -12,9 +10,12 @@ import './theme.css';
 // Composants génériques
 import SessionPlayersBar  from '../../components/layout/SessionPlayersBar.jsx';
 import ToastNotifications from '../../components/layout/ToastNotifications.jsx';
-import DiceConfigModal    from '../../components/modals/DiceConfigModal.jsx';
-import CharacterListModal from '../../components/modals/CharacterListModal.jsx';
 import AvatarUploader     from '../../components/AvatarUploader.jsx';
+import { HamburgerMenu, HamburgerMenuItem, HamburgerMenuSeparator } from '../../components/ui/HamburgerMenu.jsx';
+import {
+    HamburgerMenuItemDiceConfig, HamburgerMenuItemSwitchCharacter, HamburgerMenuItemCreateCharacter,
+    HamburgerMenuItemGMInterface, HamburgerMenuItemLogout,
+} from '../../components/ui/HamburgerMenuItems.jsx';
 import JournalTab         from '../../components/tabs/JournalTab.jsx';
 import DiceHistoryPage    from '../../components/layout/DiceHistoryPage.jsx';
 
@@ -45,18 +46,16 @@ const TABS = [
 ];
 
 // ─────────────────────────────────────────────────────────────────────────────
+// onLogout (PlayerPage) n'est plus utilisé : la déconnexion du menu ramène à l'accueil
 const Sheet = ({
                    character,
                    onCharacterUpdate,
-                   onLogout,
                    darkMode,
                    onToggleDarkMode,
                    journalUnread,
                    onJournalRead,
                }) => {
-    const { system }    = useParams();
     const { apiBase }   = useSystem();
-    const { logout }    = useAuth();
     const socket        = useSocket();
     const fetchWithAuth = useFetch();
     const { activeGMSession, activeSessionName } = useSession();
@@ -67,9 +66,7 @@ const Sheet = ({
     });
     const [editMode,       setEditMode]       = useState(false);
     const [editableChar,   setEditableChar]   = useState(character);
-    const [showMenu,       setShowMenu]       = useState(false);
-    const [showDiceConfig, setShowDiceConfig] = useState(false);
-    const [showCharList,   setShowCharList]   = useState(false);
+    // (modales du menu : dans ses éléments, spec_ui_menu.md)
     const [showAvatar,     setShowAvatar]     = useState(false);
     const [showXPModal,    setShowXPModal]    = useState(false);
     const [diceModal,      setDiceModal]      = useState(null);
@@ -111,12 +108,6 @@ const Sheet = ({
     }, [character]);
 
     const set = (field, value) => setEditableChar(p => ({ ...p, [field]: value }));
-
-    const handleLogout = async () => {
-        setShowMenu(false);
-        await logout();
-        onLogout?.();
-    };
 
     const char = editMode ? editableChar : character;
 
@@ -172,42 +163,17 @@ const Sheet = ({
                         </button>
 
                         {/* Hamburger */}
-                        <div className="relative">
-                            <button
-                                onClick={(e) => { e.stopPropagation(); setShowMenu(m => !m); }}
-                                className="w-8 h-8 flex items-center justify-center rounded"
-                                style={{ background: showMenu ? 'var(--color-surface-alt)' : 'transparent', fontSize: '1.1rem' }}
-                            >
-                                ☰
-                            </button>
-                            {showMenu && (
-                                <>
-                                    {/* Overlay pour fermer */}
-                                    <div
-                                        className="fixed inset-0 z-40"
-                                        onClick={() => setShowMenu(false)}
-                                    />
-                                    <div
-                                        className="absolute right-0 top-10 rounded-xl shadow-xl z-50 py-2"
-                                        style={{ background: 'var(--color-surface)', border: '1px solid var(--color-border)', minWidth: 200 }}
-                                        onClick={e => e.stopPropagation()}
-                                    >
-                                        <MenuItem onClick={() => { setShowDiceConfig(true); setShowMenu(false); }}>⚙️ Config des dés</MenuItem>
-                                        <MenuItem onClick={() => { setShowXPModal(true); setShowMenu(false); }}>📈 Dépenser des PP</MenuItem>
-                                        <hr style={{ borderColor: 'var(--color-border)', margin: '4px 0' }} />
-                                        <MenuItem onClick={() => { setShowCharList(true); setShowMenu(false); }}>🔄 Changer de personnage</MenuItem>
-                                        <MenuItem
-                                            onClick={() => { setShowMenu(false); window.location.href = `/${system}/creation`; }}
-                                        >✨ Nouveau personnage</MenuItem>
-                                        <MenuItem
-                                            onClick={() => { setShowMenu(false); window.location.href = `/${system}/gm`; }}
-                                        >🎭 Interface GM</MenuItem>
-                                        <hr style={{ borderColor: 'var(--color-border)', margin: '4px 0' }} />
-                                        <MenuItem onClick={handleLogout} danger>🚪 Déconnexion</MenuItem>
-                                    </div>
-                                </>
-                            )}
-                        </div>
+                        {/* Menu hamburger générique (spec_ui_menu.md), habillé dans theme.css, emojis du slug */}
+                        <HamburgerMenu button="☰">
+                            <HamburgerMenuItemDiceConfig icon="⚙️" />
+                            <HamburgerMenuItem icon="📈" onClick={() => setShowXPModal(true)}>Dépenser des PP</HamburgerMenuItem>
+                            <HamburgerMenuSeparator />
+                            <HamburgerMenuItemSwitchCharacter icon="🔄" currentCharId={character?.id} />
+                            <HamburgerMenuItemCreateCharacter icon="✨" />
+                            <HamburgerMenuItemGMInterface icon="🎭" />
+                            <HamburgerMenuSeparator />
+                            <HamburgerMenuItemLogout icon="🚪" />
+                        </HamburgerMenu>
                     </div>
                 </header>
 
@@ -467,6 +433,7 @@ const Sheet = ({
                                 <DiceHistoryPage
                                     sessionId={activeGMSession ?? null}
                                     renderHistoryEntry={tecumahConfig.dice.renderHistoryEntry}
+                                    renderAllRollTypes
                                 />
                             )}
                         </div>
@@ -475,20 +442,10 @@ const Sheet = ({
             </div>
 
             {/* ── Overlays ─────────────────────────────────────────────────── */}
-            <ToastNotifications sessionId={activeGMSession} renderDiceToast={(entry) => {
+            <ToastNotifications sessionId={activeGMSession} renderAllRollTypes renderDiceToast={(entry) => {
                 return (<TecumahHistoryEntry entry={entry} />)
             }} />
 
-            {showDiceConfig && <DiceConfigModal onClose={() => setShowDiceConfig(false)} />}
-
-            {showCharList && (
-                <CharacterListModal
-                    isOpen
-                    currentCharId={character?.id}
-                    onClose={() => setShowCharList(false)}
-                    onSelect={c => { window.location.href = `/${system}/${c.accessUrl}`; }}
-                />
-            )}
 
             {showAvatar && (
                 <AvatarUploader
@@ -553,16 +510,6 @@ const Section = ({ title, children }) => (
         </h3>
         {children}
     </section>
-);
-
-const MenuItem = ({ onClick, children, danger }) => (
-    <button
-        onClick={onClick}
-        className="w-full text-left px-4 py-2 text-sm hover:opacity-80"
-        style={{ color: danger ? 'var(--color-danger)' : 'var(--color-text)' }}
-    >
-        {children}
-    </button>
 );
 
 // Backgrounds inline — logique directement dans Sheet, pas de composant séparé

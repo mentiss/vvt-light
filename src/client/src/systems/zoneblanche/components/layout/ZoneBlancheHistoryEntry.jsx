@@ -7,9 +7,10 @@
 //
 // Props :
 //   entry — ligne d'historique brute
-//   compact — rendu resserré pour le toast
+// Rendu identique dans l'historique et dans la notification (pas de mode resserré).
 
 import React from 'react';
+import { parseFreeRoll } from '../../../../tools/freeRoll.js';
 
 const parseResult = (entry) => {
     const raw = entry?.roll_result ?? entry?.details ?? null;
@@ -18,7 +19,7 @@ const parseResult = (entry) => {
     try { return JSON.parse(raw); } catch { return null; }
 };
 
-const ZoneBlancheHistoryEntry = ({ entry, compact = false }) => {
+const ZoneBlancheHistoryEntry = ({ entry }) => {
     const result = parseResult(entry);
     if (!result) {
         return <div className="text-sm text-muted">{entry?.notation ?? 'Jet'}</div>;
@@ -26,12 +27,11 @@ const ZoneBlancheHistoryEntry = ({ entry, compact = false }) => {
 
     const rollType = entry?.roll_type ?? '';
 
-    // ── Jet libre (FreeDiceModal) — rendu dans le style ZB ───────────────
-    if (rollType === 'free_roll') {
-        const groups = result.groups ?? [];
-        const allValues = groups.flatMap(g => g.values ?? []);
-        const total = result.total ?? allValues.reduce((s, v) => s + v, 0);
-        const label = result.label || entry?.roll_target || 'Jet libre';
+    // ── Jet libre (FreeDiceModal) — rendu dans le style ZB, lu par tools/freeRoll.js
+    const free = parseFreeRoll(entry);
+    if (free) {
+        const allValues = free.groups.flatMap(g => g.values);
+        const { total, label } = free;
 
         return (
             <div className="zb-history-entry">
@@ -44,9 +44,9 @@ const ZoneBlancheHistoryEntry = ({ entry, compact = false }) => {
                         <span key={i} className="zb-die zb-mono">{v}</span>
                     ))}
                 </div>
-                {!compact && result.modifier !== 0 && result.modifier != null && (
+                {free.modifier !== 0 && (
                     <div className="zb-eyebrow mt-2">
-                        Modificateur : {result.modifier > 0 ? '+' : ''}{result.modifier}
+                        Modificateur : {free.modifier > 0 ? '+' : ''}{free.modifier}
                     </div>
                 )}
             </div>
@@ -87,14 +87,12 @@ const ZoneBlancheHistoryEntry = ({ entry, compact = false }) => {
                 ))}
             </div>
 
-            {!compact && (
-                <div className="zb-eyebrow mt-2">
-                    {successes} succès{!estAssistance && ` · difficulté ${difficulte}`}
-                    {!estAssistance && marge > 0 && ` · marge ${marge}`}
-                    {complications > 0 && ` · ${complications} complication${complications > 1 ? 's' : ''}`}
-                    {relances > 0 && ` · ${relances} relance${relances > 1 ? 's' : ''}`}
-                </div>
-            )}
+            <div className="zb-eyebrow mt-2">
+                {successes} succès{!estAssistance && ` · difficulté ${difficulte}`}
+                {!estAssistance && marge > 0 && ` · marge ${marge}`}
+                {complications > 0 && ` · ${complications} complication${complications > 1 ? 's' : ''}`}
+                {relances > 0 && ` · ${relances} relance${relances > 1 ? 's' : ''}`}
+            </div>
         </div>
     );
 };

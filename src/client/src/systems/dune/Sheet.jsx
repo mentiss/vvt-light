@@ -4,7 +4,6 @@
 // Hamburger : Changer de perso · Config dés · GM · Déconnexion
 
 import React, { useState, useEffect, useCallback } from 'react';
-import { useParams } from 'react-router-dom';
 import './theme.css';
 
 import ThemeToggle          from '../../components/ui/ThemeToggle.jsx';
@@ -12,9 +11,12 @@ import ToastNotifications   from '../../components/layout/ToastNotifications.jsx
 import SessionPlayersBar    from '../../components/layout/SessionPlayersBar.jsx';
 import JournalTab           from '../../components/tabs/JournalTab.jsx';
 import HistoryPanel         from '../../components/layout/HistoryPanel.jsx';
-import DiceConfigModal      from '../../components/modals/DiceConfigModal.jsx';
-import CharacterListModal   from '../../components/modals/CharacterListModal.jsx';
 import AvatarUploader       from '../../components/AvatarUploader.jsx';
+import { HamburgerMenu, HamburgerMenuSeparator } from '../../components/ui/HamburgerMenu.jsx';
+import {
+    HamburgerMenuItemCreateCharacter, HamburgerMenuItemSwitchCharacter, HamburgerMenuItemAccessCode,
+    HamburgerMenuItemDiceConfig, HamburgerMenuItemGMInterface, HamburgerMenuItemLogout,
+} from '../../components/ui/HamburgerMenuItems.jsx';
 
 import SkillRow             from './components/SkillRow.jsx';
 import PrincipleRow         from './components/PrincipleRow.jsx';
@@ -26,7 +28,6 @@ import VerticalGauge        from './components/VerticalGauge.jsx';
 import DuneDiceModal        from './dice/DuneDiceModal.jsx';
 
 import { useSession } from '../../context/SessionContext.jsx';
-import { useAuth }    from '../../context/AuthContext.jsx';
 import { useSocket }  from '../../context/SocketContext.jsx';
 import { useSystem }  from '../../hooks/useSystem.js';
 import { useFetch }   from '../../hooks/useFetch.js';
@@ -34,7 +35,6 @@ import { usePlayerSession } from '../../hooks/usePlayerSession.js';
 import DiceHistoryPage from "../../components/layout/DiceHistoryPage.jsx";
 import DuneHistoryEntry from "./components/DuneHistoryEntry.jsx";
 import AchtungHistoryEntry from "../achtung/components/AchtungHistoryEntry.jsx";
-import AccessCodeModal from "../../components/modals/AccessCodeModal.jsx";
 
 // ── Onglets ───────────────────────────────────────────────────────────────────
 
@@ -48,24 +48,21 @@ const TABS = [
 /**
  * @param {object}   props.character
  * @param {Function} props.onCharacterUpdate  - (updatedChar) => void
- * @param {Function} props.onLogout           - callback déco → PlayerPage repasse en 'selecting'
  * @param {number}   props.journalUnread
  * @param {Function} props.onJournalRead
  * @param {boolean}  props.darkMode
  * @param {Function} props.onToggleDarkMode
+ * (onLogout n'est plus utilisé : la déconnexion du menu ramène à l'accueil)
  */
 const Sheet = ({
                    character,
                    onCharacterUpdate,
-                   onLogout,
                    journalUnread,
                    onJournalRead,
                    darkMode,
                    onToggleDarkMode,
                }) => {
-    const { system }  = useParams();
     const { apiBase } = useSystem();
-    const { logout, user }  = useAuth();
     const socket      = useSocket();
     const fetchWithAuth = useFetch();
     const { activeGMSession, activeSessionName } = useSession();
@@ -81,11 +78,8 @@ const Sheet = ({
     // Modales
     const [diceModal,                  setDiceModal]          = useState(null);
     const [showDiceModal,              setShowDiceModal]      = useState(null);
-    const [showMenu,           setShowMenu]           = useState(false);
-    const [showDiceConfig,     setShowDiceConfig]     = useState(false);
-    const [showCharList,       setShowCharList]       = useState(false);
+    // (modales du menu : dans ses éléments, spec_ui_menu.md)
     const [showAvatarUploader, setShowAvatarUploader] = useState(false);
-    const [showAccessCode,     setShowAccessCode]     = useState(false);
 
     // Ressources session (pour DuneDiceModal)
     const [sessionResources, setSessionResources] = useState({ impulsions: 0, menace: 0 });
@@ -155,20 +149,6 @@ const Sheet = ({
     // Référence en lecture (version confirmée ou en cours d'édition)
     const char = editMode ? editableChar : character;
 
-    // ── Déconnexion ───────────────────────────────────────────────────────────
-    const handleLogout = async () => {
-        setShowMenu(false);
-        await logout();
-        onLogout?.();
-    };
-
-    // ── Changer de perso ──────────────────────────────────────────────────────
-    const handleSelectChar = (selectedChar) => {
-        setShowCharList(false);
-        // On navigue vers l'URL du perso sélectionné — PlayerPage gère la suite
-        window.location.href = `/${system}/${selectedChar.accessUrl}`;
-    };
-
     return (
         <div className="min-h-screen flex flex-col" style={{ background: 'var(--dune-bg)', color: 'var(--dune-text)' }}>
             <ToastNotifications
@@ -176,6 +156,7 @@ const Sheet = ({
                 renderDiceToast={(entry) => {
                     return <DuneHistoryEntry roll={entry}  />;
                 }}
+                renderAllRollTypes
             />
 
             {/* ── HEADER ──────────────────────────────────────────────────── */}
@@ -217,102 +198,17 @@ const Sheet = ({
 
                     <ThemeToggle darkMode={darkMode} onToggle={onToggleDarkMode} />
 
-                    {/* Menu hamburger */}
-                    <div className="relative">
-                        <button
-                            onClick={() => setShowMenu(v => !v)}
-                            className="w-8 h-8 flex items-center justify-center rounded font-bold text-base bg-surface-alt"
-                            style={{ color: 'var(--dune-gold)' }}
-                            title="Menu"
-                        >
-                            ☰
-                        </button>
-
-                        {showMenu && (
-                            <>
-                                {/* Overlay pour fermer */}
-                                <div
-                                    className="fixed inset-0 z-40"
-                                    onClick={() => setShowMenu(false)}
-                                />
-                                <div
-                                    className="absolute right-0 mt-2 w-52 rounded-xl shadow-2xl z-50 overflow-hidden"
-                                    style={{
-                                        background: 'var(--dune-surface)',
-                                        border: '1px solid var(--dune-border)',
-                                    }}
-                                >
-                                    {/* Créer un personnage */}
-                                    <button
-                                        onClick={() => { setShowMenu(false); window.location.href = `/${system}/`; }}
-                                        className="w-full px-4 py-2.5 text-left text-sm flex items-center gap-2"
-                                        style={{ color: 'var(--dune-text)' }}
-                                        onMouseEnter={e => e.currentTarget.style.background = 'var(--dune-surface-alt)'}
-                                        onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
-                                    >
-                                        ✨ Créer un personnage
-                                    </button>
-
-                                    {/* Changer de personnage */}
-                                    <button
-                                        onClick={() => { setShowMenu(false); setShowCharList(true); }}
-                                        className="w-full px-4 py-2.5 text-left text-sm flex items-center gap-2"
-                                        style={{ color: 'var(--dune-text)' }}
-                                        onMouseEnter={e => e.currentTarget.style.background = 'var(--dune-surface-alt)'}
-                                        onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
-                                    >
-                                        🗂️ Changer de personnage
-                                    </button>
-
-                                    <button
-                                        onClick={() => { setShowMenu(false); setShowAccessCode(true); }}
-                                        className="w-full px-4 py-2.5 text-left text-sm flex items-center gap-2"
-                                        style={{ color: 'var(--dune-text)' }}
-                                        onMouseEnter={e => e.currentTarget.style.background = 'var(--dune-surface-alt)'}
-                                        onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
-                                    >
-                                        🔑 Code d'accès
-                                    </button>
-
-                                    {/* Config animations dés */}
-                                    <button
-                                        onClick={() => { setShowMenu(false); setShowDiceConfig(true); }}
-                                        className="w-full px-4 py-2.5 text-left text-sm flex items-center gap-2"
-                                        style={{ color: 'var(--dune-text)' }}
-                                        onMouseEnter={e => e.currentTarget.style.background = 'var(--dune-surface-alt)'}
-                                        onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
-                                    >
-                                        🎲 Config animations dés
-                                    </button>
-
-                                    {/* Accès interface GM — si le compte a le droit */}
-                                    <button
-                                        onClick={() => { setShowMenu(false); window.location.href = `/${system}/gm`; }}
-                                        className="w-full px-4 py-2.5 text-left text-sm flex items-center gap-2"
-                                        style={{ color: 'var(--dune-text)' }}
-                                        onMouseEnter={e => e.currentTarget.style.background = 'var(--dune-surface-alt)'}
-                                        onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
-                                    >
-                                        🎭 Interface GM
-                                    </button>
-
-                                    {/* Séparateur */}
-                                    <div style={{ borderTop: '1px solid var(--dune-border)', margin: '2px 0' }} />
-
-                                    {/* Déconnexion */}
-                                    <button
-                                        onClick={handleLogout}
-                                        className="w-full px-4 py-2.5 text-left text-sm flex items-center gap-2"
-                                        style={{ color: 'var(--dune-red)' }}
-                                        onMouseEnter={e => e.currentTarget.style.background = 'var(--dune-surface-alt)'}
-                                        onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
-                                    >
-                                        🚪 Déconnexion
-                                    </button>
-                                </div>
-                            </>
-                        )}
-                    </div>
+                    {/* Menu hamburger générique (spec_ui_menu.md), habillé dans theme.css, emojis du slug ;
+                        « Créer un personnage » mène enfin à la création (D-8) */}
+                    <HamburgerMenu button="☰">
+                        <HamburgerMenuItemCreateCharacter icon="✨" />
+                        <HamburgerMenuItemSwitchCharacter icon="🗂️" currentCharId={character?.id} />
+                        <HamburgerMenuItemAccessCode icon="🔑" character={character} onSuccess={onCharacterUpdate} />
+                        <HamburgerMenuItemDiceConfig icon="🎲" />
+                        <HamburgerMenuItemGMInterface icon="🎭" />
+                        <HamburgerMenuSeparator />
+                        <HamburgerMenuItemLogout icon="🚪" />
+                    </HamburgerMenu>
                 </div>
             </header>
 
@@ -785,6 +681,7 @@ const Sheet = ({
                                         <DiceHistoryPage
                                             character={character}
                                             renderHistoryEntry={(roll) => <DuneHistoryEntry roll={roll} />}
+                                            renderAllRollTypes
                                             sessionId={activeGMSession ?? null}
                                         />
                                     )}
@@ -836,26 +733,6 @@ const Sheet = ({
                     sessionResources={sessionResources}
                 />
             )}
-
-            {/* ── CONFIG DÉS ────────────────────────────────────────────── */}
-            {showDiceConfig && (
-                <DiceConfigModal onClose={() => setShowDiceConfig(false)} />
-            )}
-
-            {/* ── CHANGER DE PERSO ──────────────────────────────────────── */}
-            <CharacterListModal
-                isOpen={showCharList}
-                currentCharId={character?.id}
-                onClose={() => setShowCharList(false)}
-                onSelect={handleSelectChar}
-            />
-
-            <AccessCodeModal
-                isOpen={showAccessCode}
-                character={character}
-                onClose={() => setShowAccessCode(false)}
-                onSuccess={(updated) => { onCharacterUpdate(updated); setShowAccessCode(false); }}
-            />
 
             {/* ── AVATAR UPLOADER ───────────────────────────────────────── */}
             {showAvatarUploader && (

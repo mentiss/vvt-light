@@ -5,9 +5,11 @@
 // format (avant la refonte, R-5) sont réduits à une ligne minimale.
 // Habillage : planche du lot 4 (section « Historique et notifications »).
 //
-// Props : entry — ligne d'historique brute · compact — rendu resserré (toast)
+// Props : entry — ligne d'historique brute. Rendu identique dans l'historique
+// et dans la notification (pas de mode resserré).
 
 import React from 'react';
+import { parseFreeRoll } from '../../../../tools/freeRoll.js';
 
 const parseResult = (entry) => {
     const raw = entry?.roll_result ?? null;
@@ -42,36 +44,36 @@ const Dice = ({ values, threshold, explosionThresholds }) => (
     </div>
 );
 
-// Jet libre (FreeDiceModal) : résultat brut du moteur — groupes { notation, values, total }
-const FreeRollEntry = ({ result, compact }) => {
-    const groups = result.groups ?? [];
-    const total  = groups.reduce((sum, g) => sum + (g.total ?? 0), 0);
-    return (
-        <div className="px-3 py-2 space-y-1.5">
-            <div className="flex items-center justify-between gap-2">
-                <span className="font-bold text-default">Jet libre</span>
-                <span className="vk-title text-lg shrink-0">= {total}</span>
-            </div>
-            {groups.map((g, i) => (
-                <div key={i} className="flex items-center gap-1">
-                    {!compact && <span className="text-xs text-muted w-12">{g.notation}</span>}
-                    <Dice values={g.values ?? []} />
-                </div>
-            ))}
+// Jet libre (FreeDiceModal) : lu par tools/freeRoll.js (libellé, total, groupes par type)
+const FreeRollEntry = ({ free }) => (
+    <div className="space-y-1.5">
+        <div className="flex items-center justify-between gap-2">
+            <span className="font-bold text-default truncate">{free.label}</span>
+            <span className="vk-title text-lg shrink-0">= {free.total}</span>
         </div>
-    );
-};
+        {free.groups.map((g, i) => (
+            <div key={i} className="flex items-center gap-1">
+                <span className="text-xs text-muted w-12">{g.notation}</span>
+                <Dice values={g.values} />
+            </div>
+        ))}
+        {free.modifier !== 0 && (
+            <div className="text-xs text-muted pl-3">Modificateur : {free.modifier > 0 ? '+' : ''}{free.modifier}</div>
+        )}
+    </div>
+);
 
-const VikingsHistoryEntry = ({ entry, compact = false }) => {
+const VikingsHistoryEntry = ({ entry }) => {
+    const free = parseFreeRoll(entry);
+    if (free) return <FreeRollEntry free={free} />;
+
     const result = parseResult(entry);
-
-    if (entry?.roll_type === 'free_roll' && result) return <FreeRollEntry result={result} compact={compact} />;
 
     // Ancien format (ou résultat illisible) : ligne minimale
     if (!result?.detail || result.detail.threshold == null) {
         if (!result) return null;   // rendu générique de la plateforme
         return (
-            <div className="px-3 py-2 text-xs text-muted">
+            <div className="text-xs text-muted">
                 Jet (ancien format){result.successes != null ? ` — ${result.successes} succès` : ''}
             </div>
         );
@@ -85,7 +87,7 @@ const VikingsHistoryEntry = ({ entry, compact = false }) => {
     const mainDice = keptDice(allDice, meta, mode);
 
     return (
-        <div className="px-3 py-2 space-y-1.5">
+        <div className="space-y-1.5">
             <div className="flex items-center justify-between gap-2">
                 <span className="font-bold text-default truncate">
                     {detail.rollTarget ?? 'Jet'}
@@ -110,19 +112,14 @@ const VikingsHistoryEntry = ({ entry, compact = false }) => {
                 </div>
             )}
 
-            {!compact && (
-                <div className="text-xs text-muted">
-                    Seuil {detail.threshold}+ · explosion {detail.explosionThresholds?.join(', ')} · {detail.pool}d10
-                    {detail.autoSuccesses > 0 && ` · auto +${detail.autoSuccesses}`}
-                    {meta.aimBonus > 0 && ` · visée +${meta.aimBonus}`}
-                    {detail.traitBonus !== 0 && detail.traitBonus != null && ` · traits ${detail.traitBonus > 0 ? '+' : ''}${detail.traitBonus}`}
-                    {detail.fatigueMalus > 0 && <span className="vk-text-warn"> · fatigue −{detail.fatigueMalus}</span>}
-                    {detail.blessureMalus > 0 && <span className="vk-text-warn"> · blessures −{detail.blessureMalus} dé{detail.blessureMalus > 1 ? 's' : ''}</span>}
-                </div>
-            )}
-            {compact && detail.fatigueMalus > 0 && (
-                <div className="text-xs vk-text-warn">fatigue −{detail.fatigueMalus}</div>
-            )}
+            <div className="text-xs text-muted">
+                Seuil {detail.threshold}+ · explosion {detail.explosionThresholds?.join(', ')} · {detail.pool}d10
+                {detail.autoSuccesses > 0 && ` · auto +${detail.autoSuccesses}`}
+                {meta.aimBonus > 0 && ` · visée +${meta.aimBonus}`}
+                {detail.traitBonus !== 0 && detail.traitBonus != null && ` · traits ${detail.traitBonus > 0 ? '+' : ''}${detail.traitBonus}`}
+                {detail.fatigueMalus > 0 && <span className="vk-text-warn"> · fatigue −{detail.fatigueMalus}</span>}
+                {detail.blessureMalus > 0 && <span className="vk-text-warn"> · blessures −{detail.blessureMalus} dé{detail.blessureMalus > 1 ? 's' : ''}</span>}
+            </div>
         </div>
     );
 };

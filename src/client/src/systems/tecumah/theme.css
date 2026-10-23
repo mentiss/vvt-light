@@ -87,3 +87,13 @@
 .vtt-session-bar-card-name { font-family: 'BleedingCowboys', Georgia, serif; font-weight: 400; font-size: 1.6rem; line-height: 1.4; padding: .1em .3em; color: var(--color-primary); }
 .vtt-session-bar-card-player-name { font-family: 'DayRoman', Georgia, serif; font-size: .85rem; }
 .vtt-session-bar-card-status { font-family: 'DayRoman', Georgia, serif; font-weight: 400; letter-spacing: .2em; }
+
+/* ── Menu hamburger (components/ui/HamburgerMenu.jsx, spec_ui_menu.md §7) ────
+   Reprend le menu d'origine (bouton transparent, panneau arrondi, survol en fondu)
+   avec la DayRoman de la barre de session. ── */
+.vtt-menu-button { width: 2rem; height: 2rem; border: 0; background: transparent; font-size: 1.1rem; }
+.vtt-menu-button[aria-expanded="true"] { background: var(--color-surface-alt); }
+.vtt-menu { top: calc(100% + .25rem); min-width: 200px; padding: .5rem 0; box-shadow: 0 10px 25px rgba(0,0,0,.3); }
+.vtt-menu-item { padding: .5rem 1rem; font-family: 'DayRoman', Georgia, serif; font-size: .9rem; }
+.vtt-menu-item:hover:not(:disabled) { background: transparent; opacity: .8; }
+.vtt-menu-separator { margin: .25rem 0; }

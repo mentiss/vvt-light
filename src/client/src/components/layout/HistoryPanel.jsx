@@ -187,8 +187,8 @@ const HistoryPanel = ({
                                         </div>
                                     </div>
 
-                                    {/* Contenu : slug ou générique */}
-                                    <div style={{ background: 'var(--color-surface, #fff)' }}>
+                                    {/* Contenu : slug ou générique (marge portée par la carte) */}
+                                    <div className="vtt-history-entry">
                                         {slugRender ?? <GenericRollEntry roll={roll} />}
                                     </div>
                                 </div>
@@ -228,7 +228,7 @@ const GenericRollEntry = ({ roll }) => {
     const notation  = roll.notation ?? '';
 
     return (
-        <div className="px-3 py-2 space-y-1">
+        <div className="space-y-1">
             <div className="flex items-center justify-between">
                 <span className="text-xs font-semibold" style={{ color: 'var(--color-text, #111)' }}>
                     {roll.roll_type ?? 'Jet'}

@@ -246,7 +246,8 @@
    que de contourner en style inline.
    ═══════════════════════════════════════════════════════════════════════════ */
 
-.zb-root {
+/* .vtt-modal-host : emplacement à modales des pages (hors de .zb-root), même police */
+.zb-root, .vtt-modal-host {
     font-family: var(--zb-font-body);
 }
 
@@ -404,18 +405,21 @@
 }
 
 /* ── Menu hamburger ─────────────────────────────────────────────────────── */
-.zb-menu {
+/* Partagé avec le menu hamburger générique (vtt-menu-*, spec_ui_menu.md §7) */
+.zb-menu, .vtt-menu {
     position: absolute;
     right: 0;
     top: calc(100% + 0.5rem);
     z-index: 50;
     min-width: 15rem;
+    padding: 0;
+    border-radius: 0;
     background: var(--color-surface);
     border: 1px solid var(--color-border);
     border-left: 3px solid var(--color-accent);
     box-shadow: 0 12px 32px rgba(0, 0, 0, 0.35);
 }
-.zb-menu-item {
+.zb-menu-item, .vtt-menu-item {
     display: block;
     width: 100%;
     text-align: left;
@@ -423,10 +427,10 @@
     font-size: 0.85rem;
     color: var(--color-text);
 }
-.zb-menu-item:hover           { background: var(--color-surface-alt); color: var(--color-primary); }
-.zb-menu-item.is-danger       { color: var(--color-danger); }
-.zb-menu-item.is-danger:hover { background: var(--color-surface-alt); color: var(--color-danger); }
-.zb-menu-separator {
+.zb-menu-item:hover, .vtt-menu-item:hover                     { background: var(--color-surface-alt); color: var(--color-primary); }
+.zb-menu-item.is-danger, .vtt-menu-item.is-danger             { color: var(--color-danger); }
+.zb-menu-item.is-danger:hover, .vtt-menu-item.is-danger:hover { background: var(--color-surface-alt); color: var(--color-danger); }
+.zb-menu-separator, .vtt-menu-separator {
     height: 1px;
     background: var(--color-border);
     margin: 0.25rem 0;

@@ -6,7 +6,6 @@
 // ─────────────────────────────────────────────────────────────────────────────
 
 import React, { useState } from 'react';
-import { useAuth }   from '../../../context/AuthContext.jsx';
 
 import ToastNotifications   from '../../../components/layout/ToastNotifications.jsx';
 import TableManagementModal from '../../../components/gm/modals/TableManagementModal.jsx';
@@ -14,10 +13,11 @@ import TabJournal           from '../../../components/gm/tabs/TabJournal.jsx';
 import TabSession from "./tabs/TabSession.jsx";
 import DiceHistoryPage from "../../../components/layout/DiceHistoryPage.jsx";
 import deltgreenConfig from "../config.jsx";
-import useSystem from "../../../hooks/useSystem.js";
-import DiceConfigModal from "../../../components/modals/DiceConfigModal.jsx";
-import CharacterListModal from "../../../components/modals/CharacterListModal.jsx";
 import FreeDiceModal from "../../../components/modals/FreeDiceModal.jsx";
+import { HamburgerMenu, HamburgerMenuSeparator } from "../../../components/ui/HamburgerMenu.jsx";
+import {
+    HamburgerMenuItemCreateCharacter, HamburgerMenuItemDiceConfig, HamburgerMenuItemLogout,
+} from "../../../components/ui/HamburgerMenuItems.jsx";
 
 const GM_TABS = [
     { id: 'session', label: 'Agents'   },
@@ -26,12 +26,8 @@ const GM_TABS = [
 ];
 
 const GMView = ({ activeSession, onSessionChange, onlineCharacters, darkMode, onToggleDarkMode }) => {
-    const [showMenu, setShowMenu] = useState(false);
-    const [showDiceConfig, setShowDiceConfig] = useState(false);
+    // Modales du menu : dans ses éléments (spec_ui_menu.md)
     const [showFreeDice, setShowFreeDice] = useState(false);
-
-    const { slug } = useSystem();
-    const { logout }    = useAuth();
 
     const [activeTab,      setActiveTab]      = useState(() => {
         const hash = window.location.hash.replace('#', '');
@@ -45,10 +41,6 @@ const GMView = ({ activeSession, onSessionChange, onlineCharacters, darkMode, on
         window.location.hash = id;
     };
 
-    const handleLogout = async () => {
-        await logout();
-    };
-
     return (
         <div
             className="min-h-screen flex flex-col bg-default text-default"
@@ -58,6 +50,7 @@ const GMView = ({ activeSession, onSessionChange, onlineCharacters, darkMode, on
             <ToastNotifications
                 sessionId={activeSession?.id || null}
                 renderDiceToast={deltgreenConfig.dice.renderHistoryEntry}
+                renderAllRollTypes
             />
 
             {/* ── En-tête GM ──────────────────────────────────────────────── */}
@@ -111,46 +104,13 @@ const GMView = ({ activeSession, onSessionChange, onlineCharacters, darkMode, on
                     >
                         {darkMode ? '◑' : '○'}
                     </button>
-                    <div className="relative">
-                        <button
-                            onClick={() => setShowMenu(v => !v)}
-                            className="text-gray-400 hover:text-white text-lg px-2"
-                            title="Menu"
-                        >
-                            ☰
-                        </button>
-                        {showMenu && (
-                            <>
-                                <div
-                                    className="fixed inset-0 z-40"
-                                    onClick={() => setShowMenu(false)}
-                                />
-                                <div className="absolute right-0 top-full mt-1 bg-surface border border-default shadow-lg z-50 min-w-40">
-                                    {/* Créer un personnage */}
-                                    <button
-                                        onClick={() => { setShowMenu(false); window.location.href = `/${slug}/creation`; }}
-                                        className="w-full text-left px-4 py-2 text-sm hover:bg-surface-alt text-default font-mono"
-                                    >
-                                        Créer un personnage
-                                    </button>
-
-                                    <button
-                                        onClick={() => { setShowMenu(false); setShowDiceConfig(true); }}
-                                        className="w-full text-left px-4 py-2 text-sm hover:bg-surface-alt text-default font-mono"
-                                    >
-                                        Configuration des Dés
-                                    </button>
-                                    <hr className="border-default my-1" />
-                                    <button
-                                        onClick={handleLogout}
-                                        className="w-full text-left px-4 py-2 text-sm hover:bg-surface-alt text-danger font-mono"
-                                    >
-                                        Déconnexion
-                                    </button>
-                                </div>
-                            </>
-                        )}
-                    </div>
+                    {/* Menu hamburger générique (spec_ui_menu.md), habillé dans theme.css, sans icônes comme avant */}
+                    <HamburgerMenu button="☰">
+                        <HamburgerMenuItemCreateCharacter icon={null} />
+                        <HamburgerMenuItemDiceConfig icon={null} />
+                        <HamburgerMenuSeparator />
+                        <HamburgerMenuItemLogout icon={null} />
+                    </HamburgerMenu>
                 </div>
             </header>
 
@@ -193,6 +153,7 @@ const GMView = ({ activeSession, onSessionChange, onlineCharacters, darkMode, on
                             <DiceHistoryPage
                                 sessionId={activeSession?.id || null}
                                 renderHistoryEntry={deltgreenConfig.dice.renderHistoryEntry}
+                                renderAllRollTypes
                             />
                         </div>
                     </div>
@@ -209,10 +170,6 @@ const GMView = ({ activeSession, onSessionChange, onlineCharacters, darkMode, on
                 />
             )}
 
-            {/* Configuration dés */}
-            {showDiceConfig && (
-                <DiceConfigModal onClose={() => setShowDiceConfig(false)} />
-            )}
             {showFreeDice && (
                 <FreeDiceModal
                     sessionId={activeSession || null}

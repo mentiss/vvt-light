@@ -1,6 +1,25 @@
 // src/client/src/systems/deltagreen/components/layout/DiceEntryHistory.jsx
 
 import React from 'react';
+import { parseFreeRoll } from '../../../../tools/freeRoll.js';
+
+// Jet libre (FreeDiceModal) : même ligne de registre que les autres jets
+// (type, libellé, valeur), dés par type en ligne secondaire
+const FreeRollEntry = ({ free }) => (
+    <div className="font-mono">
+        <div className="flex items-center gap-2 flex-wrap">
+            <span className="text-[10px] text-muted uppercase tracking-wider shrink-0">Jet libre</span>
+            <span className="text-xs font-bold truncate flex-1">{free.label}</span>
+            <span className="text-base font-black tabular-nums shrink-0" style={{ color: 'var(--color-text)' }}>
+                {free.total}
+            </span>
+        </div>
+        <div className="text-[10px] text-muted mt-0.5">
+            {free.groups.map(g => `${g.notation.toUpperCase()} [${g.values.join(', ')}]`).join(' + ')}
+            {free.modifier !== 0 && ` ${free.modifier > 0 ? '+' : '−'} ${Math.abs(free.modifier)}`}
+        </div>
+    </div>
+);
 
 const ROLL_TYPE_LABELS = {
     dg_skill:    'Compétence',
@@ -17,6 +36,10 @@ const isPercentileRoll = (rollType) =>
 
 const DiceEntryHistory = ({ roll }) => {
     const entry  = roll?.roll ?? roll;
+
+    const free = parseFreeRoll(entry);
+    if (free) return <FreeRollEntry free={free} />;
+
     const result = (() => {
         const raw = entry?.roll_result;
         if (!raw) return {};
@@ -71,7 +94,7 @@ const DiceEntryHistory = ({ roll }) => {
 
     return (
         <div
-            className="px-3 py-2 font-mono"
+            className="pl-2 py-1 font-mono"
             style={{
                 background:   resultStyle?.bg ?? 'transparent',
                 borderLeft:   resultStyle ? `3px solid ${resultStyle.border}` : '3px solid transparent',

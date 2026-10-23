@@ -1,14 +1,34 @@
 // src/client/src/systems/fabula/components/layout/FabulaHistoryEntry.jsx
 // ─────────────────────────────────────────────────────────────────────────────
 // Rendu riche des entrées d'historique — utilisé par renderHistoryEntry (config.jsx)
-// ET par renderDiceToast (ToastNotifications, prop compact=true).
+// ET par renderDiceToast (ToastNotifications) : même affichage dans les deux.
 //
-// Ne gère QUE roll_type === 'fabula_test' / 'fabula_economie' (ceux émis par
-// FabulaDiceModal). Tout le reste (notamment les jets FreeDiceModal, roll_type
-// générique) retourne null → l'appelant retombe sur son rendu générique.
+// Gère roll_type === 'fabula_test' / 'fabula_economie' (FabulaDiceModal) et le
+// jet libre 'free_roll' (FreeDiceModal, appelants en renderAllRollTypes). Tout le
+// reste retourne null → l'appelant retombe sur son rendu générique.
 // ─────────────────────────────────────────────────────────────────────────────
 
 import React from 'react';
+import { parseFreeRoll } from '../../../../tools/freeRoll.js';
+
+// Jet libre : libellé et total, dés par type
+const FreeRollEntry = ({ free }) => (
+    <div className="flex flex-col gap-1 text-sm">
+        <div className="flex items-center gap-2">
+            <span className="fu-font-title text-primary">🎲</span>
+            <span className="flex-1 font-semibold">{free.label}</span>
+            <span>= <strong className="text-default">{free.total}</strong></span>
+        </div>
+        <div className="text-muted flex items-center gap-2 flex-wrap">
+            {free.groups.map((g, i) => (
+                <span key={i} className="fu-die-badge bg-default border border-default text-[10px]">
+                    {g.notation} = {g.values.join(' + ')}
+                </span>
+            ))}
+            {free.modifier ? <span>{free.modifier > 0 ? '+' : '−'} {Math.abs(free.modifier)}</span> : null}
+        </div>
+    </div>
+);
 
 const parseResult = (entry) => {
     const raw = entry?.roll_result;
@@ -19,20 +39,23 @@ const parseResult = (entry) => {
     return raw;
 };
 
-const FabulaHistoryEntry = ({ roll, compact = false }) => {
+const FabulaHistoryEntry = ({ roll }) => {
     const entry  = roll?.roll ?? roll;
     const result = parseResult(entry);
     const rollType = entry?.roll_type ?? '';
 
+    const free = parseFreeRoll(entry);
+    if (free) return <FreeRollEntry free={free} />;
+
     if (!result || !['fabula_test', 'fabula_economie'].includes(rollType)) {
-        return null; // rendu générique (couvre notamment les jets FreeDiceModal)
+        return null; // rendu générique
     }
 
     const label = result.label || entry?.notation || 'Jet';
 
     if (result.type === 'economie') {
         return (
-            <div className={`flex items-center gap-2 ${compact ? 'text-xs' : 'text-sm'}`}>
+            <div className="flex items-center gap-2 text-sm">
                 <span className="fu-font-title text-accent">💰</span>
                 <span className="flex-1">{label}</span>
                 <span className="font-bold">{result.values?.join(' + ')} × 10 = {result.total} z</span>
@@ -51,7 +74,7 @@ const FabulaHistoryEntry = ({ roll, compact = false }) => {
     else if (result.success === false) badge = { text: 'Échec', cls: 'bg-danger/20 text-danger' };
 
     return (
-        <div className={`flex flex-col gap-1 ${compact ? 'text-xs' : 'text-sm'}`}>
+        <div className="flex flex-col gap-1 text-sm">
             <div className="flex items-center gap-2">
                 <span className="fu-font-title text-primary">{isAttaque ? '⚔' : '🎲'}</span>
                 <span className="flex-1 font-semibold">{label}</span>

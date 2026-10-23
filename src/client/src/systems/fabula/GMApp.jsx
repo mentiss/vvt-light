@@ -18,9 +18,11 @@ import './theme.css';
 import ThemeToggle        from '../../components/ui/ThemeToggle.jsx';
 import ToastNotifications from '../../components/layout/ToastNotifications.jsx';
 import DiceHistoryPage    from '../../components/layout/DiceHistoryPage.jsx';
-import DiceConfigModal    from '../../components/modals/DiceConfigModal.jsx';
 import FreeDiceModal      from '../../components/modals/FreeDiceModal.jsx';
-import TableManagementModal from '../../components/gm/modals/TableManagementModal.jsx';
+import { HamburgerMenu, HamburgerMenuSeparator } from '../../components/ui/HamburgerMenu.jsx';
+import {
+    HamburgerMenuItemTableManagement, HamburgerMenuItemDiceConfig, HamburgerMenuItemLogout,
+} from '../../components/ui/HamburgerMenuItems.jsx';
 import TabJournal          from '../../components/gm/tabs/TabJournal.jsx';
 
 import TabSession          from './gm/tabs/TabSession.jsx';
@@ -35,10 +37,8 @@ const TABS = [
 
 const GMApp = ({ activeSession, onSessionChange, onlineCharacters, characterUpdates, darkMode, onToggleDarkMode }) => {
     const [activeTab, setActiveTab]       = useState('session');
-    const [showMenu, setShowMenu]         = useState(false);
-    const [showTableMgmt, setShowTableMgmt] = useState(false);
+    // (modales du menu : dans ses éléments, spec_ui_menu.md)
     const [showFreeDice, setShowFreeDice] = useState(false);
-    const [showDiceConfig, setShowDiceConfig] = useState(false);
 
     return (
         <div className="min-h-screen bg-default text-default fu-font-body" data-theme={darkMode ? 'dark' : 'light'}>
@@ -54,27 +54,18 @@ const GMApp = ({ activeSession, onSessionChange, onlineCharacters, characterUpda
                         🎲
                     </button>
                     <ThemeToggle darkMode={darkMode} onToggle={onToggleDarkMode} />
-                    <div className="relative">
-                        <button onClick={() => setShowMenu(v => !v)}
-                                className="w-9 h-9 rounded flex items-center justify-center border border-default bg-default">
-                            ☰
-                        </button>
-                        {showMenu && (
-                            <>
-                                <div className="fixed inset-0 z-40" onClick={() => setShowMenu(false)} />
-                                <div className="absolute right-0 mt-1 w-56 bg-surface border border-default rounded-lg shadow-lg z-50 py-1">
-                                    <button className="w-full text-left px-3 py-2 text-sm hover:bg-surface-alt"
-                                            onClick={() => { setShowMenu(false); setShowTableMgmt(true); }}>
-                                        ⚙ Gestion des tables
-                                    </button>
-                                    <button className="w-full text-left px-3 py-2 text-sm hover:bg-surface-alt"
-                                            onClick={() => { setShowMenu(false); setShowDiceConfig(true); }}>
-                                        🎛️ Config animations dés
-                                    </button>
-                                </div>
-                            </>
-                        )}
-                    </div>
+                    {/* Menu hamburger générique (spec_ui_menu.md), habillé dans theme.css, emojis du slug ;
+                        déconnexion ajoutée (D-4) */}
+                    <HamburgerMenu button="☰">
+                        <HamburgerMenuItemTableManagement
+                            icon="⚙"
+                            activeSessionId={activeSession?.id ?? null}
+                            onSelectTable={(session) => onSessionChange?.(session)}
+                        />
+                        <HamburgerMenuItemDiceConfig icon="🎛️" />
+                        <HamburgerMenuSeparator />
+                        <HamburgerMenuItemLogout icon="🚪" />
+                    </HamburgerMenu>
                 </div>
             </header>
 
@@ -105,6 +96,7 @@ const GMApp = ({ activeSession, onSessionChange, onlineCharacters, characterUpda
                         <DiceHistoryPage
                             sessionId={activeSession?.id ?? null}
                             renderHistoryEntry={fabulaConfig.dice.renderHistoryEntry}
+                            renderAllRollTypes
                         />
                     </div>
                 )}
@@ -113,19 +105,11 @@ const GMApp = ({ activeSession, onSessionChange, onlineCharacters, characterUpda
             {/* ── TOASTS ──────────────────────────────────────────────────── */}
             <ToastNotifications
                 sessionId={activeSession?.id ?? null}
-                renderDiceToast={(toast) => <FabulaHistoryEntry roll={toast} compact />}
+                renderDiceToast={(toast) => <FabulaHistoryEntry roll={toast} />}
+                renderAllRollTypes
             />
 
             {/* ── MODALES GLOBALES ────────────────────────────────────────── */}
-            {showTableMgmt && (
-                <TableManagementModal
-                    isOpen
-                    onClose={() => setShowTableMgmt(false)}
-                    activeSessionId={activeSession?.id ?? null}
-                    onSelectTable={(session) => { onSessionChange?.(session); setShowTableMgmt(false); }}
-                />
-            )}
-            {showDiceConfig && <DiceConfigModal onClose={() => setShowDiceConfig(false)} />}
             {showFreeDice && (
                 <FreeDiceModal
                     sessionId={activeSession?.id ?? null}

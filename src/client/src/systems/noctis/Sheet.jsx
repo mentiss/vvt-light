@@ -3,11 +3,11 @@ import { useSystem }       from '../../hooks/useSystem.js';
 import { useFetch }        from '../../hooks/useFetch.js';
 import { useSocket }       from '../../context/SocketContext.jsx';
 import { useSession }      from '../../context/SessionContext.jsx';
-import { useAuth }         from '../../context/AuthContext.jsx';
 import ThemeToggle         from '../../components/ui/ThemeToggle.jsx';
 import JournalTab          from '../../components/tabs/JournalTab.jsx';
 import DiceHistoryPage     from '../../components/layout/DiceHistoryPage.jsx';
-import CharacterListModal  from '../../components/modals/CharacterListModal.jsx';
+import { HamburgerMenu, HamburgerMenuSeparator } from '../../components/ui/HamburgerMenu.jsx';
+import { HamburgerMenuItemSwitchCharacter, HamburgerMenuItemLogout } from '../../components/ui/HamburgerMenuItems.jsx';
 import ToastNotifications  from '../../components/layout/ToastNotifications.jsx';
 import IdentityCard        from './components/layout/IdentityCard.jsx';
 import DomainCard          from './components/layout/DomainCard.jsx';
@@ -28,10 +28,10 @@ const TABS = [
     { id: 'journal',    label: 'Journal' },
 ];
 
+// onLogout (PlayerPage) n'est plus utilisé : la déconnexion du menu ramène à l'accueil
 const Sheet = ({
                    character,
                    onCharacterUpdate,
-                   onLogout,
                    journalUnread,
                    onJournalRead,
                    darkMode,
@@ -41,7 +41,6 @@ const Sheet = ({
     const fetchWithAuth       = useFetch();
     const socket              = useSocket();
     const { activeGMSession } = useSession();
-    const { logout }          = useAuth();
 
     const [activeTab,    setActiveTab]    = useState(() => {
         const hash = window.location.hash.replace('#', '');
@@ -50,8 +49,6 @@ const Sheet = ({
     const [editMode,     setEditMode]     = useState(false);
     const [editableChar, setEditableChar] = useState(character);
     const [isSaving,     setIsSaving]     = useState(false);
-    const [showMenu,     setShowMenu]     = useState(false);
-    const [showCharList, setShowCharList] = useState(false);
     // dicePreset : null | { stat?: string, specialty?: object }
     const [dicePreset,   setDicePreset]   = useState(null);
 
@@ -111,12 +108,6 @@ const Sheet = ({
         if (tab === 'journal') onJournalRead?.();
     }, [onJournalRead]);
 
-    // ── Déconnexion ───────────────────────────────────────────────────────────
-    const handleLogout = async () => {
-        setShowMenu(false);
-        await logout();
-        onLogout?.();
-    };
 
     return (
         <div className="ns-page" data-theme={darkMode ? 'dark' : ''}>
@@ -153,31 +144,13 @@ const Sheet = ({
                         <button onClick={() => openDiceModal()} className="ns-btn-primary">
                             ⬡ Dés
                         </button>
-                        <div className="relative">
-                            <button onClick={() => setShowMenu(v => !v)} className="ns-btn-ghost px-2">≡</button>
-                            {showMenu && (
-                                <div className="absolute right-0 top-full mt-1 rounded shadow-lg z-50 min-w-36"
-                                     style={{ background: 'var(--color-surface)',
-                                         border: '1px solid var(--ns-ornament)',
-                                         borderTop: '2px solid var(--ns-ornament)' }}>
-                                    <button
-                                        onClick={() => { setShowCharList(true); setShowMenu(false); }}
-                                        className="w-full text-left px-3 py-2 text-muted hover:text-default
-                                                   hover:bg-surface-alt transition-colors text-xs"
-                                    >
-                                        Changer de personnage
-                                    </button>
-                                    <hr style={{ borderColor: 'var(--color-border)', margin: '0.25rem 0' }} />
-                                    <button
-                                        onClick={handleLogout}
-                                        className="w-full text-left px-3 py-2 text-danger hover:bg-surface-alt
-                                                   transition-colors text-xs"
-                                    >
-                                        Se déconnecter
-                                    </button>
-                                </div>
-                            )}
-                        </div>
+                        {/* Menu hamburger générique (spec_ui_menu.md) : mécanique seule, sans habillage
+                            (refonte du slug à venir) */}
+                        <HamburgerMenu button="≡" buttonClassName="ns-btn-ghost">
+                            <HamburgerMenuItemSwitchCharacter icon={null} currentCharId={character.id} />
+                            <HamburgerMenuSeparator />
+                            <HamburgerMenuItemLogout icon={null} />
+                        </HamburgerMenu>
                     </div>
                 </div>
             </header>
@@ -291,16 +264,6 @@ const Sheet = ({
                 />
             )}
 
-            {showCharList && (
-                <CharacterListModal
-                    isOpen
-                    currentCharId={character.id}
-                    onClose={() => setShowCharList(false)}
-                    onSelect={c => {
-                        window.location.href = `/${window.location.pathname.split('/')[1]}/${c.accessUrl}`;
-                    }}
-                />
-            )}
         </div>
     );
 };

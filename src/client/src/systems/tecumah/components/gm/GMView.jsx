@@ -4,8 +4,6 @@
 // Bouton dés flottant accessible depuis tous les onglets.
 
 import React, {useEffect, useState} from 'react';
-import {useParams} from "react-router-dom";
-import {useAuth} from "../../../../context/AuthContext.jsx";
 import useSystem from "../../../../hooks/useSystem.js";
 import TecumahDiceModal from "../modals/TecumahDiceModal.jsx";
 import tecumahConfig from "../../config.jsx";
@@ -16,8 +14,10 @@ import CombatPanel from "../../../../components/combat/CombatPanel.jsx";
 import DiceHistoryPage from "../../../../components/layout/DiceHistoryPage.jsx";
 import ToastNotifications from "../../../../components/layout/ToastNotifications.jsx";
 import GMDiceModal from "./modals/GMDiceModal.jsx";
-import TableManagementModal from "../../../../components/gm/modals/TableManagementModal.jsx";
-import DiceConfigModal from "../../../../components/modals/DiceConfigModal.jsx";
+import { HamburgerMenu, HamburgerMenuSeparator } from "../../../../components/ui/HamburgerMenu.jsx";
+import {
+    HamburgerMenuItemTableManagement, HamburgerMenuItemDiceConfig, HamburgerMenuItemLogout,
+} from "../../../../components/ui/HamburgerMenuItems.jsx";
 import {useSocket} from "../../../../context/SocketContext.jsx";
 import {useFetch} from "../../../../hooks/useFetch.js";
 import TabCombat from "./tabs/TabCombat.jsx";
@@ -32,8 +32,6 @@ const GM_TABS = [
 ];
 
 const GMView = ({ activeSession, onSessionChange, onlineCharacters, darkMode, onToggleDarkMode }) => {
-    const { system }  = useParams();
-    const { logout }  = useAuth();
     const { apiBase } = useSystem();
     const socket        = useSocket();
     const fetchWithAuth = useFetch();
@@ -48,10 +46,7 @@ const GMView = ({ activeSession, onSessionChange, onlineCharacters, darkMode, on
         const hash = window.location.hash.replace('#', '');
         return GM_TABS.some(t => t.id === hash) ? hash : 'session';
     });
-    const [showDiceModal,     setShowDiceModal]     = useState(false);
-    const [showTableMgmt,     setShowTableMgmt]     = useState(false);
-    const [showDiceConfig,    setShowDiceConfig]    = useState(false);
-    const [showMenu,          setShowMenu]          = useState(false);
+    const [showDiceModal,     setShowDiceModal]     = useState(false);   // (modales du menu : dans ses éléments)
 
     const changeTab = (id) => {
         setActiveTab(id);
@@ -174,44 +169,17 @@ const GMView = ({ activeSession, onSessionChange, onlineCharacters, darkMode, on
                         {darkMode ? '☀️' : '🌙'}
                     </button>
 
-                    {/* Hamburger */}
-                    <div className="relative">
-                        <button
-                            onClick={(e) => { e.stopPropagation(); setShowMenu(m => !m); }}
-                            className="w-8 h-8 flex items-center justify-center rounded"
-                            style={{ background: showMenu ? 'var(--color-surface-alt)' : 'transparent', fontSize: '1.1rem' }}
-                        >
-                            ☰
-                        </button>
-                        {showMenu && (
-                            <>
-                                {/* Overlay pour fermer */}
-                                <div
-                                    className="fixed inset-0 z-40"
-                                    onClick={() => setShowMenu(false)}
-                                />
-                                <div
-                                    className="absolute right-0 top-10 rounded-xl shadow-xl z-50 py-2"
-                                    style={{ background: 'var(--color-surface)', border: '1px solid var(--color-border)', minWidth: 200 }}
-                                    onClick={e => e.stopPropagation()}
-                                >
-                                    <GmMenuItem onClick={() => { setShowTableMgmt(true); setShowMenu(false); }}>
-                                        🗂️ Gérer les tables
-                                    </GmMenuItem>
-                                    <GmMenuItem onClick={() => { setShowDiceConfig(true); setShowMenu(false); }}>
-                                        ⚙️ Config des dés
-                                    </GmMenuItem>
-                                    <hr style={{ borderColor: 'var(--color-border)', margin: '4px 0' }} />
-
-                                    <hr style={{ borderColor: 'var(--color-border)', margin: '4px 0' }} />
-                                    <GmMenuItem onClick={async () => { await logout(); window.location.href = `/${system}`; }} danger>
-                                        🚪 Déconnexion
-                                    </GmMenuItem>
-                                </div>
-                            </>
-
-                        )}
-                    </div>
+                    {/* Menu hamburger générique (spec_ui_menu.md), habillé dans theme.css, emojis du slug */}
+                    <HamburgerMenu button="☰">
+                        <HamburgerMenuItemTableManagement
+                            icon="🗂️"
+                            activeSessionId={activeSession?.id}
+                            onSelectTable={(session) => onSessionChange(session)}
+                        />
+                        <HamburgerMenuItemDiceConfig icon="⚙️" />
+                        <HamburgerMenuSeparator />
+                        <HamburgerMenuItemLogout icon="🚪" />
+                    </HamburgerMenu>
                 </div>
             </header>
 
@@ -287,6 +255,7 @@ const GMView = ({ activeSession, onSessionChange, onlineCharacters, darkMode, on
                         <DiceHistoryPage
                             sessionId={activeSession?.id ?? null}
                             renderHistoryEntry={tecumahConfig.dice.renderHistoryEntry}
+                            renderAllRollTypes
                         />
                     )}
                 </div>
@@ -298,6 +267,7 @@ const GMView = ({ activeSession, onSessionChange, onlineCharacters, darkMode, on
                 renderDiceToast={(entry) => {
                     return (<TecumahHistoryEntry entry={entry} />)
                 }}
+                renderAllRollTypes
             />
 
             {showDiceModal && (
@@ -307,28 +277,8 @@ const GMView = ({ activeSession, onSessionChange, onlineCharacters, darkMode, on
                 />
             )}
 
-            {showTableMgmt && (
-                <TableManagementModal
-                    isOpen
-                    onClose={() => setShowTableMgmt(false)}
-                    activeSessionId={activeSession?.id}
-                    onSelectTable={(session) => { onSessionChange(session); setShowTableMgmt(false); }}
-                />
-            )}
-
-            {showDiceConfig && <DiceConfigModal onClose={() => setShowDiceConfig(false)} />}
         </div>
     );
 };
-
-const GmMenuItem = ({ onClick, children, danger }) => (
-    <button
-        onClick={onClick}
-        className="w-full text-left px-4 py-2 text-sm hover:opacity-80"
-        style={{ color: danger ? 'var(--color-danger)' : 'var(--color-text)' }}
-    >
-        {children}
-    </button>
-);
 
 export default GMView;

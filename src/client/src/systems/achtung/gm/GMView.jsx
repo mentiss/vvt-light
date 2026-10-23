@@ -7,13 +7,14 @@
 //   Référence   → résumé règles 2D20 + focus table
 
 import React, { useState, useCallback } from 'react';
-import { useAuth }   from '../../../context/AuthContext.jsx';
-import { useSystem } from '../../../hooks/useSystem.js';
-
 import ToastNotifications from '../../../components/layout/ToastNotifications.jsx';
 import ThemeToggle        from '../../../components/ui/ThemeToggle.jsx';
-import DiceConfigModal    from '../../../components/modals/DiceConfigModal.jsx';
 import TabJournal         from '../../../components/gm/tabs/TabJournal.jsx';
+import { HamburgerMenu, HamburgerMenuSeparator } from '../../../components/ui/HamburgerMenu.jsx';
+import {
+    HamburgerMenuItemTableManagement, HamburgerMenuItemPlayerView, HamburgerMenuItemDiceConfig,
+    HamburgerMenuItemLogout,
+} from '../../../components/ui/HamburgerMenuItems.jsx';
 import DiceHistoryPage    from '../../../components/layout/DiceHistoryPage.jsx';
 
 import TabSession          from './tabs/TabSession.jsx';
@@ -32,15 +33,11 @@ const GM_TABS = [
 // ── GMView ────────────────────────────────────────────────────────────────────
 
 const GMView = ({ activeSession, onSessionChange, onlineCharacters, darkMode, onToggleDarkMode }) => {
-    const { logout } = useAuth();
-    const { slug }   = useSystem();
-
     const [activeTab,      setActiveTab]      = useState(() => {
         const hash = window.location.hash.replace('#', '');
         return GM_TABS.some(t => t.id === hash) ? hash : 'session';
     });
-    const [showMenu,       setShowMenu]       = useState(false);
-    const [showDiceConfig, setShowDiceConfig] = useState(false);
+    // Modales du menu : dans ses éléments (spec_ui_menu.md)
     const [showDiceModal,  setShowDiceModal]  = useState(false);
     const [showFreeDice, setShowFreeDice] = useState(false);
 
@@ -49,11 +46,6 @@ const GMView = ({ activeSession, onSessionChange, onlineCharacters, darkMode, on
         window.location.hash = id;
     }, []);
 
-    const handleLogout = useCallback(async () => {
-        setShowMenu(false);
-        await logout();
-        window.location.href = `/${slug}/gm`;
-    }, [logout, slug]);
 
     return (
         <div className="min-h-screen bg-default text-default">
@@ -63,6 +55,7 @@ const GMView = ({ activeSession, onSessionChange, onlineCharacters, darkMode, on
                     const adapted = { ...entry, details: entry.roll_result };
                     return <AchtungHistoryEntry roll={adapted}  />;
                 }}
+                renderAllRollTypes
             />
 
             {/* ── HEADER ──────────────────────────────────────────────────── */}
@@ -112,30 +105,19 @@ const GMView = ({ activeSession, onSessionChange, onlineCharacters, darkMode, on
 
                     <ThemeToggle darkMode={darkMode} onToggle={onToggleDarkMode} />
 
-                    <div className="relative">
-                        <button
-                            onClick={() => setShowMenu(v => !v)}
-                            className={`ac-menu-btn${showMenu ? ' open' : ''}`}
-                        >☰</button>
-
-                        {showMenu && (
-                            <>
-                                <div className="fixed inset-0 z-40" onClick={() => setShowMenu(false)} />
-                                <div className="ac-menu-dropdown">
-                                    <button className="ac-menu-item" onClick={() => { setShowMenu(false); window.location.href = `/${slug}/`; }}>
-                                        👤 Vue Joueur
-                                    </button>
-                                    <button className="ac-menu-item" onClick={() => { setShowMenu(false); setShowDiceConfig(true); }}>
-                                        🎲 Config animations dés
-                                    </button>
-                                    <div className="ac-menu-separator" />
-                                    <button className="ac-menu-item danger" onClick={handleLogout}>
-                                        🚪 Déconnexion
-                                    </button>
-                                </div>
-                            </>
-                        )}
-                    </div>
+                    {/* Menu hamburger générique (spec_ui_menu.md), habillé dans theme.css, emojis du slug ;
+                        gestion des tables ajoutée (D-8), en plus de l'onglet Session */}
+                    <HamburgerMenu button="☰">
+                        <HamburgerMenuItemTableManagement
+                            icon="🗂"
+                            activeSessionId={activeSession?.id}
+                            onSelectTable={(session) => onSessionChange?.(session)}
+                        />
+                        <HamburgerMenuItemPlayerView icon="👤" />
+                        <HamburgerMenuItemDiceConfig icon="🎲" />
+                        <HamburgerMenuSeparator />
+                        <HamburgerMenuItemLogout icon="🚪" />
+                    </HamburgerMenu>
                 </div>
             </header>
 
@@ -176,15 +158,12 @@ const GMView = ({ activeSession, onSessionChange, onlineCharacters, darkMode, on
                     <DiceHistoryPage
                         sessionId={activeSession?.id ?? null}
                         renderHistoryEntry={(entry) => <AchtungHistoryEntry roll={entry} />}
+                        renderAllRollTypes
                     />
                 )}
             </div>
 
             {/* ── MODALES ─────────────────────────────────────────────────── */}
-            {showDiceConfig && (
-                <DiceConfigModal onClose={() => setShowDiceConfig(false)} />
-            )}
-
             {showDiceModal && (
                 <GMDiceModal
                     onClose={() => setShowDiceModal(false)}

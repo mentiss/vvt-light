@@ -1,7 +1,5 @@
 // src/client/src/systems/dune/gm/GMView.jsx
 import React, { useState, useEffect } from 'react';
-import { useParams }    from 'react-router-dom';
-import { useAuth }      from '../../../context/AuthContext.jsx';
 import { useSocket }    from '../../../context/SocketContext.jsx';
 import { useFetch }     from '../../../hooks/useFetch.js';
 import { useSystem }    from '../../../hooks/useSystem.js';
@@ -9,9 +7,12 @@ import { useSystem }    from '../../../hooks/useSystem.js';
 import ToastNotifications   from '../../../components/layout/ToastNotifications.jsx';
 import HistoryPanel         from '../../../components/layout/HistoryPanel.jsx';
 import ThemeToggle          from '../../../components/ui/ThemeToggle.jsx';
-import TableManagementModal from '../../../components/gm/modals/TableManagementModal.jsx';
-import DiceConfigModal      from '../../../components/modals/DiceConfigModal.jsx';
 import TabNPC               from '../../../components/gm/tabs/TabNPC.jsx';
+import { HamburgerMenu, HamburgerMenuSeparator } from '../../../components/ui/HamburgerMenu.jsx';
+import {
+    HamburgerMenuItemTableManagement, HamburgerMenuItemDiceConfig, HamburgerMenuItemPlayerView,
+    HamburgerMenuItemLogout,
+} from '../../../components/ui/HamburgerMenuItems.jsx';
 
 import TabSession   from './tabs/TabSession.jsx';
 import TabResources from './tabs/TabResources.jsx';
@@ -29,8 +30,6 @@ const GM_TABS = [
 ];
 
 const GMView = ({ activeSession, onSessionChange, onlineCharacters, darkMode, onToggleDarkMode }) => {
-    const { system }    = useParams();
-    const { logout }    = useAuth();
     const fetchWithAuth = useFetch();
     const { apiBase }   = useSystem();
     const socket        = useSocket();
@@ -78,24 +77,9 @@ const GMView = ({ activeSession, onSessionChange, onlineCharacters, darkMode, on
     }, [socket]);
 
     // ── Modales globales ──────────────────────────────────────────────────────
+    // (modales du menu : dans ses éléments, spec_ui_menu.md)
     const [showDiceModal,  setShowDiceModal]  = useState(false);
-    const [showTableMgmt,  setShowTableMgmt]  = useState(false);
     const [showHistory,    setShowHistory]    = useState(false);
-    const [showDiceConfig, setShowDiceConfig] = useState(false);
-    const [showMenu,       setShowMenu]       = useState(false);
-
-    // ── Déconnexion ───────────────────────────────────────────────────────────
-    const handleLogout = async () => {
-        setShowMenu(false);
-        await logout();
-        window.location.href = `/${system}/`;
-    };
-
-    const menuItems = [
-        { icon: '🗂', label: 'Gérer les tables', action: () => { setShowTableMgmt(true);  setShowMenu(false); } },
-        { icon: '🎲', label: 'Config dés',        action: () => { setShowDiceConfig(true); setShowMenu(false); } },
-        { icon: '🏠', label: 'Accueil',           action: () => { window.location.href = `/${system}/`; } },
-    ];
 
     return (
         <div className="min-h-screen" style={{ background: 'var(--dune-bg)', color: 'var(--dune-text)' }}>
@@ -104,6 +88,7 @@ const GMView = ({ activeSession, onSessionChange, onlineCharacters, darkMode, on
                 renderDiceToast={(entry) => {
                     return <DuneHistoryEntry roll={entry}  />;
                 }}
+                renderAllRollTypes
             />
 
             {/* ── HEADER ──────────────────────────────────────────────────── */}
@@ -166,50 +151,18 @@ const GMView = ({ activeSession, onSessionChange, onlineCharacters, darkMode, on
 
                         <ThemeToggle darkMode={darkMode} onToggle={onToggleDarkMode} />
 
-                        {/* Menu hamburger */}
-                        <div className="relative">
-                            <button
-                                onClick={() => setShowMenu(v => !v)}
-                                className="w-8 h-8 flex items-center justify-center rounded font-bold text-lg"
-                                style={{ background: 'var(--dune-surface-alt)', color: 'var(--dune-gold)' }}
-                                title="Menu"
-                            >
-                                ☰
-                            </button>
-
-                            {showMenu && (
-                                <>
-                                    <div className="fixed inset-0 z-40" onClick={() => setShowMenu(false)} />
-                                    <div
-                                        className="absolute right-0 top-10 w-48 rounded-lg shadow-xl z-50 overflow-hidden"
-                                        style={{ background: 'var(--dune-surface)', border: '1px solid var(--dune-border)' }}
-                                    >
-                                        {menuItems.map(item => (
-                                            <button
-                                                key={item.label}
-                                                onClick={item.action}
-                                                className="w-full px-4 py-2.5 text-left text-sm flex items-center gap-2"
-                                                style={{ color: 'var(--dune-text)' }}
-                                                onMouseEnter={e => e.currentTarget.style.background = 'var(--dune-surface-alt)'}
-                                                onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
-                                            >
-                                                {item.icon} {item.label}
-                                            </button>
-                                        ))}
-                                        <div style={{ borderTop: '1px solid var(--dune-border)' }} />
-                                        <button
-                                            onClick={handleLogout}
-                                            className="w-full px-4 py-2.5 text-left text-sm flex items-center gap-2"
-                                            style={{ color: 'var(--dune-red)' }}
-                                            onMouseEnter={e => e.currentTarget.style.background = 'var(--dune-surface-alt)'}
-                                            onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
-                                        >
-                                            🚪 Déconnexion
-                                        </button>
-                                    </div>
-                                </>
-                            )}
-                        </div>
+                        {/* Menu hamburger générique (spec_ui_menu.md), habillé dans theme.css, emojis du slug */}
+                        <HamburgerMenu button="☰">
+                            <HamburgerMenuItemTableManagement
+                                icon="🗂"
+                                activeSessionId={activeSession?.id}
+                                onSelectTable={(session) => onSessionChange(session)}
+                            />
+                            <HamburgerMenuItemDiceConfig icon="🎲" />
+                            <HamburgerMenuItemPlayerView icon="🏠" />
+                            <HamburgerMenuSeparator />
+                            <HamburgerMenuItemLogout icon="🚪" />
+                        </HamburgerMenu>
                     </div>
                 </div>
             </header>
@@ -239,15 +192,6 @@ const GMView = ({ activeSession, onSessionChange, onlineCharacters, darkMode, on
             </main>
 
             {/* ── MODALES GLOBALES ────────────────────────────────────────── */}
-            {showTableMgmt && (
-                <TableManagementModal
-                    isOpen={showTableMgmt}
-                    onClose={() => setShowTableMgmt(false)}
-                    onSelectTable={session => { onSessionChange(session); setShowTableMgmt(false); }}
-                    activeSessionId={activeSession?.id}
-                />
-            )}
-
             {showDiceModal && (
                 <GMDiceModal
                     onClose={() => setShowDiceModal(false)}
@@ -256,14 +200,12 @@ const GMView = ({ activeSession, onSessionChange, onlineCharacters, darkMode, on
                 />
             )}
 
-            {showDiceConfig && (
-                <DiceConfigModal onClose={() => setShowDiceConfig(false)} />
-            )}
-
             <HistoryPanel
                 isOpen={showHistory}
                 onClose={() => setShowHistory(false)}
                 sessionId={activeSession?.id}
+                renderHistoryEntry={(roll) => <DuneHistoryEntry roll={roll} />}
+                renderAllRollTypes
             />
 
             <button

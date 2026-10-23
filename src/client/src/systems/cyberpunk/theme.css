@@ -745,3 +745,32 @@
 .cp-xp-gauge-cap { width: 1px; height: 10px; margin: 0 2px; background: var(--color-text-muted); opacity: .4; }
 @keyframes cp-xp-pulse { 50% { opacity: .45; } }
 @media (prefers-reduced-motion: reduce) { .cp-xp-notch.is-next { animation: none; } }
+
+/* ── Menu hamburger (components/ui/HamburgerMenu.jsx, spec_ui_menu.md §7) ────
+   Même identité que les modales : coins coupés et balayage, Rajdhani en capitales,
+   filets cp-divider, survol néon cyan, danger en magenta. ── */
+.vtt-menu-button { background: var(--color-surface-alt); border-color: var(--color-border); }
+.vtt-menu-button:hover { border-color: var(--color-accent); background: var(--color-surface); box-shadow: var(--cp-glow-cyan); }
+.vtt-menu {
+    border-radius: 0; border: 1px solid var(--color-primary);
+    clip-path: polygon(10px 0, 100% 0, 100% calc(100% - 10px), calc(100% - 10px) 100%, 0 100%, 0 10px);
+    background: repeating-linear-gradient(0deg, rgba(255,255,255,.02) 0 1px, transparent 1px 3px), var(--color-surface);
+    box-shadow: inset 0 0 12px rgba(0, 229, 255, .06);
+}
+.vtt-menu-item {
+    font-family: 'Rajdhani', sans-serif; font-weight: 600; font-size: .85rem;
+    letter-spacing: .08em; text-transform: uppercase;
+}
+.vtt-menu-item:hover:not(:disabled) {
+    color: var(--color-primary); background: color-mix(in srgb, var(--color-primary) 12%, transparent);
+    text-shadow: 0 0 8px rgba(0, 229, 255, .6);
+}
+.vtt-menu-item.is-danger, .vtt-menu-item.is-danger .vtt-menu-icon { color: var(--color-secondary); }
+.vtt-menu-item.is-danger:hover:not(:disabled) {
+    color: var(--color-secondary); background: color-mix(in srgb, var(--color-secondary) 12%, transparent);
+    text-shadow: 0 0 8px rgba(255, 45, 120, .6);
+}
+.vtt-menu-separator {   /* cp-divider */
+    margin: .3rem 0;
+    background: linear-gradient(to right, transparent, color-mix(in srgb, var(--color-primary) 40%, transparent) 30%, color-mix(in srgb, var(--color-primary) 40%, transparent) 70%, transparent);
+}

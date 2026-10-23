@@ -5,7 +5,7 @@
 // Contrat props (plateforme) :
 //   character          — objet complet chargé par PlayerPage
 //   onCharacterUpdate  — (updatedChar) → PUT serveur
-//   onLogout           — callback déconnexion → PlayerPage repasse en 'selecting'
+//   onLogout           — plus utilisé : la déconnexion du menu ramène à l'accueil
 //   journalUnread      — nombre de messages non lus
 //   onJournalRead      — callback quand l'onglet journal est ouvert
 //   darkMode           — booléen
@@ -29,7 +29,6 @@ import { useSession } from '../../context/SessionContext.jsx';
 import { useFetch } from '../../hooks/useFetch.js';
 
 import './theme.css';
-import {useAuth} from "../../context/AuthContext.jsx";
 import IdentitySection from "./components/layout/IdentitySection.jsx";
 import StatsSection from "./components/layout/StatsSection.jsx";
 import DerivedSection from "./components/layout/DerivedSection.jsx";
@@ -43,7 +42,12 @@ import InjuriesSection, {
 } from "./components/layout/Page2Sections.jsx";
 import JournalTab from "../../components/tabs/JournalTab.jsx";
 import AvatarUploader from "../../components/AvatarUploader.jsx";
-import DiceConfigModal from "../../components/modals/DiceConfigModal.jsx";
+import { HamburgerMenu, HamburgerMenuItem, HamburgerMenuSeparator } from "../../components/ui/HamburgerMenu.jsx";
+import {
+    HamburgerMenuItemAvatar, HamburgerMenuItemCreateCharacter, HamburgerMenuItemSwitchCharacter,
+    HamburgerMenuItemGMInterface, HamburgerMenuItemAccessCode, HamburgerMenuItemDiceConfig,
+    HamburgerMenuItemLogout,
+} from "../../components/ui/HamburgerMenuItems.jsx";
 import SanModal from "./components/modals/SanModal.jsx";
 import EvolveModal from "./components/modals/EvolveModal.jsx";
 import DiceModal from "./components/modals/DiceModal.jsx";
@@ -51,13 +55,11 @@ import DiceHistoryPage from "../../components/layout/DiceHistoryPage.jsx";
 import deltgreenConfig from "./config.jsx";
 import ToastNotifications from "../../components/layout/ToastNotifications.jsx";
 import SessionPlayersBar from "../../components/layout/SessionPlayersBar.jsx";
-import CharacterListModal from "../../components/modals/CharacterListModal.jsx";
 import WeaponsSection from "./components/layout/WeaponsSection.jsx";
 import EquipmentSection from "./components/layout/EquipmentSection.jsx";
 import IdentityInlineSection from "./components/layout/IdentityInlineSection.jsx";
 import PhysicalDescriptionSection from "./components/layout/PhysicalDescriotionSection.jsx";
 import FreeDiceModal from "../../components/modals/FreeDiceModal.jsx";
-import AccessCodeModal from "../../components/modals/AccessCodeModal.jsx";
 
 // ── Onglets ──────────────────────────────────────────────────────────────────
 
@@ -72,14 +74,12 @@ const TABS = [
 const Sheet = ({
                    character,
                    onCharacterUpdate,
-                   onLogout,
                    journalUnread,
                    onJournalRead,
                    darkMode,
                    onToggleDarkMode,
                }) => {
-    const { apiBase, slug }   = useSystem();
-    const { logout }    = useAuth();
+    const { apiBase }   = useSystem();
     const socket        = useSocket();
     const fetchWithAuth = useFetch();
     const { activeGMSession, activeSessionName } = useSession();
@@ -94,16 +94,12 @@ const Sheet = ({
     const [editMode,     setEditMode]     = useState(false);
     const [editableChar, setEditableChar] = useState(character);
 
-    // Modales
-    const [showMenu,       setShowMenu]       = useState(false);
-    const [showDiceConfig, setShowDiceConfig] = useState(false);
-    const [showAvatar,     setShowAvatar]     = useState(false);
+    // Modales (celles du menu vivent dans ses éléments, spec_ui_menu.md)
+    const [showAvatar,     setShowAvatar]     = useState(false);   // clic sur l'avatar de la fiche
     const [showSanModal,   setShowSanModal]   = useState(false);
     const [showEvolve,     setShowEvolve]     = useState(false);
-    const [showCharList,   setShowCharList]   = useState(false);
     const [diceModal,      setDiceModal]      = useState(null);
     const [showFreeDice, setShowFreeDice] = useState(false);
-    const [showAccessCode, setShowAccessCode] = useState(false);
 
     // ── Sync character → editable (push serveur reçu) ─────────────────────────
     // Si editMode actif, on ne réinitialise pas — le joueur est en train d'éditer.
@@ -170,12 +166,6 @@ const Sheet = ({
 
     // ── Déconnexion ───────────────────────────────────────────────────────────
 
-    const handleLogout = useCallback(async () => {
-        setShowMenu(false);
-        await logout();
-        onLogout?.();
-    }, [logout, onLogout]);
-
     // ── Upload avatar ─────────────────────────────────────────────────────────
 
     const handleAvatarUploaded = useCallback((url) => {
@@ -225,12 +215,6 @@ const Sheet = ({
         }
     }, [character.id, onCharacterUpdate]);
 
-    const handleSelectChar = (selectedChar) => {
-        setShowCharList(false);
-        // On navigue vers l'URL du perso sélectionné — PlayerPage gère la suite
-        window.location.href = `/${slug}/${selectedChar.accessUrl}`;
-    };
-
     // ── Données affichées ─────────────────────────────────────────────────────
     // En édition : editableChar ; en lecture : character (données confirmées serveur)
     const char = editMode ? editableChar : character;
@@ -253,6 +237,7 @@ const Sheet = ({
             <ToastNotifications
                 sessionId={activeGMSession}
                 renderDiceToast={deltgreenConfig.dice.renderHistoryEntry}
+                renderAllRollTypes
             />
 
 
@@ -287,86 +272,23 @@ const Sheet = ({
                             {darkMode ? '◑' : '○'}
                         </button>
 
-                        {/* Menu hamburger */}
-                        <div className="relative">
-                            <button
-                                onClick={() => setShowMenu(v => !v)}
-                                className="text-gray-400 hover:text-white text-lg px-2"
-                                title="Menu"
-                            >
-                                ☰
-                            </button>
-                            {showMenu && (
-                                <>
-                                    <div
-                                        className="fixed inset-0 z-40"
-                                        onClick={() => setShowMenu(false)}
-                                    />
-                                    <div className="absolute right-0 top-full mt-1 bg-surface border border-default shadow-lg z-50 min-w-40">
-                                        <button
-                                            onClick={() => { setShowMenu(false); setShowAvatar(true); }}
-                                            className="w-full text-left px-4 py-2 text-sm hover:bg-surface-alt text-default font-mono"
-                                        >
-                                            Avatar
-                                        </button>
-                                        {!isLocked && (
-                                            <button
-                                                onClick={() => { setShowMenu(false); setShowEvolve(true); }}
-                                                className="w-full text-left px-4 py-2 text-sm hover:bg-surface-alt text-default font-mono"
-                                            >
-                                                Évolution post-session
-                                            </button>
-                                        )}
-                                        <hr className="border-default my-1" />
-                                        {/* Créer un personnage */}
-                                        <button
-                                            onClick={() => { setShowMenu(false); window.location.href = `/${slug}/creation`; }}
-                                            className="w-full text-left px-4 py-2 text-sm hover:bg-surface-alt text-default font-mono"
-                                        >
-                                            Créer un personnage
-                                        </button>
-
-                                        {/* Changer de personnage */}
-                                        <button
-                                            onClick={() => { setShowMenu(false); setShowCharList(true); }}
-                                            className="w-full text-left px-4 py-2 text-sm hover:bg-surface-alt text-default font-mono"
-                                        >
-                                            Changer de personnage
-                                        </button>
-                                        <button
-                                            onClick={() => { setShowMenu(false); window.location.href = `/${slug}/gm`; }}
-                                            className="w-full text-left px-4 py-2 text-sm hover:bg-surface-alt text-default font-mono"
-                                        >
-                                            Interface GM
-                                        </button>
-                                        <hr className="border-default my-1" />
-
-                                        <button
-                                            onClick={() => { setShowMenu(false); setShowAccessCode(true); }}
-                                            className="w-full text-left px-4 py-2 text-sm hover:bg-surface-alt text-default font-mono"
-                                        >
-                                            Code d'accès
-                                        </button>
-
-                                        <hr className="border-default my-1" />
-
-                                        <button
-                                            onClick={() => { setShowMenu(false); setShowDiceConfig(true); }}
-                                            className="w-full text-left px-4 py-2 text-sm hover:bg-surface-alt text-default font-mono"
-                                        >
-                                            Configuration des Dés
-                                        </button>
-                                        <hr className="border-default my-1" />
-                                        <button
-                                            onClick={handleLogout}
-                                            className="w-full text-left px-4 py-2 text-sm hover:bg-surface-alt text-danger font-mono"
-                                        >
-                                            Déconnexion
-                                        </button>
-                                    </div>
-                                </>
+                        {/* Menu hamburger générique (spec_ui_menu.md), habillé dans theme.css, sans icônes comme avant */}
+                        <HamburgerMenu button="☰">
+                            <HamburgerMenuItemAvatar icon={null} currentAvatar={character.avatar} onChange={handleAvatarUploaded} />
+                            {!isLocked && (
+                                <HamburgerMenuItem onClick={() => setShowEvolve(true)}>Évolution post-session</HamburgerMenuItem>
                             )}
-                        </div>
+                            <HamburgerMenuSeparator />
+                            <HamburgerMenuItemCreateCharacter icon={null} />
+                            <HamburgerMenuItemSwitchCharacter icon={null} currentCharId={character.id} />
+                            <HamburgerMenuItemGMInterface icon={null} />
+                            <HamburgerMenuSeparator />
+                            <HamburgerMenuItemAccessCode icon={null} character={character} onSuccess={onCharacterUpdate} />
+                            <HamburgerMenuSeparator />
+                            <HamburgerMenuItemDiceConfig icon={null} />
+                            <HamburgerMenuSeparator />
+                            <HamburgerMenuItemLogout icon={null} />
+                        </HamburgerMenu>
                     </div>
                 </header>
 
@@ -731,6 +653,7 @@ const Sheet = ({
                         <DiceHistoryPage
                             sessionId={activeGMSession}
                             renderHistoryEntry={deltgreenConfig.dice.renderHistoryEntry}
+                            renderAllRollTypes
                         />
                     </div>
                 )}
@@ -747,11 +670,6 @@ const Sheet = ({
                     onAvatarChange={handleAvatarUploaded}
                     onClose={() => setShowAvatar(false)}
                 />
-            )}
-
-            {/* Configuration dés */}
-            {showDiceConfig && (
-                <DiceConfigModal onClose={() => setShowDiceConfig(false)} />
             )}
 
             {/* Jet de SAN */}
@@ -796,12 +714,6 @@ const Sheet = ({
                     }}
                 />
             )}
-            {showCharList   && <CharacterListModal
-                isOpen={showCharList}
-                currentCharId={character?.id}
-                onClose={() => setShowCharList(false)}
-                onSelect={handleSelectChar}
-            />}
             {showFreeDice && (
                 <FreeDiceModal
                     characterId={character.id}
@@ -810,12 +722,6 @@ const Sheet = ({
                     onClose={() => setShowFreeDice(false)}
                 />
             )}
-            <AccessCodeModal
-                isOpen={showAccessCode}
-                character={character}
-                onClose={() => setShowAccessCode(false)}
-                onSuccess={(updated) => { onCharacterUpdate(updated); setShowAccessCode(false); }}
-            />
         </div>
     );
 };

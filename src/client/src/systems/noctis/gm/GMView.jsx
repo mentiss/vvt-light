@@ -1,6 +1,6 @@
 import { useState } from 'react';
-import { useAuth }   from '../../../context/AuthContext.jsx';
-import { useSystem } from '../../../hooks/useSystem.js';
+import { HamburgerMenu } from '../../../components/ui/HamburgerMenu.jsx';
+import { HamburgerMenuItemLogout } from '../../../components/ui/HamburgerMenuItems.jsx';
 
 import ThemeToggle          from '../../../components/ui/ThemeToggle.jsx';
 import ToastNotifications   from '../../../components/layout/ToastNotifications.jsx';
@@ -25,8 +25,6 @@ const GM_TABS = [
 
 /* ══════════════════════════════════════════════════════════════════════════ */
 const GMView = ({ activeSession, onSessionChange, onlineCharacters, darkMode, onToggleDarkMode }) => {
-    const { logout }  = useAuth();
-    const { apiBase } = useSystem();
 
     const [activeTab,      setActiveTab]      = useState(() => {
         const hash = window.location.hash.replace('#', '');
@@ -34,16 +32,10 @@ const GMView = ({ activeSession, onSessionChange, onlineCharacters, darkMode, on
     });
     const [showTableModal, setShowTableModal] = useState(false);
     const [showFreeDice,   setShowFreeDice]   = useState(false);
-    const [showMenu,       setShowMenu]       = useState(false);
 
     const changeTab = (id) => {
         setActiveTab(id);
         window.location.hash = id;
-    };
-
-    const handleLogout = async () => {
-        await logout();
-        window.location.href = `/${apiBase.replace('/api/', '')}/gm`;
     };
 
     return (
@@ -75,21 +67,11 @@ const GMView = ({ activeSession, onSessionChange, onlineCharacters, darkMode, on
                         </button>
                         <ThemeToggle darkMode={darkMode} onToggle={onToggleDarkMode} />
 
-                        <div className="relative">
-                            <button onClick={() => setShowMenu(v => !v)} className="ns-btn-ghost">
-                                ☰
-                            </button>
-                            {showMenu && (
-                                <>
-                                    <div className="fixed inset-0 z-40" onClick={() => setShowMenu(false)} />
-                                    <div className="ns-card ns-header-menu">
-                                        <button onClick={handleLogout} className="ns-header-menu-item">
-                                            Déconnexion
-                                        </button>
-                                    </div>
-                                </>
-                            )}
-                        </div>
+                        {/* Menu hamburger générique (spec_ui_menu.md) : mécanique seule, sans habillage
+                            (refonte du slug à venir) */}
+                        <HamburgerMenu button="☰" buttonClassName="ns-btn-ghost">
+                            <HamburgerMenuItemLogout icon={null} />
+                        </HamburgerMenu>
                     </div>
                 </header>
 

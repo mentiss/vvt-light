@@ -1,10 +1,48 @@
 // src/client/src/systems/achtung/components/AchtungHistoryEntry.jsx
 import React from 'react';
 import { SALVO_LABELS } from '../config.jsx';
+import { parseFreeRoll } from '../../../tools/freeRoll.js';
+
+const LABEL_STYLE = {
+    fontFamily: 'var(--ac-font-heading)',
+    fontWeight: 700,
+    fontSize: '0.75rem',
+    textTransform: 'uppercase',
+    letterSpacing: '0.06em',
+    color: 'var(--ac-secondary)',
+};
+
+// Jet libre (FreeDiceModal) : libellé, total, dés neutres regroupés par type
+const FreeRollEntry = ({ free }) => (
+    <div style={{ fontSize: '0.8rem', color: 'var(--ac-text)' }}>
+        <div className="flex items-center justify-between gap-2 mb-1.5">
+            <span style={LABEL_STYLE}>{free.label}</span>
+            <span style={{ ...LABEL_STYLE, fontSize: '0.85rem' }}>= {free.total}</span>
+        </div>
+        <div className="flex flex-wrap items-center gap-1">
+            {free.groups.map((g, gi) => (
+                <React.Fragment key={gi}>
+                    <span style={{ fontSize: '0.68rem', color: 'var(--ac-muted)' }}>{g.notation}</span>
+                    {g.values.map((v, i) => (
+                        <div key={i} className="ac-die miss" style={{ width: '1.8rem', height: '1.8rem', fontSize: '0.8rem' }}>{v}</div>
+                    ))}
+                </React.Fragment>
+            ))}
+            {free.modifier !== 0 && (
+                <span style={{ fontSize: '0.7rem', color: 'var(--ac-muted)' }}>
+                    {free.modifier > 0 ? '+' : ''}{free.modifier}
+                </span>
+            )}
+        </div>
+    </div>
+);
 
 const AchtungHistoryEntry = ({ roll }) => {
-    // On ne sait interpréter que les jets Achtung — tout le reste (ex: free_roll)
-    // retombe sur le rendu générique de DiceHistoryPage.
+    const free = parseFreeRoll(roll);
+    if (free) return <FreeRollEntry free={free} />;
+
+    // Autres jets : seuls les jets Achtung sont interprétés, le reste retombe
+    // sur le rendu générique.
     if (roll?.roll_type !== 'achtung_skill' && roll?.roll_type !== 'achtung_damage') return null;
 
     // Les données peuvent être dans roll_result ou details selon le contexte
@@ -35,17 +73,10 @@ const AchtungHistoryEntry = ({ roll }) => {
     };
 
     return (
-        <div style={{ fontSize: '0.8rem', color: 'var(--ac-text)', padding: '0.5rem 0.75rem' }}>
+        <div style={{ fontSize: '0.8rem', color: 'var(--ac-text)' }}>
             {/* Label du jet */}
             <div className="flex items-center gap-2 flex-wrap mb-1.5">
-                <span style={{
-                    fontFamily: 'var(--ac-font-heading)',
-                    fontWeight: 700,
-                    fontSize: '0.75rem',
-                    textTransform: 'uppercase',
-                    letterSpacing: '0.06em',
-                    color: 'var(--ac-secondary)',
-                }}>
+                <span style={LABEL_STYLE}>
                     {details.label || (isDamage ? 'Dommages' : 'Jet de compétence')}
                 </span>
                 {!isDamage && details.target !== undefined && (

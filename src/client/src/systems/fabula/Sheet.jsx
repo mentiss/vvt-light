@@ -11,6 +11,7 @@
 // Contrat props (plateforme — Delta Green / Dune / Vikings) :
 //   character, onCharacterUpdate, onLogout, journalUnread, onJournalRead,
 //   darkMode, onToggleDarkMode
+//   (onLogout n'est plus utilisé : la déconnexion du menu ramène à l'accueil)
 // ─────────────────────────────────────────────────────────────────────────────
 
 import React, { useState, useCallback } from 'react';
@@ -21,13 +22,15 @@ import SessionPlayersBar   from '../../components/layout/SessionPlayersBar.jsx';
 import ToastNotifications  from '../../components/layout/ToastNotifications.jsx';
 import JournalTab          from '../../components/tabs/JournalTab.jsx';
 import DiceHistoryPage     from '../../components/layout/DiceHistoryPage.jsx';
-import DiceConfigModal     from '../../components/modals/DiceConfigModal.jsx';
-import FreeDiceModal       from '../../components/modals/FreeDiceModal.jsx';
-import CharacterListModal  from '../../components/modals/CharacterListModal.jsx';
 import AvatarUploader      from '../../components/AvatarUploader.jsx';
+import { HamburgerMenu, HamburgerMenuSeparator } from '../../components/ui/HamburgerMenu.jsx';
+import {
+    HamburgerMenuItemCreateCharacter, HamburgerMenuItemSwitchCharacter, HamburgerMenuItemFreeDice,
+    HamburgerMenuItemAccessCode, HamburgerMenuItemDiceConfig, HamburgerMenuItemGMInterface,
+    HamburgerMenuItemLogout,
+} from '../../components/ui/HamburgerMenuItems.jsx';
 
 import { useSession } from '../../context/SessionContext.jsx';
-import { useAuth }    from '../../context/AuthContext.jsx';
 import { useSystem }  from '../../hooks/useSystem.js';
 import { useFetch }   from '../../hooks/useFetch.js';
 
@@ -35,7 +38,6 @@ import FicheGrid           from './components/layout/FicheGrid.jsx';
 import FabulaDiceModal    from './components/modals/FabulaDiceModal.jsx';
 import FabulaHistoryEntry from './components/layout/FabulaHistoryEntry.jsx';
 import fabulaConfig, { computeDerivedStats } from './config.jsx';
-import AccessCodeModal from "../../components/modals/AccessCodeModal.jsx";
 
 const TABS = [
     { id: 'fiche',      label: '📋 Fiche' },
@@ -46,15 +48,13 @@ const TABS = [
 const Sheet = ({
                    character,
                    onCharacterUpdate,
-                   onLogout,
                    journalUnread,
                    onJournalRead,
                    darkMode,
                    onToggleDarkMode,
                }) => {
-    const { slug, apiBase } = useSystem();
+    const { apiBase }       = useSystem();
     const fetchWithAuth     = useFetch();
-    const { logout }        = useAuth();
     const { activeGMSession } = useSession();
 
     const [activeTab, setActiveTab] = useState(() => {
@@ -71,15 +71,11 @@ const Sheet = ({
     const [editableChar, setEditableChar] = useState({ ...character });
     const char = editMode ? editableChar : character;
 
-    const [showMenu, setShowMenu]                     = useState(false);
+    // (modales du menu : dans ses éléments, spec_ui_menu.md)
     const [diceModalAttrs, setDiceModalAttrs]         = useState(null);
     const [attackContext, setAttackContext]           = useState(null); // item d'arme équipée | null
-    const [showFreeDice, setShowFreeDice]             = useState(false);
-    const [showDiceConfig, setShowDiceConfig]         = useState(false);
-    const [showCharList, setShowCharList]             = useState(false);
     const [showAvatarUploader, setShowAvatarUploader] = useState(false);
     const [saving, setSaving] = useState(false);
-    const [showAccessCode, setShowAccessCode] = useState(false);
 
     // ── Persistance ──────────────────────────────────────────────────────────
 
@@ -134,11 +130,6 @@ const Sheet = ({
         setEditMode(false);
     };
 
-    const handleLogout = useCallback(async () => {
-        setShowMenu(false);
-        await logout();
-        onLogout?.();
-    }, [logout, onLogout]);
 
     const openDiceModal = (attr1 = 'dex', attr2 = 'int', label = '') => setDiceModalAttrs({ attr1, attr2, label });
     const openAttackModal = (weaponItem) => setAttackContext(weaponItem);
@@ -154,48 +145,22 @@ const Sheet = ({
                         🎲
                     </button>
                     <ThemeToggle darkMode={darkMode} onToggle={onToggleDarkMode} />
-                    <div className="relative">
-                        <button onClick={() => setShowMenu(v => !v)}
-                                className="w-9 h-9 rounded flex items-center justify-center border border-default bg-default">
-                            ☰
-                        </button>
-                        {showMenu && (
-                            <>
-                                <div className="fixed inset-0 z-40" onClick={() => setShowMenu(false)} />
-                                <div className="absolute right-0 mt-1 w-56 bg-surface border border-default rounded-lg shadow-lg z-50 py-1">
-                                    <button className="w-full text-left px-3 py-2 text-sm hover:bg-surface-alt"
-                                            onClick={() => { setShowMenu(false); window.location.href = `/${slug}/creation`; }}>
-                                        ✨ Créer un personnage
-                                    </button>
-                                    <button className="w-full text-left px-3 py-2 text-sm hover:bg-surface-alt"
-                                            onClick={() => { setShowMenu(false); setShowCharList(true); }}>
-                                        🔄 Changer de personnage
-                                    </button>
-                                    <button className="w-full text-left px-3 py-2 text-sm hover:bg-surface-alt"
-                                            onClick={() => { setShowMenu(false); setShowFreeDice(true); }}>
-                                        🎲 Jet libre
-                                    </button>
-                                    <button className="w-full text-left px-3 py-2 text-sm hover:bg-surface-alt"
-                                            onClick={() => { setShowMenu(false); setShowAccessCode(true); }}>
-                                        🔑 Code d'accès
-                                    </button>
-                                    <button className="w-full text-left px-3 py-2 text-sm hover:bg-surface-alt"
-                                            onClick={() => { setShowMenu(false); setShowDiceConfig(true); }}>
-                                        🎛️ Config animations dés
-                                    </button>
-                                    <button className="w-full text-left px-3 py-2 text-sm hover:bg-surface-alt"
-                                            onClick={() => { setShowMenu(false); window.location.href = `/${slug}/gm`; }}>
-                                        🎭 Interface GM
-                                    </button>
-                                    <div className="border-t border-default my-1" />
-                                    <button className="w-full text-left px-3 py-2 text-sm text-danger hover:bg-surface-alt"
-                                            onClick={handleLogout}>
-                                        🚪 Déconnexion
-                                    </button>
-                                </div>
-                            </>
-                        )}
-                    </div>
+                    {/* Menu hamburger générique (spec_ui_menu.md), habillé dans theme.css, emojis du slug */}
+                    <HamburgerMenu button="☰">
+                        <HamburgerMenuItemCreateCharacter icon="✨" />
+                        <HamburgerMenuItemSwitchCharacter icon="🔄" currentCharId={character?.id} />
+                        <HamburgerMenuItemFreeDice
+                            icon="🎲"
+                            characterId={character.id}
+                            characterName={character.nom}
+                            sessionId={activeGMSession}
+                        />
+                        <HamburgerMenuItemAccessCode icon="🔑" character={character} onSuccess={onCharacterUpdate} />
+                        <HamburgerMenuItemDiceConfig icon="🎛️" />
+                        <HamburgerMenuItemGMInterface icon="🎭" />
+                        <HamburgerMenuSeparator />
+                        <HamburgerMenuItemLogout icon="🚪" />
+                    </HamburgerMenu>
                 </div>
             </header>
 
@@ -258,6 +223,7 @@ const Sheet = ({
                         <DiceHistoryPage
                             sessionId={activeGMSession ?? null}
                             renderHistoryEntry={fabulaConfig.dice.renderHistoryEntry}
+                            renderAllRollTypes
                         />
                     )}
                 </div>
@@ -266,7 +232,8 @@ const Sheet = ({
             {/* ── TOASTS ──────────────────────────────────────────────────── */}
             <ToastNotifications
                 sessionId={activeGMSession}
-                renderDiceToast={(toast) => <FabulaHistoryEntry roll={toast} compact />}
+                renderDiceToast={(toast) => <FabulaHistoryEntry roll={toast} />}
+                renderAllRollTypes
             />
 
             {/* ── MODALES ─────────────────────────────────────────────────── */}
@@ -288,15 +255,6 @@ const Sheet = ({
                     onClose={() => setAttackContext(null)}
                 />
             )}
-            {showDiceConfig && <DiceConfigModal onClose={() => setShowDiceConfig(false)} />}
-            {showFreeDice && (
-                <FreeDiceModal
-                    characterId={character.id}
-                    characterName={character.nom}
-                    sessionId={activeGMSession}
-                    onClose={() => setShowFreeDice(false)}
-                />
-            )}
             {showAvatarUploader && (
                 <AvatarUploader
                     currentAvatar={character.avatar}
@@ -304,18 +262,6 @@ const Sheet = ({
                     onClose={() => setShowAvatarUploader(false)}
                 />
             )}
-            <CharacterListModal
-                isOpen={showCharList}
-                currentCharId={character?.id}
-                onClose={() => setShowCharList(false)}
-                onSelect={(selected) => { window.location.href = `/${slug}/${selected.accessUrl}`; }}
-            />
-            <AccessCodeModal
-                isOpen={showAccessCode}
-                character={character}
-                onClose={() => setShowAccessCode(false)}
-                onSuccess={(updated) => { onCharacterUpdate(updated); setShowAccessCode(false); }}
-            />
         </div>
     );
 };

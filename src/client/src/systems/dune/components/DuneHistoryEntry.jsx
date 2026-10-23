@@ -3,11 +3,49 @@
 // Reçoit un objet roll depuis dice_history (roll_result et roll_definition parsés).
 
 import React from 'react';
+import { parseFreeRoll } from '../../../tools/freeRoll.js';
+
+// Jet libre (FreeDiceModal) : libellé, total en badge d'or, dés neutres par type
+const FreeRollEntry = ({ free }) => (
+    <div className="space-y-2">
+        <div className="flex items-center justify-between gap-2">
+            <span className="text-xs font-semibold truncate" style={{ color: 'var(--dune-text)' }}>
+                {free.label}
+            </span>
+            <span className="text-xs font-bold px-2 py-0.5 rounded shrink-0"
+                  style={{ background: 'var(--dune-gold)', color: 'var(--dune-dark)' }}>
+                = {free.total}
+            </span>
+        </div>
+        <div className="flex gap-1.5 flex-wrap items-center">
+            {free.groups.map((g, gi) => (
+                <React.Fragment key={gi}>
+                    <span className="text-[10px]" style={{ color: 'var(--dune-text-muted)' }}>{g.notation}</span>
+                    {g.values.map((v, i) => (
+                        <div key={i}
+                             className="w-7 h-7 rounded flex items-center justify-center text-xs font-bold border"
+                             style={{ background: 'var(--dune-surface-alt)', color: 'var(--dune-text-muted)', borderColor: 'var(--dune-border)' }}>
+                            {v}
+                        </div>
+                    ))}
+                </React.Fragment>
+            ))}
+            {free.modifier !== 0 && (
+                <span className="text-[10px]" style={{ color: 'var(--dune-text-muted)' }}>
+                    {free.modifier > 0 ? '+' : ''}{free.modifier}
+                </span>
+            )}
+        </div>
+    </div>
+);
 
 /**
  * @param {object} props.roll - Entrée dice_history (roll_result et roll_definition déjà parsés)
  */
 const DuneHistoryEntry = ({ roll }) => {
+    const free = parseFreeRoll(roll);
+    if (free) return <FreeRollEntry free={free} />;
+
     const r  = roll.roll_result   ?? {};
     const d  = roll.roll_definition ?? {};
     const results      = Array.isArray(r.results) ? r.results : [];
@@ -34,7 +72,7 @@ const DuneHistoryEntry = ({ roll }) => {
     };
 
     return (
-        <div className="px-3 py-2.5 space-y-2">
+        <div className="space-y-2">
             {/* Libellé + résultat */}
             <div className="flex items-center justify-between gap-2">
                 <span className="text-xs font-semibold truncate" style={{ color: 'var(--dune-text)' }}>

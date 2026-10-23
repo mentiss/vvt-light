@@ -684,7 +684,8 @@ body::before {
    MENU HAMBURGER
 ═══════════════════════════════════════════════════════════════════════════ */
 
-.ac-menu-btn {
+/* Partagé avec le menu hamburger générique (vtt-menu-*, spec_ui_menu.md §7) */
+.ac-menu-btn, .vtt-menu-button {
     width:       2rem;
     height:      2rem;
     display:     flex;
@@ -700,11 +701,13 @@ body::before {
     font-size:   1rem;
     transition:  background 0.15s, color 0.15s;
 }
-.ac-menu-btn.open { background: var(--ac-primary); color: #fff; }
+.ac-menu-btn.open, .vtt-menu-button[aria-expanded="true"] { background: var(--ac-primary); color: #fff; }
 
-.ac-menu-dropdown {
+.ac-menu-dropdown, .vtt-menu {
     position:      absolute;
     right:         0;
+    top:           100%;
+    padding:       0;
     margin-top:    0.5rem;
     width:         14rem;
     z-index:       50;
@@ -716,7 +719,7 @@ body::before {
     box-shadow:    0 8px 24px rgba(0,0,0,0.35);
 }
 
-.ac-menu-item {
+.ac-menu-item, .vtt-menu-item {
     width:       100%;
     padding:     0.6rem 1rem;
     text-align:  left;
@@ -733,10 +736,13 @@ body::before {
     cursor:      pointer;
     transition:  background 0.1s;
 }
-.ac-menu-item:hover  { background: var(--ac-surface-alt); }
-.ac-menu-item.danger { color: var(--ac-accent); }
+.ac-menu-item:hover, .vtt-menu-item:hover { background: var(--ac-surface-alt); }
+.ac-menu-item.danger, .vtt-menu-item.is-danger, .vtt-menu-item.is-danger .vtt-menu-icon { color: var(--ac-accent); }
 
-.ac-menu-separator {
+/* Emplacement à modales des pages : la police de la fiche est posée sur sa racine */
+.vtt-modal-host { font-family: var(--ac-font-body); color: var(--ac-text); }
+
+.ac-menu-separator, .vtt-menu-separator {
     height:     1px;
     background: var(--ac-border);
     margin:     0.2rem 0;

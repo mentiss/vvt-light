@@ -101,7 +101,7 @@ const DiceHistoryPage = ({
         const notation   = roll.notation ?? '';
 
         return (
-            <div className="px-3 py-2 space-y-1">
+            <div className="space-y-1">
                 <div className="flex items-center justify-between">
                     <span className="text-xs font-semibold" style={{ color: 'var(--color-text, #111)' }}>
                         {roll.roll_type ?? 'Jet'}
@@ -180,8 +180,8 @@ const DiceHistoryPage = ({
                                 >✕</button>
                             </div>
                         </div>
-                        {/* Rendu slug ou générique */}
-                        <div style={{ background: 'var(--color-surface, #fff)' }}>
+                        {/* Rendu slug ou générique (marge portée par la carte) */}
+                        <div className="vtt-history-entry">
                             {renderEntry(roll)}
                         </div>
                     </div>
