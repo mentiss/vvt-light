@@ -16,6 +16,7 @@ import SlugPage             from '../components/platform/SlugPage.jsx';
 import SystemBrand          from '../components/platform/SystemBrand.jsx';
 import ErrorPage            from '../components/platform/ErrorPage.jsx';
 import { useSystem }        from '../hooks/useSystem.js';
+import { ModalHostProvider } from '../components/ui/ModalHost.jsx';
 
 const SHEETS    = import.meta.glob('../systems/*/Sheet.jsx');
 const THEMES    = import.meta.glob('../systems/*/theme.css');
@@ -226,8 +227,9 @@ const PlayerPage = () => {
     }
 
     // appState === 'playing'
+    // ModalHostProvider : emplacement à modales des éléments du menu (spec_ui_menu.md §4)
     return (
-        <>
+        <ModalHostProvider>
             <Suspense fallback={<LoadingScreen />}>
                 <SystemSheet
                     character={character}
@@ -254,7 +256,7 @@ const PlayerPage = () => {
                 onClose={() => setShowCharacterList(false)}
                 onSelect={handleCharacterListSelect}
             />
-        </>
+        </ModalHostProvider>
     );
 };
 

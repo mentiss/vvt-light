@@ -9,16 +9,17 @@
 // ─────────────────────────────────────────────────────────────────────────────
 
 import React, {useState, useRef} from 'react';
-import { useAuth }    from '../../../context/AuthContext.jsx';
 import { useFetch }   from '../../../hooks/useFetch.js';
 import { useSystem }  from '../../../hooks/useSystem.js';
 
 import ToastNotifications   from '../../../components/layout/ToastNotifications.jsx';
 import HistoryPanel         from '../../../components/layout/HistoryPanel.jsx';
 import ThemeToggle          from '../../../components/ui/ThemeToggle.jsx';
-import TableManagementModal from '../../../components/gm/modals/TableManagementModal.jsx';
-import DiceConfigModal      from '../../../components/modals/DiceConfigModal.jsx';
 import TabJournal           from '../../../components/gm/tabs/TabJournal.jsx';
+import { HamburgerMenu, HamburgerMenuItem, HamburgerMenuIcon } from '../../../components/ui/HamburgerMenu.jsx';
+import {
+    HamburgerMenuItemTableManagement, HamburgerMenuItemDiceConfig, HamburgerMenuItemLogout,
+} from '../../../components/ui/HamburgerMenuItems.jsx';
 
 import cyberpunkConfig, { STAT_LABELS } from '../config.jsx';
 import TabSession from "./tabs/TabSession.jsx";
@@ -48,7 +49,6 @@ const GM_TABS = [
 // ── GMView principal ──────────────────────────────────────────────────────────
 
 const GMView = ({ activeSession, onSessionChange, onlineCharacters, darkMode, onToggleDarkMode }) => {
-    const { logout }    = useAuth();
     const fetchWithAuth = useFetch();
     const { apiBase }   = useSystem();
 
@@ -56,9 +56,6 @@ const GMView = ({ activeSession, onSessionChange, onlineCharacters, darkMode, on
         const hash = window.location.hash.replace('#', '');
         return GM_TABS.some(t => t.id === hash) ? hash : 'session';
     });
-    const [showMenu,           setShowMenu]           = useState(false);
-    const [showTableMgmt,      setShowTableMgmt]      = useState(false);
-    const [showDiceConfig,     setShowDiceConfig]     = useState(false);
     const [historyPanelOpen,   setHistoryPanelOpen]   = useState(false);
     const pendingExpandThreatRef = useRef(null);
 
@@ -66,16 +63,10 @@ const GMView = ({ activeSession, onSessionChange, onlineCharacters, darkMode, on
         setActiveTab(id);
         // eslint-disable-next-line react-hooks/immutability
         window.location.hash = id;
-        setShowMenu(false);
     };
 
     // Compte des moves en attente (badge sur l'onglet)
     const [pendingMovesCount, setPendingMovesCount] = useState(0);
-
-    const handleLogout = async () => {
-        setShowMenu(false);
-        await logout();
-    };
 
     return (
         <div
@@ -126,47 +117,20 @@ const GMView = ({ activeSession, onSessionChange, onlineCharacters, darkMode, on
                 <div className="flex items-center gap-2">
                     <ThemeToggle darkMode={darkMode} onToggle={onToggleDarkMode} />
 
-                    {/* Hamburger */}
-                    <div className="relative">
-                        <button
-                            onClick={() => setShowMenu(v => !v)}
-                            className="w-9 h-9 flex flex-col items-center justify-center gap-1 rounded-lg bg-surface-alt hover:cp-neon-glow-el hover:bg-surface border border-base hover:border-accent"
-                        >
-                            <span className="w-4 h-0.5 rounded" style={{ background: 'var(--color-text)' }} />
-                            <span className="w-4 h-0.5 rounded" style={{ background: 'var(--color-text)' }} />
-                            <span className="w-4 h-0.5 rounded" style={{ background: 'var(--color-text)' }} />
-                        </button>
-
-                        {showMenu && (
-                            <>
-                                <div
-                                    className="fixed inset-0 z-40"
-                                    onClick={() => setShowMenu(false)}
-                                />
-                                <div
-                                    className="absolute right-0 top-11 rounded-xl overflow-hidden z-50 shadow-2xl"
-                                    style={{ background: 'var(--color-surface)', border: '1px solid var(--color-border)', minWidth: '180px' }}
-                                >
-                                    {[
-                                        { label: '🗂 Gestion sessions', action: () => { setShowTableMgmt(true); setShowMenu(false); } },
-                                        { label: '🎲 Config dés',       action: () => { setShowDiceConfig(true); setShowMenu(false); } },
-                                        { label: '📜 Historique jets',  action: () => { setHistoryPanelOpen(true); setShowMenu(false); } },
-                                        { label: '🔒 Déconnexion',      action: handleLogout },
-                                    ].map(item => (
-                                        <button
-                                            key={item.label}
-                                            onClick={item.action}
-                                            className="w-full text-left px-4 py-3 text-sm hover:bg-surface-alt transition-colors"
-                                            style={{ color: 'var(--color-text)' }}
-                                        >
-                                            {item.label}
-                                        </button>
-                                    ))}
-                                </div>
-                            </>
-
-                        )}
-                    </div>
+                    {/* Hamburger : générique, sans habillage au lot pilote (spec_ui_menu.md §8) ;
+                        les emojis d'origine reviennent avec l'habillage du lot 2 */}
+                    <HamburgerMenu>
+                        <HamburgerMenuItemTableManagement
+                            activeSessionId={activeSession?.id}
+                            onSelectTable={(session) => onSessionChange?.(session)}
+                        />
+                        <HamburgerMenuItemDiceConfig />
+                        {/* Propre au slug : panneau latéral d'historique */}
+                        <HamburgerMenuItem icon={<HamburgerMenuIcon name="dice" />} onClick={() => setHistoryPanelOpen(true)}>
+                            Historique des jets
+                        </HamburgerMenuItem>
+                        <HamburgerMenuItemLogout />
+                    </HamburgerMenu>
                 </div>
             </header>
 
@@ -268,18 +232,7 @@ const GMView = ({ activeSession, onSessionChange, onlineCharacters, darkMode, on
                 )}
             </main>
 
-            {/* ── Modales globales ──────────────────────────────────────── */}
-            {showTableMgmt && (
-                <TableManagementModal
-                    isOpen
-                    onClose={() => setShowTableMgmt(false)}
-                    onSelectTable={(session) => { onSessionChange?.(session); setShowTableMgmt(false); }}
-                    activeSessionId={activeSession?.id}
-                />
-            )}
-            {showDiceConfig && <DiceConfigModal onClose={() => setShowDiceConfig(false)} />}
-
-
+            {/* ── Panneau d'historique (les modales du menu vivent dans ses éléments) ── */}
             <HistoryPanel
                 isOpen={historyPanelOpen}
                 onClose={() => setHistoryPanelOpen(false)}

@@ -14,6 +14,7 @@ import SlugPage      from '../components/platform/SlugPage.jsx';
 import SystemBrand   from '../components/platform/SystemBrand.jsx';
 import ErrorPage     from '../components/platform/ErrorPage.jsx';
 import { useSystem } from '../hooks/useSystem.js';
+import { ModalHostProvider } from '../components/ui/ModalHost.jsx';
 
 const SYSTEM_GM_APPS = import.meta.glob('../systems/*/GMApp.jsx');
 const THEMES    = import.meta.glob('../systems/*/theme.css');
@@ -72,8 +73,9 @@ const GMPage = () => {
     const SystemGMApp = getGMLazyComponent(moduleKey);
 
     if (user?.isGM) {
+        // ModalHostProvider : emplacement à modales des éléments du menu (spec_ui_menu.md §4)
         return (
-            <>
+            <ModalHostProvider>
                 <Suspense fallback={<LoadingScreen />}>
                     {/* eslint-disable-next-line react-hooks/static-components */}
                     <SystemGMApp
@@ -86,7 +88,7 @@ const GMPage = () => {
                     />
                     <DiceAnimationOverlay />
                 </Suspense>
-            </>
+            </ModalHostProvider>
         );
     }
 

@@ -29,13 +29,14 @@ import JournalTab         from '../../components/tabs/JournalTab.jsx';
 import ToastNotifications from '../../components/layout/ToastNotifications.jsx';
 import DiceHistoryPage    from '../../components/layout/DiceHistoryPage.jsx';
 import SessionPlayersBar  from '../../components/layout/SessionPlayersBar.jsx';
-import DiceConfigModal    from '../../components/modals/DiceConfigModal.jsx';
-import CharacterListModal from '../../components/modals/CharacterListModal.jsx';
-import AccessCodeModal    from '../../components/modals/AccessCodeModal.jsx';
-import FreeDiceModal      from '../../components/modals/FreeDiceModal.jsx';
 import CombatPanel        from '../../components/combat/CombatPanel.jsx';
+import { HamburgerMenu, HamburgerMenuSeparator } from '../../components/ui/HamburgerMenu.jsx';
+import {
+    HamburgerMenuItemCreateCharacter, HamburgerMenuItemSwitchCharacter, HamburgerMenuItemAvatar,
+    HamburgerMenuItemAccessCode, HamburgerMenuItemFreeDice, HamburgerMenuItemDiceConfig,
+    HamburgerMenuItemGMInterface, HamburgerMenuItemLogout,
+} from '../../components/ui/HamburgerMenuItems.jsx';
 import { useSession }     from '../../context/SessionContext.jsx';
-import { useAuth }        from '../../context/AuthContext.jsx';
 import { useSystem }      from '../../hooks/useSystem.js';
 
 // Runes et inventaire sont des sections de la fiche, plus des onglets.
@@ -47,23 +48,16 @@ const TABS = [
 
 const resolve = (updater, prev) => (typeof updater === 'function' ? updater(prev) : updater);
 
-const MenuItem = ({ icon, onClick, danger = false, children }) => (
-    <button type="button" onClick={onClick} className={`vk-menu-item ${danger ? 'is-danger' : ''}`}>
-        <VkIcon name={icon} />{children}
-    </button>
-);
-
+// onLogout (PlayerPage) n'est plus utilisé : la déconnexion du menu ramène à l'accueil
 const Sheet = ({
                    character,
                    onCharacterUpdate,
-                   onLogout,
                    journalUnread,
                    onJournalRead,
                    darkMode,
                    onToggleDarkMode,
                }) => {
     const { slug }    = useSystem();
-    const { logout }  = useAuth();
     const { activeGMSession, activeSessionName } = useSession();
 
     const [activeTab, setActiveTab] = useState(() => {
@@ -71,13 +65,8 @@ const Sheet = ({
         return TABS.some(t => t.id === hash) ? hash : 'fiche';
     });
 
-    // ── Menu et modales ──────────────────────────────────────────────────────
-    const [showMenu,       setShowMenu]       = useState(false);
-    const [showCharList,   setShowCharList]   = useState(false);
-    const [showDiceConfig, setShowDiceConfig] = useState(false);
-    const [showAccessCode, setShowAccessCode] = useState(false);
-    const [showFreeDice,   setShowFreeDice]   = useState(false);
-    const [showAvatar,     setShowAvatar]     = useState(false);
+    // ── Modales (celles du menu vivent dans ses éléments) ────────────────────
+    const [showAvatar,     setShowAvatar]     = useState(false);   // clic sur l'avatar de la fiche
     const [showEvolution,  setShowEvolution]  = useState(false);
     const [showEditModal,  setShowEditModal]  = useState(null);
     const [diceContext,    setDiceContext]    = useState(null);
@@ -131,19 +120,13 @@ const Sheet = ({
         if (tab === 'journal') onJournalRead?.();
     };
 
-    const handleLogout = async () => {
-        setShowMenu(false);
-        await logout();
-        onLogout();
-    };
+    const changeAvatar = (avatar) => update(prev => ({ ...prev, avatar }));
 
     const copyLink = () => {
         navigator.clipboard.writeText(`${window.location.origin}/${slug}/${character.accessUrl}`);
         setLinkCopied(true);
         setTimeout(() => setLinkCopied(false), 2000);
     };
-
-    const openMenuEntry = (open) => () => { setShowMenu(false); open(); };
 
     return (
         <div className="vk-root min-h-screen" data-theme={darkMode ? 'dark' : 'light'}>
@@ -176,27 +159,26 @@ const Sheet = ({
                             <VkIcon name={darkMode ? 'sun' : 'moon'} />
                         </button>
 
-                        <div className="relative">
-                            <button type="button" onClick={() => setShowMenu(v => !v)} className="vk-btn vk-btn-icon" title="Menu">
-                                <VkIcon name="menu" />
-                            </button>
-                            {showMenu && (
-                                <>
-                                    <div className="fixed inset-0 z-10" onClick={() => setShowMenu(false)} />
-                                    <div className="vk-menu absolute right-0 mt-2 z-20">
-                                        <MenuItem icon="axe"      onClick={openMenuEntry(() => { window.location.href = `/${slug}/creation`; })}>Créer un personnage</MenuItem>
-                                        <MenuItem icon="people"   onClick={openMenuEntry(() => setShowCharList(true))}>Changer de personnage</MenuItem>
-                                        <MenuItem icon="portrait" onClick={openMenuEntry(() => setShowAvatar(true))}>Changer l'avatar</MenuItem>
-                                        <MenuItem icon="key"      onClick={openMenuEntry(() => setShowAccessCode(true))}>Code d'accès</MenuItem>
-                                        <MenuItem icon="dice"     onClick={openMenuEntry(() => setShowFreeDice(true))}>Jet de dés libre</MenuItem>
-                                        <MenuItem icon="horn"     onClick={openMenuEntry(() => setShowDiceConfig(true))}>Config animations dés</MenuItem>
-                                        <MenuItem icon="helm"     onClick={openMenuEntry(() => { window.location.href = `/${slug}/gm`; })}>Interface MJ</MenuItem>
-                                        <div className="vk-menu-sep" />
-                                        <MenuItem icon="door" onClick={handleLogout} danger>Déconnexion</MenuItem>
-                                    </div>
-                                </>
-                            )}
-                        </div>
+                        <HamburgerMenu button={<VkIcon name="menu" />} buttonClassName="vk-btn vk-btn-icon">
+                            <HamburgerMenuItemCreateCharacter icon={<VkIcon name="axe" />} />
+                            <HamburgerMenuItemSwitchCharacter icon={<VkIcon name="people" />} currentCharId={character.id} />
+                            <HamburgerMenuItemAvatar icon={<VkIcon name="portrait" />} currentAvatar={character.avatar} onChange={changeAvatar} />
+                            <HamburgerMenuItemAccessCode
+                                icon={<VkIcon name="key" />}
+                                character={character}
+                                onSuccess={(updated) => persist(prev => ({ ...prev, accessCode: updated.accessCode }))}
+                            />
+                            <HamburgerMenuItemFreeDice
+                                icon={<VkIcon name="dice" />}
+                                characterId={character.id}
+                                characterName={formatFullName(character)}
+                                sessionId={activeGMSession}
+                            />
+                            <HamburgerMenuItemDiceConfig icon={<VkIcon name="horn" />} />
+                            <HamburgerMenuItemGMInterface icon={<VkIcon name="helm" />} />
+                            <HamburgerMenuSeparator />
+                            <HamburgerMenuItemLogout icon={<VkIcon name="door" />} />
+                        </HamburgerMenu>
                     </div>
                 </header>
 
@@ -263,9 +245,6 @@ const Sheet = ({
                 </main>
             </div>
 
-            {/* ── Éléments globaux ── */}
-            {showDiceConfig && <DiceConfigModal onClose={() => setShowDiceConfig(false)} />}
-
             {/* ── Modales fiche ── */}
             {diceContext && (
                 <DiceModal character={character} isBerserk={false} context={diceContext}
@@ -280,30 +259,10 @@ const Sheet = ({
             {showAvatar && (
                 <AvatarUploader
                     currentAvatar={character.avatar}
-                    onAvatarChange={(avatar) => update(prev => ({ ...prev, avatar }))}
+                    onAvatarChange={changeAvatar}
                     onClose={() => setShowAvatar(false)}
                 />
             )}
-            {showFreeDice && (
-                <FreeDiceModal
-                    characterId={character.id}
-                    characterName={formatFullName(character)}
-                    sessionId={activeGMSession}
-                    onClose={() => setShowFreeDice(false)}
-                />
-            )}
-            <AccessCodeModal
-                isOpen={showAccessCode}
-                character={character}
-                onClose={() => setShowAccessCode(false)}
-                onSuccess={(updated) => { persist(prev => ({ ...prev, accessCode: updated.accessCode })); setShowAccessCode(false); }}
-            />
-            <CharacterListModal
-                isOpen={showCharList}
-                currentCharId={character?.id}
-                onClose={() => setShowCharList(false)}
-                onSelect={(c) => { window.location.href = `/${slug}/${c.accessUrl}`; }}
-            />
 
             {/* Notifications en dernier : au même z-index que les modales, elles
                 doivent passer devant (sinon un jet libre, modale encore ouverte,

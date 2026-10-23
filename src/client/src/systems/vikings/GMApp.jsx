@@ -16,11 +16,12 @@ import React, { useState, useEffect } from 'react';
 
 import ToastNotifications   from '../../components/layout/ToastNotifications.jsx';
 import DiceHistoryPage      from '../../components/layout/DiceHistoryPage.jsx';
-import DiceConfigModal      from '../../components/modals/DiceConfigModal.jsx';
-import FreeDiceModal        from '../../components/modals/FreeDiceModal.jsx';
-import TableManagementModal from '../../components/gm/modals/TableManagementModal.jsx';
 import TabJournal           from '../../components/gm/tabs/TabJournal.jsx';
-import { useAuth }          from '../../context/AuthContext.jsx';
+import { HamburgerMenu, HamburgerMenuSeparator } from '../../components/ui/HamburgerMenu.jsx';
+import {
+    HamburgerMenuItemTableManagement, HamburgerMenuItemFreeDice, HamburgerMenuItemDiceConfig,
+    HamburgerMenuItemHome, HamburgerMenuItemLogout,
+} from '../../components/ui/HamburgerMenuItems.jsx';
 
 import TabSession          from './gm/tabs/TabSession.jsx';
 import TabCombat           from './gm/tabs/TabCombat.jsx';
@@ -37,14 +38,7 @@ const TABS = [
     { id: 'historique', label: 'Historique' },
 ];
 
-const MenuItem = ({ icon, onClick, danger = false, children }) => (
-    <button type="button" onClick={onClick} className={`vk-menu-item ${danger ? 'is-danger' : ''}`}>
-        <VkIcon name={icon} />{children}
-    </button>
-);
-
 const GMApp = ({ activeSession, onSessionChange, onlineCharacters, characterUpdates, darkMode, onToggleDarkMode }) => {
-    const { logout } = useAuth();
     const combat     = useCombat(onlineCharacters);
     const sessionId  = activeSession?.id ?? null;
 
@@ -54,21 +48,7 @@ const GMApp = ({ activeSession, onSessionChange, onlineCharacters, characterUpda
     });
     useEffect(() => { window.location.hash = activeTab; }, [activeTab]);
 
-    const [showMenu,       setShowMenu]       = useState(false);
-    const [showTableMgmt,  setShowTableMgmt]  = useState(false);
-    const [showDiceConfig, setShowDiceConfig] = useState(false);
-    const [showFreeDice,   setShowFreeDice]   = useState(false);
     const [showGMDice,     setShowGMDice]     = useState(false);
-
-    const goHome = () => {
-        window.history.pushState({}, '', '/');
-        window.location.reload();
-    };
-    const handleLogout = async () => {
-        await logout();
-        goHome();
-    };
-    const openMenuEntry = (open) => () => { setShowMenu(false); open(); };
 
     return (
         <div className="vk-root min-h-screen" data-theme={darkMode ? 'dark' : 'light'}>
@@ -89,24 +69,18 @@ const GMApp = ({ activeSession, onSessionChange, onlineCharacters, characterUpda
                                 title={darkMode ? 'Mode jour (bois)' : 'Mode nuit (fer)'}>
                             <VkIcon name={darkMode ? 'sun' : 'moon'} />
                         </button>
-                        <div className="relative">
-                            <button type="button" onClick={() => setShowMenu(v => !v)} className="vk-btn vk-btn-icon" title="Menu">
-                                <VkIcon name="menu" />
-                            </button>
-                            {showMenu && (
-                                <>
-                                    <div className="fixed inset-0 z-40" onClick={() => setShowMenu(false)} />
-                                    <div className="vk-menu absolute right-0 mt-2 z-50">
-                                        <MenuItem icon="people" onClick={openMenuEntry(() => setShowTableMgmt(true))}>Gestion des tables</MenuItem>
-                                        <MenuItem icon="dice"   onClick={openMenuEntry(() => setShowFreeDice(true))}>Jet de dés libre</MenuItem>
-                                        <MenuItem icon="horn"   onClick={openMenuEntry(() => setShowDiceConfig(true))}>Config animations dés</MenuItem>
-                                        <div className="vk-menu-sep" />
-                                        <MenuItem icon="longhouse" onClick={openMenuEntry(goHome)}>Retour à l'accueil</MenuItem>
-                                        <MenuItem icon="door" onClick={openMenuEntry(handleLogout)} danger>Déconnexion</MenuItem>
-                                    </div>
-                                </>
-                            )}
-                        </div>
+                        <HamburgerMenu button={<VkIcon name="menu" />} buttonClassName="vk-btn vk-btn-icon">
+                            <HamburgerMenuItemTableManagement
+                                icon={<VkIcon name="people" />}
+                                activeSessionId={sessionId}
+                                onSelectTable={(session) => onSessionChange(session ?? null)}
+                            />
+                            <HamburgerMenuItemFreeDice icon={<VkIcon name="dice" />} sessionId={sessionId} isGM />
+                            <HamburgerMenuItemDiceConfig icon={<VkIcon name="horn" />} />
+                            <HamburgerMenuSeparator />
+                            <HamburgerMenuItemHome icon={<VkIcon name="longhouse" />} />
+                            <HamburgerMenuItemLogout icon={<VkIcon name="door" />} />
+                        </HamburgerMenu>
                     </div>
                 </header>
 
@@ -141,18 +115,8 @@ const GMApp = ({ activeSession, onSessionChange, onlineCharacters, characterUpda
                 )}
             </main>
 
-            {/* ── Modales globales ── */}
-            {showTableMgmt && (
-                <TableManagementModal
-                    isOpen
-                    onClose={() => setShowTableMgmt(false)}
-                    activeSessionId={sessionId}
-                    onSelectTable={(session) => onSessionChange(session ?? null)}
-                />
-            )}
+            {/* ── Modales globales (celles du menu vivent dans ses éléments) ── */}
             {showGMDice && <GMDiceModal onClose={() => setShowGMDice(false)} darkMode={darkMode} sessionId={sessionId} />}
-            {showFreeDice && <FreeDiceModal sessionId={sessionId} isGM onClose={() => setShowFreeDice(false)} />}
-            {showDiceConfig && <DiceConfigModal onClose={() => setShowDiceConfig(false)} />}
 
             {/* Notifications en dernier : devant les modales (même z-index) */}
             <ToastNotifications

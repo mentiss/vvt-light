@@ -10,7 +10,6 @@
 // ─────────────────────────────────────────────────────────────────────────────
 
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { useParams } from 'react-router-dom';
 
 // Composants génériques
 import ThemeToggle         from '../../components/ui/ThemeToggle.jsx';
@@ -18,14 +17,16 @@ import ToastNotifications  from '../../components/layout/ToastNotifications.jsx'
 import SessionPlayersBar   from '../../components/layout/SessionPlayersBar.jsx';
 import JournalTab          from '../../components/tabs/JournalTab.jsx';
 import DiceHistoryPage     from '../../components/layout/DiceHistoryPage.jsx';
-import DiceConfigModal     from '../../components/modals/DiceConfigModal.jsx';
-import CharacterListModal  from '../../components/modals/CharacterListModal.jsx';
 import AvatarUploader      from '../../components/AvatarUploader.jsx';
+import { HamburgerMenu, HamburgerMenuSeparator } from '../../components/ui/HamburgerMenu.jsx';
+import {
+    HamburgerMenuItemCreateCharacter, HamburgerMenuItemSwitchCharacter, HamburgerMenuItemAccessCode,
+    HamburgerMenuItemDiceConfig, HamburgerMenuItemGMInterface, HamburgerMenuItemLogout,
+} from '../../components/ui/HamburgerMenuItems.jsx';
 
 // Composants Cyberpunk
 import MoveModal           from './components/modals/MoveModal.jsx';
 
-import { useAuth }    from '../../context/AuthContext.jsx';
 import { useSocket }  from '../../context/SocketContext.jsx';
 import { useSystem }  from '../../hooks/useSystem.js';
 import { useFetch }   from '../../hooks/useFetch.js';
@@ -43,7 +44,6 @@ import DiceEntryHistory from "./components/layout/DiceEntryHistory.jsx";
 import BoltFarm from "./components/ui/BoltFarm.jsx";
 import BrowseModal from "./components/modals/BrowseModal.jsx";
 import ReferenceTab from "./components/ReferenceTab.jsx";
-import AccessCodeModal from "../../components/modals/AccessCodeModal.jsx";
 
 // ── Onglets ───────────────────────────────────────────────────────────────────
 
@@ -87,18 +87,16 @@ const AccessKeyBadge = ({ code }) => {
 };
 
 // ── Sheet ─────────────────────────────────────────────────────────────────────
+// onLogout (PlayerPage) n'est plus utilisé : la déconnexion du menu ramène à l'accueil
 const Sheet = ({
                    character,
                    onCharacterUpdate,
-                   onLogout,
                    darkMode,
                    onToggleDarkMode,
                    journalUnread,
                    onJournalRead,
                }) => {
-    const { system }    = useParams();
     const { apiBase }   = useSystem();
-    const { logout }    = useAuth();
     const socket        = useSocket();
     const fetchWithAuth = useFetch();
     const { activeGMSession, activeSessionName } = useSession();
@@ -110,9 +108,6 @@ const Sheet = ({
     });
     const [editMode,       setEditMode]       = useState(false);
     const [editableChar,           setEditableChar]   = useState(character);
-    const [showMenu,       setShowMenu]       = useState(false);
-    const [showDiceConfig, setShowDiceConfig] = useState(false);
-    const [showCharList,   setShowCharList]   = useState(false);
     const [showAvatar,     setShowAvatar]     = useState(false);
     const [showXPPanel,    setShowXPPanel]    = useState(false);
 
@@ -127,7 +122,6 @@ const Sheet = ({
     const [movesLoading,   setMovesLoading]   = useState(false);
     const [moveModal,      setMoveModal]      = useState(null); // { mode, move?, statKey? }
     const [browseModal, setBrowseModal] = useState(null);
-    const [showAccessCode, setShowAccessCode] = useState(false);
 
     // Tags en édition
     const [newTagText,    setNewTagText]    = useState('');
@@ -187,12 +181,6 @@ const Sheet = ({
         setEditMode(false);
     }, [character]);
 
-    const handleLogout = async () => {
-        setShowMenu(false);
-        await logout();
-        onLogout?.();
-    };
-
     // Mise à jour rapide d'une ressource (Cred, info, matos, retenue)
     const patchResource = useCallback(async (field, newVal) => {
         const map = { cred: 'cred', infoTokens: 'infoTokens', matosTokens: 'matosTokens', retenue: 'retenue' };
@@ -233,12 +221,6 @@ const Sheet = ({
             : advancementMovesDisplay;
 
     const showAdvancementTab = advancementMovesFiltered.length > 0 || (editMode && hasAdvancementUnlocked);
-
-    const handleSelectChar = (selectedChar) => {
-        setShowCharList(false);
-        // On navigue vers l'URL du perso sélectionné — PlayerPage gère la suite
-        window.location.href = `/${system}/${selectedChar.accessUrl}`;
-    };
 
     // ── Tags helpers ──────────────────────────────────────────────────────────
     const addTag = useCallback((entityType, entityId, text, variant) => {
@@ -374,75 +356,20 @@ const Sheet = ({
                         ✦ XP
                     </button>
 
-                    {/* Hamburger */}
-                    <div className="relative">
-                        <button
-                            onClick={() => setShowMenu(v => !v)}
-                            className="w-9 h-9 flex flex-col items-center justify-center gap-1 rounded-lg bg-surface-alt hover:cp-neon-glow-el hover:bg-surface border border-base hover:border-accent"
-                        >
-                            <span className="w-4 h-0.5 rounded" style={{ background: 'var(--color-text)' }} />
-                            <span className="w-4 h-0.5 rounded" style={{ background: 'var(--color-text)' }} />
-                            <span className="w-4 h-0.5 rounded" style={{ background: 'var(--color-text)' }} />
-                        </button>
-                        {/* Menu dropdown */}
-                        {showMenu && (
-                            <>
-                                <div
-                                    className="fixed inset-0 z-40"
-                                    onClick={() => setShowMenu(false)}
-                                />
-                                <div
-                                    className="absolute right-0 mt-2 w-52 rounded-xl shadow-2xl z-50 bg-surface border border-base overflow-hidden"
-                                    style={{ minWidth:   '180px', }}
-                                >
-                                    {/* Créer un personnage */}
-                                    <button
-                                        onClick={() => { setShowMenu(false); window.location.href = `/${system}/creation`; }}
-                                        className="w-full text-left px-4 py-3 text-sm hover:bg-surface-alt transition-colors"
-                                    >
-                                        ✨ Créer un personnage
-                                    </button>
-
-                                    {/* Changer de personnage */}
-                                    <button
-                                        onClick={() => { setShowMenu(false); setShowCharList(true); }}
-                                        className="w-full text-left px-4 py-3 text-sm hover:bg-surface-alt transition-colors"
-                                    >
-                                        👤 Changer de personnage
-                                    </button>
-                                    <div className="cp-divider" />
-                                    <button
-                                        onClick={() => { setShowMenu(false); setShowAccessCode(true); }}
-                                        className="w-full text-left px-4 py-3 text-sm hover:bg-surface-alt transition-colors"
-                                    >
-                                        🔑 Code d'accès
-                                    </button>
-                                    <div className="cp-divider" />
-                                    <button
-                                        onClick={() => { setShowMenu(false); setShowDiceConfig(true); }}
-                                        className="w-full text-left px-4 py-3 text-sm hover:bg-surface-alt transition-colors"
-                                    >
-                                        🎲 Config animations dés
-                                    </button>
-                                    <div className="cp-divider" />
-                                    <button
-                                        onClick={() => { setShowMenu(false); window.location.href = `/${system}/gm`; }}
-                                        className="w-full text-left px-4 py-3 text-sm hover:bg-surface-alt transition-colors"
-                                    >
-                                        🎭 Interface GM
-                                    </button>
-                                    <div className="cp-divider" />
-                                    {/* Déconnexion */}
-                                    <button
-                                        onClick={handleLogout}
-                                        className="w-full text-left px-4 py-3 text-sm hover:bg-surface-alt transition-colors"
-                                    >
-                                        🔒 Déconnexion
-                                    </button>
-                                </div>
-                            </>
-                        )}
-                    </div>
+                    {/* Hamburger : générique, sans habillage au lot pilote (spec_ui_menu.md §8) ;
+                        les emojis d'origine reviennent avec l'habillage du lot 2 */}
+                    <HamburgerMenu>
+                        <HamburgerMenuItemCreateCharacter />
+                        <HamburgerMenuItemSwitchCharacter currentCharId={character?.id} />
+                        <HamburgerMenuSeparator />
+                        <HamburgerMenuItemAccessCode character={character} onSuccess={onCharacterUpdate} />
+                        <HamburgerMenuSeparator />
+                        <HamburgerMenuItemDiceConfig />
+                        <HamburgerMenuSeparator />
+                        <HamburgerMenuItemGMInterface />
+                        <HamburgerMenuSeparator />
+                        <HamburgerMenuItemLogout />
+                    </HamburgerMenu>
 
                 </div>
 
@@ -1099,20 +1026,6 @@ const Sheet = ({
                     onClose={() => setShowXPPanel(false)}
                 />
             )}
-            {showDiceConfig && <DiceConfigModal onClose={() => setShowDiceConfig(false)} />}
-            {showCharList   && <CharacterListModal
-                isOpen={showCharList}
-                currentCharId={character?.id}
-                onClose={() => setShowCharList(false)}
-                onSelect={handleSelectChar}
-            />}
-
-            <AccessCodeModal
-                isOpen={showAccessCode}
-                character={character}
-                onClose={() => setShowAccessCode(false)}
-                onSuccess={(updated) => { onCharacterUpdate(updated); setShowAccessCode(false); }}
-            />
             {showAvatar     && (
                 <AvatarUploader
                     currentAvatar={char.avatar}
