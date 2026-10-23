@@ -205,7 +205,7 @@ Claude ne lance jamais une release sans validation explicite du MJ dans la conve
 - Script versionné `scripts/certbot-deploy-hook.sh`, installé une fois dans `/etc/letsencrypt/renewal-hooks/deploy/`.
 - Certbot l'exécute en root **uniquement après un renouvellement réussi** du certificat `jdr.grossak.fr` : copie de `fullchain.pem` et `privkey.pem` vers `/home/ubuntu/certs/` (propriétaire `ubuntu`, clé privée en `600`), puis `pm2 restart` sous l'utilisateur `ubuntu`.
 - Le renouvellement lui-même reste celui de certbot (minuteur système). Le port 80 étant libre (Node écoute sur 9999), la méthode `standalone` fonctionne sans arrêter l'appli.
-- Le port 80 était occupé par un apache inutilisé, qui faisait échouer le renouvellement automatique : désactivé le 2026-10-18 (`systemctl disable --now apache2`), `certbot renew --dry-run` passe depuis. Si un serveur web doit un jour revenir sur le 80, passer certbot en `--apache`/`--nginx` ou `--webroot`.
+- Aucun serveur web n'est installé sur le VPS, le port 80 doit rester libre pour certbot (et ouvert dans le pare-feu). Si un serveur web doit un jour s'y installer, passer certbot en `--apache`/`--nginx` ou `--webroot`.
 - Coupure : quelques secondes tous les ~60 jours, au moment où le minuteur de certbot renouvelle.
 
 **Installation (une fois, sur le VPS)** :

@@ -7,4 +7,5 @@ Pour créer un slug :
 - **la commande Claude Code `/new-slug`** (`.claude/commands/new-slug.md`), qui déroule les trois phases du projet ;
 - **le slug de référence `fabula`** pour les patterns de code ;
 - **`CLAUDE.md`** (racine, `src/client`, `src/server`) pour l'architecture et les règles ;
-- **`spec_diceengine_v2.md`** et **`spec_combat.md`** pour les contrats des dés et du combat.
+- **`spec_diceengine_v2.md`** et **`spec_combat.md`** pour les contrats des dés et du combat ;
+- **`spec_ui_menu.md`** pour les menus joueur et MJ.

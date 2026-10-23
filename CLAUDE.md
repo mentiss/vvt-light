@@ -119,7 +119,7 @@ Rooms Socket.io : `${slug}_session_${sessionId}`. L'état partagé (personnages 
 
 La documentation du projet et les **spécifications validées** vivent en Markdown dans `documentations/` :
 - specs de slugs : `spec_<slug>.md` (ex. `spec_deltagreen.md`, `spec_achtung_cthulhu.md`) ;
-- specs de briques plateforme : `spec_combat.md` (combat générique), `spec_diceengine_v2.md` (moteur de dés) ;
+- specs de briques plateforme : `spec_combat.md` (combat générique), `spec_diceengine_v2.md` (moteur de dés), `spec_ui_menu.md` (menus joueur et MJ) ;
 - guides : `guide_new_slug_jdr.md` (réduit à un renvoi vers `/new-slug`).
 
 Règles :

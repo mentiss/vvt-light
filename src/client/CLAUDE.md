@@ -12,9 +12,11 @@ Règles React / CSS. Complète le CLAUDE.md racine.
 
 ## Composants génériques : ne jamais deviner leurs contrats
 
-Avant d'écrire un composant qui reçoit des props de la plateforme, **ouvre la source** et reprends les noms et formes exacts des props. Concerne notamment : `PlayerPage`, `GMPage`, `CreationPage`, `diceEngine.js`, le système de toasts/notifications, `SessionPlayersBar`, `CharacterListModal`, `TabJournal`, `DiceHistoryPage`.
+Avant d'écrire un composant qui reçoit des props de la plateforme, **ouvre la source** et reprends les noms et formes exacts des props. Concerne notamment : `PlayerPage`, `GMPage`, `CreationPage`, `diceEngine.js`, le système de toasts/notifications, `SessionPlayersBar`, `CharacterListModal`, `TabJournal`, `DiceHistoryPage`, `HamburgerMenu` et `HamburgerMenuItems`.
 
-- `DiceHistoryPage` (et non `DiceHistoryTab`) : seules props `sessionId` et `renderHistoryEntry`. Import depuis `src/components/layout/DiceHistoryPage.jsx`.
+- `DiceHistoryPage` (et non `DiceHistoryTab`) : props `sessionId`, `renderHistoryEntry` et `renderAllRollTypes` (le slug rend aussi le jet libre). Import depuis `src/components/layout/DiceHistoryPage.jsx`.
+- Menus joueur et MJ : briques `components/ui/HamburgerMenu.jsx` et éléments `components/ui/HamburgerMenuItems.jsx` (contrats dans `documentations/spec_ui_menu.md`).
+- Rendu des jets : même composant pour l'historique et les notifications, sans marge extérieure (voir « Jet libre » dans `documentations/spec_diceengine_v2.md`).
 - `SessionPlayersBar` vit aussi dans `src/components/layout/`.
 
 ## Moteur de dés (`src/tools/diceEngine.js`)
@@ -56,7 +58,7 @@ Règles :
 - `style=` est réservé aux valeurs réellement dynamiques ou en px fixes. S'il manque une classe, on l'ajoute dans `theme.css`, on ne contourne pas avec `style=`.
 - Tokens `xxx-default` (`bg-default`, `text-default`…). `xxx-base` est un alias legacy à ne pas utiliser.
 - Mode sombre via l'attribut **`data-theme`**, jamais une classe `.dark`.
-- `theme.css` est chargé au niveau page (`import.meta.glob` dans `PlayerPage`/`GMPage`), pas importé dans `Sheet.jsx`.
+- `theme.css` est chargé au niveau page (`import.meta.glob` dans `PlayerPage`/`GMPage`), pas importé dans `Sheet.jsx`. Les `import './theme.css'` restés dans d'anciens slugs sont en trop mais sans effet : n'en ajoute pas dans un nouveau slug.
 - **Pas de `<select>` ni de `<input type="checkbox">`** : boutons « pill » stylés.
 - Tailwind v4 : `shrink-0` et non `flex-shrink-0`.
 
