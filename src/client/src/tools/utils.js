@@ -2,6 +2,15 @@
 // Les fonctions de jeu Vikings vivent dans systems/vikings/config/ (rules.js, utils.js).
 
 // Gestion du thème
+
+// Jour / nuit posé sur <html> : tout ce qui est rendu dans la page en hérite,
+// y compris hors de la fiche (modales). La classe .dark reste pour les thèmes qui l'écoutent encore.
+// Appelé par la page qui porte la préférence : HomePage (global) ou SystemLayout (slug).
+export const applyTheme = (isDark) => {
+    document.documentElement.classList.toggle('dark', isDark);
+    document.documentElement.dataset.theme = isDark ? 'dark' : 'light';
+};
+
 export const saveTheme = (isDark, slug = 'global') => {
     localStorage.setItem(`vtt_theme_${slug}`, isDark ? 'dark' : 'light');
 };

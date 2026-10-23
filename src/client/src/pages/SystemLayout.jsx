@@ -7,7 +7,7 @@
 import React, {useEffect, useState} from 'react';
 import { useParams, Outlet } from 'react-router-dom';
 import { useSystems } from '../context/SystemsContext.jsx';
-import {loadTheme, saveTheme} from "../tools/utils.js";
+import {applyTheme, loadTheme, saveTheme} from "../tools/utils.js";
 import ErrorPage from '../components/platform/ErrorPage.jsx';
 import useSlugGuard from '../hooks/useSlugGuard.js';
 
@@ -17,16 +17,13 @@ const SystemLayout = () => {
     const { system } = useParams();
     const mustReload = useSlugGuard();
     const { systems, error } = useSystems();
-    const [darkMode, setDarkMode] = useState(() => false);
+    // Préférence du slug lue dès le premier rendu (pas de passage furtif en jour).
+    // Le slug ne change pas sans rechargement (useSlugGuard) : pas besoin de la relire.
+    const [darkMode, setDarkMode] = useState(() => (system ? loadTheme(system) : false));
 
+    // Jour / nuit du slug sur <html> (classe .dark et data-theme)
     useEffect(() => {
-        if (!system) return;
-        const saved = loadTheme(system);
-        setDarkMode(saved);
-    }, [system]);
-
-    useEffect(() => {
-        document.documentElement.classList.toggle('dark', darkMode);
+        applyTheme(darkMode);
     }, [darkMode]);
 
     // Thème du slug (les pages du slug le chargent aussi : import sans effet s'il l'est déjà)
@@ -40,7 +37,6 @@ const SystemLayout = () => {
         const next = !darkMode;
         setDarkMode(next);
         saveTheme(next, system);
-        document.documentElement.classList.toggle('dark', next);
     };
 
     // Arrivée par navigation interne depuis un autre slug ou l'accueil : rechargement en cours

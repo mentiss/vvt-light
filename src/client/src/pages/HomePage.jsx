@@ -14,7 +14,7 @@ import SystemBrand    from '../components/platform/SystemBrand.jsx';
 import FreeDiceModal  from '../components/modals/FreeDiceModal.jsx';
 import DiceConfigModal from '../components/modals/DiceConfigModal.jsx';
 import DiceAnimationOverlay from '../components/shared/DiceAnimationOverlay.jsx';
-import { parseServerDate } from '../tools/utils.js';
+import { applyTheme, parseServerDate } from '../tools/utils.js';
 import useSlugGuard from '../hooks/useSlugGuard.js';
 
 const GITHUB_URL = 'https://github.com/mentiss/vvt-light';
@@ -34,6 +34,11 @@ const HomePage = ({ darkMode, onToggleDarkMode }) => {
     const [resumes,       setResumes]        = useState([]);
     const [showFreeDice,   setShowFreeDice]   = useState(false);
     const [showDiceConfig, setShowDiceConfig] = useState(false);
+
+    // Jour / nuit de la plateforme sur <html>
+    useEffect(() => {
+        applyTheme(darkMode);
+    }, [darkMode]);
 
     // Connexions encore valides de cet appareil (cookies de reconnexion des slugs)
     useEffect(() => {

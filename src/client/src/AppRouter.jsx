@@ -2,7 +2,7 @@
 // Routage déclaratif uniquement — aucune logique métier ici.
 // Toute la logique (auth GM, chargement personnage, erreur système) est dans les pages.
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { createBrowserRouter, RouterProvider, Navigate } from 'react-router-dom';
 import { loadTheme, saveTheme } from './tools/utils';
 import SystemLayout from './pages/SystemLayout.jsx';
@@ -13,19 +13,14 @@ import CreationPage from './pages/CreationPage.jsx';
 import { SlugNotFound, RouteErrorPage } from './components/platform/ErrorPage.jsx';
 
 const AppRouter = () => {
-    const [darkMode, setDarkMode] = useState(false);
-
-    useEffect(() => {
-        const saved = loadTheme();
-        setDarkMode(saved);
-        document.documentElement.classList.toggle('dark', saved);
-    }, []);
+    // Préférence de la plateforme (accueil), lue dès le premier rendu.
+    // Appliquée sur <html> par HomePage ; les slugs ont la leur (SystemLayout).
+    const [darkMode, setDarkMode] = useState(() => loadTheme());
 
     const toggleDarkMode = () => {
         const next = !darkMode;
         setDarkMode(next);
         saveTheme(next);
-        document.documentElement.classList.toggle('dark', next);
     };
 
     const router = createBrowserRouter([
