@@ -1,0 +1,26 @@
+{
+  "attempts": 120,
+  "linkMaxRatio": 3,
+  "turnCost": 4,
+  "maxBranches": 8,
+  "minArm": 2,
+  "corridorMaxWidth": 2,
+  "maxSurplus": 0.2,
+  "maxLoad": 0.75,
+  "fillMargin": 1.15,
+  "leftoverOverflow": 0.25,
+  "schemeWidth": 2,
+  "schemeMinDepth": 3,
+  "levelAttempts": 8,
+  "accessCorridorWidth": 1,
+  "stairSize": 6,
+  "cellarStairSize": 4,
+  "closetMaxSize": 9,
+  "hubShare": [0.4, 0.6],
+  "shrinkComfort": 0.25,
+  "densities": {
+    "dense":    { "corridorWidth": 0, "reach": 0, "extraDoorChance": 0.35 },
+    "balanced": { "corridorWidth": 1, "reach": 5, "extraDoorChance": 0.15 },
+    "spacious": { "corridorWidth": 2, "reach": 6, "extraDoorChance": 0.1 }
+  }
+}

@@ -1,0 +1,25 @@
+{
+  "id": "house",
+  "label": "Maison individuelle",
+  "params": { "width": 10, "length": 8, "floors": 1, "basement": false, "density": "dense" },
+  "rooms": [
+    { "type": "entrance",       "quantity": 1 },
+    { "type": "living",         "quantity": 1 },
+    { "type": "kitchen",        "quantity": 1 },
+    { "type": "toilet",         "quantity": 1, "floor": "ground" },
+    { "type": "utility",        "quantity": 1 },
+    { "type": "master_bedroom", "quantity": 1 },
+    { "type": "bedroom",        "quantity": [1, 2] },
+    { "type": "bathroom",       "quantity": 1 },
+    { "type": "toilet",         "quantity": 1, "floor": "upper" }
+  ],
+  "optionalRooms": [
+    { "type": "garage", "quantity": [0, 1] },
+    { "type": "cellar", "quantity": [0, 1] },
+    { "type": "ensuite", "per": "master_bedroom", "quantity": [0, 1] },
+    { "type": "dressing", "per": "master_bedroom", "quantity": [0, 1] }
+  ],
+  "verticalLinks": [
+    { "label": "Escalier", "floorFrom": "ground", "floorTo": "1", "sizeInCells": 6 }
+  ]
+}

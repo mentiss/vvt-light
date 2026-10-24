@@ -1,0 +1,22 @@
+{
+  "id": "warehouse",
+  "label": "Entrepôt / Dock",
+  "layoutByLevel": { "ground": { "schemes": ["hub"], "hub": { "room": "storage_hall", "position": "centre", "share": [0.45,0.6] } } },
+  "params": { "width": 16, "length": 12, "floors": 1, "basement": false, "density": "dense" },
+  "rooms": [
+    { "type": "loading_dock", "quantity": 1 },
+    { "type": "storage_hall", "quantity": 1 },
+    { "type": "office",       "quantity": 1 },
+    { "type": "guard_room",   "quantity": 1 },
+    { "type": "office",       "quantity": 1,      "floor": "upper" },
+    { "type": "storeroom",    "quantity": [1, 2], "floor": "upper" }
+  ],
+  "optionalRooms": [
+    { "type": "storeroom", "quantity": [0, 2] },
+    { "type": "workshop", "quantity": [0, 1] },
+    { "type": "locker_room", "quantity": [0, 1] }
+  ],
+  "verticalLinks": [
+    { "label": "Escalier de mezzanine", "floorFrom": "ground", "floorTo": "1", "sizeInCells": 6 }
+  ]
+}

@@ -1,0 +1,22 @@
+{
+  "id": "temple",
+  "label": "Lieu de culte",
+  "layout": { "schemes": ["enfilade"] },
+  "layoutByLevel": { "ground": { "schemes": ["hub"], "width": 0, "hub": { "room": "nave", "position": "axis", "share": [0.45,0.6] } } },
+  "params": { "width": 10, "length": 16, "floors": 0, "basement": true, "density": "dense" },
+  "rooms": [
+    { "type": "entrance",    "quantity": 1 },
+    { "type": "nave",        "quantity": 1 },
+    { "type": "sacristy",    "quantity": 1 },
+    { "type": "side_chapel", "quantity": 1 },
+    { "type": "crypt",       "quantity": 1 }
+  ],
+  "optionalRooms": [
+    { "type": "side_chapel", "quantity": [0, 2] },
+    { "type": "baptistery", "quantity": [0, 1] },
+    { "type": "chapter_house", "quantity": [0, 1] }
+  ],
+  "verticalLinks": [
+    { "label": "Escalier de la crypte", "floorFrom": "ground", "floorTo": "basement", "sizeInCells": 6 }
+  ]
+}

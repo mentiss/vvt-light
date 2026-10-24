@@ -1,0 +1,25 @@
+{
+  "id": "inn",
+  "label": "Auberge",
+  "layoutByLevel": { "upper": { "schemes": ["spine"], "width": 1 }, "ground": { "schemes": ["hub"], "hub": { "room": "common_room", "position": "axis", "share": [0.4,0.55] } } },
+  "params": { "width": 12, "length": 9, "floors": 1, "basement": false, "density": "dense" },
+  "rooms": [
+    { "type": "entrance",    "quantity": 1 },
+    { "type": "common_room", "quantity": 1 },
+    { "type": "kitchen",     "quantity": 1 },
+    { "type": "cellar",      "quantity": 1 },
+    { "type": "bedroom",     "quantity": 4 },
+    { "type": "stable",      "quantity": [0, 1] }
+  ],
+  "optionalRooms": [
+    { "type": "storeroom", "quantity": [0, 1] },
+    { "type": "innkeeper_office", "quantity": [0, 1] },
+    { "type": "laundry", "quantity": [0, 1] },
+    { "type": "bedroom", "quantity": [0, 2] },
+    { "type": "linen_room", "quantity": [0, 1] },
+    { "type": "washroom", "quantity": [0, 1] }
+  ],
+  "verticalLinks": [
+    { "label": "Escalier", "floorFrom": "ground", "floorTo": "1", "sizeInCells": 6 }
+  ]
+}

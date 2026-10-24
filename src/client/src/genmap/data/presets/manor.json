@@ -1,0 +1,36 @@
+{
+  "id": "manor",
+  "label": "Manoir",
+  "layout": { "schemes": ["gallery", "spine"], "width": 2 },
+  "params": { "width": 16, "length": 12, "floors": 1, "basement": true, "density": "dense" },
+  "rooms": [
+    { "type": "entrance",       "quantity": 1 },
+    { "type": "hall",           "quantity": 1 },
+    { "type": "living_room",    "quantity": 1 },
+    { "type": "library",        "quantity": 1 },
+    { "type": "dining_room",    "quantity": 1 },
+    { "type": "kitchen",        "quantity": 1 },
+    { "type": "cellar",         "quantity": 1 },
+    { "type": "bedroom",        "quantity": 4 },
+    { "type": "master_bedroom", "quantity": 1 },
+    { "type": "cave",           "quantity": 1 }
+  ],
+  "optionalRooms": [
+    { "type": "small_salon", "quantity": [0, 2] },
+    { "type": "study", "quantity": [0, 1] },
+    { "type": "boudoir", "quantity": [0, 1] },
+    { "type": "pantry", "quantity": [0, 1] },
+    { "type": "smoking_room", "quantity": [0, 1] },
+    { "type": "bedroom", "quantity": [0, 2] },
+    { "type": "boudoir", "quantity": [0, 1], "floor": "upper" },
+    { "type": "washroom", "quantity": [0, 1] },
+    { "type": "linen_room", "quantity": [0, 1] },
+    { "type": "ensuite", "per": "master_bedroom", "quantity": [0, 1] },
+    { "type": "dressing", "per": "master_bedroom", "quantity": [0, 1] },
+    { "type": "ensuite", "per": "bedroom", "quantity": [0, 1] }
+  ],
+  "verticalLinks": [
+    { "label": "Escalier",       "floorFrom": "ground", "floorTo": "1",        "sizeInCells": 6 },
+    { "label": "Trappe de cave", "floorFrom": "ground", "floorTo": "basement", "sizeInCells": 2 }
+  ]
+}

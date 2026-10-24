@@ -10,6 +10,7 @@ import GMPage       from './pages/GMPage.jsx';
 import PlayerPage   from './pages/PlayerPage.jsx';
 import HomePage     from './pages/HomePage.jsx';
 import CreationPage from './pages/CreationPage.jsx';
+import GenMapPage   from './pages/GenMapPage.jsx';
 import { SlugNotFound, RouteErrorPage } from './components/platform/ErrorPage.jsx';
 
 const AppRouter = () => {
@@ -28,6 +29,13 @@ const AppRouter = () => {
         {
             path: '/',
             element: <HomePage darkMode={darkMode} onToggleDarkMode={toggleDarkMode} />,
+            errorElement: <RouteErrorPage />,
+        },
+
+        // Outils de la plateforme, sans connexion (route statique : passe avant /:system)
+        {
+            path: '/tools/plans',
+            element: <GenMapPage darkMode={darkMode} onToggleDarkMode={toggleDarkMode} />,
             errorElement: <RouteErrorPage />,
         },
 

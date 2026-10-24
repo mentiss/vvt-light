@@ -593,4 +593,8 @@ select:disabled {
   /* Page d'erreur */
   .vtt-error-code { font-size: 4.5rem; font-weight: 700; line-height: 1; color: var(--color-primary); letter-spacing: 0.05em; }
   .vtt-error-title { font-size: 1.3rem; font-weight: 700; margin: 0.75rem 0 0.5rem; }
+
+  /* Générateur de plans (spec_genmap.md §7.2) : SVG sans fond, toujours affiché sur fond clair */
+  .vtt-plan-preview { background: #fff; border: 1px solid var(--color-border); border-radius: 0.75rem; padding: 0.75rem; overflow: auto; }
+  .vtt-plan-preview svg { display: block; max-width: 100%; height: auto; margin: 0 auto; }
 }

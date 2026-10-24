@@ -1,0 +1,22 @@
+{
+  "id": "tower",
+  "label": "Tour de garde",
+  "layout": { "schemes": ["enfilade"] },
+  "params": { "width": 7, "length": 7, "floors": 3, "basement": false, "density": "dense" },
+  "rooms": [
+    { "type": "entrance",   "quantity": 1 },
+    { "type": "guard_room", "quantity": 1, "floor": "ground" },
+    { "type": "armory",     "quantity": 1, "floor": "1" },
+    { "type": "storeroom",  "quantity": 1, "floor": "1" },
+    { "type": "lookout",    "quantity": 1, "floor": "top", "sizeMin": 24 },
+    { "type": "dormitory",  "quantity": 1, "floor": "upper" }
+  ],
+  "optionalRooms": [
+    { "type": "dormitory", "quantity": [0, 2], "floor": "upper" },
+    { "type": "storeroom", "quantity": [0, 3], "floor": "upper" },
+    { "type": "living",    "quantity": [0, 1], "floor": "upper", "label": "Salle de vie" }
+  ],
+  "verticalLinks": [
+    { "label": "Escalier à vis", "floorFrom": "ground", "floorTo": "1", "sizeInCells": 4, "kind": "spiral" }
+  ]
+}
