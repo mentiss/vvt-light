@@ -712,6 +712,16 @@
 .vtt-journal-title { font-family: 'Rajdhani', sans-serif; letter-spacing: .06em; text-transform: uppercase; }
 .vtt-scroll { scrollbar-color: var(--color-border) transparent; }
 .vtt-scroll:hover { scrollbar-color: var(--color-primary) transparent; }
+/* Catalogue (CatalogModal, spec_ui_catalogue.md) : intertitres cp-font-ui, ligne survolée
+   teintée de cyan, ✦ bouton « + » à coins coupés */
+.vtt-catalog-list-header, .vtt-catalog-group { font-family: 'Rajdhani', sans-serif; letter-spacing: .16em; }
+.vtt-catalog-item:hover { background: color-mix(in srgb, var(--color-primary) 6%, transparent); }
+.vtt-catalog-add {
+    border-radius: 0; font-family: 'Rajdhani', sans-serif;
+    clip-path: polygon(6px 0, 100% 0, 100% calc(100% - 6px), calc(100% - 6px) 100%, 0 100%, 0 6px);
+}
+.vtt-catalog-item:hover .vtt-catalog-add { border-color: var(--color-primary); background: color-mix(in srgb, var(--color-primary) 14%, transparent); }
+.vtt-catalog-count { font-family: 'Rajdhani', sans-serif; letter-spacing: .1em; text-transform: uppercase; }
 
 /* ── Dépense d'XP : cartes de stat à jauge (XPPanel, spec §14.5) ─────────────
    Cyan pour les avancements de base, ambre (cp-xp-major) pour les majeurs.

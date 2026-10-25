@@ -36,13 +36,13 @@ import {
     ItemRow,
 } from '../../components/layout/Rows.jsx';
 
-import {CYBERWARE_ALL, ITEMS_ALL, STAT_LABELS} from '../../config.jsx';
+import {STAT_LABELS} from '../../config.jsx';
 import useSystem from "../../../../hooks/useSystem.js";
 import {useFetch} from "../../../../hooks/useFetch.js";
 import {useSocket} from "../../../../context/SocketContext.jsx";
 import GMSendModal from "../../../../components/gm/modals/GMSendModal.jsx";
 import {useParams} from "react-router-dom";
-import BrowseModal from "../../components/modals/BrowseModal.jsx";
+import CyberpunkCatalogModal from "../../components/modals/CyberpunkCatalogModal.jsx";
 import ConfirmModal from "../../../../components/modals/ConfirmModal.jsx";
 
 // ── Constantes ────────────────────────────────────────────────────────────────
@@ -832,40 +832,11 @@ const TabSession = ({ activeSession, onlineCharacters, onSessionChange }) => {
                     preSelectedCharId={selectedId}
                 />
             )}
-            {browseModal === 'cyberware' && char && (
-                <BrowseModal
-                    title="Cyberware"
-                    items={CYBERWARE_ALL}
-                    groupKey="category"
-                    onAdd={(cw) => {
-                        patchChar(char.id, {
-                            cyberware: [...(char.cyberware ?? []), {
-                                name:        cw.name,
-                                option_text: '',
-                                notes:       '',
-                                tags:        cw.tags.map(t => ({ tag_text: t.text, tag_variant: t.variant })),
-                            }],
-                        });
-                    }}
-                    onClose={() => setBrowseModal(null)}
-                />
-            )}
-
-            {browseModal === 'items' && char && (
-                <BrowseModal
-                    title="Inventaire"
-                    items={ITEMS_ALL}
-                    groupKey="category"
-                    onAdd={(it) => {
-                        patchChar(char.id, {
-                            items: [...(char.items ?? []), {
-                                name:        it.name,
-                                description: '',
-                                quantity:    1,
-                                tags:        it.tags.map(t => ({ tag_text: t.text, tag_variant: t.variant })),
-                            }],
-                        });
-                    }}
+            {/* Catalogue cyberware / inventaire (browseModal = 'cyberware' | 'items', nom du champ du personnage) */}
+            {browseModal && char && (
+                <CyberpunkCatalogModal
+                    kind={browseModal}
+                    onAdd={(entry) => patchChar(char.id, { [browseModal]: [...(char[browseModal] ?? []), entry] })}
                     onClose={() => setBrowseModal(null)}
                 />
             )}

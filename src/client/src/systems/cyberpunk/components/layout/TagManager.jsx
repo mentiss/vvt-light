@@ -25,6 +25,7 @@ export const Tag = ({ tag, onRemove, editMode, alwaysRemovable = false }) => {
         {tag.tag_text}
             {(editMode || alwaysRemovable) && (
                 <button
+                    type="button"
                     onClick={() => onRemove()}
                     className="ml-1 opacity-60 hover:opacity-100 text-xs leading-none"
                     style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}
@@ -87,6 +88,7 @@ export const TagAdder = ({ onAdd, compact = false, existingTags = [], entityType
                 <div className="flex gap-1 shrink-0">
                     {Object.entries({ positive: '✦', negative: '✕', neutral: '◈' }).map(([v, icon]) => (
                         <button
+                            type="button"
                             key={v}
                             onClick={() => setVariant(v)}
                             className="w-5 h-5 rounded text-xs flex items-center justify-center"
@@ -130,6 +132,7 @@ export const TagAdder = ({ onAdd, compact = false, existingTags = [], entityType
                         >
                             {filtered.map((s, i) => (
                                 <button
+                                    type="button"
                                     key={i}
                                     onMouseDown={() => handleAdd(s.text, s.variant)}
                                     className="w-full text-left px-3 py-1.5 text-xs flex items-center gap-2 hover:bg-surface-alt transition-colors"
@@ -152,6 +155,7 @@ export const TagAdder = ({ onAdd, compact = false, existingTags = [], entityType
                     )}
                 </div>
                 <button
+                    type="button"
                     onMouseDown={() => handleAdd()}
                     className="text-xs px-2 py-0.5 rounded flex-shrink-0"
                     style={{ background: 'var(--color-primary)', color: 'var(--color-bg)', cursor: 'pointer' }}

@@ -53,8 +53,9 @@ const WeaponsTable = ({ weapons = [], editMode, onChange, onRollDamage, onRollAt
 
     const [catalogOpen, setCatalogOpen] = useState(false);
 
+    // Arme du catalogue (complète) ou objet libre (nom, portée, dégâts) : les champs absents prennent leur valeur vide
     const addFromCatalog = (weaponData) =>
-        onChange?.([...weapons, { ...weaponData, _tempId: Date.now() }]);
+        onChange?.([...weapons, { ...EMPTY_WEAPON, ...weaponData, _tempId: Date.now() }]);
 
     const toggleQuality = (idx, w, key) => {
         const clean = (w.qualities ?? []).filter(k => WEAPON_QUALITIES.includes(k));

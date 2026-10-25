@@ -68,7 +68,7 @@ export const WEAPON_CATALOG = [
     { name: 'M1 Garand Rifle',                   type: 'Fusils', faction: 'allied', focus: 'Fusils',      range: 'medium', damage: 5, size: 'Major', salvo: [{ key: 'vicious' }], effect: [], qualities: ['reliable'] },
     { name: 'MAS Modèle 1936 Rifle',             type: 'Fusils', faction: 'allied', focus: 'Fusils',      range: 'medium', damage: 5, size: 'Major', salvo: [{ key: 'vicious' }], effect: [], qualities: ['reliable'] },
     { name: 'Springfield M1903',                 type: 'Fusils', faction: 'allied', focus: 'Fusils',      range: 'long',   damage: 5, size: 'Major', salvo: [{ key: 'vicious' }], effect: [], qualities: ['reliable', 'accurate'] },
-    { name: 'Winchester M12 Shotgun',            type: 'Fusils', faction: 'allied', focus: 'Rapproché',   range: 'close',  damage: 5, size: 'Major', salvo: [{ key: 'vicious' }], effect: [], qualities: ['reliable', 'inaccurate'] },
+    { name: 'Winchester M12 Shotgun',            type: 'Fusils', faction: 'allied', focus: 'Corps à corps',   range: 'close',  damage: 5, size: 'Major', salvo: [{ key: 'vicious' }], effect: [], qualities: ['reliable', 'inaccurate'] },
 
     // MITRAILLETTES ET MITRAILLEUSES — ALLIÉ
     { name: 'Bren Machine Gun',                          type: 'Mitraillettes et mitrailleuses', faction: 'allied', focus: 'Fusils',      range: 'medium', damage: 5, size: 'Major', salvo: [{ key: 'area' }], effect: [], qualities: ['inaccurate', 'unwieldy'] },
@@ -77,10 +77,10 @@ export const WEAPON_CATALOG = [
     { name: 'Johnson M1941 Machine Gun',                 type: 'Mitraillettes et mitrailleuses', faction: 'allied', focus: 'Fusils',      range: 'medium', damage: 5, size: 'Major', salvo: [{ key: 'area' }], effect: [], qualities: ['inaccurate', 'unwieldy'] },
     { name: 'MAC Modèle 1924 M29 Machine Gun',           type: 'Mitraillettes et mitrailleuses', faction: 'allied', focus: 'Fusils',      range: 'medium', damage: 5, size: 'Major', salvo: [{ key: 'area' }], effect: [], qualities: ['inaccurate', 'unwieldy'] },
     { name: 'Pistolet Mitrailleur Erma Modèle 1935 (EMP-35)', type: 'Mitraillettes et mitrailleuses', faction: 'allied', focus: 'Fusils', range: 'medium', damage: 5, size: 'Major', salvo: [{ key: 'stun' }], effect: [], qualities: ['inaccurate', 'unreliable'] },
-    { name: 'Sten Mk IIS Suppressed SMG',                type: 'Mitraillettes et mitrailleuses', faction: 'allied', focus: 'Rapproché',   range: 'close',  damage: 3, size: 'Major', salvo: [{ key: 'stun' }], effect: [], qualities: ['inaccurate', 'subtle'] },
-    { name: 'Sten Mk.V Submachine Gun',                  type: 'Mitraillettes et mitrailleuses', faction: 'allied', focus: 'Rapproché',   range: 'close',  damage: 4, size: 'Major', salvo: [{ key: 'stun' }], effect: [], qualities: ['inaccurate'] },
-    { name: 'Thompson Submachine Gun',                   type: 'Mitraillettes et mitrailleuses', faction: 'allied', focus: 'Rapproché',   range: 'close',  damage: 4, size: 'Major', salvo: [{ key: 'stun' }], effect: [], qualities: ['inaccurate'] },
-    { name: 'United Defence M42 Submachine Gun',         type: 'Mitraillettes et mitrailleuses', faction: 'allied', focus: 'Rapproché',   range: 'close',  damage: 4, size: 'Major', salvo: [{ key: 'stun' }], effect: [], qualities: ['inaccurate'] },
+    { name: 'Sten Mk IIS Suppressed SMG',                type: 'Mitraillettes et mitrailleuses', faction: 'allied', focus: 'Corps à corps',   range: 'close',  damage: 3, size: 'Major', salvo: [{ key: 'stun' }], effect: [], qualities: ['inaccurate', 'subtle'] },
+    { name: 'Sten Mk.V Submachine Gun',                  type: 'Mitraillettes et mitrailleuses', faction: 'allied', focus: 'Corps à corps',   range: 'close',  damage: 4, size: 'Major', salvo: [{ key: 'stun' }], effect: [], qualities: ['inaccurate'] },
+    { name: 'Thompson Submachine Gun',                   type: 'Mitraillettes et mitrailleuses', faction: 'allied', focus: 'Corps à corps',   range: 'close',  damage: 4, size: 'Major', salvo: [{ key: 'stun' }], effect: [], qualities: ['inaccurate'] },
+    { name: 'United Defence M42 Submachine Gun',         type: 'Mitraillettes et mitrailleuses', faction: 'allied', focus: 'Corps à corps',   range: 'close',  damage: 4, size: 'Major', salvo: [{ key: 'stun' }], effect: [], qualities: ['inaccurate'] },
     { name: 'Vickers Machine Gun',                       type: 'Mitraillettes et mitrailleuses', faction: 'allied', focus: 'Armes lourdes', range: 'medium', damage: 7, size: 'Major', salvo: [{ key: 'area' }], effect: [], qualities: ['escalation', 'inaccurate', 'unwieldy'] },
 
     // ARMES LOURDES ET ORDONNANCE — ALLIÉ
@@ -93,7 +93,7 @@ export const WEAPON_CATALOG = [
     { name: '2-Inch Mortar',                                 type: 'Armes lourdes et ordonnance', faction: 'allied', focus: 'Armes lourdes', range: 'extreme', damage: 6, size: 'Minor', salvo: [{ key: 'stun' }], effect: [{ key: 'area' }], qualities: ['escalation', 'heavy', 'indirect'] },
 
     // GRENADES ET BOMBES — ALLIÉ
-    { name: '1½lbs/3lbs Standard Charge',         type: 'Grenades et bombes', faction: 'allied', focus: 'Démolition', range: 'close', damage: 10, size: 'Minor', salvo: [{ key: 'intense' }], effect: [{ key: 'area' }, { key: 'stun' }], qualities: [] },
+    { name: '1½lbs/3lbs Standard Charge',         type: 'Grenades et bombes', faction: 'allied', focus: 'Explosifs', range: 'close', damage: 10, size: 'Minor', salvo: [{ key: 'intense' }], effect: [{ key: 'area' }, { key: 'stun' }], qualities: [] },
     { name: 'GP Grenade',                         type: 'Grenades et bombes', faction: 'allied', focus: 'Lancer',     range: 'close', damage: 6,  size: 'Minor', salvo: [], effect: [{ key: 'area' }, { key: 'vicious' }], qualities: ['inaccurate', 'munition'] },
     { name: 'Mills Bomb (No.36M)',                type: 'Grenades et bombes', faction: 'allied', focus: 'Lancer',     range: 'close', damage: 6,  size: 'Minor', salvo: [], effect: [{ key: 'area' }, { key: 'stun' }], qualities: ['inaccurate', 'munition'] },
     { name: 'Mills Bomb, Rifle Variant',          type: 'Grenades et bombes', faction: 'allied', focus: 'Fusils',     range: 'medium', damage: 6, size: 'Minor', salvo: [], effect: [{ key: 'area' }, { key: 'stun' }], qualities: ['inaccurate', 'munition'] },
@@ -124,7 +124,7 @@ export const WEAPON_CATALOG = [
 
     // MITRAILLETTES ET MITRAILLEUSES — ALLEMAND
     { name: 'Maschinengewehr 42 (MG 42)',   type: 'Mitraillettes et mitrailleuses', faction: 'german', focus: 'Fusils',       range: 'medium', damage: 6, size: 'Major', salvo: [{ key: 'area' }], effect: [], qualities: ['inaccurate'] },
-    { name: 'Maschinenpistole 40 (MP 40)',  type: 'Mitraillettes et mitrailleuses', faction: 'german', focus: 'Rapproché',    range: 'close',  damage: 4, size: 'Major', salvo: [{ key: 'stun' }], effect: [], qualities: ['reliable'] },
+    { name: 'Maschinenpistole 40 (MP 40)',  type: 'Mitraillettes et mitrailleuses', faction: 'german', focus: 'Corps à corps',    range: 'close',  damage: 4, size: 'Major', salvo: [{ key: 'stun' }], effect: [], qualities: ['reliable'] },
     { name: 'Maschinengewehr 131 (MG 131)', type: 'Mitraillettes et mitrailleuses', faction: 'german', focus: 'Armes lourdes', range: 'medium', damage: 7, size: 'Major', salvo: [{ key: 'area' }], effect: [], qualities: ['reliable'] },
 
     // ARMES LOURDES — ALLEMAND

@@ -39,10 +39,10 @@ import {StatCard} from "./components/layout/StatCard.jsx";
 import {XPPanel} from "./components/modals/XPPanel.jsx";
 import {MoveCard} from "./components/layout/MoveCard.jsx";
 import {ResourceCounter} from "./components/layout/ResourceCounter.jsx";
-import cyberpunkConfig, {CYBERWARE_ALL, ITEMS_ALL} from "./config.jsx";
+import cyberpunkConfig from "./config.jsx";
 import DiceEntryHistory from "./components/layout/DiceEntryHistory.jsx";
 import BoltFarm from "./components/ui/BoltFarm.jsx";
-import BrowseModal from "./components/modals/BrowseModal.jsx";
+import CyberpunkCatalogModal from "./components/modals/CyberpunkCatalogModal.jsx";
 import ReferenceTab from "./components/ReferenceTab.jsx";
 
 // ── Onglets ───────────────────────────────────────────────────────────────────
@@ -1042,45 +1042,13 @@ const Sheet = ({
                     onClose={() => setShowAvatar(false)}
                 />
             )}
-            {browseModal === 'cyberware' && (
-                <BrowseModal
-                    title="Cyberware"
-                    items={CYBERWARE_ALL}
-                    groupKey="category"
-                    onAdd={(cw) => {
+            {/* Catalogue cyberware / inventaire (browseModal = 'cyberware' | 'items', nom du champ du personnage) */}
+            {browseModal && (
+                <CyberpunkCatalogModal
+                    kind={browseModal}
+                    onAdd={(entry) => {
                         const base = editMode ? editableChar : char;
-                        const next = {
-                            ...base,
-                            cyberware: [...(base.cyberware ?? []), {
-                                name:        cw.name,
-                                option_text: '',
-                                notes:       '',
-                                tags:        cw.tags.map(t => ({ tag_text: t.text, tag_variant: t.variant })),
-                            }],
-                        };
-                        setEditableChar(next);
-                        if (!editMode) onCharacterUpdate(next);
-                    }}
-                    onClose={() => setBrowseModal(null)}
-                />
-            )}
-
-            {browseModal === 'items' && (
-                <BrowseModal
-                    title="Inventaire"
-                    items={ITEMS_ALL}
-                    groupKey="category"
-                    onAdd={(it) => {
-                        const base = editMode ? editableChar : char;
-                        const next = {
-                            ...base,
-                            items: [...(base.items ?? []), {
-                                name:        it.name,
-                                description: '',
-                                quantity:    1,
-                                tags:        it.tags.map(t => ({ tag_text: t.text, tag_variant: t.variant })),
-                            }],
-                        };
+                        const next = { ...base, [browseModal]: [...(base[browseModal] ?? []), entry] };
                         setEditableChar(next);
                         if (!editMode) onCharacterUpdate(next);
                     }}
