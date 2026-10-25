@@ -89,7 +89,7 @@ Tous sont des systèmes en usage réel, aucun n'est un brouillon :
 |---|---|---|
 | `fabula` | Fabula Ultima | Implémentation récente la plus complète : **référence à suivre** |
 | `zoneblanche` | Zone Blanche (2D20) | Récent |
-| `vikings` | Pure Vikings | Le plus ancien, **en refonte** : ne pas le prendre comme modèle |
+| `vikings` | Pure Vikings | Le plus ancien, refondu (spec, serveur, interface, graphisme) : slug moderne, seul le combat n'a pas été refait |
 | `achtung` | Achtung! Cthulhu | |
 | `cyberpunk` | The Sprawl (PbtA) | |
 | `deltagreen` | Delta Green | |
