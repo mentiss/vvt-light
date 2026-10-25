@@ -190,7 +190,7 @@
 .vtt-session-bar-player[data-online] .vtt-session-bar-frame { background: var(--dune-gold); }
 .vtt-session-bar-player[data-me] .vtt-session-bar-frame { padding: 2.5px; background: var(--dune-spice); }   /* ✦ épice */
 .vtt-session-bar-initials { font-family: var(--font-dune); color: var(--dune-gold); }
-.vtt-session-bar-reopen { border-radius: .375rem; background: var(--dune-gold); color: var(--dune-dark); }
+.vtt-session-bar-reopen { border-radius: .375rem; background: var(--dune-gold); color: var(--dune-dark); margin-top: 1rem; }   /* décollé de la barre d'onglets */
 .vtt-session-bar-card { border-radius: .5rem; border: 1.5px solid var(--dune-border); background: var(--dune-surface); }
 .vtt-session-bar-card-image { position: relative; border-radius: .375rem; border: 1.5px solid var(--dune-border); font-family: var(--font-dune); color: var(--dune-gold); }
 .vtt-session-bar-card-image::after {   /* ✦ crépuscule et dunes de la marque */

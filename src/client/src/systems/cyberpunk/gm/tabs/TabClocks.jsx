@@ -2,6 +2,7 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { Btn, SectionTitle, Input } from '../BasicComponents.jsx';
 import IconPicker, { IconPreview, DEFAULT_CLOCK_PRESETS } from '../IconPicker.jsx';
+import useConfirm from "../../../../hooks/useConfirm.jsx";
 
 // ── ClockBar — vue détaillée ──────────────────────────────────────────────────
 const ClockBar = ({ clock, threats, onAdvance, onEdit, onDelete, onPin, onGoToThreat }) => {
@@ -233,6 +234,7 @@ const TabClocks = ({ activeSession, fetchWithAuth, apiBase, onGoToThreat }) => {
     const [editClock, setEditClock] = useState(null);
     const [search,    setSearch]    = useState('');
     const [compact,   setCompact]   = useState(false);
+    const { confirm, confirmEl } = useConfirm();
 
     const sessionId = activeSession?.id ?? null;
 
@@ -284,7 +286,13 @@ const TabClocks = ({ activeSession, fetchWithAuth, apiBase, onGoToThreat }) => {
     };
 
     const deleteClock = async (id) => {
-        if (!confirm('Supprimer cette clock ?')) return;
+        const ok = await confirm({
+            title:       'Supprimer la clock',
+            message:     'Cette action est irréversible.',
+            danger:      true,
+            confirmText: 'Supprimer',
+        });
+        if (!ok) return;
         await fetchWithAuth(`${apiBase}/clocks/${id}`, { method: 'DELETE' });
         load();
     };
@@ -351,6 +359,7 @@ const TabClocks = ({ activeSession, fetchWithAuth, apiBase, onGoToThreat }) => {
                     onGoToThreat={onGoToThreat}
                 />
             ))}
+            {confirmEl}
         </div>
     );
 };

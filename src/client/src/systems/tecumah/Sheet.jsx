@@ -14,7 +14,7 @@ import AvatarUploader     from '../../components/AvatarUploader.jsx';
 import { HamburgerMenu, HamburgerMenuItem, HamburgerMenuSeparator } from '../../components/ui/HamburgerMenu.jsx';
 import {
     HamburgerMenuItemDiceConfig, HamburgerMenuItemSwitchCharacter, HamburgerMenuItemCreateCharacter,
-    HamburgerMenuItemGMInterface, HamburgerMenuItemLogout,
+    HamburgerMenuItemGMInterface, HamburgerMenuItemLogout, HamburgerMenuItemAccessCode, HamburgerMenuItemFreeDice,
 } from '../../components/ui/HamburgerMenuItems.jsx';
 import JournalTab         from '../../components/tabs/JournalTab.jsx';
 import DiceHistoryPage    from '../../components/layout/DiceHistoryPage.jsx';
@@ -166,6 +166,13 @@ const Sheet = ({
                         {/* Menu hamburger générique (spec_ui_menu.md), habillé dans theme.css, emojis du slug */}
                         <HamburgerMenu button="☰">
                             <HamburgerMenuItemDiceConfig icon="⚙️" />
+                            {/* Jet libre : icône SVG par défaut du menu (dé) */}
+                            <HamburgerMenuItemFreeDice
+                                characterId={character.id}
+                                characterName={[character.prenom, character.nom].filter(Boolean).join(' ')}
+                                sessionId={activeGMSession}
+                            />
+                            <HamburgerMenuItemAccessCode icon="🔑" character={character} onSuccess={onCharacterUpdate} />
                             <HamburgerMenuItem icon="📈" onClick={() => setShowXPModal(true)}>Dépenser des PP</HamburgerMenuItem>
                             <HamburgerMenuSeparator />
                             <HamburgerMenuItemSwitchCharacter icon="🔄" currentCharId={character?.id} />

@@ -15,7 +15,7 @@ import AvatarUploader       from '../../components/AvatarUploader.jsx';
 import { HamburgerMenu, HamburgerMenuSeparator } from '../../components/ui/HamburgerMenu.jsx';
 import {
     HamburgerMenuItemCreateCharacter, HamburgerMenuItemSwitchCharacter, HamburgerMenuItemAccessCode,
-    HamburgerMenuItemDiceConfig, HamburgerMenuItemGMInterface, HamburgerMenuItemLogout,
+    HamburgerMenuItemFreeDice, HamburgerMenuItemDiceConfig, HamburgerMenuItemGMInterface, HamburgerMenuItemLogout,
 } from '../../components/ui/HamburgerMenuItems.jsx';
 
 import SkillRow             from './components/SkillRow.jsx';
@@ -204,6 +204,12 @@ const Sheet = ({
                         <HamburgerMenuItemCreateCharacter icon="✨" />
                         <HamburgerMenuItemSwitchCharacter icon="🗂️" currentCharId={character?.id} />
                         <HamburgerMenuItemAccessCode icon="🔑" character={character} onSuccess={onCharacterUpdate} />
+                        {/* Jet libre : icône SVG par défaut du menu (dé) */}
+                        <HamburgerMenuItemFreeDice
+                            characterId={character.id}
+                            characterName={[character.prenom, character.nom].filter(Boolean).join(' ')}
+                            sessionId={activeGMSession}
+                        />
                         <HamburgerMenuItemDiceConfig icon="🎲" />
                         <HamburgerMenuItemGMInterface icon="🎭" />
                         <HamburgerMenuSeparator />

@@ -17,6 +17,7 @@ import { getCombatValues } from "../../config/rules.js";
 import VkModal from "../ui/VkModal.jsx";
 import VkIcon from "../ui/VkIcon.jsx";
 import VkQuantity from "../ui/VkQuantity.jsx";
+import useConfirm from "../../../../hooks/useConfirm.jsx";
 
 const FILTERS = [['all', 'Tous'], ['weapon', 'Armes'], ['armor', 'Armures'], ['item', 'Objets']];
 const CATEGORIES = [['item', 'Objet'], ['weapon', 'Arme'], ['armor', 'Armure']];
@@ -224,6 +225,7 @@ const EditItemModal = ({ character, item, onClose, onUpdate }) => {
     const [quantity, setQuantity] = useState(item.quantity);
     const [location, setLocation] = useState(item.location);
     const setField = (k, v) => setFields(prev => ({ ...prev, [k]: v }));
+    const { confirm, confirmEl } = useConfirm();
 
     const handleSave = () => {
         if (!fields.name.trim()) return;
@@ -231,8 +233,14 @@ const EditItemModal = ({ character, item, onClose, onUpdate }) => {
         onUpdate({ ...character, items: character.items.map(i => i.id === item.id ? updated : i) });
         onClose();
     };
-    const handleDelete = () => {
-        if (!confirm(`Supprimer « ${item.name} » ?`)) return;
+    const handleDelete = async () => {
+        const ok = await confirm({
+            title:       'Supprimer l\'objet',
+            message:     `Supprimer « ${item.name} » ?`,
+            danger:      true,
+            confirmText: 'Supprimer',
+        });
+        if (!ok) return;
         onUpdate({ ...character, items: character.items.filter(i => i.id !== item.id) });
         onClose();
     };
@@ -247,6 +255,8 @@ const EditItemModal = ({ character, item, onClose, onUpdate }) => {
                 <button type="button" className="vk-btn" onClick={onClose}>Annuler</button>
                 <button type="button" className="vk-btn vk-btn-success" onClick={handleSave} disabled={!fields.name.trim()}><VkIcon name="check" />Enregistrer</button>
             </div>
+            {/* Dans la VkModal : un clic dans la confirmation ne remonte pas jusqu'à son fond */}
+            {confirmEl}
         </VkModal>
     );
 };
