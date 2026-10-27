@@ -1,6 +1,6 @@
 {
   "name": "vtt-light-app",
-  "version": "5.7.0",
+  "version": "5.7.1",
   "description": "App VTT multi-JDR",
   "main": "src/server/server.js",
   "scripts": {
