@@ -18,6 +18,7 @@ import VkModal from "../ui/VkModal.jsx";
 import VkIcon from "../ui/VkIcon.jsx";
 import VkQuantity from "../ui/VkQuantity.jsx";
 import useConfirm from "../../../../hooks/useConfirm.jsx";
+import CatalogModal from "../../../../components/modals/CatalogModal.jsx";
 
 const FILTERS = [['all', 'Tous'], ['weapon', 'Armes'], ['armor', 'Armures'], ['item', 'Objets']];
 const CATEGORIES = [['item', 'Objet'], ['weapon', 'Arme'], ['armor', 'Armure']];
@@ -157,65 +158,51 @@ const QtyAndLocation = ({ quantity, setQuantity, location, setLocation }) => (
     </div>
 );
 
-// ── Ajout ────────────────────────────────────────────────────────────────────
+// ── Ajout : modale de catalogue générique (spec_ui_catalogue.md) ─────────────
+// Clic = ajout immédiat, quantité 1, dans l'emplacement de la colonne d'où la
+// modale a été ouverte ; la modale reste ouverte. Pas de prix (indicatif).
+const CATEGORY_FILTER = [{
+    key:      'category',
+    getValue: it => it.category,
+    options:  CATEGORIES.map(([value, label]) => ({ value, label })),
+}];
+
+const renderCatalogItem = (item) => (
+    <div className="text-sm">
+        <div className="font-bold">
+            {item.name}
+            <span className="vk-tag vk-tag-muted ml-1.5">{CATEGORIES.find(([id]) => id === item.category)?.[1] ?? 'Objet'}</span>
+        </div>
+        {itemDetails(item) && <div className="text-xs text-muted">{itemDetails(item)}</div>}
+        {(item.material || item.notes) && (
+            <div className="text-xs text-muted italic">{[item.material, item.notes].filter(Boolean).join(' · ')}</div>
+        )}
+    </div>
+);
+
+const CUSTOM_DEFAULTS = fieldsFrom();
+const renderCustomFields = ({ value, onChange }) => <ItemFields fields={value} set={(k, v) => onChange({ [k]: v })} />;
+
 const AddItemModal = ({ character, onClose, onUpdate, defaultLocation }) => {
-    const [mode, setMode] = useState('list'); // 'list' | 'custom'
-    const [search, setSearch] = useState('');
-    const [categoryFilter, setCategoryFilter] = useState('all');
-    const [selected, setSelected] = useState(null);
-    const [fields, setFields] = useState(fieldsFrom());
-    const [quantity, setQuantity] = useState(1);
-    const [location, setLocation] = useState(defaultLocation);
-
-    const setField = (k, v) => setFields(prev => ({ ...prev, [k]: v }));
-    const filteredItems = ITEMS.filter(item =>
-        (!search || item.name.toLowerCase().includes(search.toLowerCase()))
-        && (categoryFilter === 'all' || item.category === categoryFilter));
-    const canAdd = mode === 'list' ? !!selected : !!fields.name.trim();
-
-    const handleAdd = () => {
-        if (!canAdd) return;
-        const base = mode === 'list'
-            ? { ...selected, notes: '', customItem: false }
-            : { ...itemFromFields(fields), customItem: true };
-        // id temporaire : le serveur insère tout id inconnu (lot 2)
-        const newItem = { ...base, id: Date.now(), quantity, location };
-        onUpdate({ ...character, items: [...(character.items || []), newItem] });
-        onClose();
-    };
+    // id temporaire : le serveur insère tout id inconnu (lot 2)
+    const add = (base) => onUpdate({
+        ...character,
+        items: [...(character.items || []), { ...base, id: Date.now(), quantity: 1, location: defaultLocation }],
+    });
 
     return (
-        <VkModal title="Ajouter un objet" icon="pouch" onClose={onClose} size="max-w-2xl">
-            <div className="mb-3"><Pills options={[['list', 'Catalogue'], ['custom', 'Objet libre']]} value={mode} onChange={setMode} /></div>
-
-            {mode === 'list' ? (
-                <>
-                    <span className="vk-input-icon block mb-2">
-                        <VkIcon name="eye" />
-                        <input className="vk-input" value={search} onChange={e => setSearch(e.target.value)} placeholder="Rechercher…" autoFocus />
-                    </span>
-                    <div className="mb-2"><Pills options={FILTERS} value={categoryFilter} onChange={setCategoryFilter} /></div>
-                    <div className="grid sm:grid-cols-2 gap-1.5 max-h-72 overflow-y-auto pr-1">
-                        {filteredItems.map(item => (
-                            <button key={item.name} type="button" onClick={() => setSelected(item)}
-                                    className={`vk-pill w-full justify-between text-left ${selected?.name === item.name ? 'is-selected' : ''}`}>
-                                <span>{item.name}</span>
-                                <span className="text-xs opacity-75">{item.damage ? `dégâts ${item.damage}` : item.armorValue > 0 ? `armure +${item.armorValue}` : ''}</span>
-                            </button>
-                        ))}
-                    </div>
-                </>
-            ) : (
-                <ItemFields fields={fields} set={setField} />
-            )}
-
-            <QtyAndLocation quantity={quantity} setQuantity={setQuantity} location={location} setLocation={setLocation} />
-
-            <div className="flex gap-2 pt-3 mt-3 border-t border-default">
-                <button type="button" className="vk-btn flex-1" onClick={onClose}>Annuler</button>
-                <button type="button" className="vk-btn vk-btn-primary flex-1" onClick={handleAdd} disabled={!canAdd}><VkIcon name="plus" />Ajouter</button>
-            </div>
-        </VkModal>
+        <CatalogModal
+            title="Ajouter un objet"
+            subtitle={`Vers : ${LOCATIONS.find(l => l.id === defaultLocation)?.label ?? ''}`}
+            items={ITEMS}
+            renderItem={renderCatalogItem}
+            filters={CATEGORY_FILTER}
+            onAdd={item => add({ ...item, notes: '', customItem: false })}
+            onAddCustom={fields => add({ ...itemFromFields(fields), customItem: true })}
+            customDefaults={CUSTOM_DEFAULTS}
+            renderCustomForm={renderCustomFields}
+            onClose={onClose}
+        />
     );
 };
 

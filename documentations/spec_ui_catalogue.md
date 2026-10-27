@@ -2,7 +2,7 @@
 
 ## Statut
 
-**Proposée le 2026-10-25.** Diagnostic validé par le MJ le 2026-10-25 (D-1 à D-8). Questions Q-1 à Q-8 tranchées par le MJ le 2026-10-25 (§9), décisions reportées au §1 (D-9 à D-13). **Lot pilote implémenté et validé le 2026-10-25** (Cyberpunk, Achtung). Retours du MJ intégrés au lot : arme libre d'Achtung complète (focus avec suggestions tirées des compétences, saisie libre possible), lignes du catalogue d'armes avec toutes les caractéristiques, pills compactes de la forme de la fiche, cadre de la zone recherche / filtres (`vtt-catalog-controls`), onglets soulignés, pli de la feuille retiré du catalogue, version nuit des modales d'Achtung (spec_ui_modales.md §11), focus du catalogue d'armes alignés sur les compétences (Rapproché → Corps à corps, Démolition → Explosifs).
+**Proposée le 2026-10-25.** Diagnostic validé par le MJ le 2026-10-25 (D-1 à D-8). Questions Q-1 à Q-8 tranchées par le MJ le 2026-10-25 (§9), décisions reportées au §1 (D-9 à D-13). **Lot pilote implémenté et validé le 2026-10-25** (Cyberpunk, Achtung). Retours du MJ intégrés au lot : arme libre d'Achtung complète (focus avec suggestions tirées des compétences, saisie libre possible), lignes du catalogue d'armes avec toutes les caractéristiques, pills compactes de la forme de la fiche, cadre de la zone recherche / filtres (`vtt-catalog-controls`), onglets soulignés, pli de la feuille retiré du catalogue, version nuit des modales d'Achtung (spec_ui_modales.md §11), focus du catalogue d'armes alignés sur les compétences (Rapproché → Corps à corps, Démolition → Explosifs). **Lot 2a implémenté le 2026-10-25** (Fabula, Vikings, Zone Blanche ; description de la fiche Zone Blanche repliable par ExpandableText). **Lot 2b implémenté le 2026-10-25** (Delta Green : catalogues sur CatalogModal accessibles hors mode édition, « + Ajouter » retiré au profit de l'objet libre, champs partagés `EquipmentFields` / `WeaponFields`, volets d'édition remplacés par `EquipmentEditModal` / `WeaponEditModal` sur Modal, ✎ seulement sur un emplacement d'arme occupé, « Accès restreint » en pastille au lieu d'une case à cocher). Retours du MJ intégrés : modales Delta Green la nuit en microfilm comme les feuillets de la fiche ; description de la fiche Zone Blanche repliée à 70 caractères. **Lot 2c implémenté le 2026-10-25** (D-18). **Lots 2a, 2b et 2c validés par le MJ le 2026-10-27 : chantier terminé.**
 
 Brique de plateforme : concerne les catalogues d'objets de Cyberpunk, Delta Green, Fabula, Achtung et Vikings ; Zone Blanche ne prend que la modale générique.
 
@@ -33,6 +33,11 @@ Hors périmètre :
 | D-11 | Objet libre (Q-5) | **Standard de la plateforme** : onglets « Catalogue » et « Objet libre », le second seulement si le slug gère l'ajout libre. La plateforme porte les onglets, l'objet en cours de saisie, le bouton « Ajouter » (grisé tant que l'objet n'est pas valide), la remise à zéro après l'ajout et le retour ✓. Formulaire de base fourni (nom obligatoire, description) ; le slug peut fournir ses propres champs (tags de Cyberpunk, dégâts et armure de Vikings…) et sa règle de validité. Pas de quantité : 1, réglable ensuite. |
 | D-12 | Emplacements libres de Delta Green (Q-7) | **Information abandonnée** : non primordiale, propre à un slug. Les emplacements restent visibles sur la fiche, et le choix de l'emplacement à remplacer apparaît quand ils sont tous pris. |
 | D-13 | Fenêtre (Q-3, Q-6, Q-8) | Grande (`lg`) et agrandissable partout. Compteur d'objets affichés en pied. Ligne d'en-tête de liste optionnelle fournie par le slug (tableau de Delta Green). |
+| D-14 | Delta Green (lot 2, 2026-10-25) | **Vraie migration** vers le modèle de la plateforme, sans garder son fonctionnement propre : catalogue accessible hors mode édition comme ailleurs, ajout libre par l'onglet « Objet libre » (le bouton « + Ajouter » disparaît), champs des panneaux d'édition sortis en composants partagés par l'onglet et par l'édition d'un objet existant. Thème jour / nuit vérifié. |
+| D-15 | Zone Blanche (lot 2) | En plus de la fenêtre : la **description** des objets du catalogue s'affiche dans l'aperçu du matériel sur la fiche (plus besoin de rouvrir le catalogue pour la relire). |
+| D-16 | Vikings (lot 2) | Pas de prix dans les lignes du catalogue (indicatif ; un affichage côté MJ relèverait d'un autre chantier). Matériau et notes affichés. |
+| D-17 | Fabula (lot 2) | Deuxième rangée de filtres **Tous / Base / Rare** (absente à la création, qui exclut le rare). |
+| D-18 | Sans catalogue (lot 2c) | Si le slug ne fournit aucun objet de catalogue, `CatalogModal` est une **modale d'ajout libre** : le formulaire seul, sans onglets ni hauteur fixe ; l'onglet Catalogue apparaîtra de lui-même le jour où le slug fournira des objets. Utilisée par **Dune** (atouts : formulaire de base nom + description, quantité 1, ajout toujours disponible) et **Tecumah** (inventaire : champs partagés avec la modification sur place, catégorie en pastilles au lieu d'un `<select>`, ajout en mode édition comme aujourd'hui). |
 
 ---
 
@@ -113,7 +118,8 @@ Chaque slug habille `vtt-catalog*` dans son `theme.css`, dans l'identité de ses
 | Lot | Contenu |
 |---|---|
 | **Pilote** | `CatalogModal`, fonctions de filtrage et tests, style par défaut. Migration de **Cyberpunk** (part de `BrowseModal`, objet libre avec tags) et d'**Achtung** (deux rangées de filtres). Habillage de ces deux slugs. |
-| **Lot 2** | Delta Green, Fabula, Vikings, et la fenêtre de Zone Blanche. Habillage compris. |
+| **Lot 2a** | Fabula, Vikings, Zone Blanche (fenêtre et description sur la fiche). Habillage compris. |
+| **Lot 2b** | Delta Green : vraie migration (D-14). Habillage compris. |
 
 ---
 

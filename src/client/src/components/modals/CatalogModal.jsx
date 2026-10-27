@@ -9,7 +9,8 @@
 // l'objet libre. Le slug fournit les objets, le contenu d'une ligne
 // (renderItem, sans bouton : la ligne en est un), les champs de l'objet libre
 // s'il en a besoin, et ce que fait l'ajout. La modale reste ouverte après un
-// ajout (ajouts multiples).
+// ajout (ajouts multiples). Sans objets de catalogue (items vide ou absent),
+// c'est une modale d'ajout libre : le formulaire seul, sans onglets.
 //
 // Classes vtt-catalog* stables : style par défaut dans index.css, habillage
 // par le theme.css du slug.
@@ -21,6 +22,7 @@ import { filterCatalog, filterOptions, groupCatalog } from '../../tools/catalog.
 
 const ADDED_DELAY = 1500;   // durée du ✓ après un ajout (ms)
 
+const NO_ITEMS = [];
 const DEFAULT_CUSTOM = { name: '', description: '' };
 const defaultIsCustomValid = (draft) => !!draft.name?.trim();
 
@@ -66,7 +68,7 @@ const CatalogItem = ({ added, onAdd, children }) => (
 const CatalogModal = ({
     title,
     subtitle,
-    items,
+    items = NO_ITEMS,
     renderItem,
     onAdd,
     onClose,
@@ -139,7 +141,9 @@ const CatalogModal = ({
         );
     };
 
-    const isCustomTab = tab === 'custom';
+    // Sans objets de catalogue : modale d'ajout libre seule, sans onglets ni hauteur fixe
+    const hasCatalog  = items.length > 0;
+    const isCustomTab = !hasCatalog || tab === 'custom';
 
     const footer = isCustomTab ? (
         <>
@@ -155,9 +159,10 @@ const CatalogModal = ({
     );
 
     return (
-        <Modal onClose={onClose} title={title} subtitle={subtitle} size="lg" expandable className="vtt-catalog h-full" footer={footer}>
+        <Modal onClose={onClose} title={title} subtitle={subtitle} size="lg" expandable
+               className={`vtt-catalog ${hasCatalog ? 'h-full' : ''}`} footer={footer}>
             <div className="flex flex-col h-full min-h-0 gap-3">
-                {onAddCustom && (
+                {onAddCustom && hasCatalog && (
                     <div className="vtt-segmented vtt-catalog-tabs shrink-0">
                         <button type="button" onClick={() => setTab('catalog')} className={`vtt-segment ${!isCustomTab ? 'is-active' : ''}`}>
                             Catalogue

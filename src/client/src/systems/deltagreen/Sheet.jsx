@@ -495,6 +495,8 @@ const Sheet = ({
                                             char={char}
                                             editMode={editMode && !isLocked}
                                             setArr={setArr}
+                                            onPatchImmediate={patchImmediate}
+                                            locked={isLocked}
                                         />
 
                                         <hr className="dg-divider" />
@@ -506,6 +508,7 @@ const Sheet = ({
                                             setArr={setArr}
                                             onRoll={(ctx) => setDiceModal(ctx)}
                                             onPatchImmediate={patchImmediate}
+                                            locked={isLocked}
                                         />
                                     </div>
                                     <div

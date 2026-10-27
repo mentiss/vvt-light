@@ -29,6 +29,13 @@ import { useFetch }  from '../../../../hooks/useFetch.js';
 import { useSystem } from '../../../../hooks/useSystem.js';
 import useConfirm    from '../../../../hooks/useConfirm.jsx';
 import EquipmentCatalogModal from '../modals/EquipmentCatalogModal.jsx';
+import ExpandableText        from '../../../../components/ui/ExpandableText.jsx';
+import { EQUIPMENT_CATALOG, EQUIPMENT_CATEGORY_ORDER } from '../../config.jsx';
+
+// Description de chaque objet du catalogue, par clé (les objets de scénario n'en ont pas)
+const DESCRIPTIONS = Object.fromEntries(
+    EQUIPMENT_CATEGORY_ORDER.flatMap(cat => EQUIPMENT_CATALOG[cat].items.map(it => [it.key, it.description])),
+);
 
 const EquipmentSection = ({ sessionId, characterId, readOnly = false }) => {
     const { apiBase }   = useSystem();
@@ -131,11 +138,19 @@ const EquipmentSection = ({ sessionId, characterId, readOnly = false }) => {
                 )}
 
                 {state.items.map(item => (
-                    <div key={item.id} className="zb-equip-row">
-                        <span className="flex-1 min-w-0 truncate text-sm text-default">
-                            {item.label}
-                            {item.itemKey === null && <span className="zb-eyebrow ml-2">scénario</span>}
-                        </span>
+                    <div key={item.id} className="zb-equip-row items-start">
+                        <div className="flex-1 min-w-0">
+                            <div className="truncate text-sm text-default">
+                                {item.label}
+                                {item.itemKey === null && <span className="zb-eyebrow ml-2">scénario</span>}
+                            </div>
+                            {/* Description du catalogue : relue sans rouvrir la modale, repliée si longue */}
+                            {DESCRIPTIONS[item.itemKey] && (
+                                <p className="text-xs opacity-85 mt-0.5 leading-relaxed">
+                                    <ExpandableText text={DESCRIPTIONS[item.itemKey]} maxLength={70} />
+                                </p>
+                            )}
+                        </div>
                         <span className="zb-mono text-sm text-default w-6 text-center shrink-0">×{item.quantity}</span>
                         <span className="zb-mono text-sm text-muted w-8 text-right shrink-0">{item.lineTotal}</span>
                     </div>

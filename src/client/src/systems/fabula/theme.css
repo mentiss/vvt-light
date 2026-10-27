@@ -254,6 +254,16 @@
 button.vtt-list-item:hover { border-color: var(--fu-win-edge); }
 .vtt-list-item.is-selected { background: linear-gradient(90deg, rgba(255,255,255,.22), rgba(255,255,255,.04)); border-color: var(--fu-win-edge); }
 .vtt-list-item.is-selected::before { content: '▶'; position: absolute; left: -.9rem; top: 50%; transform: translateY(-50%); font-size: .6rem; color: var(--fu-win-text); }   /* ✦ */
+/* Catalogue (CatalogModal, spec_ui_catalogue.md) : lignes de menu, ✦ curseur ▶ sur la ligne survolée */
+.vtt-catalog-list { border-top-color: rgba(238, 240, 250, .22); }
+.vtt-catalog-list-header, .vtt-catalog-group { background: var(--fu-win-bottom); color: var(--fu-win-muted); border-color: rgba(238, 240, 250, .22); font-family: 'Antonio', sans-serif; }
+.vtt-catalog-item { position: relative; border-color: rgba(238, 240, 250, .14); color: var(--fu-win-text); }
+.vtt-catalog-item:hover { background: linear-gradient(90deg, rgba(255,255,255,.16), rgba(255,255,255,.02)); }
+.vtt-catalog-item:hover::before { content: '▶'; position: absolute; left: .35rem; top: 50%; transform: translateY(-50%); font-size: .6rem; color: var(--fu-win-text); }
+.vtt-catalog-add { background: transparent; border-color: rgba(238, 240, 250, .4); color: var(--fu-win-gold); border-radius: 4px; }
+.vtt-catalog-item:hover .vtt-catalog-add { border-color: var(--fu-win-edge); }
+.vtt-catalog-item.is-added .vtt-catalog-add { background: linear-gradient(180deg, #f8e3a2, #d9b24e); border-color: var(--fu-win-edge); color: var(--fu-win-bottom); }
+.vtt-catalog-count, .vtt-catalog-empty { color: var(--fu-win-muted); }
 .vtt-callout { background: rgba(255,255,255,.08); border-left-color: var(--fu-win-gold); }
 .vtt-callout-danger { border-left-color: #e0525a; background: rgba(224, 82, 90, .15); }
 .vtt-panel {

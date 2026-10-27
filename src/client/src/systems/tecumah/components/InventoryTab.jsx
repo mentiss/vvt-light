@@ -1,8 +1,10 @@
 // src/client/src/systems/tecumah/components/InventoryTab.jsx
-// Gestion de l'inventaire : liste + formulaire d'édition inline.
+// Gestion de l'inventaire : liste, modification sur place, ajout par la modale
+// générique en ajout libre (spec_ui_catalogue.md, lot 2c).
 // ItemRow est un sous-composant interne — non exporté.
 
 import React, { useState } from 'react';
+import CatalogModal from '../../../components/modals/CatalogModal.jsx';
 
 // ── Constantes ────────────────────────────────────────────────────────────────
 
@@ -12,8 +14,9 @@ const CATEGORY_LABELS = {
     misc:          '📦',
 };
 
-const EMPTY_ITEM = {
-    id: undefined, name: '', description: '', category: 'misc',
+// Objet libre de départ de la modale d'ajout
+const NEW_ITEM = {
+    name: '', description: '', category: 'misc',
     quantity: 1, location: 'inventory',
     damage: 0, rangeShort: 0, rangeMedium: 0, rangeLong: 0, skillKey: '',
 };
@@ -98,40 +101,46 @@ const ItemRow = ({ item, onEdit, onRemove, onToggleEquip, readOnly }) => {
     );
 };
 
-// ── ItemForm — formulaire d'édition inline ────────────────────────────────────
+// ── ItemFields — champs d'un objet (contrôlés) ────────────────────────────────
+// Partagés par le formulaire de modification sur place et par la modale
+// d'ajout libre (spec_ui_catalogue.md, lot 2c). Catégorie en pastilles.
 
-const ItemForm = ({ item, onSave, onCancel }) => {
-    const [draft, setDraft] = useState({ ...item });
-    const set = (k, v) => setDraft(d => ({ ...d, [k]: v }));
+const CATEGORY_OPTIONS = [['misc', 'Objet'], ['weapon_melee', 'Arme CàC'], ['weapon_ranged', 'Arme à distance']];
+
+const ItemFields = ({ value: draft, onChange, showQuantity = true }) => {
+    const set = (k, v) => onChange({ [k]: v });
 
     const isWeapon  = draft.category !== 'misc';
     const isRanged  = draft.category === 'weapon_ranged';
 
     return (
-        <div
-            className="rounded-lg p-4 flex flex-col gap-3 mb-2"
-            style={{ background: 'var(--color-surface)', border: '1px solid var(--color-border)' }}
-        >
-            <div className="grid grid-cols-2 gap-3">
-                <Field label="Nom">
-                    <input type="text" value={draft.name} onChange={e => set('name', e.target.value)} style={inputSt} className="rounded px-2 py-1 text-sm w-full" />
-                </Field>
-                <Field label="Catégorie">
-                    <select value={draft.category} onChange={e => set('category', e.target.value)} style={inputSt} className="rounded px-2 py-1 text-sm w-full">
-                        <option value="misc">Objet</option>
-                        <option value="weapon_melee">Arme CàC</option>
-                        <option value="weapon_ranged">Arme à distance</option>
-                    </select>
-                </Field>
+        <>
+            <Field label="Nom">
+                <input type="text" value={draft.name} onChange={e => set('name', e.target.value)} style={inputSt} className="rounded px-2 py-1 text-sm w-full" />
+            </Field>
+
+            {/* div et non label : un label ferait cliquer la première pastille */}
+            <div className="flex flex-col gap-1">
+                <span style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)' }}>Catégorie</span>
+                <div className="flex flex-wrap gap-1.5">
+                    {CATEGORY_OPTIONS.map(([key, label]) => (
+                        <button key={key} type="button" onClick={() => set('category', key)}
+                                className={`vtt-pill ${draft.category === key ? 'is-selected' : ''}`}>
+                            {label}
+                        </button>
+                    ))}
+                </div>
             </div>
 
             <Field label="Description">
                 <input type="text" value={draft.description} onChange={e => set('description', e.target.value)} placeholder="Optionnel" style={inputSt} className="rounded px-2 py-1 text-sm w-full" />
             </Field>
 
-            <Field label="Quantité">
-                <input type="number" min={1} value={draft.quantity} onChange={e => set('quantity', Number(e.target.value))} style={inputSt} className="rounded px-2 py-1 text-sm w-24" />
-            </Field>
+            {showQuantity && (
+                <Field label="Quantité">
+                    <input type="number" min={1} value={draft.quantity} onChange={e => set('quantity', Number(e.target.value))} style={inputSt} className="rounded px-2 py-1 text-sm w-24" />
+                </Field>
+            )}
 
             {isWeapon && (
                 <div className="grid grid-cols-2 gap-3">
@@ -153,18 +162,35 @@ const ItemForm = ({ item, onSave, onCancel }) => {
                     )}
                 </div>
             )}
+        </>
+    );
+};
+
+// ── ItemForm — modification sur place d'un objet existant ─────────────────────
+
+const ItemForm = ({ item, onSave, onCancel }) => {
+    const [draft, setDraft] = useState({ ...item });
+
+    return (
+        <div
+            className="rounded-lg p-4 flex flex-col gap-3 mb-2"
+            style={{ background: 'var(--color-surface)', border: '1px solid var(--color-border)' }}
+        >
+            <ItemFields value={draft} onChange={patch => setDraft(d => ({ ...d, ...patch }))} />
 
             <div className="flex gap-2 justify-end">
                 <button onClick={onCancel} className="px-3 py-1 rounded text-sm" style={{ background: 'var(--color-surface-alt)', color: 'var(--color-text-muted)' }}>
                     Annuler
                 </button>
                 <button onClick={() => onSave(draft)} className="px-3 py-1 rounded text-sm" style={{ background: 'var(--color-accent)', color: 'var(--color-bg)', fontWeight: 700 }}>
-                    {item.id ? 'Mettre à jour' : 'Ajouter'}
+                    Mettre à jour
                 </button>
             </div>
         </div>
     );
 };
+
+const renderAddFields = (props) => <div className="flex flex-col gap-3"><ItemFields {...props} showQuantity={false} /></div>;
 
 // ── InventoryTab — composant exporté ─────────────────────────────────────────
 
@@ -177,16 +203,16 @@ const ItemForm = ({ item, onSave, onCancel }) => {
  */
 const InventoryTab = ({ items = [], onChange, readOnly = false }) => {
     const [editingItem, setEditingItem] = useState(null);
+    const [adding,      setAdding]      = useState(false);
 
     const save = (item) => {
-        if (item.id) {
-            onChange(items.map(i => i.id === item.id ? item : i));
-        } else {
-            // id temporaire côté client — remplacé par le vrai id après PUT
-            onChange([...items, { ...item, id: `tmp_${Date.now()}` }]);
-        }
+        onChange(items.map(i => i.id === item.id ? item : i));
         setEditingItem(null);
     };
+
+    // Ajout libre (modale générique, quantité 1) ; id temporaire côté client,
+    // remplacé par le vrai id après PUT
+    const add = (draft) => onChange([...items, { ...draft, name: draft.name.trim(), quantity: 1, id: `tmp_${Date.now()}` }]);
 
     const remove      = (id)   => onChange(items.filter(i => i.id !== id));
     const toggleEquip = (item) => {
@@ -225,12 +251,23 @@ const InventoryTab = ({ items = [], onChange, readOnly = false }) => {
 
             {!readOnly && (
                 <button
-                    onClick={() => setEditingItem({ ...EMPTY_ITEM })}
+                    onClick={() => setAdding(true)}
                     className="px-3 py-2 rounded text-sm"
                     style={{ background: 'var(--color-surface)', border: '1px dashed var(--color-border)', color: 'var(--color-text-muted)' }}
                 >
                     + Ajouter un objet
                 </button>
+            )}
+
+            {/* Pas de catalogue Tecumah : modale d'ajout libre générique */}
+            {adding && (
+                <CatalogModal
+                    title="Ajouter un objet"
+                    onAddCustom={add}
+                    customDefaults={NEW_ITEM}
+                    renderCustomForm={renderAddFields}
+                    onClose={() => setAdding(false)}
+                />
             )}
 
             {editingItem && (

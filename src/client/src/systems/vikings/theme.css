@@ -474,6 +474,17 @@ button.vtt-list-item:hover { border-color: var(--vk-border-soft); border-left-co
 .vtt-segment { border-radius: 2px; font-family: var(--vk-font-label); font-size: .98rem; letter-spacing: .03em; text-transform: none; }
 .vtt-segment.is-active { background: var(--color-primary); color: var(--vk-on-primary); }
 
+/* Catalogue (CatalogModal, spec_ui_catalogue.md) : lignes comme les lignes de liste, filet d'or au survol */
+.vtt-catalog-list { border-top-color: var(--vk-border-soft); }
+.vtt-catalog-list-header, .vtt-catalog-group {
+    font-family: var(--vk-font-label); font-size: .9rem; letter-spacing: .03em; text-transform: none;
+    color: var(--color-primary); background: var(--color-surface); border-color: var(--vk-border-soft);
+}
+.vtt-catalog-item { border-color: var(--vk-border-soft); border-left: 3px solid transparent; }
+.vtt-catalog-item:hover { border-left-color: var(--color-primary); background: color-mix(in srgb, var(--color-primary) 10%, transparent); }
+.vtt-catalog-add { border-radius: 2px; border-color: var(--vk-border-soft); background: var(--vk-field-bg); }
+.vtt-catalog-item.is-added .vtt-catalog-add { background: var(--color-primary); border-color: var(--color-primary); color: var(--vk-on-primary); }
+
 /* Journal générique (components/tabs/JournalTab.jsx, spec_journal.md §3) */
 .vtt-panel { border-radius: 0; border: 2px solid var(--color-border); box-shadow: var(--vk-panel-shadow); }
 .vtt-tag { border-radius: 2px; border: 1px solid color-mix(in srgb, var(--color-primary) 50%, transparent); background: color-mix(in srgb, var(--color-primary) 10%, transparent); }

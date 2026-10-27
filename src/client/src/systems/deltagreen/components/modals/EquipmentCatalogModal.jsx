@@ -1,7 +1,16 @@
-// src/client/src/systems/deltagreen/components/layout/EquipmentCatalogModal.jsx
+// src/client/src/systems/deltagreen/components/modals/EquipmentCatalogModal.jsx
+// ─────────────────────────────────────────────────────────────────────────────
+// Catalogue d'équipement Delta Green (section 16) sur la modale générique
+// CatalogModal (documentations/spec_ui_catalogue.md D-14) : tableau à colonnes
+// (désignation, catégorie, coût), filtre par catégorie, objet libre avec les
+// champs d'édition (EquipmentFields). onAdd reçoit l'équipement prêt à ranger ;
+// la modale reste ouverte après un ajout.
+// ─────────────────────────────────────────────────────────────────────────────
 
-import React, { useState, useMemo } from 'react';
-import {EQUIPMENT_CATALOG, EQUIPMENT_CATEGORY_LABELS} from '../../config.jsx';
+import React from 'react';
+import CatalogModal from '../../../../components/modals/CatalogModal.jsx';
+import { EQUIPMENT_CATALOG, EQUIPMENT_CATEGORY_LABELS } from '../../config.jsx';
+import EquipmentFields, { equipmentToDraft, draftToEquipment } from '../ui/EquipmentFields.jsx';
 
 const EXPENSE_SHORT = {
     Incidental: 'Incident.',
@@ -11,136 +20,67 @@ const EXPENSE_SHORT = {
     Extreme:    'Extrême',
 };
 
-const EquipmentCatalogModal = ({ onAdd, onClose }) => {
-    const [search,   setSearch]   = useState('');
-    const [category, setCategory] = useState(null);
+const GRID = 'grid grid-cols-[45%_25%_20%] gap-x-3 items-center';
 
-    const filtered = useMemo(() => {
-        const q = search.toLowerCase().trim();
-        return EQUIPMENT_CATALOG
-            .filter(cat => !category || cat.key === category)
-            .flatMap(cat => cat.items.map(item => ({ ...item, _catKey: cat.key, _catLabel: cat.label })))
-            .filter(item => !q ||
-                item.name.toLowerCase().includes(q) ||
-                item.notes?.toLowerCase().includes(q)
-            );
-    }, [search, category]);
+// Catalogue à plat, chaque objet avec sa catégorie
+const ITEMS = EQUIPMENT_CATALOG.flatMap(cat => cat.items.map(item => ({ ...item, _catKey: cat.key })));
 
-    const handleSelect = (item) => {
-        onAdd({
+const FILTERS = [{
+    key:      'category',
+    getValue: it => it._catKey,
+    options:  EQUIPMENT_CATALOG.map(cat => ({ value: cat.key, label: cat.label })),
+}];
+
+const LIST_HEADER = (
+    <div className={GRID}>
+        <span>Désignation</span><span>Catégorie</span><span>Coût</span>
+    </div>
+);
+
+const renderItem = (item) => (
+    <div className={GRID}>
+        <div className="min-w-0">
+            <span className="text-xs font-mono">
+                {item.name}
+                {item.is_restricted && <span className="dg-stamp dg-stamp-red ml-1 text-[8px] align-middle">R</span>}
+            </span>
+            {item.notes && <p className="text-[10px] text-muted font-mono leading-tight">{item.notes}</p>}
+        </div>
+        <span className="text-[10px] font-mono text-muted">{EQUIPMENT_CATEGORY_LABELS[item._catKey] ?? item._catKey}</span>
+        <span className="text-xs font-mono text-muted">{EXPENSE_SHORT[item.expense] ?? item.expense}</span>
+    </div>
+);
+
+const CUSTOM_DEFAULTS = equipmentToDraft();
+const renderCustomForm = (props) => <EquipmentFields {...props} />;
+
+/**
+ * @param {Function} props.onAdd    (équipement) => void
+ * @param {Function} props.onClose
+ */
+const EquipmentCatalogModal = ({ onAdd, onClose }) => (
+    <CatalogModal
+        title="Catalogue d'équipement"
+        items={ITEMS}
+        renderItem={renderItem}
+        getKey={it => `${it._catKey}:${it.name}`}
+        filters={FILTERS}
+        listHeader={LIST_HEADER}
+        onAdd={item => onAdd({
             name:            item.name,
-            notes:           item.notes           ?? '',
+            notes:           item.notes ?? '',
             category:        item._catKey,
-            expense:         item.expense          ?? 'Standard',
-            isRestricted:    item.is_restricted    ?? false,
+            expense:         item.expense ?? 'Standard',
+            isRestricted:    item.is_restricted ?? false,
             restrictionNote: '',
             quantity:        1,
-            jsonDetails:     item.jsonDetails      ?? {},
-        });
-    };
-
-    return (
-        <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4">
-            <div
-                className="bg-default border border-default shadow-2xl w-full max-w-4xl max-h-[85vh] flex flex-col"
-                style={{ fontFamily: 'var(--dg-font-body)' }}
-                onClick={e => e.stopPropagation()}
-            >
-                {/* Header */}
-                <div className="dg-header px-4 py-3 flex items-center justify-between shrink-0">
-                    <h2 className="text-xs font-black uppercase tracking-widest text-white">
-                        Catalogue d'équipement — Delta Green
-                    </h2>
-                    <button onClick={onClose} className="text-gray-400 hover:text-white shrink-0 ml-2">✕</button>
-                </div>
-
-                {/* Recherche + filtres catégories */}
-                <div className="shrink-0 px-4 py-3 border-b border-default space-y-2">
-                    <input
-                        className="dg-field-input w-full px-3 py-1.5 text-sm"
-                        placeholder="Rechercher un équipement…"
-                        value={search}
-                        onChange={e => setSearch(e.target.value)}
-                        autoFocus
-                    />
-                    <div className="flex flex-wrap gap-1">
-                        <button
-                            onClick={() => setCategory(null)}
-                            className={[
-                                'px-2 py-0.5 text-[10px] font-mono border transition-colors',
-                                !category ? 'border-accent text-accent bg-accent/10' : 'border-default text-muted hover:text-default',
-                            ].join(' ')}
-                        >Tout</button>
-                        {EQUIPMENT_CATALOG.map(cat => (
-                            <button
-                                key={cat.key}
-                                onClick={() => setCategory(category === cat.key ? null : cat.key)}
-                                className={[
-                                    'px-2 py-0.5 text-[10px] font-mono border transition-colors',
-                                    category === cat.key ? 'border-accent text-accent bg-accent/10' : 'border-default text-muted hover:text-default',
-                                ].join(' ')}
-                            >{cat.label}</button>
-                        ))}
-                    </div>
-                </div>
-
-                {/* Liste */}
-                <div className="overflow-x-hidden overflow-y-auto max-w-full flex-1">
-                    {/* En-têtes */}
-                    <div className="grid grid-cols-[45%_20%_20%_15%] gap-x-3 px-4 py-1 border-b border-default/40 sticky top-0 bg-default z-10 w-full">
-                        {['DÉSIGNATION', 'CATÉGORIE', 'COÛT', ''].map(h => (
-                            <span key={h} className="dg-section-label text-[9px]">{h}</span>
-                        ))}
-                    </div>
-
-                    {filtered.length === 0 && (
-                        <p className="text-sm text-muted font-mono italic px-4 py-8 text-center">
-                            Aucun équipement trouvé.
-                        </p>
-                    )}
-
-                    {filtered.map((item, i) => (
-                        <button
-                            key={i}
-                            onClick={() => handleSelect(item)}
-                            className="grid grid-cols-[45%_20%_20%_15%] gap-x-3 px-4 py-1.5 border-b border-default/20 w-full text-left hover:bg-surface-alt transition-colors group"
-                        >
-                            {/* Désignation */}
-                            <div className="min-w-0">
-                                <span className="text-xs font-mono group-hover:text-accent transition-colors">
-                                    {item.name}
-                                    {item.is_restricted && (
-                                        <span className="dg-stamp dg-stamp-red ml-1 text-[8px] align-middle">R</span>
-                                    )}
-                                </span>
-                                {item.notes && (
-                                    <p className="text-[9px] text-muted font-mono leading-tight truncate">{item.notes}</p>
-                                )}
-                            </div>
-                            {/* Catégorie */}
-                            <span className="text-[10px] font-mono text-muted self-center">
-                                {EQUIPMENT_CATEGORY_LABELS[item._catKey] ?? item._catKey}
-                            </span>
-                            {/* Coût */}
-                            <span className="text-xs font-mono text-muted self-center">
-                                {EXPENSE_SHORT[item.expense] ?? item.expense}
-                            </span>
-                            {/* Vide */}
-                            <span />
-                        </button>
-                    ))}
-                </div>
-
-                {/* Footer */}
-                <div className="shrink-0 px-4 py-2 border-t border-default flex items-center justify-between">
-                    <p className="text-[10px] font-mono text-muted">
-                        Cliquer pour ajouter à l'inventaire
-                    </p>
-                    <p className="text-[10px] font-mono text-muted">{filtered.length} élément(s)</p>
-                </div>
-            </div>
-        </div>
-    );
-};
+            jsonDetails:     item.jsonDetails ?? {},
+        })}
+        onAddCustom={draft => onAdd({ ...draftToEquipment(draft), restrictionNote: '' })}
+        customDefaults={CUSTOM_DEFAULTS}
+        renderCustomForm={renderCustomForm}
+        onClose={onClose}
+    />
+);
 
 export default EquipmentCatalogModal;

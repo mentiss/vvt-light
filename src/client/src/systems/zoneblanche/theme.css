@@ -810,6 +810,9 @@
     max-height: 88vh;
 }
 
+/* Fenêtre générique (Modal) : le corps laisse la place aux deux colonnes, qui défilent chacune */
+.zb-equip-modal .vtt-modal-body { display: flex; flex-direction: column; padding: 0; overflow: hidden; }
+
 /* Corps deux colonnes : catalogue à gauche, inventaire à droite */
 .zb-equip-modal-body {
     display: grid;

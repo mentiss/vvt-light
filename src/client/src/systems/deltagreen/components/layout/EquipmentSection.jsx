@@ -2,12 +2,15 @@
 // ─────────────────────────────────────────────────────────────────────────────
 // Section 16 — Armure et matériel.
 // Affichage groupé par catégorie, colonnes adaptées.
-// En editMode : bouton ✎ par ligne + "+ Ajouter" + "+ Catalogue".
+// « + Catalogue » toujours disponible (catalogue et objet libre, modale
+// générique, spec_ui_catalogue.md D-14) : hors mode édition, l'ajout est
+// enregistré tout de suite (onPatchImmediate). En editMode : ✎ par ligne →
+// EquipmentEditModal.
 // ─────────────────────────────────────────────────────────────────────────────
 
 import React, { useState } from 'react';
 import {EQUIPMENT_CATEGORY_LABELS, EQUIPMENT_CATEGORY_ORDER} from "../../config.jsx";
-import EquipmentEditPanel from "../ui/EquipmentEditPanel.jsx";
+import EquipmentEditModal from "../modals/EquipmentEditModal.jsx";
 import EquipmentCatalogModal from "../modals/EquipmentCatalogModal.jsx";
 
 // ── Constantes ────────────────────────────────────────────────────────────────
@@ -116,9 +119,13 @@ const renderCells = (item, catKey) => {
 
 // ── Composant principal ───────────────────────────────────────────────────────
 
-const EquipmentSection = ({ char, editMode, setArr }) => {
-    const [panelItem,   setPanelItem]   = useState(null);   // item en cours d'édition ou null (nouveau)
+const EquipmentSection = ({ char, editMode, setArr, onPatchImmediate, locked = false }) => {
+    const [panelItem,   setPanelItem]   = useState(null);   // item en cours d'édition
     const [showCatalog, setShowCatalog] = useState(false);
+
+    // Mode édition : brouillon de la fiche ; sinon enregistrement immédiat
+    const commit = (equipment) => (editMode ? setArr('equipment', equipment) : onPatchImmediate?.({ equipment }));
+    const canAdd = !locked && (editMode || !!onPatchImmediate);
 
     // Items sans slot = équipement général (pas armes)
     const items = (char.equipment ?? []).filter(e => !e.slot);
@@ -136,32 +143,21 @@ const EquipmentSection = ({ char, editMode, setArr }) => {
     }
 
     // ── Mutations ──────────────────────────────────────────────────────────────
+    // Item avec id BDD, ou pas encore persisté (comparaison par référence)
+    const isPanelItem = (e) => (panelItem.id ? e.id === panelItem.id : e === panelItem);
+
     const saveItem = (itemData) => {
-        const all = char.equipment ?? [];
-        if (panelItem?.id) {
-            // Item existant avec id BDD
-            setArr('equipment', all.map(e => e.id === panelItem.id ? { ...e, ...itemData } : e));
-        } else if (panelItem && Object.keys(panelItem).length > 0) {
-            // Item existant sans id (pas encore persisté) — comparaison par référence
-            setArr('equipment', all.map(e => e === panelItem ? { ...e, ...itemData } : e));
-        } else {
-            // Nouvel item
-            setArr('equipment', [...all, { slot: null, quantity: 1, ...itemData }]);
-        }
+        setArr('equipment', (char.equipment ?? []).map(e => isPanelItem(e) ? { ...e, ...itemData } : e));
         setPanelItem(null);
     };
 
-    const removeItem = (item) => {
-        setArr('equipment', (char.equipment ?? []).filter(e =>
-            panelItem.id ? e.id !== panelItem.id : e !== panelItem
-        ));
+    const removeItem = () => {
+        setArr('equipment', (char.equipment ?? []).filter(e => !isPanelItem(e)));
         setPanelItem(null);
     };
 
-    const addFromCatalog = (itemData) => {
-        setArr('equipment', [...(char.equipment ?? []), { slot: null, ...itemData }]);
-        setShowCatalog(false);
-    };
+    // Catalogue ou objet libre ; la modale reste ouverte (ajouts multiples)
+    const addFromCatalog = (itemData) => commit([...(char.equipment ?? []), { slot: null, ...itemData }]);
 
     // ── Rendu ──────────────────────────────────────────────────────────────────
     const hasItems = Object.keys(grouped).length > 0;
@@ -171,17 +167,11 @@ const EquipmentSection = ({ char, editMode, setArr }) => {
             {/* En-tête section */}
             <div className="flex items-center justify-between mb-1 border-b border-default pb-1">
                 <p className="dg-section-label text-base">16. ARMURE ET MATÉRIEL</p>
-                {editMode && (
-                    <div className="flex gap-2">
-                        <button
-                            onClick={() => setPanelItem({})}
-                            className="text-[10px] font-mono border border-default px-2 py-0.5 hover:border-accent hover:text-accent transition-colors"
-                        >+ Ajouter</button>
-                        <button
-                            onClick={() => setShowCatalog(true)}
-                            className="text-[10px] font-mono border border-default px-2 py-0.5 hover:border-accent hover:text-accent transition-colors"
-                        >+ Catalogue</button>
-                    </div>
+                {canAdd && (
+                    <button
+                        onClick={() => setShowCatalog(true)}
+                        className="text-[10px] font-mono border border-default px-2 py-0.5 hover:border-accent hover:text-accent transition-colors"
+                    >+ Catalogue</button>
                 )}
             </div>
 
@@ -235,9 +225,9 @@ const EquipmentSection = ({ char, editMode, setArr }) => {
                 );
             })}
 
-            {/* Panel édition */}
+            {/* Modification d'un équipement */}
             {panelItem !== null && (
-                <EquipmentEditPanel
+                <EquipmentEditModal
                     item={panelItem}
                     onSave={saveItem}
                     onDelete={removeItem}

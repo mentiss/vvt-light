@@ -465,6 +465,7 @@ const GMAgentPanel = ({ char, isOnline, sessionId, onCharacterUpdate, onSendNote
                             char={localChar}
                             editMode={editMode}
                             setArr={setArr}
+                            onPatchImmediate={patchImmediate}
                         />
                         <hr className="dg-divider" />
 

@@ -1,11 +1,11 @@
 // src/client/src/systems/dune/components/AtoutsList.jsx
 // Inventaire libre des atouts du personnage.
-// Nom + description + quantité.
-// Pattern identique au InventoryTab Vikings, adapté au thème Dune.
+// Nom + description + quantité. Ajout par la modale générique en ajout libre
+// (spec_ui_catalogue.md, lot 2c) : nom et description, quantité 1, réglable
+// ensuite en mode édition.
 
 import React, { useState } from 'react';
-
-const EMPTY_ITEM = { nom: '', description: '', quantite: 1 };
+import CatalogModal from '../../../components/modals/CatalogModal.jsx';
 
 /**
  * @param {object}   props
@@ -14,13 +14,11 @@ const EMPTY_ITEM = { nom: '', description: '', quantite: 1 };
  * @param {Function} props.onChange  - (updatedItems: Array) => void
  */
 const AtoutsList = ({ items = [], editMode, onChange }) => {
-    const [newItem, setNewItem] = useState({ ...EMPTY_ITEM });
+    const [adding, setAdding] = useState(false);
 
-    const handleAdd = () => {
-        if (!newItem.nom.trim()) return;
-        onChange([...items, { ...newItem, nom: newItem.nom.trim(), quantite: Math.max(1, newItem.quantite) }]);
-        setNewItem({ ...EMPTY_ITEM });
-    };
+    // Formulaire de base de la modale : { name, description }
+    const handleAdd = ({ name, description }) =>
+        onChange([...items, { nom: name.trim(), description, quantite: 1 }]);
 
     const handleRemove = (idx) => onChange(items.filter((_, i) => i !== idx));
 
@@ -95,39 +93,20 @@ const AtoutsList = ({ items = [], editMode, onChange }) => {
                 ))}
             </div>
 
-            {editMode && (
-                <div className="mt-2 space-y-1 border-t pt-2" style={{ borderColor: 'var(--dune-border)' }}>
-                    <div className="flex gap-1">
-                        <input
-                            value={newItem.nom}
-                            onChange={e => setNewItem(p => ({ ...p, nom: e.target.value }))}
-                            className="dune-input text-xs flex-1 min-w-0"
-                            placeholder="Nom de l'atout…"
-                        />
-                        <input
-                            type="number"
-                            min={1}
-                            value={newItem.quantite}
-                            onChange={e => setNewItem(p => ({ ...p, quantite: parseInt(e.target.value) || 1 }))}
-                            className="dune-input text-xs"
-                            style={{ width: '3.5rem', flexShrink: 0 }}
-                        />
-                    </div>
-                    <textarea
-                        value={newItem.description}
-                        onChange={e => setNewItem(p => ({ ...p, description: e.target.value }))}
-                        className="dune-input text-xs"
-                        rows={2}
-                        placeholder="Description…"
-                    />
-                    <button
-                        onClick={handleAdd}
-                        disabled={!newItem.nom.trim()}
-                        className="dune-btn-primary text-xs w-full disabled:opacity-40"
-                    >
-                        + Ajouter un atout
-                    </button>
-                </div>
+            {/* Ajout : modale d'ajout libre générique (pas de catalogue d'atouts), toujours disponible */}
+            <button
+                onClick={() => setAdding(true)}
+                className="dune-btn-primary text-xs w-full mt-2"
+            >
+                + Ajouter un atout
+            </button>
+
+            {adding && (
+                <CatalogModal
+                    title="Ajouter un atout"
+                    onAddCustom={handleAdd}
+                    onClose={() => setAdding(false)}
+                />
             )}
         </div>
     );

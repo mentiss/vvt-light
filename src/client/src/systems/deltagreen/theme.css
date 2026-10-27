@@ -633,9 +633,20 @@ body:has([data-palier="4"]) .vtt-session-bar-card:not([data-me]) .vtt-session-ba
    dégradation par palier ── */
 .vtt-modal-backdrop { background: rgba(12, 12, 10, .72); backdrop-filter: none; }
 .vtt-modal-panel {
+    --dg-modal-paper: var(--color-bg);
     border-radius: 0; border: 1px solid var(--dg-field-border); font-family: var(--dg-font-body);
-    background: radial-gradient(circle at 12% 18%, var(--dg-paper-noise) 0 1px, transparent 2px) 0 0 / 7px 7px, var(--color-bg);
+    background: radial-gradient(circle at 12% 18%, var(--dg-paper-noise) 0 1px, transparent 2px) 0 0 / 7px 7px, var(--dg-modal-paper);
     box-shadow: 4px 5px 0 rgba(0,0,0,.12), 0 20px 50px rgba(0,0,0,.45);
+}
+/* ✦ Nuit : microfilm, comme les feuillets de la fiche (.dg-feuillet en mode nuit) */
+[data-theme="dark"] .vtt-modal-panel {
+    --dg-modal-paper: #0d120e;
+    border-color: #2a352b;
+    background:
+        url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.99' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.15'/%3E%3C/svg%3E"),
+        repeating-linear-gradient(to bottom, rgba(0, 255, 0, .02) 0px, rgba(0, 255, 0, .02) 1px, transparent 1px, transparent 28px),
+        var(--dg-modal-paper);
+    box-shadow: 0 0 0 4px #1a251b, 4px 4px 0 rgba(0, 0, 0, .5), 0 20px 50px rgba(0, 0, 0, .45);
 }
 .vtt-modal-deco::before {   /* ✦ agrafe */
     content: ''; position: absolute; top: -3px; left: 1.6rem; width: 34px; height: 6px; z-index: 6;
@@ -697,6 +708,20 @@ button.vtt-list-item:hover { border-color: var(--dg-field-border); background: v
 .vtt-journal-editor { border-radius: 0; background: var(--dg-field-bg); border-color: var(--dg-field-border); }
 .vtt-journal-list-toggle { font-family: var(--dg-font-body); letter-spacing: .1em; text-transform: uppercase; }
 .vtt-scroll { scrollbar-color: var(--dg-field-border) transparent; }
+/* Catalogue (CatalogModal, spec_ui_catalogue.md) : tableau de formulaire à filets tiretés,
+   ✦ ligne ajoutée passée au surligneur */
+.vtt-catalog-list { border-top: 3px double var(--color-text); }
+.vtt-catalog-list-header, .vtt-catalog-group {
+    font-family: var(--dg-font-body); font-size: .6rem; font-weight: 700; letter-spacing: .12em;
+    color: var(--color-text); background: var(--dg-modal-paper); border-bottom: 1px solid var(--dg-field-border);
+}
+.vtt-catalog-item { border-bottom: 1px dashed var(--dg-field-border); }
+.vtt-catalog-item:hover { background: var(--color-surface-alt); }
+.vtt-catalog-add { border-radius: 0; border-color: var(--color-text); background: transparent; color: var(--color-text); font-family: var(--dg-font-body); }
+.vtt-catalog-item.is-added { color: #1a1a1a; background: linear-gradient(100deg, transparent 1%, rgba(255, 236, 60, .8) 2%, rgba(255, 230, 40, .75) 97%, transparent 99%); }
+.vtt-catalog-item.is-added .text-muted { color: #3a3a3a; }
+.vtt-catalog-item.is-added .vtt-catalog-add { background: transparent; border-color: #1a1a1a; color: #1a1a1a; }
+.vtt-catalog-count { font-family: var(--dg-font-body); font-size: .65rem; letter-spacing: .1em; text-transform: uppercase; }
 /* ✦ Dégradation : les fenêtres suivent le palier de la fiche */
 body:has([data-palier="3"]) .vtt-modal-panel { filter: saturate(.2) contrast(1.2) sepia(.2); }
 body:has([data-palier="4"]) .vtt-modal-panel { filter: grayscale(1) contrast(1.5) brightness(.9); }

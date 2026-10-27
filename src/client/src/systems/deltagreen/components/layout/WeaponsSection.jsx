@@ -4,19 +4,23 @@
 //
 // En lecture  : cellules COMP.%, DÉGÂTS, LÉTALITÉ cliquables → DiceModal
 //               MUNITIONS : boutons +/- inline
-// En editMode : bouton ✎ par ligne → WeaponEditPanel (overlay)
-//               Bouton "+ Catalogue" → WeaponCatalogModal
+// Toujours    : « + Catalogue » → WeaponCatalogModal (catalogue et objet libre,
+//               spec_ui_catalogue.md D-14) ; hors mode édition, l'ajout est
+//               enregistré tout de suite (onPatchImmediate)
+// En editMode : ✎ sur un emplacement occupé → WeaponEditModal
 //
 // Props :
 //   char              — personnage courant
 //   editMode          — boolean
 //   setArr            — (key, value[]) => void
 //   onRoll            — (ctx) => void  → déclenche DiceModal dans Sheet
+//   onPatchImmediate  — (patch) => void  → enregistrement direct (munitions, ajouts)
+//   locked            — fiche verrouillée (dégradation) : pas d'ajout
 // ─────────────────────────────────────────────────────────────────────────────
 
 import React, { useState } from 'react';
 import {CARAC_KEYS, resolveSkillRef} from '../../config.jsx';
-import WeaponEditPanel from "../ui/WeaponEditPanel.jsx";
+import WeaponEditModal from "../modals/WeaponEditModal.jsx";
 import WeaponCatalogModal from "../modals/WeaponCatalogModal.jsx";
 
 // ── Constantes ────────────────────────────────────────────────────────────────
@@ -42,30 +46,35 @@ function parseLethality(val) {
 
 const COL = 'grid-cols-[1.5rem_2fr_1fr_1fr_1fr_1fr_1fr_1fr_1.5rem]';
 
-const WeaponsSection = ({ char, editMode, setArr, onRoll, onPatchImmediate  }) => {
+const WeaponsSection = ({ char, editMode, setArr, onRoll, onPatchImmediate, locked = false }) => {
     const allEquip = char.equipment ?? [];
 
     const [panelSlot,   setPanelSlot]   = useState(null);  // null | slot key
     const [showCatalog, setShowCatalog] = useState(false);
+
+    const canAdd = !locked && (editMode || !!onPatchImmediate);
 
     // ── Accès données ─────────────────────────────────────────────────────────
     const getWeapon = (slot) =>
         allEquip.find(e => e.slot === slot && e.category === 'weapon');
 
     // ── Mutations équipement ──────────────────────────────────────────────────
-    const saveWeapon = (slot, weaponData) => {
-        const existing = getWeapon(slot);
-        if (existing) {
-            setArr('equipment', allEquip.map(e =>
-                e.slot === slot && e.category === 'weapon' ? { ...e, ...weaponData } : e
-            ));
-        } else {
-            setArr('equipment', [...allEquip, {
+    // Arme posée dans un emplacement (remplace l'occupant éventuel). Mode édition :
+    // brouillon de la fiche ; sinon enregistrement immédiat.
+    const placeWeapon = (slot, weaponData) => {
+        const next = getWeapon(slot)
+            ? allEquip.map(e => e.slot === slot && e.category === 'weapon' ? { ...e, ...weaponData } : e)
+            : [...allEquip, {
                 category: 'weapon', expense: 'Standard',
                 isRestricted: false, restrictionNote: '',
                 quantity: 1, ...weaponData, slot,
-            }]);
-        }
+            }];
+        if (editMode) setArr('equipment', next);
+        else onPatchImmediate?.({ equipment: next });
+    };
+
+    const saveWeapon = (slot, weaponData) => {
+        placeWeapon(slot, weaponData);
         setPanelSlot(null);
     };
 
@@ -210,8 +219,8 @@ const WeaponsSection = ({ char, editMode, setArr, onRoll, onPatchImmediate  }) =
                     <span className="text-xs font-mono text-center">—</span>
                 )}
 
-                {/* Action colonne */}
-                {editMode ? (
+                {/* Action colonne : modification d'un emplacement occupé (l'ajout passe par le catalogue) */}
+                {editMode && w ? (
                     <button
                         onClick={() => setPanelSlot(slot)}
                         className="text-muted hover:text-accent transition-colors text-sm"
@@ -228,7 +237,7 @@ const WeaponsSection = ({ char, editMode, setArr, onRoll, onPatchImmediate  }) =
             {/* En-tête section */}
             <div className="flex items-center justify-between mb-2 border-b border-default pb-1">
                 <p className="dg-section-label text-base">17. ARMES</p>
-                {editMode && (
+                {canAdd && (
                     <button
                         onClick={() => setShowCatalog(true)}
                         className="text-[10px] font-mono border border-default px-2 py-0.5 hover:border-accent hover:text-accent transition-colors"
@@ -287,9 +296,9 @@ const WeaponsSection = ({ char, editMode, setArr, onRoll, onPatchImmediate  }) =
                 <span />
             </div>
 
-            {/* Panel d'édition */}
-            {panelSlot !== null && (
-                <WeaponEditPanel
+            {/* Modification d'un emplacement */}
+            {panelSlot !== null && getWeapon(panelSlot) && (
+                <WeaponEditModal
                     slot={panelSlot}
                     weapon={getWeapon(panelSlot)}
                     char={char}
@@ -299,11 +308,12 @@ const WeaponsSection = ({ char, editMode, setArr, onRoll, onPatchImmediate  }) =
                 />
             )}
 
-            {/* Catalogue */}
+            {/* Catalogue : la modale reste ouverte (ajouts multiples) */}
             {showCatalog && (
                 <WeaponCatalogModal
                     existingWeapons={allEquip.filter(e => e.slot && e.category === 'weapon')}
-                    onAdd={(weaponData, slot) => { saveWeapon(slot, weaponData); setShowCatalog(false); }}
+                    char={char}
+                    onAdd={(weaponData, slot) => placeWeapon(slot, weaponData)}
                     onClose={() => setShowCatalog(false)}
                 />
             )}

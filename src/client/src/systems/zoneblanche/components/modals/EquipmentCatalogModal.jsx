@@ -23,6 +23,7 @@
 
 import React, { useState, useMemo } from 'react';
 import { EQUIPMENT_CATALOG, EQUIPMENT_CATEGORY_ORDER } from '../../config.jsx';
+import Modal from '../../../../components/ui/Modal.jsx';
 
 // Recherche insensible à la casse ET aux accents ("detecteur" trouve "Détecteur").
 const norm = (s) => (s ?? '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
@@ -135,18 +136,21 @@ const EquipmentCatalogModal = ({
 
     const depasse = state.budget > 0 && state.total > state.budget;
 
+    const footer = (
+        <>
+            <span className="zb-eyebrow mr-auto self-center">
+                {filtered.length} objet{filtered.length > 1 ? 's' : ''} au catalogue
+                {' · '}
+                {state.items.length} ligne{state.items.length > 1 ? 's' : ''} dans l'inventaire
+            </span>
+            <button type="button" onClick={onClose} className="zb-btn-primary px-6 py-2.5 rounded-sm zb-display">Terminé</button>
+        </>
+    );
+
+    // Fenêtre générique (Modal, spec_ui_catalogue.md D-6) ; le corps à deux colonnes reste au slug
     return (
-        <div className="zb-modal-backdrop" onClick={onClose}>
-            <div className="zb-modal zb-modal-lg zb-grain" onClick={e => e.stopPropagation()}>
-
-                <div className="zb-modal-header">
-                    <div className="flex items-center gap-3">
-                        <span className="zb-rec-dot" />
-                        <span className="zb-display text-lg">Matériel de l'équipe</span>
-                    </div>
-                    <button type="button" onClick={onClose} className="zb-btn-ghost px-3 py-1 rounded-sm">✕</button>
-                </div>
-
+        <Modal onClose={onClose} title="Matériel de l'équipe" icon={<span className="zb-rec-dot" />}
+               size="xl" expandable className="zb-equip-modal h-full" footer={footer}>
                 <div className="zb-equip-modal-body">
 
                     {/* ═══════════ COLONNE GAUCHE — CATALOGUE ═══════════ */}
@@ -244,19 +248,7 @@ const EquipmentCatalogModal = ({
                         </div>
                     </div>
                 </div>
-
-                <div className="zb-modal-footer">
-                    <span className="zb-eyebrow">
-                        {filtered.length} objet{filtered.length > 1 ? 's' : ''} au catalogue
-                        {' · '}
-                        {state.items.length} ligne{state.items.length > 1 ? 's' : ''} dans l'inventaire
-                    </span>
-                    <button type="button" onClick={onClose} className="zb-btn-primary px-6 py-2.5 rounded-sm zb-display">
-                        Terminé
-                    </button>
-                </div>
-            </div>
-        </div>
+        </Modal>
     );
 };
 
