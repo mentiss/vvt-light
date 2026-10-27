@@ -343,7 +343,7 @@ const SpellCard = ({ spell, selected, onSelect, flawed = false }) => {
             <div className="flex items-start justify-between gap-2">
                 <div>
                     <span style={{ fontFamily: 'var(--ac-font-heading)', fontWeight: 700, fontSize: '0.78rem', color: 'var(--ac-text)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>{spell.label}</span>
-                    {flawed && <span style={{ marginLeft: 6, fontSize: '0.6rem', fontFamily: 'var(--ac-font-heading)', fontWeight: 700, background: 'var(--ac-accent)', color: '#fff', borderRadius: 3, padding: '1px 5px', textTransform: 'uppercase' }}>Imparfait</span>}
+                    {flawed && <span style={{ marginLeft: 6, fontSize: '0.6rem', fontFamily: 'var(--ac-font-heading)', fontWeight: 700, background: 'var(--ac-accent)', color: 'var(--ac-on-color)', borderRadius: 3, padding: '1px 5px', textTransform: 'uppercase' }}>Imparfait</span>}
                 </div>
                 {selected && <span style={{ color: 'var(--ac-secondary)', fontSize: '0.8rem', flexShrink: 0 }}>✓</span>}
             </div>
@@ -1430,7 +1430,7 @@ const Creation = ({ darkMode, onToggleDarkMode }) => {
                 <StepBar steps={steps} current={step} />
 
                 {error && (
-                    <div className="mb-4 px-3 py-2 rounded" style={{ background: 'var(--ac-accent)', color: '#fff', fontSize: '0.85rem' }}>{error}</div>
+                    <div className="mb-4 px-3 py-2 rounded" style={{ background: 'var(--ac-accent)', color: 'var(--ac-on-color)', fontSize: '0.85rem' }}>{error}</div>
                 )}
 
                 {stepContent[realId]}

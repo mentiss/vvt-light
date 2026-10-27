@@ -11,8 +11,9 @@ import React from 'react';
 import './theme.css';
 import GMView from './gm/GMView.jsx';
 
+// Le mode nuit passe par [data-theme] sur <html> (posé par la plateforme), plus par une classe .dark
 const GMApp = ({ activeSession, onSessionChange, onlineCharacters, darkMode, onToggleDarkMode }) => (
-    <div className={darkMode ? 'dark' : ''}>
+    <div>
         <GMView
             activeSession={activeSession}
             onSessionChange={onSessionChange}

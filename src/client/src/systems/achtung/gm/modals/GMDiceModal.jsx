@@ -187,7 +187,7 @@ const GMDiceModal = ({ onClose, sessionId }) => {
                 </div>
 
                 {error && (
-                    <div className="mb-3 px-3 py-2 rounded text-sm" style={{ background: 'var(--ac-danger)', color: '#fff' }}>
+                    <div className="mb-3 px-3 py-2 rounded text-sm" style={{ background: 'var(--ac-danger)', color: 'var(--ac-on-color)' }}>
                         {error}
                     </div>
                 )}

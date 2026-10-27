@@ -72,7 +72,7 @@ const VerticalGauge = ({
                         onClick={onInc}
                         disabled={!onInc || value >= max}
                         className="ac-btn ac-btn-icon disabled:opacity-25"
-                        style={{ background: filledColor, color: '#fff', border: 'none' }}
+                        style={{ background: filledColor, color: 'var(--ac-on-color)', border: 'none' }}
                         title={`+1 ${label}`}
                     >+</button>
                     <button

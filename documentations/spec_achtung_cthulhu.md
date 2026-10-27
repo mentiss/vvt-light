@@ -283,22 +283,24 @@ Le calcul du total de stress est affiché dans l'interface. L'application des ef
 
 ## 6. Thème visuel
 
-Palette WWII "Secret War" — documents opérationnels tamponnés, nuit européenne.
+Palette WWII "Secret War" — documents opérationnels tamponnés. Deux modes, réglés par les variables `--ac-*` de `theme.css` (le mode nuit répond à `[data-theme="dark"]`).
 
-| Token | Valeur | Usage |
-|---|---|---|
-| `--ac-bg` | `#1a1a14` | Fond principal — noir encre |
-| `--ac-surface` | `#252518` | Surface carte |
-| `--ac-surface-alt` | `#2f2f1e` | Surface secondaire |
-| `--ac-primary` | `#6b7c45` | Kaki militaire — accents, titres |
-| `--ac-secondary` | `#b5a96a` | Sable — labels, valeurs |
-| `--ac-accent` | `#8b1a1a` | Rouge sang — danger, stress, blessures |
-| `--ac-success` | `#4a6741` | Vert terrain — succès, Momentum |
-| `--ac-muted` | `#5c5840` | Texte atténué |
-| `--ac-text` | `#e5dcc0` | Texte principal — papier jauni |
-| `--ac-border` | `#3d3d28` | Bordures |
+| Token | Jour (papier kraft, encre sépia) | Nuit (papier carbone, encre claire) | Usage |
+|---|---|---|---|
+| `--ac-bg` | `#f0e8d0` | `#141210` | Fond de page (la nuit, nettement plus sombre que les cartes) |
+| `--ac-surface` | `#e8dfc0` | `#2a2720` | Surface carte (la feuille) |
+| `--ac-surface-alt` | `#ddd4aa` | `#332f27` | Surface secondaire |
+| `--ac-primary` | `#4a5830` | `#a3b872` | Kaki / olive éclairci — accents, filet des cartes, bandes d'en-tête |
+| `--ac-secondary` | `#7a6830` | `#b8a77a` | Sable — labels, valeurs |
+| `--ac-accent` | `#8b1a1a` | `#d9675a` | Rouge — danger, stress, blessures |
+| `--ac-success` | `#3a5530` | `#8fb070` | Vert — succès, Momentum |
+| `--ac-text` | `#1e1c12` | `#e8dfc4` | Texte principal (encre) |
+| `--ac-text-muted` | `#6a6040` | `#a99d7e` | Texte secondaire |
+| `--ac-border` | `#c0b080` | `#4d4636` | Bordures (bord du papier) |
 
-Typographie : **Special Elite** (machine à écrire) pour les titres et en-têtes, police système pour le corps. Mode nuit uniquement.
+Mode nuit (décisions du MJ, 2026-10-27) : même papier carbone que les modales génériques (spec_ui_modales.md §11). Sections distinguées par le contraste entre le fond de page et les cartes (pas de cadre imprimé pour l'instant). Bandes d'en-tête de section en olive éclairci, texte couleur du fond. Magie et traditions des sorts : posées sur le carbone, légèrement teintées de leur couleur, avec leurs filets et badges de couleur, pour rester distinctes. Laissez-passer de la barre de session : papier ivoire jour et nuit, éclairé la nuit par une lampe torche (halo au centre, bords dans l'ombre).
+
+Typographie : **Special Elite** (machine à écrire) pour les titres et en-têtes, police système pour le corps.
 
 ---
 

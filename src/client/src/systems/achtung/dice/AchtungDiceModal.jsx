@@ -475,7 +475,7 @@ const AchtungDiceModal = ({
                     <button onClick={onClose} className="ac-btn ac-btn-ghost">✕</button>
                 </div>
 
-                {error && <div className="mb-3 px-3 py-2 rounded text-sm bg-danger" style={{ color: '#fff' }}>{error}</div>}
+                {error && <div className="mb-3 px-3 py-2 rounded text-sm bg-danger" style={{ color: 'var(--ac-on-color)' }}>{error}</div>}
 
                 {/* ══ ÉTAPE 1 — Sélection ══════════════════════════════════ */}
                 {step === 1 && (

@@ -47,6 +47,9 @@
     --ac-threat-color:   var(--ac-accent);
     --ac-injury-color:   #c43030;
 
+    /* Texte posé sur une couleur pleine (kaki, rouge, badge de tradition) */
+    --ac-on-color:       #fff;
+
     --ac-radius:    3px;
     --ac-radius-md: 5px;
     --ac-radius-lg: 8px;
@@ -75,22 +78,26 @@
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════
-   MODE NUIT — Salle d'opérations, noir encre, kaki sombre
+   MODE NUIT — Papier carbone, encre claire (comme les modales génériques,
+   spec_achtung_cthulhu.md §6) ; fond de page plus sombre que les cartes
 ═══════════════════════════════════════════════════════════════════════════ */
 
-[data-theme="dark"], .dark {
-    --ac-bg:            #1a1a14;
-    --ac-surface:       #252518;
-    --ac-surface-alt:   #2f2f1e;
-    --ac-primary:       #6b7c45;
-    --ac-secondary:     #b5a96a;
-    --ac-accent:        #8b1a1a;
-    --ac-success:       #4a6741;
-    --ac-muted:         #5c5840;
-    --ac-text:          #e5dcc0;
-    --ac-text-muted:    #9a9070;
-    --ac-border:        #3d3d28;
-    --ac-border-strong: #5c5840;
+[data-theme="dark"] {
+    --ac-bg:            #141210;
+    --ac-surface:       #2a2720;
+    --ac-surface-alt:   #332f27;
+    --ac-primary:       #a3b872;
+    --ac-secondary:     #b8a77a;
+    --ac-accent:        #d9675a;
+    --ac-success:       #8fb070;
+    --ac-muted:         #7a705a;
+    --ac-text:          #e8dfc4;
+    --ac-text-muted:    #a99d7e;
+    --ac-border:        #4d4636;
+    --ac-border-strong: #6a604a;
+
+    /* Couleurs pleines éclaircies : le texte posé dessus passe à l'encre carbone */
+    --ac-on-color:      #141210;
 
     --color-bg:          var(--ac-bg);
     --color-surface:     var(--ac-surface);
@@ -110,23 +117,24 @@
     --ac-drape-opacity: 0.11;
     --ac-drape-color:   #8b0000;
 
-    /* Magie — mode nuit */
-    --ac-mythos-bg:      #151f15;
-    --ac-mythos-surface: #1a281a;
-    --ac-mythos-border:  #3a6a3a;
-    --ac-mythos-text:    #c0d8c0;
-    --ac-mythos-header:  #5a9a5a;
+    /* Magie — mode nuit : posée sur le carbone, teintée de sa couleur, filets et
+       intertitre de couleur pour rester distincte du reste de la fiche */
+    --ac-mythos-bg:      color-mix(in srgb, #2a2720 84%, #5a9a5a);
+    --ac-mythos-surface: color-mix(in srgb, #2a2720 76%, #5a9a5a);
+    --ac-mythos-border:  #5a9a5a;
+    --ac-mythos-text:    #c8dcc0;
+    --ac-mythos-header:  #7ab87a;
 
-    /* Sorts par tradition — mode nuit */
+    /* Sorts par tradition — mode nuit : même principe, une couleur par tradition */
     --ac-celtic-accent:  #8ab040;
-    --ac-celtic-bg:      #1e2818;
-    --ac-celtic-border:  #5a7830;
+    --ac-celtic-bg:      color-mix(in srgb, #2a2720 86%, #8ab040);
+    --ac-celtic-border:  #8ab040;
     --ac-runic-accent:   #6090b8;
-    --ac-runic-bg:       #181e28;
-    --ac-runic-border:   #3a5878;
+    --ac-runic-bg:       color-mix(in srgb, #2a2720 86%, #6090b8);
+    --ac-runic-border:   #6090b8;
     --ac-psychic-accent: #9a70b8;
-    --ac-psychic-bg:     #201828;
-    --ac-psychic-border: #6a4888;
+    --ac-psychic-bg:     color-mix(in srgb, #2a2720 86%, #9a70b8);
+    --ac-psychic-border: #9a70b8;
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════
@@ -157,7 +165,6 @@ body::before {
 }
 
 /* En mode nuit : multiply → screen pour que le rouge ressorte sur fond sombre */
-.dark body::before,
 [data-theme="dark"] body::before {
     mix-blend-mode: screen;
 }
@@ -206,10 +213,9 @@ body::before {
     border-radius:   0;
 }
 
-/* En mode nuit la bande reste lisible */
-[data-theme="dark"] .ac-section-header,
-.dark .ac-section-header {
-    color:      var(--ac-text);
+/* En mode nuit : bande olive éclairci, texte couleur du fond (comme le bouton principal des modales) */
+[data-theme="dark"] .ac-section-header {
+    color:      var(--ac-bg);
     background: var(--ac-primary);
 }
 
@@ -287,8 +293,7 @@ body::before {
     box-shadow:      0 2px 8px rgba(0,0,0,0.15);
 }
 
-[data-theme="dark"] .ac-header,
-.dark .ac-header {
+[data-theme="dark"] .ac-header {
     border-bottom-color: var(--ac-primary);
     box-shadow: 0 2px 12px rgba(0,0,0,0.4);
 }
@@ -503,7 +508,7 @@ body::before {
     font-weight:    700;
     letter-spacing: 0.08em;
     text-transform: uppercase;
-    color:          #fff;
+    color:          var(--ac-on-color);
     margin-left:    0.5rem;
     vertical-align: middle;
 }
@@ -545,7 +550,7 @@ body::before {
     padding:        1px 6px;
     border-radius:  99px;
     background:     var(--ac-accent);
-    color:          #fff;
+    color:          var(--ac-on-color);
     font-family:    var(--ac-font-heading);
     font-size:      0.55rem;
     font-weight:    700;
@@ -631,7 +636,7 @@ body::before {
 
 .ac-btn-primary {
     background:  var(--ac-primary);
-    color:       #fff;
+    color:       var(--ac-on-color);
     font-weight: 700;
 }
 .ac-btn-primary:hover:not(:disabled) { opacity: 0.85; }
@@ -645,7 +650,7 @@ body::before {
 
 .ac-btn-danger {
     background: var(--ac-accent);
-    color:      #fff;
+    color:      var(--ac-on-color);
 }
 .ac-btn-danger:hover:not(:disabled) { opacity: 0.85; }
 
@@ -676,7 +681,7 @@ body::before {
 }
 .ac-roll-btn:hover {
     background:   var(--ac-primary);
-    color:        #fff;
+    color:        var(--ac-on-color);
     border-color: var(--ac-primary);
 }
 
@@ -701,7 +706,7 @@ body::before {
     font-size:   1rem;
     transition:  background 0.15s, color 0.15s;
 }
-.ac-menu-btn.open, .vtt-menu-button[aria-expanded="true"] { background: var(--ac-primary); color: #fff; }
+.ac-menu-btn.open, .vtt-menu-button[aria-expanded="true"] { background: var(--ac-primary); color: var(--ac-on-color); }
 
 .ac-menu-dropdown, .vtt-menu {
     position:      absolute;
@@ -932,7 +937,7 @@ body::before {
     font-weight:     700;
     letter-spacing:  0.05em;
     background:      var(--ac-accent);
-    color:           #fff;
+    color:           var(--ac-on-color);
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════
@@ -1136,7 +1141,7 @@ body::before {
 .ac-select-btn.selected-primary {
     background:   var(--ac-primary);
     border-color: var(--ac-primary);
-    color:        #fff;
+    color:        var(--ac-on-color);
 }
 .ac-select-btn:hover:not(.selected):not(.selected-primary) {
     border-color: var(--ac-border-strong);
@@ -1416,10 +1421,11 @@ body::before {
 .vtt-session-bar-image, .vtt-session-bar-initials { border-radius: 0; }
 .vtt-session-bar-image { filter: sepia(.3) contrast(1.05); }
 .vtt-session-bar-player:not([data-online]):not([data-me]) .vtt-session-bar-frame { filter: grayscale(1) sepia(.4); }
-.vtt-session-bar-initials { font-family: var(--ac-font-title); color: var(--ac-primary); background: #e9e1c8; }
+.vtt-session-bar-initials { font-family: var(--ac-font-title); color: #4a5830; background: #e9e1c8; }   /* pastille papier : kaki fixe, jour et nuit */
 .vtt-session-bar-reopen { border-radius: var(--ac-radius); }
 
-/* ✦ Carte : laissez-passer. Papier ivoire guilloché (identique jour et nuit, comme un vrai document) */
+/* ✦ Carte : laissez-passer. Papier ivoire guilloché jour et nuit, comme un vrai document ;
+   la nuit, éclairé à la lampe torche (règle [data-theme="dark"] ci-dessous) */
 .vtt-session-bar-card {
     --ac-paper: #efe7cf; --ac-ink: #2a2618; --ac-ink-soft: #6a6040;
     position: relative; border-radius: 4px; padding: .9rem 1rem 1.1rem;
@@ -1430,6 +1436,16 @@ body::before {
         var(--ac-paper);
     box-shadow: inset 0 0 0 4px var(--ac-paper), inset 0 0 0 5px rgba(74, 88, 48, .45), 0 18px 40px rgba(0,0,0,.45);
     font-family: var(--ac-font-title);
+}
+/* ✦ Nuit : lampe torche — halo chaud au centre, bords et coins dans l'ombre (le texte reste lisible) */
+[data-theme="dark"] .vtt-session-bar-card {
+    background:
+        radial-gradient(ellipse 75% 60% at 50% 42%, rgba(255, 214, 140, .16) 0, transparent 70%),
+        radial-gradient(ellipse 95% 85% at 50% 45%, transparent 55%, rgba(12, 9, 4, .55) 85%, rgba(6, 4, 2, .85) 100%),
+        repeating-radial-gradient(circle at 50% 120%, transparent 0 6px, rgba(74, 88, 48, .07) 6px 7px),
+        repeating-linear-gradient(45deg, transparent 0 9px, rgba(122, 104, 48, .05) 9px 10px),
+        var(--ac-paper);
+    box-shadow: inset 0 0 0 4px rgba(239, 231, 207, .35), inset 0 0 0 5px rgba(74, 88, 48, .35), 0 0 30px rgba(255, 214, 140, .12), 0 18px 40px rgba(0,0,0,.6);
 }
 .vtt-session-bar-card::before {   /* intitulé du document */
     content: 'Laissez-passer'; display: block; margin: 0 0 .6rem; padding-bottom: .35rem; text-align: center;
