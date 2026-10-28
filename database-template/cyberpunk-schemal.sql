@@ -75,6 +75,7 @@ CREATE TABLE IF NOT EXISTS game_sessions (
                                              date DATETIME DEFAULT CURRENT_TIMESTAMP,
                                              notes TEXT,
                                              created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                                             audio_enabled INTEGER NOT NULL DEFAULT 0,
                                              updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
 );
 
@@ -473,3 +474,46 @@ INSERT INTO moves (type, playbook, name, stat, description) VALUES
                                                                 ('official', 'Assassin', 'Plus machine qu''homme',     NULL,    'Choisis un cyberware supplémentaire à la création ou durant un temps mort.'),
                                                                 ('official', 'Assassin', 'Regard de dur',              'style', '15+ : 2 Retenues. 10-14 : 1 Retenue. Dépense : fixer un PNJ — il se fige. 9- : identifié comme plus grande menace.'),
                                                                 ('official', 'Assassin', 'Préparation silencieuse',    'pro',   '15+ : [info] routine/vulnérabilités/environnement + +1 forward. 10-14 : 1 aspect au choix. 9- : repéré ou cible a changé.');
+
+-- Brique audio (documentations/spec_audio.md §9.2) : bibliothèque du MJ,
+-- collections → playlists → vidéos YouTube
+create table audio_collections
+(
+    id         INTEGER
+        primary key autoincrement,
+    name       TEXT    not null,
+    position   INTEGER not null default 0,
+    created_at DATETIME default CURRENT_TIMESTAMP
+);
+
+create table audio_playlists
+(
+    id            INTEGER
+        primary key autoincrement,
+    collection_id INTEGER not null
+        references audio_collections
+            on delete cascade,
+    name          TEXT    not null,
+    position      INTEGER not null default 0,
+    created_at    DATETIME default CURRENT_TIMESTAMP
+);
+
+create index idx_audio_playlists_collection
+    on audio_playlists (collection_id, position);
+
+create table audio_tracks
+(
+    id          INTEGER
+        primary key autoincrement,
+    playlist_id INTEGER not null
+        references audio_playlists
+            on delete cascade,
+    youtube_id  TEXT    not null,
+    title       TEXT    not null,
+    position    INTEGER not null default 0,
+    unavailable INTEGER not null default 0,
+    created_at  DATETIME default CURRENT_TIMESTAMP
+);
+
+create index idx_audio_tracks_playlist
+    on audio_tracks (playlist_id, position);

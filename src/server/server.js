@@ -87,6 +87,7 @@ for (const [slug] of getAllSystems()) {
     app.use(`${prefix}/sessions`,   resolver, getSharedRoute('sessions'));
     app.use(`${prefix}/journal`,    resolver, getSharedRoute('journal'));
     app.use(`${prefix}/dice`,       resolver, getSharedRoute('dice'));
+    app.use(`${prefix}/audio`,      resolver, getSharedRoute('audio'));
 
     // ── Routes extra slug-spécifiques (auto-scan de systems/:slug/routes/) ───
     // Tout fichier .js autre que characters.js / combat.js est monté ici.
@@ -99,7 +100,7 @@ for (const [slug] of getAllSystems()) {
     const extraNames = extraRoutes.length
         ? `,${extraRoutes.map(r => r.name).join(',')}`
         : '';
-    console.log(`🗺️  Routes mounted for [${slug}]: ${prefix}/{auth,characters,combat,sessions,journal,dice${extraNames}}`);
+    console.log(`🗺️  Routes mounted for [${slug}]: ${prefix}/{auth,characters,combat,sessions,journal,dice,audio${extraNames}}`);
 }
 
 // hidden : slug absent de la page d'accueil, toujours accessible par son adresse

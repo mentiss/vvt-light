@@ -34,6 +34,7 @@ const SHARED_ROUTES = {
     combat:     path.join(__dirname, '../routes/combat.js'),
     npc:        path.join(__dirname, '../routes/npc.js'),
     'npc-sets': path.join(__dirname, '../routes/npc-sets.js'),
+    audio:      path.join(__dirname, '../routes/audio.js'),
 };
 
 // Routes que chaque système DOIT fournir
