@@ -11,6 +11,7 @@ import PlayerPage   from './pages/PlayerPage.jsx';
 import HomePage     from './pages/HomePage.jsx';
 import CreationPage from './pages/CreationPage.jsx';
 import GenMapPage   from './pages/GenMapPage.jsx';
+import AudioProtoPage from './pages/AudioProtoPage.jsx';
 import { SlugNotFound, RouteErrorPage } from './components/platform/ErrorPage.jsx';
 
 const AppRouter = () => {
@@ -36,6 +37,12 @@ const AppRouter = () => {
         {
             path: '/tools/plans',
             element: <GenMapPage darkMode={darkMode} onToggleDarkMode={toggleDarkMode} />,
+            errorElement: <RouteErrorPage />,
+        },
+        // Prototype temporaire du lecteur audio (spec_audio.md §9.9)
+        {
+            path: '/tools/audio',
+            element: <AudioProtoPage darkMode={darkMode} />,
             errorElement: <RouteErrorPage />,
         },
 
