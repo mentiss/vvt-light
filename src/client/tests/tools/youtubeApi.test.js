@@ -1,6 +1,6 @@
 // Extraction des identifiants d'un lien YouTube (spec_audio.md §9.4, Q-21, Q-22)
 import { describe, it, expect } from 'vitest';
-import { parseYouTubeLink } from '../../../src/components/audio/youtubeApi.js';
+import { parseYouTubeLink } from '../../src/tools/youtubeApi.js';
 
 const ID = 'dQw4w9WgXcQ';
 const LIST = 'PLx0sYbCqOb8TBPRdmBHs5Iftvv9TPboYG';

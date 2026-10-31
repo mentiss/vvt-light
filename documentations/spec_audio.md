@@ -1,7 +1,7 @@
 # Spec — Lecteur audio synchronisé (façon Watch2Gether)
 
 > Version 0.4 — Phase 2 : spécification technique  
-> Statut : **Spécification validée par le MJ (§6, §9). Implémentation : prototype validé (§9.9), serveur fait, lecteurs et interfaces à venir**  
+> Statut : **Prototype de synchronisation validé à plusieurs (§10.1). Cadrage des nouvelles idées terminé, décisions au §10.8 (elles priment sur §6 et §9). Spécification technique v2 (§11) validée (§11.11). Implémentation du lot 1 : étapes 1 à 4 faites (base de module, serveur, lecteurs, panneau MJ) et élément d'activation posé dans Vikings ; point de contrôle du MJ en dev, puis habillage Vikings**  
 > Dernière mise à jour : octobre 2026
 
 ---
@@ -174,11 +174,17 @@ Hors chantier, à garder en tête pour que la v1 ne les rende pas difficiles :
 - Boucle d'un morceau à la demande.
 - Soundboard : effets ponctuels joués par-dessus la musique (Q-9, Q-27).
 - Élément du menu hamburger MJ pour activer la musique, en plus de l'onglet Session (Q-31).
+- Extrait d'une vidéo (début et fin) : effets tirés d'une compilation, introduction coupée d'une ambiance (S-8, évolution éventuelle, pas visée).
+- Fondu entre deux pistes ou deux morceaux (Q-7, S-14).
+- Troisième piste ambiance, si le besoin se fait sentir (S-5).
+- Écoute d'essai d'un contenu public depuis le catalogue, sans le copier (P2-5) : **à prévoir dans une mise à jour**.
 - Extension aux autres slugs après le pilote Vikings (Noctis après sa refonte).
 
 ---
 
 ## 9. Spécification technique (phase 2)
+
+> **Remplacée par le §11** (2026-10-31) pour tout ce qui découle du §10.8 : base propre au module, partage, pistes typées. Gardée pour l'historique et pour ce que le §11 reprend explicitement.
 
 ### 9.1 Principes
 
@@ -357,3 +363,439 @@ Visibilité (Q-12) : l'état diffusé contient le titre et le nom de playlist ; 
 | P-3 | Le MJ ouvre son panneau par un bouton flottant toujours visible (musique activée), ou seulement depuis l'onglet Session ? | Bouton flottant toujours visible : changer de musique depuis n'importe quel onglet | Oui pour l'instant ; un autre emplacement pourra être étudié plus tard |
 | P-4 | Désactiver la musique d'une session : arrêt immédiat chez tous ? | Oui | Oui |
 | P-5 | Ordre d'implémentation : prototype §9.9, puis serveur (tables, routes, état), puis lecteurs et modale, puis panneau MJ et bibliothèque, puis habillage Vikings | Oui, avec un point de contrôle de ta part après le prototype | Oui |
+
+---
+
+## 10. Retour du test et nouvelles idées (2026-10-31) — phase 1
+
+### 10.1 Résultat du test de synchronisation
+
+Test à plusieurs, en prod (v5.7.1, page `/tools/audio`) : **succès**, Firefox compris. La synchronisation par état du serveur et recalage local (`audioSync.js`) est validée : le chantier continue.
+
+### 10.2 Idées issues de l'échange avec les joueurs
+
+1. **Superposer plusieurs pistes** en même temps (musique + pluie + feu de camp). Revient sur Q-8.
+2. **Centraliser la gestion des playlists**, sur le modèle du tableau (`spec_tableau.md` §3.3) : une base propre au module, hors des bases des slugs. Revient sur Q-1.
+3. **Boutons préconfigurés** : lancer un morceau précis, un ensemble, ou un morceau au hasard d'une playlist. Sort du §8 (bouton raccourci « Combat »).
+
+### 10.3 Diagnostic
+
+**Superposition**
+- Techniquement, une piste = un lecteur YouTube caché de plus chez chaque client, synchronisé par le même algorithme que la piste unique. Rien de neuf sur le principe, déjà validé.
+- Coût : chaque lecteur est un cadre YouTube complet (mémoire, processeur, réseau). Quelques pistes ne posent pas de problème sur un PC ; une dizaine pèserait, surtout sur un téléphone. Le lecteur de 1 × 1 px aide : YouTube choisit la qualité d'image d'après la taille du lecteur, donc la plus basse, et le flux reste léger.
+- Une ambiance (pluie, vent) doit **tourner en boucle** sans fin, quand la musique **enchaîne** sa playlist (Q-6) : chaque piste a donc son mode.
+- Il faut un **mixage** : le volume de la pluie par rapport à la musique est un choix du MJ, le même pour tous. Le volume local de chaque joueur (Q-3) s'applique ensuite par-dessus l'ensemble.
+- L'état de lecture du serveur (§9.3) devient une liste de pistes, chacune avec son propre état ; la diffusion et le recalage restent les mêmes.
+
+**Base propre au module (`audio.db`)**
+- Même modèle que `board.db` : un fichier `database/audio.db`, magasin du seul module audio, **sans** être une base centrale. Les bases des slugs ne sont plus touchées du tout.
+- Conséquence heureuse : l'activation par session (Q-30) passe aussi dans `audio.db`, indexée par slug et identifiant de session, au lieu d'une colonne sur `game_sessions`. Plus de modification des 9 schémas de slug ni de migration `-- systems: all`.
+- À prévoir, **commun avec le tableau** : `scripts/migrate.js` et la release ne savent gérer que des bases de slug ; il leur faut une base hors slug (ex. en-tête `-- systems: audio`). Le premier des deux chantiers à arriver l'écrit, l'autre s'en sert.
+- Droits : la bibliothèque est modifiée par un MJ authentifié sur n'importe quel slug (jeton MJ du slug de la page) ; il n'y a qu'un MJ, c'est sans conséquence.
+
+**Boutons préconfigurés**
+- Un bouton enregistre une action : lancer tel morceau, lancer un ensemble de pistes, lancer un morceau au hasard d'une playlist. Côté serveur, ce n'est qu'une suite de commandes déjà prévues (§9.4) : peu de code en plus, une table de plus.
+- Points à trancher : effet sur ce qui joue déjà (remplacer tout, remplacer une piste, ajouter), et rangement des boutons.
+
+**La branche `audio`**
+- Les routes, l'état en mémoire et le minuteur restent réutilisables. Les modifications de `base.sql`, des 9 schémas et la migration `27102026_add_audio.sql` deviendraient caduques avec `audio.db` ; l'état mono-piste est à étendre. Plutôt qu'une fusion telle quelle, une reprise de la branche, une fois ces décisions prises.
+
+### 10.4 Questions
+
+| # | Question | Proposition | Réponse MJ |
+|---|---|---|---|
+| R-1 | Combien de pistes simultanées au maximum ? | 4 (une musique + trois ambiances) ; plus serait lourd sur un téléphone, et rarement utile | Pas 10 pistes : un nombre limité par type (une musique, une à trois ambiances, un effet ?), voir S-5 |
+| R-2 | Pistes toutes équivalentes, ou une piste « musique » et des pistes « ambiance » ? | Toutes équivalentes, numérotées ; c'est le mode de chaque piste qui change (R-3) | Pistes typées plutôt : musique, ambiance, effet, pour ne pas surcharger et garder la maîtrise (S-5) |
+| R-3 | Mode d'une piste : « playlist » (enchaîne puis s'arrête, Q-6) ou « boucle » (le morceau repart sans fin) ? Faut-il aussi « aléatoire » (morceau au hasard de la playlist à chaque fin) ? | Les trois modes, choisis par piste | La superposition suppose un contrôle des pistes, notamment pour faire boucler (S-7) |
+| R-4 | Mixage : le MJ règle le volume de chaque piste, appliqué chez tous ; chaque joueur garde seulement son volume général (Q-3). Le joueur doit-il aussi pouvoir couper ou baisser une piste en particulier ? | Non : volume général et coupure seulement, comme décidé | |
+| R-5 | Base propre au module, `database/audio.db`, sur le modèle de `board.db` ? (Q-1 est alors à revoir) | Oui | |
+| R-6 | Dans `audio.db`, la bibliothèque est-elle **commune à tous les slugs** (une même playlist de taverne sert à Vikings et à Achtung), ou **rangée par slug** (chaque slug ne voit que la sienne) ? | Commune, puisque c'est l'intérêt de la centralisation ; les collections suffisent à ranger par jeu ou par campagne | Ni toute commune ni seulement par slug : une musique Vikings n'a rien à faire dans Cyberpunk, et d'une table à l'autre les goûts et playlists diffèrent. Classement par slug quelque part, et piste à creuser : playlists privées, publiques slug, publiques plateforme (S-1 à S-4) |
+| R-7 | L'activation par session (Q-30) passe aussi dans `audio.db` (par slug et session), au lieu d'une colonne sur `game_sessions` ? | Oui : les bases des slugs ne bougent plus du tout | Oui (T-2) |
+| R-8 | Types de boutons : (a) un morceau précis, (b) un ensemble de pistes lancées d'un coup (une « ambiance » : musique + pluie + feu), (c) un morceau au hasard d'une playlist. Autre chose (ex. « tout arrêter ») ? | Les trois, plus « tout arrêter », toujours présent | |
+| R-9 | Effet d'un bouton sur ce qui joue déjà : un bouton (a) ou (c) joue sur **une piste désignée** (il ne remplace que celle-là) ; un bouton (b) **remplace toutes les pistes**. D'accord ? | Oui ; « ajouter sans rien couper » se fait avec (a) ou (c) sur une piste libre | Réglable dans la configuration du bouton : remplacement complet, ou extinction d'une piste au profit d'une autre (S-10) |
+| R-10 | Bouton (c), le hasard : un seul morceau au hasard puis comportement normal de la piste, ou la piste passe en mode aléatoire ? | La piste passe en mode aléatoire (R-3) sur cette playlist | |
+| R-11 | Rangement des boutons : dans une collection (comme les playlists), commune à tous les slugs, ou par slug ? | Dans une collection : les boutons de la campagne vivent avec ses playlists | Par MJ, donc par table : chaque table a sa série de boutons, nombre éventuellement limité (S-9) |
+| R-12 | Où sont les boutons dans l'interface MJ : dans le panneau flottant (P-3), ou dans une barre de boutons à part, toujours visible ? | Une rangée de boutons en tête du panneau flottant, plus un mode « boutons seuls » du panneau replié | « Quelque part dans l'interface » : à préciser (S-12) |
+| R-13 | Les joueurs voient-ils quelque chose des pistes superposées (titres de chaque piste, nom du bouton lancé) ? | Comme Q-12 : titre de chaque piste visible, réglage « masquer » du MJ valable pour toutes ; nom des boutons jamais montré | |
+| R-14 | Découpage : tout d'un coup, ou en lots ? | Lot 1 : `audio.db` et migration hors slug, pistes multiples, bibliothèque, lecteurs, panneau MJ, activation, habillage Vikings. Lot 2 : boutons préconfigurés. Le lot 1 pose la structure, le lot 2 s'y branche sans la changer | |
+| R-15 | La page `/tools/audio` (prototype, en prod) : la retirer dès la prochaine release, ou la garder jusqu'à la fin du lot 1 pour d'autres essais ? | La garder jusqu'à la fin du lot 1, puis la retirer avec le relais `audioProto.js` | |
+
+### 10.5 Réponses du MJ et diagnostic, second tour (2026-10-31)
+
+**Ce qui se dégage**
+- **Pistes typées**, en petit nombre, pour ne pas surcharger et garder la maîtrise : une piste musique, une à trois pistes ambiance, une piste effet.
+- **Contrôle par piste**, boucle comprise.
+- **Bibliothèque ni toute commune, ni seulement par slug** : un classement par slug, des goûts différents d'une table à l'autre, et l'idée de niveaux de partage (privé, public slug, public plateforme).
+- **Boutons par table**, en nombre limité, configurables : remplacement complet, ou une piste éteinte au profit d'une autre.
+
+**Ce que le code impose**
+- Dans l'application, une « session » (`game_sessions`) est une **table** : un groupe durable, d'une soirée à l'autre, pas une soirée. Il n'y a **qu'un compte MJ par slug** (le personnage `-1`). « Par MJ » veut donc dire « par table » : un MJ qui mène deux tables du même slug aura deux espaces privés.
+- La réponse à Q-1 (« pas par session ») visait une soirée : par table, le MJ retrouve ses playlists d'une soirée à l'autre, c'est compatible.
+
+**La piste effet**
+- Un effet (porte, coup de feu, cri) se joue une fois, par-dessus le reste. Avec YouTube, il **n'est pas instantané** : charger une vidéo prend une à trois secondes. Pour un effet attendu (« la porte s'ouvre »), ça passe ; pour un effet au réflexe, c'est un peu mou. C'est la limite de « YouTube seul, aucun fichier son sur le serveur ».
+- Beaucoup d'effets sur YouTube sont des compilations (« 50 bruits de portes ») : il faut pouvoir **jouer un extrait** (début et fin dans la vidéo). C'est utile aussi pour une ambiance (couper une introduction parlée avant la boucle).
+
+**Les niveaux de partage**
+- Trois niveaux : **privé** (une table), **public slug** (toutes les tables du slug), **public plateforme** (tout le monde). Ils règlent le cas Vikings / Cyberpunk (rien n'est commun sans le vouloir) et le partage volontaire (une playlist « taverne » publique plateforme).
+- Le niveau se pose plus simplement sur une **collection** (tout son contenu suit) que sur chaque playlist ; une playlist mal rangée se copie ou se déplace.
+- Il faut décider qui peut **modifier** un contenu public : sinon une table peut casser la playlist d'une autre.
+
+### 10.6 Questions, second tour
+
+| # | Question | Proposition | Réponse MJ |
+|---|---|---|---|
+| S-1 | « Privé » = rattaché à **une table** (`game_sessions`, durable d'une soirée à l'autre), puisqu'il n'y a qu'un compte MJ par slug ? | Oui | Oui : privé = session / table |
+| S-2 | Trois niveaux de partage : **privé** (une table), **public slug** (toutes les tables du slug), **public plateforme** (toutes les tables de tous les slugs) ? | Oui | Oui (proposition du MJ). **Public ne veut pas dire présent d'office** dans toutes les tables : un MJ peut le récupérer, l'associer, le copier dans sa table. Sinon, pollution |
+| S-3 | Le niveau se règle sur la **collection** (son contenu suit) ou sur **chaque playlist** ? | Sur la collection : plus lisible ; une playlist se copie ou se déplace d'une collection à l'autre | Sur la collection, à condition de pouvoir **copier une playlist seule** (pas seulement toute une collection) |
+| S-4 | Qui modifie un contenu public ? Seule la table propriétaire (les autres l'utilisent tel quel et peuvent le **copier** dans leurs collections privées), ou toutes les tables ? | Seule la table propriétaire ; copie possible pour les autres | Oui, c'est le bon niveau |
+| S-5 | Pistes typées : **1 musique, 1 à 3 ambiances, 1 effet** (5 au plus) ? Le nombre de pistes ambiance est-il fixe (3), ou choisi par la table ? | 1 musique, 3 ambiances, 1 effet, fixes : une piste vide ne coûte rien | Fixe, mais **2 ambiances** suffisent ; une troisième pourra s'ajouter plus tard si le besoin se fait sentir |
+| S-6 | Piste effet : joue une fois et s'arrête, par-dessus le reste ; latence de chargement YouTube d'une à trois secondes. Acceptable ? Un nouvel effet coupe-t-il l'effet en cours ? | Acceptable ; un nouvel effet remplace celui en cours | Oui, pas le choix |
+| S-7 | Contrôles par piste (MJ) : lecture / pause / arrêt, volume, et mode. Musique : playlist (Q-6), boucle du morceau, aléatoire. Ambiance : boucle par défaut, playlist possible. Effet : une fois. D'accord ? | Oui | Oui |
+| S-8 | **Extrait** d'une vidéo : début et fin facultatifs, enregistrés avec la vidéo dans la bibliothèque (effets tirés d'une compilation, introduction coupée d'une ambiance) ? | Oui, pour tous les types | Pourquoi pas, mais ça complexifie : **évolution future éventuelle**, pas une fonctionnalité visée (§8) |
+| S-9 | Nombre maximal de boutons par table ? | 12 : une rangée lisible, et c'est une limite d'affichage, facile à relever | Boutons : conforme à ce que le MJ envisageait (S-9, S-10, S-12) |
+| S-10 | Configuration d'un bouton : **scène** (fixe le contenu de chaque piste : tel morceau, telle playlist, ou silence ; les pistes non citées s'éteignent) ou **ciblé** (change une piste, les autres continuent). Un bouton peut-il aussi lancer un effet ? Un bouton peut-il viser un contenu public d'une autre table ? | Les deux modes ; un effet peut être visé ; contenu public autorisé, et le bouton se signale en erreur si ce contenu disparaît | Oui |
+| S-11 | Les types de pistes changent-ils l'affichage joueur ? (Q-12 : titre visible, playlist masquée) | Le titre de la musique seulement ; ambiances et effets ne s'affichent pas (un « cri » annoncé gâche l'effet) | Oui, uniquement le titre de la piste musique |
+| S-12 | Où sont les boutons : dans le panneau MJ flottant, ou une **barre à part toujours visible** (le MJ lance « Combat » sans ouvrir de panneau) ? | Une barre à part, repliable, distincte du panneau de gestion | Oui (voir S-9) |
+| S-13 | Volume local du joueur : un seul (Q-3), ou un par type (musique, ambiance, effet) ? Avec des pistes typées, certains voudront baisser la musique en gardant les effets | Un général plus un par type, mémorisés dans le navigateur | Oui, réglés par le joueur (pas envoyés par le MJ). **Pré-réglage de la plateforme** par type (ex. ambiance 10 %, musique 50 %). Réglage du joueur gardé sur le long terme, **pour toute la plateforme** (pas par slug ni par table) |
+| S-14 | Passage d'une piste à une autre par un bouton : coupure sèche (Q-7) ou court fondu ? Avec des ambiances qui se remplacent, la coupure peut s'entendre | Coupure sèche en v1, fondu en évolution (§8) | Oui |
+
+### 10.7 Volume : précisions et questions restantes
+
+- **Réglage du joueur pour toute la plateforme** : c'est naturel, toute l'application est une seule adresse, donc un seul stockage du navigateur pour tous les slugs. Limite : c'est **par navigateur**, faute de comptes joueurs. Sur un autre appareil, le joueur repart des pré-réglages.
+- **Volume entendu** par un joueur sur une piste = pré-réglage du type (ou son propre réglage du type, s'il l'a modifié) × son volume général.
+- Reste à savoir si le MJ garde un **réglage par piste** (R-4) : deux vidéos d'ambiance n'ont pas le même niveau sonore d'origine (une pluie enregistrée fort, un vent très faible). Sans réglage du MJ, chaque joueur rattrape à la main à chaque changement.
+
+| # | Question | Proposition | Réponse MJ |
+|---|---|---|---|
+| S-15 | Le MJ garde-t-il un **gain par vidéo**, enregistré avec la vidéo dans la bibliothèque, pour égaliser les niveaux d'origine (pluie trop forte, vent trop faible) ? Ce n'est pas un réglage de mixage en direct : il est fixé une fois, et le volume reste ensuite celui du joueur | Oui, par vidéo, de 0 à 100 % (100 par défaut) ; pas de réglage de volume en direct par le MJ | Oui |
+| S-16 | Pré-réglages de la plateforme par type : musique 50 %, ambiance 10 %, et effet ? | Effet 50 % : un effet doit s'entendre par-dessus la musique | Oui. Réglage lié au navigateur, comme la configuration des dés |
+
+### 10.8 Décisions du cadrage (2026-10-31)
+
+Elles **remplacent** Q-1 (bibliothèque par slug), Q-8 (une seule piste), Q-3 (un seul volume joueur) et la partie « bouton raccourci » du §8.
+
+**Données**
+- Base propre au module, `database/audio.db`, sur le modèle de `board.db` : hors des bases des slugs, sans être une base centrale (R-5).
+- Tout contenu appartient à une **table** (`game_sessions`, durable d'une soirée à l'autre, un compte MJ par slug) : « privé » = la table (S-1).
+- Niveau de partage posé sur la **collection** : **privé**, **public slug**, **public plateforme** (S-2, S-3).
+- **Public ne veut pas dire présent d'office** : un contenu public n'apparaît dans aucune autre table tant que son MJ ne l'a pas copié chez lui. Sinon, pollution (S-2).
+- **Copie seule**, pas d'association : un MJ parcourt les contenus publics et en copie ce qu'il veut dans sa table. La copie est indépendante et ne suit pas les mises à jour du propriétaire (T-1).
+- Seule la table propriétaire modifie un contenu (S-4).
+- Copie possible d'une **collection**, d'une **playlist seule** ou d'une **vidéo** (S-3).
+- Gain par vidéo, réglé une fois par le MJ dans la bibliothèque, 100 % par défaut (S-15).
+
+**Pistes**
+- Typées et en nombre fixe : **1 musique, 2 ambiances, 1 effet** (S-5).
+- Contrôles par piste pour le MJ : lecture, pause, arrêt, mode. Musique : playlist (défaut), boucle du morceau, aléatoire. Ambiance : boucle du morceau (défaut), playlist. Effet : une fois (S-7).
+- Effet : joue une fois par-dessus le reste ; un nouvel effet remplace celui en cours ; délai de chargement YouTube d'une à trois secondes accepté (S-6).
+- Coupure sèche entre deux contenus, pas de fondu (S-14).
+
+**Boutons**
+- Par **table**, **5 au plus** (2 à 3 en pratique), plus un bouton **STOP** (tout arrêter) toujours présent, hors du compte ; dans une barre à part, repliable, distincte du panneau de gestion (S-9, S-12, T-3).
+- Deux modes : **scène** (fixe le contenu de chaque piste, les pistes non citées s'éteignent) et **ciblé** (change une piste, les autres continuent). Ils couvrent un morceau précis comme un morceau au hasard d'une playlist ; le hasard fait passer la piste en mode aléatoire. Un bouton peut lancer un effet (S-10, T-3).
+- Un bouton ne vise que le contenu **de sa table** (un contenu public y entre par copie, T-1) ; il se signale en erreur si ce contenu a été supprimé.
+
+**Activation**
+- Musique activée par table, mémorisée dans `audio.db` (par slug et table), et non par une colonne sur `game_sessions` : les bases des slugs ne bougent plus du tout (T-2).
+
+**Découpage**
+- **Lot 1**, la structure : `audio.db`, migration et release hors slug (commune avec le tableau), pistes typées, bibliothèque et partage, lecteurs, panneau MJ, activation, habillage Vikings.
+- **Lot 2** : les boutons.
+- **Lot 3**, nettoyage : retrait de la page prototype `/tools/audio` et du relais `audioProto.js`, qui restent en prod d'ici là (T-4, T-5).
+
+**Joueurs**
+- Seul le **titre de la piste musique** est visible ; ambiances et effets ne s'affichent pas (S-11).
+- Volume : un général et un par type, réglés par le joueur, jamais envoyés par le MJ. Pré-réglages de la plateforme : musique 50 %, ambiance 10 %, effet 50 %. Réglage gardé dans le navigateur, pour toute la plateforme, comme la configuration des dés (S-13, S-16).
+
+Cadrage terminé : plus de question ouverte (§10.9 tranché). La spécification technique du §9 est à reprendre en phase 2, sur feu vert du MJ.
+
+### 10.9 Questions restantes
+
+| # | Question | Proposition | Réponse MJ |
+|---|---|---|---|
+| T-1 | « **Associer** » un contenu public et le « **copier** » : deux choses différentes ? Associer = un lien en lecture seule (la table voit les mises à jour du propriétaire, et le perd s'il le supprime) ; copier = un double indépendant, modifiable | Oui, les deux : on associe une collection publique entière, on copie une playlist ou une vidéo | **Copie seule** : associer ajoute trop d'options. Limite acceptée : une copie ne suit pas les mises à jour du propriétaire |
+| T-2 (R-7) | L'activation de la musique par table passe dans `audio.db` (par slug et table), au lieu d'une colonne sur `game_sessions` ? | Oui : les bases des slugs ne bougent plus du tout | Oui |
+| T-3 (R-8, R-10) | Les boutons « scène » et « ciblé » couvrent-ils le morceau précis et le morceau au hasard d'une playlist ? Le hasard fait passer la piste en mode aléatoire ? Un bouton « tout arrêter » toujours présent, hors des 12 ? | Oui aux trois | Oui, mais **5 boutons au plus** par table (2 à 3 en pratique), **plus le bouton STOP** |
+| T-4 (R-14) | Découpage en deux lots : structure d'abord (`audio.db`, migration et release hors slug, pistes typées, bibliothèque et partage, lecteurs, panneau MJ, activation, habillage Vikings), boutons ensuite ? | Oui | Oui |
+| T-5 (R-15) | La page prototype `/tools/audio` reste en prod jusqu'à la fin du lot 1 ? | Oui, puis retrait avec le relais `audioProto.js` | Oui, ou un **dernier lot de nettoyage** |
+
+---
+
+## 11. Spécification technique v2 (phase 2, 2026-10-31)
+
+Remplace le §9 pour tout ce qui suit les décisions du §10.8. Du §9 restent valables : les principes (§9.1), la synchronisation (validée, `audioSync.js`), le lecteur caché 1 × 1 hors écran, l'ajout par lien et l'import de playlist (§9.4, dernier paragraphe), la modale « Activer le son » et le montage par `GMPage` / `PlayerPage`.
+
+### 11.1 Base propre au module : `database/audio.db`
+
+**Principe commun avec le tableau (`board.db`)** : une base de **module**, déclarée une fois, que le pool de connexions, la migration et la release savent traiter comme une base de slug.
+
+- Déclaration seule dans `src/server/db/modules/audio.js` : `{ slug: 'audio', dbPath: 'database/audio.db', schemaPath: 'database-template/audio-schema.sql' }` (le tableau ajoutera `db/modules/board.js`), chargée par `getModuleConfig('audio')` (`db/moduleConfig.js`, qui ne charge que la déclaration demandée). Même forme qu'une config de slug : `getDbForSystem(getModuleConfig('audio'))` marche tel quel (ouverture paresseuse, création depuis le schéma, fermeture après 5 min). Le nom d'un module ne doit pas être un nom de slug.
+- **Migration** : en-tête `-- systems: audio`. `scripts/migrate.js` cherche le nom parmi les slugs, puis parmi les modules. `all` continue de viser **les slugs seulement**.
+- **Release** : `scripts/release.js` accepte un nom de module dans l'en-tête ; `scripts/install.sh` (`resolve_dbs`) trouve son `dbPath` de la même façon, donc la sauvegarde avant migration et le retour arrière marchent sans autre changement.
+- Une base de module absente est créée depuis son schéma à la première ouverture, comme une base de slug. La première mise en prod n'a donc **pas besoin de migration** : `audio-schema.sql` suffit.
+
+**Schéma** (`database-template/audio-schema.sql`) :
+
+```sql
+-- Collections : appartiennent à une table (slug + session), niveau de partage (§10.8)
+create table audio_collections
+(
+    id          INTEGER primary key autoincrement,
+    slug        TEXT    not null,
+    session_id  INTEGER not null,          -- game_sessions.id dans la base du slug (pas de clé étrangère possible)
+    name        TEXT    not null,
+    visibility  TEXT    not null default 'private',   -- 'private' | 'slug' | 'platform'
+    position    INTEGER not null default 0,
+    created_at  DATETIME default CURRENT_TIMESTAMP,
+    updated_at  DATETIME default CURRENT_TIMESTAMP
+);
+
+create table audio_playlists
+(
+    id            INTEGER primary key autoincrement,
+    collection_id INTEGER not null references audio_collections on delete cascade,
+    name          TEXT    not null,
+    position      INTEGER not null default 0,
+    created_at    DATETIME default CURRENT_TIMESTAMP
+);
+
+create table audio_tracks
+(
+    id          INTEGER primary key autoincrement,
+    playlist_id INTEGER not null references audio_playlists on delete cascade,
+    youtube_id  TEXT    not null,
+    title       TEXT    not null,
+    gain        INTEGER not null default 100,   -- 0 à 100, égalise les niveaux d'origine (S-15)
+    position    INTEGER not null default 0,
+    unavailable INTEGER not null default 0,
+    created_at  DATETIME default CURRENT_TIMESTAMP
+);
+
+-- Réglages par table
+create table audio_session_settings
+(
+    slug        TEXT    not null,
+    session_id  INTEGER not null,
+    enabled     INTEGER not null default 0,     -- musique activée (T-2)
+    hide_title  INTEGER not null default 0,     -- titre de la musique masqué aux joueurs (Q-28)
+    primary key (slug, session_id)
+);
+
+-- Lot 2 : boutons
+create table audio_buttons
+(
+    id          INTEGER primary key autoincrement,
+    slug        TEXT    not null,
+    session_id  INTEGER not null,
+    label       TEXT    not null,
+    position    INTEGER not null default 0,
+    mode        TEXT    not null,               -- 'scene' | 'target'
+    actions     TEXT    not null,               -- JSON, voir §11.6
+    created_at  DATETIME default CURRENT_TIMESTAMP
+);
+```
+
+Index sur `audio_collections (slug, session_id)`, `audio_collections (visibility)`, `audio_playlists (collection_id, position)`, `audio_tracks (playlist_id, position)`, `audio_buttons (slug, session_id, position)`.
+
+- La table `audio_buttons` est créée dès le lot 1 : le lot 2 n'aura pas de migration.
+- Les clés étrangères n'étant pas activées sur les connexions, les suppressions effacent les lignes filles en transaction, comme dans la branche.
+
+### 11.2 Partage et copie
+
+- **Ma bibliothèque** : les collections de ma table (`slug` et `session_id` de la table active du MJ).
+- **Catalogue public** : en lecture seule, les collections `visibility = 'slug'` des **autres tables du même slug** et `visibility = 'platform'` de **toutes les tables**. Rien n'y apparaît dans ma bibliothèque tant que je ne copie pas.
+- **Copie** (indépendante, T-1) :
+  - une collection publique → une nouvelle collection de ma table, **privée**, avec copie de ses playlists et vidéos ;
+  - une playlist publique (ou à moi) → dans une de mes collections ;
+  - une vidéo → dans une de mes playlists.
+- **Écriture réservée à la table propriétaire** (S-4) : toute route qui modifie une collection, une playlist ou une vidéo vérifie qu'elle appartient à la table de la requête, sinon 403.
+
+### 11.3 Pistes et état de lecture
+
+Quatre pistes fixes par table, chacune avec ses modes permis (S-5, S-7) :
+
+| Piste (clé) | Type | Modes | Défaut |
+|---|---|---|---|
+| `music` | musique | `playlist`, `loop`, `shuffle` | `playlist` |
+| `ambience1`, `ambience2` | ambiance | `loop`, `playlist` | `loop` |
+| `effect` | effet | `once` | `once` |
+
+État en mémoire (`sharedState.audioStates`, clé `${slug}_${sessionId}`) :
+
+```js
+{
+  slots: {
+    music:     { status, trackId, youtubeId, title, gain, playlistId, mode, position, refTime, duration },
+    ambience1: { … }, ambience2: { … }, effect: { … },
+  },
+}
+```
+
+Chaque piste se synchronise comme la piste unique validée par le prototype. **Fin de morceau**, selon le mode : `playlist` → suivant de la playlist, arrêt après le dernier (Q-6) ; `loop` → le même morceau repart de 0 ; `shuffle` → un autre morceau au hasard de la playlist ; `once` → arrêt. Le minuteur de fin est armé par piste à partir de la durée remontée par le lecteur du MJ (inchangé, P-1).
+
+`hide_title` est lu dans `audio_session_settings` et ajouté à l'état diffusé.
+
+### 11.4 Routes HTTP
+
+Route partagée `src/server/routes/audio.js`, montée sur `/api/:slug/audio` (comme dans la branche), jeton du slug. Toutes sous `/sessions/:sessionId/` : la table de la requête, qui fixe le propriétaire.
+
+| Méthode et chemin | Droits | Rôle |
+|---|---|---|
+| `GET /sessions/:sid` | connecté | `{ enabled, hideTitle, tolerance, state, serverTime }` (`tolerance` : §11.11) |
+| `PUT /sessions/:sid/enabled` `{ enabled }` | MJ | Activer / désactiver ; désactiver arrête toutes les pistes (P-4) |
+| `POST /sessions/:sid/command` `{ slot?, action, … }` | MJ | Commandes, ci-dessous |
+| `GET /sessions/:sid/library` | MJ | Ma bibliothèque : collections → playlists → vidéos |
+| `GET /sessions/:sid/catalog` | MJ | Catalogue public (§11.2), même forme, avec la table d'origine |
+| `POST /sessions/:sid/collections` `{ name }` | MJ | Créer |
+| `PUT /sessions/:sid/collections/order` `{ ids }` | MJ | Réordonner |
+| `PUT /sessions/:sid/collections/:id` `{ name?, visibility? }` | MJ, propriétaire | Renommer, changer le niveau de partage |
+| `DELETE /sessions/:sid/collections/:id` | MJ, propriétaire | Supprimer (contenu compris) |
+| `POST /sessions/:sid/collections/:id/copy` | MJ | Copier une collection (publique ou à moi) dans ma table |
+| `POST /sessions/:sid/playlists` `{ collectionId, name }` | MJ, propriétaire | Créer |
+| `PUT /sessions/:sid/collections/:id/order` `{ playlistIds }` | MJ, propriétaire | Réordonner les playlists |
+| `PUT /sessions/:sid/playlists/:id` `{ name?, collectionId? }` | MJ, propriétaire | Renommer, déplacer entre mes collections |
+| `DELETE /sessions/:sid/playlists/:id` | MJ, propriétaire | Supprimer |
+| `POST /sessions/:sid/playlists/:id/copy` `{ collectionId }` | MJ | Copier une playlist dans une de mes collections |
+| `POST /sessions/:sid/playlists/:id/tracks` `{ videoIds }` | MJ, propriétaire | Ajouter (titres oEmbed) |
+| `PUT /sessions/:sid/playlists/:id/order` `{ trackIds }` | MJ, propriétaire | Réordonner |
+| `PUT /sessions/:sid/tracks/:id` `{ title?, gain?, playlistId? }` | MJ, propriétaire | Renommer, régler le gain, déplacer |
+| `POST /sessions/:sid/tracks/:id/copy` `{ playlistId }` | MJ | Copier dans une de mes playlists |
+| `DELETE /sessions/:sid/tracks/:id` | MJ, propriétaire | Supprimer |
+
+Commandes (`command`) :
+- par piste (`slot`) : `play { trackId }`, `playPlaylist { playlistId }` (premier morceau, ou au hasard en mode `shuffle`), `pause`, `resume`, `seek { position }`, `next`, `previous`, `stop`, `mode { mode }` (refusé hors des modes de la piste) ;
+- globales : `stopAll`, `settings { hideTitle }` (enregistré dans `audio_session_settings`) ;
+- remontées du lecteur du MJ : `duration { slot, trackId, duration }`, `error { slot, trackId }`.
+
+Un morceau lancé sur une piste peut venir de ma bibliothèque **seulement** (un contenu public se copie d'abord).
+
+### 11.5 Temps réel
+
+- `audio-state { system, sessionId, state, serverTime }` et `audio-enabled { system, sessionId, enabled }` vers la room de la table, comme au §9.5 ; `state` contient les quatre pistes.
+- **Horloge** : le prototype mesurait l'écart par un aller-retour socket (`audio-ping`, réponse immédiate du serveur, sans écriture). Repris tel quel : c'est le seul événement émis par le client, en lecture seule, validé en conditions réelles.
+
+### 11.6 Lot 2 : boutons (structure fixée dès maintenant)
+
+`audio_buttons.actions` (JSON) :
+- `scene` : `{ slots: { music: { trackId } | { playlistId } | null, ambience1: …, ambience2: …, effect: … } }` ; une piste à `null` ou absente est arrêtée ;
+- `target` : `{ slot, trackId } | { slot, playlistId, shuffle? }` ; les autres pistes continuent.
+
+Exécution côté serveur par les commandes du §11.4 (une seule diffusion à la fin). 5 boutons au plus par table, plus STOP (`stopAll`), toujours présent. Un bouton dont le contenu a été supprimé est signalé en erreur et ne fait rien.
+
+### 11.7 Client
+
+Dossier `components/audio/` (en plus des briques déjà commitées : `youtubeApi.js`, `useYouTubePlayer.js`, `audioSync.js`) :
+
+| Fichier | Rôle |
+|---|---|
+| `hooks/useAudioSession.js` | `{ enabled, hideTitle, state }` à l'entrée et à la reconnexion, écoute `audio-state` / `audio-enabled`, mesure de l'horloge |
+| `audioVolume.js` | Volumes du joueur : général et par type, pré-réglages (musique 50, ambiance 10, effet 50), lecture / écriture dans le navigateur sous une clé **unique pour toute la plateforme** ; calcul du volume d'une piste (gain × type × général). Fonctions pures testées |
+| `SlotPlayer.jsx` | Un lecteur caché par piste **non vide** (une piste vide ne crée pas de cadre YouTube), recalé par `audioSync.js` ; côté MJ, remonte durée et erreurs |
+| `AudioLayer.jsx` | Monté par `GMPage` et `PlayerPage` : rien si la musique est désactivée ; sinon les `SlotPlayer`, la modale « Activer le son », et le panneau MJ ou le lecteur joueur |
+| `AudioUnlockModal.jsx` | Sur la `Modal` générique (Q-26) |
+| `AudioPlayerWidget.jsx` | Joueur : titre de la **musique** seulement (sauf masqué), volume général et trois volumes par type, coupure ; repliable |
+| `AudioGMPanel.jsx` | MJ : panneau flottant agrandissable. Onglet **Lecture** (les quatre pistes : morceau, commandes, mode, position) ; onglet **Bibliothèque** (mes collections, niveau de partage, glisser-déposer, ajout par lien, gain, copie, suppression) ; onglet **Catalogue** (contenus publics, copie) |
+| `AudioSessionToggle.jsx` | Élément prêt à l'emploi pour `TabSession` |
+| *(lot 2)* `AudioButtonsBar.jsx` | Barre de boutons du MJ, à part du panneau |
+
+Habillage : classes `vtt-audio*` (§9.7), plus `vtt-audio-slot` (états `is-music`, `is-ambience`, `is-effect`). Pilote Vikings.
+
+### 11.8 Reprise de la branche `audio`
+
+- **Abandonné** : les modifications de `base.sql` et des 9 schémas de slug, la migration `27102026_add_audio.sql`, `game_sessions.audio_enabled`.
+- **Repris et adapté** : `routes/audio.js` (montage, oEmbed, transactions, minuteur protégé, `playAdjacent` étendu aux modes), passé à `audio.db`, à la propriété par table, à quatre pistes.
+- Méthode : rebase de `audio` sur `master`, puis un commit qui retire l'abandonné et ajoute `audio-schema.sql`, `db/modules.js` et l'extension de la migration et de la release.
+
+### 11.9 Fichiers touchés (lot 1)
+
+| Fichier | Changement |
+|---|---|
+| `database-template/audio-schema.sql` | Nouveau |
+| `src/server/db/moduleConfig.js`, `src/server/db/modules/audio.js` | Nouveaux : chargement d'une base de module, déclaration de la base audio |
+| `scripts/migrate.js`, `scripts/release.js`, `scripts/install.sh` | Noms de module acceptés dans `-- systems:` |
+| `src/server/routes/audio.js` | Repris de la branche, adapté |
+| `src/server/systems/Loader.js`, `src/server/server.js` | Montage (déjà dans la branche) |
+| `src/server/socket/index.js` | `audioStates` (déjà là), `audio-ping` |
+| `src/client/src/hooks/useAudioSession.js`, `src/client/src/components/audio/*` | Nouveaux (§11.7) |
+| `src/client/src/pages/GMPage.jsx`, `PlayerPage.jsx` | Montage d'`AudioLayer` |
+| `src/client/src/index.css` | Style par défaut `vtt-audio*` |
+| `src/client/src/systems/vikings/gm/tabs/TabSession.jsx`, `systems/vikings/theme.css` | Pose de l'élément d'activation, habillage |
+| `src/client/tests/components/audio/audioVolume.test.js` | Nouveau |
+| `documentations/spec_release.md`, `src/server/CLAUDE.md`, `/new-slug` | Bases de module, brique audio et son élément `TabSession` |
+
+### 11.10 Points à valider
+
+| # | Point | Proposition | Réponse MJ |
+|---|---|---|---|
+| P2-1 | Suppression d'une table (`game_sessions`) : son contenu audio (collections, réglages) reste orphelin dans `audio.db`, faute de lien entre les bases. Le purger à la suppression de la table ? Les copies faites par d'autres tables ne sont pas touchées (elles sont indépendantes) | Oui, purge à la suppression de la table (une ligne d'appel dans `sessions.js`) | Non : rien dans les slugs ni dans les sessions de la plateforme. **Contrôle à la connexion du MJ** dans un slug : les collections (et réglages, boutons) dont la table n'existe plus sont supprimés à ce moment-là (§11.11) |
+| P2-2 | « Masquer le titre » : enregistré avec la table (`audio_session_settings`) plutôt qu'en mémoire (Q-28) ? Ça ne coûte rien de plus désormais | Oui | Oui |
+| P2-3 | Horloge par aller-retour socket (`audio-ping`), seul événement émis par le client, en lecture seule, comme dans le prototype validé ? | Oui | Oui. **Tolérance de recalage à 1 s**, modifiable plus tard sans toucher au code, par une variable du `.env` (§11.11) |
+| P2-4 | Changer une collection publique en privée : les tables qui l'ont copiée gardent leurs copies (indépendantes), la collection disparaît seulement du catalogue ? | Oui | Oui |
+| P2-5 | Un morceau ne se lance que depuis ma bibliothèque : écouter un contenu public demande de le copier d'abord. Ou faut-il une **écoute d'essai** depuis le catalogue (sur la piste musique, sans copie) ? | Pas d'écoute d'essai en v1 : la copie suffit et se supprime facilement | Pas en v1, mais **à prévoir dans une mise à jour** (§8) |
+| P2-6 | Ordre d'implémentation du lot 1 : (1) base de module, migration et release (commun avec le tableau), (2) serveur : bibliothèque, partage, état à quatre pistes, (3) lecteurs, volumes, modale, lecteur joueur, (4) panneau MJ, (5) élément d'activation et habillage Vikings. Point de contrôle après (1) et après (3) ? | Oui | Oui |
+
+### 11.11 Décisions des points P2 (2026-10-31)
+
+- **Tables supprimées (P2-1)** : aucun ajout dans les slugs ni dans `routes/sessions.js`. Au chargement de la bibliothèque par le MJ d'un slug (`GET /sessions/:sid/library`), le serveur compare les `session_id` de ce slug présents dans `audio.db` aux tables de la base du slug, et supprime collections (contenu compris), réglages et boutons des tables disparues. Les copies faites par d'autres tables ne sont pas touchées. Limite connue : si la base d'un slug était recréée de zéro, une nouvelle table pourrait reprendre l'identifiant d'une ancienne et hériter de son contenu audio (cas exceptionnel, sans gravité).
+- **« Masquer le titre » enregistré avec la table** (P2-2).
+- **Tolérance de recalage à 1 s** (P2-3), lue par le serveur dans la variable `AUDIO_SYNC_TOLERANCE` du `.env` (en secondes, 1 par défaut si absente) et transmise au client dans la réponse de `GET /sessions/:sid` : un changement ne demande ni build ni release, seulement un redémarrage du serveur.
+- **Collection repassée en privé** : les copies restent, elle sort du catalogue (P2-4).
+- **Écoute d'essai depuis le catalogue** : pas en v1, à prévoir dans une mise à jour (P2-5, §8).
+- **Ordre du lot 1** validé, points de contrôle après les étapes 1 et 3 (P2-6).
+
+### 11.12 Retours du premier essai en dev (2026-10-31)
+
+- **Deux boutons flottants** côte à côte : réglages du son, et pour le MJ le panneau, ouvert en un clic. Le bouton du panneau est là dès qu'une table est active, **même musique désactivée** : le MJ prépare sa bibliothèque, et active la musique depuis l'onglet Lecture (l'élément de `TabSession` reste disponible).
+- **Réglages du son** : volume général et coupure visibles, volumes par type repliés (état mémorisé).
+- **Panneau MJ en fenêtre** : déplaçable par sa barre de titre, redimensionnable par ses bords et ses coins, **réductible** à sa barre de titre (agrandir, plein écran, fermer), position, taille et réduction mémorisées dans le navigateur ; ouvert ou fermé, retrouvé après rechargement.
+- **Coller un lien sans étape** : barre « Coller un lien » en tête de la bibliothèque. Une playlist YouTube devient une nouvelle playlist, **au titre repris de YouTube** (oEmbed) ; une vidéo va dans la playlist visée (⌖), sinon dans une nouvelle playlist qui devient la cible des liens suivants. Collection et noms facultatifs : la première collection de la table sert, ou une collection est créée ; noms par défaut « Collection n », « Playlist n », renommables ensuite.
+- Serveur : `POST /sessions/:sid/playlists` accepte `collectionId`, `name`, `listId`, `videoIds` tous facultatifs (création et remplissage en un appel) ; `POST /sessions/:sid/collections` accepte un nom vide.
+
+### 11.13 Refonte du panneau MJ (2026-10-31, maquette validée)
+
+Second essai : interface trop centrée sur les pistes, trop de clics pour retrouver un titre. **Le cœur du module : diffuser de la musique à la table.** Maquette cliquable `documentations/audio/maquette_panneau_mj.html`, validée par le MJ (le panneau réel garde en plus le déplacement par la barre de titre et les poignées sur tous les bords).
+
+- **Une seule vue, sans onglets.** En haut, **ce qui joue**, toujours visible : titre de la musique, lien vers sa playlist, précédent / lecture-pause / suivant, position, mode (un clic fait défiler playlist, boucle, aléatoire). Ambiances et effet en **pastilles**, seulement s'ils jouent : mode (boucle, playlist), pause, arrêt. Un menu ⋯ porte « Tout arrêter », titre masqué aux joueurs, désactiver la musique. Musique désactivée : un bandeau « Activer ».
+- **En dessous, la bibliothèque, rouverte sur la dernière playlist consultée** (mémorisée par table). Fil d'Ariane pour remonter. **▶** lance en musique ; **≋** joue sur Ambiance 1, Ambiance 2 ou Effet (« remplace » si la piste est occupée) ; **⋯** regroupe la gestion (renommer sur place, volume de la vidéo, copier, déplacer, supprimer ; partage au niveau de la collection). Titre en cours surligné. Glisser-déposer pour l'ordre.
+- **Recherche** dans tous les titres de la bibliothèque, avec leur emplacement.
+- **Ajout d'un lien à la Watch2Gether** : « Ajouter un lien » en pied ouvre un champ et son bouton (« Importer la playlist » si c'en est une) ; **Ctrl+V** dans le panneau fait de même. Une vidéo va dans la playlist affichée, sinon dans une nouvelle playlist (dans une nouvelle collection s'il n'y en a aucune) ; une playlist YouTube devient une nouvelle playlist à son titre. Plus de texte d'aide sous le champ.
+- **Catalogue public** dans une fenêtre, depuis le pied du panneau.
+- **Panneau large ou plein écran** : collections et playlists à gauche, titres à droite. Réduit : barre de titre seule, avec le morceau en cours.
+- **Accessibilité** : tout au clavier, menus aux flèches, Échap ferme menu, renommage ou champ d'ajout et rend le focus au bouton d'origine, noms lisibles sur les boutons icônes, cibles de 32 px au moins, animation coupée si le système réduit les mouvements.
+- Technique : le panneau est un conteneur de requêtes de taille (`container-type`), qui piège ce qui est en position fixe : menus, confirmations, sélecteurs et catalogue passent par `HostedModal` (emplacement à modales de la page).
+
+### 11.14 Durée des titres (2026-10-31)
+
+- Affichée à côté du titre dans la bibliothèque : « Titre (3:47) », « Titre (1:41:25) ».
+- YouTube ne la donne pas sans clé d'API (oEmbed : titre seulement). Elle est relevée de deux façons : **à la lecture** (le lecteur du MJ la remonte déjà, le serveur l'enregistre désormais avec la vidéo) et **à l'affichage** (un lecteur caché du panneau MJ charge sans les jouer, une par une, les vidéos affichées dont la durée manque, et envoie les durées par lots). Une copie garde la durée.
+- Base : colonne `audio_tracks.duration` (secondes, null si inconnue), dans `audio-schema.sql` et la migration `31102026_audio_track_duration.sql` (`-- systems: audio`), utile aux bases de dev ; en prod, la base audio n'existe pas encore et la migration est ignorée.
+- Route : `PUT /sessions/:sid/tracks/durations { durations: [{ id, duration }] }`, limitée aux vidéos de la table.
+- Un titre trop long se coupe ; la durée garde toujours sa place.
+
+### 11.15 Piste par défaut d'une playlist (2026-10-31, idée du MJ)
+
+- Chaque playlist a sa **piste** : Musique (défaut), Ambiance 1, Ambiance 2 ou Effet. ▶ sur un de ses titres joue sur cette piste ; ≋ propose les autres.
+- Réglée par une **pastille** cliquable entre le fil d'Ariane et la recherche (playlist ouverte), et sur chaque ligne de playlist. Pastille discrète en Musique, en couleur pour les autres pistes.
+- Le ▶ de la playlist entière n'existe que pour une playlist en Musique ; les autres se lancent titre par titre.
+- Choix d'une piste précise (pas de « première ambiance libre ») : à revoir à l'usage si besoin.
+- Base : `audio_playlists.default_slot` (`music` par défaut), dans `audio-schema.sql` et la migration `31102026_audio_playlist_slot.sql` (`-- systems: audio`, base de dev ; ignorée en prod). Une copie garde la piste. Route : `PUT /sessions/:sid/playlists/:id { defaultSlot }`.
+
+### 11.16 Rangement après relecture du code par le MJ (2026-10-31)
+
+Les chemins des §11.7 et §11.9 sont remplacés par ceux-ci. Principe : la brique audio suit l'organisation de la plateforme (comme la barre de session ou le combat), sans espace « module » à part.
+
+- **Sockets de la plateforme, un fichier par domaine** : `src/server/socket/platform/presence.js`, `sessions.js` (sessions MJ et rooms), `audio.js` (`audio-ping`) ; chacun exporte `register(io, socket, sharedState)` et gère sa propre déconnexion ; `socket/index.js` les branche, puis les handlers des slugs. L'ancien `socket/handlers.js` disparaît, comportement inchangé (vérifié : présence, sessions MJ, rooms, joueur tardif, déconnexion et timer, reprise, désactivation).
+- **Base de module, une déclaration par base** : `src/server/db/modules/audio.js` ; `getModuleConfig(nom)` (`src/server/db/moduleConfig.js`) ne charge que la déclaration demandée. Route inchangée : `src/server/routes/audio.js`.
+- **Client rangé selon les conventions** :
+  - composants : `components/audio/` (`AudioLayer`, `AudioGMPanel` qui assemble, `AudioPlayerWidget`, `SlotPlayer`, `AudioUnlockModal`, `AudioSessionToggle`) et `components/audio/panel/` (le panneau découpé : `NowPlaying`, `LibraryBrowser`, `LibraryRows`, `RowMenu`, `SlotChip`, `PanelDialogs`, `HiddenPlayers`, `AddLinkFoot`, `PanelIcons`) ;
+  - hooks : `hooks/useAudioSession.js`, `useAudioLibrary.js`, `useYouTubePlayer.js`, et deux hooks génériques `useFloatingWindow.js` (fenêtre flottante) et `useDragOrder.js` (glisser-déposer) ;
+  - logique pure et config : `tools/audioSync.js`, `audioVolume.js`, `audioLibrary.js`, `audioSlots.js`, `panelGeometry.js`, `youtubeApi.js` ; `tools/utils.js` gagne `readStorage` / `writeStorage` ;
+  - tests : `tests/tools/` (miroir) ; la recherche ignore désormais les accents (`normalizeText` de `tools/catalog.js`).
+- **Classes génériques réutilisées** : le panneau prend `vtt-modal-panel`, `vtt-modal-header`, `vtt-modal-title`, `vtt-modal-close` / `-expand` et `vtt-modal-deco` ; les menus ≋ et ⋯, la pastille de piste et le petit panneau du son prennent `vtt-menu`, `vtt-menu-item`, `vtt-menu-separator`. Ils reprennent ainsi l'habillage des modales et des menus de chaque slug ; les classes `vtt-audio-*` ne gardent que ce qui n'a pas d'équivalent (fenêtre flottante, ce qui joue, lignes, pastilles, poignées, boutons ronds).
+
+### 11.17 Passage sur les briques génériques (2026-11-01)
+
+- **Fenêtre** : le panneau MJ est une `FloatingPanel` (`spec_ui_panneaux.md`), mémorisée sous `vtt:platform:panel:audio` ; `AudioGMPanel` ne garde que le contenu. Les classes `vtt-audio-panel-*` et `vtt-audio-resize-*` laissent place aux `vtt-floating-*` ; `vtt-audio-panel` reste sur la fenêtre pour qu'un slug puisse habiller celle-ci en particulier.
+- **Stockage** (`spec_browser_storage.md`) : réglages audio du navigateur regroupés dans `vtt:platform:audio` (volumes, réglages du son dépliés, volumes par type dépliés, panneau MJ ouvert), dernière vue de la bibliothèque dans `vtt:<slug>:<table>:audio` ; tout passe par `usePersistedState`. Les six anciennes clés `vtt-audio-…` n'ont jamais été en prod : pas de reprise (en dev, elles restent inertes et peuvent être effacées). `readStorage` / `writeStorage` sont retirés de `tools/utils.js`.
+- Le petit panneau du son est désormais tenu par `AudioLayer` (états dépliés en props), qui donne le focus au panneau MJ seulement quand il est ouvert d'un clic.

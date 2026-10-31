@@ -1,4 +1,4 @@
-// src/client/src/components/audio/youtubeApi.js
+// src/client/src/tools/youtubeApi.js
 // ─────────────────────────────────────────────────────────────────────────────
 // Accès à l'IFrame API de YouTube (documentations/spec_audio.md §9.6).
 //

@@ -16,6 +16,7 @@ import { useFetch }  from '../../../../hooks/useFetch.js';
 import { useSystem } from '../../../../hooks/useSystem.js';
 import GMSendModal    from '../../../../components/gm/modals/GMSendModal.jsx';
 import AvatarUploader from '../../../../components/AvatarUploader.jsx';
+import AudioSessionToggle from '../../../../components/audio/AudioSessionToggle.jsx';
 
 import SheetLayout     from '../../components/layout/SheetLayout.jsx';
 import DiceModal       from '../../components/modals/DiceModal.jsx';
@@ -250,6 +251,8 @@ const TabSession = ({ activeSession, onlineCharacters = [], characterUpdates }) 
                             className="vk-btn vk-btn-primary vk-btn-sm col-span-2" title="Saga, fin d'arc, repos">
                         <span className="vk-rune">ᛟ</span>Actions de table
                     </button>
+                    {/* Musique de la table (brique audio, spec_audio.md §11.7) */}
+                    <AudioSessionToggle sessionId={activeSession.id} className="vk-btn vk-btn-sm col-span-2" />
                 </div>
             </aside>
 

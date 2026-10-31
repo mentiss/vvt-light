@@ -1,4 +1,4 @@
-// src/client/src/components/audio/audioSync.js
+// src/client/src/tools/audioSync.js
 // ─────────────────────────────────────────────────────────────────────────────
 // Synchronisation d'un lecteur YouTube local sur l'état de lecture du serveur
 // (documentations/spec_audio.md §9.3, §9.6). Fonctions pures, testées sous Vitest.

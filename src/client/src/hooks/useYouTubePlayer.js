@@ -1,4 +1,4 @@
-// src/client/src/components/audio/useYouTubePlayer.js
+// src/client/src/hooks/useYouTubePlayer.js
 // ─────────────────────────────────────────────────────────────────────────────
 // Crée un lecteur YouTube (IFrame API) dans le conteneur fourni et suit son état.
 // Base du lecteur caché de la brique audio (documentations/spec_audio.md §9.6).
@@ -8,7 +8,7 @@
 // ─────────────────────────────────────────────────────────────────────────────
 
 import { useEffect, useRef, useState } from 'react';
-import { loadYouTubeApi } from './youtubeApi.js';
+import { loadYouTubeApi } from '../tools/youtubeApi.js';
 
 // Codes d'état de l'IFrame API, en clair
 export const PLAYER_STATES = { '-1': 'unstarted', 0: 'ended', 1: 'playing', 2: 'paused', 3: 'buffering', 5: 'cued' };

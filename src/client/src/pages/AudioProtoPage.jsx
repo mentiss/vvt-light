@@ -3,7 +3,7 @@
 // PROTOTYPE TEMPORAIRE (documentations/spec_audio.md §9.9), page /tools/audio sans
 // connexion. Passe 2 : synchronisation entre plusieurs clients.
 // - Meneur : choisit les vidéos et commande la lecture (relais socket/audioProto.js).
-// - Auditeur : applique l'état reçu avec l'algorithme durable (components/audio/audioSync.js).
+// - Auditeur : applique l'état reçu avec l'algorithme durable (tools/audioSync.js).
 // Tous les clients affichent l'écart avec la position attendue et les recalages.
 // À supprimer une fois la brique en place.
 // ─────────────────────────────────────────────────────────────────────────────
@@ -12,9 +12,9 @@ import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { applyTheme } from '../tools/utils.js';
 import useSlugGuard from '../hooks/useSlugGuard.js';
 import { useSocket } from '../context/SocketContext.jsx';
-import { parseYouTubeLink } from '../components/audio/youtubeApi.js';
-import { useYouTubePlayer, PLAYER_STATES } from '../components/audio/useYouTubePlayer.js';
-import { clockSample, bestOffset, expectedPosition, planSync } from '../components/audio/audioSync.js';
+import { parseYouTubeLink } from '../tools/youtubeApi.js';
+import { useYouTubePlayer, PLAYER_STATES } from '../hooks/useYouTubePlayer.js';
+import { clockSample, bestOffset, expectedPosition, planSync } from '../tools/audioSync.js';
 
 const THRESHOLDS = [0.5, 1, 1.5, 3];
 const SYNC_INTERVAL_MS = 1000;   // contrôle de l'écart

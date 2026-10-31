@@ -15,6 +15,7 @@ import SystemBrand   from '../components/platform/SystemBrand.jsx';
 import ErrorPage     from '../components/platform/ErrorPage.jsx';
 import { useSystem } from '../hooks/useSystem.js';
 import { ModalHostProvider } from '../components/ui/ModalHost.jsx';
+import AudioLayer    from '../components/audio/AudioLayer.jsx';
 
 const SYSTEM_GM_APPS = import.meta.glob('../systems/*/GMApp.jsx');
 const THEMES    = import.meta.glob('../systems/*/theme.css');
@@ -88,6 +89,8 @@ const GMPage = () => {
                     />
                     <DiceAnimationOverlay />
                 </Suspense>
+                {/* Musique de la table active, si le MJ l'a activée (spec_audio.md §11.7) */}
+                <AudioLayer role="gm" sessionId={activeSession?.id ?? null} />
             </ModalHostProvider>
         );
     }

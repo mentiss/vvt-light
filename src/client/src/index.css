@@ -214,6 +214,41 @@ select:disabled {
     .vtt-modal-expand { display: none; }
   }
 
+  /* ── Fenêtres flottantes (FloatingPanel, spec_ui_panneaux.md) ──────────────── */
+  /* Fond, bordure, en-tête, titre, boutons : classes de la modale ci-dessus (habillage des slugs).
+     Ici, ce qui fait une fenêtre flottante : position et taille portées par style, ordre au premier
+     plan (--vtt-floating-order), poignées, réduction, plein écran. Toujours sous les modales. */
+  :root { --vtt-z-floating: 46; }
+  .vtt-floating-panel {
+    position: fixed; max-height: none; width: auto;
+    z-index: calc(var(--vtt-z-floating) + var(--vtt-floating-order, 0));
+    container-type: inline-size;
+  }
+  .vtt-floating-panel:focus { outline: none; }
+  .vtt-floating-panel.is-full { inset: 1rem; width: auto; height: auto; }
+  .vtt-floating-panel.is-full.is-minimized { top: auto; height: auto; }
+  .vtt-floating-header { gap: 0.25rem; user-select: none; }
+  .vtt-floating-header.is-movable { cursor: move; touch-action: none; }
+  .vtt-floating-panel.is-minimized .vtt-floating-header { border-bottom: 0; }
+  .vtt-floating-header .vtt-modal-title { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .vtt-floating-title-extra { font-weight: 400; letter-spacing: normal; text-transform: none; color: var(--color-text-muted); }
+  /* Réduire reste utile sur petit écran (la modale y masque Agrandir) */
+  .vtt-floating-header .vtt-floating-btn { display: inline-flex; }
+  .vtt-floating-body { flex: 1 1 auto; min-height: 0; display: flex; flex-direction: column; overflow: hidden; }
+  .vtt-floating-body[hidden] { display: none; }
+  .vtt-floating-resize { position: absolute; z-index: 1; touch-action: none; }
+  .vtt-floating-resize-n, .vtt-floating-resize-s { left: 0.75rem; right: 0.75rem; height: 0.5rem; cursor: ns-resize; }
+  .vtt-floating-resize-e, .vtt-floating-resize-w { top: 0.75rem; bottom: 0.75rem; width: 0.5rem; cursor: ew-resize; }
+  .vtt-floating-resize-n { top: 0; }
+  .vtt-floating-resize-s { bottom: 0; }
+  .vtt-floating-resize-e { right: 0; }
+  .vtt-floating-resize-w { left: 0; }
+  .vtt-floating-resize-ne, .vtt-floating-resize-nw, .vtt-floating-resize-se, .vtt-floating-resize-sw { width: 0.9rem; height: 0.9rem; }
+  .vtt-floating-resize-ne { top: 0; right: 0; cursor: nesw-resize; }
+  .vtt-floating-resize-sw { bottom: 0; left: 0; cursor: nesw-resize; }
+  .vtt-floating-resize-nw { top: 0; left: 0; cursor: nwse-resize; }
+  .vtt-floating-resize-se { bottom: 0; right: 0; cursor: nwse-resize; }
+
   /* Barres de défilement (§3.4) : épaisseur et couleurs uniquement.
      Les zones qui défilent à l'intérieur (listes) en héritent. */
   .vtt-scroll, .vtt-scroll * { scrollbar-width: thin; }
@@ -630,4 +665,187 @@ select:disabled {
   /* Générateur de plans (spec_genmap.md §7.2) : SVG sans fond, toujours affiché sur fond clair */
   .vtt-plan-preview { background: #fff; border: 1px solid var(--color-border); border-radius: 0.75rem; padding: 0.75rem; overflow: auto; }
   .vtt-plan-preview svg { display: block; max-width: 100%; height: auto; margin: 0 auto; }
+
+  /* ── Lecteur audio (spec_audio.md §11.7) ─────────────────────────────────── */
+  /* Position en variables, redéfinissables par un slug ; sous les notifications (bottom-16). */
+  :root {
+    --vtt-audio-bottom: 1rem;
+    --vtt-audio-right: 1rem;
+  }
+  /* Lecteur YouTube caché : 1 × 1 px hors écran (un lecteur 0 × 0 reste affiché, §9.9) */
+  .vtt-audio-hidden-player { position: fixed; left: -10000px; top: 0; width: 1px; height: 1px; overflow: hidden; pointer-events: none; }
+  .vtt-audio-widget {
+    position: fixed; right: var(--vtt-audio-right); bottom: var(--vtt-audio-bottom); z-index: 45;
+    display: flex; flex-direction: column; align-items: flex-end; gap: 0.5rem;
+  }
+  .vtt-audio-toggle {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 2.5rem; height: 2.5rem; border-radius: 999px;
+    border: 1px solid var(--color-border); background: var(--color-surface); color: var(--color-text-muted);
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.25); transition: border-color 0.15s, color 0.15s;
+  }
+  .vtt-audio-toggle:hover { border-color: var(--color-primary); color: var(--color-primary); }
+  .vtt-audio-toggle:focus-visible { outline: 2px solid var(--color-primary); outline-offset: 2px; }
+  .vtt-audio-widget.is-playing .vtt-audio-toggle { color: var(--color-primary); border-color: var(--color-primary); }
+  /* Réglages du son : un .vtt-menu (habillé par le slug) ouvert vers le haut, dans le flux */
+  .vtt-audio-widget-panel { position: static; top: auto; right: auto; width: 15rem; min-width: 0; }
+  .vtt-audio-widget-content { display: flex; flex-direction: column; gap: 0.6rem; padding: 0.6rem 0.75rem; }
+  .vtt-audio-now {
+    font-size: 0.85rem; font-weight: 600; color: var(--color-primary);
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+  .vtt-audio-btn {
+    display: inline-flex; align-items: center; gap: 0.4rem; padding: 0.3rem 0.6rem; font-size: 0.8rem;
+    border: 1px solid var(--color-border); border-radius: 0.5rem; background: var(--color-surface-alt); color: var(--color-text);
+    transition: border-color 0.15s, color 0.15s;
+  }
+  .vtt-audio-btn:hover:not(:disabled) { border-color: var(--color-primary); }
+  .vtt-audio-btn.is-active { color: var(--color-danger); border-color: var(--color-danger); }
+  .vtt-audio-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+  .vtt-audio-volume { display: flex; flex-direction: column; gap: 0.15rem; font-size: 0.8rem; }
+  .vtt-audio-volume input[type="range"] { width: 100%; accent-color: var(--color-primary); }
+
+  .vtt-audio-buttons { display: flex; gap: 0.5rem; }
+  .vtt-audio-toggle-gm.is-active { color: var(--color-primary); border-color: var(--color-primary); }
+  .vtt-audio-details-toggle { align-self: flex-start; font-size: 0.75rem; color: var(--color-text-muted); }
+  .vtt-audio-details-toggle:hover { color: var(--color-primary); }
+
+  /* Panneau MJ de la musique : une FloatingPanel (fenêtre flottante générique, classes vtt-floating-*) ;
+     ci-dessous, seulement son contenu (spec_audio.md §11.13). */
+
+  .vtt-audio-icon-btn {
+    width: 2rem; height: 2rem; border-radius: 0.5rem; display: inline-grid; place-items: center; flex-shrink: 0;
+    color: var(--color-text-muted); background: transparent;
+  }
+  .vtt-audio-icon-btn:hover:not(:disabled) { color: var(--color-text); background: var(--color-surface-alt); }
+  .vtt-audio-icon-btn:disabled { opacity: 0.4; cursor: default; }
+  .vtt-audio-icon-btn.is-danger:hover:not(:disabled) { color: var(--color-danger); }
+  .vtt-audio-icon-btn.is-main { width: 2.6rem; height: 2.6rem; border-radius: 999px; background: var(--color-primary); color: var(--color-on-primary); }
+  .vtt-audio-icon-btn.is-main:hover:not(:disabled) { background: var(--color-primary); color: var(--color-on-primary); filter: brightness(1.08); }
+
+  /* Ce qui joue */
+  .vtt-audio-now { padding: 0.75rem 0.85rem 0.6rem; border-bottom: 1px solid var(--color-border); background: color-mix(in srgb, var(--color-primary) 6%, var(--color-surface)); }
+  .vtt-audio-now-main { display: flex; align-items: center; gap: 0.6rem; }
+  .vtt-audio-now-text { flex: 1; min-width: 0; }
+  .vtt-audio-now-title, .vtt-audio-now-sub { display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .vtt-audio-now-title { font-weight: 700; }
+  .vtt-audio-now-sub { font-size: 0.8rem; color: var(--color-text-muted); }
+  .vtt-audio-now-sub button { text-decoration: underline; text-underline-offset: 2px; }
+  .vtt-audio-now-sub button:hover { color: var(--color-primary); }
+  .vtt-audio-now-controls { display: flex; align-items: center; gap: 0.15rem; }
+  .vtt-audio-now-empty { flex: 1; margin: 0; font-size: 0.88rem; color: var(--color-text-muted); }
+  .vtt-audio-mode-btn {
+    display: inline-flex; align-items: center; gap: 0.3rem; height: 2rem; padding: 0 0.55rem; border-radius: 999px;
+    font-size: 0.78rem; color: var(--color-text-muted); border: 1px solid var(--color-border);
+  }
+  .vtt-audio-mode-btn:hover { color: var(--color-text); border-color: var(--color-primary); }
+  .vtt-audio-seek { display: flex; align-items: center; gap: 0.55rem; margin-top: 0.4rem; font-size: 0.75rem; color: var(--color-text-muted); font-variant-numeric: tabular-nums; }
+  .vtt-audio-seek input[type="range"] { flex: 1; min-width: 0; accent-color: var(--color-primary); }
+  .vtt-audio-layers { display: flex; flex-wrap: wrap; gap: 0.35rem; margin-top: 0.55rem; }
+  .vtt-audio-layer {
+    display: inline-flex; align-items: center; gap: 0.1rem; max-width: 100%; padding: 0.1rem 0.15rem 0.1rem 0.6rem;
+    border-radius: 999px; border: 1px solid var(--color-border); background: var(--color-surface); font-size: 0.8rem;
+  }
+  .vtt-audio-layer-kind { font-weight: 700; color: var(--color-primary); margin-right: 0.3rem; }
+  .vtt-audio-layer-title { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 11rem; }
+  .vtt-audio-layer .vtt-audio-icon-btn { width: 1.6rem; height: 1.6rem; }
+  .vtt-audio-layer.is-paused .vtt-audio-layer-title { color: var(--color-text-muted); font-style: italic; }
+
+  /* Bibliothèque */
+  .vtt-audio-library { flex: 1; min-height: 0; display: flex; }
+  .vtt-audio-tree { display: none; }
+  .vtt-audio-browse { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+  .vtt-audio-browse-bar { display: flex; align-items: center; gap: 0.4rem; padding: 0.5rem 0.6rem 0.4rem 0.85rem; }
+  .vtt-audio-crumbs { flex: 1; min-width: 0; display: flex; align-items: center; gap: 0.2rem; font-size: 0.85rem; white-space: nowrap; overflow: hidden; }
+  .vtt-audio-crumbs > button:not(.vtt-audio-icon-btn) { color: var(--color-text-muted); border-radius: 0.3rem; padding: 0.1rem 0.25rem; }
+  .vtt-audio-crumbs > button:not(.vtt-audio-icon-btn):hover { color: var(--color-primary); }
+  .vtt-audio-crumbs [aria-current="page"] { font-weight: 700; overflow: hidden; text-overflow: ellipsis; }
+  .vtt-audio-crumb-sep { color: var(--color-border); }
+  .vtt-audio-search { position: relative; width: 11rem; flex-shrink: 0; transition: width 0.15s; }
+  .vtt-audio-search:focus-within { width: 15rem; }
+  .vtt-audio-search svg { position: absolute; left: 0.5rem; top: 50%; transform: translateY(-50%); color: var(--color-text-muted); pointer-events: none; }
+  .vtt-audio-search input {
+    width: 100%; height: 2rem; padding: 0 0.5rem 0 1.85rem; border-radius: 0.5rem;
+    border: 1px solid var(--color-border); background: var(--color-surface-alt); color: var(--color-text); font-size: 0.85rem;
+  }
+  .vtt-audio-search input:focus { outline: none; border-color: var(--color-primary); background: var(--color-surface); }
+  .vtt-audio-list { flex: 1; min-height: 0; overflow-y: auto; margin: 0; padding: 0 0.4rem 0.5rem; list-style: none; }
+  .vtt-audio-row { display: flex; align-items: center; gap: 0.35rem; min-height: 2.6rem; padding: 0.15rem 0.3rem 0.15rem 0.35rem; border-radius: 0.55rem; }
+  .vtt-audio-row:hover { background: var(--color-surface-alt); }
+  .vtt-audio-row.is-current { background: color-mix(in srgb, var(--color-primary) 12%, transparent); }
+  .vtt-audio-row-main { flex: 1; min-width: 0; text-align: left; display: flex; flex-direction: column; padding: 0.2rem 0.25rem; border-radius: 0.4rem; }
+  .vtt-audio-row-name, .vtt-audio-row-meta { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .vtt-audio-row-meta { font-size: 0.75rem; color: var(--color-text-muted); }
+  .vtt-audio-row-name.is-track { display: flex; align-items: center; gap: 0.3rem; min-width: 0; }
+  .vtt-audio-row-title { flex: 0 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .vtt-audio-row-duration { flex-shrink: 0; font-weight: 400; color: var(--color-text-muted); font-variant-numeric: tabular-nums; }
+  .vtt-audio-row-name.is-track .vtt-audio-eq { flex-shrink: 0; margin-right: 0; }
+  .vtt-audio-row.is-current .vtt-audio-row-name { font-weight: 700; color: var(--color-primary); }
+  .vtt-audio-row.is-unavailable .vtt-audio-row-name { text-decoration: line-through; color: var(--color-text-muted); }
+  .vtt-audio-row-actions { display: flex; opacity: 0.35; transition: opacity 0.1s; }
+  .vtt-audio-row:hover .vtt-audio-row-actions, .vtt-audio-row:focus-within .vtt-audio-row-actions, .vtt-audio-row-actions:has([aria-expanded="true"]) { opacity: 1; }
+  @media (hover: none) { .vtt-audio-row-actions { opacity: 1; } }
+  .vtt-audio-rename-input { flex: 1; min-width: 0; height: 2rem; padding: 0 0.5rem; font-size: 0.88rem; }
+  .vtt-audio-slot-chip {
+    flex-shrink: 0; display: inline-flex; align-items: center; gap: 0.25rem; height: 1.6rem; padding: 0 0.55rem;
+    border-radius: 999px; font-size: 0.75rem; font-weight: 600; white-space: nowrap;
+    border: 1px solid var(--color-border); color: var(--color-text-muted); background: var(--color-surface);
+  }
+  .vtt-audio-slot-chip:hover, .vtt-audio-slot-chip[aria-expanded="true"] { border-color: var(--color-primary); color: var(--color-text); }
+  .vtt-audio-slot-chip:not(.is-music) { color: var(--color-primary); border-color: color-mix(in srgb, var(--color-primary) 45%, var(--color-border)); }
+  .vtt-audio-badge { flex-shrink: 0; font-size: 0.7rem; padding: 0.05rem 0.4rem; border-radius: 999px; border: 1px solid var(--color-border); color: var(--color-text-muted); }
+  .vtt-audio-eq { display: inline-flex; gap: 2px; align-items: flex-end; height: 12px; margin-right: 0.35rem; vertical-align: -1px; }
+  .vtt-audio-eq i { width: 3px; background: var(--color-primary); animation: vtt-audio-eq 0.9s ease-in-out infinite; }
+  .vtt-audio-eq i:nth-child(2) { animation-delay: 0.2s; }
+  .vtt-audio-eq i:nth-child(3) { animation-delay: 0.4s; }
+  .vtt-audio-eq.is-paused i { animation: none; height: 4px; }
+  @keyframes vtt-audio-eq { 0%, 100% { height: 4px; } 50% { height: 12px; } }
+  .vtt-audio-empty { padding: 1.5rem 1rem; text-align: center; color: var(--color-text-muted); font-size: 0.9rem; }
+  .vtt-audio-group-label { padding: 0.6rem 0.4rem 0.2rem; font-size: 0.72rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; color: var(--color-text-muted); }
+  [data-dragging="true"] { opacity: 0.45; }
+
+  /* Large (plein écran ou panneau élargi) : collections et playlists à gauche */
+  @container (min-width: 44rem) {
+    .vtt-audio-tree {
+      display: block; width: 15rem; flex-shrink: 0; overflow-y: auto; padding: 0.5rem 0.4rem;
+      border-right: 1px solid var(--color-border); background: color-mix(in srgb, var(--color-surface-alt) 45%, var(--color-surface));
+    }
+    .vtt-audio-crumb-root { display: none; }
+  }
+  .vtt-audio-tree-collection { margin-bottom: 0.4rem; }
+  .vtt-audio-tree-head { display: flex; align-items: center; gap: 0.2rem; padding: 0.25rem 0.3rem; font-size: 0.75rem; font-weight: 700; color: var(--color-text-muted); text-transform: uppercase; letter-spacing: 0.03em; }
+  .vtt-audio-tree-head span { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .vtt-audio-tree-item { display: flex; width: 100%; align-items: center; gap: 0.4rem; padding: 0.35rem 0.5rem; border-radius: 0.45rem; text-align: left; font-size: 0.88rem; }
+  .vtt-audio-tree-item:hover { background: var(--color-surface-alt); }
+  .vtt-audio-tree-item[aria-current="true"] { background: color-mix(in srgb, var(--color-primary) 14%, transparent); color: var(--color-primary); font-weight: 600; }
+  .vtt-audio-tree-item span:first-of-type { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .vtt-audio-tree-count { font-size: 0.72rem; color: var(--color-text-muted); }
+
+  /* Pied : ajout d'un lien, à la Watch2Gether */
+  .vtt-audio-foot { border-top: 1px solid var(--color-border); padding: 0.45rem 0.6rem; display: flex; align-items: center; gap: 0.4rem; }
+  .vtt-audio-text-btn { display: inline-flex; align-items: center; gap: 0.35rem; height: 2rem; padding: 0 0.65rem; border-radius: 0.5rem; font-size: 0.85rem; color: var(--color-text-muted); }
+  .vtt-audio-text-btn:hover { color: var(--color-text); background: var(--color-surface-alt); }
+  .vtt-audio-text-btn.is-primary { color: var(--color-primary); font-weight: 600; }
+  .vtt-audio-add-form { display: flex; flex: 1; gap: 0.35rem; align-items: center; }
+  .vtt-audio-add-form input { flex: 1; min-width: 0; height: 2.1rem; }
+  .vtt-audio-foot-message { font-size: 0.78rem; color: var(--color-text-muted); }
+
+  /* Menus des lignes (≋ et ⋯) : classes du menu générique (.vtt-menu, .vtt-menu-item,
+     .vtt-menu-separator), habillées par chaque slug ; ici, la position fixe sous le bouton
+     (placée par le script) et ce qui est propre à ces menus. */
+  .vtt-audio-menu { position: fixed; right: auto; z-index: 60; margin: 0; list-style: none; }
+  .vtt-audio-menu-label { padding: 0.35rem 1rem 0.2rem; font-size: 0.72rem; color: var(--color-text-muted); text-transform: uppercase; letter-spacing: 0.04em; }
+  .vtt-audio-menu .vtt-menu-item:focus-visible { background: color-mix(in srgb, var(--color-primary) 10%, transparent); }
+  .vtt-audio-menu [aria-checked="true"]::after { content: "✓"; margin-left: auto; color: var(--color-primary); }
+  .vtt-audio-menu-hint { margin-left: auto; font-size: 0.75rem; color: var(--color-text-muted); }
+  .vtt-audio-menu-gain { display: flex; align-items: center; gap: 0.5rem; padding: 0.4rem 1rem; font-size: 0.85rem; }
+  .vtt-audio-menu-gain input { flex: 1; accent-color: var(--color-primary); }
+
+  .vtt-audio-pick {
+    width: 100%; padding: 0.4rem 0.6rem; text-align: left; border-radius: 0.5rem;
+    border: 1px solid var(--color-border); background: var(--color-surface-alt); color: var(--color-text);
+  }
+  .vtt-audio-pick:hover:not(:disabled) { border-color: var(--color-primary); }
+  @media (prefers-reduced-motion: reduce) { .vtt-audio-eq i { animation: none; } .vtt-audio-search { transition: none; } }
+  .vtt-audio-session-toggle { display: inline-flex; align-items: center; justify-content: center; gap: 0.4rem; }
 }

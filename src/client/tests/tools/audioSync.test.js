@@ -1,6 +1,6 @@
 // Synchronisation du lecteur local sur l'état du serveur (spec_audio.md §9.3, §9.6)
 import { describe, it, expect } from 'vitest';
-import { clockSample, bestOffset, expectedPosition, planSync } from '../../../src/components/audio/audioSync.js';
+import { clockSample, bestOffset, expectedPosition, planSync } from '../../src/tools/audioSync.js';
 
 const playing = { status: 'playing', youtubeId: 'aaaaaaaaaaa', position: 10, refTime: 100_000, duration: 200 };
 

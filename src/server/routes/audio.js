@@ -1,13 +1,16 @@
 // src/server/routes/audio.js
 // ─────────────────────────────────────────────────────────────────────────────
-// Brique audio synchronisée (documentations/spec_audio.md §9) : route partagée,
-// montée pour chaque système sur /api/:slug/audio.
+// Brique audio synchronisée (documentations/spec_audio.md §10.8, §11) : route
+// partagée, montée pour chaque système sur /api/:slug/audio.
 //
-// - Bibliothèque du MJ (collections → playlists → vidéos YouTube), par slug.
-// - Activation par session (game_sessions.audio_enabled).
-// - État de lecture en mémoire (sharedState.audioStates), seule source de vérité :
-//   chaque commande du MJ le modifie puis le diffuse à la room de la session
-//   (audio-state). Les clients ne font que l'appliquer à leur lecteur YouTube.
+// - Données dans la base du module (database/audio.db, db/modules/audio.js), jamais dans
+//   la base du slug. Tout contenu appartient à une table : slug + session_id.
+// - Bibliothèque de la table (collections → playlists → vidéos), catalogue public
+//   en lecture seule (niveaux 'slug' et 'platform'), copie indépendante (T-1).
+//   Seule la table propriétaire modifie un contenu (S-4).
+// - Quatre pistes fixes par table (music, ambience1, ambience2, effect). L'état de
+//   lecture vit en mémoire (sharedState.audioStates), seule source de vérité :
+//   chaque commande du MJ le modifie puis le diffuse à la room de la table.
 //
 // Les clés étrangères ne sont pas activées sur les connexions : les suppressions
 // effacent explicitement les lignes filles, en transaction.
@@ -18,55 +21,184 @@ const router = express.Router();
 const { authenticate, requireGM } = require('../middlewares/auth');
 const { sharedState } = require('../socket/index');
 const { getDbForSystem } = require('../db');
+const { getModuleConfig } = require('../db/moduleConfig');
 const { getConfigForSystem } = require('../systems/Loader');
 
 const YOUTUBE_ID = /^[A-Za-z0-9_-]{11}$/;
 const OEMBED_URL = 'https://www.youtube.com/oembed?format=json&url=';
 const OEMBED_BATCH = 8;          // requêtes oEmbed simultanées à l'import d'une playlist
 const END_MARGIN_MS = 1000;      // marge avant de passer au morceau suivant
+const VISIBILITIES = ['private', 'slug', 'platform'];
 
-// Minuteurs de fin de morceau, par clé d'état (hors de l'état diffusé)
+// Pistes fixes et modes permis (S-5, S-7)
+const SLOTS = {
+    music:     { modes: ['playlist', 'loop', 'shuffle'], mode: 'playlist' },
+    ambience1: { modes: ['loop', 'playlist'],            mode: 'loop' },
+    ambience2: { modes: ['loop', 'playlist'],            mode: 'loop' },
+    effect:    { modes: ['once'],                        mode: 'once' },
+};
+
+// Tolérance de recalage des clients, en secondes (P2-3), réglable dans le .env
+const syncTolerance = () => {
+    const value = Number(process.env.AUDIO_SYNC_TOLERANCE);
+    return Number.isFinite(value) && value > 0 ? value : 1;
+};
+
+// Minuteurs de fin de morceau, par piste (hors de l'état diffusé)
 const endTimers = new Map();
 
-// ─── Bibliothèque ───────────────────────────────────────────────────────────
+const audioDb = () => getDbForSystem(getModuleConfig('audio'));
+const isText = (value) => typeof value === 'string' && value.trim().length > 0;
 
-/** Bibliothèque complète, triée : [{ id, name, playlists: [{ id, name, tracks: [...] }] }] */
-function loadLibrary(db) {
-    const collections = db.prepare('SELECT id, name FROM audio_collections ORDER BY position, id').all();
-    const playlists = db.prepare('SELECT id, collection_id, name FROM audio_playlists ORDER BY position, id').all();
-    const tracks = db.prepare('SELECT id, playlist_id, youtube_id, title, unavailable FROM audio_tracks ORDER BY position, id').all();
+// ─── Bibliothèque : lecture ─────────────────────────────────────────────────
+
+/** Collections données → [{ id, name, visibility, owner, playlists: [{ id, name, tracks }] }] */
+function nestCollections(db, collections) {
+    if (collections.length === 0) return [];
+    const ids = JSON.stringify(collections.map(c => c.id));
+    const playlists = db.prepare(`
+        SELECT id, collection_id, name, default_slot FROM audio_playlists
+        WHERE collection_id IN (SELECT value FROM json_each(?)) ORDER BY position, id
+    `).all(ids);
+    const tracks = db.prepare(`
+        SELECT t.id, t.playlist_id, t.youtube_id, t.title, t.gain, t.unavailable, t.duration
+        FROM audio_tracks t JOIN audio_playlists p ON p.id = t.playlist_id
+        WHERE p.collection_id IN (SELECT value FROM json_each(?)) ORDER BY t.position, t.id
+    `).all(ids);
 
     const tracksByPlaylist = new Map();
     for (const t of tracks) {
         if (!tracksByPlaylist.has(t.playlist_id)) tracksByPlaylist.set(t.playlist_id, []);
-        tracksByPlaylist.get(t.playlist_id).push({ id: t.id, youtubeId: t.youtube_id, title: t.title, unavailable: !!t.unavailable });
+        tracksByPlaylist.get(t.playlist_id).push({ id: t.id, youtubeId: t.youtube_id, title: t.title, gain: t.gain, unavailable: !!t.unavailable, duration: t.duration });
     }
-
     const playlistsByCollection = new Map();
     for (const p of playlists) {
         if (!playlistsByCollection.has(p.collection_id)) playlistsByCollection.set(p.collection_id, []);
-        playlistsByCollection.get(p.collection_id).push({ id: p.id, name: p.name, tracks: tracksByPlaylist.get(p.id) ?? [] });
+        playlistsByCollection.get(p.collection_id).push({ id: p.id, name: p.name, defaultSlot: p.default_slot, tracks: tracksByPlaylist.get(p.id) ?? [] });
     }
 
-    return collections.map(c => ({ id: c.id, name: c.name, playlists: playlistsByCollection.get(c.id) ?? [] }));
+    return collections.map(c => ({
+        id: c.id,
+        name: c.name,
+        visibility: c.visibility,
+        owner: { slug: c.slug, sessionId: c.session_id },
+        playlists: playlistsByCollection.get(c.id) ?? [],
+    }));
 }
+
+/** Bibliothèque de la table */
+function loadLibrary(ctx) {
+    const collections = ctx.db.prepare(`
+        SELECT * FROM audio_collections WHERE slug = ? AND session_id = ? ORDER BY position, id
+    `).all(ctx.slug, ctx.sessionId);
+    return nestCollections(ctx.db, collections);
+}
+
+/** Nom d'une table d'un slug, pour le catalogue (null si introuvable) */
+function sessionName(slug, sessionId, names) {
+    const key = `${slug}_${sessionId}`;
+    if (!names.has(key)) {
+        try {
+            const row = getDbForSystem(getConfigForSystem(slug)).prepare('SELECT name FROM game_sessions WHERE id = ?').get(sessionId);
+            names.set(key, row?.name ?? null);
+        } catch {
+            names.set(key, null);
+        }
+    }
+    return names.get(key);
+}
+
+/** Catalogue public : niveau 'slug' des autres tables du slug, niveau 'platform' de toutes les tables (§11.2) */
+function loadCatalog(ctx) {
+    const collections = ctx.db.prepare(`
+        SELECT * FROM audio_collections
+        WHERE NOT (slug = ? AND session_id = ?)
+          AND ((visibility = 'slug' AND slug = ?) OR visibility = 'platform')
+        ORDER BY slug, name, id
+    `).all(ctx.slug, ctx.sessionId, ctx.slug);
+
+    const names = new Map();
+    return nestCollections(ctx.db, collections).map(c => ({
+        ...c,
+        owner: { ...c.owner, sessionName: sessionName(c.owner.slug, c.owner.sessionId, names) },
+    }));
+}
+
+// ─── Bibliothèque : propriété et lecture permise ────────────────────────────
+
+const OWN_COLLECTION = 'SELECT * FROM audio_collections WHERE id = ? AND slug = ? AND session_id = ?';
+const OWN_PLAYLIST = `
+    SELECT p.* FROM audio_playlists p JOIN audio_collections c ON c.id = p.collection_id
+    WHERE p.id = ? AND c.slug = ? AND c.session_id = ?`;
+const OWN_TRACK = `
+    SELECT t.* FROM audio_tracks t
+    JOIN audio_playlists p ON p.id = t.playlist_id JOIN audio_collections c ON c.id = p.collection_id
+    WHERE t.id = ? AND c.slug = ? AND c.session_id = ?`;
+
+// Lisible : à la table, ou public pour elle
+const READABLE = `((c.slug = ? AND c.session_id = ?) OR (c.visibility = 'slug' AND c.slug = ?) OR c.visibility = 'platform')`;
+
+const own = (ctx, sql, id) => ctx.db.prepare(sql).get(id, ctx.slug, ctx.sessionId);
+const readable = (ctx, sql, id) => ctx.db.prepare(sql).get(id, ctx.slug, ctx.sessionId, ctx.slug);
+
+const READABLE_COLLECTION = `SELECT c.* FROM audio_collections c WHERE c.id = ? AND ${READABLE}`;
+const READABLE_PLAYLIST = `
+    SELECT p.* FROM audio_playlists p JOIN audio_collections c ON c.id = p.collection_id
+    WHERE p.id = ? AND ${READABLE}`;
+const READABLE_TRACK = `
+    SELECT t.* FROM audio_tracks t
+    JOIN audio_playlists p ON p.id = t.playlist_id JOIN audio_collections c ON c.id = p.collection_id
+    WHERE t.id = ? AND ${READABLE}`;
+
+// ─── Bibliothèque : écriture ────────────────────────────────────────────────
 
 /** Position suivant la dernière ligne d'un parent (fin de liste). */
-function nextPosition(db, table, parentColumn, parentId) {
-    const where = parentColumn ? `WHERE ${parentColumn} = ?` : '';
-    const row = db.prepare(`SELECT COALESCE(MAX(position), -1) + 1 AS pos FROM ${table} ${where}`).get(...(parentColumn ? [parentId] : []));
-    return row.pos;
+function nextPosition(db, table, where, params) {
+    return db.prepare(`SELECT COALESCE(MAX(position), -1) + 1 AS pos FROM ${table} WHERE ${where}`).get(...params).pos;
 }
 
-/** Réécrit l'ordre d'une liste d'ids (glisser-déposer), limité aux lignes du parent. */
-function reorder(db, table, ids, parentColumn, parentId) {
+/** Réécrit l'ordre d'une liste d'ids (glisser-déposer), limité aux lignes visées par `where`. */
+function reorder(db, table, ids, where, params) {
     if (!Array.isArray(ids)) return false;
-    const where = parentColumn ? ` AND ${parentColumn} = ?` : '';
-    const stmt = db.prepare(`UPDATE ${table} SET position = ? WHERE id = ?${where}`);
-    db.transaction(() => {
-        ids.forEach((id, index) => stmt.run(index, id, ...(parentColumn ? [parentId] : [])));
-    })();
+    const stmt = db.prepare(`UPDATE ${table} SET position = ? WHERE id = ? AND ${where}`);
+    db.transaction(() => ids.forEach((id, index) => stmt.run(index, id, ...params)))();
     return true;
+}
+
+function copyTracks(db, fromPlaylistId, toPlaylistId) {
+    const start = nextPosition(db, 'audio_tracks', 'playlist_id = ?', [toPlaylistId]);
+    db.prepare(`
+        INSERT INTO audio_tracks (playlist_id, youtube_id, title, gain, duration, position)
+        SELECT ?, youtube_id, title, gain, duration, ? + ROW_NUMBER() OVER (ORDER BY position, id) - 1
+        FROM audio_tracks WHERE playlist_id = ?
+    `).run(toPlaylistId, start, fromPlaylistId);
+}
+
+function copyPlaylist(db, playlist, toCollectionId) {
+    const { lastInsertRowid } = db.prepare('INSERT INTO audio_playlists (collection_id, name, default_slot, position) VALUES (?, ?, ?, ?)')
+        .run(toCollectionId, playlist.name, playlist.default_slot, nextPosition(db, 'audio_playlists', 'collection_id = ?', [toCollectionId]));
+    copyTracks(db, playlist.id, lastInsertRowid);
+}
+
+function deleteCollections(db, where, params) {
+    const ids = `SELECT id FROM audio_collections WHERE ${where}`;
+    db.prepare(`DELETE FROM audio_tracks WHERE playlist_id IN (SELECT id FROM audio_playlists WHERE collection_id IN (${ids}))`).run(...params);
+    db.prepare(`DELETE FROM audio_playlists WHERE collection_id IN (${ids})`).run(...params);
+    return db.prepare(`DELETE FROM audio_collections WHERE ${where}`).run(...params).changes;
+}
+
+/**
+ * Ménage des tables disparues (P2-1) : contenu audio des tables du slug qui
+ * n'existent plus dans sa base. Les copies faites ailleurs sont indépendantes.
+ */
+function purgeDeletedTables(ctx, slugDb) {
+    const existing = JSON.stringify(slugDb.prepare('SELECT id FROM game_sessions').all().map(r => r.id));
+    const where = 'slug = ? AND session_id NOT IN (SELECT value FROM json_each(?))';
+    ctx.db.transaction(() => {
+        deleteCollections(ctx.db, where, [ctx.slug, existing]);
+        ctx.db.prepare(`DELETE FROM audio_session_settings WHERE ${where}`).run(ctx.slug, existing);
+        ctx.db.prepare(`DELETE FROM audio_buttons WHERE ${where}`).run(ctx.slug, existing);
+    })();
 }
 
 /** Titre d'une vidéo par oEmbed (sans clé d'API) ; l'identifiant si YouTube ne répond pas. */
@@ -90,476 +222,550 @@ async function fetchTitles(videoIds) {
     return titles;
 }
 
-const isText = (value) => typeof value === 'string' && value.trim().length > 0;
+/** Titre d'une playlist YouTube par oEmbed ; null si YouTube ne répond pas. */
+async function fetchPlaylistTitle(listId) {
+    try {
+        const url = `${OEMBED_URL}${encodeURIComponent(`https://www.youtube.com/playlist?list=${listId}`)}`;
+        const res = await fetch(url, { signal: AbortSignal.timeout(5000) });
+        if (!res.ok) return null;
+        const data = await res.json();
+        return data?.title?.trim() || null;
+    } catch {
+        return null;
+    }
+}
+
+/** Nom par défaut quand le MJ n'en donne pas : « Collection 3 », « Playlist 2 »… */
+function defaultName(db, prefix, table, where, params) {
+    const { n } = db.prepare(`SELECT COUNT(*) AS n FROM ${table} WHERE ${where}`).get(...params);
+    return `${prefix} ${n + 1}`;
+}
+
+function createCollection(ctx, name) {
+    const owner = ['slug = ? AND session_id = ?', [ctx.slug, ctx.sessionId]];
+    return ctx.db.prepare('INSERT INTO audio_collections (slug, session_id, name, position) VALUES (?, ?, ?, ?)')
+        .run(ctx.slug, ctx.sessionId, isText(name) ? name.trim() : defaultName(ctx.db, 'Collection', 'audio_collections', ...owner),
+            nextPosition(ctx.db, 'audio_collections', ...owner)).lastInsertRowid;
+}
+
+/** Ajoute des vidéos en fin de playlist, titres repris de YouTube (Q-21). */
+async function addTracks(ctx, playlistId, videoIds) {
+    const titles = await fetchTitles(videoIds);
+    const insert = ctx.db.prepare('INSERT INTO audio_tracks (playlist_id, youtube_id, title, position) VALUES (?, ?, ?, ?)');
+    ctx.db.transaction(() => {
+        let position = nextPosition(ctx.db, 'audio_tracks', 'playlist_id = ?', [playlistId]);
+        videoIds.forEach((videoId, i) => insert.run(playlistId, videoId, titles[i], position++));
+    })();
+}
+
+// ─── Réglages de la table ───────────────────────────────────────────────────
+
+function getSettings(ctx) {
+    const row = ctx.db.prepare('SELECT enabled, hide_title FROM audio_session_settings WHERE slug = ? AND session_id = ?').get(ctx.slug, ctx.sessionId);
+    return { enabled: !!row?.enabled, hideTitle: !!row?.hide_title };
+}
+
+function saveSettings(ctx, { enabled, hideTitle }) {
+    const current = getSettings(ctx);
+    ctx.db.prepare(`
+        INSERT INTO audio_session_settings (slug, session_id, enabled, hide_title) VALUES (?, ?, ?, ?)
+        ON CONFLICT (slug, session_id) DO UPDATE SET enabled = excluded.enabled, hide_title = excluded.hide_title
+    `).run(ctx.slug, ctx.sessionId, (enabled ?? current.enabled) ? 1 : 0, (hideTitle ?? current.hideTitle) ? 1 : 0);
+}
 
 // ─── État de lecture ────────────────────────────────────────────────────────
 
 const stateKey = (slug, sessionId) => `${slug}_${sessionId}`;
+const timerKey = (ctx, slot) => `${ctx.key}:${slot}`;
 
-const STOPPED = { status: 'stopped', trackId: null, youtubeId: null, title: null, playlistId: null, playlistName: null, position: 0, refTime: 0, duration: null };
+const emptySlot = (slot, mode = SLOTS[slot].mode) => ({
+    status: 'stopped', trackId: null, youtubeId: null, title: null, gain: 100,
+    playlistId: null, mode, position: 0, refTime: 0, duration: null,
+});
 
-function getState(slug, sessionId) {
-    const key = stateKey(slug, sessionId);
-    if (!sharedState.audioStates.has(key)) sharedState.audioStates.set(key, { ...STOPPED, hideTitle: false });
-    return sharedState.audioStates.get(key);
+function getState(ctx) {
+    if (!sharedState.audioStates.has(ctx.key)) {
+        sharedState.audioStates.set(ctx.key, { slots: Object.fromEntries(Object.keys(SLOTS).map(s => [s, emptySlot(s)])) });
+    }
+    return sharedState.audioStates.get(ctx.key);
 }
 
-/** Position courante (secondes) d'un état, à l'instant présent. */
-function currentPosition(state) {
-    return state.status === 'playing' ? state.position + (Date.now() - state.refTime) / 1000 : state.position;
+/** Position courante (secondes) d'une piste, à l'instant présent. */
+function currentPosition(slot) {
+    return slot.status === 'playing' ? slot.position + (Date.now() - slot.refTime) / 1000 : slot.position;
 }
 
-function clearEndTimer(key) {
+function clearEndTimer(ctx, slot) {
+    const key = timerKey(ctx, slot);
     if (endTimers.has(key)) {
         clearTimeout(endTimers.get(key));
         endTimers.delete(key);
     }
 }
 
-/** Arme le passage au morceau suivant si la vidéo joue et que sa durée est connue (Q-6). */
-function scheduleEnd(io, slug, sessionId) {
-    const key = stateKey(slug, sessionId);
-    clearEndTimer(key);
-    const state = getState(slug, sessionId);
+function broadcastState(ctx) {
+    ctx.io?.to(`${ctx.slug}_session_${ctx.sessionId}`).emit('audio-state', {
+        system: ctx.slug,
+        sessionId: ctx.sessionId,
+        state: getState(ctx),
+        hideTitle: getSettings(ctx).hideTitle,
+        serverTime: Date.now(),
+    });
+}
+
+/** Arme la fin de morceau d'une piste si elle joue et que sa durée est connue (§11.3). */
+function scheduleEnd(ctx, slot) {
+    clearEndTimer(ctx, slot);
+    const state = getState(ctx).slots[slot];
     if (state.status !== 'playing' || !state.duration) return;
 
     const remainingMs = Math.max(0, (state.duration - currentPosition(state)) * 1000) + END_MARGIN_MS;
     const trackId = state.trackId;
+    const key = timerKey(ctx, slot);
     endTimers.set(key, setTimeout(() => {
         endTimers.delete(key);
         // Le MJ a pu changer de morceau entre-temps
-        if (getState(slug, sessionId).trackId !== trackId) return;
+        if (getState(ctx).slots[slot].trackId !== trackId) return;
         // Hors requête : une erreur non rattrapée ferait tomber le serveur
         try {
-            const db = getDbForSystem(getConfigForSystem(slug));
-            playAdjacent(io, db, slug, sessionId, 1);
+            advance({ ...ctx, db: audioDb() }, slot, { auto: true });
+            broadcastState(ctx);
         } catch (error) {
             console.error('Error moving to next audio track:', error);
         }
     }, remainingMs));
 }
 
-function broadcastState(io, slug, sessionId) {
-    io?.to(`${slug}_session_${sessionId}`).emit('audio-state', {
-        system: slug,
-        sessionId: Number(sessionId),
-        state: getState(slug, sessionId),
-        serverTime: Date.now(),
-    });
-}
-
-/** Lance une vidéo de la bibliothèque à la position donnée. Renvoie false si elle n'existe plus. */
-function playTrack(db, slug, sessionId, trackId, position = 0) {
-    const track = db.prepare(`
-        SELECT t.id, t.youtube_id, t.title, p.id AS playlist_id, p.name AS playlist_name
-        FROM audio_tracks t JOIN audio_playlists p ON p.id = t.playlist_id
-        WHERE t.id = ?
-    `).get(trackId);
+/** Lance une vidéo de la bibliothèque de la table sur une piste. Renvoie false si elle n'y est pas. */
+function playTrack(ctx, slot, trackId, position = 0) {
+    const track = own(ctx, OWN_TRACK, trackId);
     if (!track) return false;
-
-    Object.assign(getState(slug, sessionId), {
+    const current = getState(ctx).slots[slot];
+    Object.assign(current, {
         status: 'playing',
         trackId: track.id,
         youtubeId: track.youtube_id,
         title: track.title,
+        gain: track.gain,
         playlistId: track.playlist_id,
-        playlistName: track.playlist_name,
         position: Math.max(0, Number(position) || 0),
         refTime: Date.now(),
         duration: null,
     });
+    clearEndTimer(ctx, slot);
     return true;
 }
 
-function stop(slug, sessionId) {
-    clearEndTimer(stateKey(slug, sessionId));
-    Object.assign(getState(slug, sessionId), STOPPED);
+function stopSlot(ctx, slot) {
+    clearEndTimer(ctx, slot);
+    const current = getState(ctx).slots[slot];
+    Object.assign(current, emptySlot(slot, current.mode));
+}
+
+const playlistIds = (ctx, playlistId) =>
+    ctx.db.prepare('SELECT id FROM audio_tracks WHERE playlist_id = ? ORDER BY position, id').all(playlistId).map(r => r.id);
+
+/** Un morceau au hasard de la liste, autre que `exclude` quand c'est possible. */
+function pickRandom(ids, exclude) {
+    const pool = ids.length > 1 ? ids.filter(id => id !== exclude) : ids;
+    return pool[Math.floor(Math.random() * pool.length)];
 }
 
 /**
- * Morceau voisin dans la playlist du morceau en cours (Q-25) : step = 1 (suivant) ou -1 (précédent).
- * Après le dernier : arrêt (Q-6). Avant le premier : le morceau en cours repart du début.
- * La playlist est relue en base, donc à jour des modifications faites pendant la lecture.
+ * Morceau suivant d'une piste, selon son mode (§11.3) : fin de morceau (auto) ou
+ * commande « suivant » / « précédent » (step = 1 / -1). La playlist est relue en
+ * base, donc à jour des modifications faites pendant la lecture.
  */
-function playAdjacent(io, db, slug, sessionId, step) {
-    const state = getState(slug, sessionId);
-    if (!state.trackId) return;
+function advance(ctx, slot, { auto = false, step = 1 } = {}) {
+    const current = getState(ctx).slots[slot];
+    if (!current.trackId) return;
 
-    const ids = db.prepare('SELECT id FROM audio_tracks WHERE playlist_id = ? ORDER BY position, id').all(state.playlistId).map(r => r.id);
-    const index = ids.indexOf(state.trackId);
-    const target = index === -1 ? undefined : ids[index + step] ?? (step < 0 ? state.trackId : undefined);
+    if (auto && current.mode === 'once') return stopSlot(ctx, slot);
+    if (auto && current.mode === 'loop') {
+        Object.assign(current, { status: 'playing', position: 0, refTime: Date.now() });
+        return scheduleEnd(ctx, slot);
+    }
 
-    if (target === undefined || !playTrack(db, slug, sessionId, target)) stop(slug, sessionId);
-    else clearEndTimer(stateKey(slug, sessionId));
-    broadcastState(io, slug, sessionId);
+    const ids = playlistIds(ctx, current.playlistId);
+    let target;
+    if (current.mode === 'shuffle') {
+        target = ids.length ? pickRandom(ids, current.trackId) : undefined;
+    } else {
+        const index = ids.indexOf(current.trackId);
+        // Avant le premier : le morceau en cours repart du début. Après le dernier : arrêt (Q-6)
+        target = index === -1 ? undefined : ids[index + step] ?? (step < 0 ? current.trackId : undefined);
+    }
+
+    if (target === undefined || !playTrack(ctx, slot, target)) stopSlot(ctx, slot);
 }
 
-/** Commandes de lecture : chacune modifie l'état et renvoie un message d'erreur, ou null. */
-const COMMANDS = {
-    play(ctx, { trackId, position }) {
-        if (!playTrack(ctx.db, ctx.slug, ctx.sessionId, trackId, position)) return 'Track not found';
-        clearEndTimer(ctx.key);
+/** Commandes d'une piste : chacune modifie l'état et renvoie un message d'erreur, ou null. */
+const SLOT_COMMANDS = {
+    play(ctx, slot, { trackId, position }) {
+        return playTrack(ctx, slot, trackId, position) ? null : 'Track not found in this table library';
+    },
+    playPlaylist(ctx, slot, { playlistId }) {
+        if (!own(ctx, OWN_PLAYLIST, playlistId)) return 'Playlist not found in this table library';
+        const ids = playlistIds(ctx, playlistId);
+        if (ids.length === 0) return 'Playlist is empty';
+        const mode = getState(ctx).slots[slot].mode;
+        playTrack(ctx, slot, mode === 'shuffle' ? pickRandom(ids) : ids[0]);
         return null;
     },
-    pause(ctx) {
-        const state = getState(ctx.slug, ctx.sessionId);
-        if (state.status !== 'playing') return null;
-        Object.assign(state, { status: 'paused', position: currentPosition(state), refTime: Date.now() });
-        clearEndTimer(ctx.key);
+    pause(ctx, slot) {
+        const current = getState(ctx).slots[slot];
+        if (current.status !== 'playing') return null;
+        Object.assign(current, { status: 'paused', position: currentPosition(current), refTime: Date.now() });
+        clearEndTimer(ctx, slot);
         return null;
     },
-    resume(ctx) {
-        const state = getState(ctx.slug, ctx.sessionId);
-        if (state.status !== 'paused') return null;
-        Object.assign(state, { status: 'playing', refTime: Date.now() });
-        scheduleEnd(ctx.io, ctx.slug, ctx.sessionId);
+    resume(ctx, slot) {
+        const current = getState(ctx).slots[slot];
+        if (current.status !== 'paused') return null;
+        Object.assign(current, { status: 'playing', refTime: Date.now() });
+        scheduleEnd(ctx, slot);
         return null;
     },
-    seek(ctx, { position }) {
-        const state = getState(ctx.slug, ctx.sessionId);
-        if (!state.trackId) return null;
+    seek(ctx, slot, { position }) {
+        const current = getState(ctx).slots[slot];
+        if (!current.trackId) return null;
         const value = Number(position);
         if (!Number.isFinite(value)) return 'Invalid position';
-        const max = state.duration ?? Infinity;
-        Object.assign(state, { position: Math.min(Math.max(0, value), max), refTime: Date.now() });
-        scheduleEnd(ctx.io, ctx.slug, ctx.sessionId);
+        Object.assign(current, { position: Math.min(Math.max(0, value), current.duration ?? Infinity), refTime: Date.now() });
+        scheduleEnd(ctx, slot);
         return null;
     },
-    stop(ctx) {
-        stop(ctx.slug, ctx.sessionId);
+    next(ctx, slot) {
+        advance(ctx, slot, { step: 1 });
         return null;
     },
-    settings(ctx, { hideTitle }) {
-        getState(ctx.slug, ctx.sessionId).hideTitle = !!hideTitle;
+    previous(ctx, slot) {
+        advance(ctx, slot, { step: -1 });
         return null;
     },
-    // Remontée du lecteur du MJ : durée connue, la vidéo est lisible (§9.3)
-    duration(ctx, { trackId, duration }) {
-        const state = getState(ctx.slug, ctx.sessionId);
+    stop(ctx, slot) {
+        stopSlot(ctx, slot);
+        return null;
+    },
+    mode(ctx, slot, { mode }) {
+        if (!SLOTS[slot].modes.includes(mode)) return `Mode not allowed on ${slot}`;
+        getState(ctx).slots[slot].mode = mode;
+        return null;
+    },
+    // Remontées du lecteur du MJ : durée connue, la vidéo est lisible (§11.3)
+    duration(ctx, slot, { trackId, duration }) {
+        const current = getState(ctx).slots[slot];
         const value = Number(duration);
-        if (state.trackId !== trackId || !Number.isFinite(value) || value <= 0) return null;
-        state.duration = value;
-        ctx.db.prepare('UPDATE audio_tracks SET unavailable = 0 WHERE id = ?').run(trackId);
-        scheduleEnd(ctx.io, ctx.slug, ctx.sessionId);
+        if (current.trackId !== trackId || !Number.isFinite(value) || value <= 0) return null;
+        current.duration = value;
+        // Lisible, et sa durée s'affiche désormais dans la bibliothèque
+        ctx.db.prepare('UPDATE audio_tracks SET unavailable = 0, duration = ? WHERE id = ?').run(value, trackId);
+        scheduleEnd(ctx, slot);
+        return null;
+    },
+    // Vidéo illisible chez le MJ : signalée, puis morceau suivant (Q-23)
+    error(ctx, slot, { trackId }) {
+        const current = getState(ctx).slots[slot];
+        if (current.trackId !== trackId) return null;
+        ctx.db.prepare('UPDATE audio_tracks SET unavailable = 1 WHERE id = ?').run(trackId);
+        // Une vidéo en boucle ou un effet ne se relancent pas : arrêt
+        if (current.mode === 'loop' || current.mode === 'once') stopSlot(ctx, slot);
+        else advance(ctx, slot, { step: 1 });
         return null;
     },
 };
 
-// ─── Routes : bibliothèque (MJ) ─────────────────────────────────────────────
+function stopAll(ctx) {
+    for (const slot of Object.keys(SLOTS)) stopSlot(ctx, slot);
+}
 
-router.get('/library', authenticate, requireGM, (req, res) => {
-    try {
-        res.json(loadLibrary(req.db));
-    } catch (error) {
-        console.error('Error loading audio library:', error);
-        res.status(500).json({ error: 'Failed to load audio library' });
-    }
-});
+// ─── Table de la requête ────────────────────────────────────────────────────
 
-// Collections — /order déclarée avant /:id
-router.put('/collections/order', authenticate, requireGM, (req, res) => {
+// Toutes les routes passent par /sessions/:sid : la table fixe le propriétaire
+router.param('sid', (req, res, next, sid) => {
     try {
-        if (!reorder(req.db, 'audio_collections', req.body.ids)) return res.status(400).json({ error: 'ids must be an array' });
-        res.json(loadLibrary(req.db));
-    } catch (error) {
-        console.error('Error reordering audio collections:', error);
-        res.status(500).json({ error: 'Failed to reorder collections' });
-    }
-});
-
-router.post('/collections', authenticate, requireGM, (req, res) => {
-    try {
-        const { name } = req.body;
-        if (!isText(name)) return res.status(400).json({ error: 'Name is required' });
-        req.db.prepare('INSERT INTO audio_collections (name, position) VALUES (?, ?)')
-            .run(name.trim(), nextPosition(req.db, 'audio_collections'));
-        res.status(201).json(loadLibrary(req.db));
-    } catch (error) {
-        console.error('Error creating audio collection:', error);
-        res.status(500).json({ error: 'Failed to create collection' });
-    }
-});
-
-router.put('/collections/:id/order', authenticate, requireGM, (req, res) => {
-    try {
-        if (!reorder(req.db, 'audio_playlists', req.body.playlistIds, 'collection_id', req.params.id)) {
-            return res.status(400).json({ error: 'playlistIds must be an array' });
+        const sessionId = Number(sid);
+        if (!Number.isInteger(sessionId) || !req.db.prepare('SELECT id FROM game_sessions WHERE id = ?').get(sessionId)) {
+            return res.status(404).json({ error: 'Session not found' });
         }
-        res.json(loadLibrary(req.db));
+        const slug = req.system.slug;
+        req.audio = { db: audioDb(), slug, sessionId, key: stateKey(slug, sessionId), io: req.app.get('io') };
+        next();
     } catch (error) {
-        console.error('Error reordering audio playlists:', error);
-        res.status(500).json({ error: 'Failed to reorder playlists' });
+        console.error('Error resolving audio session:', error);
+        res.status(500).json({ error: 'Failed to open audio session' });
     }
 });
 
-router.put('/collections/:id', authenticate, requireGM, (req, res) => {
+const gm = [authenticate, requireGM];
+
+/** Enveloppe commune des routes de bibliothèque : erreurs, et bibliothèque à jour en réponse. */
+const libraryRoute = (label, handler) => async (req, res) => {
     try {
-        const { name } = req.body;
-        if (!isText(name)) return res.status(400).json({ error: 'Name is required' });
-        const result = req.db.prepare('UPDATE audio_collections SET name = ? WHERE id = ?').run(name.trim(), req.params.id);
-        if (result.changes === 0) return res.status(404).json({ error: 'Collection not found' });
-        res.json(loadLibrary(req.db));
+        const result = await handler(req.audio, req.body ?? {}, req.params);
+        if (result?.status) return res.status(result.status).json({ error: result.error });
+        res.status(result?.created ? 201 : 200).json(loadLibrary(req.audio));
     } catch (error) {
-        console.error('Error renaming audio collection:', error);
-        res.status(500).json({ error: 'Failed to rename collection' });
+        console.error(`Error (${label}):`, error);
+        res.status(500).json({ error: `Failed to ${label}` });
     }
-});
+};
 
-router.delete('/collections/:id', authenticate, requireGM, (req, res) => {
+const notFound = (what) => ({ status: 404, error: `${what} not found` });
+const invalid = (error) => ({ status: 400, error });
+
+// ─── Routes : lecture de la table ───────────────────────────────────────────
+
+// Activation, réglages et état de lecture, pour qui arrive en cours de route (MJ et joueurs)
+router.get('/sessions/:sid', authenticate, (req, res) => {
     try {
-        const db = req.db;
-        const id = req.params.id;
-        const changes = db.transaction(() => {
-            db.prepare('DELETE FROM audio_tracks WHERE playlist_id IN (SELECT id FROM audio_playlists WHERE collection_id = ?)').run(id);
-            db.prepare('DELETE FROM audio_playlists WHERE collection_id = ?').run(id);
-            return db.prepare('DELETE FROM audio_collections WHERE id = ?').run(id).changes;
-        })();
-        if (changes === 0) return res.status(404).json({ error: 'Collection not found' });
-        res.json(loadLibrary(db));
-    } catch (error) {
-        console.error('Error deleting audio collection:', error);
-        res.status(500).json({ error: 'Failed to delete collection' });
-    }
-});
-
-// Playlists
-router.post('/playlists', authenticate, requireGM, (req, res) => {
-    try {
-        const { collectionId, name } = req.body;
-        if (!isText(name)) return res.status(400).json({ error: 'Name is required' });
-        if (!req.db.prepare('SELECT id FROM audio_collections WHERE id = ?').get(collectionId)) {
-            return res.status(404).json({ error: 'Collection not found' });
-        }
-        req.db.prepare('INSERT INTO audio_playlists (collection_id, name, position) VALUES (?, ?, ?)')
-            .run(collectionId, name.trim(), nextPosition(req.db, 'audio_playlists', 'collection_id', collectionId));
-        res.status(201).json(loadLibrary(req.db));
-    } catch (error) {
-        console.error('Error creating audio playlist:', error);
-        res.status(500).json({ error: 'Failed to create playlist' });
-    }
-});
-
-router.put('/playlists/:id/order', authenticate, requireGM, (req, res) => {
-    try {
-        if (!reorder(req.db, 'audio_tracks', req.body.trackIds, 'playlist_id', req.params.id)) {
-            return res.status(400).json({ error: 'trackIds must be an array' });
-        }
-        res.json(loadLibrary(req.db));
-    } catch (error) {
-        console.error('Error reordering audio tracks:', error);
-        res.status(500).json({ error: 'Failed to reorder tracks' });
-    }
-});
-
-// Renommer, ou déplacer vers une autre collection, en fin de liste (Q-20)
-router.put('/playlists/:id', authenticate, requireGM, (req, res) => {
-    try {
-        const db = req.db;
-        const { name, collectionId } = req.body;
-        const playlist = db.prepare('SELECT id, collection_id FROM audio_playlists WHERE id = ?').get(req.params.id);
-        if (!playlist) return res.status(404).json({ error: 'Playlist not found' });
-        if (name !== undefined && !isText(name)) return res.status(400).json({ error: 'Name cannot be empty' });
-
-        let targetCollection = playlist.collection_id;
-        let position = null;
-        if (collectionId !== undefined && Number(collectionId) !== playlist.collection_id) {
-            if (!db.prepare('SELECT id FROM audio_collections WHERE id = ?').get(collectionId)) {
-                return res.status(404).json({ error: 'Collection not found' });
-            }
-            targetCollection = Number(collectionId);
-            position = nextPosition(db, 'audio_playlists', 'collection_id', targetCollection);
-        }
-
-        db.prepare(`
-            UPDATE audio_playlists
-            SET name = COALESCE(?, name), collection_id = ?, position = COALESCE(?, position)
-            WHERE id = ?
-        `).run(name?.trim() ?? null, targetCollection, position, playlist.id);
-        res.json(loadLibrary(db));
-    } catch (error) {
-        console.error('Error updating audio playlist:', error);
-        res.status(500).json({ error: 'Failed to update playlist' });
-    }
-});
-
-router.delete('/playlists/:id', authenticate, requireGM, (req, res) => {
-    try {
-        const db = req.db;
-        const changes = db.transaction(() => {
-            db.prepare('DELETE FROM audio_tracks WHERE playlist_id = ?').run(req.params.id);
-            return db.prepare('DELETE FROM audio_playlists WHERE id = ?').run(req.params.id).changes;
-        })();
-        if (changes === 0) return res.status(404).json({ error: 'Playlist not found' });
-        res.json(loadLibrary(db));
-    } catch (error) {
-        console.error('Error deleting audio playlist:', error);
-        res.status(500).json({ error: 'Failed to delete playlist' });
-    }
-});
-
-// Ajout d'une ou plusieurs vidéos (lien simple ou playlist YouTube importée, Q-21, Q-22)
-router.post('/playlists/:id/tracks', authenticate, requireGM, async (req, res) => {
-    try {
-        const db = req.db;
-        const playlistId = Number(req.params.id);
-        const videoIds = Array.isArray(req.body.videoIds) ? req.body.videoIds.filter(id => YOUTUBE_ID.test(id)) : [];
-        if (videoIds.length === 0) return res.status(400).json({ error: 'No valid YouTube video id' });
-        if (!db.prepare('SELECT id FROM audio_playlists WHERE id = ?').get(playlistId)) {
-            return res.status(404).json({ error: 'Playlist not found' });
-        }
-
-        const titles = await fetchTitles(videoIds);
-
-        const insert = db.prepare('INSERT INTO audio_tracks (playlist_id, youtube_id, title, position) VALUES (?, ?, ?, ?)');
-        db.transaction(() => {
-            let position = nextPosition(db, 'audio_tracks', 'playlist_id', playlistId);
-            videoIds.forEach((videoId, i) => insert.run(playlistId, videoId, titles[i], position++));
-        })();
-        res.status(201).json(loadLibrary(db));
-    } catch (error) {
-        console.error('Error adding audio tracks:', error);
-        res.status(500).json({ error: 'Failed to add tracks' });
-    }
-});
-
-// Vidéos : renommer, ou déplacer vers une autre playlist, en fin de liste
-router.put('/tracks/:id', authenticate, requireGM, (req, res) => {
-    try {
-        const db = req.db;
-        const { title, playlistId } = req.body;
-        const track = db.prepare('SELECT id, playlist_id FROM audio_tracks WHERE id = ?').get(req.params.id);
-        if (!track) return res.status(404).json({ error: 'Track not found' });
-        if (title !== undefined && !isText(title)) return res.status(400).json({ error: 'Title cannot be empty' });
-
-        let targetPlaylist = track.playlist_id;
-        let position = null;
-        if (playlistId !== undefined && Number(playlistId) !== track.playlist_id) {
-            if (!db.prepare('SELECT id FROM audio_playlists WHERE id = ?').get(playlistId)) {
-                return res.status(404).json({ error: 'Playlist not found' });
-            }
-            targetPlaylist = Number(playlistId);
-            position = nextPosition(db, 'audio_tracks', 'playlist_id', targetPlaylist);
-        }
-
-        db.prepare(`
-            UPDATE audio_tracks
-            SET title = COALESCE(?, title), playlist_id = ?, position = COALESCE(?, position)
-            WHERE id = ?
-        `).run(title?.trim() ?? null, targetPlaylist, position, track.id);
-        res.json(loadLibrary(db));
-    } catch (error) {
-        console.error('Error updating audio track:', error);
-        res.status(500).json({ error: 'Failed to update track' });
-    }
-});
-
-// Copie indépendante vers une autre playlist (Q-4, Q-19)
-router.post('/tracks/:id/copy', authenticate, requireGM, (req, res) => {
-    try {
-        const db = req.db;
-        const { playlistId } = req.body;
-        const track = db.prepare('SELECT youtube_id, title FROM audio_tracks WHERE id = ?').get(req.params.id);
-        if (!track) return res.status(404).json({ error: 'Track not found' });
-        if (!db.prepare('SELECT id FROM audio_playlists WHERE id = ?').get(playlistId)) {
-            return res.status(404).json({ error: 'Playlist not found' });
-        }
-        db.prepare('INSERT INTO audio_tracks (playlist_id, youtube_id, title, position) VALUES (?, ?, ?, ?)')
-            .run(playlistId, track.youtube_id, track.title, nextPosition(db, 'audio_tracks', 'playlist_id', playlistId));
-        res.status(201).json(loadLibrary(db));
-    } catch (error) {
-        console.error('Error copying audio track:', error);
-        res.status(500).json({ error: 'Failed to copy track' });
-    }
-});
-
-router.delete('/tracks/:id', authenticate, requireGM, (req, res) => {
-    try {
-        const result = req.db.prepare('DELETE FROM audio_tracks WHERE id = ?').run(req.params.id);
-        if (result.changes === 0) return res.status(404).json({ error: 'Track not found' });
-        res.json(loadLibrary(req.db));
-    } catch (error) {
-        console.error('Error deleting audio track:', error);
-        res.status(500).json({ error: 'Failed to delete track' });
-    }
-});
-
-// ─── Routes : session ───────────────────────────────────────────────────────
-
-// Activation et état de lecture, pour qui arrive en cours de route (MJ et joueurs)
-router.get('/sessions/:sessionId', authenticate, (req, res) => {
-    try {
-        const session = req.db.prepare('SELECT audio_enabled FROM game_sessions WHERE id = ?').get(req.params.sessionId);
-        if (!session) return res.status(404).json({ error: 'Session not found' });
-        res.json({
-            enabled: !!session.audio_enabled,
-            state: getState(req.system.slug, req.params.sessionId),
-            serverTime: Date.now(),
-        });
+        const ctx = req.audio;
+        res.json({ ...getSettings(ctx), tolerance: syncTolerance(), state: getState(ctx), serverTime: Date.now() });
     } catch (error) {
         console.error('Error loading audio session:', error);
         res.status(500).json({ error: 'Failed to load audio session' });
     }
 });
 
-// Activer / désactiver la musique de la session (Q-30) ; désactiver arrête la lecture (P-4)
-router.put('/sessions/:sessionId/enabled', authenticate, requireGM, (req, res) => {
+// Activer / désactiver la musique de la table (T-2) ; désactiver arrête tout (P-4)
+router.put('/sessions/:sid/enabled', ...gm, (req, res) => {
     try {
-        const slug = req.system.slug;
-        const sessionId = Number(req.params.sessionId);
+        const ctx = req.audio;
         const enabled = !!req.body.enabled;
-        const result = req.db.prepare('UPDATE game_sessions SET audio_enabled = ? WHERE id = ?').run(enabled ? 1 : 0, sessionId);
-        if (result.changes === 0) return res.status(404).json({ error: 'Session not found' });
-
-        const io = req.app.get('io');
+        saveSettings(ctx, { enabled });
         if (!enabled) {
-            stop(slug, sessionId);
-            broadcastState(io, slug, sessionId);
+            stopAll(ctx);
+            broadcastState(ctx);
         }
-        io?.to(`${slug}_session_${sessionId}`).emit('audio-enabled', { system: slug, sessionId, enabled });
-        res.json({ enabled, state: getState(slug, sessionId), serverTime: Date.now() });
+        ctx.io?.to(`${ctx.slug}_session_${ctx.sessionId}`).emit('audio-enabled', { system: ctx.slug, sessionId: ctx.sessionId, enabled });
+        res.json({ ...getSettings(ctx), tolerance: syncTolerance(), state: getState(ctx), serverTime: Date.now() });
     } catch (error) {
         console.error('Error toggling session audio:', error);
         res.status(500).json({ error: 'Failed to toggle session audio' });
     }
 });
 
-// Commandes de lecture du MJ (§9.4) : play, pause, resume, seek, next, previous, stop,
-// settings, et les remontées de son lecteur : duration, error
-router.post('/sessions/:sessionId/command', authenticate, requireGM, (req, res) => {
+// Commandes de lecture du MJ (§11.4)
+router.post('/sessions/:sid/command', ...gm, (req, res) => {
     try {
-        const slug = req.system.slug;
-        const sessionId = Number(req.params.sessionId);
-        const { action, ...payload } = req.body;
+        const ctx = req.audio;
+        const { slot, action, ...payload } = req.body;
+        if (!getSettings(ctx).enabled) return res.status(409).json({ error: 'Audio is disabled for this session' });
 
-        const session = req.db.prepare('SELECT audio_enabled FROM game_sessions WHERE id = ?').get(sessionId);
-        if (!session) return res.status(404).json({ error: 'Session not found' });
-        if (!session.audio_enabled) return res.status(409).json({ error: 'Audio is disabled for this session' });
-
-        const io = req.app.get('io');
-        const ctx = { db: req.db, io, slug, sessionId, key: stateKey(slug, sessionId) };
-
-        if (action === 'next' || action === 'previous') {
-            playAdjacent(io, req.db, slug, sessionId, action === 'next' ? 1 : -1);
-        } else if (action === 'error') {
-            // Vidéo illisible chez le MJ : signalée, puis morceau suivant (Q-23)
-            if (getState(slug, sessionId).trackId === payload.trackId) {
-                req.db.prepare('UPDATE audio_tracks SET unavailable = 1 WHERE id = ?').run(payload.trackId);
-                playAdjacent(io, req.db, slug, sessionId, 1);
-            }
-        } else if (COMMANDS[action]) {
-            const error = COMMANDS[action](ctx, payload);
+        if (action === 'stopAll') {
+            stopAll(ctx);
+        } else if (action === 'settings') {
+            saveSettings(ctx, { hideTitle: !!payload.hideTitle });
+        } else if (SLOT_COMMANDS[action]) {
+            if (!SLOTS[slot]) return res.status(400).json({ error: `Unknown slot: ${slot}` });
+            const error = SLOT_COMMANDS[action](ctx, slot, payload);
             if (error) return res.status(400).json({ error });
-            // La durée ne change rien pour les clients : pas de diffusion
-            if (action !== 'duration') broadcastState(io, slug, sessionId);
         } else {
             return res.status(400).json({ error: `Unknown action: ${action}` });
         }
 
-        res.json({ state: getState(slug, sessionId), serverTime: Date.now() });
+        // La durée ne change rien pour les clients : pas de diffusion
+        if (action !== 'duration') broadcastState(ctx);
+        res.json({ ...getSettings(ctx), state: getState(ctx), serverTime: Date.now() });
     } catch (error) {
         console.error('Error running audio command:', error);
         res.status(500).json({ error: 'Failed to run audio command' });
     }
 });
+
+// ─── Routes : bibliothèque et catalogue (MJ) ────────────────────────────────
+
+// Ma bibliothèque ; ménage des tables disparues du slug au passage (P2-1)
+router.get('/sessions/:sid/library', ...gm, (req, res) => {
+    try {
+        purgeDeletedTables(req.audio, req.db);
+        res.json(loadLibrary(req.audio));
+    } catch (error) {
+        console.error('Error loading audio library:', error);
+        res.status(500).json({ error: 'Failed to load audio library' });
+    }
+});
+
+router.get('/sessions/:sid/catalog', ...gm, (req, res) => {
+    try {
+        res.json(loadCatalog(req.audio));
+    } catch (error) {
+        console.error('Error loading audio catalog:', error);
+        res.status(500).json({ error: 'Failed to load audio catalog' });
+    }
+});
+
+// Collections — /order déclarée avant /:id
+router.put('/sessions/:sid/collections/order', ...gm, libraryRoute('reorder collections', (ctx, { ids }) => {
+    if (!reorder(ctx.db, 'audio_collections', ids, 'slug = ? AND session_id = ?', [ctx.slug, ctx.sessionId])) return invalid('ids must be an array');
+}));
+
+// Nom facultatif : « Collection n » par défaut
+router.post('/sessions/:sid/collections', ...gm, libraryRoute('create collection', (ctx, { name }) => {
+    createCollection(ctx, name);
+    return { created: true };
+}));
+
+router.put('/sessions/:sid/collections/:id/order', ...gm, libraryRoute('reorder playlists', (ctx, { playlistIds }, { id }) => {
+    if (!own(ctx, OWN_COLLECTION, id)) return notFound('Collection');
+    if (!reorder(ctx.db, 'audio_playlists', playlistIds, 'collection_id = ?', [id])) return invalid('playlistIds must be an array');
+}));
+
+// Renommer, changer le niveau de partage (S-2, S-3)
+router.put('/sessions/:sid/collections/:id', ...gm, libraryRoute('update collection', (ctx, { name, visibility }, { id }) => {
+    if (!own(ctx, OWN_COLLECTION, id)) return notFound('Collection');
+    if (name !== undefined && !isText(name)) return invalid('Name cannot be empty');
+    if (visibility !== undefined && !VISIBILITIES.includes(visibility)) return invalid('Invalid visibility');
+    ctx.db.prepare(`
+        UPDATE audio_collections SET name = COALESCE(?, name), visibility = COALESCE(?, visibility), updated_at = CURRENT_TIMESTAMP
+        WHERE id = ?
+    `).run(name?.trim() ?? null, visibility ?? null, id);
+}));
+
+router.delete('/sessions/:sid/collections/:id', ...gm, libraryRoute('delete collection', (ctx, _body, { id }) => {
+    if (!own(ctx, OWN_COLLECTION, id)) return notFound('Collection');
+    ctx.db.transaction(() => deleteCollections(ctx.db, 'id = ?', [id]))();
+}));
+
+// Copie d'une collection (publique ou à moi) dans ma table, en privé (T-1)
+router.post('/sessions/:sid/collections/:id/copy', ...gm, libraryRoute('copy collection', (ctx, _body, { id }) => {
+    const source = readable(ctx, READABLE_COLLECTION, id);
+    if (!source) return notFound('Collection');
+    ctx.db.transaction(() => {
+        const { lastInsertRowid } = ctx.db.prepare('INSERT INTO audio_collections (slug, session_id, name, position) VALUES (?, ?, ?, ?)')
+            .run(ctx.slug, ctx.sessionId, source.name, nextPosition(ctx.db, 'audio_collections', 'slug = ? AND session_id = ?', [ctx.slug, ctx.sessionId]));
+        const playlists = ctx.db.prepare('SELECT * FROM audio_playlists WHERE collection_id = ? ORDER BY position, id').all(source.id);
+        for (const playlist of playlists) copyPlaylist(ctx.db, playlist, lastInsertRowid);
+    })();
+    return { created: true };
+}));
+
+// Playlists
+// Création en un appel, pour coller un lien sans étape préalable : collection facultative
+// (la première de la table, créée au besoin), nom facultatif (titre de la playlist YouTube
+// importée, sinon « Playlist n »), vidéos facultatives (listId : playlist YouTube importée)
+router.post('/sessions/:sid/playlists', ...gm, libraryRoute('create playlist', async (ctx, { collectionId, name, listId, videoIds }) => {
+    const ids = Array.isArray(videoIds) ? videoIds.filter(v => YOUTUBE_ID.test(v)) : [];
+
+    let collection = collectionId;
+    if (collection !== undefined && collection !== null) {
+        if (!own(ctx, OWN_COLLECTION, collection)) return notFound('Collection');
+    } else {
+        collection = ctx.db.prepare('SELECT id FROM audio_collections WHERE slug = ? AND session_id = ? ORDER BY position, id LIMIT 1')
+            .get(ctx.slug, ctx.sessionId)?.id ?? createCollection(ctx);
+    }
+
+    const listTitle = !isText(name) && typeof listId === 'string' ? await fetchPlaylistTitle(listId) : null;
+    const playlistName = isText(name) ? name.trim() : listTitle ?? defaultName(ctx.db, 'Playlist', 'audio_playlists', 'collection_id = ?', [collection]);
+    const { lastInsertRowid } = ctx.db.prepare('INSERT INTO audio_playlists (collection_id, name, position) VALUES (?, ?, ?)')
+        .run(collection, playlistName, nextPosition(ctx.db, 'audio_playlists', 'collection_id = ?', [collection]));
+
+    if (ids.length) await addTracks(ctx, lastInsertRowid, ids);
+    return { created: true };
+}));
+
+router.put('/sessions/:sid/playlists/:id/order', ...gm, libraryRoute('reorder tracks', (ctx, { trackIds }, { id }) => {
+    if (!own(ctx, OWN_PLAYLIST, id)) return notFound('Playlist');
+    if (!reorder(ctx.db, 'audio_tracks', trackIds, 'playlist_id = ?', [id])) return invalid('trackIds must be an array');
+}));
+
+// Renommer, choisir sa piste par défaut (§11.15), ou déplacer vers une autre de mes collections, en fin de liste
+router.put('/sessions/:sid/playlists/:id', ...gm, libraryRoute('update playlist', (ctx, { name, collectionId, defaultSlot }, { id }) => {
+    const playlist = own(ctx, OWN_PLAYLIST, id);
+    if (!playlist) return notFound('Playlist');
+    if (name !== undefined && !isText(name)) return invalid('Name cannot be empty');
+    if (defaultSlot !== undefined && !SLOTS[defaultSlot]) return invalid(`Unknown slot: ${defaultSlot}`);
+
+    let target = playlist.collection_id;
+    let position = null;
+    if (collectionId !== undefined && Number(collectionId) !== playlist.collection_id) {
+        if (!own(ctx, OWN_COLLECTION, collectionId)) return notFound('Collection');
+        target = Number(collectionId);
+        position = nextPosition(ctx.db, 'audio_playlists', 'collection_id = ?', [target]);
+    }
+    ctx.db.prepare(`
+        UPDATE audio_playlists SET name = COALESCE(?, name), default_slot = COALESCE(?, default_slot), collection_id = ?, position = COALESCE(?, position)
+        WHERE id = ?
+    `).run(name?.trim() ?? null, defaultSlot ?? null, target, position, playlist.id);
+}));
+
+router.delete('/sessions/:sid/playlists/:id', ...gm, libraryRoute('delete playlist', (ctx, _body, { id }) => {
+    if (!own(ctx, OWN_PLAYLIST, id)) return notFound('Playlist');
+    ctx.db.transaction(() => {
+        ctx.db.prepare('DELETE FROM audio_tracks WHERE playlist_id = ?').run(id);
+        ctx.db.prepare('DELETE FROM audio_playlists WHERE id = ?').run(id);
+    })();
+}));
+
+// Copie d'une playlist (publique ou à moi) dans une de mes collections (S-3)
+router.post('/sessions/:sid/playlists/:id/copy', ...gm, libraryRoute('copy playlist', (ctx, { collectionId }, { id }) => {
+    const source = readable(ctx, READABLE_PLAYLIST, id);
+    if (!source) return notFound('Playlist');
+    if (!own(ctx, OWN_COLLECTION, collectionId)) return notFound('Collection');
+    ctx.db.transaction(() => copyPlaylist(ctx.db, source, Number(collectionId)))();
+    return { created: true };
+}));
+
+// Ajout d'une ou plusieurs vidéos (lien simple ou playlist YouTube importée, Q-21, Q-22)
+router.post('/sessions/:sid/playlists/:id/tracks', ...gm, libraryRoute('add tracks', async (ctx, { videoIds }, { id }) => {
+    const ids = Array.isArray(videoIds) ? videoIds.filter(v => YOUTUBE_ID.test(v)) : [];
+    if (ids.length === 0) return invalid('No valid YouTube video id');
+    if (!own(ctx, OWN_PLAYLIST, id)) return notFound('Playlist');
+    await addTracks(ctx, id, ids);
+    return { created: true };
+}));
+
+// Vidéos : renommer, régler le gain (S-15), ou déplacer vers une autre de mes playlists
+// Durées relevées par le lecteur caché du panneau MJ, pour l'affichage (§11.14) — déclarée avant /:id
+router.put('/sessions/:sid/tracks/durations', ...gm, libraryRoute('save durations', (ctx, { durations }) => {
+    if (!Array.isArray(durations)) return invalid('durations must be an array');
+    const update = ctx.db.prepare(`
+        UPDATE audio_tracks SET duration = ?
+        WHERE id = ? AND playlist_id IN (
+            SELECT p.id FROM audio_playlists p JOIN audio_collections c ON c.id = p.collection_id
+            WHERE c.slug = ? AND c.session_id = ?)
+    `);
+    ctx.db.transaction(() => {
+        for (const { id, duration } of durations) {
+            const value = Number(duration);
+            if (Number.isFinite(value) && value > 0) update.run(value, id, ctx.slug, ctx.sessionId);
+        }
+    })();
+}));
+
+router.put('/sessions/:sid/tracks/:id', ...gm, libraryRoute('update track', (ctx, { title, gain, playlistId }, { id }) => {
+    const track = own(ctx, OWN_TRACK, id);
+    if (!track) return notFound('Track');
+    if (title !== undefined && !isText(title)) return invalid('Title cannot be empty');
+    const gainValue = gain === undefined ? null : Math.round(Number(gain));
+    if (gainValue !== null && !(gainValue >= 0 && gainValue <= 100)) return invalid('Gain must be between 0 and 100');
+
+    let target = track.playlist_id;
+    let position = null;
+    if (playlistId !== undefined && Number(playlistId) !== track.playlist_id) {
+        if (!own(ctx, OWN_PLAYLIST, playlistId)) return notFound('Playlist');
+        target = Number(playlistId);
+        position = nextPosition(ctx.db, 'audio_tracks', 'playlist_id = ?', [target]);
+    }
+    ctx.db.prepare(`
+        UPDATE audio_tracks SET title = COALESCE(?, title), gain = COALESCE(?, gain), playlist_id = ?, position = COALESCE(?, position)
+        WHERE id = ?
+    `).run(title?.trim() ?? null, gainValue, target, position, track.id);
+}));
+
+// Copie d'une vidéo (publique ou à moi) dans une de mes playlists
+router.post('/sessions/:sid/tracks/:id/copy', ...gm, libraryRoute('copy track', (ctx, { playlistId }, { id }) => {
+    const source = readable(ctx, READABLE_TRACK, id);
+    if (!source) return notFound('Track');
+    if (!own(ctx, OWN_PLAYLIST, playlistId)) return notFound('Playlist');
+    ctx.db.prepare('INSERT INTO audio_tracks (playlist_id, youtube_id, title, gain, duration, position) VALUES (?, ?, ?, ?, ?, ?)')
+        .run(playlistId, source.youtube_id, source.title, source.gain, source.duration, nextPosition(ctx.db, 'audio_tracks', 'playlist_id = ?', [playlistId]));
+    return { created: true };
+}));
+
+router.delete('/sessions/:sid/tracks/:id', ...gm, libraryRoute('delete track', (ctx, _body, { id }) => {
+    if (!own(ctx, OWN_TRACK, id)) return notFound('Track');
+    ctx.db.prepare('DELETE FROM audio_tracks WHERE id = ?').run(id);
+}));
 
 module.exports = router;

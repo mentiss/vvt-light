@@ -17,6 +17,8 @@ import SystemBrand          from '../components/platform/SystemBrand.jsx';
 import ErrorPage            from '../components/platform/ErrorPage.jsx';
 import { useSystem }        from '../hooks/useSystem.js';
 import { ModalHostProvider } from '../components/ui/ModalHost.jsx';
+import { useSession }       from '../context/SessionContext.jsx';
+import AudioLayer           from '../components/audio/AudioLayer.jsx';
 
 const SHEETS    = import.meta.glob('../systems/*/Sheet.jsx');
 const THEMES    = import.meta.glob('../systems/*/theme.css');
@@ -133,6 +135,9 @@ const PlayerPage = () => {
         apiBase,
     });
 
+    // Table active (diffusée par le MJ), pour la musique (spec_audio.md §11.7)
+    const { activeGMSession } = useSession();
+
     // ── Cinématique sélection → CodeModal → playing ──────────────────────────
     const handleCharacterListSelect = (char) => {
         setSelectedCharForCode(char);
@@ -242,6 +247,9 @@ const PlayerPage = () => {
                 />
                 <DiceAnimationOverlay />
             </Suspense>
+
+            {/* Musique de la table active, si le MJ l'a activée (spec_audio.md §11.7) */}
+            <AudioLayer role="player" sessionId={activeGMSession ?? null} />
 
             {/* CodeModal disponible en mode playing aussi (changer de perso depuis Sheet) */}
             <CodeModal
