@@ -40,6 +40,9 @@ const SHARED_ROUTES = {
 // Routes que chaque système DOIT fournir
 const REQUIRED_ROUTES = ['characters'];
 
+// Noms interdits à un slug : portée de la plateforme dans le stockage navigateur
+const RESERVED_SLUGS = ['platform'];
+
 // Routes slug-spécifiques exclues du scan extra (gérées explicitement)
 const EXCLUDED_FROM_EXTRA_SCAN = new Set(['characters.js', 'combat.js']);
 
@@ -187,6 +190,8 @@ function _validateConfig(config, systemDir) {
     if (!config.label)      throw new Error('Missing "label" in config.js');
     if (!config.dbPath)     throw new Error('Missing "dbPath" in config.js');
     if (!config.schemaPath) throw new Error('Missing "schemaPath" in config.js');
+    // Portée réservée du stockage navigateur (vtt:platform:…, spec_browser_storage.md §7)
+    if (RESERVED_SLUGS.includes(config.slug)) throw new Error(`Reserved slug "${config.slug}": choose another name`);
 
     for (const routeName of REQUIRED_ROUTES) {
         const routePath = path.join(systemDir, 'routes', `${routeName}.js`);

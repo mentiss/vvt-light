@@ -16,6 +16,7 @@ Avant d'écrire un composant qui reçoit des props de la plateforme, **ouvre la 
 
 - `DiceHistoryPage` (et non `DiceHistoryTab`) : props `sessionId`, `renderHistoryEntry` et `renderAllRollTypes` (le slug rend aussi le jet libre). Import depuis `src/components/layout/DiceHistoryPage.jsx`.
 - Menus joueur et MJ : briques `components/ui/HamburgerMenu.jsx` et éléments `components/ui/HamburgerMenuItems.jsx` (contrats dans `documentations/spec_ui_menu.md`).
+- Fenêtre flottante (déplaçable, redimensionnable, réductible, mémorisée) : `components/ui/FloatingPanel.jsx`, contrat dans `documentations/spec_ui_panneaux.md`. Elle est un conteneur de requêtes de taille : un menu ou une modale ouvert depuis son contenu passe par `HostedModal` (`components/ui/ModalHost.jsx`), sinon il est rogné.
 - Rendu des jets : même composant pour l'historique et les notifications, sans marge extérieure (voir « Jet libre » dans `documentations/spec_diceengine_v2.md`).
 - `SessionPlayersBar` vit aussi dans `src/components/layout/`.
 
@@ -51,6 +52,13 @@ Règles :
 - `patchImmediate` déclenche un PUT direct sans debounce ; les autres modifications passent par le debounce.
 - Les actions de jeu (équiper, attaquer, lancer les dés, sentiments de liens…) restent **toujours actives**, quel que soit le mode édition. Seule l'édition de texte libre est soumise au mode édition.
 - Ne modélise pas dans l'app une mécanique gérée à la table.
+
+## Stockage navigateur (`tools/browserStorage.js`)
+
+- **Jamais `localStorage` directement.** Dans React : `usePersistedState(scope, name, { defaults, version, validate })` (`hooks/usePersistedState.js`), qui met à jour tous les composants et les autres onglets ; ailleurs : `readStored` / `writeStored` / `removeStored`. Voir `documentations/spec_browser_storage.md`.
+- Clés `vtt:<portée>:<fonction>` par `storageKey(scope, name)` ; portées `PLATFORM_SCOPE` (`'platform'`), `<slug>`, `tableScope(slug, table)`. Un objet par fonction, pas une clé par réglage.
+- Options de `usePersistedState` stables (constantes du module).
+- Une ancienne clé à reprendre : règle ajoutée dans `tools/browserStorageMigration.js` (jouée au démarrage), pas de lecture de secours dans le composant.
 
 ## CSS / style
 

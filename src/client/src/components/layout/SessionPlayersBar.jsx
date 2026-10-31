@@ -9,6 +9,7 @@ import { createPortal }      from 'react-dom';
 import { useSocket }         from '../../context/SocketContext.jsx';
 import { toSystemUrl, useFetch } from '../../hooks/useFetch.js';
 import useSystem from "../../hooks/useSystem.js";
+import { readStored, storageKey, writeStored } from '../../tools/browserStorage.js';
 
 const MODES            = ['panel', 'rail', 'hidden'];
 const CARD_OPEN_DELAY  = 150;   // ms de survol avant d'ouvrir la carte
@@ -21,15 +22,13 @@ const ICONS = {
     reopen: 'M9 5l7 7-7 7',
 };
 
-// Mode mémorisé ; reprend les anciennes valeurs (« 1 » = réduit → masqué, « 0 » = ouvert → panneau)
+// Mode mémorisé (vtt:<slug>:session-bar) ; les anciennes valeurs « 1 » / « 0 » sont reprises au démarrage
+// (tools/browserStorageMigration.js)
+const SESSION_BAR_DEFAULTS = { mode: 'panel' };
+const isSessionBar = (value) => MODES.includes(value?.mode);
+
 function readMode(key) {
-    try {
-        const value = localStorage.getItem(key);
-        if (value === '1') return 'hidden';
-        return MODES.includes(value) ? value : 'panel';
-    } catch {
-        return 'panel';
-    }
+    return readStored(key, { defaults: SESSION_BAR_DEFAULTS, validate: isSessionBar }).mode;
 }
 
 // Initiales du personnage (deux au plus), affichées quand il n'a pas d'avatar
@@ -91,7 +90,7 @@ const SessionPlayersBar = ({ character, sessionId, sessionName, headerHeight = n
     const socket        = useSocket();
     const fetchWithAuth = useFetch();
     const {slug} = useSystem();
-    const STORAGE_KEY = `${slug}_player_session_bar`;
+    const STORAGE_KEY = storageKey(slug, 'session-bar');
 
     const [mode,        setMode]        = useState(() => readMode(STORAGE_KEY));
     const [lastVisible, setLastVisible] = useState(mode === 'rail' ? 'rail' : 'panel');
@@ -104,7 +103,7 @@ const SessionPlayersBar = ({ character, sessionId, sessionName, headerHeight = n
 
     // Mémoriser le mode
     useEffect(() => {
-        try { localStorage.setItem(STORAGE_KEY, mode); } catch { /* stockage indisponible */ }
+        writeStored(STORAGE_KEY, { mode });
     }, [mode, STORAGE_KEY]);
 
     // Détecter le scroll pour fixer la liste

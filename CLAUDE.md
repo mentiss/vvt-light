@@ -79,7 +79,7 @@ Fichiers d'un slug :
 Routes supplémentaires : tout `.js` de `routes/` (sauf `characters.js`, `combat.js`) est monté sur `/api/:slug/<fichier>`.
 Handlers socket supplémentaires : tout `.js` de `socket/` exporte `function register(io, socket, db)`.
 
-Pour créer un slug, utilise la commande `/new-slug`.
+Pour créer un slug, utilise la commande `/new-slug`. Un slug ne peut pas s'appeler `platform` (portée réservée du stockage navigateur, refusée par le Loader).
 
 ### Slugs actifs
 
@@ -103,6 +103,7 @@ Tous sont des systèmes en usage réel, aucun n'est un brouillon :
 - Tables partagées, définies dans `database-template/base.sql` : `characters`, `game_sessions`, `session_characters`, `dice_history`, `character_journal`, `refresh_tokens`. Ne les redéfinis jamais dans un schéma de slug.
 - **Toute modification de structure** se fait à deux endroits : le schéma (`base.sql` ou `:slug-schema.sql`) pour les nouvelles bases, **et** une migration `database-template/migrations/DDMMYYYY_description.sql` pour les bases existantes.
 - Chaque nouvelle migration déclare ses slugs dans son en-tête de commentaires : `-- systems: vikings` (ou `vikings,achtung`, ou `all`). Sans cette ligne, `npm run release` refuse de partir. `migrations/released.txt` liste les migrations déjà en prod : ne l'édite pas à la main, la release le tient à jour.
+- **Bases de module** : un module de la plateforme peut avoir sa propre base hors des bases des slugs (ex. `database/audio.db`), déclarée seule dans `src/server/db/modules/<module>.js` et chargée par `getModuleConfig(nom)` (`src/server/db/moduleConfig.js`), schéma `database-template/<module>-schema.sql`. Ce n'est pas une base centrale de jeu : chaque ligne porte le slug (et la table, `session_id`) qu'elle concerne. Une migration la vise par son nom (`-- systems: audio`) ; `all` ne vise que les slugs.
 - Dans les migrations et seeds, référence les lignes par sous-SELECT, jamais par ID en dur.
 
 ### Temps réel

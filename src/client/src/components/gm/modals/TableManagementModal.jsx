@@ -82,10 +82,8 @@ const TableManagementModal = ({ isOpen, onClose, onSelectTable, activeSessionId 
                 method: 'DELETE'
             });
             if (response.ok) {
-                if (sessionId === activeSessionId) {
-                    localStorage.removeItem('activeSessionId');
-                    onSelectTable(null);
-                }
+                // Table active supprimée : la quitter (useGMSession efface la table mémorisée)
+                if (sessionId === activeSessionId) onSelectTable(null);
                 await loadSessions();
             }
         } catch (error) {

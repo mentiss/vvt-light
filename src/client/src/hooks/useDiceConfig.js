@@ -11,6 +11,7 @@ import {useState, useCallback, useRef, useEffect} from 'react';
 import { useParams } from 'react-router-dom';
 import useSystem from "./useSystem.js";
 import useSlugConfig from "./useSlugConfig.js";
+import { PLATFORM_SCOPE, readStored, removeStored, storageKey, writeStored } from '../tools/browserStorage.js';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // COLORSETS — liste complète issue de colorsets.js (lib officielle)
@@ -131,11 +132,12 @@ export const DICE_FALLBACK_CONFIG = {
     animationEnabled:  true,
 };
 
-export const diceStorageKey = (slug) => `${slug}_vtt-dice_config`;
+// vtt:<slug>:dice, ou vtt:platform:dice hors slug (spec_browser_storage.md §6)
+export const diceStorageKey = (slug) => storageKey(slug, 'dice');
 
 // Configuration des dés de la plateforme (pages hors slug, ex. accueil) :
 // rangée à part, sans les dés par défaut d'un slug (spec_plateforme_accueil.md §4).
-export const PLATFORM_DICE_SCOPE = 'platform';
+export const PLATFORM_DICE_SCOPE = PLATFORM_SCOPE;
 
 // Portée de la configuration d'après l'adresse : slug de l'adresse, sinon plateforme
 export const getDiceScope = (pathname = window.location.pathname) =>
@@ -187,32 +189,26 @@ export const buildDiceBoxConfig = (config) => {
 // ─────────────────────────────────────────────────────────────────────────────
 // Lecture / écriture
 // ─────────────────────────────────────────────────────────────────────────────
+const isDiceConfig = (value) => value !== null && typeof value === 'object' && !Array.isArray(value);
+
 export const readDiceConfig = (slug, slugDefaults) => {
     const base = {
         ...DICE_FALLBACK_CONFIG,
         ...slugDefaults,
         custom: { ...DICE_FALLBACK_CONFIG.custom, ...(slugDefaults?.custom ?? {}) },
     };
-    try {
-        const raw = localStorage.getItem(diceStorageKey(slug));
-        if (raw) {
-            const parsed = JSON.parse(raw);
-            return {
-                ...base,
-                ...parsed,
-                custom: { ...base.custom, ...(parsed.custom ?? {}) },
-            };
-        }
-    } catch (_) {}
+    const parsed = readStored(diceStorageKey(slug), { validate: isDiceConfig });
+    if (parsed) {
+        return {
+            ...base,
+            ...parsed,
+            custom: { ...base.custom, ...(parsed.custom ?? {}) },
+        };
+    }
     return base;
 };
 
-export const writeDiceConfig = (slug, config) => {
-    try {
-        localStorage.setItem(diceStorageKey(slug), JSON.stringify(config));
-        return true;
-    } catch (_) { return false; }
-};
+export const writeDiceConfig = (slug, config) => writeStored(diceStorageKey(slug), config);
 
 // ─────────────────────────────────────────────────────────────────────────────
 // HOOK
@@ -246,7 +242,7 @@ const useDiceConfig = () => {
     }, [slug]);
 
     const resetConfig = useCallback(() => {
-        try { localStorage.removeItem(diceStorageKey(slug)); } catch (_) {}
+        removeStored(diceStorageKey(slug));
         setConfig({
             ...DICE_FALLBACK_CONFIG,
             ...slugDefaults,

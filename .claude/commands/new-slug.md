@@ -9,7 +9,7 @@ Respecte la méthode en trois phases du CLAUDE.md racine. **N'écris aucun fichi
 
 ## Phase 1 — Cadrage (aucun code)
 
-1. Vérifie que le slug n'existe pas déjà dans `src/server/systems/` ni dans `src/client/src/systems/`, et cherche une spec existante `documentations/spec_<slug>.md`. Si elle existe, c'est ta base : ne repose pas les questions auxquelles elle répond déjà.
+1. Vérifie que le slug n'existe pas déjà dans `src/server/systems/` ni dans `src/client/src/systems/`, et qu'il ne s'appelle pas `platform` (portée réservée du stockage navigateur, refusée par le Loader), et cherche une spec existante `documentations/spec_<slug>.md`. Si elle existe, c'est ta base : ne repose pas les questions auxquelles elle répond déjà.
 2. Demande-moi ce que tu ne sais pas encore, en une seule fois :
     - mécanique de dés (pool, seuil, d20, 2D20, PbtA…), succès, critiques, explosions ;
     - contenu de la fiche (caractéristiques, compétences, ressources, équipement, liens…) ;

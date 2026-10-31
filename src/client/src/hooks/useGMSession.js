@@ -3,7 +3,7 @@
 // Extrait de GMView.jsx Vikings — aucune logique système dedans.
 //
 // Responsabilités :
-//   - Charger la session active depuis localStorage au boot
+//   - Charger la session active mémorisée dans le navigateur au boot (vtt:<slug>:gm)
 //   - Émettre gm-set-active-session + join/leave session quand activeSession change
 //   - Écouter online-characters-update
 //   - Écouter character-full-update / character-update et les exposer via
@@ -18,6 +18,7 @@
 import { useEffect, useState, useCallback } from 'react';
 import { useSocket } from '../context/SocketContext.jsx';
 import { useFetch } from './useFetch.js';
+import { readStored, removeStored, storageKey, writeStored } from '../tools/browserStorage.js';
 
 /**
  * @param {string} apiBase - ex: '/api/vikings'
@@ -37,11 +38,12 @@ export function useGMSession({ apiBase }) {
     const [characterUpdates, setCharacterUpdates]   = useState({});
 
     const slug = apiBase.replace(/^\/api\//, '').replace(/\/$/, '');
-    const storageKey = `activeSessionId_${slug}`;
+    // Table active du MJ, mémorisée dans ce navigateur : vtt:<slug>:gm (spec_browser_storage.md §6)
+    const gmKey = storageKey(slug, 'gm');
 
-    // ── Chargement initial depuis localStorage ──────────────────────────────
+    // ── Chargement initial depuis le navigateur ─────────────────────────────
     useEffect(() => {
-        const savedId = localStorage.getItem(storageKey);
+        const savedId = readStored(gmKey)?.activeSessionId;
         if (!savedId) return;
 
         fetchWithAuth(`${apiBase}/sessions/${savedId}`)
@@ -49,7 +51,7 @@ export function useGMSession({ apiBase }) {
             .then(session => { if (session) setActiveSessionState(session); })
             .catch(err => {
                 console.error('[useGMSession] Error loading saved session:', err);
-                localStorage.removeItem(storageKey);
+                removeStored(gmKey);
             });
     }, [apiBase]);
 
@@ -128,11 +130,11 @@ export function useGMSession({ apiBase }) {
         };
     }, [socket, activeSession?.id]);
 
-    // ── setActiveSession avec effet de bord localStorage ───────────────────
+    // ── setActiveSession, mémorisée dans le navigateur ──────────────────────
     const setActiveSession = useCallback(async (session) => {
         if (!session) {
             setActiveSessionState(null);
-            localStorage.removeItem(storageKey);
+            removeStored(gmKey);
             return;
         }
 
@@ -142,11 +144,11 @@ export function useGMSession({ apiBase }) {
             const r = await fetchWithAuth(`${apiBase}/sessions/${session.id}`);
             const full = r.ok ? await r.json() : session; // fallback sur l'objet partiel
             setActiveSessionState(full);
-            localStorage.setItem(storageKey, full.id);
+            writeStored(gmKey, { activeSessionId: full.id });
         } catch {
             // fallback silencieux
             setActiveSessionState(session);
-            localStorage.setItem(storageKey, session.id);
+            writeStored(gmKey, { activeSessionId: session.id });
         }
     }, [apiBase, fetchWithAuth]);
 

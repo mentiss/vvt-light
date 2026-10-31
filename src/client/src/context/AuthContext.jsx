@@ -54,7 +54,6 @@ export const AuthProvider = ({ children }) => {
             const data = await response.json();
             setAccessToken(data.accessToken);
             setUser({ character: data.character, isGM: data.character.id === -1 });
-            localStorage.setItem(`currentCharacterId_${getSystemFromPath()}`, data.character.id);
 
             return data.character;
         } catch (error) {
@@ -122,7 +121,6 @@ export const AuthProvider = ({ children }) => {
         }
         setUser(null);
         setAccessToken(null);
-        localStorage.removeItem(`currentCharacterId_${getSystemFromPath()}`);
     };
 
     return (
