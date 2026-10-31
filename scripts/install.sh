@@ -95,18 +95,21 @@ install_archive_code() {
 
 # ─── Bases ───────────────────────────────────────────────────────────────────
 
-# Sortie : « slug<TAB>dbPath » pour chaque slug visé dont la base existe déjà.
+# Sortie : « slug<TAB>dbPath » pour chaque slug ou base de module visé dont la base existe déjà.
 # Une base absente sera créée depuis le schéma (qui contient déjà la migration).
+# « all » ne vise que les slugs ; une base de module (src/server/db/modules/<nom>.js) est toujours nommée.
 resolve_dbs() {
     APP_DIR="$APP_DIR" SYSTEMS="$1" node - <<'NODE'
 const fs = require('fs'), path = require('path');
 const dir = path.join(process.env.APP_DIR, 'src/server/systems');
+const { getModuleConfig } = require(path.join(process.env.APP_DIR, 'src/server/db/moduleConfig.js'));
 const wanted = process.env.SYSTEMS.split(',');
 const slugs = wanted[0] === 'all'
     ? fs.readdirSync(dir).filter(s => fs.existsSync(path.join(dir, s, 'config.js')))
     : wanted;
 for (const slug of slugs) {
-    const { dbPath } = require(path.join(dir, slug, 'config.js'));
+    const configFile = path.join(dir, slug, 'config.js');
+    const { dbPath } = fs.existsSync(configFile) ? require(configFile) : (getModuleConfig(slug) ?? {});
     if (dbPath && fs.existsSync(dbPath)) console.log(`${slug}\t${dbPath}`);
 }
 NODE

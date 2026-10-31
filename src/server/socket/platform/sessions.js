@@ -1,18 +1,13 @@
 /**
- * src/server/socket/handlers.js
+ * src/server/socket/platform/sessions.js
  *
- * Tous les handlers Socket.io génériques de la plateforme.
- * Reçoit io, socket, et sharedState en paramètres — pas d'import circulaire.
+ * Sessions MJ et rooms de la plateforme (repris de l'ancien socket/handlers.js).
  *
- * Handlers couverts :
- *   Présence   : character-loaded, character-left
+ * Handlers :
  *   Sessions   : gm-set-active-session, gm-clear-session
  *   Rooms      : join-session, leave-session
- *   Disconnect : nettoyage présence + timer 5min sur sessions GM
- *   Auto-découverte : handlers slug-spécifiques via Loader
+ *   Disconnect : timer de 5 min sur les sessions du MJ déconnecté
  */
-
-const { getAllSystems, getSystemSocketHandlers } = require('../systems/Loader');
 
 const SESSION_TIMEOUT_MS = 5 * 60 * 1000; // 5 minutes
 
@@ -71,60 +66,14 @@ function startSessionCleanupTimer(io, activeSessions, sessionTimers, system, ses
     sessionTimers.set(key, timer);
 }
 
-/** Clé de présence : slug + id, un id n'étant unique que dans la base de son slug. */
-const presenceKey = (slug, characterId) => `${slug}:${characterId}`;
-
-/* ── Enregistrement des handlers ────────────────────────────────────────────── */
+/* ── Enregistrement ─────────────────────────────────────────────────────────── */
 
 /**
  * @param {import('socket.io').Server} io
  * @param {import('socket.io').Socket} socket
- * @param {{ onlineCharacters: Map, activeSessions: Map, sessionTimers: Map }} sharedState
+ * @param {{ activeSessions: Map, sessionTimers: Map }} sharedState
  */
-function registerHandlers(io, socket, { onlineCharacters, activeSessions, sessionTimers }) {
-
-    /* ════════════════════════════════════════════════════════════════════════
-       PRÉSENCE
-       ════════════════════════════════════════════════════════════════════════ */
-
-    /**
-     * character-loaded — émis par usePlayerSession à la connexion d'un joueur.
-     *
-     * Actions :
-     *   1. Enregistre le personnage dans onlineCharacters
-     *   2. Broadcast online-characters-update à tous
-     *   3. Répond au socket émetteur avec les sessions actives de son slug
-     *      (pour qu'un joueur tardif puisse rejoindre la bonne room)
-     */
-    socket.on('character-loaded', (data) => {
-        if (!data?.characterId) return;
-
-        onlineCharacters.set(presenceKey(data.slug, data.characterId), {
-            ...data,
-            socketId: socket.id,
-        });
-
-        io.emit('online-characters-update', Array.from(onlineCharacters.values()));
-
-        // Répondre uniquement au joueur qui vient de se connecter
-        const activeSlugs = getActiveSessionsForSlug(activeSessions, data.slug);
-        if (activeSlugs.length > 0) {
-            socket.emit('gm-sessions-active', activeSlugs);
-        }
-    });
-
-    /**
-     * character-left — émis par usePlayerSession à la déconnexion volontaire.
-     * Ne retire que l'entrée de ce socket : le même id peut exister dans un autre slug.
-     */
-    socket.on('character-left', (charId) => {
-        for (const [key, char] of onlineCharacters.entries()) {
-            if (String(char.characterId) === String(charId) && char.socketId === socket.id) {
-                onlineCharacters.delete(key);
-            }
-        }
-        io.emit('online-characters-update', Array.from(onlineCharacters.values()));
-    });
+function register(io, socket, { activeSessions, sessionTimers }) {
 
     /* ════════════════════════════════════════════════════════════════════════
        SESSIONS GM
@@ -209,21 +158,10 @@ function registerHandlers(io, socket, { onlineCharacters, activeSessions, sessio
     });
 
     /* ════════════════════════════════════════════════════════════════════════
-       DISCONNECT
+       DISCONNECT — sessions GM (avec timer 5 min)
        ════════════════════════════════════════════════════════════════════════ */
 
     socket.on('disconnect', () => {
-        console.log('🔌 Client disconnected:', socket.id);
-
-        // ── Nettoyage présence ──────────────────────────────────────────────
-        for (const [key, char] of onlineCharacters.entries()) {
-            if (char.socketId === socket.id) {
-                onlineCharacters.delete(key);
-            }
-        }
-        io.emit('online-characters-update', Array.from(onlineCharacters.values()));
-
-        // ── Nettoyage sessions GM (avec timer 5min) ─────────────────────────
         const sessions = activeSessions.get(socket.id);
         if (sessions) {
             for (const { system, sessionId } of sessions) {
@@ -234,20 +172,6 @@ function registerHandlers(io, socket, { onlineCharacters, activeSessions, sessio
             activeSessions.delete(socket.id);
         }
     });
-
-    /* ════════════════════════════════════════════════════════════════════════
-       AUTO-DÉCOUVERTE — handlers slug-spécifiques
-       Même comportement qu'avant — chaque système enregistre ses handlers.
-       ════════════════════════════════════════════════════════════════════════ */
-
-    for (const [slug] of getAllSystems()) {
-        const handlers = getSystemSocketHandlers(slug);
-        if (handlers.length === 0) continue;
-
-        for (const register of handlers) {
-            register(io, socket);
-        }
-    }
 }
 
-module.exports = { registerHandlers, getActiveSessionsForSlug, presenceKey };
+module.exports = { register, getActiveSessionsForSlug };

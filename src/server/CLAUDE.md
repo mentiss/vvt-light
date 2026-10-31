@@ -8,6 +8,7 @@ Règles Express / SQLite / Socket.io. Complète le CLAUDE.md racine.
 - Toutes les routes sont préfixées `/api/:slug/`. Routes partagées montées pour chaque système : sessions, journal, dice, combat, npc, npc-sets.
 - Le middleware `systemResolver` injecte `req.system` (config du slug) et `req.db` (connexion SQLite). Utilise-les, n'ouvre jamais de connexion à la main.
 - Connexions DB : `db/index.js` (ouverture paresseuse, fermeture après 5 min d'inactivité).
+- Bases de module (hors slugs, ex. audio) : une déclaration par base dans `db/modules/<nom>.js`, même forme qu'une config de slug ; `getModuleConfig(nom)` (`db/moduleConfig.js`) ne charge que celle demandée ; connexion par `getDbForSystem(getModuleConfig('audio'))`.
 
 ## Routes et contrôleurs
 
@@ -37,7 +38,9 @@ Middlewares dans `middlewares/auth.js` : `authenticate`, `requireOwnerOrGM`, `re
 
 ## Socket.io
 
-### Fonctionnement réel (`socket/handlers.js`)
+### Fonctionnement réel (`socket/index.js` et `socket/platform/`)
+
+- Handlers de la plateforme rangés par domaine dans `socket/platform/` : `presence.js`, `sessions.js` (sessions MJ et rooms), `audio.js`. Chacun exporte `register(io, socket, sharedState)` et gère sa propre déconnexion ; `socket/index.js` les branche, puis les handlers des slugs. Un nouveau domaine de la plateforme = un nouveau fichier, pas un ajout dans un fichier existant.
 
 - **Une seule room par session**, partagée par le MJ et les joueurs : `${slug}_session_${sessionId}`. Il n'existe pas de room réservée au MJ.
 - On y entre et on en sort via `join-session` / `leave-session` `{ sessionId, system }`, émis par les hooks génériques (`useGMSession` côté MJ, `SessionContext` côté joueur). Le serveur ne vérifie pas l'appartenance : le contrôle « ce personnage fait partie de la session » est fait côté client.

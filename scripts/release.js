@@ -23,6 +23,7 @@ const CLIENT_DIR     = path.join(ROOT, 'src/client');
 const MIGRATIONS_DIR = path.join(ROOT, 'database-template/migrations');
 const RELEASED_FILE  = path.join(MIGRATIONS_DIR, 'released.txt');
 const SYSTEMS_DIR    = path.join(ROOT, 'src/server/systems');
+const { getModuleConfig } = require('../src/server/db/moduleConfig');   // bases de module (« -- systems: audio »)
 const CONFIG_FILE    = path.join(ROOT, 'deploy.config.json');
 const TMP_DIR        = path.join(ROOT, 'release-tmp');
 
@@ -134,7 +135,7 @@ function collectNewMigrations() {
             errors.push(`${file} : en-tête « -- systems: <slug,...|all> » manquant`);
         } else if (!(systems.length === 1 && systems[0] === 'all')) {
             for (const slug of systems) {
-                if (!fs.existsSync(path.join(SYSTEMS_DIR, slug, 'config.js'))) {
+                if (!fs.existsSync(path.join(SYSTEMS_DIR, slug, 'config.js')) && !getModuleConfig(slug)) {
                     errors.push(`${file} : système inconnu « ${slug} »`);
                 }
             }

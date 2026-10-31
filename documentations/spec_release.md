@@ -82,6 +82,8 @@ Ne partent pas : `src/client/src`, `src/client/node_modules`, `documentations/`,
 -- systems: all
 ```
 
+Une **base de module** (base propre à un module de la plateforme, hors des bases des slugs, déclarée dans `src/server/db/modules/<nom>.js`, ex. `audio`) se vise par son nom : `-- systems: audio`. `all` ne vise **que les slugs**, jamais une base de module. Une base de module absente est créée depuis son schéma à la première ouverture, comme une base de slug : sa première mise en prod n'a pas besoin de migration.
+
 Une nouvelle migration sans cette ligne **bloque la release** (pas de valeur par défaut, pour ne jamais jouer sur toutes les bases une migration propre à un slug). Les migrations déjà parties n'ont pas à être modifiées.
 
 **Ordre** : date du nom de fichier (`DDMMYYYY`, relue en vraie date), puis ordre alphabétique pour une même date.

@@ -13,6 +13,10 @@
 //   npm run migrate <filename.sql> --system=vikings,noctis
 //       → applique sur une liste de systèmes
 //
+//   npm run migrate <filename.sql> --system=audio
+//       → applique sur une base de module (src/server/db/modules/<nom>.js), jamais
+//         visée sans être nommée
+//
 // Exemples :
 //   npm run migrate 27022025_dice_history_generic.sql
 //   npm run migrate 27022025_dice_history_generic.sql --system=vikings
@@ -23,6 +27,7 @@ const path = require('path');
 
 const { loadAllSystems, getAllSystems } = require('../src/server/systems/Loader');
 const { getDbForSystem }               = require('../src/server/db/index');
+const { getModuleConfig, listModules } = require('../src/server/db/moduleConfig');
 
 const MIGRATIONS_DIR = path.join(__dirname, '../database-template/migrations');
 
@@ -98,10 +103,11 @@ function main() {
     if (systemFilter) {
         targets = [];
         for (const slug of systemFilter) {
-            const sys = allSystems.get(slug);
+            // Un slug, sinon une base de module
+            const sys = allSystems.get(slug) ?? getModuleConfig(slug);
             if (!sys) {
                 console.error(`❌ Système inconnu : "${slug}"`);
-                console.error(`   Disponibles : ${[...allSystems.keys()].join(', ')}`);
+                console.error(`   Disponibles : ${[...allSystems.keys(), ...listModules()].join(', ')}`);
                 process.exit(1);
             }
             targets.push(sys);
