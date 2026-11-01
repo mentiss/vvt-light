@@ -24,3 +24,5 @@
 30052026_migration_v2_moves_cyberpunk.sql
 30052026_refonte_moves_cyberpunk.sql
 31032025_add_threat_enhancements.sql
+31102026_audio_playlist_slot.sql
+31102026_audio_track_duration.sql
