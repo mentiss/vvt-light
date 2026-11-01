@@ -133,7 +133,7 @@ const ReferenceTab = ({ character }) => {
         .filter(({ blocks }) => blocks.length > 0);
 
     return (
-        <div className="max-w-5xl mx-auto flex flex-col md:flex-row gap-4">
+        <div className="w-full flex flex-col md:flex-row gap-4">
             <aside className="md:w-48 shrink-0">
                 <nav className="md:sticky md:top-4 flex md:flex-col flex-wrap gap-1">
                     {REFERENCE_SECTIONS.map(s => (
