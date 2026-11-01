@@ -57,9 +57,6 @@ CREATE TABLE IF NOT EXISTS characters (
                                           updated_at    DATETIME DEFAULT CURRENT_TIMESTAMP
 );
 
-INSERT OR IGNORE INTO characters (id, access_code, access_url, player_name, nom)
-VALUES (-1, 'GMCODE', 'iamthegm', 'Maître du Jeu', 'Maître du Jeu');
-
 CREATE INDEX IF NOT EXISTS idx_characters_access_code ON characters(access_code);
 CREATE INDEX IF NOT EXISTS idx_characters_access_url  ON characters(access_url);
 CREATE INDEX IF NOT EXISTS idx_characters_updated_at  ON characters(updated_at DESC);
@@ -81,6 +78,11 @@ CREATE TABLE IF NOT EXISTS game_sessions (
 CREATE INDEX IF NOT EXISTS idx_sessions_access_code ON game_sessions(access_code);
 CREATE INDEX IF NOT EXISTS idx_sessions_access_url  ON game_sessions(access_url);
 CREATE INDEX IF NOT EXISTS idx_sessions_updated_at  ON game_sessions(updated_at DESC);
+
+-- Compte MJ : inséré après game_sessions, que characters.session_id référence
+-- (clés étrangères actives avec better-sqlite3).
+INSERT OR IGNORE INTO characters (id, access_code, access_url, player_name, nom)
+VALUES (-1, 'GMCODE', 'iamthegm', 'Maître du Jeu', 'Maître du Jeu');
 
 CREATE TABLE IF NOT EXISTS session_characters (
                                                   session_id   INTEGER NOT NULL,

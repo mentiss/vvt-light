@@ -39,7 +39,7 @@ npm run release -- --major   # 5.0.0 → 6.0.0
 
 Déroulé sur le poste de dev, arrêt au premier échec :
 
-1. **Vérifications** : lint, tests et build du front.
+1. **Vérifications** : lint, tests et build du front, puis tests serveur (contrat des routes, `npm test` à la racine, `documentations/spec_tests_serveur.md`).
 2. **Migrations** : détection des nouvelles migrations (§4), contrôle de leur en-tête `-- systems:`.
 3. **Fichiers non commités** : si des fichiers modifiés ou non suivis font partie de ce qui part, leur liste s'affiche avec « Continuer ? (o/N) ».
 4. **Récapitulatif** : version, migrations et bases visées, puis confirmation.

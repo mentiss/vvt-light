@@ -18,7 +18,7 @@ const {generateAccessUrl} = require("../config");
 router.get('/', (req, res) => {
     try {
         const rows = req.db.prepare(`
-            SELECT id, access_code, access_url, player_name, prenom, nom, statut_social,
+            SELECT id, access_code, access_url, player_name, prenom, nom, avatar, statut_social,
                    determination, determination_max, updated_at
             FROM characters
             WHERE id != -1
@@ -32,6 +32,7 @@ router.get('/', (req, res) => {
             playerName:         c.player_name,
             nom:                c.nom,
             prenom:             c.prenom,
+            avatar:             c.avatar,
             statutSocial:       c.statut_social,
             determination:      c.determination,
             determinationMax:   c.determination_max,
@@ -224,7 +225,7 @@ router.put('/:id', authenticate, requireOwnerOrGM, (req, res) => {
 
 // ── DELETE /:id — Suppression (GM uniquement) ────────────────────────────────
 
-router.delete('/:id', requireGM, (req, res) => {
+router.delete('/:id', authenticate, requireGM, (req, res) => {
     try {
         const id = Number(req.params.id);
         if (id === -1) return res.status(403).json({ error: 'Le compte GM ne peut pas être supprimé' });

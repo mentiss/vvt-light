@@ -8,7 +8,7 @@
 // garder un fichier intermédiaire qui n'apporte rien — à reprendre comme
 // nouveau standard sur les prochains slugs.
 //
-// Header (titre + actions) + onglets Session/Journal/Historique. Modales
+// Header (titre + actions) + onglets Session/Journal/Historique/Référence. Modales
 // globales (Table, Config dés, Jet libre) vivent ici, pas dans TabSession.
 // ─────────────────────────────────────────────────────────────────────────────
 
@@ -26,11 +26,13 @@ import {
 import TabJournal          from '../../components/gm/tabs/TabJournal.jsx';
 
 import TabSession          from './gm/tabs/TabSession.jsx';
+import ReferenceTab        from './components/ReferenceTab.jsx';
 
 const TABS = [
     { id: 'session',    label: '🎭 Session' },
     { id: 'journal',    label: '📓 Journal' },
     { id: 'historique', label: '📜 Historique' },
+    { id: 'reference',  label: '📖 Référence' },
 ];
 
 const GMApp = ({ activeSession, onSessionChange, onlineCharacters, characterUpdates, darkMode, onToggleDarkMode }) => {
@@ -94,6 +96,11 @@ const GMApp = ({ activeSession, onSessionChange, onlineCharacters, characterUpda
                         <DiceHistoryPage
                             sessionId={activeSession?.id ?? null}
                         />
+                    </div>
+                )}
+                {activeTab === 'reference' && (
+                    <div className="p-4">
+                        <ReferenceTab />
                     </div>
                 )}
             </main>

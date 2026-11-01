@@ -264,6 +264,58 @@ Quand vous créez un mélange, lancez le nombre de dés à 20 faces indiqué sur
 - Vous développez trois prototypes de magisphères : chacun peut reproduire un sort choisi parmi les listes des classes suivantes : Élémentaliste, Entropiste et Spirite. Les sorts que vous choisissez peuvent tous venir de la même ou relever de listes différentes. (Vous développez aussi deux prototypes de plus en arrivant au niveau 20, et deux autres au niveau 40 (il en va de même si vous avez déjà atteint ces niveaux).)
 - Vous pouvez effectuer l’action Inventaire et dépenser 2 Points d’Inventaire pour créer une magisphère et aussitôt réaliser gratuitement l’action Sort, lançant ainsi l’un des sorts pour lequel vous avez développé un prototype. Le sort obéit aux règles ordinaires (y compris pour ce qui concerne le coût en PM et les tests de magie), et la magisphère est détruite après utilisation.
 
+#### Projets (livre de base p. 134-139, errata 06/2024)
+
+Atout gratuit du Bricoleur : il peut démarrer des projets, des inventions sur mesure.
+
+1. Le joueur décrit l'invention (effets, fonctionnement, énergie, avantages) ; le MJ décide si elle est faisable.
+2. Le MJ peut diviser une invention complexe en plusieurs projets.
+3. Coût total en matériaux = coût de puissance × multiplicateur de zone × multiplicateur d'utilisation, payé immédiatement. Dès la puissance moyenne, le MJ impose un ingrédient ou matériau spécial introuvable dans le commerce (une ou deux séances de recherche).
+4. Un grave défaut négocié avec le MJ réduit le coût total de 25 %.
+5. Points de Progression requis : 1 par tranche de 100 z de coût (arrondi inférieur, minimum 1). Chaque jour : +1 par PJ qui a travaillé sur le projet, +1 de plus s'il a au moins un niveau de Bricoleur.
+6. Le total atteint, l'invention est fabriquée (en quelques heures si la journée produit plus que nécessaire).
+
+| Puissance | Coût | L'invention peut… | Dégâts / soins | Protection |
+|---|---|---|---|---|
+| Mineure | 100 z | éclairer, transporter des passagers ou des cargaisons, procurer une protection limitée | non disponibles | une résistance (consommable) |
+| Moyenne | 200 z | voyager sous l'eau, contenir un sort, transmettre le son ou la parole, réaliser une opération à la place de l'inventeur, fournir de l'énergie sur une courte durée | mineurs | une résistance (errata) |
+| Majeure | 400 z | voler, altérer une zone brièvement, annuler un sort, posséder une intelligence élémentaire, combattre aux côtés de l'inventeur, fournir de l'énergie à long terme, capturer ou immobiliser | lourds | une immunité ou deux résistances |
+| Extrême | 800 z | altérer une zone longtemps, contenir un démon, empêcher une catastrophe, disposer d'une intelligence et d'une personnalité normales | massifs | deux immunités ou trois résistances |
+
+| Zone | Multiplicateur | Peut affecter… |
+|---|---|---|
+| Individuelle | ×1 | une créature de taille humaine, une porte, un arbre, une arme |
+| Petite | ×2 | quelques créatures, une grande créature, une clairière, une pièce, une voiture de train, une cabane |
+| Grande | ×3 | une foule, une petite forêt, un aéronef ou un galion, le hall d'un château, une maison, une créature géante |
+| Immense | ×4 | une forteresse, un lac, le sommet d'une montagne, un village, un quartier |
+
+| Utilisation | Multiplicateur | Une fois activée, l'invention… |
+|---|---|---|
+| Consommable | ×1 | ne peut plus servir sans nouvel exemplaire |
+| Permanente | ×5 | reste disponible pour plusieurs utilisations |
+
+Quantité de dégâts / soins selon le niveau de l'inventeur (mineurs → quantité mineure, lourds → majeure, massifs → énorme) :
+
+| Niveau | Quantité mineure | Quantité majeure | Quantité énorme |
+|---|---|---|---|
+| 5+ | 10 | 30 | 40 |
+| 20+ | 20 | 40 | 60 |
+| 40+ | 30 | 50 | 80 |
+
+- Pas d'immunité aux dégâts physiques ; une invention aux effets multiples se sépare en plusieurs projets.
+- Des matériaux précieux trouvés en aventure peuvent payer le projet (MJ), sauf l'ingrédient exigé à l'étape 3.
+- Assistant : salaire égal à la moitié du coût total du projet, +1 Point de Progression par jour.
+- Chaque exemplaire d'une invention est un projet distinct ; pour de l'équipement sur mesure, voir Version améliorée.
+- Visionnaire s'applique ici (matériaux payés et Points de Progression en plus, cumulables).
+
+Exemples du livre : aéronef « La Découverte » (majeure, grande, permanente) 6 000 z, 60 PP ; Golem Gatling (majeure, individuelle, permanente, défaut) 1 500 z, 15 PP ; minitank (deux projets moyens individuels permanents, dont un avec défaut) 1 750 z, 17 PP.
+
+#### Améliorer un objet
+
+**Version améliorée** (compétence héroïque, Bricoleur maîtrisé, p. 241) — Une fois par repos, ajoutez une qualité à une arme, une armure ou un bouclier qui n'en a pas, ou remplacez sa qualité actuelle. La qualité vient de la liste par défaut pour ce type d'objet et son modificateur de coût est de +1 000 z au plus ; vous dépensez le double de ce coût. L'objet est prêt à la fin du repos ; un seul objet par repos. Donne accès d'office à l'option « Acheter des qualités ».
+
+**Acheter des qualités** (règle optionnelle, p. 267) — Un forgeron ou un artisan ajoute ou remplace la qualité d'une arme, d'une armure ou d'un bouclier, aux mêmes conditions (qualité par défaut à +1 000 z au plus, double du coût), en un jour par objet. Un objet n'a qu'une qualité. Exemple : passer une arme en Multi coûte 2 000 z, en Résistance 1 400 z.
+
 ---
 
 ### CHIMÉRISTE

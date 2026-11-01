@@ -36,12 +36,14 @@ import { useFetch }   from '../../hooks/useFetch.js';
 
 import FicheGrid           from './components/layout/FicheGrid.jsx';
 import FabulaDiceModal    from './components/modals/FabulaDiceModal.jsx';
+import ReferenceTab       from './components/ReferenceTab.jsx';
 import { computeDerivedStats } from './config.jsx';
 
 const TABS = [
     { id: 'fiche',      label: '📋 Fiche' },
     { id: 'journal',    label: '📓 Journal' },
     { id: 'historique', label: '📜 Historique' },
+    { id: 'reference',  label: '📖 Référence' },
 ];
 
 const Sheet = ({
@@ -222,6 +224,10 @@ const Sheet = ({
                         <DiceHistoryPage
                             sessionId={activeGMSession ?? null}
                         />
+                    )}
+
+                    {activeTab === 'reference' && (
+                        <ReferenceTab character={character} />
                     )}
                 </div>
             </div>

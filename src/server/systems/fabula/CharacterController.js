@@ -15,13 +15,184 @@
 //     main_directrice/main_secondaire/deux_mains)
 //   JSON parsé : alterations_etat
 //
-// saveFullCharacter persiste en transaction atomique :
-//   - UPDATE characters (colonnes plates, assignation directe — jamais de
-//     COALESCE, pour ne pas empêcher de vider un champ texte)
-//   - Sous-tables (classes, skills, arcana, bonds, equipment) synchronisées
-//     en delete-puis-reinsert : la fiche est toujours sauvegardée en entier
-//     depuis Sheet.jsx, donc pas besoin d'un upsert par id.
+// saveFullCharacter persiste en transaction atomique (même modèle que vikings) :
+//   - UPDATE characters : colonnes à plat en COALESCE, un champ absent (ou
+//     null) n'est pas écrasé → envoi partiel possible (PATCH). Un texte vidé
+//     ('') est bien enregistré vide.
+//   - Sous-tables (classes, skills, arcana, bonds, equipment) synchronisées par
+//     _syncSubTable : mise à jour par id, insertion sans id, suppression des
+//     lignes absentes du tableau ; un tableau absent laisse la sous-table intacte.
 // ─────────────────────────────────────────────────────────────────────────────
+
+// ── Colonnes à plat : clé camelCase envoyée par le client → colonne SQL ──────
+// (alterationsEtat et boostsAttributs, en JSON, sont traités à part)
+
+const FLAT_COLUMNS = {
+    playerName:     'player_name',
+    avatar:         'avatar',
+    accessCode:     'access_code',
+    nom:            'nom',
+    prenom:         'prenom',
+    sexe:           'sexe',
+    age:            'age',
+    taille:         'taille',
+    poids:          'poids',
+    identite:       'identite',
+    origine:        'origine',
+    theme:          'theme',
+    niveauGlobal:   'niveau_global',
+    dexDe:          'dex_de',
+    intDe:          'int_de',
+    puiDe:          'pui_de',
+    volDe:          'vol_de',
+    pvMax:          'pv_max',
+    pvActuel:       'pv_actuel',
+    pmMax:          'pm_max',
+    pmActuel:       'pm_actuel',
+    piMax:          'pi_max',
+    piActuel:       'pi_actuel',
+    seuilCrise:     'seuil_crise',
+    initiative:     'initiative',
+    defense:        'defense',
+    defenseMagique: 'defense_magique',
+    zenit:          'zenit',
+    pointsFabula:   'points_fabula',
+    groupeNom:      'groupe_nom',
+};
+
+// Énumérations autorisées de l'équipement — toute valeur hors liste retombe
+// sur un défaut sûr plutôt que de faire échouer la transaction sur un CHECK.
+const ATTRS        = ['dex', 'int', 'pui', 'vol'];
+const DEGATS_TYPES = ['physique', 'feu', 'glace', 'foudre', 'air', 'terre', 'lumiere', 'tenebres', 'poison'];
+const EMPLACEMENTS = ['armure', 'accessoire', 'main_directrice', 'main_secondaire', 'deux_mains'];
+const TYPES_EMPLACEMENT = ['arme', 'armure', 'bouclier', 'accessoire'];
+const BOND_TARGETS = ['pj', 'pnj', 'lieu', 'organisation'];
+
+// ── Helpers ──────────────────────────────────────────────────────────────────
+
+/**
+ * Synchronise une sous-table en CRUD complet (même helper que vikings et
+ * deltagreen). Entrée avec id → mise à jour ; sans id → insertion ; présente
+ * en BDD mais absente du tableau → suppression. L'index est transmis à
+ * upsertFn (ordre de l'équipement).
+ */
+function _syncSubTable(db, table, characterId, incoming, upsertFn) {
+    if (!Array.isArray(incoming)) return;
+
+    const existingIds = db.prepare(
+        `SELECT id FROM ${table} WHERE character_id = ?`
+    ).all(characterId).map(r => r.id);
+
+    const incomingIds = incoming.filter(i => i?.id).map(i => i.id);
+
+    for (const eid of existingIds) {
+        if (!incomingIds.includes(eid)) {
+            db.prepare(`DELETE FROM ${table} WHERE id = ?`).run(eid);
+        }
+    }
+
+    incoming.forEach((item, index) => {
+        if (item) upsertFn(db, characterId, item, index);
+    });
+}
+
+// Mise à jour par id, sinon insertion. Un id inconnu de la base (id temporaire
+// créé côté client) est traité comme une insertion.
+function _updateOrInsert(db, entry, updateSql, updateValues, insertSql, insertValues) {
+    const changes = entry.id ? db.prepare(updateSql).run(...updateValues).changes : 0;
+    if (!changes) db.prepare(insertSql).run(...insertValues);
+}
+
+function _upsertClass(db, charId, c) {
+    if (!c.classKey) return;
+    const values = [c.classKey, c.niveau ?? 0];
+    _updateOrInsert(db, c,
+        'UPDATE character_classes SET class_key = ?, niveau = ? WHERE id = ? AND character_id = ?', [...values, c.id, charId],
+        'INSERT INTO character_classes (character_id, class_key, niveau) VALUES (?, ?, ?)', [charId, ...values]);
+}
+
+function _upsertSkill(db, charId, s) {
+    if (!s.classKey || !s.skillKey) return;
+    const values = [
+        s.classKey, s.skillKey, s.rang ?? 0,
+        JSON.stringify(Array.isArray(s.spellsChoisis) ? s.spellsChoisis : []),
+    ];
+    _updateOrInsert(db, s,
+        `UPDATE character_skills SET class_key = ?, skill_key = ?, rang = ?, spells_choisis = ?
+         WHERE id = ? AND character_id = ?`, [...values, s.id, charId],
+        `INSERT INTO character_skills (character_id, class_key, skill_key, rang, spells_choisis)
+         VALUES (?, ?, ?, ?, ?)`, [charId, ...values]);
+}
+
+function _upsertArcanum(db, charId, a) {
+    if (!a.arcanumKey) return;
+    const values = [a.arcanumKey, a.etat === 'fusionne' ? 'fusionne' : 'lie'];
+    _updateOrInsert(db, a,
+        'UPDATE character_arcana SET arcanum_key = ?, etat = ? WHERE id = ? AND character_id = ?', [...values, a.id, charId],
+        'INSERT INTO character_arcana (character_id, arcanum_key, etat) VALUES (?, ?, ?)', [charId, ...values]);
+}
+
+function _upsertBond(db, charId, b) {
+    const values = [
+        b.cibleNom ?? '',
+        BOND_TARGETS.includes(b.cibleType) ? b.cibleType : 'pnj',
+        JSON.stringify(Array.isArray(b.sentiments) ? b.sentiments.slice(0, 3) : []),
+        b.notes ?? '',
+    ];
+    _updateOrInsert(db, b,
+        `UPDATE character_bonds SET cible_nom = ?, cible_type = ?, sentiments = ?, notes = ?
+         WHERE id = ? AND character_id = ?`, [...values, b.id, charId],
+        `INSERT INTO character_bonds (character_id, cible_nom, cible_type, sentiments, notes)
+         VALUES (?, ?, ?, ?, ?)`, [charId, ...values]);
+}
+
+function _upsertEquipment(db, charId, e, index) {
+    if (!TYPES_EMPLACEMENT.includes(e.typeEmplacement)) return;
+    const values = [
+        e.typeEmplacement,
+        e.equipmentKey ?? null,
+        e.nomLibre ?? '',
+        e.notesLibres ?? '',
+        e.prix ?? 0,
+
+        e.categorie ?? null,
+        e.estMartial ? 1 : 0,
+        e.qualite ?? '',
+
+        ATTRS.includes(e.precisionAttr1) ? e.precisionAttr1 : null,
+        ATTRS.includes(e.precisionAttr2) ? e.precisionAttr2 : null,
+        e.precisionBonus ?? 0,
+        e.degatsBonus ?? 0,
+        DEGATS_TYPES.includes(e.degatsType) ? e.degatsType : 'physique',
+        e.mains === 2 ? 2 : 1,
+        e.portee === 'distance' ? 'distance' : 'cac',
+
+        e.modDefense ?? 0,
+        e.modDefenseMagique ?? 0,
+        e.modInitiative ?? 0,
+        Number.isInteger(e.defFixe) ? e.defFixe : null,
+
+        EMPLACEMENTS.includes(e.emplacementEquipe) ? e.emplacementEquipe : null,
+        e.ordre ?? index,
+    ];
+    _updateOrInsert(db, e,
+        `UPDATE character_equipment SET
+             type_emplacement = ?, equipment_key = ?, nom_libre = ?, notes_libres = ?, prix = ?,
+             categorie = ?, est_martial = ?, qualite = ?,
+             precision_attr1 = ?, precision_attr2 = ?, precision_bonus = ?,
+             degats_bonus = ?, degats_type = ?, mains = ?, portee = ?,
+             mod_defense = ?, mod_defense_magique = ?, mod_initiative = ?, def_fixe = ?,
+             emplacement_equipe = ?, ordre = ?
+         WHERE id = ? AND character_id = ?`, [...values, e.id, charId],
+        `INSERT INTO character_equipment
+             (character_id, type_emplacement, equipment_key, nom_libre, notes_libres, prix,
+              categorie, est_martial, qualite,
+              precision_attr1, precision_attr2, precision_bonus,
+              degats_bonus, degats_type, mains, portee,
+              mod_defense, mod_defense_magique, mod_initiative, def_fixe,
+              emplacement_equipe, ordre)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`, [charId, ...values]);
+}
 
 function _parseJson(str, fallback) {
     if (!str) return fallback;
@@ -186,216 +357,46 @@ function loadFullCharacter(db, id) {
 // ── saveFullCharacter ─────────────────────────────────────────────────────────
 
 /**
- * Persiste un personnage complet en transaction.
+ * Persiste un personnage en transaction. Seuls les champs fournis sont écrits :
+ * colonnes à plat en COALESCE, sous-tables synchronisées si leur tableau est
+ * présent. Sert au PUT (fiche complète), au PATCH (partiel) et à la création.
  *
  * @param {import('better-sqlite3').Database} db
  * @param {number|string} id
- * @param {object} data - Données envoyées par le client (fiche complète)
+ * @param {object} data - Données envoyées par le client
  * @returns {object} personnage rechargé
  */
 function saveFullCharacter(db, id, data) {
-    const {
-        playerName, avatar, nom, prenom, sexe, age, taille, poids,
-        identite, origine, theme, niveauGlobal,
-        dexDe, intDe, puiDe, volDe,
-        pvMax, pvActuel, pmMax, pmActuel, piMax, piActuel,
-        seuilCrise, initiative, defense, defenseMagique,
-        zenit, pointsFabula, groupeNom, alterationsEtat, boostsAttributs,
-        classes, skills, arcana, bonds, equipment,
-        accessCode,
-    } = data;
+    const params = { id };
+    for (const [key, column] of Object.entries(FLAT_COLUMNS)) params[column] = data[key] ?? null;
+    if (params.access_code) params.access_code = String(params.access_code).toUpperCase();
+    // Pas de plafond de Points Fabula (règle de table du MJ — la limite
+    // officielle de 6 de la spec §4.1 est explicitement écartée), plancher à 0.
+    if (params.points_fabula !== null) params.points_fabula = Math.max(0, params.points_fabula);
+
+    // JSON : écrits seulement s'ils sont fournis, au bon format
+    params.alterations_etat = Array.isArray(data.alterationsEtat) ? JSON.stringify(data.alterationsEtat) : null;
+    const boosts = data.boostsAttributs;
+    params.boosts_attributs = boosts && typeof boosts === 'object' && !Array.isArray(boosts) ? JSON.stringify(boosts) : null;
+
+    const setClauses = [...Object.values(FLAT_COLUMNS), 'alterations_etat', 'boosts_attributs']
+        .map(column => `${column} = COALESCE(@${column}, ${column})`)
+        .join(',\n                ');
 
     db.prepare('BEGIN').run();
     try {
-        // ── 1. Colonnes plates du personnage — assignation directe ─────────────
-        // Jamais de COALESCE ici : la fiche est toujours envoyée en entier par
-        // Sheet.jsx, donc un champ vidé (nom = '') doit bien être persisté vide.
         db.prepare(`
             UPDATE characters SET
-                                  player_name       = @playerName,
-                                  avatar            = @avatar,
-                                  nom               = @nom,
-                                  prenom            = @prenom,
-                                  sexe              = @sexe,
-                                  age               = @age,
-                                  taille            = @taille,
-                                  poids             = @poids,
-
-                                  identite          = @identite,
-                                  origine           = @origine,
-                                  theme             = @theme,
-                                  niveau_global     = @niveauGlobal,
-
-                                  dex_de            = @dexDe,
-                                  int_de            = @intDe,
-                                  pui_de            = @puiDe,
-                                  vol_de            = @volDe,
-
-                                  pv_max            = @pvMax,
-                                  pv_actuel         = @pvActuel,
-                                  pm_max            = @pmMax,
-                                  pm_actuel         = @pmActuel,
-                                  pi_max            = @piMax,
-                                  pi_actuel         = @piActuel,
-                                  seuil_crise       = @seuilCrise,
-                                  initiative        = @initiative,
-                                  defense           = @defense,
-                                  defense_magique   = @defenseMagique,
-
-                                  zenit             = @zenit,
-                                  points_fabula     = @pointsFabula,
-                                  groupe_nom        = @groupeNom,
-                                  alterations_etat  = @alterationsEtat,
-                                  boosts_attributs  = @boostsAttributs,
-
-                                  access_code       = COALESCE(@accessCode, access_code),
-
-                                  updated_at        = CURRENT_TIMESTAMP
+                ${setClauses},
+                updated_at = CURRENT_TIMESTAMP
             WHERE id = @id
-        `).run({
-            id,
-            accessCode:   accessCode   ?? null,
-            playerName:   playerName   ?? '',
-            avatar:       avatar       ?? null,
-            nom:          nom          ?? '',
-            prenom:       prenom       ?? '',
-            sexe:         sexe         ?? '',
-            age:          age          ?? null,
-            taille:       taille       ?? null,
-            poids:        poids        ?? null,
+        `).run(params);
 
-            identite:     identite     ?? '',
-            origine:      origine      ?? '',
-            theme:        theme        ?? '',
-            niveauGlobal: niveauGlobal ?? 5,
-
-            dexDe: dexDe ?? 8, intDe: intDe ?? 8, puiDe: puiDe ?? 8, volDe: volDe ?? 8,
-
-            pvMax: pvMax ?? 0, pvActuel: pvActuel ?? 0,
-            pmMax: pmMax ?? 0, pmActuel: pmActuel ?? 0,
-            piMax: piMax ?? 6, piActuel: piActuel ?? 6,
-            seuilCrise: seuilCrise ?? 0,
-            initiative: initiative ?? 0,
-            defense: defense ?? 0,
-            defenseMagique: defenseMagique ?? 0,
-
-            zenit:        zenit        ?? 0,
-            // Pas de plafond de Points Fabula (règle de table du MJ — la limite
-            // officielle de 6 de la spec §4.1 est explicitement écartée).
-            pointsFabula: pointsFabula != null ? Math.max(0, pointsFabula) : 3,
-            groupeNom:    groupeNom    ?? '',
-            alterationsEtat: JSON.stringify(Array.isArray(alterationsEtat) ? alterationsEtat : []),
-            boostsAttributs: JSON.stringify(
-                boostsAttributs && typeof boostsAttributs === 'object' && !Array.isArray(boostsAttributs)
-                    ? boostsAttributs : {}
-            ),
-        });
-
-        // ── 2. Sous-tables — delete puis reinsert ───────────────────────────────
-
-        db.prepare('DELETE FROM character_classes WHERE character_id = ?').run(id);
-        if (Array.isArray(classes)) {
-            const ins = db.prepare(
-                'INSERT INTO character_classes (character_id, class_key, niveau) VALUES (?, ?, ?)'
-            );
-            for (const c of classes) {
-                if (!c.classKey) continue;
-                ins.run(id, c.classKey, c.niveau ?? 0);
-            }
-        }
-
-        db.prepare('DELETE FROM character_skills WHERE character_id = ?').run(id);
-        if (Array.isArray(skills)) {
-            const ins = db.prepare(
-                'INSERT INTO character_skills (character_id, class_key, skill_key, rang, spells_choisis) VALUES (?, ?, ?, ?, ?)'
-            );
-            for (const s of skills) {
-                if (!s.classKey || !s.skillKey) continue;
-                ins.run(
-                    id, s.classKey, s.skillKey, s.rang ?? 0,
-                    JSON.stringify(Array.isArray(s.spellsChoisis) ? s.spellsChoisis : [])
-                );
-            }
-        }
-
-        db.prepare('DELETE FROM character_arcana WHERE character_id = ?').run(id);
-        if (Array.isArray(arcana)) {
-            const ins = db.prepare(
-                'INSERT INTO character_arcana (character_id, arcanum_key, etat) VALUES (?, ?, ?)'
-            );
-            for (const a of arcana) {
-                if (!a.arcanumKey) continue;
-                ins.run(id, a.arcanumKey, a.etat === 'fusionne' ? 'fusionne' : 'lie');
-            }
-        }
-
-        db.prepare('DELETE FROM character_bonds WHERE character_id = ?').run(id);
-        if (Array.isArray(bonds)) {
-            const ins = db.prepare(
-                'INSERT INTO character_bonds (character_id, cible_nom, cible_type, sentiments, notes) VALUES (?, ?, ?, ?, ?)'
-            );
-            for (const b of bonds) {
-                const sentiments = Array.isArray(b.sentiments) ? b.sentiments.slice(0, 3) : [];
-                ins.run(
-                    id,
-                    b.cibleNom ?? '',
-                    ['pj', 'pnj', 'lieu', 'organisation'].includes(b.cibleType) ? b.cibleType : 'pnj',
-                    JSON.stringify(sentiments),
-                    b.notes ?? ''
-                );
-            }
-        }
-
-        db.prepare('DELETE FROM character_equipment WHERE character_id = ?').run(id);
-        if (Array.isArray(equipment)) {
-            // Énumérations autorisées — toute valeur hors liste retombe sur un
-            // défaut sûr plutôt que de faire échouer la transaction sur un CHECK.
-            const ATTRS        = ['dex', 'int', 'pui', 'vol'];
-            const DEGATS_TYPES = ['physique', 'feu', 'glace', 'foudre', 'air', 'terre', 'lumiere', 'tenebres', 'poison'];
-            const EMPLACEMENTS = ['armure', 'accessoire', 'main_directrice', 'main_secondaire', 'deux_mains'];
-
-            const ins = db.prepare(`
-                INSERT INTO character_equipment
-                (character_id, type_emplacement, equipment_key, nom_libre, notes_libres, prix,
-                 categorie, est_martial, qualite,
-                 precision_attr1, precision_attr2, precision_bonus,
-                 degats_bonus, degats_type, mains, portee,
-                 mod_defense, mod_defense_magique, mod_initiative, def_fixe,
-                 emplacement_equipe, ordre)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-            `);
-            equipment.forEach((e, index) => {
-                if (!['arme', 'armure', 'bouclier', 'accessoire'].includes(e.typeEmplacement)) return;
-                ins.run(
-                    id,
-                    e.typeEmplacement,
-                    e.equipmentKey ?? null,
-                    e.nomLibre ?? '',
-                    e.notesLibres ?? '',
-                    e.prix ?? 0,
-
-                    e.categorie ?? null,
-                    e.estMartial ? 1 : 0,
-                    e.qualite ?? '',
-
-                    ATTRS.includes(e.precisionAttr1) ? e.precisionAttr1 : null,
-                    ATTRS.includes(e.precisionAttr2) ? e.precisionAttr2 : null,
-                    e.precisionBonus ?? 0,
-                    e.degatsBonus ?? 0,
-                    DEGATS_TYPES.includes(e.degatsType) ? e.degatsType : 'physique',
-                    e.mains === 2 ? 2 : 1,
-                    e.portee === 'distance' ? 'distance' : 'cac',
-
-                    e.modDefense ?? 0,
-                    e.modDefenseMagique ?? 0,
-                    e.modInitiative ?? 0,
-                    Number.isInteger(e.defFixe) ? e.defFixe : null,
-
-                    EMPLACEMENTS.includes(e.emplacementEquipe) ? e.emplacementEquipe : null,
-                    e.ordre ?? index
-                );
-            });
-        }
+        _syncSubTable(db, 'character_classes',   id, data.classes,   _upsertClass);
+        _syncSubTable(db, 'character_skills',    id, data.skills,    _upsertSkill);
+        _syncSubTable(db, 'character_arcana',    id, data.arcana,    _upsertArcanum);
+        _syncSubTable(db, 'character_bonds',     id, data.bonds,     _upsertBond);
+        _syncSubTable(db, 'character_equipment', id, data.equipment, _upsertEquipment);
 
         db.prepare('COMMIT').run();
     } catch (err) {

@@ -89,128 +89,120 @@ function loadFullCharacter(db, id, sessionId = null) {
 // ─── Sauvegarde complète ──────────────────────────────────────────────────────
 
 /**
- * Met à jour un personnage et ses données associées (spécialités, ombres, items).
- * La fiche de groupe est gérée par sa propre route.
+ * Met à jour un personnage et ses données associées (spécialités, ombres, items),
+ * en transaction. La fiche de groupe est gérée par sa propre route.
+ * Seuls les champs fournis sont écrits (src/server/CLAUDE.md) : colonnes en
+ * COALESCE, sous-tables synchronisées par _syncSubTable si leur tableau est
+ * présent (un tableau absent laisse la sous-table intacte).
  */
 function saveFullCharacter(db, id, data) {
-    const {
-        specialties  = [],
-        ombres       = [],
-        items        = [],
-        groupReserve,   // ignoré ici — route dédiée
-        // Alias camelCase ignorés (le frontend peut les envoyer, on ne les stocke pas)
-        accessCode, accessUrl,
-        // Valeurs dérivées ignorées (recalculées)
-        initiative, limite_corruption, malus_blessure,
-        ...charData
-    } = data;
+    const params = { id };
+    for (const column of FLAT_COLUMNS) params[column] = data[column] ?? null;
 
-    // Mise à jour des colonnes du personnage
-    db.prepare(`
-        UPDATE characters SET
-            nom                       = @nom,
-            prenom                    = @prenom,
-            avatar                    = @avatar,
-            sexe                      = @sexe,
-            age                       = @age,
-            taille                    = @taille,
-            poids                     = @poids,
-            description_physique      = @description_physique,
-            activite                  = @activite,
-            faction                   = @faction,
-            annee_campagne            = @annee_campagne,
-            force                     = @force,
-            sante                     = @sante,
-            athletisme                = @athletisme,
-            agilite                   = @agilite,
-            precision                 = @precision,
-            technique                 = @technique,
-            connaissance              = @connaissance,
-            perception                = @perception,
-            volonte                   = @volonte,
-            persuasion                = @persuasion,
-            psychologie               = @psychologie,
-            entregent                 = @entregent,
-            reserve_effort_max        = @reserve_effort_max,
-            reserve_effort_current    = @reserve_effort_current,
-            reserve_sangfroid_max     = @reserve_sangfroid_max,
-            reserve_sangfroid_current = @reserve_sangfroid_current,
-            sante_touche_max          = @sante_touche_max,
-            sante_touche_current      = @sante_touche_current,
-            sante_blesse_max          = @sante_blesse_max,
-            sante_blesse_current      = @sante_blesse_current,
-            sante_tue_max             = @sante_tue_max,
-            sante_tue_current         = @sante_tue_current,
-            eclats_max                = @eclats_max,
-            eclats_current            = @eclats_current,
-            is_fracture               = @is_fracture,
-            xp_total                  = @xp_total,
-            xp_spent                  = @xp_spent,
-            selvarins_current         = @selvarins_current,
-            selvarins_month           = @selvarins_month,
-            notes                     = @notes,
-            updated_at                = CURRENT_TIMESTAMP
-        WHERE id = @id
-    `).run({ ...charData, id });
+    const setClauses = FLAT_COLUMNS
+        .map(column => `${column} = COALESCE(@${column}, ${column})`)
+        .join(',\n            ');
 
-    // Spécialités : delete + re-insert
-    db.prepare('DELETE FROM character_specialties WHERE character_id = ?').run(id);
-    const insSpecialty = db.prepare(`
-        INSERT INTO character_specialties (character_id, name, type, niveau, is_dormant, notes)
-        VALUES (@character_id, @name, @type, @niveau, @is_dormant, @notes)
-    `);
-    for (const s of specialties) {
-        insSpecialty.run({
-            character_id: id,
-            name:       s.name       ?? '',
-            type:       s.type       ?? 'normale',
-            niveau:     s.niveau     ?? 'debutant',
-            is_dormant: s.is_dormant ?? 0,
-            notes:      s.notes      ?? '',
-        });
-    }
+    db.prepare('BEGIN').run();
+    try {
+        db.prepare(`
+            UPDATE characters SET
+            ${setClauses},
+            updated_at = CURRENT_TIMESTAMP
+            WHERE id = @id
+        `).run(params);
 
-    // Ombres : delete + re-insert
-    db.prepare('DELETE FROM character_ombres WHERE character_id = ?').run(id);
-    const insOmbre = db.prepare(`
-        INSERT INTO character_ombres (character_id, type, description, effect)
-        VALUES (@character_id, @type, @description, @effect)
-    `);
-    for (const o of ombres) {
-        insOmbre.run({
-            character_id: id,
-            type:        o.type        ?? 'dette',
-            description: o.description ?? '',
-            effect:      o.effect      ?? '',
-        });
-    }
+        _syncSubTable(db, 'character_specialties', id, data.specialties, _upsertSpecialty);
+        _syncSubTable(db, 'character_ombres',      id, data.ombres,      _upsertOmbre);
+        _syncSubTable(db, 'character_items',       id, data.items,       _upsertItem);
 
-    // Items : delete + re-insert
-    db.prepare('DELETE FROM character_items WHERE character_id = ?').run(id);
-    const insItem = db.prepare(`
-        INSERT INTO character_items
-            (character_id, name, description, category, quantity, location,
-             damage_value, armor_value, price, notes)
-        VALUES
-            (@character_id, @name, @description, @category, @quantity, @location,
-             @damage_value, @armor_value, @price, @notes)
-    `);
-    for (const it of items) {
-        insItem.run({
-            character_id: id,
-            name:         it.name         ?? '',
-            description:  it.description  ?? '',
-            category:     it.category     ?? 'misc',
-            quantity:     it.quantity      ?? 1,
-            location:     it.location      ?? 'inventory',
-            damage_value: it.damage_value  ?? 0,
-            armor_value:  it.armor_value   ?? '',
-            price:        it.price         ?? 0,
-            notes:        it.notes         ?? '',
-        });
+        db.prepare('COMMIT').run();
+    } catch (err) {
+        db.prepare('ROLLBACK').run();
+        throw err;
     }
 
     return loadFullCharacter(db, id);
+}
+
+// Colonnes à plat écrites par saveFullCharacter (noctis envoie ses champs en
+// snake_case, sous le nom des colonnes). accessCode / accessUrl, groupReserve
+// et les valeurs dérivées (initiative, limite_corruption, malus_blessure) n'y
+// figurent pas : ignorés, comme avant.
+const FLAT_COLUMNS = [
+    'nom', 'prenom', 'avatar', 'sexe', 'age', 'taille', 'poids',
+    'description_physique', 'activite', 'faction', 'annee_campagne',
+    'force', 'sante', 'athletisme', 'agilite', 'precision', 'technique',
+    'connaissance', 'perception', 'volonte', 'persuasion', 'psychologie', 'entregent',
+    'reserve_effort_max', 'reserve_effort_current', 'reserve_sangfroid_max', 'reserve_sangfroid_current',
+    'sante_touche_max', 'sante_touche_current', 'sante_blesse_max', 'sante_blesse_current',
+    'sante_tue_max', 'sante_tue_current',
+    'eclats_max', 'eclats_current', 'is_fracture',
+    'xp_total', 'xp_spent', 'selvarins_current', 'selvarins_month', 'notes',
+];
+
+/**
+ * Synchronise une sous-table en CRUD complet (même helper que vikings, fabula,
+ * deltagreen). Entrée avec id → mise à jour ; sans id → insertion ; présente
+ * en BDD mais absente du tableau → suppression.
+ */
+function _syncSubTable(db, table, characterId, incoming, upsertFn) {
+    if (!Array.isArray(incoming)) return;
+
+    const existingIds = db.prepare(
+        `SELECT id FROM ${table} WHERE character_id = ?`
+    ).all(characterId).map(r => r.id);
+
+    const incomingIds = incoming.filter(i => i?.id).map(i => i.id);
+
+    for (const eid of existingIds) {
+        if (!incomingIds.includes(eid)) {
+            db.prepare(`DELETE FROM ${table} WHERE id = ?`).run(eid);
+        }
+    }
+
+    for (const item of incoming) {
+        if (item) upsertFn(db, characterId, item);
+    }
+}
+
+// Mise à jour par id, sinon insertion (id inconnu de la base = insertion).
+function _updateOrInsert(db, entry, updateSql, updateValues, insertSql, insertValues) {
+    const changes = entry.id ? db.prepare(updateSql).run(...updateValues).changes : 0;
+    if (!changes) db.prepare(insertSql).run(...insertValues);
+}
+
+function _upsertSpecialty(db, charId, s) {
+    const values = [s.name ?? '', s.type ?? 'normale', s.niveau ?? 'debutant', s.is_dormant ?? 0, s.notes ?? ''];
+    _updateOrInsert(db, s,
+        `UPDATE character_specialties SET name = ?, type = ?, niveau = ?, is_dormant = ?, notes = ?
+         WHERE id = ? AND character_id = ?`, [...values, s.id, charId],
+        `INSERT INTO character_specialties (character_id, name, type, niveau, is_dormant, notes)
+         VALUES (?, ?, ?, ?, ?, ?)`, [charId, ...values]);
+}
+
+function _upsertOmbre(db, charId, o) {
+    const values = [o.type ?? 'dette', o.description ?? '', o.effect ?? ''];
+    _updateOrInsert(db, o,
+        'UPDATE character_ombres SET type = ?, description = ?, effect = ? WHERE id = ? AND character_id = ?',
+        [...values, o.id, charId],
+        'INSERT INTO character_ombres (character_id, type, description, effect) VALUES (?, ?, ?, ?)',
+        [charId, ...values]);
+}
+
+function _upsertItem(db, charId, it) {
+    const values = [
+        it.name ?? '', it.description ?? '', it.category ?? 'misc', it.quantity ?? 1,
+        it.location ?? 'inventory', it.damage_value ?? 0, it.armor_value ?? '', it.price ?? 0, it.notes ?? '',
+    ];
+    _updateOrInsert(db, it,
+        `UPDATE character_items SET name = ?, description = ?, category = ?, quantity = ?, location = ?,
+             damage_value = ?, armor_value = ?, price = ?, notes = ?
+         WHERE id = ? AND character_id = ?`, [...values, it.id, charId],
+        `INSERT INTO character_items
+             (character_id, name, description, category, quantity, location,
+              damage_value, armor_value, price, notes)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`, [charId, ...values]);
 }
 
 // ─── Helpers internes ─────────────────────────────────────────────────────────

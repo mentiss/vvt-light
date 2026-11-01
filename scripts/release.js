@@ -225,6 +225,8 @@ async function release(config) {
         run('npm run lint', CLIENT_DIR);
         step('Tests');
         run('npm test', CLIENT_DIR);
+        step('Tests serveur (contrat des routes)');
+        run('npm test', ROOT);
     }
 
     // 2. Migrations

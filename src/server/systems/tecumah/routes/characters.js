@@ -17,7 +17,7 @@ const { generateAccessUrl } = require('../config');
 router.get('/', (req, res) => {
     try {
         const rows = req.db.prepare(`
-            SELECT id, access_code, access_url, player_name, nom, prenom,
+            SELECT id, access_code, access_url, player_name, nom, prenom, avatar,
                    blessure_niveau, points_destin, points_personnage, updated_at
             FROM characters
             WHERE id != -1
@@ -31,6 +31,7 @@ router.get('/', (req, res) => {
             playerName:       c.player_name,
             nom:              c.nom,
             prenom:           c.prenom,
+            avatar:           c.avatar,
             blessureNiveau:   c.blessure_niveau,
             pointsDestin:     c.points_destin,
             pointsPersonnage: c.points_personnage,

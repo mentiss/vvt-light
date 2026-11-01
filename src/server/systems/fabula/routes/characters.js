@@ -5,7 +5,7 @@
 //
 // Création : PUBLIQUE (pas d'auth) — requis pour le wizard.
 // Liste + lecture par url/code : PUBLIQUE — requis pour la sélection au login.
-// Écriture (PUT) : auth requise (propriétaire ou GM).
+// Écriture (PUT complet, PATCH partiel) : auth requise (propriétaire ou GM).
 // Suppression : GM uniquement.
 // ─────────────────────────────────────────────────────────────────────────────
 
@@ -180,6 +180,28 @@ router.put('/:id', authenticate, requireOwnerOrGM, (req, res) => {
         res.json(updated);
     } catch (err) {
         console.error('[fabula] PUT /:id:', err);
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// ── PATCH /:id — Mise à jour partielle (Owner ou GM) ─────────────────────────
+// Même sauvegarde que PUT : seuls les champs et tableaux fournis sont écrits.
+
+router.patch('/:id', authenticate, requireOwnerOrGM, (req, res) => {
+    try {
+        const id = Number(req.params.id);
+
+        if (!req.db.prepare('SELECT id FROM characters WHERE id = ?').get(id)) {
+            return res.status(404).json({ error: 'Personnage introuvable' });
+        }
+
+        const updated = saveFullCharacter(req.db, id, req.body);
+
+        broadcastCharacterUpdate(req.app.get('io'), req.db, id, updated);
+
+        res.json(updated);
+    } catch (err) {
+        console.error('[fabula] PATCH /:id:', err);
         res.status(500).json({ error: err.message });
     }
 });

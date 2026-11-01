@@ -30,11 +30,17 @@ Middlewares dans `middlewares/auth.js` : `authenticate`, `requireOwnerOrGM`, `re
 ## SQLite
 
 - Requêtes **paramétrées** uniquement, jamais de concaténation de valeurs dans le SQL.
-- **COALESCE** dans les UPDATE pour ne pas écraser les champs non fournis. Exception assumée : `fabula` n'utilise COALESCE que sur `access_code` et garde l'assignation directe ailleurs.
+- **COALESCE** dans les UPDATE pour ne pas écraser les champs non fournis (modèle : `FLAT_COLUMNS` de `vikings` et `fabula`). Un texte vidé (`''`) est bien enregistré ; une colonne ne se remet pas à `NULL` par la sauvegarde de fiche, c'est assumé.
 - Écritures multi-tables (`saveFullCharacter`) dans une **transaction**. Les sous-tables (équipement, liens…) se synchronisent avec le pattern `_syncSubTable`.
 - `saveFullCharacter` doit mapper `accessCode → access_code` dans l'UPDATE des colonnes à plat.
 - Schéma d'un slug : partir de `database-template/base.sql`, ne jamais redéfinir les tables partagées (`game_sessions`, `refresh_tokens`, `dice_history`, `character_journal`, `session_characters`). `characters` doit avoir `login_attempts`, `last_attempt_at`, `last_accessed`, et la colonne d'avatar s'appelle `avatar` (pas `avatar_url`).
 - Toute évolution de structure : schéma **et** migration (voir CLAUDE.md racine).
+
+## Tests (`tests/server/`, Vitest, `npm test` à la racine)
+
+- **Contrat des routes `/characters`** de tous les slugs (`tests/server/systems/characters.contract.test.js`, spec `documentations/spec_tests_serveur.md`) : le routeur réel est monté sur une base en mémoire créée depuis le schéma du slug (`tests/server/helpers/slugApp.js`), sans `server.js` ni les bases de `database/`.
+- Chaque slug fournit `tests/server/systems/<slug>/fixture.js` (corps minimal de création, champ modifié par l'envoi partiel). Le contrat échoue s'il manque.
+- Le contrat crée la base depuis `schemaPath` : un schéma désynchronisé des migrations y apparaît.
 
 ## Socket.io
 

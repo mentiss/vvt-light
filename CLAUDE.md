@@ -53,13 +53,20 @@ npm run migrate 27022025_add_quoi.sql        # joue une migration précise (les 
 # Lint (front uniquement)
 cd src/client && npm run lint
 
-# Tests unitaires (front uniquement pour l'instant, Vitest)
+# Tests unitaires du front (Vitest)
 cd src/client && npm test
+
+# Tests serveur : contrat des routes (Vitest, racine)
+npm test
 ```
 
-Après une modif, vérifie au minimum que `npm run lint`, `npm test` et `npm run build` passent (depuis `src/client`).
+Après une modif, vérifie au minimum que `npm run lint`, `npm test` et `npm run build` passent (depuis `src/client`), et `npm test` à la racine si le serveur est touché.
 
-**Tests** : Vitest, fonctions pures uniquement (barèmes, conversions, hooks de dés, stats dérivées), jamais de composants. Un dossier `tests/` par côté, qui reproduit l'arborescence du code testé : `src/client/tests/` miroir de `src/client/src/` (ex. `tests/systems/tecumah/xpCosts.test.js` pour `src/systems/tecumah/xpCosts.js`) ; côté serveur, le jour venu, `tests/server/…` à la racine. Pas de campagne de rattrapage : on ajoute un test quand on touche une règle de calcul. Supprimer un slug implique aussi de supprimer `tests/systems/<slug>/`.
+**Tests** : Vitest. Un dossier `tests/` par côté, qui reproduit l'arborescence du code testé :
+- **Front** (`src/client/tests/`, miroir de `src/client/src/`, ex. `tests/systems/tecumah/xpCosts.test.js` pour `src/systems/tecumah/xpCosts.js`) : fonctions pures uniquement (barèmes, conversions, hooks de dés, stats dérivées), jamais de composants.
+- **Serveur** (`tests/server/` à la racine) : tests de contrat des routes, sur base temporaire créée depuis le schéma (voir `src/server/CLAUDE.md`). Chaque slug y a son `tests/server/systems/<slug>/fixture.js`.
+
+Pas de campagne de rattrapage : on ajoute un test quand on touche une règle de calcul ou un contrat. Supprimer un slug implique aussi de supprimer `src/client/tests/systems/<slug>/` et `tests/server/systems/<slug>/`.
 
 ## Architecture
 

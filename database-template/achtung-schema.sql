@@ -90,7 +90,8 @@ CREATE TABLE IF NOT EXISTS characters (
 
     -- ── Magie (optionnel) ────────────────────────────────────────────────────
                                           is_spellcaster      INTEGER  DEFAULT 0,
-                                          power               INTEGER  DEFAULT 0
+                                          power               INTEGER  DEFAULT 0,
+                                          spellcaster_practice TEXT    DEFAULT NULL  -- migration 18062026_spellcaster_practice_achtung.sql
 );
 
 CREATE INDEX IF NOT EXISTS idx_ac_characters_access_code ON characters(access_code);
@@ -124,6 +125,7 @@ CREATE TABLE IF NOT EXISTS character_weapons (
                                                  range           TEXT     DEFAULT '',   -- Close / Short / Medium / Long
                                                  damage          INTEGER  DEFAULT 0,    -- nombre de dés de Challenge
                                                  salvo           TEXT     DEFAULT '',
+                                                 effect          TEXT     DEFAULT '[]', -- effets innés (migration 22062026_add_wp_effect.sql)
                                                  size            TEXT     DEFAULT '',   -- Minor / Major
                                                  qualities       TEXT     DEFAULT '',
                                                  sort_order      INTEGER  DEFAULT 0,
@@ -160,6 +162,7 @@ CREATE TABLE IF NOT EXISTS character_spells (
                                                 duration        TEXT     DEFAULT '',
                                                 effect          TEXT     DEFAULT '',
                                                 momentum_spends TEXT     DEFAULT '',
+                                                flawed          INTEGER  DEFAULT 0,    -- migration 18062026_spellcaster_practice_achtung.sql
                                                 sort_order      INTEGER  DEFAULT 0,
                                                 FOREIGN KEY (character_id) REFERENCES characters(id) ON DELETE CASCADE
 );

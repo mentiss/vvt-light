@@ -37,6 +37,29 @@ Toutes les qualités ont un type. Les qualités **défensives** peuvent être ap
 
 ---
 
+## 1 bis. Étapes de conception (livre de base p. 266-284)
+
+Conseils : limiter les objets qui donnent un bonus aux tests de précision ou de magie, ou à la Défense ou Défense magique (pas plus de deux portés à la fois, ou des options qui s'excluent) ; ne pas copier un sort ou une compétence de classe ; un objet trop puissant s'ajuste avec les joueurs plutôt que de le retirer.
+
+**Armes rares** (p. 268) :
+1. Partir d'une arme de base (sauf main nue et armes improvisées).
+2. Dégâts d'un autre type que physiques (air, foudre, ténèbres, terre, feu, glace, lumière, poison) : +100 z.
+3. Modifications au choix :
+   - deux mains → une main : dégâts −4 ;
+   - une main → deux mains (sauf lutte, dague, jet) : dégâts +4 ;
+   - +1 au test de précision : +100 z (impossible si l'arme a déjà un bonus de précision) ;
+   - +4 dégâts : +200 z ;
+   - changer les attributs du test de précision : deux attributs identiques valent 50 z de plus que deux différents.
+4. Une seule qualité, choisie dans la table du §1 ou sur mesure (prix variable).
+
+Une arme dont le modificateur de dégâts final atteint +10 devient automatiquement martiale.
+
+**Armures et boucliers rares** (p. 280) : un objet de base plus une qualité, qui augmente son prix du coût indiqué.
+
+**Accessoires** (p. 284) : on choisit la capacité octroyée (table ou sur mesure) ; le prix de l'objet est celui de sa qualité.
+
+---
+
 ## 2.Liste des exemples d'objets rare du livre de base 
 
 ### Table des objets rare

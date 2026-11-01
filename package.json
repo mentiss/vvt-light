@@ -10,6 +10,7 @@
     "client-dev": "cd src/client && npm run dev",
     "build": "cd src/client && npm run build",
     "migrate": "node scripts/migrate.js",
+    "test": "vitest run",
     "release": "node scripts/release.js"
   },
   "keywords": [
@@ -32,6 +33,7 @@
   },
   "devDependencies": {
     "concurrently": "^9.2.1",
-    "nodemon": "^3.1.11"
+    "nodemon": "^3.1.11",
+    "vitest": "^4.1.12"
   }
 }

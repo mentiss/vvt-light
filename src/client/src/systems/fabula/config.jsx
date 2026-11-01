@@ -20,6 +20,10 @@ export {
     formatPrecision, formatDegats, formatDefense, formatDefenseMagique,
 } from './config/utils.js';
 export { EQUIPMENT_CATALOG, CATALOG_ORDER, CATEGORIES_ARMES, TYPES_DEGATS, ATTR_LABELS, catalogToItem } from './config/equipment.js';
+export {
+    PROJECT_POWERS, PROJECT_AREAS, PROJECT_USAGES, PROJECT_AMOUNTS, PROJECT_AMOUNT_LABELS,
+    computeProject, projectAmount,
+} from './config/projects.js';
 
 // ══════════════════════════════════════════════════════════════════════════════
 // BLOC DÉS — contrat diceEngine v2

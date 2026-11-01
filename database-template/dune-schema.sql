@@ -18,7 +18,17 @@ CREATE TABLE IF NOT EXISTS characters (
                                           player_name     TEXT NOT NULL,
 
     -- Identité du personnage
+    -- avatar, prenom, sexe, age, taille, poids, motto : utilisés par le code
+    -- (CharacterController, liste publique) mais absents du schéma jusqu'au
+    -- 2026-11-01 ; les bases existantes les ont déjà (aucune migration).
+                                          avatar          TEXT DEFAULT NULL,
                                           nom             TEXT NOT NULL DEFAULT '',
+                                          prenom          TEXT DEFAULT '',
+                                          sexe            TEXT DEFAULT 'homme',
+                                          age             TEXT DEFAULT '',
+                                          taille          TEXT DEFAULT '',
+                                          poids           TEXT DEFAULT '',
+                                          motto           TEXT DEFAULT '',
                                           statut_social   TEXT DEFAULT '',
                                           description     TEXT DEFAULT '',
 
