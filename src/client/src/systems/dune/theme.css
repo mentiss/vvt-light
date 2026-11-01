@@ -306,16 +306,16 @@ button.vtt-list-item:hover { border-left-color: var(--dune-gold); }
 .vtt-menu-item.is-danger, .vtt-menu-item.is-danger .vtt-menu-icon { color: var(--dune-red); }
 .vtt-menu-separator { margin: .3rem 1rem; background: color-mix(in srgb, var(--dune-gold) 35%, transparent); }
 
-/* ── Musique : boutons flottants (components/audio/AudioPlayerWidget.jsx, spec_audio.md §11.18) ── */
+/* ── Zone d'actions : boutons (components/ui/ActionZone.jsx, spec_ui_actions.md §6.2) ── */
 /* ✦ Pans coupés, sable et or ; plein d'or quand ça joue */
-.vtt-audio-toggle {
+.vtt-action-btn {
     width: 2.9rem; border-radius: 0; border: none; clip-path: var(--dune-cut); box-shadow: none;
     background: var(--dune-surface-alt); color: var(--dune-gold);
 }
-.vtt-audio-toggle:hover { color: var(--dune-gold); background: color-mix(in srgb, var(--dune-gold) 25%, var(--dune-surface-alt)); }
-.vtt-audio-widget.is-playing .vtt-audio-toggle:not(.vtt-audio-toggle-gm),
-.vtt-audio-toggle-gm.is-active { background: var(--dune-gold); color: var(--dune-dark); }
-.vtt-audio-buttons { filter: drop-shadow(0 4px 10px rgba(0,0,0,.35)); }   /* l'ombre ne survit pas au clip-path */
+.vtt-action-btn:hover { color: var(--dune-gold); background: color-mix(in srgb, var(--dune-gold) 25%, var(--dune-surface-alt)); }
+.vtt-action-btn.is-highlighted,
+.vtt-action-btn.is-active { background: var(--dune-gold); color: var(--dune-dark); }
+.vtt-actions-bar { filter: drop-shadow(0 4px 10px rgba(0,0,0,.35)); }   /* l'ombre ne survit pas au clip-path */
 /* Bouton principal du panneau (lecture / pause) : pans coupés */
 .vtt-audio-icon-btn.is-main { width: 3rem; border-radius: 0; clip-path: var(--dune-cut); }
 

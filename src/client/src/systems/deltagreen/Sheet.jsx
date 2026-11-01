@@ -52,7 +52,6 @@ import SanModal from "./components/modals/SanModal.jsx";
 import EvolveModal from "./components/modals/EvolveModal.jsx";
 import DiceModal from "./components/modals/DiceModal.jsx";
 import DiceHistoryPage from "../../components/layout/DiceHistoryPage.jsx";
-import deltgreenConfig from "./config.jsx";
 import ToastNotifications from "../../components/layout/ToastNotifications.jsx";
 import SessionPlayersBar from "../../components/layout/SessionPlayersBar.jsx";
 import WeaponsSection from "./components/layout/WeaponsSection.jsx";
@@ -236,8 +235,6 @@ const Sheet = ({
 
             <ToastNotifications
                 sessionId={activeGMSession}
-                renderDiceToast={deltgreenConfig.dice.renderHistoryEntry}
-                renderAllRollTypes
             />
 
 
@@ -655,8 +652,6 @@ const Sheet = ({
                     <div className="max-w-4xl mx-auto px-4 py-6">
                         <DiceHistoryPage
                             sessionId={activeGMSession}
-                            renderHistoryEntry={deltgreenConfig.dice.renderHistoryEntry}
-                            renderAllRollTypes
                         />
                     </div>
                 )}

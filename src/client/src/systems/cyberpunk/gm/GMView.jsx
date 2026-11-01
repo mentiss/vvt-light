@@ -13,15 +13,15 @@ import { useFetch }   from '../../../hooks/useFetch.js';
 import { useSystem }  from '../../../hooks/useSystem.js';
 
 import ToastNotifications   from '../../../components/layout/ToastNotifications.jsx';
-import HistoryPanel         from '../../../components/layout/HistoryPanel.jsx';
+import DiceHistoryPanel     from '../../../components/layout/DiceHistoryPanel.jsx';
 import ThemeToggle          from '../../../components/ui/ThemeToggle.jsx';
 import TabJournal           from '../../../components/gm/tabs/TabJournal.jsx';
-import { HamburgerMenu, HamburgerMenuItem } from '../../../components/ui/HamburgerMenu.jsx';
+import { HamburgerMenu } from '../../../components/ui/HamburgerMenu.jsx';
 import {
     HamburgerMenuItemTableManagement, HamburgerMenuItemFreeDice, HamburgerMenuItemDiceConfig, HamburgerMenuItemLogout,
 } from '../../../components/ui/HamburgerMenuItems.jsx';
 
-import cyberpunkConfig, { STAT_LABELS } from '../config.jsx';
+import { STAT_LABELS } from '../config.jsx';
 import TabSession from "./tabs/TabSession.jsx";
 import TabClocks from "./tabs/TabClocks.jsx";
 import TabThreats from "./tabs/TabThreats.jsx";
@@ -56,7 +56,6 @@ const GMView = ({ activeSession, onSessionChange, onlineCharacters, darkMode, on
         const hash = window.location.hash.replace('#', '');
         return GM_TABS.some(t => t.id === hash) ? hash : 'session';
     });
-    const [historyPanelOpen,   setHistoryPanelOpen]   = useState(false);
     const pendingExpandThreatRef = useRef(null);
 
     const changeTab = (id) => {
@@ -76,10 +75,6 @@ const GMView = ({ activeSession, onSessionChange, onlineCharacters, darkMode, on
         >
             <ToastNotifications
                 sessionId={activeSession?.id}
-                renderDiceToast={(entry) => {
-                    return (<DiceEntryHistory roll={entry}  />)
-                }}
-                renderAllRollTypes
             />
 
             {/* ── Header ───────────────────────────────────────────────── */}
@@ -127,10 +122,6 @@ const GMView = ({ activeSession, onSessionChange, onlineCharacters, darkMode, on
                         />
                         <HamburgerMenuItemFreeDice icon="⬡" sessionId={activeSession?.id ?? null} isGM />
                         <HamburgerMenuItemDiceConfig icon="🎲" />
-                        {/* Propre au slug : panneau latéral d'historique */}
-                        <HamburgerMenuItem icon="📜" onClick={() => setHistoryPanelOpen(true)}>
-                            Historique des jets
-                        </HamburgerMenuItem>
                         <HamburgerMenuItemLogout icon="🔒" />
                     </HamburgerMenu>
                 </div>
@@ -224,8 +215,6 @@ const GMView = ({ activeSession, onSessionChange, onlineCharacters, darkMode, on
                     <div className="m-1">
                         <DiceHistoryPage
                             sessionId={activeSession?.id}
-                            renderHistoryEntry={cyberpunkConfig.dice.renderHistoryEntry}
-                            renderAllRollTypes
                         />
                     </div>
                 )}
@@ -235,14 +224,8 @@ const GMView = ({ activeSession, onSessionChange, onlineCharacters, darkMode, on
                 )}
             </main>
 
-            {/* ── Panneau d'historique (les modales du menu vivent dans ses éléments) ── */}
-            <HistoryPanel
-                isOpen={historyPanelOpen}
-                onClose={() => setHistoryPanelOpen(false)}
-                sessionId={activeSession?.id}
-                renderHistoryEntry={cyberpunkConfig.dice.renderHistoryEntry}
-                renderAllRollTypes
-            />
+            {/* ── Panneau d'historique : brique de la plateforme, bouton dans la zone d'actions (spec_ui_actions.md §6.4) ── */}
+            <DiceHistoryPanel sessionId={activeSession?.id ?? null} />
         </div>
     );
 };

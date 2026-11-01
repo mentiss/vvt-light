@@ -27,9 +27,7 @@ import TabSession          from './gm/tabs/TabSession.jsx';
 import TabCombat           from './gm/tabs/TabCombat.jsx';
 import GMDiceModal         from './gm/modals/GMDiceModal.jsx';
 import { useCombat }       from './gm/useCombat.js';
-import VikingsHistoryEntry from './components/layout/VikingsHistoryEntry.jsx';
 import VkIcon              from './components/ui/VkIcon.jsx';
-import vikingsConfig       from './config.jsx';
 
 const TABS = [
     { id: 'session',    label: 'Session' },
@@ -110,7 +108,7 @@ const GMApp = ({ activeSession, onSessionChange, onlineCharacters, characterUpda
                 )}
                 {activeTab === 'historique' && (
                     <div className="max-w-4xl mx-auto">
-                        <DiceHistoryPage sessionId={sessionId} renderHistoryEntry={vikingsConfig.dice.renderHistoryEntry} renderAllRollTypes />
+                        <DiceHistoryPage sessionId={sessionId} />
                     </div>
                 )}
             </main>
@@ -121,8 +119,6 @@ const GMApp = ({ activeSession, onSessionChange, onlineCharacters, characterUpda
             {/* Notifications en dernier : devant les modales (même z-index) */}
             <ToastNotifications
                 sessionId={sessionId}
-                renderDiceToast={(toast) => <VikingsHistoryEntry entry={toast} />}
-                renderAllRollTypes
             />
         </div>
     );

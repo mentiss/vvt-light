@@ -21,7 +21,6 @@ import {
 import {useSocket} from "../../../../context/SocketContext.jsx";
 import {useFetch} from "../../../../hooks/useFetch.js";
 import TabCombat from "./tabs/TabCombat.jsx";
-import TecumahHistoryEntry from "../TecumahHistoryEntry.jsx";
 
 const GM_TABS = [
     { id: 'session',    label: '📜 Session'    },
@@ -254,8 +253,6 @@ const GMView = ({ activeSession, onSessionChange, onlineCharacters, darkMode, on
                     {activeTab === 'historique' && (
                         <DiceHistoryPage
                             sessionId={activeSession?.id ?? null}
-                            renderHistoryEntry={tecumahConfig.dice.renderHistoryEntry}
-                            renderAllRollTypes
                         />
                     )}
                 </div>
@@ -264,10 +261,6 @@ const GMView = ({ activeSession, onSessionChange, onlineCharacters, darkMode, on
             {/* ── Overlays ─────────────────────────────────────────────────── */}
             <ToastNotifications
                 sessionId={activeSession?.id}
-                renderDiceToast={(entry) => {
-                    return (<TecumahHistoryEntry entry={entry} />)
-                }}
-                renderAllRollTypes
             />
 
             {showDiceModal && (

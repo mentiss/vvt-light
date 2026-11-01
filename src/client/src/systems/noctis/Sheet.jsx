@@ -18,7 +18,6 @@ import SpecialtiesCard     from './components/layout/SpecialtiesCard.jsx';
 import InventoryCard       from './components/layout/InventoryCard.jsx';
 import GroupReserveCard    from './components/layout/GroupReserveCard.jsx';
 import DiceModal           from './components/modals/DiceModal.jsx';
-import noctisConfig        from './config.jsx';
 import GearBackground from "./components/ui/GearBackground.jsx";
 import NoctisLogo from "./components/ui/NoctisLogo.jsx";
 
@@ -242,7 +241,6 @@ const Sheet = ({
                 {activeTab === 'historique' && (
                     <DiceHistoryPage
                         sessionId={activeGMSession ?? null}
-                        renderHistoryEntry={noctisConfig.dice.renderHistoryEntry}
                     />
                 )}
 

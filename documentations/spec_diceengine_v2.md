@@ -1,7 +1,7 @@
 # Spec — Refactoring DiceEngine v2
 
 > **Statut** : Implémenté  
-> **Périmètre** : `diceEngine.js` · `diceAnimBridge.js` · `DiceAnimationOverlay.jsx` · `HistoryPanel.jsx` · `DiceHistoryPage.jsx` · `config.dice` de chaque slug  
+> **Périmètre** : `diceEngine.js` · `diceAnimBridge.js` · `DiceAnimationOverlay.jsx` · `DiceHistoryList.jsx` (onglet `DiceHistoryPage.jsx`, panneau `DiceHistoryPanel.jsx` ; `HistoryPanel.jsx` supprimé le 2026-11-01) · `config.dice` de chaque slug  
 > **Objectif** : Moteur de dés véritablement générique, sans aucune connaissance des systèmes de jeu
 
 ---
@@ -481,12 +481,12 @@ notre `buildBoxNotation` qui ne généraient que des notations mono-type.
 ### Rendu : chaque slug, dans son style
 
 - Le composant d'historique du slug traite le jet libre **en premier** (`parseFreeRoll`), puis ses propres jets.
-- Les trois affichages du slug passent `renderAllRollTypes` : onglet Historique (`DiceHistoryPage`), panneau latéral (`HistoryPanel`) s'il en a un, notifications (`ToastNotifications`).
+- Le slug déclare son rendu **une fois** dans `config.jsx` : `dice.renderHistoryEntry` et `dice.renderAllRollTypes: true` (il rend aussi le jet libre). L'onglet Historique (`DiceHistoryPage`), le panneau (`DiceHistoryPanel`) s'il le monte et les notifications (`ToastNotifications`) le lisent ; ils ne reçoivent plus que `sessionId` (`spec_ui_actions.md` §6.4, 2026-11-01).
 - Contenu : libellé et total en évidence, dés regroupés par type avec leur notation (« 2d6 »), modificateur s'il y en a un.
 - **Rendu identique** dans l'historique et dans la notification : pas de mode resserré (`compact`), retiré de Fabula, Vikings et Zone Blanche le 2026-10-23 (décision du MJ).
 - Le rendu générique de la plateforme reste le filet de sécurité, notamment pour **Noctis** (refonte à venir).
 
 ### Marges : portées par la plateforme
 
-- La carte d'historique (`DiceHistoryPage`, `HistoryPanel`) pose la marge intérieure via la classe habillable `vtt-history-entry` (`index.css`) ; la notification a la sienne (`ToastShell`).
-- Les rendus des slugs (`renderHistoryEntry`, `renderDiceToast`) **ne mettent aucune marge extérieure**. Seul un décor propre au slug garde un espacement interne au décor : bande teintée et filet gauche de Delta Green, bloc encadré `zb-history-entry` de Zone Blanche.
+- La carte d'historique (`DiceHistoryList`, commune à l'onglet et au panneau) pose la marge intérieure via la classe habillable `vtt-history-entry` (`index.css`) ; la notification a la sienne (`ToastShell`).
+- Le rendu du slug (`dice.renderHistoryEntry`) **ne met aucune marge extérieure**. Seul un décor propre au slug garde un espacement interne au décor : bande teintée et filet gauche de Delta Green, bloc encadré `zb-history-entry` de Zone Blanche.

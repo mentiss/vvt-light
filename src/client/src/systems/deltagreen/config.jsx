@@ -1006,6 +1006,7 @@ const deltgreenConfig = {
 
         // 5. renderHistoryEntry — null : rendu générique plateforme suffisant
         renderHistoryEntry: (entry) => <DiceEntryHistory roll={entry} />,
+        renderAllRollTypes: true,   // le slug rend aussi le jet libre (onglet, panneau, notifications)
     },
 
     // ── Bloc combat — stub (pas de TabCombat en v1) ───────────────────────────

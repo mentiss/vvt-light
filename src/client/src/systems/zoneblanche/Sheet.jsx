@@ -38,7 +38,6 @@ import {
 
 import SheetLayout              from './components/layout/SheetLayout.jsx';
 import ZoneBlancheDiceModal     from './components/modals/ZoneBlancheDiceModal.jsx';
-import ZoneBlancheHistoryEntry  from './components/layout/ZoneBlancheHistoryEntry.jsx';
 
 const TABS = [
     { id: 'fiche',      label: 'Fiche' },
@@ -202,8 +201,6 @@ const Sheet = ({
 
             <ToastNotifications
                 sessionId={activeGMSession}
-                renderDiceToast={(entry) => <ZoneBlancheHistoryEntry entry={entry} />}
-                renderAllRollTypes
             />
 
             {/* ── Bandeau de diffusion ─────────────────────────────────────── */}
@@ -308,8 +305,6 @@ const Sheet = ({
                     {activeTab === 'historique' && (
                         <DiceHistoryPage
                             sessionId={activeGMSession}
-                            renderHistoryEntry={(entry) => <ZoneBlancheHistoryEntry entry={entry} />}
-                            renderAllRollTypes
                         />
                     )}
                 </main>

@@ -68,7 +68,7 @@ const DEFAULT_HOOKS = {
         })),
     }),
 
-    /** null → rendu générique dans HistoryPanel */
+    /** null → rendu générique dans l'historique et les notifications (DiceHistoryList, ToastNotifications) */
     renderHistoryEntry: (_entry) => null,
 };
 

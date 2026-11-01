@@ -4,9 +4,11 @@
 // Props :
 //   sessionId        — filtre les jets sur la session active
 //   onViewHistory    — callback "Voir l'historique" (optionnel)
-//   renderDiceToast  — (toast) => JSX | null
-//                      Rendu slug-spécifique du toast de jet.
-//                      Si absent ou retourne null → rendu générique.
+//
+// Rendu d'un jet : celui du slug, déclaré une fois dans son config.jsx
+// (dice.renderHistoryEntry, dice.renderAllRollTypes), le même que l'historique
+// (spec_ui_actions.md §6.4) ; absent ou null → rendu générique.
+// Pile placée au-dessus de la zone d'actions (--vtt-actions-offset, ActionZone.jsx).
 //
 // ⚠️ Aucune classe CSS viking-* ici.
 //    Les couleurs utilisent exclusivement les variables CSS génériques :
@@ -18,6 +20,7 @@ import React, { useState, useEffect } from 'react';
 import { useSocket } from '../../context/SocketContext.jsx';
 import { useAuth }   from '../../context/AuthContext.jsx';
 import {stripHtml, firstImageSrc} from "../shared/RichTextEditor.jsx";
+import useSlugConfig from '../../hooks/useSlugConfig.js';
 
 const TOAST_DICE_TTL    = 5000;
 const TOAST_MESSAGE_TTL = 8000;
@@ -27,13 +30,14 @@ const PLATFORM_ROLL_TYPES = ['free_roll'];
 const ToastNotifications = ({
                                 sessionId          = null,
                                 onViewHistory      = null,
-                                renderDiceToast    = null,
-                                renderAllRollTypes = false,
                             }) => {
     const [toasts, setToasts] = useState([]);
     const socket              = useSocket();
     const { user }            = useAuth();
     const myCharacterId       = user?.character?.id;
+    const slugDice            = useSlugConfig()?.dice;
+    const renderDiceToast     = slugDice?.renderHistoryEntry ?? null;
+    const renderAllRollTypes  = !!slugDice?.renderAllRollTypes;
 
     const add = (toast, ttl) => {
         setToasts(prev => [toast, ...prev].slice(0, 3));
@@ -102,7 +106,7 @@ const ToastNotifications = ({
     if (!toasts.length) return null;
 
     return (
-        <div className="fixed bottom-16 right-4 z-50 flex flex-col gap-2">
+        <div className="vtt-toasts fixed right-4 z-50 flex flex-col gap-2">
             {toasts.map(toast => (
                 <div key={toast.id} className={animClass(toast.animation)}>
 

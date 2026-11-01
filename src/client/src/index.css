@@ -667,33 +667,52 @@ select:disabled {
   .vtt-plan-preview { background: #fff; border: 1px solid var(--color-border); border-radius: 0.75rem; padding: 0.75rem; overflow: auto; }
   .vtt-plan-preview svg { display: block; max-width: 100%; height: auto; margin: 0 auto; }
 
-  /* ── Lecteur audio (spec_audio.md §11.7) ─────────────────────────────────── */
-  /* Position en variables, redéfinissables par un slug ; sous les notifications (bottom-16). */
+  /* ── Zone d'actions (components/ui/ActionZone.jsx, spec_ui_actions.md §6.2) ── */
+  /* Position en variables, redéfinissables par un slug. Au-dessus des fenêtres flottantes
+     (46 et plus, elles s'ouvrent juste au-dessus des boutons), sous les modales (150). */
   :root {
-    --vtt-audio-bottom: 1rem;
-    --vtt-audio-right: 1rem;
+    --vtt-actions-bottom: 1rem;
+    --vtt-actions-right: 1rem;
   }
-  /* Lecteur YouTube caché : 1 × 1 px hors écran (un lecteur 0 × 0 reste affiché, §9.9) */
-  .vtt-audio-hidden-player { position: fixed; left: -10000px; top: 0; width: 1px; height: 1px; overflow: hidden; pointer-events: none; }
-  .vtt-audio-widget {
-    /* Au-dessus des fenêtres flottantes (46 et plus, le panneau MJ s'ouvre juste au-dessus des boutons), sous les modales (150) */
-    position: fixed; right: var(--vtt-audio-right); bottom: var(--vtt-audio-bottom); z-index: 100;
+  .vtt-actions {
+    position: fixed; right: var(--vtt-actions-right); bottom: var(--vtt-actions-bottom); z-index: 100;
     display: flex; flex-direction: column; align-items: flex-end; gap: 0.5rem;
   }
-  /* Boutons flottants : ronds et opaques par défaut ; chaque slug les habille dans son theme.css
-     (.vtt-audio-buttons, .vtt-audio-toggle, états .vtt-audio-widget.is-playing et .vtt-audio-toggle-gm.is-active). */
-  .vtt-audio-buttons { display: flex; gap: 0.5rem; }
-  .vtt-audio-toggle {
+  .vtt-actions-panels { display: flex; flex-direction: column; align-items: flex-end; gap: 0.5rem; }
+  .vtt-actions-panels:empty { display: none; }
+  .vtt-actions-bar, .vtt-actions-buttons { display: flex; align-items: center; gap: 0.5rem; }
+  /* Boutons : ronds et opaques par défaut ; chaque slug les habille dans son theme.css
+     (.vtt-action-btn, états .is-active et .is-highlighted, .vtt-actions-bar). */
+  .vtt-action-btn {
     display: inline-flex; align-items: center; justify-content: center;
     width: 2.5rem; height: 2.5rem; border-radius: 999px;
     border: 1px solid var(--color-border); background: var(--color-surface); color: var(--color-text-muted);
     box-shadow: 0 4px 14px rgba(0, 0, 0, 0.25); transition: border-color 0.15s, color 0.15s, background-color 0.15s;
   }
-  .vtt-audio-toggle:hover { color: var(--color-text); border-color: var(--color-primary); }
-  .vtt-audio-toggle:focus-visible { outline: 2px solid var(--color-primary); outline-offset: 2px; }
-  .vtt-audio-widget.is-playing .vtt-audio-toggle:not(.vtt-audio-toggle-gm),
-  .vtt-audio-toggle-gm.is-active { color: var(--color-primary); border-color: var(--color-primary); }
-  /* Réglages du son : un .vtt-menu (habillé par le slug) ouvert vers le haut, dans le flux
+  .vtt-action-btn:hover { color: var(--color-text); border-color: var(--color-primary); }
+  .vtt-action-btn:focus-visible { outline: 2px solid var(--color-primary); outline-offset: 2px; }
+  .vtt-action-btn.is-highlighted, .vtt-action-btn.is-active { color: var(--color-primary); border-color: var(--color-primary); }
+  /* Replier en mini-menu : discret, au bout de la rangée */
+  .vtt-actions-collapse {
+    display: inline-flex; align-items: center; justify-content: center; width: 1.25rem; height: 2.5rem;
+    border-radius: 0.4rem; color: var(--color-text-muted); opacity: 0.6; transition: opacity 0.15s, color 0.15s;
+  }
+  .vtt-actions-collapse:hover, .vtt-actions-collapse:focus-visible { opacity: 1; color: var(--color-text); }
+  /* Mini-menu : un .vtt-menu (habillé par le slug) ouvert vers le haut, dans le flux (placement hors couche) */
+  .vtt-actions-list { width: 15rem; min-width: 0; }
+  .vtt-actions-list .vtt-actions-buttons { flex-direction: column; align-items: stretch; gap: 0; }
+  .vtt-action-item.is-active, .vtt-action-item.is-highlighted { color: var(--color-primary); }
+  /* Zone vide (aucune action montée) : rien d'affiché */
+  .vtt-actions:not(:has(.vtt-actions-buttons > *)) { display: none; }
+  /* Panneau d'historique des jets (DiceHistoryPanel) : la liste défile dans la fenêtre */
+  .vtt-history-panel-body { flex: 1 1 auto; min-height: 0; overflow-y: auto; padding: 0.75rem; }
+  /* Notifications (ToastNotifications) : au-dessus de la rangée de la zone, quelle que soit sa hauteur */
+  .vtt-toasts { bottom: calc(var(--vtt-actions-offset, 0px) + 1rem); }
+
+  /* ── Lecteur audio (spec_audio.md §11.7) ─────────────────────────────────── */
+  /* Lecteur YouTube caché : 1 × 1 px hors écran (un lecteur 0 × 0 reste affiché, §9.9) */
+  .vtt-audio-hidden-player { position: fixed; left: -10000px; top: 0; width: 1px; height: 1px; overflow: hidden; pointer-events: none; }
+  /* Réglages du son : volet de la zone d'actions, un .vtt-menu (habillé par le slug) dans le flux
      (placement imposé hors couche, en fin de fichier) */
   .vtt-audio-widget-panel { width: 15rem; min-width: 0; }
   .vtt-audio-widget-content { display: flex; flex-direction: column; gap: 0.6rem; padding: 0.6rem 0.75rem; }
@@ -854,4 +873,7 @@ select:disabled {
    Hors couche et plus précis qu'une classe seule : un theme.css qui place sa classe générique
    (ex. .vtt-menu en position absolue pour son menu hamburger) ne les déplace pas. Un slug qui
    veut vraiment les changer reprend le même sélecteur. */
-.vtt-audio-widget .vtt-audio-widget-panel { position: static; inset: auto; margin: 0; }
+.vtt-actions .vtt-audio-widget-panel,
+.vtt-actions .vtt-actions-list { position: static; inset: auto; margin: 0; }
+.vtt-actions .vtt-actions-list[hidden] { display: none; }
+.vtt-actions .vtt-action-item { display: flex; align-items: center; gap: 0.6rem; }

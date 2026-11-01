@@ -162,6 +162,7 @@ export const diceHooks = {
 
     // ── 5. renderHistoryEntry ──────────────────────────────────────────────
     renderHistoryEntry: (entry) => <ZoneBlancheHistoryEntry entry={entry} />,
+    renderAllRollTypes: true,   // le slug rend aussi le jet libre (onglet, panneau, notifications)
 };
 
 // ── Hooks d'ASSISTANCE — jet simplifié 1d20 ─────────────────────────────────

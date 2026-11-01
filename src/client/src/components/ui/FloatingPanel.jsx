@@ -64,6 +64,8 @@ const subscribeSmallScreen = (listener) => {
     return () => query.removeEventListener('change', listener);
 };
 const isSmallScreen = () => window.matchMedia(SMALL_SCREEN).matches;
+/** Petit écran (< 640 px), suivi en direct ; partagé avec la zone d'actions (ActionZone.jsx). */
+export const useSmallScreen = () => useSyncExternalStore(subscribeSmallScreen, isSmallScreen);
 
 // ─── Composant ──────────────────────────────────────────────────────────────
 
@@ -98,7 +100,7 @@ const FloatingPanel = ({
     const titleId = `${id}-title`;
     const ref = useRef(null);
     const [full, setFull] = useState(false);
-    const small = useSyncExternalStore(subscribeSmallScreen, isSmallScreen);
+    const small = useSmallScreen();
     const order = useStackOrder(id);
     const win = useFloatingWindow({ persistAs, movable, resizable, minimizable, defaultSize, minSize, defaultPosition, offset });
 

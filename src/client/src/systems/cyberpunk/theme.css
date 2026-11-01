@@ -785,20 +785,20 @@
     background: linear-gradient(to right, transparent, color-mix(in srgb, var(--color-primary) 40%, transparent) 30%, color-mix(in srgb, var(--color-primary) 40%, transparent) 70%, transparent);
 }
 
-/* ── Musique : boutons flottants (components/audio/AudioPlayerWidget.jsx, spec_audio.md §11.18) ── */
+/* ── Zone d'actions : boutons (components/ui/ActionZone.jsx, spec_ui_actions.md §6.2) ── */
 /* ✦ Coins coupés, contour néon ; balayage et lueur cyan quand ça joue */
-.vtt-audio-toggle {
+.vtt-action-btn {
     border-radius: 0; border: 1px solid var(--color-border); background: var(--color-surface-alt); color: var(--color-text-muted);
     clip-path: polygon(8px 0, 100% 0, 100% calc(100% - 8px), calc(100% - 8px) 100%, 0 100%, 0 8px); box-shadow: none;
 }
-.vtt-audio-toggle:hover { color: var(--color-accent); border-color: var(--color-accent); background: var(--color-surface); }
-.vtt-audio-widget.is-playing .vtt-audio-toggle:not(.vtt-audio-toggle-gm),
-.vtt-audio-toggle-gm.is-active {
+.vtt-action-btn:hover { color: var(--color-accent); border-color: var(--color-accent); background: var(--color-surface); }
+.vtt-action-btn.is-highlighted,
+.vtt-action-btn.is-active {
     color: var(--color-primary); border-color: var(--color-primary);
     background: repeating-linear-gradient(0deg, rgba(255,255,255,.03) 0 1px, transparent 1px 3px), color-mix(in srgb, var(--color-primary) 14%, var(--color-surface));
 }
-.vtt-audio-widget.is-playing .vtt-audio-toggle:not(.vtt-audio-toggle-gm) svg,
-.vtt-audio-toggle-gm.is-active svg { filter: drop-shadow(0 0 4px rgba(0, 229, 255, .7)); }
+.vtt-action-btn.is-highlighted svg,
+.vtt-action-btn.is-active svg { filter: drop-shadow(0 0 4px rgba(0, 229, 255, .7)); }
 /* Bouton principal du panneau (lecture / pause) : coins coupés, comme les boutons flottants */
 .vtt-audio-icon-btn.is-main { border-radius: 0; clip-path: polygon(8px 0, 100% 0, 100% calc(100% - 8px), calc(100% - 8px) 100%, 0 100%, 0 8px); }
 

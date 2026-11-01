@@ -108,6 +108,7 @@ Style par défaut dans `index.css` (`@layer components`, variables `--color-*` s
 - `AudioGMPanel` devient `<FloatingPanel title="Musique" titleExtra={morceau en cours} persistAs="audio" onClose={…} onPaste={…}>…</FloatingPanel>` ; il ne garde que l'audio (ce qui joue, bibliothèque, pied, Ctrl+V, imports).
 - Les classes `vtt-audio-panel*` et `vtt-audio-resize*` disparaissent au profit des `vtt-floating-*`.
 - Ouverture et fermeture restent à `AudioLayer` (c'est l'appelant qui décide si la fenêtre est affichée), mémorisées par slug dans `vtt:<slug>:audio` (les volumes restent dans `vtt:platform:audio`).
+- Deuxième usage (2026-11-01) : le panneau d'historique des jets, `DiceHistoryPanel` (`spec_ui_actions.md` §6.4), `persistAs="history"`, collé au côté droit, presque toute la hauteur.
 
 ---
 

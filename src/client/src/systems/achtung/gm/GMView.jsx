@@ -19,7 +19,6 @@ import DiceHistoryPage    from '../../../components/layout/DiceHistoryPage.jsx';
 
 import TabSession          from './tabs/TabSession.jsx';
 import GMDiceModal         from './modals/GMDiceModal.jsx';
-import AchtungHistoryEntry from '../components/AchtungHistoryEntry.jsx';
 import FreeDiceModal from "../../../components/modals/FreeDiceModal.jsx";
 
 // ── Onglets ───────────────────────────────────────────────────────────────────
@@ -51,11 +50,6 @@ const GMView = ({ activeSession, onSessionChange, onlineCharacters, darkMode, on
         <div className="min-h-screen bg-default text-default">
             <ToastNotifications
                 sessionId={activeSession?.id}
-                renderDiceToast={(entry) => {
-                    const adapted = { ...entry, details: entry.roll_result };
-                    return <AchtungHistoryEntry roll={adapted}  />;
-                }}
-                renderAllRollTypes
             />
 
             {/* ── HEADER ──────────────────────────────────────────────────── */}
@@ -157,8 +151,6 @@ const GMView = ({ activeSession, onSessionChange, onlineCharacters, darkMode, on
                 {activeTab === 'historique' && (
                     <DiceHistoryPage
                         sessionId={activeSession?.id ?? null}
-                        renderHistoryEntry={(entry) => <AchtungHistoryEntry roll={entry} />}
-                        renderAllRollTypes
                     />
                 )}
             </div>

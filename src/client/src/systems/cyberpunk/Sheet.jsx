@@ -39,8 +39,6 @@ import {StatCard} from "./components/layout/StatCard.jsx";
 import {XPPanel} from "./components/modals/XPPanel.jsx";
 import {MoveCard} from "./components/layout/MoveCard.jsx";
 import {ResourceCounter} from "./components/layout/ResourceCounter.jsx";
-import cyberpunkConfig from "./config.jsx";
-import DiceEntryHistory from "./components/layout/DiceEntryHistory.jsx";
 import BoltFarm from "./components/ui/BoltFarm.jsx";
 import CyberpunkCatalogModal from "./components/modals/CyberpunkCatalogModal.jsx";
 import ReferenceTab from "./components/ReferenceTab.jsx";
@@ -277,10 +275,6 @@ const Sheet = ({
         >
             <ToastNotifications
                 sessionId={activeGMSession}
-                renderDiceToast={(entry) => {
-                    return (<DiceEntryHistory roll={entry}  />)
-                }}
-                renderAllRollTypes
             />
 
             {/* ── Header ───────────────────────────────────────────────── */}
@@ -999,8 +993,6 @@ const Sheet = ({
                         <div className="h-full overflow-y-auto cp-scroll p-4">
                             <DiceHistoryPage
                                 sessionId={activeGMSession}
-                                renderHistoryEntry={cyberpunkConfig.dice.renderHistoryEntry}
-                                renderAllRollTypes
                             />
                         </div>
                     )}

@@ -44,8 +44,6 @@ function initSocket(io) {
         presence.register(io, socket, sharedState);
         sessions.register(io, socket, sharedState);
         audio.register(io, socket, sharedState);
-        // PROTOTYPE TEMPORAIRE du lecteur audio (spec_audio.md §9.9), à retirer avec la page /tools/audio
-        require('./audioProto').register(io, socket);
 
         // Slugs : handlers découverts par le Loader
         for (const [slug] of getAllSystems()) {

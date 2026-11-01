@@ -380,6 +380,7 @@ const vikingsConfig = {
         // ── 5. renderHistoryEntry ─────────────────────────────────────────────────
         // Rendu Vikings dans DiceHistoryPage (jets libres : rendu générique).
         renderHistoryEntry: (entry) => <VikingsHistoryEntry entry={entry} />,
+        renderAllRollTypes: true,   // le slug rend aussi le jet libre (onglet, panneau, notifications)
     },
 
 

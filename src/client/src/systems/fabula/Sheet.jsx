@@ -36,8 +36,7 @@ import { useFetch }   from '../../hooks/useFetch.js';
 
 import FicheGrid           from './components/layout/FicheGrid.jsx';
 import FabulaDiceModal    from './components/modals/FabulaDiceModal.jsx';
-import FabulaHistoryEntry from './components/layout/FabulaHistoryEntry.jsx';
-import fabulaConfig, { computeDerivedStats } from './config.jsx';
+import { computeDerivedStats } from './config.jsx';
 
 const TABS = [
     { id: 'fiche',      label: '📋 Fiche' },
@@ -222,8 +221,6 @@ const Sheet = ({
                     {activeTab === 'historique' && (
                         <DiceHistoryPage
                             sessionId={activeGMSession ?? null}
-                            renderHistoryEntry={fabulaConfig.dice.renderHistoryEntry}
-                            renderAllRollTypes
                         />
                     )}
                 </div>
@@ -232,8 +229,6 @@ const Sheet = ({
             {/* ── TOASTS ──────────────────────────────────────────────────── */}
             <ToastNotifications
                 sessionId={activeGMSession}
-                renderDiceToast={(toast) => <FabulaHistoryEntry roll={toast} />}
-                renderAllRollTypes
             />
 
             {/* ── MODALES ─────────────────────────────────────────────────── */}

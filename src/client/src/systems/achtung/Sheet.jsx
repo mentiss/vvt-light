@@ -33,7 +33,6 @@ import LanguagePills      from './components/LanguagePills.jsx';
 import SpellsSection      from './components/SpellsSection.jsx';
 import IdentitySection    from './components/IdentitySection.jsx';
 import TruthsSection      from './components/TruthsSection.jsx';
-import AchtungHistoryEntry from './components/AchtungHistoryEntry.jsx';
 import AchtungDiceModal    from './dice/AchtungDiceModal.jsx';
 import FreeDiceModal from "../../components/modals/FreeDiceModal.jsx";
 
@@ -142,11 +141,6 @@ const Sheet = ({
         >
             <ToastNotifications
                 sessionId={activeGMSession}
-                renderDiceToast={(entry) => {
-                    const adapted = { ...entry, details: entry.roll_result };
-                    return <AchtungHistoryEntry roll={adapted}  />;
-                }}
-                renderAllRollTypes
             />
 
             {/* ── HEADER ──────────────────────────────────────────────────── */}
@@ -389,8 +383,6 @@ const Sheet = ({
                         <div className="px-3 py-4">
                             <DiceHistoryPage
                                 sessionId={activeGMSession}
-                                renderHistoryEntry={(entry) => <AchtungHistoryEntry roll={entry} />}
-                                renderAllRollTypes
                             />
                         </div>
                     )}

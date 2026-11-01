@@ -10,7 +10,6 @@ import ThemeToggle          from '../../components/ui/ThemeToggle.jsx';
 import ToastNotifications   from '../../components/layout/ToastNotifications.jsx';
 import SessionPlayersBar    from '../../components/layout/SessionPlayersBar.jsx';
 import JournalTab           from '../../components/tabs/JournalTab.jsx';
-import HistoryPanel         from '../../components/layout/HistoryPanel.jsx';
 import AvatarUploader       from '../../components/AvatarUploader.jsx';
 import { HamburgerMenu, HamburgerMenuSeparator } from '../../components/ui/HamburgerMenu.jsx';
 import {
@@ -33,7 +32,6 @@ import { useSystem }  from '../../hooks/useSystem.js';
 import { useFetch }   from '../../hooks/useFetch.js';
 import { usePlayerSession } from '../../hooks/usePlayerSession.js';
 import DiceHistoryPage from "../../components/layout/DiceHistoryPage.jsx";
-import DuneHistoryEntry from "./components/DuneHistoryEntry.jsx";
 import AchtungHistoryEntry from "../achtung/components/AchtungHistoryEntry.jsx";
 
 // ── Onglets ───────────────────────────────────────────────────────────────────
@@ -153,10 +151,6 @@ const Sheet = ({
         <div className="min-h-screen flex flex-col" style={{ background: 'var(--dune-bg)', color: 'var(--dune-text)' }}>
             <ToastNotifications
                 sessionId={activeGMSession}
-                renderDiceToast={(entry) => {
-                    return <DuneHistoryEntry roll={entry}  />;
-                }}
-                renderAllRollTypes
             />
 
             {/* ── HEADER ──────────────────────────────────────────────────── */}
@@ -685,9 +679,6 @@ const Sheet = ({
                                     {/* ── TAB HISTORIQUE ─────────────────────────────────── */}
                                     {activeTab === 'historique' && (
                                         <DiceHistoryPage
-                                            character={character}
-                                            renderHistoryEntry={(roll) => <DuneHistoryEntry roll={roll} />}
-                                            renderAllRollTypes
                                             sessionId={activeGMSession ?? null}
                                         />
                                     )}

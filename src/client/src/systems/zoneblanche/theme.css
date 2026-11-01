@@ -936,14 +936,14 @@
 .vtt-journal-editor { border-radius: 2px; }
 .vtt-journal-list-toggle { font-family: var(--zb-font-mono); letter-spacing: .1em; text-transform: uppercase; }
 
-/* ── Musique : boutons flottants (components/audio/AudioPlayerWidget.jsx, spec_audio.md §11.18) ── */
+/* ── Zone d'actions : boutons (components/ui/ActionZone.jsx, spec_ui_actions.md §6.2) ── */
 /* ✦ Boîtier de caméscope : angles quasi droits, bord gauche accent ; voyant d'enregistrement quand ça joue */
-.vtt-audio-toggle {
+.vtt-action-btn {
     border-radius: 2px; border: 1px solid var(--color-border); border-left: 3px solid var(--color-accent);
     background: var(--zb-bar-bg); color: var(--zb-bar-text); opacity: .9;
 }
-.vtt-audio-toggle:hover { opacity: 1; color: var(--zb-bar-text); border-color: var(--color-border); border-left-color: var(--color-accent); }
-.vtt-audio-widget.is-playing .vtt-audio-toggle:not(.vtt-audio-toggle-gm),
-.vtt-audio-toggle-gm.is-active { opacity: 1; color: var(--zb-rec-dot); border-color: var(--color-border); border-left-color: var(--zb-rec-dot); }
+.vtt-action-btn:hover { opacity: 1; color: var(--zb-bar-text); border-color: var(--color-border); border-left-color: var(--color-accent); }
+.vtt-action-btn.is-highlighted,
+.vtt-action-btn.is-active { opacity: 1; color: var(--zb-rec-dot); border-color: var(--color-border); border-left-color: var(--zb-rec-dot); }
 /* Bouton principal du panneau (lecture / pause) : angles quasi droits */
 .vtt-audio-icon-btn.is-main { border-radius: 2px; }

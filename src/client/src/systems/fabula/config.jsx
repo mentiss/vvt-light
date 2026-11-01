@@ -140,6 +140,7 @@ const dice = {
     },
 
     renderHistoryEntry: (entry) => <FabulaHistoryEntry roll={entry} />,
+    renderAllRollTypes: true,   // le slug rend aussi le jet libre (onglet, panneau, notifications)
 };
 
 // ══════════════════════════════════════════════════════════════════════════════

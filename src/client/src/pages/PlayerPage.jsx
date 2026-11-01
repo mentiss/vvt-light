@@ -17,6 +17,7 @@ import SystemBrand          from '../components/platform/SystemBrand.jsx';
 import ErrorPage            from '../components/platform/ErrorPage.jsx';
 import { useSystem }        from '../hooks/useSystem.js';
 import { ModalHostProvider } from '../components/ui/ModalHost.jsx';
+import { ActionZoneProvider } from '../components/ui/ActionZone.jsx';
 import { useSession }       from '../context/SessionContext.jsx';
 import AudioLayer           from '../components/audio/AudioLayer.jsx';
 
@@ -233,8 +234,10 @@ const PlayerPage = () => {
 
     // appState === 'playing'
     // ModalHostProvider : emplacement à modales des éléments du menu (spec_ui_menu.md §4)
+    // ActionZoneProvider : zone d'actions en bas à droite (spec_ui_actions.md §6.2)
     return (
         <ModalHostProvider>
+        <ActionZoneProvider>
             <Suspense fallback={<LoadingScreen />}>
                 <SystemSheet
                     character={character}
@@ -264,6 +267,7 @@ const PlayerPage = () => {
                 onClose={() => setShowCharacterList(false)}
                 onSelect={handleCharacterListSelect}
             />
+        </ActionZoneProvider>
         </ModalHostProvider>
     );
 };

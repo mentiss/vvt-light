@@ -6,6 +6,7 @@ import { useSystem }    from '../../../hooks/useSystem.js';
 
 import ToastNotifications   from '../../../components/layout/ToastNotifications.jsx';
 import DiceHistoryPage      from '../../../components/layout/DiceHistoryPage.jsx';
+import DiceHistoryPanel     from '../../../components/layout/DiceHistoryPanel.jsx';
 import ThemeToggle          from '../../../components/ui/ThemeToggle.jsx';
 import TabNPC               from '../../../components/gm/tabs/TabNPC.jsx';
 import { HamburgerMenu, HamburgerMenuSeparator } from '../../../components/ui/HamburgerMenu.jsx';
@@ -20,7 +21,6 @@ import TabJournal   from '../../../components/gm/tabs/TabJournal.jsx';
 import GMDiceModal  from './modals/GMDiceModal.jsx';
 
 import duneConfig from '../config.jsx';
-import DuneHistoryEntry from "../components/DuneHistoryEntry.jsx";
 
 const GM_TABS = [
     { id: 'session',    label: '📜 Session'   },
@@ -85,10 +85,6 @@ const GMView = ({ activeSession, onSessionChange, onlineCharacters, darkMode, on
         <div className="min-h-screen" style={{ background: 'var(--dune-bg)', color: 'var(--dune-text)' }}>
             <ToastNotifications
                 sessionId={activeSession?.id}
-                renderDiceToast={(entry) => {
-                    return <DuneHistoryEntry roll={entry}  />;
-                }}
-                renderAllRollTypes
             />
 
             {/* ── HEADER ──────────────────────────────────────────────────── */}
@@ -192,8 +188,6 @@ const GMView = ({ activeSession, onSessionChange, onlineCharacters, darkMode, on
                 {activeTab === 'historique' && (
                     <DiceHistoryPage
                         sessionId={activeSession?.id}
-                        renderHistoryEntry={(roll) => <DuneHistoryEntry roll={roll} />}
-                        renderAllRollTypes
                     />
                 )}
             </main>
@@ -206,6 +200,9 @@ const GMView = ({ activeSession, onSessionChange, onlineCharacters, darkMode, on
                     menaceDisponible={resources.menace}
                 />
             )}
+
+            {/* ── Panneau d'historique : brique de la plateforme, bouton dans la zone d'actions (spec_ui_actions.md §6.4) ── */}
+            <DiceHistoryPanel sessionId={activeSession?.id ?? null} />
         </div>
     );
 };

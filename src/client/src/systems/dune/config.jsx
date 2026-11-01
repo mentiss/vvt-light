@@ -133,6 +133,7 @@ const duneConfig = {
         // ── renderHistoryEntry ────────────────────────────────────────────────────
         // Délègue au composant Dune-spécifique.
         renderHistoryEntry: (entry) => <DuneHistoryEntry roll={entry} />,
+        renderAllRollTypes: true,   // le slug rend aussi le jet libre (onglet, panneau, notifications)
     },
     npc : {
         renderNPCForm: (slugForm, onChange) =>

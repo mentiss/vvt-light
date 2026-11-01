@@ -1329,6 +1329,7 @@ const dice = {
      * @returns {JSX.Element | null}
      */
     renderHistoryEntry: (entry) => <DiceEntryHistory roll={entry} />,
+    renderAllRollTypes: true,   // le slug rend aussi le jet libre (onglet, panneau, notifications)
 };
 
 // ── Données statiques Playbooks ───────────────────────────────────────────────

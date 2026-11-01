@@ -41,7 +41,7 @@ Fichiers à créer (aucun fichier hors de ces dossiers ne doit être modifié, l
 
 **Frontend** (`src/client/src/systems/<slug>/`)
 - `config.jsx`, `Sheet.jsx`, `GMApp.jsx`, `Creation.jsx`
-- `theme.css` : tokens du slug et habillage des classes de la plateforme (`vtt-menu*`, `vtt-history-entry`, `vtt-audio-toggle`)
+- `theme.css` : tokens du slug et habillage des classes de la plateforme (`vtt-menu*`, `vtt-history-entry`, `vtt-action-btn`)
 - `components/layout/` pour les sections de fiche, dont `<Slug>HistoryEntry.jsx` (rendu des jets, partagé par l'historique et les notifications) ; `components/modals/` pour les modales
 - `gm/tabs/TabSession.jsx`, avec l'élément d'activation de la musique (`components/audio/AudioSessionToggle.jsx`)
 
@@ -57,10 +57,10 @@ Vérifie chaque point avant d'annoncer la fin, et coche-les dans ton récapitula
 - [ ] Code d'accès : `HamburgerMenuItemAccessCode` dans le menu joueur, `saveFullCharacter` mappe `accessCode → access_code`.
 - [ ] Déconnexion par `HamburgerMenuItemLogout` (retour à l'accueil) ; `onLogout` de `PlayerPage` n'est pas utilisé.
 - [ ] Habillage du menu : classes `vtt-menu*` surchargées dans le `theme.css` du slug, hors couche. Une classe racine qui porte la police du slug cible aussi `.vtt-modal-host`.
-- [ ] Rendu des jets : un composant `<Slug>HistoryEntry` sert à `renderHistoryEntry` et à `renderDiceToast`, rendu identique (pas de mode `compact`) ; il traite le jet libre en premier (`parseFreeRoll` de `tools/freeRoll.js`).
-- [ ] `renderAllRollTypes` passé à `DiceHistoryPage` (importé depuis `../../components/layout/DiceHistoryPage.jsx`, props `sessionId`, `renderHistoryEntry`, `renderAllRollTypes`), à `ToastNotifications` et à `HistoryPanel` s'il y en a un.
+- [ ] Rendu des jets : un composant `<Slug>HistoryEntry`, déclaré **une fois** dans `config.jsx` (`dice.renderHistoryEntry`, et `dice.renderAllRollTypes: true` : il rend aussi le jet libre) ; l'onglet, le panneau et les notifications le lisent, rendu identique (pas de mode `compact`) ; il traite le jet libre en premier (`parseFreeRoll` de `tools/freeRoll.js`).
+- [ ] `DiceHistoryPage` (importé depuis `../../components/layout/DiceHistoryPage.jsx`) et `ToastNotifications` avec la seule prop `sessionId`. Panneau d'historique (`components/layout/DiceHistoryPanel.jsx`, prop `sessionId`) au choix du slug, décidé en phase 2, monté à la racine de la fiche ou de l'interface MJ.
 - [ ] Aucune marge extérieure dans les rendus de jets : la plateforme la porte (`vtt-history-entry`, `ToastShell`).
-- [ ] Musique de la table : `AudioSessionToggle` posé dans l'onglet Session du MJ (`sessionId={activeSession.id}`, `className` aux boutons du slug), rien d'autre à coder (lecteurs, panneau MJ et réglages du son sont montés par `PlayerPage` / `GMPage`). Habillage : le panneau et les réglages reprennent les classes déjà habillées par le slug (`vtt-modal-*`, `vtt-menu*`, `vtt-btn*`) ; les boutons flottants (`vtt-audio-toggle`, états `.vtt-audio-widget.is-playing` et `.vtt-audio-toggle-gm.is-active`) sont habillés dans le `theme.css` ; vérifier en dev le rendu, panneau réduit compris (décors d'en-tête et de fond).
+- [ ] Musique de la table : `AudioSessionToggle` posé dans l'onglet Session du MJ (`sessionId={activeSession.id}`, `className` aux boutons du slug), rien d'autre à coder (lecteurs, panneau MJ et réglages du son sont montés par `PlayerPage` / `GMPage`). Habillage : le panneau et les réglages reprennent les classes déjà habillées par le slug (`vtt-modal-*`, `vtt-menu*`, `vtt-btn*`) ; les boutons de la zone d'actions (`vtt-action-btn`, états `is-active` et `is-highlighted`, `vtt-actions-bar` ; `spec_ui_actions.md`) sont habillés dans le `theme.css`, icônes remplaçables par `actionIcons` dans `config.jsx` ; vérifier en dev le rendu, panneau réduit compris (décors d'en-tête et de fond).
 - [ ] `theme.css` chargé par `PlayerPage` / `GMPage` : pas d'`import './theme.css'` dans les fichiers du slug.
 - [ ] Pas d'indirection `GMApp.jsx → gm/GMView.jsx`.
 - [ ] UPDATE avec COALESCE ; `saveFullCharacter` en transaction avec `_syncSubTable` pour les sous-tables.

@@ -1641,15 +1641,15 @@ button.vtt-list-item:hover { border-color: var(--ac-ink); background: rgba(var(-
 .vtt-journal-list-toggle { background: transparent; color: var(--ac-ink-soft); border-bottom-color: rgba(var(--ac-ink-rgb), .35); font-family: var(--ac-font-heading); letter-spacing: .1em; text-transform: uppercase; }
 .vtt-scroll { scrollbar-color: rgba(var(--ac-ink-rgb), .4) transparent; }
 
-/* ── Musique : boutons flottants (components/audio/AudioPlayerWidget.jsx, spec_audio.md §11.18) ── */
+/* ── Zone d'actions : boutons (components/ui/ActionZone.jsx, spec_ui_actions.md §6.2) ── */
 /* ✦ Tampon encreur : papier, contour à l'encre ; encre olive pleine quand ça joue */
-.vtt-audio-toggle {
+.vtt-action-btn {
     border-radius: 2px; border: 1.5px solid var(--ac-ink); background: var(--ac-paper); color: var(--ac-ink);
     box-shadow: 2px 3px 0 rgba(var(--ac-ink-rgb), .25), 0 6px 14px rgba(0,0,0,.3);
 }
-.vtt-audio-toggle:hover { color: var(--ac-ink); border-color: var(--ac-ink); background: color-mix(in srgb, var(--ac-ink) 8%, var(--ac-paper)); }
-.vtt-audio-widget.is-playing .vtt-audio-toggle:not(.vtt-audio-toggle-gm),
-.vtt-audio-toggle-gm.is-active { background: var(--ac-ink-olive); border-color: var(--ac-ink-olive); color: var(--ac-paper); }
+.vtt-action-btn:hover { color: var(--ac-ink); border-color: var(--ac-ink); background: color-mix(in srgb, var(--ac-ink) 8%, var(--ac-paper)); }
+.vtt-action-btn.is-highlighted,
+.vtt-action-btn.is-active { background: var(--ac-ink-olive); border-color: var(--ac-ink-olive); color: var(--ac-paper); }
 /* Bouton principal du panneau (lecture / pause) : tampon */
 .vtt-audio-icon-btn.is-main { border-radius: 2px; }
 

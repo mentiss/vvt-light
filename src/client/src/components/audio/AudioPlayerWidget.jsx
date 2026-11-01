@@ -1,14 +1,16 @@
 // src/client/src/components/audio/AudioPlayerWidget.jsx
 // ─────────────────────────────────────────────────────────────────────────────
-// Boutons flottants de la musique (documentations/spec_audio.md Q-16, S-11, S-13) :
-// - réglages du son : titre de la piste musique seulement (sauf si le MJ le
-//   masque), son à activer, coupure, volume général ; volumes par type repliés ;
-// - MJ : accès direct au panneau, en un clic (P-3).
+// Actions de la musique dans la zone d'actions (documentations/spec_audio.md Q-16, S-11, S-13 ;
+// spec_ui_actions.md §6.3) :
+// - « Réglages du son » (sound) : volet avec le titre de la piste musique seulement (sauf si
+//   le MJ le masque), son à activer, coupure, volume général ; volumes par type repliés ;
+// - MJ : « Musique » (music), accès direct au panneau, en un clic (P-3).
 // États repliés / dépliés tenus par l'appelant (AudioLayer, mémorisés par slug dans vtt:<slug>:audio).
-// Classes vtt-audio* habillables par le theme.css du slug.
+// Boutons habillés par le slug (.vtt-action-btn), volet en .vtt-menu.
 // ─────────────────────────────────────────────────────────────────────────────
 
 import React from 'react';
+import { ZoneAction } from '../ui/ActionZone.jsx';
 
 const TYPE_LEVELS = [
     { id: 'music',    label: 'Musique' },
@@ -59,9 +61,11 @@ const AudioPlayerWidget = ({
     const silent = volumes.muted || !unlocked;
 
     return (
-        <div className={`vtt-audio-widget${open && enabled ? ' is-open' : ''}${playing ? ' is-playing' : ''}`}>
-            {open && enabled && (
-                // Classes du menu générique (habillage du slug) ; marges portées par le contenu
+        <>
+            {enabled && (
+                <ZoneAction id="sound" icon={<SpeakerIcon muted={silent} />} label="Réglages du son" order={10}
+                            active={open} highlighted={playing} onSelect={onToggleOpen}>
+                {/* Volet : classes du menu générique (habillage du slug) ; marges portées par le contenu */}
                 <div className="vtt-menu vtt-audio-widget-panel">
                     <div className="vtt-audio-widget-content">
                         {musicTitle && <div className="vtt-audio-now" title={musicTitle}>{musicTitle}</div>}
@@ -81,22 +85,13 @@ const AudioPlayerWidget = ({
                         ))}
                     </div>
                 </div>
+                </ZoneAction>
             )}
-            <div className="vtt-audio-buttons">
-                {enabled && (
-                    <button type="button" className="vtt-audio-toggle" onClick={onToggleOpen}
-                            title={open ? 'Replier les réglages du son' : 'Réglages du son'} aria-expanded={open}>
-                        <SpeakerIcon muted={silent} />
-                    </button>
-                )}
-                {gmPanel && (
-                    <button type="button" className={`vtt-audio-toggle vtt-audio-toggle-gm${gmPanel.open ? ' is-active' : ''}`} onClick={gmPanel.onToggle}
-                            title={gmPanel.open ? 'Fermer le panneau MJ' : 'Panneau MJ de la musique'} aria-pressed={gmPanel.open}>
-                        <PanelIcon />
-                    </button>
-                )}
-            </div>
-        </div>
+            {gmPanel && (
+                <ZoneAction id="music" icon={<PanelIcon />} label="Musique (panneau MJ)" order={20}
+                            active={gmPanel.open} onSelect={gmPanel.onToggle} />
+            )}
+        </>
     );
 };
 

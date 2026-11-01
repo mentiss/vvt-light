@@ -33,7 +33,6 @@ import {
 import TabSession                from './gm/tabs/TabSession.jsx';
 import { BUDGET_PRESETS }        from './config.jsx';
 import ZoneBlancheGMDiceModal    from './components/modals/ZoneBlancheGMDiceModal.jsx';
-import ZoneBlancheHistoryEntry from './components/layout/ZoneBlancheHistoryEntry.jsx';
 
 const TABS = [
     { id: 'session',    label: 'Session' },
@@ -245,8 +244,6 @@ const GMApp = ({
 
             <ToastNotifications
                 sessionId={sessionId}
-                renderDiceToast={(toast) => <ZoneBlancheHistoryEntry entry={toast} />}
-                renderAllRollTypes
             />
 
             {/* ── Bandeau de régie ─────────────────────────────────────────── */}
@@ -330,8 +327,6 @@ const GMApp = ({
                     <div className="max-w-4xl mx-auto">
                         <DiceHistoryPage
                             sessionId={sessionId}
-                            renderHistoryEntry={(entry) => <ZoneBlancheHistoryEntry entry={entry} />}
-                            renderAllRollTypes
                         />
                     </div>
                 )}

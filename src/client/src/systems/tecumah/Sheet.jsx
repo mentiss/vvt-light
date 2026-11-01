@@ -29,12 +29,11 @@ import InventoryTab   from './components/InventoryTab.jsx';
 import XPModal        from './components/modals/XPModal.jsx';
 import TecumahDiceModal from './components/modals/TecumahDiceModal.jsx';
 
-import tecumahConfig, {
+import {
     ATTRIBUTS, ATTRIBUT_LABELS, SKILLS_BY_ATTR,
     BACKGROUNDS, BACKGROUNDS_BY_ID,
     pipsToNotation,
 } from './config.jsx';
-import TecumahHistoryEntry from "./components/TecumahHistoryEntry.jsx";
 
 // ── Onglets ───────────────────────────────────────────────────────────────────
 
@@ -439,8 +438,6 @@ const Sheet = ({
                             {activeTab === 'historique' && (
                                 <DiceHistoryPage
                                     sessionId={activeGMSession ?? null}
-                                    renderHistoryEntry={tecumahConfig.dice.renderHistoryEntry}
-                                    renderAllRollTypes
                                 />
                             )}
                         </div>
@@ -449,9 +446,7 @@ const Sheet = ({
             </div>
 
             {/* ── Overlays ─────────────────────────────────────────────────── */}
-            <ToastNotifications sessionId={activeGMSession} renderAllRollTypes renderDiceToast={(entry) => {
-                return (<TecumahHistoryEntry entry={entry} />)
-            }} />
+            <ToastNotifications sessionId={activeGMSession} />
 
 
             {showAvatar && (

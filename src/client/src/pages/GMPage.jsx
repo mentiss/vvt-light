@@ -15,6 +15,7 @@ import SystemBrand   from '../components/platform/SystemBrand.jsx';
 import ErrorPage     from '../components/platform/ErrorPage.jsx';
 import { useSystem } from '../hooks/useSystem.js';
 import { ModalHostProvider } from '../components/ui/ModalHost.jsx';
+import { ActionZoneProvider } from '../components/ui/ActionZone.jsx';
 import AudioLayer    from '../components/audio/AudioLayer.jsx';
 
 const SYSTEM_GM_APPS = import.meta.glob('../systems/*/GMApp.jsx');
@@ -75,8 +76,10 @@ const GMPage = () => {
 
     if (user?.isGM) {
         // ModalHostProvider : emplacement à modales des éléments du menu (spec_ui_menu.md §4)
+        // ActionZoneProvider : zone d'actions en bas à droite (spec_ui_actions.md §6.2)
         return (
             <ModalHostProvider>
+            <ActionZoneProvider>
                 <Suspense fallback={<LoadingScreen />}>
                     {/* eslint-disable-next-line react-hooks/static-components */}
                     <SystemGMApp
@@ -91,6 +94,7 @@ const GMPage = () => {
                 </Suspense>
                 {/* Musique de la table active, si le MJ l'a activée (spec_audio.md §11.7) */}
                 <AudioLayer role="gm" sessionId={activeSession?.id ?? null} />
+            </ActionZoneProvider>
             </ModalHostProvider>
         );
     }

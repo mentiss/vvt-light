@@ -2,14 +2,12 @@
 // Onglet Ressources de session — vue GM complète.
 // Affiche : Impulsions, Menace, Complications (GM uniquement), Maison.
 // Temps réel via socket (event session-resources-update / session-resources-gm-update).
-// Historique des jets intégré via HistoryPanel partagé.
+// Historique des jets : panneau de la plateforme (DiceHistoryPanel, monté par GMView).
 
 import React, { useState, useEffect, useCallback } from 'react';
 import { useSocket }    from '../../../../context/SocketContext.jsx';
 import { useFetch }     from '../../../../hooks/useFetch.js';
 import { useSystem }    from '../../../../hooks/useSystem.js';
-import HistoryPanel     from '../../../../components/layout/HistoryPanel.jsx';
-import DuneHistoryEntry from '../../components/DuneHistoryEntry.jsx';
 import VerticalGauge    from '../../components/VerticalGauge.jsx';
 
 const MAX_IMPULSIONS = 6;
@@ -31,7 +29,6 @@ const TabResources = ({ activeSession }) => {
     const [maison,    setMaison]    = useState({ nom: '', description: '' });
     const [maisonEdit, setMaisonEdit] = useState(false);
     const [maisonDraft, setMaisonDraft] = useState({ nom: '', description: '' });
-    const [historyOpen, setHistoryOpen] = useState(false);
 
     // ── Chargement initial ────────────────────────────────────────────────
     useEffect(() => {
@@ -252,24 +249,6 @@ const TabResources = ({ activeSession }) => {
                     </div>
                 )}
             </div>
-
-            {/* ── Historique des jets ───────────────────────────────── */}
-            <div className="flex justify-end">
-                <button
-                    onClick={() => setHistoryOpen(true)}
-                    className="dune-btn-secondary text-xs"
-                >
-                    📜 Historique des jets
-                </button>
-            </div>
-
-            <HistoryPanel
-                isOpen={historyOpen}
-                onClose={() => setHistoryOpen(false)}
-                sessionId={sessionId}
-                renderHistoryEntry={(roll) => <DuneHistoryEntry roll={roll} />}
-                renderAllRollTypes
-            />
         </div>
     );
 };

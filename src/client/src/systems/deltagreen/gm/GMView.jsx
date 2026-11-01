@@ -12,7 +12,6 @@ import TableManagementModal from '../../../components/gm/modals/TableManagementM
 import TabJournal           from '../../../components/gm/tabs/TabJournal.jsx';
 import TabSession from "./tabs/TabSession.jsx";
 import DiceHistoryPage from "../../../components/layout/DiceHistoryPage.jsx";
-import deltgreenConfig from "../config.jsx";
 import FreeDiceModal from "../../../components/modals/FreeDiceModal.jsx";
 import { HamburgerMenu, HamburgerMenuSeparator } from "../../../components/ui/HamburgerMenu.jsx";
 import {
@@ -49,8 +48,6 @@ const GMView = ({ activeSession, onSessionChange, onlineCharacters, darkMode, on
 
             <ToastNotifications
                 sessionId={activeSession?.id || null}
-                renderDiceToast={deltgreenConfig.dice.renderHistoryEntry}
-                renderAllRollTypes
             />
 
             {/* ── En-tête GM ──────────────────────────────────────────────── */}
@@ -152,8 +149,6 @@ const GMView = ({ activeSession, onSessionChange, onlineCharacters, darkMode, on
                         <div className="max-w-4xl mx-auto px-4 py-6">
                             <DiceHistoryPage
                                 sessionId={activeSession?.id || null}
-                                renderHistoryEntry={deltgreenConfig.dice.renderHistoryEntry}
-                                renderAllRollTypes
                             />
                         </div>
                     </div>

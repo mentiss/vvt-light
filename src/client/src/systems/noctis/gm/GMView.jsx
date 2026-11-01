@@ -13,7 +13,6 @@ import GearBackground   from '../components/ui/GearBackground.jsx';
 import NoctisLogo       from '../components/ui/NoctisLogo.jsx';
 import TabSession       from './tabs/TabSession.jsx';
 import TabReserveGroupe from './tabs/TabReserveGroupe.jsx';
-import noctisConfig     from '../config.jsx';
 
 /* ── Onglets ─────────────────────────────────────────────────────────────── */
 const GM_TABS = [
@@ -114,7 +113,6 @@ const GMView = ({ activeSession, onSessionChange, onlineCharacters, darkMode, on
                     <div className="max-w-4xl mx-auto p-4">
                         <DiceHistoryPage
                             sessionId={activeSession?.id ?? null}
-                            renderHistoryEntry={noctisConfig.dice.renderHistoryEntry}
                         />
                     </div>
                 )}

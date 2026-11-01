@@ -18,7 +18,6 @@ import { formatFullName, pickEditableFields } from './config/utils.js';
 import { withDerivedValues } from './config/rules.js';
 import vikingsConfig      from './config.jsx';
 import SheetLayout        from './components/layout/SheetLayout.jsx';
-import VikingsHistoryEntry from './components/layout/VikingsHistoryEntry.jsx';
 import DiceModal          from './components/modals/DiceModal.jsx';
 import EditModals         from './components/modals/EditModals.jsx';
 import ExperienceModal    from './components/modals/ExperienceModal.jsx';
@@ -239,8 +238,6 @@ const Sheet = ({
                     {activeTab === 'historique' && (
                         <DiceHistoryPage
                             sessionId={activeGMSession}
-                            renderHistoryEntry={vikingsConfig.dice.renderHistoryEntry}
-                            renderAllRollTypes
                         />
                     )}
                 </main>
@@ -270,8 +267,6 @@ const Sheet = ({
                 masquait sa propre notification). */}
             <ToastNotifications
                 sessionId={activeGMSession}
-                renderDiceToast={(toast) => <VikingsHistoryEntry entry={toast} />}
-                renderAllRollTypes
             />
         </div>
     );

@@ -744,15 +744,15 @@ body:has([data-palier="4"]) .vtt-modal-panel { filter: grayscale(1) contrast(1.5
 .vtt-menu-item:hover:not(:disabled) { background: var(--color-surface-alt); }
 .vtt-menu-separator { margin: .25rem 0; background: var(--dg-field-border); }
 
-/* ── Musique : boutons flottants (components/audio/AudioPlayerWidget.jsx, spec_audio.md §11.18) ── */
+/* ── Zone d'actions : boutons (components/ui/ActionZone.jsx, spec_ui_actions.md §6.2) ── */
 /* ✦ Case de formulaire : angles droits, trait noir, ombre décalée ; bandeau dg-header quand ça joue */
-.vtt-audio-toggle {
+.vtt-action-btn {
     border-radius: 0; border: 1px solid var(--color-text); background: var(--dg-field-bg); color: var(--color-text);
     box-shadow: 3px 3px 0 rgba(0,0,0,.18);
 }
-.vtt-audio-toggle:hover { color: var(--color-text); border-color: var(--color-text); background: var(--color-surface-alt); }
-.vtt-audio-widget.is-playing .vtt-audio-toggle:not(.vtt-audio-toggle-gm),
-.vtt-audio-toggle-gm.is-active { background: var(--dg-header-bg); border-color: var(--dg-header-bg); color: var(--dg-header-text); }
+.vtt-action-btn:hover { color: var(--color-text); border-color: var(--color-text); background: var(--color-surface-alt); }
+.vtt-action-btn.is-highlighted,
+.vtt-action-btn.is-active { background: var(--dg-header-bg); border-color: var(--dg-header-bg); color: var(--dg-header-text); }
 /* Bouton principal du panneau (lecture / pause) : angles droits */
 .vtt-audio-icon-btn.is-main { border-radius: 0; }
 

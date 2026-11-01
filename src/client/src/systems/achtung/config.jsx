@@ -113,6 +113,7 @@ const skillDiceHooks = {
     }),
 
     renderHistoryEntry: (entry) => <AchtungHistoryEntry roll={entry} />,
+    renderAllRollTypes: true,   // le slug rend aussi le jet libre (onglet, panneau, notifications)
 };
 
 // ── Hooks dés — dommages (dés de Challenge d6) ────────────────────────────────

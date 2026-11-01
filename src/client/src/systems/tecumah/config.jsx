@@ -403,6 +403,7 @@ const tecumahConfig = {
         },
 
         renderHistoryEntry: (entry) => <TecumahHistoryEntry entry={entry} />,
+        renderAllRollTypes: true,   // le slug rend aussi le jet libre (onglet, panneau, notifications)
 
         getNPCRollContext: (npc, attack, { apiBase, fetchFn, sessionId }) => ({
             apiBase, fetchFn,

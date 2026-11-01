@@ -136,6 +136,8 @@ Testée sous Vitest avec des navigateurs simulés : chaque ancien format, ancien
 | `vtt:platform:audio` | volumes par type | — (jamais en prod) | brique audio |
 | `vtt:<slug>:audio` | réglages du son ouverts, détails dépliés, panneau MJ ouvert | — | brique audio |
 | `vtt:<slug>:<table>:audio` | dernière playlist consultée | — | brique audio |
+| `vtt:<slug>:actions` | zone d'actions repliée en mini-menu ou non | — | `ActionZone` (`spec_ui_actions.md`) |
+| `vtt:<slug>:history` | panneau d'historique des jets ouvert | — | `DiceHistoryPanel` (`spec_ui_actions.md`) |
 | `vtt:<slug>:panel:<id>` | position, taille, réduction d'une fenêtre flottante, par slug | — | `FloatingPanel` (`spec_ui_panneaux.md`) |
 
 `currentCharacterId_<slug>` n'est plus écrite ; l'ancienne valeur est effacée par la reprise (§5).

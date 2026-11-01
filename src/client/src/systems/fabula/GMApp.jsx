@@ -26,8 +26,6 @@ import {
 import TabJournal          from '../../components/gm/tabs/TabJournal.jsx';
 
 import TabSession          from './gm/tabs/TabSession.jsx';
-import FabulaHistoryEntry  from './components/layout/FabulaHistoryEntry.jsx';
-import fabulaConfig        from './config.jsx';
 
 const TABS = [
     { id: 'session',    label: '🎭 Session' },
@@ -95,8 +93,6 @@ const GMApp = ({ activeSession, onSessionChange, onlineCharacters, characterUpda
                     <div className="max-w-4xl mx-auto p-4">
                         <DiceHistoryPage
                             sessionId={activeSession?.id ?? null}
-                            renderHistoryEntry={fabulaConfig.dice.renderHistoryEntry}
-                            renderAllRollTypes
                         />
                     </div>
                 )}
@@ -105,8 +101,6 @@ const GMApp = ({ activeSession, onSessionChange, onlineCharacters, characterUpda
             {/* ── TOASTS ──────────────────────────────────────────────────── */}
             <ToastNotifications
                 sessionId={activeSession?.id ?? null}
-                renderDiceToast={(toast) => <FabulaHistoryEntry roll={toast} />}
-                renderAllRollTypes
             />
 
             {/* ── MODALES GLOBALES ────────────────────────────────────────── */}
