@@ -845,6 +845,15 @@ select:disabled {
   .vtt-audio-text-btn { display: inline-flex; align-items: center; gap: 0.35rem; height: 2rem; padding: 0 0.65rem; border-radius: 0.5rem; font-size: 0.85rem; color: var(--color-text-muted); }
   .vtt-audio-text-btn:hover { color: var(--color-text); background: var(--color-surface-alt); }
   .vtt-audio-text-btn.is-primary { color: var(--color-primary); font-weight: 600; }
+  /* Boutons préréglés (spec_audio.md §12.6) : déclencheur du menu, coche de la dernière scène, fenêtre de gestion */
+  .vtt-audio-scenes-btn { flex-shrink: 0; height: 2rem; }
+  .vtt-audio-menu-check { display: inline-block; width: 1em; flex-shrink: 0; color: var(--color-primary); }
+  .vtt-audio-scenes { display: flex; flex-direction: column; gap: 0.4rem; margin: 0; padding: 0; list-style: none; }
+  .vtt-audio-scene-row { display: flex; align-items: center; gap: 0.6rem; flex-wrap: wrap; }
+  .vtt-audio-scene-row[data-dragging] { opacity: 0.5; }
+  .vtt-audio-scene-grip { cursor: grab; color: var(--color-text-muted); letter-spacing: -0.15em; }
+  .vtt-audio-scene-name { flex: 1 1 10rem; min-width: 0; display: flex; flex-direction: column; }
+  .vtt-audio-scene-actions { display: flex; flex-wrap: wrap; gap: 0.35rem; }
   .vtt-audio-add-form { display: flex; flex: 1; gap: 0.35rem; align-items: center; }
   .vtt-audio-add-form input { flex: 1; min-width: 0; height: 2.1rem; }
   .vtt-audio-foot-message { font-size: 0.78rem; color: var(--color-text-muted); }

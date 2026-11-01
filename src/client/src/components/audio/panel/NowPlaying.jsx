@@ -10,8 +10,9 @@ import { MenuButton, MenuItem, MenuSeparator } from './RowMenu.jsx';
 import { expectedPosition } from '../../../tools/audioSync.js';
 import { MODE_LABELS, SLOT_LABEL, LAYER_SLOTS, nextMode } from '../../../tools/audioSlots.js';
 import { formatTime, findPlaylist } from '../../../tools/audioLibrary.js';
+import AudioScenesMenu from '../AudioScenesMenu.jsx';
 
-export const NowPlaying = ({ audio, library, onGoto }) => {
+export const NowPlaying = ({ audio, library, scenes, onGoto }) => {
     const { getServerNow, sendCommand } = audio;
     const [now, setNow] = useState(() => getServerNow());
     const [seekValue, setSeekValue] = useState(null);   // position en cours de glissement
@@ -82,6 +83,9 @@ export const NowPlaying = ({ audio, library, onGoto }) => {
                 ) : (
                     <p className="vtt-audio-now-empty">Aucune musique en cours. Cliquez sur ▶ devant un titre ou une playlist.</p>
                 )}
+                {/* Boutons préréglés (§12.5) : un petit bouton, tout le reste est dans le menu */}
+                <AudioScenesMenu scenes={scenes} audio={audio}
+                                 trigger={props => <button type="button" className="vtt-audio-text-btn vtt-audio-scenes-btn" {...props}>Scènes ▾</button>} />
                 {sessionMenu}
             </div>
 

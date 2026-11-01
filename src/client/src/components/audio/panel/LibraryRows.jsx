@@ -92,6 +92,8 @@ export const TrackRow = ({ track, slot = 'music', path, playingSlot, audioState,
                         <>
                             <MenuItem onSelect={() => { close(); setEditing({ kind: 'track', id: track.id }); }}>Renommer…</MenuItem>
                             <GainItem track={track} onWrite={onWrite} />
+                            <MenuItem disabled={!ctx.canCreateButton} hint={ctx.canCreateButton ? undefined : '5 au plus'}
+                                      onSelect={() => { close(); ctx.onCreateButton({ kind: 'track', trackId: track.id, name: track.title, slot }); }}>Créer un bouton…</MenuItem>
                             <MenuSeparator />
                             <MenuItem onSelect={() => { close(); onPick({ kind: 'playlist', title: 'Copier la vidéo vers…', onPick: id => onWrite('POST', `/tracks/${track.id}/copy`, { playlistId: id }) }); }}>Copier vers une playlist…</MenuItem>
                             <MenuItem onSelect={() => { close(); onPick({ kind: 'playlist', title: 'Déplacer la vidéo vers…', onPick: id => onWrite('PUT', `/tracks/${track.id}`, { playlistId: id }) }); }}>Déplacer vers une playlist…</MenuItem>
@@ -141,6 +143,8 @@ export const PlaylistRow = ({ playlist, audioState, editing, dragProps, ctx }) =
                     {(close) => (
                         <>
                             <MenuItem onSelect={() => { close(); setEditing({ kind: 'playlist', id: playlist.id }); }}>Renommer…</MenuItem>
+                            <MenuItem disabled={empty || !ctx.canCreateButton} hint={ctx.canCreateButton ? undefined : '5 au plus'}
+                                      onSelect={() => { close(); ctx.onCreateButton({ kind: 'playlist', playlistId: playlist.id, name: playlist.name, slot }); }}>Créer un bouton…</MenuItem>
                             <MenuItem onSelect={() => { close(); onPick({ kind: 'collection', title: 'Copier la playlist vers…', onPick: id => onWrite('POST', `/playlists/${playlist.id}/copy`, { collectionId: id }) }); }}>Copier vers une collection…</MenuItem>
                             <MenuItem onSelect={() => { close(); onPick({ kind: 'collection', title: 'Déplacer la playlist vers…', onPick: id => onWrite('PUT', `/playlists/${playlist.id}`, { collectionId: id }) }); }}>Déplacer vers une collection…</MenuItem>
                             <MenuSeparator />

@@ -58,9 +58,13 @@ export const RowMenu = ({ anchor, onClose, children }) => {
     );
 };
 
-export const MenuItem = ({ children, onSelect, danger, hint }) => (
+/** Élément de menu ; `checked` (booléen) en fait un choix coché ou non, `disabled` le grise. */
+export const MenuItem = ({ children, onSelect, danger, hint, disabled, checked, title }) => (
     <li role="none">
-        <button type="button" role="menuitem" className={`vtt-menu-item${danger ? ' is-danger' : ''}`} onClick={onSelect}>
+        <button type="button" role={checked === undefined ? 'menuitem' : 'menuitemradio'} aria-checked={checked}
+                className={`vtt-menu-item${danger ? ' is-danger' : ''}${checked ? ' is-checked' : ''}`}
+                onClick={onSelect} disabled={disabled} title={title}>
+            {checked !== undefined && <span className="vtt-audio-menu-check" aria-hidden="true">{checked ? '✓' : ''}</span>}
             {children}{hint && <span className="vtt-audio-menu-hint">{hint}</span>}
         </button>
     </li>

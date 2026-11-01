@@ -1,7 +1,7 @@
 # Spec — Lecteur audio synchronisé (façon Watch2Gether)
 
 > Version 0.4 — Phase 2 : spécification technique  
-> Statut : **Prototype de synchronisation validé à plusieurs (§10.1). Cadrage des nouvelles idées terminé, décisions au §10.8 (elles priment sur §6 et §9). Spécification technique v2 (§11) validée (§11.11). Implémentation du lot 1 : étapes 1 à 4 faites (base de module, serveur, lecteurs, panneau MJ) et élément d'activation posé dans Vikings ; point de contrôle du MJ en dev, puis habillage Vikings**  
+> Statut : **Lots 1 (structure, §11) et 3 (retrait du prototype, §11.19) en place ; lot 2 (boutons préréglés, §12) implémenté le 2026-11-01, vérification du MJ en dev attendue.** Décisions de cadrage au §10.8 (elles priment sur §6 et §9) et au §12.5 pour les boutons.  
 > Dernière mise à jour : octobre 2026
 
 ---
@@ -819,3 +819,112 @@ Les chemins des §11.7 et §11.9 sont remplacés par ceux-ci. Principe : la briq
 - Classes renommées dans les 8 `theme.css`, même rendu : `vtt-audio-toggle` → `vtt-action-btn`, `vtt-audio-buttons` → `vtt-actions-bar` ; variables de position `--vtt-audio-bottom` / `--vtt-audio-right` → `--vtt-actions-bottom` / `--vtt-actions-right`.
 - **Élément d'activation posé dans les 8 slugs** (Noctis exclu) : Vikings, Cyberpunk, Zone Blanche et Achtung en bas de la colonne des personnages, Fabula dans l'en-tête de cette colonne, Delta Green sous l'en-tête de la colonne des agents, Dune et Tecumah au bout de la barre de sélection des personnages ; chacun avec les classes de bouton de son slug.
 - `/new-slug` et `guide_new_slug_jdr.md` : l'élément d'activation fait partie de la création d'un slug (phase 2 : son emplacement ; phase 3 et checklist : sa pose), sans habillage propre.
+
+## 12. Lot 2 : boutons préréglés — phase 1 (2026-11-01)
+
+### 12.1 Déjà décidé
+
+- Par **table**, **5 boutons au plus**, plus **STOP** (tout arrêter) toujours présent, hors du compte (§10.8, T-3).
+- Deux modes (S-10, §11.6) : **scène** (fixe le contenu de chaque piste ; les pistes non citées s'éteignent) et **ciblé** (change une piste, les autres continuent). Un morceau précis ou une playlist, le hasard faisant passer la piste en mode aléatoire ; un bouton peut lancer un effet.
+- Contenu **de la table seulement** ; un bouton dont le contenu a été supprimé est signalé en erreur et ne fait rien.
+- Une **barre à part, repliable, distincte du panneau de gestion** : le MJ lance « Combat » sans ouvrir le panneau (S-12).
+- Noms des boutons **jamais montrés aux joueurs** (R-13). Coupure sèche, fondu en évolution (S-14).
+- Table `audio_buttons` (`label`, `position`, `mode`, `actions` JSON) déjà créée dans `audio.db` : pas de migration (§11.1).
+
+### 12.2 Ce qui a changé depuis
+
+- **La zone d'actions existe** (`spec_ui_actions.md`) : une action peut avoir un **volet** qui s'ouvre au-dessus de la zone (c'est le cas des réglages du son). La « barre à part, repliable » peut donc être un volet de la zone plutôt qu'un nouvel élément flottant.
+- Le panneau réduit a déjà un **■ tout arrêter** dans sa barre.
+
+### 12.3 Pistes
+
+**Où vivent les boutons**
+
+| | A. Volet d'une action de la zone | B. Barre flottante à part (`FloatingPanel` sans cadre ou bande dédiée) | C. Dans le panneau de la musique |
+|---|---|---|---|
+| Accès | Une action « Scènes » dans la zone ; son volet montre les boutons et STOP ; il reste ouvert tant qu'on ne le referme pas (mémorisé par slug) | Toujours visible, déplaçable | Il faut ouvrir le panneau |
+| Mécanique | Celle de la zone, déjà là | Une fenêtre de plus à placer à l'écran | Existante |
+| Conforme à S-12 | Oui (à part, repliable) | Oui | Non (c'est le panneau de gestion) |
+
+**Comment le MJ crée un bouton** — plutôt qu'un formulaire qui fait choisir piste par piste, partir de ce qu'il fait déjà dans le panneau :
+- **Scène = « Enregistrer ce qui joue »** : le MJ monte son mélange dans le panneau (musique, ambiances, effet), puis l'enregistre comme bouton, sous un nom. Le bouton relancera exactement ce mélange.
+- **Ciblé = depuis une ligne de la bibliothèque** : le menu ⋯ d'un titre ou d'une playlist propose « Créer un bouton… », avec la piste visée (musique, ambiance 1 ou 2, effet) et, pour une playlist, « au hasard ».
+- **Gestion** dans le volet, en mode « modifier » : renommer, réordonner, supprimer, et pour une scène « Remplacer par ce qui joue ».
+
+**Ce qu'une scène enregistre de chaque piste** : la playlist, le morceau en cours et le mode (une playlist en lecture enchaînée repart de ce morceau, en mode aléatoire elle repart au hasard ; un morceau en boucle reste ce morceau). Le JSON du §11.6 gagne donc le mode : aucune donnée n'existe encore, rien à reprendre.
+
+### 12.4 Questions
+
+| # | Question | Proposition | Réponse MJ |
+|---|---|---|---|
+| U-1 | Où vivent les boutons (§12.3) ? | **A** : une action « Scènes » de la zone (MJ seulement), dont le volet porte les boutons et STOP ; le volet reste ouvert jusqu'à ce qu'on le referme, mémorisé par slug | Pas dans la zone d'actions (déjà 3 boutons côté MJ). Là où le slug le veut (onglet Session = fiche du joueur, la vue la plus utilisée) et dans le panneau de la musique, y compris sa barre réduite. Voir §12.5 |
+| U-2 | Création d'une scène : « Enregistrer ce qui joue » plutôt qu'un formulaire piste par piste ? | Oui ; un formulaire pourra venir plus tard si le besoin apparaît | Oui, rester simple, pas de nouveau formulaire |
+| U-3 | Création d'un bouton ciblé : depuis le menu ⋯ d'un titre ou d'une playlist (piste visée, « au hasard » pour une playlist) ? | Oui | Oui |
+| U-4 | Ce qu'une scène enregistre d'une piste : playlist, morceau en cours et mode (§12.3) ? Ou seulement la playlist, relancée depuis son début ? | Playlist, morceau et mode : le bouton refait exactement ce qu'on entendait | Oui (proposition) |
+| U-5 | Un bouton scène qui ne cite pas une piste : il l'arrête (décidé, S-10). Un bouton ciblé sur une piste qui joue déjà autre chose : il la remplace sans rien demander ? | Oui, coupure sèche (S-14) | Oui (proposition) |
+| U-6 | Musique désactivée sur la table : les boutons sont-ils visibles ? | Le volet reste accessible (le MJ prépare ses boutons), boutons grisés avec « Musique désactivée » et un lien pour l'activer | Bascule : musique activée → accès au menu des scènes (§12.5) |
+| U-7 | Bouton en erreur (contenu supprimé) : comment le signaler ? | Grisé avec un pictogramme d'alerte et une infobulle « Contenu supprimé » ; un clic ne fait rien ; « Remplacer par ce qui joue » ou supprimer le répare | Oui (proposition) |
+| U-8 | Retour visuel : le bouton de la dernière scène lancée reste-t-il marqué tant qu'on ne change rien ? | Oui, marqué « en cours » jusqu'à une autre commande ; aucune information envoyée aux joueurs | Oui (proposition) |
+| U-9 | Habillage du volet | Comme les réglages du son : un `.vtt-menu` habillé par le slug, boutons en `vtt-btn`, STOP en `vtt-btn-danger` ; rien de propre au slug | Oui (proposition) |
+| U-10 | Icône de l'action « Scènes » | Icône au trait de la plateforme, remplaçable par `actionIcons.scenes` dans `config.jsx` (comme les autres) | Sans objet : pas d'action dans la zone |
+
+### 12.5 Décisions (2026-11-01)
+
+- **Un menu « Scènes », une seule brique, trois endroits** ; **pas dans la zone d'actions** :
+  - dans le **panneau ouvert**, un petit bouton texte « Scènes ▾ » sur la ligne de « ce qui joue », à côté du menu ⋯ de la session (même gabarit que ≋ et ⋯) : **aucune rangée de boutons**, le panneau reste sobre (« on teste, on voit à l'usage ») ;
+  - dans la **barre du panneau réduit**, à côté de ■ ;
+  - dans l'**onglet Session** des 8 slugs (Noctis exclu), par une **bascule** qui remplace l'élément d'activation : musique désactivée → « Activer la musique » ; activée → un bouton « Musique ▾ » qui ouvre le menu des scènes, terminé par « Désactiver la musique ».
+- **Contenu du menu**, le même partout : les boutons (5 au plus), la dernière scène lancée cochée, ceux en erreur grisés ; STOP ; « Enregistrer ce qui joue… » ; « Modifier les scènes… » (petite fenêtre à part : renommer, réordonner, supprimer, remplacer par ce qui joue). La gestion n'entre pas dans le panneau.
+- **Création** : scène = « Enregistrer ce qui joue » ; ciblé = « Créer un bouton… » dans le menu ⋯ d'un titre ou d'une playlist. Pas de formulaire piste par piste.
+- **Limite** : 5 boutons par table, plus STOP.
+- **Hors lot** : raccourcis clavier (évolution) ; réglages du son du MJ déplacés dans le panneau pour ne lui laisser qu'un bouton audio dans la zone (idée de prochain chantier, pas une décision).
+
+### 12.6 Spécification technique (phase 2)
+
+**Données** — `audio_buttons` existe (§11.1), aucune migration. `mode` : `scene` ou `target`. `actions` (JSON), précisé par rapport au §11.6 (table vide, rien à reprendre) :
+- `scene` : `{ slots: { music: { trackId, playlistId, mode } | null, ambience1: …, ambience2: …, effect: … } }` ;
+- `target` : `{ slot, trackId }` ou `{ slot, playlistId, shuffle }`.
+
+**Serveur** (`routes/audio.js`, sous `/sessions/:sid/`, MJ seulement, réponse = liste des boutons à jour) :
+
+| Route | Rôle |
+|---|---|
+| `GET /buttons` | Boutons de la table, dans l'ordre, chacun avec `broken` (contenu absent de la bibliothèque de la table) |
+| `POST /buttons` `{ label, mode: 'scene' }` | Enregistre **ce qui joue**, lu dans l'état du serveur : chaque piste avec un morceau (en lecture ou en pause) → `{ trackId, playlistId, mode }`, sinon `null`. Refus si rien ne joue (400) |
+| `POST /buttons` `{ label, mode: 'target', slot, trackId \| playlistId, shuffle? }` | Bouton ciblé ; vérifie que le contenu est à la table et que la piste l'accepte |
+| `PUT /buttons/order` `{ ids }` | Réordonner (déclarée avant `/buttons/:id`) |
+| `PUT /buttons/:id` `{ label?, capture? }` | Renommer ; `capture: true` remplace une scène par ce qui joue |
+| `DELETE /buttons/:id` | Supprimer |
+| `POST /buttons/:id/run` | Lancer : 409 si la musique est désactivée, 422 si le bouton est en erreur ; une seule diffusion `audio-state` à la fin |
+
+- **5 au plus** : `POST` renvoie 409 au-delà.
+- **Pistes acceptées** par un bouton ciblé : un titre sur n'importe quelle piste ; une playlist sur la musique (enchaînée ou au hasard) ou une ambiance (enchaînée), pas sur l'effet. « Au hasard » seulement sur la musique (les ambiances n'ont pas ce mode).
+- **Lancer une scène** : pour chaque piste citée, mode rétabli puis morceau lancé depuis le début (en mode `shuffle`, un morceau au hasard de la playlist) ; pistes non citées arrêtées. **Bouton ciblé** : seule sa piste change (mode `shuffle` ou `playlist` pour une playlist), les autres continuent ; coupure sèche (S-14).
+- **Dernière scène lancée** : `state.lastButtonId` dans l'état en mémoire (diffusé avec `audio-state` : un identifiant, jamais un nom). Remis à `null` par toute commande qui change le contenu (`play`, `playPlaylist`, `next`, `previous`, `stop`, `stopAll`, un autre bouton) ; gardé par `pause`, `resume`, `seek`, `mode`, les remontées du lecteur et l'enchaînement automatique.
+- **Synchronisation** entre le panneau et l'onglet Session (et les autres onglets du MJ) : après chaque modification, `audio-buttons-changed { system, sessionId }` vers la room, **sans les noms** ; les clients MJ relisent la liste. Les joueurs ne reçoivent ni la liste ni les noms.
+- **Contenu supprimé** : rien n'est effacé en cascade ; le bouton passe `broken` à la lecture suivante de la liste.
+
+**Client**
+
+| Fichier | Rôle |
+|---|---|
+| `hooks/useAudioButtons.js` (nouveau) | Liste des boutons d'une table (MJ), relue sur `audio-buttons-changed` ; `run`, `saveScene(label)`, `createTarget(…)`, `rename`, `capture`, `reorder`, `remove` |
+| `components/audio/AudioScenesMenu.jsx` (nouveau) | Le menu (via `RowMenu` : `.vtt-menu`, `HostedModal`, habillé par le slug) ; bouton déclencheur fourni par l'appelant (texte « Scènes ▾ », icône dans la barre réduite, « Musique ▾ » dans l'onglet Session) |
+| `components/audio/panel/ScenesDialog.jsx` (nouveau) | « Modifier les scènes… » : liste, renommage, ordre (glisser, `useDragOrder`), suppression (confirmation), « Remplacer par ce qui joue » ; nom demandé à l'enregistrement |
+| `components/audio/AudioSessionToggle.jsx` | Devient la **bascule** : désactivée → « Activer la musique » ; activée → « Musique ▾ » qui ouvre `AudioScenesMenu`, terminé par « Désactiver la musique ». **Même contrat** (`sessionId`, `label`, `icon`, `className`) : les 8 `TabSession` n'ont rien à changer |
+| `components/audio/panel/NowPlaying.jsx` | « Scènes ▾ » à côté du menu ⋯ de la session |
+| `components/audio/AudioGMPanel.jsx` | « Scènes » dans les actions de la barre réduite, à côté de ■ |
+| `components/audio/panel/LibraryRows.jsx` | « Créer un bouton… » dans le menu ⋯ d'un titre et d'une playlist (choix de la piste, « au hasard » pour la musique) |
+
+- **États du menu** : coche sur `lastButtonId` ; bouton `broken` grisé avec ⚠ et infobulle « Contenu supprimé » ; musique désactivée (panneau) : boutons grisés et « Musique désactivée » ; « Enregistrer ce qui joue… » grisé si rien ne joue ou si 5 boutons existent déjà ; « Créer un bouton… » grisé à 5 avec « 5 boutons au plus ».
+- **Habillage** : rien de propre au slug, le menu et la fenêtre reprennent `.vtt-menu`, `.vtt-modal-*` et `.vtt-btn*` déjà habillés ; STOP en `is-danger`.
+- **Vérification** : script de fumée côté serveur (création, limite, lancement d'une scène et d'un bouton ciblé, `lastButtonId`, bouton en erreur), comme pour le lot 1 ; pas de test Vitest (aucune fonction pure côté client).
+
+**Documentation** : ce §12 ; `/new-slug` (l'élément d'activation devient la bascule « Musique ▾ ») ; `spec_browser_storage.md` inchangé (rien de mémorisé).
+
+### 12.7 Contenu supprimé : les boutons suivent (2026-11-01, retour du MJ, option B)
+
+- Remplace « signalé en erreur » (§10.8, §12.1) : à la suppression d'un titre, d'une playlist ou d'une collection, le serveur fait le ménage des boutons de la table (`pruneButtons`), puis envoie `audio-buttons-changed`.
+- **Bouton ciblé** dont le titre ou la playlist a disparu : **supprimé**.
+- **Scène** : la piste dont le contenu a disparu est **retirée** (elle sera arrêtée au lancement, comme une piste vide) ; la scène n'est supprimée que s'il ne lui reste aucune piste. Dernière scène lancée effacée si son bouton disparaît.
+- Seul cas restant « en erreur » : un bouton « au hasard » dont la playlist existe mais a été vidée ; grisé dans le menu, il ne fait rien (422).

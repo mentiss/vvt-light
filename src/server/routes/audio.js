@@ -285,7 +285,8 @@ const emptySlot = (slot, mode = SLOTS[slot].mode) => ({
 
 function getState(ctx) {
     if (!sharedState.audioStates.has(ctx.key)) {
-        sharedState.audioStates.set(ctx.key, { slots: Object.fromEntries(Object.keys(SLOTS).map(s => [s, emptySlot(s)])) });
+        // lastButtonId : dernière scène lancée (lot 2, §12.6), un identifiant, jamais un nom
+        sharedState.audioStates.set(ctx.key, { slots: Object.fromEntries(Object.keys(SLOTS).map(s => [s, emptySlot(s)])), lastButtonId: null });
     }
     return sharedState.audioStates.get(ctx.key);
 }
@@ -479,6 +480,138 @@ function stopAll(ctx) {
     for (const slot of Object.keys(SLOTS)) stopSlot(ctx, slot);
 }
 
+// ─── Boutons préréglés (lot 2, spec_audio.md §12.6) ─────────────────────────
+
+const MAX_BUTTONS = 5;
+const LABEL_MAX = 40;
+const OWN_BUTTON = 'SELECT * FROM audio_buttons WHERE id = ? AND slug = ? AND session_id = ?';
+// Commandes qui changent le contenu : la dernière scène lancée n'est plus en cours
+const CLEARS_LAST_BUTTON = new Set(['play', 'playPlaylist', 'next', 'previous', 'stop', 'stopAll']);
+
+const parseActions = (row) => {
+    try { return JSON.parse(row.actions); } catch { return null; }
+};
+
+/** Une entrée (piste d'une scène, ou bouton ciblé) dont le contenu est encore à la table ? */
+function entryAvailable(ctx, entry) {
+    if (entry.playlistId && (entry.mode === 'shuffle' || entry.shuffle || !entry.trackId)) {
+        return !!own(ctx, OWN_PLAYLIST, entry.playlistId) && playlistIds(ctx, entry.playlistId).length > 0;
+    }
+    return !!own(ctx, OWN_TRACK, entry.trackId);
+}
+
+/** Bouton en erreur : contenu supprimé de la bibliothèque de la table. */
+function buttonBroken(ctx, row) {
+    const actions = parseActions(row);
+    if (!actions) return true;
+    if (row.mode === 'scene') return Object.values(actions.slots ?? {}).some(entry => entry && !entryAvailable(ctx, entry));
+    return !entryAvailable(ctx, actions);
+}
+
+/** Boutons de la table, dans l'ordre (réponse de toutes les routes de boutons). */
+function loadButtons(ctx) {
+    return ctx.db.prepare('SELECT * FROM audio_buttons WHERE slug = ? AND session_id = ? ORDER BY position, id')
+        .all(ctx.slug, ctx.sessionId)
+        .map(row => ({ id: row.id, label: row.label, mode: row.mode, actions: parseActions(row), broken: buttonBroken(ctx, row) }));
+}
+
+/** Ce qui joue (en lecture ou en pause), pour une scène ; null si rien. */
+function captureScene(ctx) {
+    const slots = {};
+    let any = false;
+    for (const [slot, state] of Object.entries(getState(ctx).slots)) {
+        slots[slot] = state.trackId ? { trackId: state.trackId, playlistId: state.playlistId, mode: state.mode } : null;
+        any = any || !!state.trackId;
+    }
+    return any ? { slots } : null;
+}
+
+/** Actions d'un bouton ciblé, vérifiées (§12.6) ; { error } si refusé. */
+function targetActions(ctx, { slot, trackId, playlistId, shuffle }) {
+    if (!SLOTS[slot]) return { error: `Unknown slot: ${slot}` };
+    if (trackId) {
+        return own(ctx, OWN_TRACK, trackId) ? { slot, trackId: Number(trackId) } : { error: 'Track not found in this table library' };
+    }
+    if (!own(ctx, OWN_PLAYLIST, playlistId)) return { error: 'Playlist not found in this table library' };
+    if (slot === 'effect') return { error: 'A playlist cannot target the effect slot' };
+    if (shuffle && slot !== 'music') return { error: 'Shuffle is only available on the music slot' };
+    return { slot, playlistId: Number(playlistId), shuffle: !!shuffle };
+}
+
+/** Lance une piste d'après une entrée (mode rétabli, depuis le début ; au hasard en mode shuffle). */
+function runEntry(ctx, slot, entry) {
+    const mode = entry.shuffle ? 'shuffle' : entry.mode ?? (entry.playlistId && !entry.trackId ? 'playlist' : null);
+    if (mode && SLOTS[slot].modes.includes(mode)) getState(ctx).slots[slot].mode = mode;
+    const fromPlaylist = entry.playlistId && (mode === 'shuffle' || !entry.trackId);
+    const ok = fromPlaylist ? !SLOT_COMMANDS.playPlaylist(ctx, slot, { playlistId: entry.playlistId }) : playTrack(ctx, slot, entry.trackId);
+    if (!ok) stopSlot(ctx, slot);
+}
+
+/** Exécute un bouton : scène (toutes les pistes) ou ciblé (sa piste seulement). */
+function runButton(ctx, row) {
+    const actions = parseActions(row);
+    if (row.mode === 'scene') {
+        for (const slot of Object.keys(SLOTS)) {
+            const entry = actions.slots?.[slot];
+            if (entry) runEntry(ctx, slot, entry);
+            else stopSlot(ctx, slot);
+        }
+    } else {
+        runEntry(ctx, actions.slot, actions);
+    }
+    getState(ctx).lastButtonId = row.id;
+}
+
+/** Le contenu visé par une entrée existe-t-il encore à la table (sans regarder si une playlist est vide) ? */
+function entryExists(ctx, entry) {
+    if (!entry) return false;
+    const usesPlaylist = entry.playlistId && (entry.mode === 'shuffle' || entry.shuffle || !entry.trackId);
+    return usesPlaylist ? !!own(ctx, OWN_PLAYLIST, entry.playlistId) : !!own(ctx, OWN_TRACK, entry.trackId);
+}
+
+/**
+ * Ménage après une suppression de titre, de playlist ou de collection (§12.7) :
+ * bouton ciblé dont le contenu a disparu → supprimé ; scène → la piste disparue est
+ * retirée (elle sera arrêtée au lancement), la scène supprimée s'il ne lui reste rien.
+ * Signale le changement aux clients du MJ s'il y en a un.
+ */
+function pruneButtons(ctx) {
+    const rows = ctx.db.prepare('SELECT * FROM audio_buttons WHERE slug = ? AND session_id = ?').all(ctx.slug, ctx.sessionId);
+    const remove = ctx.db.prepare('DELETE FROM audio_buttons WHERE id = ?');
+    const update = ctx.db.prepare('UPDATE audio_buttons SET actions = ? WHERE id = ?');
+    let changed = false;
+
+    ctx.db.transaction(() => {
+        for (const row of rows) {
+            const actions = parseActions(row);
+            if (!actions) continue;
+            if (row.mode === 'target') {
+                if (!entryExists(ctx, actions)) { remove.run(row.id); changed = true; }
+                continue;
+            }
+            const slots = { ...actions.slots };
+            let dropped = false;
+            for (const [slot, entry] of Object.entries(slots)) {
+                if (entry && !entryExists(ctx, entry)) { slots[slot] = null; dropped = true; }
+            }
+            if (!dropped) continue;
+            if (Object.values(slots).some(Boolean)) update.run(JSON.stringify({ ...actions, slots }), row.id);
+            else remove.run(row.id);
+            changed = true;
+        }
+    })();
+
+    if (!changed) return;
+    const state = getState(ctx);
+    if (state.lastButtonId && !ctx.db.prepare(OWN_BUTTON).get(state.lastButtonId, ctx.slug, ctx.sessionId)) state.lastButtonId = null;
+    notifyButtons(ctx);
+}
+
+/** Les boutons ont changé : les clients du MJ relisent la liste (les noms ne partent pas dans la room). */
+function notifyButtons(ctx) {
+    ctx.io?.to(`${ctx.slug}_session_${ctx.sessionId}`).emit('audio-buttons-changed', { system: ctx.slug, sessionId: ctx.sessionId });
+}
+
 // ─── Table de la requête ────────────────────────────────────────────────────
 
 // Toutes les routes passent par /sessions/:sid : la table fixe le propriétaire
@@ -563,6 +696,8 @@ router.post('/sessions/:sid/command', ...gm, (req, res) => {
         } else {
             return res.status(400).json({ error: `Unknown action: ${action}` });
         }
+        // Le contenu a changé : la dernière scène lancée n'est plus « en cours » (§12.6)
+        if (CLEARS_LAST_BUTTON.has(action)) getState(ctx).lastButtonId = null;
 
         // La durée ne change rien pour les clients : pas de diffusion
         if (action !== 'duration') broadcastState(ctx);
@@ -625,6 +760,7 @@ router.put('/sessions/:sid/collections/:id', ...gm, libraryRoute('update collect
 router.delete('/sessions/:sid/collections/:id', ...gm, libraryRoute('delete collection', (ctx, _body, { id }) => {
     if (!own(ctx, OWN_COLLECTION, id)) return notFound('Collection');
     ctx.db.transaction(() => deleteCollections(ctx.db, 'id = ?', [id]))();
+    pruneButtons(ctx);
 }));
 
 // Copie d'une collection (publique ou à moi) dans ma table, en privé (T-1)
@@ -695,6 +831,7 @@ router.delete('/sessions/:sid/playlists/:id', ...gm, libraryRoute('delete playli
         ctx.db.prepare('DELETE FROM audio_tracks WHERE playlist_id = ?').run(id);
         ctx.db.prepare('DELETE FROM audio_playlists WHERE id = ?').run(id);
     })();
+    pruneButtons(ctx);
 }));
 
 // Copie d'une playlist (publique ou à moi) dans une de mes collections (S-3)
@@ -766,6 +903,95 @@ router.post('/sessions/:sid/tracks/:id/copy', ...gm, libraryRoute('copy track', 
 router.delete('/sessions/:sid/tracks/:id', ...gm, libraryRoute('delete track', (ctx, _body, { id }) => {
     if (!own(ctx, OWN_TRACK, id)) return notFound('Track');
     ctx.db.prepare('DELETE FROM audio_tracks WHERE id = ?').run(id);
+    pruneButtons(ctx);
 }));
+
+// ─── Routes : boutons préréglés (MJ, lot 2, §12.6) ──────────────────────────
+
+/** Enveloppe des routes de boutons : erreurs, signal aux clients du MJ, liste à jour en réponse. */
+const buttonsRoute = (label, handler, { write = true } = {}) => async (req, res) => {
+    try {
+        const result = await handler(req.audio, req.body ?? {}, req.params);
+        if (result?.status) return res.status(result.status).json({ error: result.error });
+        if (write) notifyButtons(req.audio);
+        res.status(result?.created ? 201 : 200).json(loadButtons(req.audio));
+    } catch (error) {
+        console.error(`Error (${label}):`, error);
+        res.status(500).json({ error: `Failed to ${label}` });
+    }
+};
+
+const buttonLabel = (label) => (isText(label) ? label.trim().slice(0, LABEL_MAX) : null);
+
+router.get('/sessions/:sid/buttons', ...gm, buttonsRoute('load buttons', () => null, { write: false }));
+
+// Créer : scène (ce qui joue, lu dans l'état du serveur) ou ciblé ; 5 au plus
+router.post('/sessions/:sid/buttons', ...gm, buttonsRoute('create button', (ctx, { label, mode, ...target }) => {
+    const name = buttonLabel(label);
+    if (!name) return invalid('Label required');
+    const count = ctx.db.prepare('SELECT COUNT(*) AS n FROM audio_buttons WHERE slug = ? AND session_id = ?').get(ctx.slug, ctx.sessionId).n;
+    if (count >= MAX_BUTTONS) return { status: 409, error: `${MAX_BUTTONS} buttons at most` };
+
+    let actions;
+    if (mode === 'scene') {
+        actions = captureScene(ctx);
+        if (!actions) return invalid('Nothing is playing');
+    } else if (mode === 'target') {
+        actions = targetActions(ctx, target);
+        if (actions.error) return invalid(actions.error);
+    } else {
+        return invalid(`Unknown mode: ${mode}`);
+    }
+
+    ctx.db.prepare('INSERT INTO audio_buttons (slug, session_id, label, position, mode, actions) VALUES (?, ?, ?, ?, ?, ?)')
+        .run(ctx.slug, ctx.sessionId, name, nextPosition(ctx.db, 'audio_buttons', 'slug = ? AND session_id = ?', [ctx.slug, ctx.sessionId]), mode, JSON.stringify(actions));
+    return { created: true };
+}));
+
+// Avant /buttons/:id
+router.put('/sessions/:sid/buttons/order', ...gm, buttonsRoute('reorder buttons', (ctx, { ids }) => {
+    if (!reorder(ctx.db, 'audio_buttons', ids, 'slug = ? AND session_id = ?', [ctx.slug, ctx.sessionId])) return invalid('ids must be an array');
+}));
+
+// Renommer ; capture : remplacer une scène par ce qui joue
+router.put('/sessions/:sid/buttons/:id', ...gm, buttonsRoute('update button', (ctx, { label, capture }, { id }) => {
+    const row = own(ctx, OWN_BUTTON, id);
+    if (!row) return notFound('Button');
+    if (label !== undefined) {
+        const name = buttonLabel(label);
+        if (!name) return invalid('Label required');
+        ctx.db.prepare('UPDATE audio_buttons SET label = ? WHERE id = ?').run(name, id);
+    }
+    if (capture) {
+        if (row.mode !== 'scene') return invalid('Only a scene can be replaced by what is playing');
+        const actions = captureScene(ctx);
+        if (!actions) return invalid('Nothing is playing');
+        ctx.db.prepare('UPDATE audio_buttons SET actions = ? WHERE id = ?').run(JSON.stringify(actions), id);
+    }
+}));
+
+router.delete('/sessions/:sid/buttons/:id', ...gm, buttonsRoute('delete button', (ctx, _body, { id }) => {
+    if (!own(ctx, OWN_BUTTON, id)) return notFound('Button');
+    ctx.db.prepare('DELETE FROM audio_buttons WHERE id = ?').run(id);
+    if (getState(ctx).lastButtonId === Number(id)) getState(ctx).lastButtonId = null;
+}));
+
+// Lancer un bouton : une seule diffusion à la fin
+router.post('/sessions/:sid/buttons/:id/run', ...gm, (req, res) => {
+    try {
+        const ctx = req.audio;
+        if (!getSettings(ctx).enabled) return res.status(409).json({ error: 'Audio is disabled for this session' });
+        const row = own(ctx, OWN_BUTTON, req.params.id);
+        if (!row) return res.status(404).json({ error: 'Button not found' });
+        if (buttonBroken(ctx, row)) return res.status(422).json({ error: 'Button content was deleted' });
+
+        runButton(ctx, row);
+        broadcastState(ctx);
+        res.json({ ...getSettings(ctx), state: getState(ctx), serverTime: Date.now() });
+    } catch (error) {
+        console.error('Error running audio button:', error);
+        res.status(500).json({ error: 'Failed to run audio button' });
+    }
+});
 
 module.exports = router;

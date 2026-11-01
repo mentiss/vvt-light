@@ -1,17 +1,21 @@
 // src/client/src/components/audio/AudioSessionToggle.jsx
 // ─────────────────────────────────────────────────────────────────────────────
-// Élément prêt à l'emploi (documentations/spec_audio.md Q-31, Q-32, T-2) : active
-// ou désactive la musique de la table, à poser par le slug dans son onglet
-// Session. Un slug qui ne le pose pas n'a pas la musique.
+// Élément prêt à l'emploi (documentations/spec_audio.md Q-31, Q-32, T-2, §12.5), à
+// poser par le slug dans son onglet Session. Un slug qui ne le pose pas n'a pas la
+// musique. C'est une bascule :
+// - musique désactivée : « Activer la musique » ;
+// - activée : « Musique ▾ », qui ouvre le menu des scènes (AudioScenesMenu : boutons
+//   préréglés, STOP, enregistrer, modifier), terminé par « Désactiver la musique ».
 // Personnalisable comme les HamburgerMenuItemXXX : label, icon, className.
 //
 //   <AudioSessionToggle sessionId={activeSession.id} className="vk-btn vk-btn-sm" />
 // ─────────────────────────────────────────────────────────────────────────────
 
-import React, { useEffect, useRef, useState } from 'react';
-import { useSocket } from '../../context/SocketContext.jsx';
-import { useFetch } from '../../hooks/useFetch.js';
-import { getSystemFromPath } from '../../hooks/useSystem.js';
+import React, { useState } from 'react';
+import { useAudioSession } from '../../hooks/useAudioSession.js';
+import { useAudioButtons } from '../../hooks/useAudioButtons.js';
+import AudioScenesMenu from './AudioScenesMenu.jsx';
+import { MenuItem, MenuSeparator } from './panel/RowMenu.jsx';
 
 const DefaultIcon = () => (
     <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
@@ -27,55 +31,48 @@ const DefaultIcon = () => (
  * @param {string} [props.className]   classes du bouton (habillage du slug)
  */
 const AudioSessionToggle = ({ sessionId, label, icon, className = 'vtt-btn vtt-btn-sm' }) => {
-    const socket = useSocket();
-    const fetchWithAuth = useFetch();
-    const fetchRef = useRef(fetchWithAuth);
-    useEffect(() => { fetchRef.current = fetchWithAuth; });
-
-    const [enabled, setEnabled] = useState(null);   // null : pas encore chargé
+    const audio = useAudioSession(sessionId ?? null);
+    const scenes = useAudioButtons(audio.enabled ? sessionId : null);
     const [busy, setBusy] = useState(false);
+    const shownIcon = icon === undefined ? <DefaultIcon /> : icon;
 
-    useEffect(() => {
-        if (!sessionId) return undefined;
-        let cancelled = false;
-        fetchRef.current(`/api/audio/sessions/${sessionId}`)
-            .then(r => (r.ok ? r.json() : null))
-            .then(data => { if (data && !cancelled) setEnabled(!!data.enabled); })
-            .catch(err => console.error('[AudioSessionToggle] Load failed:', err));
-        return () => { cancelled = true; };
-    }, [sessionId]);
-
-    // Activation changée ailleurs (autre onglet du MJ)
-    useEffect(() => {
-        if (!socket || !sessionId) return undefined;
-        const slug = getSystemFromPath();
-        const onEnabled = (data) => {
-            if (data?.system === slug && Number(data.sessionId) === Number(sessionId)) setEnabled(!!data.enabled);
-        };
-        socket.on('audio-enabled', onEnabled);
-        return () => socket.off('audio-enabled', onEnabled);
-    }, [socket, sessionId]);
-
-    const toggle = async () => {
+    const setEnabled = async (enabled) => {
         setBusy(true);
-        try {
-            const res = await fetchRef.current(`/api/audio/sessions/${sessionId}/enabled`, { method: 'PUT', body: JSON.stringify({ enabled: !enabled }) });
-            if (res.ok) setEnabled(!!(await res.json()).enabled);
-        } catch (err) {
-            console.error('[AudioSessionToggle] Toggle failed:', err);
-        } finally {
-            setBusy(false);
-        }
+        await audio.setEnabled(enabled);
+        setBusy(false);
     };
 
-    const text = label ? label(!!enabled) : (enabled ? 'Musique activée' : 'Activer la musique');
+    if (!audio.enabled) {
+        return (
+            <button type="button" className={`vtt-audio-session-toggle ${className}`.trim()}
+                    onClick={() => setEnabled(true)} disabled={!sessionId || !audio.loaded || busy} aria-pressed={false}
+                    title="Activer la musique pour cette table">
+                {shownIcon}
+                {label ? label(false) : 'Activer la musique'}
+            </button>
+        );
+    }
+
     return (
-        <button type="button" className={`vtt-audio-session-toggle ${className}${enabled ? ' is-active' : ''}`.trim()}
-                onClick={toggle} disabled={!sessionId || enabled === null || busy} aria-pressed={!!enabled}
-                title={enabled ? 'Désactiver la musique de la table (arrête la lecture chez tous)' : 'Activer la musique pour cette table'}>
-            {icon === undefined ? <DefaultIcon /> : icon}
-            {text}
-        </button>
+        <AudioScenesMenu
+            scenes={scenes}
+            audio={audio}
+            trigger={props => (
+                <button type="button" className={`vtt-audio-session-toggle ${className} is-active`.trim()} disabled={busy}
+                        title="Scènes et musique de la table" {...props}>
+                    {shownIcon}
+                    {label ? label(true) : 'Musique'}
+                    <span aria-hidden="true">▾</span>
+                </button>
+            )}
+            extraItems={close => (
+                <>
+                    <MenuSeparator />
+                    <MenuItem danger onSelect={() => { close(); setEnabled(false); }}
+                              hint="arrête la lecture chez tous">Désactiver la musique</MenuItem>
+                </>
+            )}
+        />
     );
 };
 

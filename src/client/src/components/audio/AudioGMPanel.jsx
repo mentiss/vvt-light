@@ -21,6 +21,9 @@ import { HostedModal } from '../ui/ModalHost.jsx';
 import FloatingPanel from '../ui/FloatingPanel.jsx';
 import useConfirm from '../../hooks/useConfirm.jsx';
 import { useAudioLibrary } from '../../hooks/useAudioLibrary.js';
+import { useAudioButtons, MAX_AUDIO_BUTTONS } from '../../hooks/useAudioButtons.js';
+import AudioScenesMenu from './AudioScenesMenu.jsx';
+import { TargetButtonDialog } from './panel/ScenesDialog.jsx';
 import { usePersistedState } from '../../hooks/usePersistedState.js';
 import { getSystemFromPath } from '../../hooks/useSystem.js';
 import { parseYouTubeLink } from '../../tools/youtubeApi.js';
@@ -55,6 +58,9 @@ const AudioGMPanel = ({ sessionId, audio, onClose, focusOnOpen = true }) => {
     const [picker, setPicker] = useState(null);         // { kind, title, onPick }
     const [catalogOpen, setCatalogOpen] = useState(false);
     const lib = useAudioLibrary(sessionId, true);
+    // Boutons préréglés (lot 2, §12.6) : un seul jeu pour le panneau ouvert et sa barre réduite
+    const scenes = useAudioButtons(sessionId);
+    const [buttonTarget, setButtonTarget] = useState(null);   // bouton ciblé en cours de création
     const { confirm, confirmEl } = useConfirm();
     const { write } = lib;
 
@@ -138,6 +144,9 @@ const AudioGMPanel = ({ sessionId, audio, onClose, focusOnOpen = true }) => {
         onWrite: write,
         onPick: setPicker,
         confirm,
+        // « Créer un bouton… » des menus ⋯ (§12.6) : 5 boutons au plus
+        onCreateButton: (target) => { scenes.clearError(); setButtonTarget(target); },
+        canCreateButton: scenes.buttons.length < MAX_AUDIO_BUTTONS,
         open: (playlistId) => setView({ collectionId: validView.collectionId, playlistId }),
         openCollection: (collectionId) => setView({ collectionId, playlistId: null }),
     };
@@ -163,6 +172,7 @@ const AudioGMPanel = ({ sessionId, audio, onClose, focusOnOpen = true }) => {
                 : <IconButton icon="play" label="Lecture" disabled={!hasMusic} onClick={() => send('resume')} />}
             <IconButton icon="next" label="Titre suivant" disabled={!hasMusic} onClick={() => send('next')} />
             <IconButton icon="stop" label="Tout arrêter" disabled={!anyPlaying} onClick={() => audio.sendCommand({ action: 'stopAll' })} />
+            <AudioScenesMenu scenes={scenes} audio={audio} trigger={props => <IconButton icon="scenes" label="Scènes" {...props} />} />
         </>
     );
 
@@ -170,7 +180,7 @@ const AudioGMPanel = ({ sessionId, audio, onClose, focusOnOpen = true }) => {
         // Fenêtre flottante générique : déplacement, redimensionnement, réduction, plein écran, mémorisation
         <FloatingPanel title="Musique" titleExtra={nowLabel} minimizedActions={miniControls} persistAs="audio" onClose={onClose}
                        focusOnOpen={focusOnOpen} className="vtt-audio-panel" onPaste={onPaste}>
-            <NowPlaying audio={audio} library={library} onGoto={(collectionId, playlistId) => setView({ collectionId, playlistId })} />
+            <NowPlaying audio={audio} library={library} scenes={scenes} onGoto={(collectionId, playlistId) => setView({ collectionId, playlistId })} />
 
             {lib.error && (
                 <div className="vtt-callout vtt-callout-danger text-sm flex items-center gap-2 mx-3 mt-2">
@@ -202,6 +212,10 @@ const AudioGMPanel = ({ sessionId, audio, onClose, focusOnOpen = true }) => {
             {importing && <PlaylistImport listId={importing.listId} onDone={importDone} onFail={importFail} />}
             {missingDurations.length > 0 && <DurationProbe tracks={missingDurations} onFound={onDurationFound} />}
             {picker && <TargetPicker {...picker} library={library} onPick={pick} onClose={() => setPicker(null)} />}
+            {buttonTarget && (
+                <TargetButtonDialog target={buttonTarget} error={scenes.error} onClose={() => setButtonTarget(null)}
+                                    onCreate={async (body) => { if (await scenes.createTarget(body)) { setButtonTarget(null); flash(`Bouton « ${body.label} » créé`); } }} />
+            )}
             {catalogOpen && <CatalogModal lib={lib} onPick={setPicker} onClose={() => setCatalogOpen(false)} />}
             {confirmEl && <HostedModal>{confirmEl}</HostedModal>}
         </FloatingPanel>
