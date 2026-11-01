@@ -301,3 +301,17 @@ button.vtt-list-item:hover { border-color: var(--fu-win-edge); }
 
 /* Emplacement à modales des pages (hors de la racine .fu-font-body de la fiche) */
 .vtt-modal-host { font-family: 'PT Sans Narrow', Arial, sans-serif; }
+
+/* ── Musique : boutons flottants (components/audio/AudioPlayerWidget.jsx, spec_audio.md §11.18) ── */
+/* ✦ Petite fenêtre JRPG : dégradé bleu nuit, liseré clair, icône dorée quand ça joue */
+.vtt-audio-toggle {
+    border-radius: 10px; border: 2px solid var(--fu-win-edge);
+    background: linear-gradient(180deg, var(--fu-win-top), var(--fu-win-bottom)); color: var(--fu-win-muted);
+    box-shadow: 0 0 0 1px var(--fu-win-shadow), 0 6px 16px rgba(0,0,0,.4);
+}
+.vtt-audio-toggle:hover { color: var(--fu-win-text); border-color: var(--fu-win-edge); }
+.vtt-audio-widget.is-playing .vtt-audio-toggle:not(.vtt-audio-toggle-gm),
+.vtt-audio-toggle-gm.is-active { color: var(--fu-win-gold); border-color: var(--fu-win-edge); }
+.vtt-audio-toggle svg { filter: drop-shadow(1px 1px 0 var(--fu-win-shadow)); }
+/* Bouton principal du panneau (lecture / pause) : petite fenêtre aux angles arrondis */
+.vtt-audio-icon-btn.is-main { border-radius: 10px; box-shadow: inset 0 0 0 2px var(--fu-win-edge); }

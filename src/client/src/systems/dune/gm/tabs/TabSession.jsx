@@ -8,6 +8,7 @@ import EditCharacterModal    from '../modals/EditCharacterModal.jsx';
 import SendNoteModal         from '../modals/SendNoteModal.jsx';
 import SendItemModal         from '../modals/SendItemModal.jsx';
 import GMSendModal from "../../../../components/gm/modals/GMSendModal.jsx";
+import AudioSessionToggle from '../../../../components/audio/AudioSessionToggle.jsx';
 
 const TabSession = ({ activeSession, onlineCharacters }) => {
     const { apiBase }   = useSystem();
@@ -144,6 +145,8 @@ const TabSession = ({ activeSession, onlineCharacters }) => {
                         </button>
                     );
                 })}
+                {/* Musique de la table (brique audio, spec_audio.md §11.7) */}
+                <AudioSessionToggle sessionId={activeSession.id} className="dune-btn-secondary text-xs ml-auto" />
             </div>
 
             {selectedChar ? (

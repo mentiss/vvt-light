@@ -8,6 +8,7 @@ import { useSocket }  from '../../../../../context/SocketContext.jsx';
 import { useFetch }   from '../../../../../hooks/useFetch.js';
 import { useSystem }  from '../../../../../hooks/useSystem.js';
 import GMSendModal    from '../../../../../components/gm/modals/GMSendModal.jsx';
+import AudioSessionToggle from '../../../../../components/audio/AudioSessionToggle.jsx';
 
 import HealthDisplay  from '../../HealthDisplay.jsx';
 import ResourcesBar   from '../../ResourcesBar.jsx';
@@ -136,6 +137,9 @@ const TabSession = ({ activeSession, onlineCharacters }) => {
                         </button>
                     );
                 })}
+                {/* Musique de la table (brique audio, spec_audio.md §11.7) */}
+                <AudioSessionToggle sessionId={activeSession.id}
+                                    className="ml-auto px-3 py-1.5 rounded text-xs font-semibold transition-colors hover:bg-surface-alt bg-surface border border-default text-default" />
             </div>
 
             {selectedChar ? (

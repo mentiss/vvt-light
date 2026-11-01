@@ -5,7 +5,7 @@
 // les bords au pointeur, fenêtre gardée dans le navigateur (calculs dans
 // tools/floatingGeometry.js).
 //
-// Mémorisation (O-3) sous vtt:platform:panel:<persistAs>, seulement de ce que
+// Mémorisation (O-3) par slug, sous vtt:<slug>:panel:<persistAs>, seulement de ce que
 // l'utilisateur peut changer : position si `movable`, taille si `resizable`,
 // réduction si `minimizable`. Enregistrée à la fin d'un geste, pas à chaque
 // mouvement du pointeur.
@@ -13,7 +13,8 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { clampRect, defaultRect, moveRect, resizeRect } from '../tools/floatingGeometry.js';
-import { PLATFORM_SCOPE, readStored, storageKey, writeStored } from '../tools/browserStorage.js';
+import { readStored, storageKey, writeStored } from '../tools/browserStorage.js';
+import { getSystemFromPath } from './useSystem.js';
 
 const viewport = () => ({ width: window.innerWidth, height: window.innerHeight });
 
@@ -32,7 +33,8 @@ export function useFloatingWindow({
     persistAs, movable = true, resizable = true, minimizable = true,
     defaultSize, minSize, defaultPosition, offset,
 } = {}) {
-    const key = persistAs ? storageKey(PLATFORM_SCOPE, `panel:${persistAs}`) : null;
+    // Slug de la page (une page = un slug) : chaque jeu garde sa disposition
+    const key = persistAs ? storageKey(getSystemFromPath(), `panel:${persistAs}`) : null;
 
     const [geometry, setGeometry] = useState(() => {
         const rect = defaultRect(viewport(), { size: defaultSize, anchor: defaultPosition, offset, min: minSize });

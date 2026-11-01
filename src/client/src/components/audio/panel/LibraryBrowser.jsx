@@ -34,9 +34,9 @@ export const LibraryList = ({ library, view, search, audioState, ctx }) => {
         const hits = library.flatMap(c => c.playlists.flatMap(p => p.tracks
             .filter(t => titleMatches(t.title, q))
             .map(t => ({ track: t, slot: p.defaultSlot, path: `${c.name} › ${p.name}` }))));
-        if (!hits.length) return <ul className="vtt-audio-list"><li className="vtt-audio-empty">Aucun titre ne contient « {search.trim()} ».</li></ul>;
+        if (!hits.length) return <ul className="vtt-audio-list vtt-scroll"><li className="vtt-audio-empty">Aucun titre ne contient « {search.trim()} ».</li></ul>;
         return (
-            <ul className="vtt-audio-list">
+            <ul className="vtt-audio-list vtt-scroll">
                 <li className="vtt-audio-group-label">{hits.length} titre(s)</li>
                 {hits.map(({ track, slot, path }) => (
                     <TrackRow key={track.id} track={track} slot={slot} path={path} playingSlot={playingSlotOf(track.id)} audioState={audioState}
@@ -48,7 +48,7 @@ export const LibraryList = ({ library, view, search, audioState, ctx }) => {
 
     if (place) {
         return (
-            <ul className="vtt-audio-list">
+            <ul className="vtt-audio-list vtt-scroll">
                 {place.playlist.tracks.map(track => (
                     <TrackRow key={track.id} track={track} slot={place.playlist.defaultSlot} playingSlot={playingSlotOf(track.id)} audioState={audioState}
                               editing={isEditing('track', track.id)} dragProps={dragTracks(track.id)} ctx={rowCtx} />
@@ -60,23 +60,23 @@ export const LibraryList = ({ library, view, search, audioState, ctx }) => {
 
     if (collection) {
         return (
-            <ul className="vtt-audio-list">
+            <ul className="vtt-audio-list vtt-scroll">
                 {collection.playlists.map(playlist => (
                     <PlaylistRow key={playlist.id} playlist={playlist} audioState={audioState}
                                  editing={isEditing('playlist', playlist.id)} dragProps={dragPlaylists(playlist.id)} ctx={rowCtx} />
                 ))}
-                <li><button type="button" className="vtt-audio-text-btn" onClick={() => ctx.onWrite('POST', '/playlists', { collectionId: collection.id })}><Icon name="plus" /> Nouvelle playlist</button></li>
+                <li><button type="button" className="vtt-audio-text-btn" onClick={() => ctx.onWrite('POST', '/playlists', { collectionId: collection.id })}><Icon name="plus" /> Playlist</button></li>
             </ul>
         );
     }
 
     return (
-        <ul className="vtt-audio-list">
+        <ul className="vtt-audio-list vtt-scroll">
             {library.map(c => (
                 <CollectionRow key={c.id} collection={c} editing={isEditing('collection', c.id)} dragProps={dragCollections(c.id)} ctx={rowCtx} />
             ))}
             {!library.length && <li className="vtt-audio-empty">Bibliothèque vide. Collez un lien YouTube : la collection et la playlist se créent toutes seules.</li>}
-            <li><button type="button" className="vtt-audio-text-btn" onClick={() => ctx.onWrite('POST', '/collections', {})}><Icon name="plus" /> Nouvelle collection</button></li>
+            <li><button type="button" className="vtt-audio-text-btn" onClick={() => ctx.onWrite('POST', '/collections', {})}><Icon name="plus" /> Collection</button></li>
         </ul>
     );
 };
@@ -108,7 +108,7 @@ export const Breadcrumbs = ({ library, view, search, onNavigate }) => {
 };
 
 export const LibraryTree = ({ library, view, onNavigate, onWrite }) => (
-    <nav className="vtt-audio-tree" aria-label="Collections et playlists">
+    <nav className="vtt-audio-tree vtt-scroll" aria-label="Collections et playlists">
         {library.map(c => (
             <div key={c.id} className="vtt-audio-tree-collection">
                 <div className="vtt-audio-tree-head">
@@ -121,8 +121,10 @@ export const LibraryTree = ({ library, view, onNavigate, onWrite }) => (
                         <Icon name="list" size={14} /><span>{p.name}</span><span className="vtt-audio-tree-count">{p.tracks.length}</span>
                     </button>
                 ))}
+                <button type="button" className="vtt-audio-text-btn vtt-audio-tree-add" onClick={() => onWrite('POST', '/playlists', { collectionId: c.id })}
+                        title={`Nouvelle playlist dans « ${c.name} »`}><Icon name="plus" /> Playlist</button>
             </div>
         ))}
-        <button type="button" className="vtt-audio-text-btn" onClick={() => onWrite('POST', '/collections', {})}><Icon name="plus" /> Nouvelle collection</button>
+        <button type="button" className="vtt-audio-text-btn" onClick={() => onWrite('POST', '/collections', {})}><Icon name="plus" /> Collection</button>
     </nav>
 );

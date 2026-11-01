@@ -5,7 +5,7 @@ import { useFetch }     from '../../../hooks/useFetch.js';
 import { useSystem }    from '../../../hooks/useSystem.js';
 
 import ToastNotifications   from '../../../components/layout/ToastNotifications.jsx';
-import HistoryPanel         from '../../../components/layout/HistoryPanel.jsx';
+import DiceHistoryPage      from '../../../components/layout/DiceHistoryPage.jsx';
 import ThemeToggle          from '../../../components/ui/ThemeToggle.jsx';
 import TabNPC               from '../../../components/gm/tabs/TabNPC.jsx';
 import { HamburgerMenu, HamburgerMenuSeparator } from '../../../components/ui/HamburgerMenu.jsx';
@@ -27,6 +27,7 @@ const GM_TABS = [
     { id: 'ressources', label: '🏺 Ressources' },
     { id: 'journal',    label: '📓 Journal'    },
     { id: 'npc',        label: '🧟 PNJ'        },
+    { id: 'historique', label: '⏳ Historique' },
 ];
 
 const GMView = ({ activeSession, onSessionChange, onlineCharacters, darkMode, onToggleDarkMode }) => {
@@ -79,7 +80,6 @@ const GMView = ({ activeSession, onSessionChange, onlineCharacters, darkMode, on
     // ── Modales globales ──────────────────────────────────────────────────────
     // (modales du menu : dans ses éléments, spec_ui_menu.md)
     const [showDiceModal,  setShowDiceModal]  = useState(false);
-    const [showHistory,    setShowHistory]    = useState(false);
 
     return (
         <div className="min-h-screen" style={{ background: 'var(--dune-bg)', color: 'var(--dune-text)' }}>
@@ -189,6 +189,13 @@ const GMView = ({ activeSession, onSessionChange, onlineCharacters, darkMode, on
                         }}
                     />
                 )}
+                {activeTab === 'historique' && (
+                    <DiceHistoryPage
+                        sessionId={activeSession?.id}
+                        renderHistoryEntry={(roll) => <DuneHistoryEntry roll={roll} />}
+                        renderAllRollTypes
+                    />
+                )}
             </main>
 
             {/* ── MODALES GLOBALES ────────────────────────────────────────── */}
@@ -199,23 +206,6 @@ const GMView = ({ activeSession, onSessionChange, onlineCharacters, darkMode, on
                     menaceDisponible={resources.menace}
                 />
             )}
-
-            <HistoryPanel
-                isOpen={showHistory}
-                onClose={() => setShowHistory(false)}
-                sessionId={activeSession?.id}
-                renderHistoryEntry={(roll) => <DuneHistoryEntry roll={roll} />}
-                renderAllRollTypes
-            />
-
-            <button
-                onClick={() => setShowHistory(true)}
-                className="fixed bottom-4 right-4 w-10 h-10 rounded-full shadow-lg z-30 flex items-center justify-center text-lg border-2"
-                style={{ background: 'var(--dune-gold)', color: 'var(--dune-dark)', borderColor: 'var(--dune-ochre)' }}
-                title="Historique des jets"
-            >
-                📜
-            </button>
         </div>
     );
 };

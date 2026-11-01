@@ -54,7 +54,8 @@ Hors périmètre :
 | `minSize` | `{ width: 320, height: 240 }` | Taille minimale au redimensionnement |
 | `defaultPosition` | `'bottom-right'` | Ancrage : `'bottom-right'`, `'bottom-left'`, `'top-right'`, `'top-left'`, `'center'` |
 | `offset` | `{ x: 16, y: 72 }` | Décalage depuis le bord d'ancrage (le défaut laisse la place aux boutons flottants en bas à droite) |
-| `persistAs` | — | Identifiant de mémorisation : clé `vtt:platform:panel:<persistAs>` ; sans lui, rien n'est mémorisé |
+| `persistAs` | — | Identifiant de mémorisation : clé `vtt:<slug>:panel:<persistAs>`, par slug de la page (chaque jeu garde sa disposition) ; sans lui, rien n'est mémorisé |
+| `minimizedActions` | — | Boutons dans la barre de titre, **une fois la fenêtre réduite seulement** (à côté du titre, avant Réduire / Plein écran / Fermer ; un clic dessus ne déplace pas la fenêtre). Le titre et `titleExtra` restent, tronqués si la place manque (`titleExtra` textuel aussi en infobulle) |
 | `focusOnOpen` | `true` | Focus donné à la fenêtre à son ouverture (F-4) ; faux quand elle se rouvre seule |
 | `className` | — | Classe en plus sur la fenêtre (habillage propre à un usage) |
 | `children` | — | Contenu ; il gère son propre défilement et son propre pied |
@@ -106,7 +107,7 @@ Style par défaut dans `index.css` (`@layer components`, variables `--color-*` s
 
 - `AudioGMPanel` devient `<FloatingPanel title="Musique" titleExtra={morceau en cours} persistAs="audio" onClose={…} onPaste={…}>…</FloatingPanel>` ; il ne garde que l'audio (ce qui joue, bibliothèque, pied, Ctrl+V, imports).
 - Les classes `vtt-audio-panel*` et `vtt-audio-resize*` disparaissent au profit des `vtt-floating-*`.
-- Ouverture et fermeture restent à `AudioLayer` (c'est l'appelant qui décide si la fenêtre est affichée), mémorisées dans `vtt:platform:audio`.
+- Ouverture et fermeture restent à `AudioLayer` (c'est l'appelant qui décide si la fenêtre est affichée), mémorisées par slug dans `vtt:<slug>:audio` (les volumes restent dans `vtt:platform:audio`).
 
 ---
 

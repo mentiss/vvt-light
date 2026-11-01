@@ -72,7 +72,8 @@ const isSmallScreen = () => window.matchMedia(SMALL_SCREEN).matches;
  * @param {React.ReactNode} props.title         titre (barre de titre, nom de la fenêtre)
  * @param {React.ReactNode} [props.subtitle]
  * @param {React.ReactNode} [props.icon]
- * @param {React.ReactNode} [props.titleExtra]  texte en plus dans la barre de titre, gardé réduite
+ * @param {React.ReactNode} [props.titleExtra]  texte en plus dans la barre de titre, gardé réduite (tronqué, en infobulle s'il est textuel)
+ * @param {React.ReactNode} [props.minimizedActions] boutons de la barre, à côté du titre, une fois réduite seulement
  * @param {Function} [props.onClose]            bouton ✕ ; sans lui, pas de bouton
  * @param {boolean}  [props.movable=true]
  * @param {boolean}  [props.resizable=true]
@@ -82,13 +83,13 @@ const isSmallScreen = () => window.matchMedia(SMALL_SCREEN).matches;
  * @param {{ width: number, height: number }} [props.minSize]     taille minimale (320 × 240)
  * @param {string}   [props.defaultPosition='bottom-right'] ancrage : bottom-right, bottom-left, top-right, top-left, center
  * @param {{ x: number, y: number }} [props.offset] décalage depuis les bords d'ancrage ({ x: 16, y: 72 })
- * @param {string}   [props.persistAs]          identifiant de mémorisation (vtt:platform:panel:<persistAs>)
+ * @param {string}   [props.persistAs]          identifiant de mémorisation (vtt:<slug>:panel:<persistAs>)
  * @param {boolean}  [props.focusOnOpen=true]   focus à l'ouverture (false quand elle se rouvre seule)
  * @param {string}   [props.className]
  * Les autres props (onPaste…) sont transmises à l'élément de la fenêtre.
  */
 const FloatingPanel = ({
-    title, subtitle, icon, titleExtra, onClose,
+    title, subtitle, icon, titleExtra, minimizedActions, onClose,
     movable = true, resizable = true, minimizable = true, expandable = true,
     defaultSize, minSize, defaultPosition, offset, persistAs,
     focusOnOpen = true, className = '', children, ...rest
@@ -107,6 +108,7 @@ const FloatingPanel = ({
 
     const isFull = full || small;
     const minimized = minimizable && win.minimized;
+    const showActions = minimized && !!minimizedActions;
     const style = { '--vtt-floating-order': order };
     if (!isFull) {
         Object.assign(style, {
@@ -124,11 +126,12 @@ const FloatingPanel = ({
                     onPointerDown={isFull ? undefined : win.startMove}>
                 {icon && <span className="vtt-modal-icon">{icon}</span>}
                 <div className="vtt-modal-heading">
-                    <h2 className="vtt-modal-title" id={titleId}>
+                    <h2 className="vtt-modal-title" id={titleId} title={typeof titleExtra === 'string' ? titleExtra : undefined}>
                         {title}{titleExtra && <small className="vtt-floating-title-extra"> · {titleExtra}</small>}
                     </h2>
                     {subtitle && <p className="vtt-modal-subtitle">{subtitle}</p>}
                 </div>
+                {showActions && <div className="vtt-floating-actions">{minimizedActions}</div>}
                 {minimizable && (
                     <button type="button" className="vtt-modal-expand vtt-floating-btn" onClick={win.toggleMinimized}
                             aria-label={minimized ? 'Agrandir la fenêtre' : 'Réduire la fenêtre'} title={minimized ? 'Agrandir' : 'Réduire'}>

@@ -133,9 +133,10 @@ Testée sous Vitest avec des navigateurs simulés : chaque ancien format, ancien
 | `vtt:<slug>:dice` | configuration des dés du jeu | `<slug>_vtt-dice_config` | idem |
 | `vtt:<slug>:session-bar` | `{ mode }` | `<slug>_player_session_bar` (`1` → `hidden`, `0` → `panel`) | `SessionPlayersBar` |
 | `vtt:<slug>:gm` | `{ activeSessionId }` | `activeSessionId_<slug>` | `useGMSession`, `TableManagementModal` (bug corrigé) |
-| `vtt:platform:audio` | volumes, réglages du son dépliés, panneau MJ ouvert | — (jamais en prod) | brique audio |
+| `vtt:platform:audio` | volumes par type | — (jamais en prod) | brique audio |
+| `vtt:<slug>:audio` | réglages du son ouverts, détails dépliés, panneau MJ ouvert | — | brique audio |
 | `vtt:<slug>:<table>:audio` | dernière playlist consultée | — | brique audio |
-| `vtt:platform:panel:<id>` | position, taille, réduction d'une fenêtre flottante | — | `FloatingPanel` (`spec_ui_panneaux.md`) |
+| `vtt:<slug>:panel:<id>` | position, taille, réduction d'une fenêtre flottante, par slug | — | `FloatingPanel` (`spec_ui_panneaux.md`) |
 
 `currentCharacterId_<slug>` n'est plus écrite ; l'ancienne valeur est effacée par la reprise (§5).
 

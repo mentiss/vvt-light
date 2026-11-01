@@ -16,7 +16,7 @@ Respecte la méthode en trois phases du CLAUDE.md racine. **N'écris aucun fichi
     - besoins côté MJ (ressources de session, PNJ, combat) ;
     - palette de couleurs et identité visuelle ;
     - les règles de référence (lore, livre de base) si je peux te les fournir : n'invente rien qui les contredise.
-3. Lis le slug de référence `fabula` (config, routes, schéma, `Sheet.jsx`, `GMApp.jsx`) pour calquer les patterns. **Ne prends pas `vikings` comme modèle** (en refonte). Lis aussi `documentations/spec_diceengine_v2.md` (dont la section « Jet libre » : rendu des jets dans l'historique et les notifications) et `documentations/spec_combat.md` pour les contrats dés et combat, et `documentations/spec_ui_menu.md` pour les menus joueur et MJ.
+3. Lis le slug de référence `fabula` (config, routes, schéma, `Sheet.jsx`, `GMApp.jsx`) pour calquer les patterns. **Ne prends pas `vikings` comme modèle** (en refonte). Lis aussi `documentations/spec_diceengine_v2.md` (dont la section « Jet libre » : rendu des jets dans l'historique et les notifications) et `documentations/spec_combat.md` pour les contrats dés et combat, et `documentations/spec_ui_menu.md` pour les menus joueur et MJ, et `documentations/spec_audio.md` (§11.7, §11.17) pour la musique de la table.
 
 ## Phase 2 — Spécification (à faire valider)
 
@@ -25,7 +25,8 @@ Présente :
 - les routes au-delà de `characters.js` et les éventuels handlers socket ;
 - la logique des 5 hooks de dés et du bloc combat ;
 - l'arborescence des composants et le découpage de la fiche ;
-- le contenu des menus joueur et MJ (éléments prêts à l'emploi, éléments propres au slug, icônes ou aucune) et leur habillage.
+- le contenu des menus joueur et MJ (éléments prêts à l'emploi, éléments propres au slug, icônes ou aucune) et leur habillage ;
+- l'emplacement, dans l'onglet Session du MJ, de l'élément d'activation de la musique (`AudioSessionToggle`) et ses classes de bouton.
 
 Expose les choix ouverts avec leurs avantages et inconvénients, et donne ta recommandation. Une fois validée, la spec est enregistrée (ou mise à jour) dans `documentations/spec_<slug>.md`.
 
@@ -40,9 +41,9 @@ Fichiers à créer (aucun fichier hors de ces dossiers ne doit être modifié, l
 
 **Frontend** (`src/client/src/systems/<slug>/`)
 - `config.jsx`, `Sheet.jsx`, `GMApp.jsx`, `Creation.jsx`
-- `theme.css` : tokens du slug et habillage des classes de la plateforme (`vtt-menu*`, `vtt-history-entry`)
+- `theme.css` : tokens du slug et habillage des classes de la plateforme (`vtt-menu*`, `vtt-history-entry`, `vtt-audio-toggle`)
 - `components/layout/` pour les sections de fiche, dont `<Slug>HistoryEntry.jsx` (rendu des jets, partagé par l'historique et les notifications) ; `components/modals/` pour les modales
-- `gm/tabs/TabSession.jsx`
+- `gm/tabs/TabSession.jsx`, avec l'élément d'activation de la musique (`components/audio/AudioSessionToggle.jsx`)
 
 ## Checklist des standards obligatoires
 
@@ -59,6 +60,7 @@ Vérifie chaque point avant d'annoncer la fin, et coche-les dans ton récapitula
 - [ ] Rendu des jets : un composant `<Slug>HistoryEntry` sert à `renderHistoryEntry` et à `renderDiceToast`, rendu identique (pas de mode `compact`) ; il traite le jet libre en premier (`parseFreeRoll` de `tools/freeRoll.js`).
 - [ ] `renderAllRollTypes` passé à `DiceHistoryPage` (importé depuis `../../components/layout/DiceHistoryPage.jsx`, props `sessionId`, `renderHistoryEntry`, `renderAllRollTypes`), à `ToastNotifications` et à `HistoryPanel` s'il y en a un.
 - [ ] Aucune marge extérieure dans les rendus de jets : la plateforme la porte (`vtt-history-entry`, `ToastShell`).
+- [ ] Musique de la table : `AudioSessionToggle` posé dans l'onglet Session du MJ (`sessionId={activeSession.id}`, `className` aux boutons du slug), rien d'autre à coder (lecteurs, panneau MJ et réglages du son sont montés par `PlayerPage` / `GMPage`). Habillage : le panneau et les réglages reprennent les classes déjà habillées par le slug (`vtt-modal-*`, `vtt-menu*`, `vtt-btn*`) ; les boutons flottants (`vtt-audio-toggle`, états `.vtt-audio-widget.is-playing` et `.vtt-audio-toggle-gm.is-active`) sont habillés dans le `theme.css` ; vérifier en dev le rendu, panneau réduit compris (décors d'en-tête et de fond).
 - [ ] `theme.css` chargé par `PlayerPage` / `GMPage` : pas d'`import './theme.css'` dans les fichiers du slug.
 - [ ] Pas d'indirection `GMApp.jsx → gm/GMView.jsx`.
 - [ ] UPDATE avec COALESCE ; `saveFullCharacter` en transaction avec `_syncSubTable` pour les sous-tables.

@@ -11,6 +11,7 @@ const PATHS = {
     prev: 'M18 6l-8 6 8 6M6 6v12',
     next: 'M6 6l8 6-8 6M18 6v12',
     close: 'M6 6l12 12M18 6L6 18',
+    stop: 'M6 6h12v12H6z',
     layers: 'M3 9c3-2 6 2 9 0s6-2 9 0M3 15c3-2 6 2 9 0s6-2 9 0',
     plus: 'M12 5v14M5 12h14',
     back: 'M15 6l-6 6 6 6',

@@ -688,3 +688,17 @@ html { scrollbar-color: color-mix(in srgb, var(--color-primary) 45%, transparent
 .font-vikingText {
     font-family: 'Grenze Gotisch', serif;
 }
+
+/* ── Musique : boutons flottants (components/audio/AudioPlayerWidget.jsx, spec_audio.md §11.18) ── */
+/* ✦ Bouclier rond : umbo de fer, cerclage du cadre ; or quand ça joue */
+.vtt-audio-toggle {
+    width: 2.6rem; height: 2.6rem; border: 2px solid var(--color-border);
+    background: radial-gradient(circle at 50% 40%, var(--color-surface-alt), var(--color-surface) 70%);
+    color: var(--color-text-muted); box-shadow: var(--vk-panel-shadow);
+}
+.vtt-audio-toggle:hover { color: var(--color-text); border-color: var(--color-primary); }
+.vtt-audio-widget.is-playing .vtt-audio-toggle:not(.vtt-audio-toggle-gm),
+.vtt-audio-toggle-gm.is-active {
+    color: var(--color-primary); border-color: var(--color-primary);
+    box-shadow: var(--vk-panel-shadow), 0 0 14px color-mix(in srgb, var(--color-primary) 40%, transparent);
+}

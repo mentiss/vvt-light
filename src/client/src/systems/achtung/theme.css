@@ -1640,3 +1640,26 @@ button.vtt-list-item:hover { border-color: var(--ac-ink); background: rgba(var(-
 .vtt-journal-editor { border-radius: 0; border-color: rgba(var(--ac-ink-rgb), .3); background: var(--ac-sheet-overlay); color: var(--ac-ink); }
 .vtt-journal-list-toggle { background: transparent; color: var(--ac-ink-soft); border-bottom-color: rgba(var(--ac-ink-rgb), .35); font-family: var(--ac-font-heading); letter-spacing: .1em; text-transform: uppercase; }
 .vtt-scroll { scrollbar-color: rgba(var(--ac-ink-rgb), .4) transparent; }
+
+/* ── Musique : boutons flottants (components/audio/AudioPlayerWidget.jsx, spec_audio.md §11.18) ── */
+/* ✦ Tampon encreur : papier, contour à l'encre ; encre olive pleine quand ça joue */
+.vtt-audio-toggle {
+    border-radius: 2px; border: 1.5px solid var(--ac-ink); background: var(--ac-paper); color: var(--ac-ink);
+    box-shadow: 2px 3px 0 rgba(var(--ac-ink-rgb), .25), 0 6px 14px rgba(0,0,0,.3);
+}
+.vtt-audio-toggle:hover { color: var(--ac-ink); border-color: var(--ac-ink); background: color-mix(in srgb, var(--ac-ink) 8%, var(--ac-paper)); }
+.vtt-audio-widget.is-playing .vtt-audio-toggle:not(.vtt-audio-toggle-gm),
+.vtt-audio-toggle-gm.is-active { background: var(--ac-ink-olive); border-color: var(--ac-ink-olive); color: var(--ac-paper); }
+/* Bouton principal du panneau (lecture / pause) : tampon */
+.vtt-audio-icon-btn.is-main { border-radius: 2px; }
+
+/* ── Fenêtres flottantes (components/ui/FloatingPanel.jsx, spec_ui_panneaux.md) ── */
+/* Sans le pli horizontal du papier : à mi-hauteur d'une fenêtre réduite, il barrait le titre */
+.vtt-floating-panel.vtt-modal-panel {
+    background:
+        url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='200' height='200' filter='url(%23noise)' opacity='0.05'/%3E%3C/svg%3E"),
+        var(--ac-paper);
+}
+/* Réduite : barre compacte, sans le double filet (il doublait le cadre imprimé) */
+.vtt-floating-panel.is-minimized .vtt-modal-header { border-bottom: 0; padding-top: .55rem; padding-bottom: .55rem; }
+.vtt-floating-panel.is-minimized .vtt-modal-title { font-size: 1rem; }

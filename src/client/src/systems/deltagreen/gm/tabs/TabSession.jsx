@@ -28,6 +28,7 @@ import SanLogSection             from '../../components/layout/SanLogSection.jsx
 import PhysicalDescriptionSection from '../../components/layout/PhysicalDescriotionSection.jsx';
 import DiceModal                 from '../../components/modals/DiceModal.jsx';
 import GMSendModal               from '../../../../components/gm/modals/GMSendModal.jsx';
+import AudioSessionToggle        from '../../../../components/audio/AudioSessionToggle.jsx';
 
 // ── Constantes ────────────────────────────────────────────────────────────────
 
@@ -682,6 +683,12 @@ const TabSession = ({ activeSession, onlineCharacters }) => {
                         className="text-[10px] font-mono text-muted hover:text-default border border-default/30 px-1.5 py-0.5 transition-colors"
                         title={collapsed ? 'Étendre les cartes' : 'Réduire les cartes'}
                     >{collapsed ? '⊞' : '⊟'}</button>
+                </div>
+
+                {/* Musique de la table (brique audio, spec_audio.md §11.7) */}
+                <div className="px-3 py-2 border-b border-default/40 shrink-0">
+                    <AudioSessionToggle sessionId={activeSession.id}
+                                        className="w-full text-[10px] font-mono uppercase tracking-wider border border-default/40 text-muted px-1.5 py-1 hover:border-default transition-colors" />
                 </div>
 
                 {/* Barre initiative — masquée en mode compact */}

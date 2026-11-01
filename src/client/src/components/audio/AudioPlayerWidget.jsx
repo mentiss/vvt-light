@@ -4,7 +4,7 @@
 // - réglages du son : titre de la piste musique seulement (sauf si le MJ le
 //   masque), son à activer, coupure, volume général ; volumes par type repliés ;
 // - MJ : accès direct au panneau, en un clic (P-3).
-// États repliés / dépliés tenus par l'appelant (AudioLayer, mémorisés dans vtt:platform:audio).
+// États repliés / dépliés tenus par l'appelant (AudioLayer, mémorisés par slug dans vtt:<slug>:audio).
 // Classes vtt-audio* habillables par le theme.css du slug.
 // ─────────────────────────────────────────────────────────────────────────────
 
@@ -68,7 +68,7 @@ const AudioPlayerWidget = ({
                         {!unlocked && (
                             <button type="button" className="vtt-btn vtt-btn-primary vtt-btn-sm w-full" onClick={onUnlock}>Activer le son</button>
                         )}
-                        <button type="button" className={`vtt-audio-btn${volumes.muted ? ' is-active' : ''}`} onClick={() => onVolumesChange({ ...volumes, muted: !volumes.muted })}>
+                        <button type="button" className={`vtt-btn vtt-btn-sm${volumes.muted ? ' vtt-btn-danger' : ''}`} onClick={() => onVolumesChange({ ...volumes, muted: !volumes.muted })}>
                             <SpeakerIcon muted={volumes.muted} />
                             {volumes.muted ? 'Son coupé' : 'Couper le son'}
                         </button>

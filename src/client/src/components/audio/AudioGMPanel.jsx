@@ -151,9 +151,24 @@ const AudioGMPanel = ({ sessionId, audio, onClose, focusOnOpen = true }) => {
     const music = audio.state?.slots?.music;
     const nowLabel = music?.youtubeId ? `${music.status === 'playing' ? '' : '(pause) '}${music.title}` : null;
 
+    // Panneau réduit : mini-contrôles de la musique et arrêt de tout, à la place du titre en cours
+    const hasMusic = !!music?.youtubeId;
+    const anyPlaying = Object.values(audio.state?.slots ?? {}).some(s => s.youtubeId);
+    const send = (action) => audio.sendCommand({ slot: 'music', action });
+    const miniControls = (
+        <>
+            <IconButton icon="prev" label="Titre précédent" disabled={!hasMusic} onClick={() => send('previous')} />
+            {music?.status === 'playing'
+                ? <IconButton icon="pause" label="Pause" onClick={() => send('pause')} />
+                : <IconButton icon="play" label="Lecture" disabled={!hasMusic} onClick={() => send('resume')} />}
+            <IconButton icon="next" label="Titre suivant" disabled={!hasMusic} onClick={() => send('next')} />
+            <IconButton icon="stop" label="Tout arrêter" disabled={!anyPlaying} onClick={() => audio.sendCommand({ action: 'stopAll' })} />
+        </>
+    );
+
     return (
         // Fenêtre flottante générique : déplacement, redimensionnement, réduction, plein écran, mémorisation
-        <FloatingPanel title="Musique" titleExtra={nowLabel} persistAs="audio" onClose={onClose}
+        <FloatingPanel title="Musique" titleExtra={nowLabel} minimizedActions={miniControls} persistAs="audio" onClose={onClose}
                        focusOnOpen={focusOnOpen} className="vtt-audio-panel" onPaste={onPaste}>
             <NowPlaying audio={audio} library={library} onGoto={(collectionId, playlistId) => setView({ collectionId, playlistId })} />
 

@@ -229,11 +229,12 @@ select:disabled {
   .vtt-floating-panel.is-full.is-minimized { top: auto; height: auto; }
   .vtt-floating-header { gap: 0.25rem; user-select: none; }
   .vtt-floating-header.is-movable { cursor: move; touch-action: none; }
-  .vtt-floating-panel.is-minimized .vtt-floating-header { border-bottom: 0; }
+  .vtt-floating-panel.is-minimized .vtt-floating-header { border-bottom: 0; padding-top: 0.5rem; padding-bottom: 0.5rem; }
   .vtt-floating-header .vtt-modal-title { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .vtt-floating-title-extra { font-weight: 400; letter-spacing: normal; text-transform: none; color: var(--color-text-muted); }
   /* Réduire reste utile sur petit écran (la modale y masque Agrandir) */
   .vtt-floating-header .vtt-floating-btn { display: inline-flex; }
+  .vtt-floating-actions { display: flex; align-items: center; gap: 0.1rem; flex-shrink: 0; cursor: default; }
   .vtt-floating-body { flex: 1 1 auto; min-height: 0; display: flex; flex-direction: column; overflow: hidden; }
   .vtt-floating-body[hidden] { display: none; }
   .vtt-floating-resize { position: absolute; z-index: 1; touch-action: none; }
@@ -675,38 +676,34 @@ select:disabled {
   /* Lecteur YouTube caché : 1 × 1 px hors écran (un lecteur 0 × 0 reste affiché, §9.9) */
   .vtt-audio-hidden-player { position: fixed; left: -10000px; top: 0; width: 1px; height: 1px; overflow: hidden; pointer-events: none; }
   .vtt-audio-widget {
-    position: fixed; right: var(--vtt-audio-right); bottom: var(--vtt-audio-bottom); z-index: 45;
+    /* Au-dessus des fenêtres flottantes (46 et plus, le panneau MJ s'ouvre juste au-dessus des boutons), sous les modales (150) */
+    position: fixed; right: var(--vtt-audio-right); bottom: var(--vtt-audio-bottom); z-index: 100;
     display: flex; flex-direction: column; align-items: flex-end; gap: 0.5rem;
   }
+  /* Boutons flottants : ronds et opaques par défaut ; chaque slug les habille dans son theme.css
+     (.vtt-audio-buttons, .vtt-audio-toggle, états .vtt-audio-widget.is-playing et .vtt-audio-toggle-gm.is-active). */
+  .vtt-audio-buttons { display: flex; gap: 0.5rem; }
   .vtt-audio-toggle {
     display: inline-flex; align-items: center; justify-content: center;
     width: 2.5rem; height: 2.5rem; border-radius: 999px;
     border: 1px solid var(--color-border); background: var(--color-surface); color: var(--color-text-muted);
-    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.25); transition: border-color 0.15s, color 0.15s;
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.25); transition: border-color 0.15s, color 0.15s, background-color 0.15s;
   }
-  .vtt-audio-toggle:hover { border-color: var(--color-primary); color: var(--color-primary); }
+  .vtt-audio-toggle:hover { color: var(--color-text); border-color: var(--color-primary); }
   .vtt-audio-toggle:focus-visible { outline: 2px solid var(--color-primary); outline-offset: 2px; }
-  .vtt-audio-widget.is-playing .vtt-audio-toggle { color: var(--color-primary); border-color: var(--color-primary); }
-  /* Réglages du son : un .vtt-menu (habillé par le slug) ouvert vers le haut, dans le flux */
-  .vtt-audio-widget-panel { position: static; top: auto; right: auto; width: 15rem; min-width: 0; }
+  .vtt-audio-widget.is-playing .vtt-audio-toggle:not(.vtt-audio-toggle-gm),
+  .vtt-audio-toggle-gm.is-active { color: var(--color-primary); border-color: var(--color-primary); }
+  /* Réglages du son : un .vtt-menu (habillé par le slug) ouvert vers le haut, dans le flux
+     (placement imposé hors couche, en fin de fichier) */
+  .vtt-audio-widget-panel { width: 15rem; min-width: 0; }
   .vtt-audio-widget-content { display: flex; flex-direction: column; gap: 0.6rem; padding: 0.6rem 0.75rem; }
   .vtt-audio-now {
     font-size: 0.85rem; font-weight: 600; color: var(--color-primary);
     white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
   }
-  .vtt-audio-btn {
-    display: inline-flex; align-items: center; gap: 0.4rem; padding: 0.3rem 0.6rem; font-size: 0.8rem;
-    border: 1px solid var(--color-border); border-radius: 0.5rem; background: var(--color-surface-alt); color: var(--color-text);
-    transition: border-color 0.15s, color 0.15s;
-  }
-  .vtt-audio-btn:hover:not(:disabled) { border-color: var(--color-primary); }
-  .vtt-audio-btn.is-active { color: var(--color-danger); border-color: var(--color-danger); }
-  .vtt-audio-btn:disabled { opacity: 0.5; cursor: not-allowed; }
   .vtt-audio-volume { display: flex; flex-direction: column; gap: 0.15rem; font-size: 0.8rem; }
   .vtt-audio-volume input[type="range"] { width: 100%; accent-color: var(--color-primary); }
 
-  .vtt-audio-buttons { display: flex; gap: 0.5rem; }
-  .vtt-audio-toggle-gm.is-active { color: var(--color-primary); border-color: var(--color-primary); }
   .vtt-audio-details-toggle { align-self: flex-start; font-size: 0.75rem; color: var(--color-text-muted); }
   .vtt-audio-details-toggle:hover { color: var(--color-primary); }
 
@@ -720,8 +717,10 @@ select:disabled {
   .vtt-audio-icon-btn:hover:not(:disabled) { color: var(--color-text); background: var(--color-surface-alt); }
   .vtt-audio-icon-btn:disabled { opacity: 0.4; cursor: default; }
   .vtt-audio-icon-btn.is-danger:hover:not(:disabled) { color: var(--color-danger); }
-  .vtt-audio-icon-btn.is-main { width: 2.6rem; height: 2.6rem; border-radius: 999px; background: var(--color-primary); color: var(--color-on-primary); }
-  .vtt-audio-icon-btn.is-main:hover:not(:disabled) { background: var(--color-primary); color: var(--color-on-primary); filter: brightness(1.08); }
+  /* Bouton principal (lecture / pause) : icône à la couleur du fond quand le slug ne définit pas
+     --color-on-primary (contraste avec le primaire, de jour comme de nuit) ; forme habillable par le slug */
+  .vtt-audio-icon-btn.is-main { width: 2.6rem; height: 2.6rem; border-radius: 999px; background: var(--color-primary); color: var(--color-on-primary, var(--color-bg)); }
+  .vtt-audio-icon-btn.is-main:hover:not(:disabled) { background: var(--color-primary); color: var(--color-on-primary, var(--color-bg)); filter: brightness(1.08); }
 
   /* Ce qui joue */
   .vtt-audio-now { padding: 0.75rem 0.85rem 0.6rem; border-bottom: 1px solid var(--color-border); background: color-mix(in srgb, var(--color-primary) 6%, var(--color-surface)); }
@@ -819,6 +818,7 @@ select:disabled {
   .vtt-audio-tree-item:hover { background: var(--color-surface-alt); }
   .vtt-audio-tree-item[aria-current="true"] { background: color-mix(in srgb, var(--color-primary) 14%, transparent); color: var(--color-primary); font-weight: 600; }
   .vtt-audio-tree-item span:first-of-type { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .vtt-audio-tree-add { height: 1.75rem; padding: 0 0.5rem; font-size: 0.8rem; }
   .vtt-audio-tree-count { font-size: 0.72rem; color: var(--color-text-muted); }
 
   /* Pied : ajout d'un lien, à la Watch2Gether */
@@ -849,3 +849,9 @@ select:disabled {
   @media (prefers-reduced-motion: reduce) { .vtt-audio-eq i { animation: none; } .vtt-audio-search { transition: none; } }
   .vtt-audio-session-toggle { display: inline-flex; align-items: center; justify-content: center; gap: 0.4rem; }
 }
+
+/* ── Placements imposés par la plateforme (hors couche) ─────────────────────
+   Hors couche et plus précis qu'une classe seule : un theme.css qui place sa classe générique
+   (ex. .vtt-menu en position absolue pour son menu hamburger) ne les déplace pas. Un slug qui
+   veut vraiment les changer reprend le même sélecteur. */
+.vtt-audio-widget .vtt-audio-widget-panel { position: static; inset: auto; margin: 0; }

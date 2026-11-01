@@ -23,6 +23,7 @@ import { useSystem }  from '../../../../hooks/useSystem.js';
 
 import TableManagementModal from '../../../../components/gm/modals/TableManagementModal.jsx';
 import GMSendModal          from '../../../../components/gm/modals/GMSendModal.jsx';
+import AudioSessionToggle   from '../../../../components/audio/AudioSessionToggle.jsx';
 
 import { ARCHETYPES } from '../../config.jsx';
 
@@ -373,6 +374,13 @@ const TabSession = ({ activeSession, onSessionChange, onlineCharacters }) => {
                         onClick={() => setSelectedId(sc.id)}
                     />
                 ))}
+
+                {/* Musique de la table (brique audio, spec_audio.md §11.7) */}
+                {activeSession && (
+                    <div className="p-2">
+                        <AudioSessionToggle sessionId={activeSession.id} className="ac-btn ac-btn-secondary w-full" />
+                    </div>
+                )}
             </aside>
 
             {/* ── ZONE PRINCIPALE ─────────────────────────────────────────── */}

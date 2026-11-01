@@ -41,6 +41,7 @@ import useSystem from "../../../../hooks/useSystem.js";
 import {useFetch} from "../../../../hooks/useFetch.js";
 import {useSocket} from "../../../../context/SocketContext.jsx";
 import GMSendModal from "../../../../components/gm/modals/GMSendModal.jsx";
+import AudioSessionToggle from '../../../../components/audio/AudioSessionToggle.jsx';
 import {useParams} from "react-router-dom";
 import CyberpunkCatalogModal from "../../components/modals/CyberpunkCatalogModal.jsx";
 import ConfirmModal from "../../../../components/modals/ConfirmModal.jsx";
@@ -416,6 +417,9 @@ const TabSession = ({ activeSession, onlineCharacters, onSessionChange }) => {
                     style={{ color: 'var(--color-text-muted)' }}>
                     Personnages
                 </h3>
+                {/* Musique de la table (brique audio, spec_audio.md §11.7) */}
+                <AudioSessionToggle sessionId={activeSession.id}
+                                    className="w-full rounded-lg font-semibold text-xs px-2 py-1.5 bg-surface-alt hover:cp-neon-glow-el hover:bg-surface border border-base hover:border-accent" />
                 {(activeSession.characters ?? []).map(sc => {
                     const c        = characters[sc.id];
                     const isOnline = onlineIds.has(sc.id);

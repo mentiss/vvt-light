@@ -20,6 +20,7 @@ import { useFetch }  from '../../../../hooks/useFetch.js';
 
 import AvatarUploader from '../../../../components/AvatarUploader.jsx';
 import GMSendModal    from '../../../../components/gm/modals/GMSendModal.jsx';
+import AudioSessionToggle from '../../../../components/audio/AudioSessionToggle.jsx';
 
 import SheetLayout            from '../../components/layout/SheetLayout.jsx';
 import ZoneBlancheDiceModal   from '../../components/modals/ZoneBlancheDiceModal.jsx';
@@ -245,6 +246,8 @@ const TabSession = ({
                         className="zb-btn-ghost w-full mt-4 px-4 py-2 rounded-sm text-sm">
                     Envoyer au journal
                 </button>
+                {/* Musique de la table (brique audio, spec_audio.md §11.7) */}
+                <AudioSessionToggle sessionId={activeSession.id} className="zb-btn-ghost w-full mt-2 px-4 py-2 rounded-sm text-sm" />
             </aside>
 
             {/* ── Fiche ────────────────────────────────────────────────────── */}

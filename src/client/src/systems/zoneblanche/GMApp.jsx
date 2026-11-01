@@ -338,12 +338,6 @@ const GMApp = ({
             </main>
 
             {/* ── Modales globales ─────────────────────────────────────────── */}
-            {/* Accès rapide au jet MJ, disponible sur tous les onglets */}
-            <button type="button" onClick={() => setShowGMDice(true)}
-                    className="zb-fab zb-display" title="Jet du MJ">
-                Jet MJ
-            </button>
-
             {showGMDice && (
                 <ZoneBlancheGMDiceModal
                     sessionId={sessionId}

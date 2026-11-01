@@ -15,14 +15,17 @@ import { useAudioSession } from '../../hooks/useAudioSession.js';
 import { usePersistedState } from '../../hooks/usePersistedState.js';
 import { DEFAULT_VOLUMES, normalizeVolumes, slotVolume } from '../../tools/audioVolume.js';
 import { PLATFORM_SCOPE } from '../../tools/browserStorage.js';
+import { getSystemFromPath } from '../../hooks/useSystem.js';
 import SlotPlayer from './SlotPlayer.jsx';
 import AudioUnlockModal from './AudioUnlockModal.jsx';
 import AudioPlayerWidget from './AudioPlayerWidget.jsx';
 import AudioGMPanel from './AudioGMPanel.jsx';
 
-// Réglages audio de ce navigateur, pour toute la plateforme : vtt:platform:audio
-// (spec_browser_storage.md §6) ; la position du panneau MJ, elle, est à FloatingPanel
-const AUDIO_DEFAULTS = { volumes: DEFAULT_VOLUMES, widgetOpen: false, widgetDetails: false, panelOpen: false };
+// Volumes de ce navigateur, pour toute la plateforme : vtt:platform:audio ; ouverture des
+// réglages du son et du panneau MJ, par slug : vtt:<slug>:audio (spec_browser_storage.md §6).
+// La position du panneau MJ, elle, est à FloatingPanel (par slug aussi)
+const VOLUME_DEFAULTS = { volumes: DEFAULT_VOLUMES };
+const LAYOUT_DEFAULTS = { widgetOpen: false, widgetDetails: false, panelOpen: false };
 
 /**
  * @param {object} props
@@ -37,9 +40,10 @@ const AudioLayer = ({ role, sessionId }) => {
     const [unlocked, setUnlocked]   = useState(false);   // par chargement de page (contrainte des navigateurs)
     const [dismissed, setDismissed] = useState(false);   // « Plus tard »
     const [openedByUser, setOpenedByUser] = useState(false);   // panneau ouvert d'un clic (focus, F-4)
-    const [settings, setSettings] = usePersistedState(PLATFORM_SCOPE, 'audio', { defaults: AUDIO_DEFAULTS });
+    const [volumeSettings, setVolumeSettings] = usePersistedState(PLATFORM_SCOPE, 'audio', { defaults: VOLUME_DEFAULTS });
+    const [settings, setSettings] = usePersistedState(getSystemFromPath(), 'audio', { defaults: LAYOUT_DEFAULTS });
 
-    const volumes = normalizeVolumes(settings.volumes);
+    const volumes = normalizeVolumes(volumeSettings.volumes);
     const update = (patch) => setSettings(prev => ({ ...prev, ...patch }));
     const togglePanel = () => {
         if (!settings.panelOpen) setOpenedByUser(true);
@@ -80,7 +84,7 @@ const AudioLayer = ({ role, sessionId }) => {
                 unlocked={unlocked}
                 onUnlock={() => setUnlocked(true)}
                 volumes={volumes}
-                onVolumesChange={next => update({ volumes: next })}
+                onVolumesChange={next => setVolumeSettings(prev => ({ ...prev, volumes: next }))}
                 open={settings.widgetOpen}
                 onToggleOpen={() => update({ widgetOpen: !settings.widgetOpen })}
                 details={settings.widgetDetails}

@@ -8,4 +8,5 @@ Pour créer un slug :
 - **le slug de référence `fabula`** pour les patterns de code ;
 - **`CLAUDE.md`** (racine, `src/client`, `src/server`) pour l'architecture et les règles ;
 - **`spec_diceengine_v2.md`** et **`spec_combat.md`** pour les contrats des dés et du combat ;
-- **`spec_ui_menu.md`** pour les menus joueur et MJ.
+- **`spec_ui_menu.md`** pour les menus joueur et MJ ;
+- **`spec_audio.md`** pour la musique de la table (élément d'activation à poser dans l'onglet Session du MJ).

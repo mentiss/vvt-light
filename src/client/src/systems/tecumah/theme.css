@@ -97,3 +97,12 @@
 .vtt-menu-item { padding: .5rem 1rem; font-family: 'DayRoman', Georgia, serif; font-size: .9rem; }
 .vtt-menu-item:hover:not(:disabled) { background: transparent; opacity: .8; }
 .vtt-menu-separator { margin: .25rem 0; }
+
+/* ── Musique : boutons flottants (components/audio/AudioPlayerWidget.jsx, spec_audio.md §11.18) ── */
+/* ✦ Insigne de shérif : rond, double filet ; rouge canyon quand ça joue */
+.vtt-audio-toggle {
+    border: 3px double var(--color-border); background: var(--color-surface); color: var(--color-text-muted);
+}
+.vtt-audio-toggle:hover { color: var(--color-text); border-color: var(--color-primary); }
+.vtt-audio-widget.is-playing .vtt-audio-toggle:not(.vtt-audio-toggle-gm),
+.vtt-audio-toggle-gm.is-active { color: var(--color-primary); border-color: var(--color-primary); }

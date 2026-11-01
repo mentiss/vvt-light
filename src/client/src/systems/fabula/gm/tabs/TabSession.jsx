@@ -18,6 +18,7 @@ import { useFetch }  from '../../../../hooks/useFetch.js';
 import { useSystem } from '../../../../hooks/useSystem.js';
 
 import GMSendModal from '../../../../components/gm/modals/GMSendModal.jsx';
+import AudioSessionToggle from '../../../../components/audio/AudioSessionToggle.jsx';
 import AvatarUploader from '../../../../components/AvatarUploader.jsx';
 
 import { CLASSES, computeDerivedStats } from '../../config.jsx';
@@ -231,6 +232,8 @@ const TabSession = ({ activeSession, onlineCharacters, characterUpdates }) => {
                 <div className="px-3 py-2 border-b border-default">
                     <p className="text-[10px] uppercase tracking-wide text-muted">Personnages</p>
                     <p className="fu-font-title text-xs text-primary">{activeSession.name}</p>
+                    {/* Musique de la table (brique audio, spec_audio.md §11.7) */}
+                    <AudioSessionToggle sessionId={activeSession.id} className="vtt-btn vtt-btn-sm w-full mt-2" />
                 </div>
 
                 {loading && <p className="p-3 text-xs text-muted italic">Chargement...</p>}

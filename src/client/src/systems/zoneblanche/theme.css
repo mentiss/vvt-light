@@ -751,21 +751,6 @@
     box-shadow: var(--zb-glow);
 }
 
-/* ── Bouton flottant (accès rapide jet MJ) ──────────────────────────────── */
-.zb-fab {
-    position: fixed;
-    right: 1rem;
-    bottom: 1rem;
-    z-index: 40;
-    padding: 0.7rem 1.1rem;
-    background: var(--color-accent);
-    color: #fff;
-    border: 1px solid var(--zb-select-border);
-    box-shadow: 0 10px 26px rgba(0, 0, 0, 0.4);
-    transition: transform 0.12s;
-}
-.zb-fab:hover { transform: translateY(-2px); }
-
 /* ── Marqueurs de jet privé (modale MJ) ─────────────────────────────────── */
 .zb-private-badge {
     font-size: 0.6rem;
@@ -950,3 +935,15 @@
 .vtt-journal-title { font-family: var(--zb-font-display); text-transform: uppercase; letter-spacing: .04em; }
 .vtt-journal-editor { border-radius: 2px; }
 .vtt-journal-list-toggle { font-family: var(--zb-font-mono); letter-spacing: .1em; text-transform: uppercase; }
+
+/* ── Musique : boutons flottants (components/audio/AudioPlayerWidget.jsx, spec_audio.md §11.18) ── */
+/* ✦ Boîtier de caméscope : angles quasi droits, bord gauche accent ; voyant d'enregistrement quand ça joue */
+.vtt-audio-toggle {
+    border-radius: 2px; border: 1px solid var(--color-border); border-left: 3px solid var(--color-accent);
+    background: var(--zb-bar-bg); color: var(--zb-bar-text); opacity: .9;
+}
+.vtt-audio-toggle:hover { opacity: 1; color: var(--zb-bar-text); border-color: var(--color-border); border-left-color: var(--color-accent); }
+.vtt-audio-widget.is-playing .vtt-audio-toggle:not(.vtt-audio-toggle-gm),
+.vtt-audio-toggle-gm.is-active { opacity: 1; color: var(--zb-rec-dot); border-color: var(--color-border); border-left-color: var(--zb-rec-dot); }
+/* Bouton principal du panneau (lecture / pause) : angles quasi droits */
+.vtt-audio-icon-btn.is-main { border-radius: 2px; }
