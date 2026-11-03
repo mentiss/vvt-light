@@ -8,6 +8,9 @@
 //
 // Markdown reconnu : `# titre` (section), `##`… (intertitre), paragraphes,
 // listes (`-`, `*`, `1.`), tableaux, citations (`>`, en texte), `---` ignoré.
+// Notes Obsidian : liens `[[note#titre|alias]]` en texte simple (alias, sinon nom de
+// la note sans son numéro), marqueur d'encadré `[!type]` retiré, `<br>` → retour à
+// la ligne (`\n` dans le texte), `~~barré~~` rendu par inlineSegments.
 // Visibilité : en-tête `visibility: gm | player` (ou `mj`) ; dans le texte,
 // `<!-- gm -->` … `<!-- /gm -->` et `<!-- player -->` … `<!-- /player -->`.
 // ─────────────────────────────────────────────────────────────────────────────
@@ -43,6 +46,23 @@ const isTableSeparator = (line) => /^\s*\|?\s*:?-{2,}:?\s*(\|\s*:?-{2,}:?\s*)*\|
 const LIST_ITEM = /^\s*(?:[-*+]|\d+[.)])\s+(.*)$/;
 const VISIBILITY_TAG = /^\s*<!--\s*(\/?)\s*(gm|mj|player)\s*-->\s*$/i;
 
+const WIKILINK = /\[\[([^\]|\\]*?)(?:\\?\|([^\]]*))?\]\]/g;
+const CALLOUT = /^(\s*>\s*)\[![\w-]+\][+-]?\s*/;
+
+/** Lien Obsidian → texte : l'alias, sinon le titre visé (`[[#titre]]`), sinon le nom de la note sans dossier ni numéro */
+const wikilinkText = (_, target, alias) => {
+    if (alias?.trim()) return alias.trim();
+    const [note, heading] = target.split('#');
+    if (!note.trim() && heading) return heading.trim();
+    return note.replace(/^.*\//, '').replace(/^\d+\s*[-_.]?\s*/, '').trim();
+};
+
+/** Syntaxe Obsidian d'une ligne : liens en texte, marqueur d'encadré retiré, `<br>` en retour à la ligne */
+const obsidianLine = (line) => line
+    .replace(WIKILINK, wikilinkText)
+    .replace(CALLOUT, '$1')
+    .replace(/<br\s*\/?>/gi, '\n');
+
 /** Identifiant de section tiré du nom de fichier : « 02-combat.md » → « combat » */
 const sectionId = (name) => String(name).replace(/^.*[\\/]/, '').replace(/\.md$/i, '').replace(/^\d+[-_.\s]*/, '') || String(name);
 
@@ -69,10 +89,11 @@ export const markdownToSection = (name, text) => {
     };
 
     for (const raw of body.split(/\r?\n/)) {
-        const line = raw.replace(/\s+$/, '');
+        const line = obsidianLine(raw.replace(/\s+$/, ''));
         const tag = line.match(VISIBILITY_TAG);
         if (tag) { flush(); visibility = tag[1] ? null : normalizeVisibility(tag[2]); continue; }
         if (!line.trim()) { flush(); continue; }
+        if (/^\s*>\s*$/.test(line)) continue;            // encadré dont il ne restait que le marqueur
 
         const heading = line.match(/^(#{1,6})\s+(.*)$/);
         if (heading) {
@@ -133,16 +154,18 @@ export const matchingBlocks = (section, blocks, query) => {
     return kept;
 };
 
-/** Texte avec **gras** et *italique* → segments { text, bold?, italic? } */
+/** Texte avec **gras**, *italique* et ~~barré~~ → segments { text, bold?, italic?, strike? } */
 export const inlineSegments = (text) => {
     const out = [];
-    const re = /\*\*([^*]+)\*\*|\*([^*\s][^*]*)\*/g;
+    const re = /\*\*([^*]+)\*\*|\*([^*\s][^*]*)\*|~~([^~]+)~~/g;
     let last = 0;
     let m;
     const s = String(text ?? '');
     while ((m = re.exec(s))) {
         if (m.index > last) out.push({ text: s.slice(last, m.index) });
-        out.push(m[1] !== undefined ? { text: m[1], bold: true } : { text: m[2], italic: true });
+        if (m[1] !== undefined) out.push({ text: m[1], bold: true });
+        else if (m[2] !== undefined) out.push({ text: m[2], italic: true });
+        else out.push({ text: m[3], strike: true });
         last = re.lastIndex;
     }
     if (last < s.length) out.push({ text: s.slice(last) });

@@ -398,6 +398,73 @@ Constat fait en lecture seule sur la base de DEV et sur une copie de la PROD (de
 
 ---
 
+## 14. Aide de jeu (demande MJ, 2026-11-03)
+
+> Statut : **validée par le MJ le 2026-11-03** (recommandations AJ-1 à AJ-4 retenues). **Implémentée le 2026-11-03.**
+
+### 14.1 Besoin
+
+Un onglet de consultation des règles et du cadre, côté joueur et côté MJ, avec la brique de la plateforme `ReferenceGuide` (`spec_ui_reference.md`) : sommaire, sections repliables, recherche insensible à la casse et aux accents, visibilité MJ / joueur. Le contenu existe déjà dans le vault en Markdown : l'app le reprend, elle ne le réécrit pas.
+
+### 14.2 Préparation du vault (faite le 2026-11-03)
+
+- `04` : ajout des compétences **Escalade, Intimidation, Chant, Marchandage** (Q-1 soldée) ; « Bon réflexes » → **« Bons réflexes »** (R-2 soldée) ; description de **Mineur** complétée ; « Esquive (+1 suc auto) » retiré d'**Insaisissable** (Q-2), aussi dans le guide du joueur. Le vault et l'annexe A / B ne divergent plus sur ces points.
+- Nouvelle note `COSMOLOGIE/Une cosmologie sans Hel.md`, écrite pour les joueurs : les neuf mondes, ce que l'on raconte d'Ymir et de Jökulheimr, la mort, et une note de la table expliquant le choix.
+- **Cosmologie de la table** : pas de Hel. Le royaume de Hel des Eddas (XIIIᵉ siècle, lettrés chrétiens) est une greffe de l'Enfer biblique sur le séjour des morts. Les morts glorieux rejoignent les halls des dieux ; les morts sans gloire errent dans les brumes glacées de Niflheimr, à la lisière de Jökulheimr, en attendant le réveil d'Ymir, sans juge ni punition. Le neuvième monde est Jökulheimr.
+
+### 14.3 Contenu
+
+Une section par fichier du vault, dans cet ordre :
+
+| # | Section | Fichier du vault | Visible par |
+|---|---|---|---|
+| 1 | Guide du joueur : le cadre seulement (« Le monde en l'an 810 », « Vos personnages ») ; système, création et annexe des traits ne sont pas repris, ils sont dans les autres sections | `STORIES/Guide du joueur.md` | Tous |
+| 2 | Cosmologie | `COSMOLOGIE/Une cosmologie sans Hel.md` | Tous |
+| 3 | Système Saga | `PURE SAGA/01` | Tous |
+| 4 | Combat | `PURE SAGA/02` | Tous |
+| 5 | Santé et fatigue | `PURE SAGA/03` | Tous |
+| 6 | Traits et compétences | `PURE SAGA/04` | Tous |
+| 7 | Équipement et économie | `PURE SAGA/05` | Tous |
+| 8 | Runes et magie (l'intro « La réalité subjective… » reste en tête, en intertitre) | `PURE SAGA/06` | Tous |
+| 9 | Création de personnage et évolution | `PURE SAGA/07` | Tous, sauf « Conseils pour le Maître de Jeu » : **MJ** |
+| 10 | Navigation et combat maritime | `PURE SAGA/08` | Tous |
+| 11 | Jökulheimr | `COSMOLOGIE/Mondes/Jokulheimr.md` | **MJ** |
+
+- **Traits** : le tableau complet de `04` est visible de tous, traits impossibles à prendre compris (Forme de loup, Forme d'ours, Troublé ; Maudit par une Völva et Hanté par les Draugr barrés) : ne pas pouvoir les prendre n'empêche pas de les connaître (D-14). L'annexe du guide n'est pas reprise (retour MJ du 2026-11-03 : le guide ne garde que le cadre, sans redite des règles).
+- **Création** : l'ordre des étapes est celui du guide et de l'app (caractéristiques, compétences, traits, Saga, équipement, concept en dernier). `07` aligné dans le vault (AJ-3).
+- Non repris : `Les neuf mondes` et `Origine de l'homme`, couverts par la note de cosmologie ; le reste du vault (setup, PNJ, histoires).
+
+### 14.4 Rendu des notes Obsidian (brique, pour tous les slugs)
+
+La conversion Markdown de la brique (`spec_ui_reference.md` §3) gagne quatre règles, pour reprendre les notes du vault sans les retoucher :
+
+| Dans la note | Affiché |
+|---|---|
+| Lien `[[note]]`, `[[note#titre]]` | Texte simple, non cliquable : le nom de la note sans son numéro (« 02 - Combat » → « Combat ») |
+| Lien avec alias `[[note#titre\|texte]]` | Le texte de l'alias |
+| `~~barré~~` | Texte barré (traits exclus, vue MJ) |
+| `<br>` dans une cellule de tableau | Retour à la ligne (nom du trait, puis sa description) |
+| Marqueur d'encadré `>[!quote]` | Retiré ; le texte de l'encadré reste |
+
+Les listes imbriquées s'affichent à plat (comportement actuel de la brique).
+
+### 14.5 Interface
+
+- Onglet **« Aide de jeu »** en dernier, sur la fiche joueur (après Historique) et dans l'interface MJ (après Historique), comme Vampire.
+- Habillage Vikings, tiré du vocabulaire déjà validé (planche du lot 4) : rien de nouveau à valider.
+- Aucune base, aucune route, aucun événement socket.
+
+### 14.6 Questions
+
+| # | Question | Recommandation | Réponse |
+|---|---|---|---|
+| AJ-1 | Les marqueurs de visibilité (`<!-- gm -->` … `<!-- /gm -->` autour des conseils au MJ de `07`, `visibility: gm` en tête de `Jokulheimr`) : dans le vault ou seulement dans la copie de l'app ? | **Dans le vault** : invisibles dans Obsidian, ils font de la mise à jour une simple recopie. | Oui (faits le 2026-11-03) |
+| AJ-2 | Mise à jour de l'aide de jeu quand le vault change | Recopie manuelle des 11 fichiers dans le dossier du slug, sous des noms fixes (`01-guide.md`, `02-cosmologie.md`…, liste dans le code) ; pas de script tant que les mises à jour restent rares. | Oui (correspondance dans `config/reference.js`) |
+| AJ-3 | Aligner l'ordre de création de `07` sur le guide (§14.3) | Oui, je le corrige dans le vault. | Oui (fait le 2026-11-03) |
+| AJ-4 | Mentions de Hel antérieures au choix (`SETUP/Strindafylki/Trondheim/Olavsgard.md:521` notamment) | Hors aide de jeu ; à corriger par le MJ quand il repasse sur ces notes. | Oui |
+
+---
+
 ## Annexe A — Compétences (39)
 
 Source : vault `04` (fait foi, D-13) + 4 compétences conservées depuis l'app (Q-1). L'explosion utilise la meilleure des deux caractéristiques. Cumulables avec spécialisation : Combat CàC (armé), Combat distance, Langue orale, Langue écrite.

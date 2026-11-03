@@ -29,6 +29,7 @@ import ToastNotifications from '../../components/layout/ToastNotifications.jsx';
 import DiceHistoryPage    from '../../components/layout/DiceHistoryPage.jsx';
 import SessionPlayersBar  from '../../components/layout/SessionPlayersBar.jsx';
 import CombatPanel        from '../../components/combat/CombatPanel.jsx';
+import ReferenceGuide     from '../../components/reference/ReferenceGuide.jsx';
 import { HamburgerMenu, HamburgerMenuSeparator } from '../../components/ui/HamburgerMenu.jsx';
 import {
     HamburgerMenuItemCreateCharacter, HamburgerMenuItemSwitchCharacter, HamburgerMenuItemAvatar,
@@ -37,12 +38,14 @@ import {
 } from '../../components/ui/HamburgerMenuItems.jsx';
 import { useSession }     from '../../context/SessionContext.jsx';
 import { useSystem }      from '../../hooks/useSystem.js';
+import { REFERENCE_SECTIONS } from './config/reference.js';
 
 // Runes et inventaire sont des sections de la fiche, plus des onglets.
 const TABS = [
     { id: 'fiche',      label: 'Ma fiche' },
     { id: 'journal',    label: 'Journal' },
     { id: 'historique', label: 'Historique' },
+    { id: 'aide',       label: 'Aide de jeu' },
 ];
 
 const resolve = (updater, prev) => (typeof updater === 'function' ? updater(prev) : updater);
@@ -240,6 +243,7 @@ const Sheet = ({
                             sessionId={activeGMSession}
                         />
                     )}
+                    {activeTab === 'aide' && <ReferenceGuide sections={REFERENCE_SECTIONS} placeholder="Rechercher une règle (ex. seuil, berserk, tempête)…" />}
                 </main>
             </div>
 

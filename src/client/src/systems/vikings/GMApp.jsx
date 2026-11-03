@@ -17,6 +17,7 @@ import React, { useState, useEffect } from 'react';
 import ToastNotifications   from '../../components/layout/ToastNotifications.jsx';
 import DiceHistoryPage      from '../../components/layout/DiceHistoryPage.jsx';
 import TabJournal           from '../../components/gm/tabs/TabJournal.jsx';
+import ReferenceGuide       from '../../components/reference/ReferenceGuide.jsx';
 import { HamburgerMenu, HamburgerMenuSeparator } from '../../components/ui/HamburgerMenu.jsx';
 import {
     HamburgerMenuItemTableManagement, HamburgerMenuItemFreeDice, HamburgerMenuItemDiceConfig,
@@ -28,12 +29,14 @@ import TabCombat           from './gm/tabs/TabCombat.jsx';
 import GMDiceModal         from './gm/modals/GMDiceModal.jsx';
 import { useCombat }       from './gm/useCombat.js';
 import VkIcon              from './components/ui/VkIcon.jsx';
+import { REFERENCE_SECTIONS } from './config/reference.js';
 
 const TABS = [
     { id: 'session',    label: 'Session' },
     { id: 'combat',     label: 'Combat' },
     { id: 'journal',    label: 'Journal' },
     { id: 'historique', label: 'Historique' },
+    { id: 'aide',       label: 'Aide de jeu' },
 ];
 
 const GMApp = ({ activeSession, onSessionChange, onlineCharacters, characterUpdates, darkMode, onToggleDarkMode }) => {
@@ -111,6 +114,7 @@ const GMApp = ({ activeSession, onSessionChange, onlineCharacters, characterUpda
                         <DiceHistoryPage sessionId={sessionId} />
                     </div>
                 )}
+                {activeTab === 'aide' && <ReferenceGuide sections={REFERENCE_SECTIONS} isGM placeholder="Rechercher une règle (ex. seuil, berserk, tempête)…" />}
             </main>
 
             {/* ── Modales globales (celles du menu vivent dans ses éléments) ── */}

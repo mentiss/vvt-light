@@ -702,3 +702,28 @@ html { scrollbar-color: color-mix(in srgb, var(--color-primary) 45%, transparent
     color: var(--color-primary); border-color: var(--color-primary);
     box-shadow: var(--vk-panel-shadow), 0 0 14px color-mix(in srgb, var(--color-primary) 40%, transparent);
 }
+
+/* ── Aide de jeu (components/reference/ReferenceGuide.jsx, spec_vikings.md §14) ── */
+/* Vocabulaire de la fiche : panneaux sombres, intitulés en Grenze Gotisch, filets dorés */
+.vtt-reference { gap: 1.25rem; font-family: var(--vk-font-body); --vtt-reference-top: 7.5rem; }   /* sous le bandeau et les onglets collants */
+.vtt-reference-nav-item { border-radius: 2px; font-family: var(--vk-font-label); font-size: 1rem; letter-spacing: .03em; color: var(--color-text-muted); }
+.vtt-reference-nav-item:hover { background: color-mix(in srgb, var(--color-primary) 10%, transparent); color: var(--color-primary); }
+.vtt-reference-search { border-radius: 2px; font-size: .95rem; padding: .5rem .75rem; background: var(--vk-field-bg); }
+.vtt-reference-search:focus { outline: none; border-color: var(--color-primary); }
+.vtt-reference-section { border-radius: 0; border-width: 2px; box-shadow: var(--vk-panel-shadow); }
+.vtt-reference-section-head { padding: .7rem 1rem; }
+.vtt-reference-section-title { font-family: var(--vk-font-label); font-size: 1.4rem; line-height: 1.2; letter-spacing: .03em; color: var(--color-primary); }
+.vtt-reference-chevron { color: var(--color-primary); }
+.vtt-reference-badge { border-radius: 2px; border-color: var(--vk-gold-dim); background: color-mix(in srgb, var(--color-primary) 15%, transparent); color: var(--color-primary); font-size: .7rem; }
+.vtt-reference-body { padding: 0 1.1rem 1.1rem; gap: .7rem; }
+.vtt-reference-heading {
+    margin-top: .6rem; padding-bottom: .2rem; font-family: var(--vk-font-label); font-weight: 400; font-size: 1.15rem; color: var(--color-text);
+    border-bottom: 1px solid var(--vk-border-soft);
+}
+.vtt-reference-text, .vtt-reference-list { font-size: .95rem; line-height: 1.55; }
+.vtt-reference-table { font-size: .875rem; line-height: 1.4; }
+.vtt-reference-table th { font-family: var(--vk-font-label); font-weight: 400; font-size: .95rem; letter-spacing: .03em; color: var(--color-primary); border-bottom: 1px solid var(--color-border); padding: .35rem .6rem; }
+.vtt-reference-table td { padding: .35rem .6rem; border-bottom-color: var(--vk-border-soft); }
+.vtt-reference-table td:first-child { white-space: normal; min-width: 8em; }   /* nom du trait puis sa description */
+.vtt-reference-table td s { color: var(--color-text-muted); }
+.vtt-reference-block.is-gm { border-left: 2px solid var(--vk-gold-dim); padding-left: .7rem; }

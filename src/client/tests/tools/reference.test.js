@@ -59,6 +59,36 @@ describe('markdownToSection', () => {
     });
 });
 
+describe('markdownToSection : notes Obsidian (spec_vikings.md §14.4)', () => {
+    const OBSIDIAN = `# Règles
+
+Voir aussi : [[02 - Combat]] [[03 - Santé et fatigue]]
+Cf [[02 - Combat#Attaque et défense|Bonus de posture]] et [[#Modificateurs de combat]].
+
+| Compétence | Notes |
+|---|---|
+| Combat | Parades (cf [[02 - Combat#Attaque et défense\\|Bonus de posture]]) |
+| **Bons réflexes**<br>Réflexes surprenants. | ~~Exclu~~ |
+
+>[!quote]
+*"Sous la racine que nul ne nomme,*
+`;
+    const s = markdownToSection('01-regles.md', OBSIDIAN);
+
+    it('liens en texte simple : nom sans numéro, alias, titre visé', () => {
+        expect(s.blocks[0].text).toBe('Voir aussi : Combat Santé et fatigue Cf Bonus de posture et Modificateurs de combat.');
+    });
+
+    it('lien à alias échappé dans un tableau, <br> en retour à la ligne', () => {
+        expect(s.blocks[1].rows[0][1]).toBe('Parades (cf Bonus de posture)');
+        expect(s.blocks[1].rows[1][0]).toBe('**Bons réflexes**\nRéflexes surprenants.');
+    });
+
+    it('marqueur d’encadré retiré, le texte reste', () => {
+        expect(s.blocks[2]).toEqual({ type: 'text', text: '*"Sous la racine que nul ne nomme,*' });
+    });
+});
+
 describe('markdownToSections', () => {
     it('ordre des préfixes numériques (10 après 2)', () => {
         const files = [{ name: '10-fin.md', text: '# Fin' }, { name: '02-debut.md', text: '# Début' }];
@@ -94,5 +124,8 @@ describe('inlineSegments', () => {
         expect(inlineSegments('Un **+2 diff** et *iso*.')).toEqual([
             { text: 'Un ' }, { text: '+2 diff', bold: true }, { text: ' et ' }, { text: 'iso', italic: true }, { text: '.' },
         ]);
+    });
+    it('barré', () => {
+        expect(inlineSegments('~~Forme de loup~~ (MJ)')).toEqual([{ text: 'Forme de loup', strike: true }, { text: ' (MJ)' }]);
     });
 });

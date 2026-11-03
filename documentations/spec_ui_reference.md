@@ -30,7 +30,13 @@ Un fichier = une section. Le slug range ses fichiers dans un dossier (ex. `confi
 | Paragraphe | Texte |
 | Liste `-` ou `1.` | Liste |
 | Tableau Markdown | Tableau (première ligne = colonnes) |
-| `**gras**`, `*italique*` | Gras, italique dans le texte, les listes et les cellules |
+| `**gras**`, `*italique*`, `~~barré~~` | Gras, italique, barré dans le texte, les listes et les cellules |
+| Lien Obsidian `[[note]]`, `[[note#titre]]`, `[[#titre]]` | Texte simple, non cliquable : nom de la note sans dossier ni numéro (« 02 - Combat » → « Combat »), ou le titre visé |
+| Lien Obsidian avec alias `[[note#titre\|texte]]` (`\|` accepté dans un tableau) | Le texte de l'alias |
+| `<br>` | Retour à la ligne (ex. nom puis description dans une cellule) |
+| Marqueur d'encadré Obsidian `>[!quote]` | Retiré ; le texte de l'encadré reste |
+
+Les règles Obsidian (ajoutées pour l'aide de jeu Vikings, spec_vikings.md §14.4) permettent de reprendre les notes d'un vault sans les retoucher. Les listes imbriquées s'affichent à plat.
 
 **Visibilité** (par défaut : tout le monde) :
 

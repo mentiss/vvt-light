@@ -16,11 +16,17 @@ import { isVisible, matchingBlocks, inlineSegments } from '../../tools/reference
 
 const anchor = (id) => `vtt-ref-${id}`;
 
-/** Texte avec gras et italique */
+/** Retours à la ligne (`<br>` des notes Obsidian, devenus `\n`) */
+const Lines = ({ text }) => text.split('\n').map((part, i) => (
+    <React.Fragment key={i}>{i > 0 && <br />}{part}</React.Fragment>
+));
+
+/** Texte avec gras, italique, barré et retours à la ligne */
 const Inline = ({ text }) => inlineSegments(text).map((s, i) => {
-    if (s.bold) return <strong key={i}>{s.text}</strong>;
-    if (s.italic) return <em key={i}>{s.text}</em>;
-    return <React.Fragment key={i}>{s.text}</React.Fragment>;
+    if (s.bold) return <strong key={i}><Lines text={s.text} /></strong>;
+    if (s.italic) return <em key={i}><Lines text={s.text} /></em>;
+    if (s.strike) return <s key={i}><Lines text={s.text} /></s>;
+    return <Lines key={i} text={s.text} />;
 });
 
 const Table = ({ columns, rows }) => (
