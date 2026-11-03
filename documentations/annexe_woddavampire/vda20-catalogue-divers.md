@@ -1,6 +1,6 @@
 # V20 Dark Ages – Catalogue divers
 
-> Rattaché à `vda20-regles.md`. Contenu : Archétypes, Capacités (spécialités), Historiques, équipement de combat, manœuvres, Dérangements, tables de référence, goules, animaux, démons.
+> Rattaché à `spec_woddavampire.md`. Contenu : Archétypes, Capacités (spécialités), Historiques, équipement de combat, manœuvres, Dérangements, tables de référence, goules, animaux, démons.
 > Noms français provisoires. Textes reformulés.
 
 ---
@@ -255,7 +255,7 @@ La pénalité s'applique à l'initiative et aux actions basées sur la Dextérit
 
 ## 6. Dérangements
 
-**Règles** (`vda20-regles.md` §19) : déclenchés par le stress (tout ce qui appelle un jet de Maîtrise/Instinct), effet pour la nuit ; 1 Volonté = 1 tour de lucidité. Effets ci-dessous pour les vampires (pour les mortels, au jugement du MJ).
+**Règles** (`spec_woddavampire.md` §19) : déclenchés par le stress (tout ce qui appelle un jet de Maîtrise/Instinct), effet pour la nuit ; 1 Volonté = 1 tour de lucidité. Effets ci-dessous pour les vampires (pour les mortels, au jugement du MJ).
 
 | Famille | Dérangement | Effet |
 |---|---|---|

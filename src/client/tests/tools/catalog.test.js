@@ -3,7 +3,15 @@
 // texte des objets, rangées de filtres, options déduites, groupement.
 
 import { describe, it, expect } from 'vitest';
-import { filterCatalog, filterOptions, groupCatalog, searchableText } from '../../src/tools/catalog.js';
+import { filterCatalog, filterOptions, groupCatalog, searchableText, normalizeText } from '../../src/tools/catalog.js';
+
+describe('normalizeText', () => {
+    it('minuscules, sans accents, ligatures dépliées', () => {
+        expect(normalizeText('Frénésie')).toBe('frenesie');
+        expect(normalizeText('MANŒUVRE')).toBe('manoeuvre');
+        expect(normalizeText('Cœur')).toBe(normalizeText('coeur'));
+    });
+});
 
 const ITEMS = [
     { name: 'Épée longue',  type: 'Mêlée',   faction: 'allies', damage: 15, tags: [{ text: 'Tranchant' }] },

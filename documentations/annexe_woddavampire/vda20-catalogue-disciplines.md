@@ -1,6 +1,6 @@
 # V20 Dark Ages – Catalogue des Disciplines
 
-> Rattaché à `vda20-regles.md` (§13). Magie du sang (Thaumaturgie, Nécromancie, Koldunisme, Ogham, Mysticisme de l'Abîme) : `vda20-catalogue-magie-sang.md`.
+> Rattaché à `spec_woddavampire.md` (§13). Magie du sang (Thaumaturgie, Nécromancie, Koldunisme, Ogham, Mysticisme de l'Abîme) : `vda20-catalogue-magie-sang.md`.
 > Effets **reformulés et résumés** ; les tables de résultats détaillées sont reprises quand elles servent au jeu. Noms français provisoires (VO entre parenthèses).
 
 ## Structure d'une entrée

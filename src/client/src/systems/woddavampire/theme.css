@@ -1,0 +1,851 @@
+/* src/client/src/systems/woddavampire/theme.css */
+/* ─────────────────────────────────────────────────────────────────────────────
+   Thème Vampire : l'Âge des Ténèbres — manuscrit gothique de nuit, le poids de
+   l'Église et le sang, dosé. Source validée : documentations/woddavampire/
+   planche_woddavampire.html (spec_woddavampire.md §II.9).
+   Nuit : crypte, vélin à la chandelle, sang, or. Jour : vélin, encre brune,
+   rouge rubrique, or liturgique.
+   Polices : DeRoos FR et Lombardic FR (public/fonts/fonts.css, chargé partout),
+   Sorts Mill Goudy (Google, ci-dessous).
+   ─────────────────────────────────────────────────────────────────────────── */
+
+@import './Brand.css';
+@import url('https://fonts.googleapis.com/css2?family=Sorts+Mill+Goudy:ital@0;1&display=swap');
+
+/* ── Mode JOUR ──────────────────────────────────────────────────────────── */
+:root {
+    --color-primary:     #8E1018;   /* rouge rubrique */
+    --color-secondary:   #4B2F6B;   /* violet épiscopal */
+    --color-accent:      #A67C1E;   /* or liturgique */
+    --color-danger:      #B3121C;
+    --color-success:     #4F6B2A;
+    --color-bg:          #E9DDC2;   /* vélin */
+    --color-surface:     #F4EBD6;
+    --color-surface-alt: #E0CFA9;
+    --color-text:        #2A1810;   /* encre ferro-gallique */
+    --color-text-muted:  #6E5440;
+    --color-border:      #6B3A24;
+
+    --vda-blood:       #8E1018;
+    --vda-blood-dark:  #4A060B;
+    --vda-gold:        #A67C1E;
+    --vda-rule:        var(--color-primary);
+    --vda-thirst:      0;
+    --vda-font-title:  'DeRoos FR', Georgia, serif;
+    --vda-font-initial:'Lombardic FR', 'DeRoos FR', Georgia, serif;
+    --vda-font-body:   'Sorts Mill Goudy', Georgia, serif;
+    --vda-iron-filter: drop-shadow(0 2px 2px rgba(60, 30, 10, .35));
+    --vda-cavity:       rgba(60, 30, 15, .10);
+    --vda-cavity-edge:  rgba(107, 58, 36, .55);
+    --vda-cavity-light: rgba(255, 255, 255, .55);
+    --vda-stain-blend:  multiply;
+    --vda-stain-opacity:.6;
+    --vda-soak-blend:   multiply;
+    --vda-soak-opacity: .9;
+}
+
+/* ── Mode NUIT (principal) ──────────────────────────────────────────────── */
+[data-theme="dark"] {
+    --color-primary:     #B3141F;   /* sang */
+    --color-secondary:   #8A6BB0;   /* améthyste */
+    --color-accent:      #C9A24A;   /* or à la feuille */
+    --color-danger:      #E2402F;
+    --color-success:     #8C9E58;
+    --color-bg:          #0C0708;   /* crypte */
+    --color-surface:     #170F0F;
+    --color-surface-alt: #241615;
+    --color-text:        #E6D7BC;   /* vélin à la chandelle */
+    --color-text-muted:  #A08C72;
+    --color-border:      #4E2A22;
+
+    --vda-blood:       #B3141F;
+    --vda-blood-dark:  #5C0910;
+    --vda-gold:        #C9A24A;
+    --vda-iron-filter: brightness(2.1) contrast(1.1) drop-shadow(0 0 5px rgba(179, 20, 31, .45)) drop-shadow(0 2px 3px rgba(0, 0, 0, .8));
+    --vda-cavity:       rgba(0, 0, 0, .35);
+    --vda-cavity-edge:  rgba(150, 70, 55, .5);
+    --vda-cavity-light: rgba(255, 255, 255, .07);
+    --vda-stain-blend:  normal;
+    --vda-stain-opacity:.7;
+    --vda-soak-blend:   normal;
+    --vda-soak-opacity: .85;
+}
+
+/* ── Racine du slug (fiche, MJ, création) et emplacement à modales ──────── */
+.vda-root, .vtt-modal-host {
+    font-family: var(--vda-font-body);
+    font-variant-numeric: lining-nums;
+}
+.vda-root { background: var(--color-bg); color: var(--color-text); min-height: 100vh; font-size: 16px; line-height: 1.45; }
+.vda-font-title   { font-family: var(--vda-font-title); font-weight: 400; letter-spacing: .02em; }
+.vda-font-initial { font-family: var(--vda-font-initial); }
+
+/* ═════════════ En-tête des pages du slug ═════════════ */
+.vda-header { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 8px clamp(12px, 2vw, 28px);
+    background: var(--color-surface); border-bottom: 1px solid var(--color-border); }
+.vda-header-title { font-family: var(--vda-font-title); font-size: 26px; color: var(--color-primary); line-height: 1; }
+.vda-header-sub { font-size: 14px; color: var(--color-text-muted); }
+.vda-page { padding: 18px clamp(12px, 2vw, 28px) 60px; }
+
+/* ═════════════ Titres : fleurons de fer à roses (blocs), doubles filets (colonnes) ═════════════ */
+.vda-section-title {
+    display: flex; align-items: center; justify-content: center; gap: 14px; white-space: nowrap;
+    font-family: var(--vda-font-title); font-weight: 400; font-size: 26px; line-height: 1;
+    color: var(--color-text); margin: 18px 0 10px; --vda-flank-h: 26px;
+}
+.vda-section-title::before, .vda-section-title::after {
+    content: ''; flex: 0 1 auto; min-width: 0;
+    height: var(--vda-flank-h); width: calc(var(--vda-flank-h) * 9.59);
+    background: url('./assets/title-flourish.webp') no-repeat right center / contain;
+    filter: var(--vda-iron-filter);
+}
+.vda-section-title::after { transform: scaleX(-1); }
+.vda-section-title .vda-initial { font-family: var(--vda-font-initial); color: var(--color-primary); font-size: 1.35em; text-shadow: 0 0 1px var(--vda-gold); }
+.vda-section-title.is-small { font-size: 19px; gap: 10px; }
+.vda-section-title.is-small::before, .vda-section-title.is-small::after {
+    flex: 1; width: auto; height: 5px; background: none; filter: none; transform: none;
+    border-top: 1px solid var(--vda-rule); border-bottom: 2px solid var(--vda-rule);
+}
+.vda-col-title { font-family: var(--vda-font-title); font-size: 18px; text-align: center; margin-bottom: 6px; letter-spacing: .03em; }
+
+/* ═════════════ Feuille : parchemin encadré de coins de ferronnerie ═════════════ */
+.vda-sheet {
+    position: relative; padding: 44px 50px;
+    background: var(--color-surface); border: 1px solid var(--color-border);
+    box-shadow: inset 0 0 0 4px var(--color-surface), inset 0 0 0 5px color-mix(in srgb, var(--vda-blood) 55%, transparent), 0 10px 40px rgba(0, 0, 0, .35);
+}
+/* Contenu au-dessus des taches (ordre du DOM), sans créer de contexte d'empilement :
+   une modale rendue dans la feuille (catalogue) doit pouvoir passer au-dessus de la bande fixe */
+.vda-sheet > *:not(.vda-stain):not(.vda-corner):not(.vtt-modal-backdrop) { position: relative; }
+.vda-corner { position: absolute; width: 150px; height: 150px; pointer-events: none; z-index: 2;
+    background: url('./assets/corner-iron.webp') no-repeat top left / contain; filter: var(--vda-iron-filter); }
+.vda-corner.is-tl { top: -10px; left: -10px; }
+.vda-corner.is-tr { top: -10px; right: -10px; transform: scaleX(-1); }
+.vda-corner.is-bl { bottom: -10px; left: -10px; transform: scaleY(-1); }
+.vda-corner.is-br { bottom: -10px; right: -10px; transform: scale(-1, -1); }
+.vda-corner.is-small { width: 70px; height: 70px; }
+.vda-corner.is-small.is-tl, .vda-corner.is-small.is-tr { top: -6px; }
+.vda-corner.is-small.is-bl, .vda-corner.is-small.is-br { bottom: -6px; }
+.vda-corner.is-small.is-tl, .vda-corner.is-small.is-bl { left: -6px; }
+.vda-corner.is-small.is-tr, .vda-corner.is-small.is-br { right: -6px; }
+
+.vda-header-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px 24px; font-size: 15px; }
+.vda-field { display: flex; gap: 8px; border-bottom: 1px solid color-mix(in srgb, var(--color-border) 45%, transparent); padding: 2px 0; }
+.vda-field b { font-family: var(--vda-font-title); font-weight: 400; color: var(--color-text-muted); min-width: 92px; }
+.vda-three { display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px 28px; }
+.vda-two { display: grid; grid-template-columns: repeat(2, 1fr); gap: 4px 28px; }
+
+/* Trait avec points ●○ (permanent) */
+.vda-trait { display: flex; align-items: center; gap: 8px; padding: 1px 0; font-size: 16px; }
+.vda-trait-name { flex: 1; border-bottom: 1px dotted color-mix(in srgb, var(--color-border) 60%, transparent); }
+.vda-trait-name small { font-style: italic; color: var(--color-text-muted); font-size: 13px; }
+button.vda-trait-roll { text-align: left; padding: 0; background: none; color: inherit; font: inherit; cursor: pointer; }
+button.vda-trait-roll:hover { color: var(--color-primary); border-bottom-color: var(--color-primary); }
+/* Ligne de trait entière cliquable hors édition (nom et points lancent le jet) */
+button.vda-trait-roll-row { width: 100%; text-align: left; padding: 0; background: none; color: inherit; font: inherit; border: 0; cursor: pointer; }
+button.vda-trait-roll-row:hover .vda-trait-name, button.vda-trait-roll-row:focus-visible .vda-trait-name { color: var(--color-primary); border-bottom-color: var(--color-primary); }
+button.vda-trait-roll-row:hover .vda-dot.is-on { box-shadow: 0 0 0 1px var(--color-primary); }
+.vda-trait-below { display: flex; gap: 6px; margin: 0 0 6px 10px; }
+/* Route et Volonté : même survol que les lignes de traits (les points s'allument, pas le conteneur) */
+button.vda-dots-roll { padding: 0; background: none; border: 0; cursor: pointer; }
+button.vda-dots-roll:hover .vda-dot.is-on, button.vda-dots-roll:focus-visible .vda-dot.is-on { box-shadow: 0 0 0 1px var(--color-primary); }
+button.vda-section-toggle { display: block; width: 100%; padding: 0; background: none; border: 0; color: inherit; font: inherit; cursor: pointer; text-align: center; }
+button.vda-section-toggle .vda-section-title { margin-bottom: 0; }
+button.vda-section-toggle:hover .vda-section-title { color: var(--color-primary); }
+.vda-dots { display: inline-flex; gap: 3px; flex-shrink: 0; }
+.vda-dot { width: 12px; height: 12px; border-radius: 50%; border: 1.5px solid var(--color-text); background: transparent; }
+.vda-dot.is-on { background: var(--color-text); }
+.vda-dot.is-free { background: var(--color-text-muted); border-color: var(--color-text-muted); }   /* point gratuit */
+.vda-dot.is-bonus { background: var(--vda-blood); border-color: var(--vda-blood); }                   /* point bonus */
+.vda-dot.is-locked { opacity: .3; }
+button.vda-dot { padding: 0; cursor: pointer; transition: transform .15s; }
+button.vda-dot:hover:not(:disabled) { transform: scale(1.18); }
+button.vda-dot:disabled { cursor: not-allowed; }
+
+/* ═════════════ Réserves : carrés gravés (sang « sombre et épais », Volonté à l'encre) ═════════════ */
+.vda-drops { display: grid; grid-template-columns: repeat(10, 20px); gap: 7px; justify-content: center; }
+.vda-drop { position: relative; width: 20px; height: 20px; overflow: hidden; border-radius: 2px; padding: 0;
+    background: var(--vda-cavity); border: 1px solid var(--vda-cavity-edge);
+    box-shadow: inset 0 2px 3px rgba(0, 0, 0, .45), 0 1px 0 var(--vda-cavity-light); }
+.vda-drop::after { content: ''; position: absolute; inset: 0;
+    clip-path: inset(100% 0 0 0); transition: clip-path .8s cubic-bezier(.45, .05, .35, 1);
+    background:
+        linear-gradient(180deg, rgba(255, 160, 160, .38) 0, rgba(255, 160, 160, .38) 1px, transparent 2.5px),
+        radial-gradient(ellipse 34% 20% at 34% 26%, rgba(255, 210, 210, .22), transparent 100%),
+        radial-gradient(circle at 50% 50%, transparent 52%, rgba(10, 0, 0, .55) 100%),
+        linear-gradient(180deg, #7c0b12 0%, #520609 55%, #2a0204 100%); }
+[data-theme="dark"] .vda-drop::after { filter: brightness(1.25) saturate(1.1); }
+.vda-drop.is-on::after { clip-path: inset(0 0 0 0); }
+.vda-drop.is-ink::after { background:
+    linear-gradient(180deg, rgba(255, 255, 255, .22) 0, rgba(255, 255, 255, .22) 1px, transparent 2.5px),
+    radial-gradient(circle at 50% 50%, transparent 52%, rgba(0, 0, 0, .35) 100%),
+    linear-gradient(180deg, #4a3020 0%, #2a1810 60%, #160c07 100%); filter: none; }
+[data-theme="dark"] .vda-drop.is-ink::after { background:
+    linear-gradient(180deg, rgba(255, 255, 255, .5) 0, rgba(255, 255, 255, .5) 1px, transparent 2.5px),
+    radial-gradient(circle at 50% 50%, transparent 52%, rgba(60, 40, 20, .35) 100%),
+    linear-gradient(180deg, #efe3cb 0%, #d8c6a4 60%, #b9a47e 100%); filter: none; }
+.vda-drop.is-locked { opacity: .3; }
+.vda-drop.is-moving { animation: vda-drop-slosh .9s ease-out; }
+@keyframes vda-drop-slosh { 70% { transform: none; } 82% { transform: scale(1.07, .94); } 92% { transform: scale(.98, 1.02); } }
+
+/* ═════════════ Santé : / contondant, X létal, ✱ aggravé ═════════════ */
+.vda-health { width: 100%; border-collapse: collapse; font-size: 15px; }
+.vda-health td { padding: 1px 4px; }
+.vda-health td.pen { text-align: right; color: var(--color-text-muted); width: 34px; }
+.vda-health tr.is-worst td:first-child { color: var(--vda-blood); font-weight: 600; }
+.vda-hbox { position: relative; display: block; width: 20px; height: 20px; margin-left: auto; border: 1.5px solid var(--color-text); background: transparent; }
+.vda-hbox::before, .vda-hbox::after { content: ''; position: absolute; left: 50%; top: 50%; width: 24px; height: 2px; background: var(--color-text); opacity: 0; }
+.vda-hbox.is-bashing::before, .vda-hbox.is-lethal::before { opacity: 1; transform: translate(-50%, -50%) rotate(-45deg); }
+.vda-hbox.is-lethal::after { opacity: 1; transform: translate(-50%, -50%) rotate(45deg); }
+.vda-hbox.is-aggravated { background: var(--vda-blood-dark); border-color: var(--vda-blood-dark); }
+.vda-hbox.is-aggravated::before { content: '✱'; opacity: 1; width: auto; height: auto; background: none; color: var(--color-accent); font-size: 15px; line-height: 1; transform: translate(-50%, -52%); }
+
+/* Taches séchées qui suivent les blessures */
+.vda-stain { position: absolute; pointer-events: none; z-index: 0; background: no-repeat center / contain;
+    mix-blend-mode: var(--vda-stain-blend); opacity: 0; animation: vda-stain-soak 4s ease-out forwards; }
+@keyframes vda-stain-soak {
+    0%   { opacity: 0; filter: blur(6px) saturate(1.6) brightness(1.2); transform: var(--rot) scale(.7); }
+    40%  { opacity: var(--vda-stain-opacity); filter: blur(2px) saturate(1.4) brightness(1.1); }
+    100% { opacity: var(--vda-stain-opacity); filter: none; transform: var(--rot) scale(1); }
+}
+
+/* Imprégnation (la page boit le sang) : couche sous le texte */
+.vda-soak-clip { position: absolute; inset: 0; overflow: hidden; pointer-events: none; z-index: 0; }
+.vda-soak { width: 100%; height: 100%; display: block; mix-blend-mode: var(--vda-soak-blend); opacity: var(--vda-soak-opacity); }
+
+/* ═════════════ Boutons : plaques de fer forgé rivetées ═════════════ */
+.vtt-btn, .vda-btn {
+    --rivet: radial-gradient(circle at 40% 35%, #b9b2a8 0, #6d665e 1.4px, #1a1614 2.4px, transparent 2.8px);
+    position: relative; display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+    padding: 8px 22px 7px; font-family: var(--vda-font-title); font-size: 16px; letter-spacing: .05em;
+    color: #ddd3c2; text-shadow: 0 1px 0 #000;
+    background:
+        var(--rivet) 5px 5px / 6px 6px no-repeat, var(--rivet) calc(100% - 5px) 5px / 6px 6px no-repeat,
+        var(--rivet) 5px calc(100% - 5px) / 6px 6px no-repeat, var(--rivet) calc(100% - 5px) calc(100% - 5px) / 6px 6px no-repeat,
+        linear-gradient(180deg, #4a443f 0%, #2c2724 45%, #1d1917 100%);
+    border: 1px solid #0b0908; border-radius: 3px;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, .18), inset 0 -2px 0 rgba(0, 0, 0, .45), 0 2px 4px rgba(0, 0, 0, .45);
+    transition: color .15s, box-shadow .15s;
+}
+.vtt-btn:hover:not(:disabled), .vda-btn:hover:not(:disabled) { color: #fff; box-shadow: inset 0 1px 0 rgba(255, 255, 255, .22), inset 0 -2px 0 rgba(0, 0, 0, .45), 0 0 0 1px #6b1a14, 0 0 10px rgba(179, 20, 31, .45); }
+.vtt-btn:active:not(:disabled), .vda-btn:active:not(:disabled) { transform: translateY(1px); box-shadow: inset 0 2px 4px rgba(0, 0, 0, .6); }
+.vtt-btn:disabled, .vda-btn:disabled { opacity: .45; cursor: not-allowed; }
+.vtt-btn-primary, .vda-btn.is-primary {
+    color: #f6e7cc;
+    background:
+        var(--rivet) 5px 5px / 6px 6px no-repeat, var(--rivet) calc(100% - 5px) 5px / 6px 6px no-repeat,
+        var(--rivet) 5px calc(100% - 5px) / 6px 6px no-repeat, var(--rivet) calc(100% - 5px) calc(100% - 5px) / 6px 6px no-repeat,
+        radial-gradient(ellipse 60% 70% at 50% 30%, rgba(255, 120, 120, .35), transparent 70%),
+        linear-gradient(180deg, #a3141f 0%, #6e0a12 55%, #3e0509 100%);
+    box-shadow: inset 0 0 0 3px #2a2522, inset 0 0 0 4px #0b0908, inset 0 1px 0 4px rgba(255, 255, 255, .12), 0 2px 5px rgba(0, 0, 0, .5);
+}
+.vtt-btn-danger, .vda-btn.is-danger { color: #ff8a70; text-shadow: 0 0 6px rgba(255, 80, 40, .6), 0 1px 0 #000;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, .12), inset 0 -2px 0 rgba(0, 0, 0, .45), inset 0 0 10px rgba(200, 40, 20, .35), 0 2px 4px rgba(0, 0, 0, .45); }
+.vtt-btn-sm, .vda-btn.is-sm { padding: 4px 14px 3px; font-size: 14px;
+    --rivet: radial-gradient(circle at 40% 35%, #b9b2a8 0, #6d665e 1px, #1a1614 1.8px, transparent 2.2px); }
+
+/* Bascule : sceau de cire frappé du tau ; éteinte = empreinte vide */
+.vda-toggle { display: inline-flex; align-items: center; gap: 8px; font-size: 15px; cursor: pointer; padding: 0; }
+.vda-toggle i { position: relative; width: 24px; height: 24px; border-radius: 50%; flex-shrink: 0;
+    background: radial-gradient(circle, transparent 52%, color-mix(in srgb, var(--color-border) 35%, transparent) 54%, transparent 64%);
+    box-shadow: inset 0 1px 2px rgba(0, 0, 0, .35); }
+.vda-toggle i::after { content: ''; position: absolute; inset: -3px; opacity: 0;
+    background: url('./assets/wax-seal.webp') no-repeat center / contain; filter: drop-shadow(0 1px 2px rgba(0, 0, 0, .5)); }
+.vda-toggle.is-on i { box-shadow: none; }
+.vda-toggle.is-on i::after { opacity: 1; animation: vda-wax .35s cubic-bezier(.2, 1.6, .4, 1); }
+@keyframes vda-wax { from { transform: scale(1.5) rotate(-25deg); opacity: 0; } to { transform: none; opacity: 1; } }
+
+/* Choix « pill » (remplace les listes déroulantes) */
+.vda-chip { padding: 3px 11px; border: 1px solid var(--color-border); background: var(--color-surface); color: var(--color-text);
+    font-size: 14px; cursor: pointer; border-radius: 2px; transition: background .15s, color .15s; }
+.vda-chip:hover:not(:disabled) { border-color: var(--color-primary); color: var(--color-primary); }
+.vda-chip.is-on { background: var(--color-text); color: var(--color-surface); border-color: var(--color-text); }
+.vda-chip:disabled { opacity: .35; cursor: not-allowed; }
+.vda-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.vda-chips.is-loose { gap: 10px 22px; }
+.vda-chips.is-small { gap: 4px; }
+.vda-chips.is-small .vda-chip { padding: 1px 8px; font-size: 13px; }
+
+/* Pas à pas (− valeur +) */
+.vda-stepper { display: inline-flex; align-items: center; border: 1px solid var(--color-border); }
+.vda-stepper button { width: 26px; height: 26px; font-size: 17px; color: var(--color-primary); }
+.vda-stepper button:disabled { opacity: .3; cursor: not-allowed; }
+.vda-stepper span { min-width: 28px; text-align: center; font-weight: 700; border-inline: 1px solid var(--color-border); line-height: 26px; }
+
+/* Champs de saisie */
+.vda-input, .vda-textarea { width: 100%; padding: 5px 8px; background: var(--color-bg); color: var(--color-text);
+    border: 1px solid var(--color-border); border-radius: 2px; font-family: var(--vda-font-body); font-size: 15px; }
+.vda-input:focus, .vda-textarea:focus { outline: none; border-color: var(--color-primary); box-shadow: 0 0 0 2px color-mix(in srgb, var(--color-primary) 25%, transparent); }
+.vda-label { display: block; font-family: var(--vda-font-title); font-size: 14px; color: var(--color-text-muted); margin-bottom: 3px; }
+
+/* ═════════════ Assistant de création ═════════════ */
+.vda-tabs-nav { position: relative; display: flex; align-items: flex-end; border-bottom: 2px solid var(--vda-rule); }
+.vda-wizard-tabs { display: flex; flex-wrap: nowrap; flex: 1; min-width: 0; overflow-x: auto; overflow-y: hidden; scroll-behavior: smooth;
+    scrollbar-width: none; margin-bottom: -2px; }
+.vda-wizard-tabs::-webkit-scrollbar { display: none; }
+.vda-tabs-nav.has-left  .vda-wizard-tabs { -webkit-mask-image: linear-gradient(90deg, transparent 0, #000 36px); mask-image: linear-gradient(90deg, transparent 0, #000 36px); }
+.vda-tabs-nav.has-right .vda-wizard-tabs { -webkit-mask-image: linear-gradient(90deg, #000 calc(100% - 36px), transparent 100%); mask-image: linear-gradient(90deg, #000 calc(100% - 36px), transparent 100%); }
+.vda-tabs-nav.has-left.has-right .vda-wizard-tabs { -webkit-mask-image: linear-gradient(90deg, transparent 0, #000 36px, #000 calc(100% - 36px), transparent 100%); mask-image: linear-gradient(90deg, transparent 0, #000 36px, #000 calc(100% - 36px), transparent 100%); }
+.vda-tabs-arrow { display: none; flex: 0 0 auto; align-self: center; width: 26px; height: 26px; margin: 0 4px 4px; padding: 0; font-size: 15px; line-height: 1; --rivet: none; }
+.vda-tabs-nav.has-left .vda-tabs-arrow.is-left, .vda-tabs-nav.has-right .vda-tabs-arrow.is-right { display: inline-flex; }
+.vda-wizard-tab { flex: 0 0 auto; white-space: nowrap; position: relative; padding: 8px 14px 6px; font-family: var(--vda-font-title); font-size: 17px;
+    color: var(--color-text-muted); border: 1px solid transparent; border-bottom: 0; cursor: pointer; background: none; }
+.vda-wizard-tab:hover { color: var(--color-text); }
+.vda-wizard-tab.is-active { color: var(--color-text); background: var(--color-surface); border-color: var(--color-border); border-bottom: 2px solid var(--color-surface); }
+.vda-count { font-family: var(--vda-font-body); font-size: 12px; font-weight: 700; margin-left: 6px; padding: 0 6px; border-radius: 9px; background: var(--color-surface-alt); color: var(--color-text); }
+.vda-count.is-done { background: var(--color-success); color: #F3E6CC; }
+.vda-count.is-left { background: var(--vda-blood); color: #F3E6CC; }
+.vda-priority { display: flex; gap: 6px; align-items: center; justify-content: center; margin-bottom: 8px; font-size: 14px; }
+.vda-budget { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 8px; padding: 8px 12px; margin-top: 14px; border-top: 1px solid var(--color-border); font-size: 15px; }
+.vda-budget b { font-family: var(--vda-font-title); font-weight: 400; font-size: 20px; color: var(--vda-blood); }
+.vda-card { padding: 10px 12px; border: 1px solid var(--color-border); background: var(--color-bg); text-align: left; cursor: pointer; transition: border-color .15s; }
+.vda-card:hover { border-color: var(--color-primary); }
+.vda-card.is-on { border-color: var(--color-primary); box-shadow: inset 0 0 0 1px var(--color-primary); background: color-mix(in srgb, var(--color-primary) 8%, var(--color-bg)); }
+.vda-card:disabled { opacity: .4; cursor: not-allowed; }
+.vda-card.is-static { cursor: default; }
+.vda-card.is-static:hover { border-color: var(--color-border); }
+.vda-sheet.is-wizard { padding-top: 18px; }
+.vda-budget.is-top { margin-top: 0; }
+.vda-card-title { font-family: var(--vda-font-title); font-size: 17px; }
+.vda-card-text { font-size: 13px; color: var(--color-text-muted); }
+.vda-grid-cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 10px; }
+.vda-note { font-size: 14px; color: var(--color-text-muted); }
+.vda-error-list { margin: 8px 0 0; padding: 8px 12px; border-left: 3px solid var(--vda-blood); background: color-mix(in srgb, var(--vda-blood) 8%, transparent); font-size: 14px; }
+.vda-warning-list { margin: 8px 0 0; padding: 8px 12px; border-left: 3px solid var(--color-accent); background: color-mix(in srgb, var(--color-accent) 10%, transparent); font-size: 14px; }
+
+/* ═════════════ Rendu d'un jet (historique et notification identiques, sans marge) ═════════════ */
+.vda-roll { position: relative; font-size: 15px; }
+.vda-roll > *:not(.vda-soak-clip) { position: relative; z-index: 1; }
+.vda-roll-head { display: flex; justify-content: space-between; gap: 8px; align-items: baseline; }
+.vda-roll-label { font-family: var(--vda-font-title); font-size: 16px; }
+.vda-roll-meta { font-size: 13px; color: var(--color-text-muted); display: flex; flex-wrap: wrap; gap: 8px; }
+.vda-roll-total { font-family: var(--vda-font-title); font-size: 18px; }
+.vda-roll-dice { display: flex; flex-wrap: wrap; gap: 4px; margin: 6px 0; }
+.vda-die { width: 26px; height: 26px; display: grid; place-items: center; font-weight: 700; font-size: 14px;
+    clip-path: polygon(50% 0, 100% 38%, 82% 100%, 18% 100%, 0 38%);   /* silhouette de d10 */
+    background: var(--color-surface-alt); color: var(--color-text-muted); }
+.vda-die.is-success { background: var(--vda-blood); color: #F3E6CC; }
+.vda-die.is-ten { background: linear-gradient(180deg, var(--vda-gold), #7a5a12); color: #1a0e08; }
+.vda-die.is-one { background: #000; color: var(--color-danger); }
+.vda-auto { display: inline-flex; align-items: center; padding: 0 8px; height: 26px; border: 1px dashed var(--vda-gold); color: var(--color-accent); font-size: 13px; font-weight: 700; }
+.vda-roll-result { font-family: var(--vda-font-title); font-size: 20px; }
+.vda-roll-result small { font-family: var(--vda-font-body); font-size: 14px; color: var(--color-text-muted); margin-left: 6px; }
+.vda-roll-result.is-botch { color: var(--color-danger); }
+
+/* Carte d'historique (classe plateforme) : marge portée par la plateforme, ici le décor */
+.vtt-history-entry { background: var(--color-surface); border: 1px solid var(--color-border); border-left: 3px solid var(--vda-blood); overflow: hidden; }
+
+/* ═════════════ Menu hamburger (classes plateforme) ═════════════ */
+.vtt-menu-button { width: 40px; height: 40px; display: grid; place-items: center; border: 1px solid var(--color-border); background: var(--color-surface); color: var(--color-text); }
+.vtt-menu {
+    min-width: 250px; padding: 6px 0; border-radius: 0;
+    background: var(--color-surface); border: 1px solid var(--color-border);
+    box-shadow: inset 0 0 0 3px var(--color-surface), inset 0 0 0 4px color-mix(in srgb, var(--vda-blood) 45%, transparent), 0 12px 30px rgba(0, 0, 0, .5);
+    font-family: var(--vda-font-body);
+}
+.vtt-menu-item { display: flex; align-items: center; gap: 10px; width: 100%; padding: 7px 16px; font-size: 16px; text-align: left; color: var(--color-text); border-radius: 0; }
+.vtt-menu-item:hover:not(:disabled) { background: color-mix(in srgb, var(--vda-blood) 16%, transparent); color: var(--color-primary); }
+.vtt-menu-item.is-danger { color: var(--color-danger); }
+.vtt-menu-icon { width: 18px; color: var(--color-accent); display: grid; place-items: center; }
+.vtt-menu-separator { height: 5px; margin: 6px 14px; background: none; border-top: 1px solid var(--vda-rule); border-bottom: 1px solid var(--vda-rule); opacity: .6; }
+
+/* ═════════════ Modales (classes plateforme) ═════════════ */
+.vtt-modal-panel {
+    overflow: visible;   /* les coins de fer débordent ; le corps défile seul (vtt-modal-body) */
+    background: var(--color-surface); color: var(--color-text); border: 1px solid var(--color-border); border-radius: 0;
+    box-shadow: inset 0 0 0 4px var(--color-surface), inset 0 0 0 5px color-mix(in srgb, var(--vda-blood) 55%, transparent), 0 20px 60px rgba(0, 0, 0, .6);
+}
+/* Coins de ferronnerie (planche validée : 70 px, à −6 px des bords) : pseudo-éléments du panneau
+   en haut, du décor de la plateforme (vtt-modal-deco) en bas ; une image retournée par angle */
+.vtt-modal-panel::before, .vtt-modal-panel::after,
+.vtt-modal-deco::before, .vtt-modal-deco::after {
+    content: ''; position: absolute; z-index: 5; width: 70px; height: 70px; pointer-events: none;
+    background: url('./assets/corner-iron.webp') no-repeat top left / contain; filter: var(--vda-iron-filter);
+}
+.vtt-modal-panel::before { top: -6px; left: -6px; }
+.vtt-modal-panel::after  { top: -6px; right: -6px; transform: scaleX(-1); }
+.vtt-modal-deco::before  { bottom: -6px; left: -6px; transform: scaleY(-1); }
+.vtt-modal-deco::after   { bottom: -6px; right: -6px; transform: scale(-1, -1); }
+/* Fenêtres flottantes (plus petites, réductibles) : coins plus discrets */
+.vtt-floating-panel::before, .vtt-floating-panel::after,
+.vtt-floating-panel .vtt-modal-deco::before, .vtt-floating-panel .vtt-modal-deco::after { width: 44px; height: 44px; }
+@media (max-width: 640px) {
+    .vtt-modal-panel::before, .vtt-modal-panel::after,
+    .vtt-modal-deco::before, .vtt-modal-deco::after { width: 44px; height: 44px; }
+}
+.vtt-modal-header { border-bottom: 1px solid color-mix(in srgb, var(--color-border) 60%, transparent); }
+.vtt-modal-title { font-family: var(--vda-font-title); font-weight: 400; font-size: 23px; line-height: 1.1; }
+.vtt-modal-subtitle { font-style: italic; color: var(--color-text-muted); }
+.vtt-modal-close:hover, .vtt-modal-expand:hover { color: var(--color-primary); }
+.vtt-modal-footer { border-top: 1px solid color-mix(in srgb, var(--color-border) 60%, transparent); }
+
+/* Fenêtres flottantes (lecteur audio…) */
+.vtt-floating-panel .vtt-modal-header { background: linear-gradient(180deg, color-mix(in srgb, var(--vda-blood) 22%, var(--color-surface)), var(--color-surface)); }
+.vtt-floating-title-extra { font-family: var(--vda-font-body); color: var(--color-text-muted); }
+
+/* ═════════════ Zone d'actions : médaillons de reliquaire ═════════════ */
+.vtt-action-btn {
+    width: 48px; height: 48px; display: grid; place-items: center; border-radius: 50%;
+    background: radial-gradient(circle at 40% 35%, var(--color-surface-alt), var(--color-surface));
+    border: 2px solid var(--vda-gold); color: var(--color-text);
+    box-shadow: 0 0 0 3px var(--color-surface), 0 0 0 4px var(--color-border), 0 6px 18px rgba(0, 0, 0, .5);
+    transition: box-shadow .2s, color .2s, background .2s;
+}
+.vtt-action-btn:hover { color: var(--color-accent); }
+.vtt-action-btn.is-active { background: radial-gradient(circle at 40% 35%, #c42a33, var(--vda-blood-dark)); color: #F3E6CC; }
+.vtt-action-btn.is-highlighted { animation: vda-pulse 2.2s ease-in-out infinite; }
+@keyframes vda-pulse { 50% { box-shadow: 0 0 0 3px var(--color-surface), 0 0 0 4px var(--vda-blood), 0 0 22px var(--vda-blood); } }
+
+/* ═════════════ Ascenseurs, jauges, curseurs ═════════════ */
+@supports not selector(::-webkit-scrollbar) {
+    .vtt-scroll { scrollbar-width: thin; scrollbar-color: #4a443f color-mix(in srgb, var(--color-text) 10%, transparent); }
+}
+.vtt-scroll::-webkit-scrollbar { width: 12px; height: 12px; }
+.vtt-scroll::-webkit-scrollbar-track { background: color-mix(in srgb, var(--color-text) 8%, transparent); box-shadow: inset 0 0 4px rgba(0, 0, 0, .35); }
+.vtt-scroll::-webkit-scrollbar-thumb {
+    border: 2px solid transparent; background-clip: padding-box; border-radius: 3px;
+    background-image:
+        radial-gradient(circle at 50% 8px, #b9b2a8 0, #6d665e 1.2px, transparent 2.2px),
+        radial-gradient(circle at 50% calc(100% - 8px), #b9b2a8 0, #6d665e 1.2px, transparent 2.2px),
+        linear-gradient(90deg, #2a2522, #4e4842 45%, #24201d);
+}
+.vtt-scroll::-webkit-scrollbar-thumb:hover { background-image: linear-gradient(90deg, #4a0a10, #8e1018 45%, #3a0508); }
+.vda-gauge { position: relative; height: 18px; border-radius: 9px; overflow: hidden;
+    background: linear-gradient(180deg, #120d0b, #2a2421); border: 1px solid #0b0908; box-shadow: inset 0 2px 4px rgba(0, 0, 0, .7); }
+.vda-gauge > i { position: absolute; inset: 2px auto 2px 2px; width: var(--v, 50%); border-radius: 7px;
+    background: radial-gradient(ellipse 100% 60% at 50% 20%, rgba(255, 140, 140, .45), transparent 70%), linear-gradient(180deg, #c0141f, #7a0a12 60%, #3e0509);
+    transition: width .5s ease-out; }
+
+/* ═════════════ Page de la fiche : header et sous-header fixes ═════════════ */
+/* Header + sous-header : une seule bande, fermée par un double filet et une ombre portée,
+   pour que la coupure avec la fiche se lise à l'œil (et que l'effet de soif passe dessous) */
+.vda-sticky-top { position: sticky; top: 0; z-index: calc(var(--vtt-z-floating, 46) - 1); /* sous les fenêtres flottantes, sur la soif et les états (40) */ background: var(--color-surface); box-shadow: 0 8px 16px -8px rgba(0, 0, 0, .55); }
+.vda-sticky-top .vda-header { border-bottom: 1px solid color-mix(in srgb, var(--color-border) 60%, transparent); }
+/* Double filet dessiné dans le fond du sous-header : l'onglet actif le recouvre */
+.vda-subheader { padding: 8px clamp(12px, 2vw, 28px) 0;
+    background: linear-gradient(var(--vda-rule), var(--vda-rule)) left bottom / 100% 1px no-repeat,
+        linear-gradient(var(--vda-rule), var(--vda-rule)) left calc(100% - 3px) / 100% 1px no-repeat, var(--color-surface); }
+.vda-subheader .vda-tabs-nav { border-bottom: 0; }
+/* Onglet actif de la bande : intercalaire à l'encre (comme une pill choisie), liseré de sang
+   en tête ; il recouvre le double filet de la bande */
+.vda-subheader .vda-wizard-tabs { margin-bottom: 0; }
+.vda-subheader .vda-wizard-tab { border: 1px solid transparent; border-bottom: 0; }
+.vda-subheader .vda-wizard-tab { border-radius: 4px 4px 0 0; }
+.vda-subheader .vda-wizard-tab.is-active { z-index: 1; color: var(--color-surface); background: var(--color-text);
+    border-color: var(--color-text); box-shadow: inset 0 3px 0 var(--vda-blood); }
+/* Boutons d'action de la bande : même hauteur, icônes comprises, décollés du filet.
+   (Portée limitée aux actions : les flèches des onglets gardent leur display: none.)
+   Le bouton rouge garde un cadre fin, sinon son cadre intérieur le fait paraître plus bas. */
+.vda-subheader-actions { align-self: center; padding: 4px 0 8px; }
+.vda-subheader-actions .vtt-btn-sm { height: 36px; }
+.vda-subheader-actions .vtt-btn-primary { box-shadow: inset 0 0 0 1px #2a2522, inset 0 1px 0 1px rgba(255, 255, 255, .14), 0 2px 4px rgba(0, 0, 0, .45); }
+.vda-icon-btn { justify-content: center; width: 40px; padding-left: 0; padding-right: 0; }
+.vda-icon-btn svg { width: 24px; height: 24px; flex-shrink: 0; }
+.vda-sheet-body { position: relative; }
+/* Fiche joueur : le corps occupe au moins la hauteur visible sous la bande, pour que la barre
+   de session descende jusqu'en bas même sur un onglet court (aide de jeu repliée, journal vide) */
+.vda-root.is-sheet-page .vda-sheet-body { min-height: calc(100vh - var(--vda-band-h, 0px)); }
+
+/* Portrait en médaillon cerclé de fer */
+.vda-identity { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 20px; align-items: center; }
+.vda-avatar { width: 104px; height: 104px; border-radius: 50%; overflow: hidden; padding: 0; display: flex; align-items: center; justify-content: center;
+    background: var(--color-bg); color: var(--color-text-muted); font-size: 34px;
+    border: 3px solid #2a2421; box-shadow: 0 0 0 2px var(--color-surface), 0 0 0 4px color-mix(in srgb, var(--vda-blood) 60%, transparent), inset 0 2px 8px rgba(0, 0, 0, .45); }
+.vda-avatar img { width: 100%; height: 100%; object-fit: cover; }
+.vda-avatar:disabled { cursor: default; opacity: 1; }
+.vda-avatar.is-editable { cursor: pointer; }
+.vda-avatar.is-editable:hover { box-shadow: 0 0 0 2px var(--color-surface), 0 0 0 4px var(--color-primary), inset 0 2px 8px rgba(0, 0, 0, .45); }
+
+/* ═════════════ Effet de soif (fiche du joueur) ═════════════ */
+/* Devant la fiche, sous la bande header + sous-header (z-index 40 < 50). Un peu plus
+   doux qu'à l'origine. La variable --vda-thirst est posée sur .vda-root (0 en mode Édition). */
+.vda-thirst { position: fixed; inset: 0; pointer-events: none; z-index: 40;
+    background: radial-gradient(ellipse at center, transparent calc(70% - var(--vda-thirst) * 30%),
+        color-mix(in srgb, var(--vda-blood-dark) calc(var(--vda-thirst) * 75%), transparent) 100%);
+    -webkit-backdrop-filter: blur(calc(var(--vda-thirst) * 2.5px)) saturate(calc(1 - var(--vda-thirst) * .45));
+    backdrop-filter: blur(calc(var(--vda-thirst) * 2.5px)) saturate(calc(1 - var(--vda-thirst) * .45));
+    -webkit-mask-image: radial-gradient(ellipse at center, transparent 48%, #000 78%);
+    mask-image: radial-gradient(ellipse at center, transparent 48%, #000 78%); }
+.is-sheet-page .vda-sheet {
+    box-shadow: inset 0 0 0 4px var(--color-surface), inset 0 0 0 5px color-mix(in srgb, var(--vda-blood) 55%, transparent), 0 10px 40px rgba(0, 0, 0, .35),
+        0 0 calc(var(--vda-thirst) * 40px) color-mix(in srgb, var(--vda-blood-dark) calc(var(--vda-thirst) * 60%), transparent);
+}
+.vda-thirst.is-hungry { animation: vda-heartbeat 1.9s ease-in-out infinite; }
+@keyframes vda-heartbeat { 0%, 100% { opacity: .85; } 12% { opacity: 1; } 24% { opacity: .9; } 36% { opacity: 1; } }
+
+@media (prefers-reduced-motion: reduce) {
+    .vda-thirst.is-hungry, .vtt-action-btn.is-highlighted, .vda-stain, .vda-drop.is-moving { animation: none; }
+    .vda-stain { opacity: var(--vda-stain-opacity); }
+    .vda-drop::after { transition: none; }
+}
+
+/* ── Assistant : colonne d'aide, Guide, points bonus (§II.6) ── */
+.vda-wizard-body { display: grid; grid-template-columns: minmax(0, 1fr) minmax(260px, 24rem); gap: 24px; align-items: start; }
+.vda-wizard-body.is-single { grid-template-columns: 1fr; }
+.vda-help { position: sticky; top: 12px; padding: 16px 18px; border: 1px solid var(--color-border);
+    background: color-mix(in srgb, var(--color-surface) 70%, var(--color-bg)); }
+.vda-help-text { margin: 6px 0 8px; font-size: 15px; }
+.vda-help-fact { font-size: 14px; margin: 4px 0; }
+.vda-help-fact b { font-family: var(--vda-font-title); font-weight: 400; color: var(--color-primary); }
+.vda-help-scale { list-style: none; padding: 0; margin: 10px 0 0; font-size: 14px; border-top: 1px solid var(--color-border); padding-top: 8px; }
+.vda-help-scale li { display: flex; gap: 8px; }
+.vda-help-scale li span { width: 4.2em; flex-shrink: 0; color: var(--color-primary); letter-spacing: .05em; }
+.vda-card-hook { font-style: italic; font-size: 14px; margin: 2px 0 3px; }
+button.vda-trait-help { text-align: left; padding: 0; background: none; color: inherit; font: inherit; cursor: help; }
+button.vda-trait-help:hover, button.vda-trait-help:focus-visible { color: var(--color-primary); border-bottom-color: var(--color-primary); }
+.vda-bonus-bar { margin-top: 10px; border-top: 0; border-bottom: 1px solid var(--color-border); flex-wrap: nowrap; }
+.vda-bonus-switch { display: flex; align-items: center; gap: 10px; flex: 1; min-width: 0; }
+.vda-bonus-count { margin-left: auto; flex-shrink: 0; }
+.vda-help-back { float: right; font-size: 13px; }
+@media (max-width: 760px) { .vda-bonus-bar, .vda-bonus-switch { flex-wrap: wrap; } }
+.vda-guide p { margin: 6px 0 10px; }
+.vda-guide-steps { margin: 6px 0 10px 1.4em; list-style: decimal; }
+.vda-guide-steps li { margin: 3px 0; }
+button.vda-link { padding: 0; background: none; font: inherit; font-family: var(--vda-font-title); color: var(--color-primary); cursor: pointer; border-bottom: 1px solid currentColor; }
+
+/* Compteur de colonne, rappel de priorité, reste à faire, navigation, détail des bonus */
+.vda-priority-head { margin-bottom: 6px; }
+.vda-priority-state { font-size: 14px; text-align: center; color: var(--color-text-muted); }
+.vda-priority-state b { font-family: var(--vda-font-title); font-weight: 400; font-size: 17px; color: var(--vda-blood); }
+.vda-priority-head.is-nudged .vda-priority-state { color: var(--vda-blood); font-weight: 600; animation: vda-nudge .4s ease-in-out 2; }
+.vda-priority-head.is-nudged .vda-chip { border-color: var(--vda-blood); }
+@keyframes vda-nudge { 0%, 100% { transform: translateX(0); } 25% { transform: translateX(-4px); } 75% { transform: translateX(4px); } }
+.vda-todo { margin-top: 8px; padding: 6px 12px; font-size: 14px; border-left: 3px solid var(--vda-blood);
+    background: color-mix(in srgb, var(--vda-blood) 7%, transparent); }
+.vda-todo b { font-family: var(--vda-font-title); font-weight: 400; color: var(--vda-blood); }
+.vda-todo.is-warning { border-left-color: var(--color-accent); background: color-mix(in srgb, var(--color-accent) 8%, transparent); }
+.vda-todo.is-warning b { color: var(--color-accent); }
+.vda-todo.is-done { border-left-color: var(--color-success, #4d6b2f); background: none; color: var(--color-text-muted); }
+.vda-step-nav { display: flex; justify-content: space-between; gap: 12px; margin-top: 22px; padding-top: 12px; border-top: 1px solid var(--color-border); }
+.vda-bonus-count { display: flex; flex-direction: column; align-items: flex-end; gap: 2px; }
+.vda-bonus-detail { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 4px 10px; font-size: 13px; }
+.vda-bonus-detail button.vda-link { font-family: inherit; }
+.vda-card.is-chosen { border-color: var(--color-primary); }
+.vda-help-summary { margin-top: 12px; padding-top: 8px; border-top: 1px solid var(--color-border); }
+.vda-entry { padding: 6px 0 8px; border-bottom: 1px dotted color-mix(in srgb, var(--color-border) 70%, transparent); }
+.vda-entry-head { display: flex; align-items: center; gap: 6px; }
+.vda-entry-text { font-size: 14px; color: var(--color-text-muted); }
+.vda-entry-text.is-problem { color: var(--vda-blood); font-style: italic; }
+.vda-entry.is-blocked .vda-entry-head b { opacity: .55; }
+
+/* ── Pouvoirs (fiche) ── */
+.vda-powers-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(340px, 1fr)); gap: 14px; }
+.vda-power-card { padding: 10px 14px; }
+.vda-power-card-head { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; margin-bottom: 4px;
+    border-bottom: 1px solid color-mix(in srgb, var(--vda-rule) 50%, transparent); }
+.vda-power-dots { color: var(--vda-blood); letter-spacing: .1em; font-size: 13px; }
+.vda-power-row { border-bottom: 1px dotted color-mix(in srgb, var(--color-border) 60%, transparent); }
+.vda-power-head { display: flex; align-items: center; gap: 8px; min-height: 34px; }
+.vda-power-level { width: 1.4em; flex-shrink: 0; text-align: center; font-family: var(--vda-font-title); color: var(--color-text-muted); }
+button.vda-power-name { flex: 1; min-width: 0; text-align: left; padding: 0; background: none; color: inherit; font: inherit; cursor: pointer; }
+button.vda-power-name:hover { color: var(--color-primary); }
+.vda-power-meta { font-size: 13px; color: var(--color-text-muted); white-space: nowrap; max-width: 40%; overflow: hidden; text-overflow: ellipsis; }
+.vda-power-effect { padding: 2px 0 8px 1.9em; font-size: 14px; }
+.vda-power-effect p { margin: 2px 0; }
+.vda-path { margin-top: 6px; }
+.vda-path-head { font-size: 15px; }
+.vda-icon-btn.is-mini { width: 30px; height: 28px; padding: 0; --rivet: none; }
+.vda-icon-btn.is-mini svg { width: 18px; height: 18px; }
+
+/* ── Combat, états, expérience (lot 2c) ── */
+.vda-combat-actions { display: flex; flex-wrap: wrap; gap: 6px; }
+.vda-input-short { width: 8em; flex: 0 0 auto; }
+/* Combat et pouvoirs : barre d'actions, puis équipement | Disciplines */
+.vda-combat-bar { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 8px; margin-bottom: 12px; }
+.vda-combat-layout { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 24px; align-items: start; }
+.vda-combat-layout .vda-powers-grid { grid-template-columns: 1fr; }
+@media (max-width: 900px) { .vda-combat-layout { grid-template-columns: 1fr; } }
+.vda-clan-weakness { margin-top: 6px; }
+.vda-inventory-sep { margin-top: 10px; font-family: var(--vda-font-title); font-size: 14px; color: var(--color-text-muted); border-bottom: 1px solid color-mix(in srgb, var(--vda-rule) 50%, transparent); }
+.vda-inventory-note { flex: 1; min-width: 0; padding: 2px 6px; font-size: 14px; }
+.vda-xp-btn { min-width: 64px; justify-content: center; }
+.vda-roll-group small { font-family: var(--vda-font-body); text-transform: none; letter-spacing: 0; }
+.is-negative { color: var(--color-danger, #b3141f) !important; }
+.vda-xp-row { display: flex; align-items: center; gap: 10px; padding: 3px 0; border-bottom: 1px dotted color-mix(in srgb, var(--color-border) 60%, transparent); }
+.vda-xp-cost { width: 4.5em; text-align: right; font-family: var(--vda-font-title); color: var(--vda-blood); }
+
+/* ── Modale de catalogue de la plateforme (CatalogModal, spec_ui_catalogue.md §6) ── */
+.vtt-pill { padding: 3px 11px; border: 1px solid var(--color-border); border-radius: 0; background: var(--color-surface); color: var(--color-text); font-size: 14px; cursor: pointer; }
+.vtt-pill:hover { border-color: var(--color-primary); color: var(--color-primary); }
+.vtt-pill.is-selected { background: var(--color-text); color: var(--color-surface); border-color: var(--color-text); }
+.vtt-input { width: 100%; padding: 5px 8px; background: var(--color-bg); color: var(--color-text); border: 1px solid var(--color-border); border-radius: 0; }
+.vtt-input:focus { outline: none; border-color: var(--color-primary); box-shadow: 0 0 0 2px color-mix(in srgb, var(--color-primary) 25%, transparent); }
+.vtt-field-label { display: block; font-family: var(--vda-font-title); font-size: 14px; color: var(--color-text-muted); margin-bottom: 3px; }
+.vtt-catalog-controls { padding: 8px 10px; border: 1px solid var(--color-border); background: color-mix(in srgb, var(--vda-blood) 5%, var(--color-surface)); }
+/* Onglets segmentés (Catalogue / Objet libre) : comme les mini-onglets du slug */
+.vtt-segmented { gap: 2px; padding: 0; border: 0; border-bottom: 1px solid var(--vda-rule); border-radius: 0; background: transparent; }
+.vtt-segment { padding: 4px 14px; border: 0; border-radius: 4px 4px 0 0; background: none; color: var(--color-text-muted); font-family: var(--vda-font-title); font-size: 15px; cursor: pointer; }
+.vtt-segment:hover { color: var(--color-text); background: none; }
+.vtt-segment.is-active { color: var(--color-surface); background: var(--color-text); box-shadow: inset 0 2px 0 var(--vda-blood); }
+.vtt-catalog-list { border-top: 3px double var(--vda-rule); }
+.vtt-catalog-list-header, .vtt-catalog-group { font-family: var(--vda-font-title); color: var(--color-text-muted); }
+.vtt-catalog-item { color: var(--color-text); border-bottom: 1px dotted color-mix(in srgb, var(--color-border) 70%, transparent); }
+.vtt-catalog-item:hover { background: color-mix(in srgb, var(--color-primary) 6%, transparent); }
+.vtt-catalog-add { font-family: var(--vda-font-title); color: var(--vda-blood); border: 1px solid transparent; border-radius: 0; background: transparent; }
+.vtt-catalog-item:hover .vtt-catalog-add { border-color: var(--vda-blood); }
+.vtt-catalog-item.is-added .vtt-catalog-add { color: var(--color-success, #4d6b2f); border-color: currentColor; }
+.vtt-catalog-empty, .vtt-catalog-count { color: var(--color-text-muted); font-style: italic; }
+
+/* ═════════════ Coterie : fiche du groupe (lot 4, planche_coterie.html) ═════════════ */
+.vda-coterie { padding: 34px 44px; }
+.vda-coterie-id { display: grid; grid-template-columns: 112px minmax(0, 1fr) auto; gap: 22px; align-items: center; padding-bottom: 16px; border-bottom: 3px double var(--vda-rule); }
+.vda-coterie-emblem { width: 112px; height: 112px; border-radius: 50%; overflow: hidden; padding: 0; display: flex; align-items: center; justify-content: center;
+    font-size: 44px; color: var(--vda-blood); background: radial-gradient(circle at 40% 35%, color-mix(in srgb, var(--color-bg) 80%, #fff), var(--color-bg));
+    border: 3px solid #2a2421; box-shadow: 0 0 0 2px var(--color-surface), 0 0 0 4px color-mix(in srgb, var(--vda-blood) 60%, transparent), inset 0 2px 8px rgba(0, 0, 0, .45); }
+.vda-coterie-emblem img { width: 100%; height: 100%; object-fit: cover; }
+.vda-coterie-emblem:disabled { cursor: default; opacity: 1; }
+.vda-coterie-emblem.is-editable { cursor: pointer; }
+.vda-coterie-name { margin: 0; font-family: var(--vda-font-title); font-weight: 400; font-size: 34px; line-height: 1.05; color: var(--color-primary); }
+.vda-coterie-name .vda-initial { font-family: var(--vda-font-initial); font-size: 1.3em; }
+.vda-coterie-name-input { font-family: var(--vda-font-title); font-size: 26px; }
+.vda-coterie-desc { margin: 6px 0 8px; font-style: italic; font-size: 16px; }
+.vda-coterie-facts { display: flex; flex-wrap: wrap; gap: 4px 18px; font-size: 14px; color: var(--color-text-muted); }
+.vda-coterie-facts b { color: var(--color-text); font-weight: 600; }
+.vda-coterie-id-actions { display: flex; gap: 8px; align-self: start; }
+.vda-coterie-pools { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 18px; margin-top: 6px; }
+.vda-coterie-pool { position: relative; padding: 14px 16px 12px; background: color-mix(in srgb, var(--vda-blood) 4%, var(--color-bg)); border: 1px solid var(--color-border); }
+.vda-coterie-pool.is-anchor { box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--vda-gold) 70%, transparent); }
+.vda-coterie-pool-head { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; }
+.vda-coterie-pool-head h4 { margin: 0; font-family: var(--vda-font-title); font-weight: 400; font-size: 22px; }
+.vda-coterie-total { font-family: var(--vda-font-title); font-size: 28px; color: var(--vda-blood); line-height: 1; white-space: nowrap; }
+.vda-coterie-total small { font-size: 14px; color: var(--color-text-muted); }
+.vda-coterie-anchor { display: inline-flex; align-items: center; gap: 5px; margin-left: 8px; font-family: var(--vda-font-title); font-size: 13px; color: var(--color-accent); vertical-align: middle; }
+.vda-coterie-anchor i { width: 14px; height: 14px; border-radius: 50%; background: radial-gradient(circle at 35% 30%, #c42a33, var(--vda-blood-dark)); box-shadow: 0 1px 2px rgba(0, 0, 0, .5); }
+.vda-coterie-pool .vda-dots { margin: 8px 0 6px; }
+.vda-coterie-detail { font-style: italic; font-size: 14px; margin: 0 0 8px; }
+.vda-coterie-parts { display: flex; flex-wrap: wrap; gap: 4px 12px; font-size: 13px; color: var(--color-text-muted); padding-top: 7px;
+    border-top: 1px dotted color-mix(in srgb, var(--color-border) 60%, transparent); }
+.vda-coterie-parts b { color: var(--color-text); font-weight: 600; }
+.vda-coterie-parts .is-me b { color: var(--vda-blood); }
+.vda-coterie-parts .is-story { color: var(--vda-blood); }
+.vda-coterie-x { margin-left: 3px; padding: 0 3px; font-size: 11px; color: var(--color-text-muted); }
+.vda-coterie-x:hover { color: var(--vda-blood); }
+.vda-coterie-pool-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin-top: 10px; }
+.vda-coterie-pool-actions:empty { display: none; }
+.vda-coterie-story { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; color: var(--color-text-muted); }
+.vda-coterie-story .vtt-btn-sm { width: 28px; height: 26px; padding: 0; justify-content: center; }
+.vda-coterie-btnrow { display: flex; justify-content: center; gap: 10px; margin: 16px 0 4px; }
+.vda-coterie-members { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 14px; }
+.vda-coterie-member { display: grid; grid-template-columns: 54px minmax(0, 1fr); gap: 10px; align-items: center; }
+.vda-coterie-member b { font-family: var(--vda-font-title); font-weight: 400; font-size: 18px; display: block; }
+.vda-coterie-member small { color: var(--color-text-muted); font-size: 13px; }
+.vda-coterie-av { width: 54px; height: 54px; border-radius: 50%; overflow: hidden; background: #3a302a; border: 2px solid #2a2421; display: flex; align-items: center; justify-content: center;
+    color: #c9b99a; box-shadow: 0 0 0 1px var(--color-surface), 0 0 0 3px color-mix(in srgb, var(--vda-blood) 60%, transparent); }
+.vda-coterie-av img { width: 100%; height: 100%; object-fit: cover; }
+.vda-coterie-member.is-out .vda-coterie-av { box-shadow: none; opacity: .55; filter: grayscale(1); }
+.vda-coterie-notes { font-size: 15px; line-height: 1.55; white-space: pre-line; }
+.vda-coterie-recap { display: grid; gap: 3px; padding: 10px 12px; font-size: 14px; background: color-mix(in srgb, var(--vda-blood) 6%, var(--color-bg)); border-left: 3px solid var(--vda-blood); }
+.vda-coterie-empty { display: flex; flex-direction: column; align-items: center; gap: 12px; padding: 60px 20px; font-size: 16px; color: var(--color-text-muted); }
+@media (max-width: 1100px) {
+    .vda-coterie { padding: 26px 20px; }
+    .vda-coterie-pools { grid-template-columns: 1fr; }
+    .vda-coterie-members { grid-template-columns: 1fr 1fr; }
+}
+
+/* ═════════════ Aide de jeu (brique ReferenceGuide, spec_ui_reference.md) ═════════════ */
+/* Vocabulaire de la feuille : cartes de vélin à filet de sang, titres DeRoos, tableaux à filets */
+.vtt-reference { gap: 20px; --vtt-reference-top: calc(var(--vda-band-h, 0px) + 14px); }   /* sous la bande fixe */
+.vtt-reference-nav-item { border-radius: 0; font-family: var(--vda-font-title); font-size: 16px; color: var(--color-text); }
+.vtt-reference-nav-item:hover { background: color-mix(in srgb, var(--vda-blood) 12%, transparent); color: var(--color-primary); }
+.vtt-reference-search { border-radius: 0; font-size: 16px; padding: 8px 12px; background: var(--color-bg); }
+.vtt-reference-search:focus { outline: none; border-color: var(--color-primary); }
+.vtt-reference-main { gap: 12px; }
+.vtt-reference-section { border-radius: 0; background: var(--color-surface);
+    box-shadow: inset 0 0 0 3px var(--color-surface), inset 0 0 0 4px color-mix(in srgb, var(--vda-blood) 40%, transparent); }
+.vtt-reference-section-head { padding: 10px 16px; }
+.vtt-reference-section-title { font-family: var(--vda-font-title); font-size: 22px; line-height: 1.1; color: var(--color-primary); }
+.vtt-reference-badge { border-radius: 0; border-color: var(--vda-blood-dark); background: var(--vda-blood); color: #F3E6CC; font-size: 11px; }
+.vtt-reference-body { padding: 0 18px 16px; gap: 10px; }
+.vtt-reference-heading { margin-top: 8px; font-family: var(--vda-font-title); font-weight: 400; font-size: 18px; color: var(--color-text);
+    padding-bottom: 3px; border-bottom: 1px solid color-mix(in srgb, var(--vda-rule) 50%, transparent); }
+.vtt-reference-text, .vtt-reference-list { font-size: 15px; line-height: 1.5; }
+.vtt-reference-table { font-size: 14px; line-height: 1.4; }
+.vtt-reference-table th { font-family: var(--vda-font-title); font-weight: 400; font-size: 15px; color: var(--color-primary); border-bottom: 2px solid var(--vda-rule); padding: 4px 8px; }
+.vtt-reference-table td { padding: 4px 8px; border-bottom-color: color-mix(in srgb, var(--color-border) 35%, transparent); }
+.vtt-reference-table td:first-child { white-space: normal; min-width: 7em; }
+.vtt-reference-block.is-gm { border-left: 2px solid var(--vda-blood); padding-left: 10px; }
+
+/* ═════════════ Barre de session des joueurs (classes plateforme, spec_session_bar.md) ═════════════ */
+/* Vocabulaire de la feuille : vélin à double filet de sang, coins de ferronnerie, médaillons cerclés de fer */
+.vtt-session-bar { border-right: 1px solid var(--color-border);
+    box-shadow: inset -4px 0 0 var(--color-surface), inset -5px 0 0 color-mix(in srgb, var(--vda-blood) 55%, transparent), 6px 0 24px rgba(0, 0, 0, .3); }
+.vtt-session-bar-header { position: relative; border-bottom: 0; padding: 12px 14px 10px; }
+.vtt-session-bar-header::after { content: ''; position: absolute; left: 12px; right: 18px; bottom: 0; height: 4px;
+    border-top: 1px solid var(--vda-rule); border-bottom: 2px solid var(--vda-rule); }
+.vtt-session-bar[data-mode="rail"] .vtt-session-bar-header { padding: 12px 0 10px; }
+.vtt-session-bar[data-mode="rail"] .vtt-session-bar-header::after { left: 8px; right: 10px; }
+.vtt-session-bar-eyebrow { font-family: var(--vda-font-title); font-weight: 400; font-size: 13px; letter-spacing: .08em; text-transform: none; color: var(--color-text-muted); }
+.vtt-session-bar-title { font-family: var(--vda-font-title); font-weight: 400; font-size: 20px; line-height: 1.1; color: var(--color-primary); }
+.vtt-session-bar-toggle { border-radius: 0; border-color: color-mix(in srgb, var(--color-border) 60%, transparent); }
+.vtt-session-bar-toggle:hover { color: var(--color-primary); border-color: var(--color-primary); background: color-mix(in srgb, var(--vda-blood) 10%, transparent); }
+.vtt-session-bar-list { padding: 10px 14px 40px 8px; scrollbar-color: var(--color-border) transparent; }
+.vtt-session-bar[data-mode="rail"] .vtt-session-bar-list { padding: 12px 0 40px; }
+.vtt-session-bar-player { border-radius: 0; }
+.vtt-session-bar-player[data-me] { background: color-mix(in srgb, var(--vda-blood) 8%, transparent); box-shadow: inset 3px 0 0 var(--vda-blood); }
+.vtt-session-bar[data-mode="rail"] .vtt-session-bar-player[data-me] { box-shadow: none; }
+.vtt-session-bar-name { font-family: var(--vda-font-title); font-weight: 400; font-size: 17px; }
+.vtt-session-bar-player-name { font-size: 13px; font-style: italic; }
+.vtt-session-bar-player[data-online] .vtt-session-bar-player-name { color: var(--color-text-muted); }
+/* Médaillon : anneau de fer, liseré de sang en ligne, sang plein pour soi */
+.vtt-session-bar-frame { padding: 2px; background: #2a2421; box-shadow: 0 0 0 1px var(--color-surface), 0 0 0 2px color-mix(in srgb, var(--color-border) 50%, transparent); }
+.vtt-session-bar-player[data-online] .vtt-session-bar-frame { background: #2a2421; box-shadow: 0 0 0 1px var(--color-surface), 0 0 0 3px color-mix(in srgb, var(--vda-blood) 70%, transparent); }
+.vtt-session-bar-player[data-me] .vtt-session-bar-frame { padding: 2px; background: var(--vda-blood); box-shadow: 0 0 0 1px var(--color-surface), 0 0 0 3px var(--vda-blood-dark); }
+.vtt-session-bar-image, .vtt-session-bar-initials { background: var(--color-bg); }
+.vtt-session-bar-initials { font-family: var(--vda-font-initial); font-weight: 400; font-size: 18px; color: var(--color-primary); }
+.vtt-session-bar[data-mode="rail"] .vtt-session-bar-initials { font-size: 14px; }
+.vtt-session-bar-presence { background: var(--vda-gold); border-color: #2a2421; box-shadow: 0 0 6px color-mix(in srgb, var(--vda-gold) 70%, transparent); }   /* flamme de chandelle */
+.vtt-session-bar-reopen { border-radius: 0; border: 1px solid #2a2421; background: var(--vda-blood); color: #F3E6CC;
+    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .14), 0 4px 14px rgba(0, 0, 0, .45); }
+/* Carte au survol : vélin encadré comme une modale, portrait sous fer, nom en rubrique */
+.vtt-session-bar-card { border-radius: 0; padding: 16px; font-family: var(--vda-font-body);   /* rendue hors de .vda-root */
+    background: var(--color-surface); border: 1px solid var(--color-border);
+    box-shadow: inset 0 0 0 4px var(--color-surface), inset 0 0 0 5px color-mix(in srgb, var(--vda-blood) 55%, transparent), 0 18px 40px rgba(0, 0, 0, .5); }
+.vtt-session-bar-card::before, .vtt-session-bar-card::after,
+.vtt-session-bar-card-deco::before, .vtt-session-bar-card-deco::after { content: ''; position: absolute; width: 52px; height: 52px; z-index: 1;
+    background: url('./assets/corner-iron.webp') no-repeat top left / contain; filter: var(--vda-iron-filter); }
+.vtt-session-bar-card::before      { top: -6px; left: -6px; }
+.vtt-session-bar-card::after       { top: -6px; right: -6px; transform: scaleX(-1); }
+.vtt-session-bar-card-deco::before { bottom: -6px; left: -6px; transform: scaleY(-1); }
+.vtt-session-bar-card-deco::after  { bottom: -6px; right: -6px; transform: scale(-1, -1); }
+.vtt-session-bar-card-image { border-radius: 0; border: 3px solid #2a2421; box-shadow: 0 0 0 1px var(--color-surface), 0 0 0 2px color-mix(in srgb, var(--vda-blood) 60%, transparent);
+    background: var(--color-bg); font-family: var(--vda-font-initial); font-weight: 400; color: var(--color-primary); }
+.vtt-session-bar-card-name { margin-top: 10px; font-family: var(--vda-font-title); font-weight: 400; font-size: 22px; line-height: 1.1; color: var(--color-primary); text-align: center; }
+.vtt-session-bar-card-player-name { font-style: italic; color: var(--color-text-muted); text-align: center; }
+.vtt-session-bar-card-status { display: flex; justify-content: center; text-transform: none; letter-spacing: .03em; font-weight: 400; font-family: var(--vda-font-title); font-size: 15px; color: var(--color-text-muted); }
+.vtt-session-bar-card[data-online] .vtt-session-bar-card-status { color: var(--color-accent); }
+.vtt-session-bar-card[data-online] .vtt-session-bar-card-status::before { background: var(--vda-gold); box-shadow: 0 0 5px var(--vda-gold); }
+.vtt-session-bar-card[data-me] .vtt-session-bar-card-status { color: var(--color-primary); }
+.vtt-session-bar-card[data-me] .vtt-session-bar-card-status::before { background: var(--vda-blood); box-shadow: none; }
+
+/* ═════════════ États imposés par le Conteur (fiche joueur, lot 3, planche_conteur.html) ═════════════ */
+/* Devant la page, sous la bande fixe (comme la soif) ; rien n'est bloqué, le texte reste lisible. */
+.vda-imposed { position: fixed; inset: 0; z-index: 40; pointer-events: none; isolation: isolate; }
+/* Frénésie : la vision se voile de sang ; les yeux et les crocs de la Bête s'y posent, puis se retirent */
+.vda-imposed.is-frenzy::after { content: ''; position: absolute; inset: 0; mix-blend-mode: multiply;
+    background: radial-gradient(ellipse 75% 70% at center, rgba(170, 40, 40, .18), rgba(140, 12, 20, .55) 70%, rgba(90, 4, 10, .85) 100%);
+    animation: vda-veil 7s ease-in-out infinite; }
+/* La Bête se centre sur la colonne de la feuille, sous la bande (mesures posées par Sheet.jsx) */
+.vda-imposed.is-frenzy::before { content: ''; position: absolute; opacity: 0;
+    top: calc(var(--vda-band-h, 0px) + 3%); bottom: 3%;
+    left: calc(var(--vda-sheet-left, 0px) + var(--vda-sheet-w, 100vw) * .08); width: calc(var(--vda-sheet-w, 100vw) * .84);
+    background: url('./assets/bete-sang.webp') no-repeat center / contain;
+    filter: blur(9px) brightness(.55) saturate(1.6); mix-blend-mode: multiply;
+    animation: vda-gaze 9s ease-in-out infinite; }
+[data-theme="dark"] .vda-imposed.is-frenzy::after { mix-blend-mode: normal;
+    background: radial-gradient(ellipse 75% 70% at center, rgba(150, 10, 20, .10), rgba(140, 10, 20, .32) 70%, rgba(120, 6, 14, .6) 100%); }
+[data-theme="dark"] .vda-imposed.is-frenzy::before { mix-blend-mode: normal; filter: blur(10px) brightness(.55) saturate(1.5); animation-name: vda-gaze-dark; }
+@keyframes vda-veil { 0%, 100% { opacity: .75; } 50% { opacity: 1; } }
+@keyframes vda-gaze { 0%, 100% { opacity: 0; } 35%, 60% { opacity: .55; } }
+@keyframes vda-gaze-dark { 0%, 100% { opacity: 0; } 35%, 60% { opacity: .4; } }
+/* Rötschreck : la Bête fuit le feu — braises qui couvent depuis le bas, sans à-coups */
+.vda-imposed.is-rotschreck::after { content: ''; position: absolute; inset: 0;
+    background: radial-gradient(ellipse 120% 60% at 50% 115%, rgba(230, 120, 30, .5), rgba(170, 45, 10, .25) 45%, transparent 72%),
+                radial-gradient(ellipse at center, transparent 58%, rgba(0, 0, 0, .45) 100%);
+    animation: vda-embers 5s ease-in-out infinite; }
+@keyframes vda-embers { 0%, 100% { opacity: .65; } 40% { opacity: .85; } 70% { opacity: .72; } }
+/* Torpeur : proche de la mort. Jour : sépia assombri ; nuit : couleurs éteintes sous un voile de cendre */
+.vda-root.is-torpor .vda-sheet-body { filter: sepia(1) saturate(1.6) brightness(.78) contrast(.92); }
+.vda-imposed.is-torpor::after { content: ''; position: absolute; inset: 0;
+    background: radial-gradient(ellipse at center, rgba(90, 60, 20, .12) 40%, rgba(30, 18, 6, .7) 100%); }
+[data-theme="dark"].vda-root.is-torpor .vda-sheet-body, [data-theme="dark"] .vda-root.is-torpor .vda-sheet-body { filter: grayscale(1) brightness(.75); }
+[data-theme="dark"] .vda-imposed.is-torpor::after { background: linear-gradient(rgba(190, 180, 160, .16), rgba(190, 180, 160, .16)),
+    radial-gradient(ellipse at center, transparent 35%, rgba(0, 0, 0, .75) 100%); }
+@media (prefers-reduced-motion: reduce) {
+    .vda-imposed::before, .vda-imposed::after { animation: none; }
+    .vda-imposed.is-frenzy::before { opacity: .4; }
+}
+
+/* ═════════════ Interface du Conteur (lot 3) ═════════════ */
+.vda-gm-session { display: grid; grid-template-columns: 300px minmax(0, 1fr); gap: 20px; padding: 18px clamp(12px, 2vw, 28px) 60px; align-items: start; }
+.vda-gm-table { position: sticky; top: 120px; display: flex; flex-direction: column; gap: 8px; }
+.vda-gm-pc { position: relative; display: grid; grid-template-columns: 46px minmax(0, 1fr); gap: 4px 10px; padding: 10px; text-align: left; font: inherit; color: inherit;
+    border: 1px solid var(--color-border); background: var(--color-surface); cursor: pointer; }
+.vda-gm-pc:hover { border-color: var(--color-primary); }
+.vda-gm-pc.is-on { border-color: var(--color-primary); box-shadow: inset 3px 0 0 var(--vda-blood); background: color-mix(in srgb, var(--color-primary) 6%, var(--color-surface)); }
+.vda-gm-pc b { display: block; font-family: var(--vda-font-title); font-weight: 400; font-size: 17px; }
+.vda-gm-pc-who { display: block; font-size: 13px; color: var(--color-text-muted); }
+.vda-gm-pc-av { position: relative; width: 46px; height: 46px; border-radius: 50%; overflow: visible; display: flex; align-items: center; justify-content: center;
+    background: #3a302a; border: 2px solid #2a2421; color: #c9b99a; }
+.vda-gm-pc-av img { width: 100%; height: 100%; object-fit: cover; border-radius: 50%; }
+.vda-gm-pc-av::after { content: ''; position: absolute; right: -2px; bottom: -2px; width: 11px; height: 11px; border-radius: 50%; border: 2px solid var(--color-surface); background: #7a716a; }
+.vda-gm-pc-av.is-online::after { background: var(--vda-gold); box-shadow: 0 0 6px var(--vda-gold); }   /* même chandelle que la barre de session */
+.vda-gm-mini { grid-column: 1 / -1; display: grid; grid-template-columns: auto 1fr auto; gap: 3px 8px; align-items: center; font-size: 13px; }
+.vda-gm-bar { height: 7px; background: color-mix(in srgb, var(--color-border) 45%, transparent); position: relative; }
+.vda-gm-bar i { position: absolute; inset: 0 auto 0 0; background: linear-gradient(90deg, var(--vda-blood-dark), var(--vda-blood)); }
+.vda-gm-bar.is-ink i { background: var(--color-text); }
+.is-hurt { color: var(--vda-blood); }
+.vda-gm-flag { position: absolute; right: 8px; bottom: 8px; font-size: 11px; padding: 0 6px; background: #3e0509; color: #f3e6cc; }
+.vda-gm-sheet { padding: 28px 34px 30px; }
+.vda-gm-id { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: 16px; align-items: center; padding-bottom: 14px; border-bottom: 3px double var(--vda-rule); }
+.vda-avatar.is-small { width: 76px; height: 76px; font-size: 26px; }
+.vda-gm-name { margin: 0; font-family: var(--vda-font-title); font-weight: 400; font-size: 28px; color: var(--color-primary); }
+.vda-gm-facts { display: flex; flex-wrap: wrap; gap: 4px 16px; font-size: 14px; color: var(--color-text-muted); }
+.vda-gm-facts b { color: var(--color-text); font-weight: 600; }
+.vda-gm-id-actions { display: flex; gap: 6px; flex-wrap: wrap; justify-content: flex-end; }
+.vda-gm-state { display: grid; grid-template-columns: 1.2fr 1fr 1.3fr .9fr; gap: 18px; margin: 16px 0; padding: 14px 16px;
+    border: 1px solid var(--color-border); background: color-mix(in srgb, var(--vda-blood) 5%, var(--color-bg)); }
+.vda-gm-state h4 { margin: 0 0 8px; font-family: var(--vda-font-title); font-weight: 400; font-size: 16px; color: var(--color-text-muted); }
+.vda-gm-state h4 small { font-family: var(--vda-font-body); font-size: 14px; color: var(--color-text); margin-left: 6px; }
+.vda-gm-state .vda-drops { justify-content: start; }
+.vda-gm-big { font-family: var(--vda-font-title); font-size: 30px; color: var(--vda-blood); line-height: 1; }
+.vda-gm-big small { font-size: 15px; color: var(--color-text-muted); }
+.vda-gm-states { grid-column: 1 / -1; display: flex; flex-wrap: wrap; align-items: center; gap: 8px; padding-top: 10px;
+    border-top: 1px solid color-mix(in srgb, var(--color-border) 60%, transparent); }
+.vda-gm-states h4 { margin: 0 6px 0 0; }
+.vda-title-act { display: flex; align-items: center; justify-content: center; gap: 8px; }
+.vda-gm-state .vda-title-act { justify-content: flex-start; }
+.vda-title-ico { display: inline-flex; align-items: center; justify-content: center; width: 28px; height: 26px; padding: 0; font-size: 18px; line-height: 1;
+    border: 1px solid var(--color-border); color: var(--vda-blood); background: var(--color-bg); cursor: pointer; }
+.vda-title-ico:hover { border-color: var(--color-primary); color: var(--color-primary); }
+.vda-gm-h { margin-top: 14px; }
+.vda-gm-sub { font-family: var(--vda-font-title); font-size: 15px; color: var(--color-text-muted); margin-bottom: 2px; }
+.vda-gm-powers { margin: -2px 0 6px; font-size: 13px; color: var(--color-text-muted); }
+.vda-trait.is-muted, .vda-trait-roll-row.is-muted { color: var(--color-text-muted); }
+.vda-trait.is-muted .vda-dot, .vda-trait-roll-row.is-muted .vda-dot { opacity: .6; }
+.vda-gm-edit-bar { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; }
+.vda-gm-edit-bar .vda-card-title { flex: 1; }
+@media (max-width: 1100px) {
+    .vda-gm-session { grid-template-columns: 1fr; }
+    .vda-gm-table { position: static; }
+    .vda-gm-state { grid-template-columns: 1fr 1fr; }
+}
+
+/* ── Fenêtre de jet ── */
+.vda-roll-head { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 32px; padding: 8px 14px;
+    border: 1px solid var(--color-border); background: color-mix(in srgb, var(--vda-blood) 6%, var(--color-surface)); }
+.vda-roll-head b { font-family: var(--vda-font-title); font-weight: 400; font-size: 30px; line-height: 1; color: var(--vda-blood); margin-right: 4px; }
+.vda-roll-head .vda-label { display: block; margin-bottom: 0; }
+.vda-roll-head-step { margin-left: auto; }
+.vda-roll-body { display: grid; grid-template-columns: minmax(0, 3fr) minmax(260px, 2fr); gap: 24px; margin-top: 14px; }
+.vda-roll-side { padding-left: 20px; border-left: 1px solid var(--color-border); }
+.vda-roll-group { font-family: var(--vda-font-title); font-size: 15px; color: var(--color-text-muted); margin-bottom: 2px; }
+.vda-three.is-tight, .vda-two.is-tight { gap: 0 20px; }
+.vda-pick-row { display: flex; justify-content: space-between; align-items: baseline; width: 100%; padding: 3px 8px; text-align: left; font: inherit; font-size: 15px;
+    color: inherit; background: none; border: 1px solid transparent; border-bottom-color: color-mix(in srgb, var(--color-border) 50%, transparent); cursor: pointer; }
+.vda-pick-row b { font-family: var(--vda-font-title); font-weight: 400; font-size: 17px; }
+.vda-pick-row:hover { color: var(--color-primary); }
+.vda-pick-row.is-muted { color: var(--color-text-muted); }
+.vda-pick-row.is-on { background: var(--color-text); color: var(--color-surface); border-color: var(--color-text); }
+.vda-mini-tabs { display: flex; gap: 2px; border-bottom: 1px solid var(--vda-rule); margin-bottom: 4px; }
+.vda-mini-tab { padding: 4px 12px; font-family: var(--vda-font-title); font-size: 15px; color: var(--color-text-muted); background: none;
+    border: 1px solid transparent; border-bottom: 0; border-radius: 4px 4px 0 0; cursor: pointer; }
+.vda-mini-tab:hover { color: var(--color-text); }
+.vda-mini-tab.is-active { color: var(--color-surface); background: var(--color-text); box-shadow: inset 0 2px 0 var(--vda-blood); }
+@media (max-width: 900px) {
+    .vda-roll-body { grid-template-columns: 1fr; }
+    .vda-roll-side { padding-left: 0; border-left: 0; border-top: 1px solid var(--color-border); padding-top: 12px; }
+}
+
+/* Colonne d'aide sous le contenu quand la place manque */
+@media (max-width: 1023px) {
+    .vda-wizard-body { grid-template-columns: 1fr; }
+    .vda-help { position: static; }
+}
+
+/* Petits écrans : une colonne */
+@media (max-width: 760px) {
+    .vda-header-grid, .vda-three, .vda-two, .vda-identity { grid-template-columns: 1fr; }
+    .vda-avatar { margin: 0 auto; }
+    .vda-sheet { padding: 28px 16px; }
+    .vda-corner { width: 90px; height: 90px; }
+}

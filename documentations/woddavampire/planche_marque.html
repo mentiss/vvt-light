@@ -1,0 +1,161 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Planche marque — Vampire : l'Âge des Ténèbres</title>
+<!--
+  Marque du slug (phase 2, lot 1) : carte de l'accueil (variant 'card') et titre
+  des pages d'accès / bloc « Reprendre » (variant 'title').
+  Emblèmes générés par Codex (marque/) ; le texte est en CSS (DeRoos Caps, Lombardic).
+  Carte : couleurs fixes (elle vit sur le thème de la plateforme). Titre : couleurs du thème.
+-->
+<style>
+@font-face { font-family: 'DeRoos FR'; src: url('../../src/client/public/fonts/DeRoosCaps-FR.ttf'); }
+@font-face { font-family: 'Lombardic FR'; src: url('../../src/client/public/fonts/Lombardic-FR.ttf'); }
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+body { background: #F6F3EE; color: #222; font-family: Georgia, serif; padding: 18px; }
+h1 { font-family: 'DeRoos FR', serif; font-weight: 400; font-size: 26px; color: #7a1018; margin-bottom: 4px; }
+h2 { font: 700 12px Arial, sans-serif; letter-spacing: .14em; text-transform: uppercase; color: #777; margin: 26px 0 10px; }
+.note { font-size: 14px; color: #666; max-width: 1050px; }
+.cards { display: grid; grid-template-columns: repeat(4, 300px); gap: 18px; }
+.label { font: 13px Arial, sans-serif; color: #555; margin-bottom: 6px; }
+
+/* ── Carte de slug (copie fidèle des dimensions de la plateforme : 15rem, bande du bas) ── */
+.vtt-system-card { display: flex; flex-direction: column; width: 100%; height: 15rem; overflow: hidden;
+    border-radius: .9rem; border: 1px solid #d8d2c8; background: #fff; box-shadow: 0 4px 14px rgba(0,0,0,.08); }
+.vtt-system-card-main { flex: 1; min-height: 0; display: block; }
+.vtt-system-card-foot { display: flex; justify-content: space-between; align-items: center; padding: .45rem .85rem;
+    font: .75rem Arial, sans-serif; color: #777; border-top: 1px solid #d8d2c8; background: #fff; }
+.vtt-system-card-foot b { font-weight: 600; padding: .1rem .5rem; border-radius: 999px; border: 1px solid #d8d2c8; }
+
+/* ── Marque Vampire (futur Brand.css : classes vda-brand-*, aucune --color-* globale) ── */
+.vda-brand { position: relative; height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px;
+    color: #E6D7BC; overflow: hidden;
+    background: radial-gradient(ellipse at 50% 35%, #2a1414 0%, #140a0b 60%, #0a0506 100%); }
+/* coins de fer (validés), en petit */
+.vda-brand-c { position: absolute; width: 44px; height: 44px; pointer-events: none;
+    background: url('ornements/a1-ferronnerie-coin.png') no-repeat top left / contain;
+    filter: brightness(2.1) contrast(1.1) drop-shadow(0 0 4px rgba(179,20,31,.4)); }
+.vda-brand-c.tl { top: 5px; left: 5px; } .vda-brand-c.tr { top: 5px; right: 5px; transform: scaleX(-1); }
+.vda-brand-c.bl { bottom: 5px; left: 5px; transform: scaleY(-1); } .vda-brand-c.br { bottom: 5px; right: 5px; transform: scale(-1,-1); }
+.vda-brand-emblem { height: 104px; width: 104px; background: no-repeat center / contain; filter: drop-shadow(0 4px 10px rgba(0,0,0,.7)); }
+.vda-brand-title { font-family: 'DeRoos FR', serif; font-size: 2rem; line-height: 1; letter-spacing: .04em; color: #E6D7BC;
+    text-shadow: 0 2px 0 #3a0508, 0 0 14px rgba(179,20,31,.55); }
+.vda-brand-sub { font-family: 'Lombardic FR', 'DeRoos FR', serif; font-size: .95rem; letter-spacing: .1em; color: #C9A24A; }
+/* sceau : légende latine posée en CSS (SVG) sur l'anneau vide */
+.vda-brand-seal { position: relative; width: 112px; height: 112px; }
+.vda-brand-seal .vda-brand-emblem { width: 100%; height: 100%; }
+.vda-brand-seal svg { position: absolute; inset: 0; width: 100%; height: 100%; }
+.vda-brand-seal text { font-family: 'Lombardic FR', 'DeRoos FR', serif; font-size: 10.5px; letter-spacing: 1.2px; }
+/* une tache séchée discrète dans la carte (variante) */
+.vda-brand-stain { position: absolute; width: 70px; height: 70px; right: 18px; bottom: 10px; opacity: .55; transform: rotate(-20deg);
+    background: url('sang/seche-1.png') no-repeat center / contain; }
+
+/* Variante horizontale : emblème grand à gauche, texte à droite (pour les médaillons) */
+.vda-brand.is-row { flex-direction: row; gap: 10px; padding: 0 14px; }
+.vda-brand.is-row .vda-brand-text { display: flex; flex-direction: column; align-items: flex-start; gap: 4px; }
+.vda-brand.is-row .vda-brand-emblem, .vda-brand.is-row .vda-brand-seal { width: 132px; height: 132px; flex-shrink: 0; }
+.vda-brand.is-row .vda-brand-title { font-size: 1.45rem; }
+.vda-brand.is-row .vda-brand-sub { font-size: .72rem; letter-spacing: .06em; }
+
+/* Piste E : l'image est le fond de la carte (tête dans l'ombre à gauche), le nom à droite */
+.vda-brand.is-portrait { align-items: flex-end; justify-content: center; padding-right: 22px; background-color: #000;
+    background-repeat: no-repeat; background-size: cover; background-position: left center; }
+.vda-brand.is-portrait .vda-brand-text { display: flex; flex-direction: column; align-items: flex-end; gap: 4px; position: relative; z-index: 1; }
+.vda-brand.is-portrait .vda-brand-title { font-size: 1.85rem; }
+.vda-brand.is-portrait .vda-brand-sub { font-size: .8rem; }
+
+/* ── Titre : une ligne, couleurs du thème ── */
+.titles { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
+.theme { padding: 18px 20px; border-radius: 8px; display: grid; gap: 18px; }
+.theme.light { --color-primary: #8E1018; --color-accent: #A67C1E; --color-text: #2A1810; background: #E9DDC2; }
+.theme.dark  { --color-primary: #E6D7BC; --color-accent: #C9A24A; --color-text: #E6D7BC; background: #0C0708; }
+.vda-brand.is-title { height: auto; background: none; flex-direction: row; align-items: center; gap: .45em; white-space: nowrap; overflow: visible; font-size: 22px; }
+.vda-brand.is-title .vda-brand-title { font-size: 1.4em; color: var(--color-primary); text-shadow: none; }
+.vda-brand.is-title .vda-brand-sub { font-size: .8em; color: var(--color-accent); }
+.vda-brand.is-title .vda-brand-sign { width: 1.6em; height: 1.6em; background: no-repeat center / contain; }
+.dark .vda-brand.is-title .vda-brand-sign.is-forge { filter: brightness(1.35); }
+.theme .row:has(.resume) { gap: 10px; }
+.resume { width: 11rem; height: 3rem; display: flex; align-items: center; justify-content: center; overflow: hidden; border: 1px dashed currentColor; border-radius: 8px; font-size: .85rem; opacity: .95; }
+.resume .vda-brand.is-title { font-size: 15px; }
+.resume .vda-brand.is-title .vda-brand-sub { display: none; }   /* place comptée : signe + nom seulement */
+.theme.dark .mini { color: #A08C72; opacity: 1; }
+.row { display: flex; align-items: center; gap: 24px; flex-wrap: wrap; }
+.mini { font: 12px Arial, sans-serif; opacity: .7; }
+</style>
+</head>
+<body>
+<h1>Marque — carte d'accueil et titre</h1>
+<p class="note">Quatre emblèmes pour la carte de l'accueil (fond sombre fixe, coins de fer, « VAMPIRE » en DeRoos Caps, sous-titre en Lombardic), puis le <b>tau</b> comme signe du format titre / bouton (pages d'accès, bloc « Reprendre »). Le sceau de Caïn porte la légende <i>VOX SANGVINIS CLAMAT DE TERRA</i> (Genèse 4, 10) posée en CSS sur son anneau.</p>
+
+<h2>Carte d'accueil — disposition empilée</h2>
+<div class="cards" id="cards"></div>
+<h2>Carte d'accueil — médaillons en grand, disposition en ligne</h2>
+<div class="cards" id="cards-row"></div>
+
+<h2>Carte d'accueil — le tau (tour 2)</h2>
+<div class="cards" id="cards-tau"></div>
+<h2>Carte d'accueil — E, la tête dans l'ombre marquée de sang (tour 2)</h2>
+<div class="cards" id="cards-head"></div>
+
+<h2>Titre / bouton — quatre signes : tau marqué, tau forgé, tache de sang, sceau de Caïn</h2>
+<div class="titles">
+  <div class="theme light" id="t-light"></div>
+  <div class="theme dark" id="t-dark"></div>
+</div>
+
+<script>
+const corners = '<span class="vda-brand-c tl"></span><span class="vda-brand-c tr"></span><span class="vda-brand-c bl"></span><span class="vda-brand-c br"></span>';
+const seal = (size) => `<div class="vda-brand-seal" style="width:${size}px;height:${size}px">
+    <div class="vda-brand-emblem" style="background-image:url('marque/d1-sceau-cain.png')"></div>
+    <svg viewBox="0 0 112 112" aria-hidden="true"><defs><path id="ring-${size}" d="M56 56 m-44 0 a44 44 0 1 1 88 0 a44 44 0 1 1 -88 0"/></defs>
+      <text fill="#2a0306" opacity=".75" dy="1"><textPath href="#ring-${size}" startOffset="2%">✠ VOX SANGVINIS CLAMAT DE TERRA ✠</textPath></text>
+      <text fill="#e0a0a0" opacity=".35" dy="0"><textPath href="#ring-${size}" startOffset="2%">✠ VOX SANGVINIS CLAMAT DE TERRA ✠</textPath></text>
+    </svg></div>`;
+const EMBLEMS = [
+  ['A — Le calice', '<div class="vda-brand-emblem" style="background-image:url(\'marque/a-calice.png\')"></div>'],
+  ['B — La rose de fer', '<div class="vda-brand-emblem" style="background-image:url(\'marque/b-rose-fer.png\')"></div>'],
+  ['D1 — Le sceau de Caïn', seal(112)],
+  ['D2 — L\'enluminure', '<div class="vda-brand-emblem" style="background-image:url(\'marque/d2-enluminure.png\')"></div>'],
+];
+const card = (inner, cls = '') => `<div class="vtt-system-card"><a class="vtt-system-card-main"><div class="vda-brand ${cls}">${corners}${inner}</div></a>
+   <div class="vtt-system-card-foot"><code>/woddavampire/</code><b>MJ</b></div></div>`;
+document.getElementById('cards').innerHTML = EMBLEMS.map(([n, e]) => `<div><div class="label">${n}</div>${card(`${e}<span class="vda-brand-title">VAMPIRE</span><span class="vda-brand-sub">L'Âge des Ténèbres</span>`)}</div>`).join('');
+const ROW = [
+  ['D1 — Le sceau de Caïn', seal(132)],
+  ['D2 — L\'enluminure', '<div class="vda-brand-emblem" style="background-image:url(\'marque/d2-enluminure.png\')"></div>'],
+  ['A — Le calice', '<div class="vda-brand-emblem" style="background-image:url(\'marque/a-calice.png\')"></div>'],
+  ['D1 + tache séchée', seal(132) + '<span class="vda-brand-stain"></span>'],
+];
+document.getElementById('cards-row').innerHTML = ROW.map(([n, e]) => `<div><div class="label">${n}</div>${card(`${e}<div class="vda-brand-text"><span class="vda-brand-title">VAMPIRE</span><span class="vda-brand-sub">L'Âge des Ténèbres</span></div>`, 'is-row')}</div>`).join('');
+
+// Cartes « tau » : les deux taus du tour 1 et le tau tracé au sang sur parchemin
+const TAUS = [['Tau tracé au sang sur parchemin', 't-tau-parchemin'], ['Tau marqué (brûlé)', 'tau-marque'], ['Tau forgé', 'tau-forge']];
+document.getElementById('cards-tau').innerHTML =
+    TAUS.map(([n, img]) => `<div><div class="label">${n} — empilée</div>${card(`<div class="vda-brand-emblem" style="background-image:url('marque/${img}.png')"></div><span class="vda-brand-title">VAMPIRE</span><span class="vda-brand-sub">L'Âge des Ténèbres</span>`)}</div>`).join('')
+    + `<div><div class="label">Tau sur parchemin — en ligne</div>${card(`<div class="vda-brand-emblem" style="background-image:url('marque/t-tau-parchemin.png')"></div><div class="vda-brand-text"><span class="vda-brand-title">VAMPIRE</span><span class="vda-brand-sub">L'Âge des Ténèbres</span></div>`, 'is-row')}</div>`;
+// Cartes « tête dans l'ombre » : l'image est le fond, le nom à droite
+const HEADS = [['E1 — Sous le capuchon', 'e1-tete-capuchon', 'left center'], ['E2 — Tête nue, de profil', 'e2-tete-profil', 'left center'],
+               ['E1 — cadrage serré sur le front', 'e1-tete-capuchon', '8% 22%'], ['E1 + coins sans fer', 'e1-tete-capuchon', 'left center']];
+document.getElementById('cards-head').innerHTML = HEADS.map(([n, img, pos], i) => {
+    const inner = `${i === 3 ? '' : corners}<div class="vda-brand-text"><span class="vda-brand-title">VAMPIRE</span><span class="vda-brand-sub">L'Âge des Ténèbres</span></div>`;
+    const size = i === 2 ? 'background-size:190%;' : '';
+    return `<div><div class="label">${n}</div><div class="vtt-system-card"><a class="vtt-system-card-main"><div class="vda-brand is-portrait" style="background-image:url('marque/${img}.png');background-position:${pos};${size}">${inner}</div></a>
+      <div class="vtt-system-card-foot"><code>/woddavampire/</code><b>MJ</b></div></div></div>`;
+}).join('');
+
+// Titres : quatre signes
+const SIGNS = [['tau marqué', 'tau-marque', ''], ['tau forgé', 'tau-forge', 'is-forge'], ['tache de sang', '../sang/seche-1', ''], ['sceau de Caïn', 'd1-sceau-cain', '']];
+const title = (sign, cls) => `<span class="vda-brand is-title"><span class="vda-brand-sign ${cls}" style="background-image:url('marque/${sign}.png')"></span><span class="vda-brand-title">Vampire</span><span class="vda-brand-sub">L'Âge des Ténèbres</span></span>`;
+const block = (label) => `
+  <div class="mini">${label}</div>
+  ${SIGNS.map(([n, img, cls]) => `<div>${title(img, cls)}<div class="mini">${n}</div></div>`).join('')}
+  <div class="row">${SIGNS.map(([, img, cls]) => `<div class="resume">${title(img, cls)}</div>`).join('')}</div>
+  <div class="mini">bloc « Reprendre » (11 rem)</div>
+  <div class="row">${SIGNS.map(([, img]) => `<span style="display:inline-block;width:24px;height:24px;background:url('marque/${img}.png') no-repeat center/contain"></span>`).join('')}<span class="mini">à 24 px (icône)</span></div>`;
+document.getElementById('t-light').innerHTML = block('Thème jour');
+document.getElementById('t-dark').innerHTML = block('Thème nuit');
+</script>
+</body>
+</html>

@@ -52,9 +52,11 @@ function getCharNameExpr(db) {
     const cols = db.pragma('table_info(characters)').map(c => c.name);
     let expr;
     if (cols.includes('nom')) {
-        // Dune : champ `nom` direct
+        // Prénom (s'il existe) + nom. Chaque morceau est protégé par COALESCE : en SQLite,
+        // NULL || 'x' vaut NULL, et un prénom vide (Vampire n'a que `nom`) faisait retomber
+        // l'appelant sur player_name. Une chaîne vide reste un repli valide (falsy en JS).
         expr = cols.includes('prenom')
-            ? "c.prenom || COALESCE(' ' || c.nom, '')"
+            ? "TRIM(COALESCE(c.prenom, '') || ' ' || COALESCE(c.nom, ''))"
             : "c.nom";
     } else if (cols.includes('prenom')) {
         // Vikings : prénom + surnom optionnel

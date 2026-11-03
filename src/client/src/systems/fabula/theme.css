@@ -71,7 +71,8 @@
 /* Grand titre de page (.fu-font-logo) : Brand.css */
 
 /* Titres de section — "Attributs & Altérations", noms de classe, etc. */
-.fu-font-title {
+.fu-font-title,
+.vtt-reference-section-title, .vtt-reference-heading {   /* titres de l'onglet Référence (brique ReferenceGuide) */
     font-family: 'Antonio', 'Arial Narrow', sans-serif;
     font-weight: 600;
     letter-spacing: 0.03em;

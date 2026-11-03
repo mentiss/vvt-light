@@ -1,6 +1,6 @@
 # V20 Dark Ages – Catalogue des clans et lignées
 
-> Rattaché à `vda20-regles.md` (§15). Faiblesses reformulées. Noms français provisoires.
+> Rattaché à `spec_woddavampire.md` (§15). Faiblesses reformulées. Noms français provisoires.
 > **Type** : *Majeur* = clan fondé par un Antédiluvien (3ᵉ Génération) ou reconnu comme clan en 1242 · *Mineur* = lignée.
 > **Apparition** : date ou repère donné par le livre ; « – » quand le livre n'en donne pas.
 

@@ -1,13 +1,13 @@
 # Vampire : l'Âge des Ténèbres V20 – Catalogue de la magie du sang
 
-Complément de `vda20-regles.md` (§15). Noms en VF de travail, nom anglais entre parenthèses. Abréviations : S = point de sang, V = point de Volonté, diff = difficulté.
+Complément de `spec_woddavampire.md` (§14). Noms en VF de travail, nom anglais entre parenthèses. Abréviations : S = point de sang, V = point de Volonté, diff = difficulté.
 
 ## Règles communes
 
 - La magie du sang se pratique en **voies** (max 5 points) et/ou en **rituels** (pas de limite de niveau).
 - **Nécromancie et Thaumaturgie** : la Discipline a une valeur comme les autres. À chaque point, le personnage gagne **un point de voie et un rituel** de niveau égal ou inférieur. Il peut apprendre d'autres voies (jamais au-dessus de la valeur de la Discipline) et autant de rituels qu'il veut (même limite de niveau).
 - Les autres formes (Mysticisme de l'Abîme, Koldunisme, Ogham) ont leurs propres règles, détaillées dans leur section.
-- Coûts XP : voir `vda20-regles.md` §6.1 (nouvelle voie 7, voie secondaire valeur × 4, rituel niveau × 2, rituel de l'Abîme niveau × 3).
+- Coûts XP : voir `spec_woddavampire.md` §6.1 (nouvelle voie 7, voie secondaire valeur × 4, rituel niveau × 2, rituel de l'Abîme niveau × 3).
 
 **Structure d'une fiche de pouvoir** (même format que le catalogue des Disciplines) : Niv. | Pouvoir | Coût | Jet | Durée | Effet.
 

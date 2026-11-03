@@ -1,6 +1,6 @@
 # V20 Dark Ages – Catalogue des Atouts et Handicaps
 
-> Rattaché à `vda20-regles.md` (§5.2 et §16). Effets reformulés. Noms français provisoires.
+> Rattaché à `spec_woddavampire.md` (§5.2 et §16). Effets reformulés. Noms français provisoires.
 > Sur la fiche : chaque Atout/Handicap porte un statut **« validé MJ »** ; le total est plafonné par le paramètre de chronique (7 par défaut ; 5 ou 10 possibles).
 > **Structurant** : effet appliqué par la fiche. Les autres effets passent par des modificateurs ou se jouent à la table.
 
@@ -161,7 +161,7 @@
 | Aura faible (Weak Aura) | 2 | Atout si Route ≤ 4, Handicap si Route ≥ 5 | Route 10-9 : +1 · 8-3 : 0 · 2-1 : −1 |
 | Aura puissante (Potent Aura) | 3 | Atout si Route ≥ 5, Handicap si Route ≤ 4 | Route 10 : −3 · 9-8 : −2 · 7-6 : −1 · 5 : 0 · 4-3 : +1 · 2 : +2 · 1 : +3 |
 
-L'aura étant jouée de façon narrative (`vda20-regles.md` §11.2), ces deux entrées sont des références.
+L'aura étant jouée de façon narrative (`spec_woddavampire.md` §11.2), ces deux entrées sont des références.
 
 ---
 

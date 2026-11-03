@@ -9,9 +9,9 @@
 // identifiants) feraient remonter trop de bruit.
 // ─────────────────────────────────────────────────────────────────────────────
 
-/** Minuscules, sans accents. */
+/** Minuscules, sans accents ; ligatures dépliées (« manœuvre » = « manoeuvre »). */
 export const normalizeText = (s) =>
-    String(s ?? '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
+    String(s ?? '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().replace(/œ/g, 'oe').replace(/æ/g, 'ae');
 
 // Tous les textes d'une valeur (chaîne, tableau, objet), à n'importe quelle profondeur
 const collectText = (value, out) => {

@@ -1,6 +1,6 @@
 # V20 Dark Ages – Catalogue des Routes et Voies
 
-> Rattaché à `vda20-regles.md` (§11). Les Routes se jouent **simplement** : ce catalogue sert de référence (éthiques, Vertus, aura, hiérarchie des péchés), sans mécanique supplémentaire.
+> Rattaché à `spec_woddavampire.md` (§11). Les Routes se jouent **simplement** : ce catalogue sert de référence (éthiques, Vertus, aura, hiérarchie des péchés), sans mécanique supplémentaire.
 > Noms français provisoires. Hiérarchies reformulées.
 
 ## Structure d'une entrée

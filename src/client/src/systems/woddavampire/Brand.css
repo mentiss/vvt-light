@@ -1,0 +1,36 @@
+/* src/client/src/systems/woddavampire/Brand.css */
+/* ─────────────────────────────────────────────────────────────────────────────
+   Marque Vampire : l'Âge des Ténèbres (spec_plateforme_accueil.md §5) : carte
+   de l'accueil et titre des pages d'accès. Importé par Brand.jsx (accueil) et
+   par theme.css. Classes .vda-brand-* uniquement, aucune couleur globale
+   (--color-* lues, jamais définies). Source validée : planche_marque.html.
+   Polices : DeRoos FR et Lombardic FR — public/fonts/fonts.css (chargé partout).
+   ─────────────────────────────────────────────────────────────────────────── */
+
+/* ── Carte : le Caïnite sous le capuchon, marqué au front du tau de sang ── */
+.vda-brand {
+    position: relative; height: 100%; display: flex; flex-direction: column; align-items: flex-end; justify-content: center;
+    gap: 4px; padding-right: 22px; overflow: hidden; color: #E6D7BC;
+    background: #000 url('./assets/brand-card.webp') no-repeat left center / cover;
+}
+.vda-brand-title {
+    position: relative; z-index: 1; font-family: 'DeRoos FR', Georgia, serif; font-size: 1.85rem; letter-spacing: .04em; line-height: 1;
+    color: #E6D7BC; text-shadow: 0 2px 0 #3a0508, 0 0 14px rgba(179, 20, 31, .55);
+}
+.vda-brand-sub { position: relative; z-index: 1; font-family: 'Lombardic FR', 'DeRoos FR', Georgia, serif; font-size: .8rem; letter-spacing: .1em; color: #C9A24A; }
+.vda-brand-stain {
+    position: absolute; width: 70px; height: 70px; right: 18px; bottom: 10px; opacity: .55; transform: rotate(-20deg);
+    background: url('./assets/stain-1.webp') no-repeat center / contain;
+}
+
+/* ── Titre (pages d'accès, Reprendre) : tau marqué + nom, couleurs du thème ── */
+/* Le sous-titre passe à la ligne quand la place manque (cadre max-w-md des pages d'accès) */
+.vda-brand.is-title { height: auto; padding: 0; background: none; flex-direction: row; flex-wrap: wrap; justify-content: center; align-items: center; gap: .1em .45em; overflow: visible; }
+.vda-brand.is-title > span { white-space: nowrap; }
+.vda-brand.is-title .vda-brand-stain { display: none; }
+.vda-brand.is-title .vda-brand-title { font-size: 1.4em; color: var(--color-primary, #8E1018); text-shadow: none; }
+.vda-brand.is-title .vda-brand-sub { font-size: .8em; color: var(--color-accent, #A67C1E); }
+.vda-brand-sign { width: 1.6em; height: 1.6em; flex-shrink: 0; background: url('./assets/tau.webp') no-repeat center / contain; }
+/* Place comptée (bloc « Reprendre ») : signe et nom seulement */
+.vtt-resume-brand .vda-brand.is-title { justify-content: flex-start; }
+.vtt-resume-brand .vda-brand.is-title .vda-brand-sub { display: none; }

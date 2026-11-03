@@ -160,3 +160,21 @@
     font-display: swap;
 }
 
+/* Vampire : l'Âge des Ténèbres (woddavampire) — DeRoos Caps et Lombardic complétées
+   de leurs accents français (scripts/fonts/add_french_accents.py) */
+@font-face {
+    font-family: 'DeRoos FR';
+    src: url('./DeRoosCaps-FR.ttf') format('truetype');
+    font-weight: normal;
+    font-style: normal;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'Lombardic FR';
+    src: url('./Lombardic-FR.ttf') format('truetype');
+    font-weight: normal;
+    font-style: normal;
+    font-display: swap;
+}
+
