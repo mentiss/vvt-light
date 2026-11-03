@@ -75,7 +75,7 @@ Pas de campagne de rattrapage : on ajoute un test quand on touche une règle de 
 **Zéro registre central.** `Loader.js` scanne `src/server/systems/` au démarrage : tout dossier contenant un `config.js` valide devient un système actif. Aucun fichier hors du dossier du slug ne doit être modifié pour en ajouter un.
 
 Fichiers d'un slug :
-- `src/server/systems/:slug/config.js` — `{ slug, label, dbPath, schemaPath, generateAccessUrl? }`
+- `src/server/systems/:slug/config.js` — `{ slug, label, dbPath, schemaPath, generateAccessUrl?, hidden? }` (`hidden: true` : absent de l'accueil, joignable par son adresse)
 - `src/server/systems/:slug/routes/characters.js` — routeur Express (obligatoire)
 - `database-template/:slug-schema.sql` — schéma SQLite (bâti sur `base.sql`)
 - `src/client/src/systems/:slug/config.jsx` — config front (hooks de dés, combat, `diceConfigDefault`)
@@ -101,8 +101,9 @@ Tous sont des systèmes en usage réel, aucun n'est un brouillon :
 | `cyberpunk` | The Sprawl (PbtA) | |
 | `deltagreen` | Delta Green | |
 | `dune` | Dune (2D20) | |
-| `noctis` | Noctis Solis (Vermine 2047) | Intégration `accessCode` en attente |
+| `noctis` | Noctis Solis (Vermine 2047) | Intégration `accessCode` en attente ; masqué de l'accueil (`hidden`) |
 | `tecumah` | Tecumah Gulch (D6) | |
+| `woddavampire` | Vampire : l'Âge des Ténèbres (V20 Dark Ages) | Le plus récent (v5.10.0) : organisation du code de référence (`config/rules/`, sections partagées joueur / MJ, hooks), aide de jeu en Markdown, coterie |
 
 ### Base de données
 

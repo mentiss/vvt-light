@@ -21,6 +21,8 @@ Avant d'écrire un composant qui reçoit des props de la plateforme, **ouvre la 
 - Fenêtre flottante (déplaçable, redimensionnable, réductible, mémorisée) : `components/ui/FloatingPanel.jsx`, contrat dans `documentations/spec_ui_panneaux.md`. Elle est un conteneur de requêtes de taille : un menu ou une modale ouvert depuis son contenu passe par `HostedModal` (`components/ui/ModalHost.jsx`), sinon il est rogné.
 - Rendu des jets : même composant pour l'historique et les notifications, sans marge extérieure (voir « Jet libre » dans `documentations/spec_diceengine_v2.md`).
 - `SessionPlayersBar` vit aussi dans `src/components/layout/`.
+- Aide de jeu (référence des règles) : `components/reference/ReferenceGuide.jsx` (props `sections`, `isGM`, `renderBlock?`, `placeholder?`), contenu en Markdown converti par `markdownToSections` (`tools/reference.js`), visibilité `gm` / `player`. Contrat dans `documentations/spec_ui_reference.md`.
+- Onglet courant gardé dans le hash de l'URL : `useHashTab(TABS, défaut)` (`hooks/useHashTab.js`).
 
 ## Moteur de dés (`src/tools/diceEngine.js`)
 
