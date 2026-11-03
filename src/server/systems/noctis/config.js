@@ -31,4 +31,5 @@ module.exports = {
     dbPath:     path.join(__dirname, '../../../../database/noctis.db'),
     schemaPath: path.join(__dirname, '../../../../database-template/noctis-solis.sql'),
     generateAccessUrl,
+    hidden: true,
 };
