@@ -1,7 +1,7 @@
 // src/client/src/systems/dune/hooks/useSessionResources.js
 // Ressources de la table (Impulsion, Menace, Complications pour le MJ) :
 // chargement, écoute en temps réel, modification.
-// La modification passe par le socket update-session-resources : dette connue
+// La modification passe par le socket dune:update-session-resources : dette connue
 // du pattern 2D20 (src/client/CLAUDE.md), reprise telle quelle.
 
 import { useCallback, useEffect, useState } from 'react';
@@ -52,7 +52,7 @@ export function useSessionResources(sessionId, isGM = false) {
             const next = Math.max(0, (prev[field] ?? 0) + delta);
             return { ...prev, [field]: field === 'impulsions' ? Math.min(IMPULSION_MAX, next) : next };
         });
-        socket.emit('update-session-resources', { sessionId, field, delta });
+        socket.emit('dune:update-session-resources', { sessionId, field, delta });
     }, [socket, sessionId]);
 
     return { resources: sessionId ? resources : EMPTY, updateResource };

@@ -117,7 +117,7 @@ const TecumahDiceModal = ({
 
             // Complication → socket
             if (res.isComplication && socket && activeGMSession) {
-                socket.emit('update-session-resources', {
+                socket.emit('tecumah:update-session-resources', {
                     sessionId: activeGMSession,
                     field:     'complications',
                     delta:     1,

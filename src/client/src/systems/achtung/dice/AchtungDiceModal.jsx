@@ -239,7 +239,7 @@ const AchtungDiceModal = ({
     const emitResources = useCallback((patches) => {
         if (!socket || !activeGMSession) return;
         for (const [field, delta] of Object.entries(patches)) {
-            if (delta !== 0) socket.emit('update-session-resources', { sessionId: activeGMSession, field, delta });
+            if (delta !== 0) socket.emit('achtung:update-session-resources', { sessionId: activeGMSession, field, delta });
         }
     }, [socket, activeGMSession]);
 

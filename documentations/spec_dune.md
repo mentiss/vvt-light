@@ -18,7 +18,7 @@
 | Atouts | C'est l'inventaire : ils reviennent **en section de la fiche**, qui n'a plus qu'un seul onglet de jeu. |
 | Identité | Tous les champs restent : prénom, nom, joueur, statut social, âge, taille, poids, sexe, devise, description, portrait. |
 | Talents et atouts | Saisie libre conservée ; **catalogue tiré du livre** ajouté (atouts confirmés par le MJ, talents proposés : Q-11). |
-| Serveur | Routes inchangées, sauf correctif. Schéma : seulement les champs facultatifs de Q-13 et Q-14 (§3.2). La dette socket des ressources de session (`update-session-resources`, voir `src/client/CLAUDE.md`) reste telle quelle. |
+| Serveur | Routes inchangées, sauf correctif. Schéma : seulement les champs facultatifs de Q-13 et Q-14 (§3.2). La dette socket des ressources de session (`dune:update-session-resources`, préfixé par le slug depuis le 2026-11-04, voir `src/client/CLAUDE.md`) reste telle quelle. |
 
 ---
 

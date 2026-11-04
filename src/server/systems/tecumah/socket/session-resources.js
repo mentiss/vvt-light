@@ -2,7 +2,7 @@
 // Handler Socket.io pour les ressources de session Tecumah.
 // Découvert et enregistré automatiquement par loader.js à chaque connexion socket.
 //
-// Événement écouté  : update-session-resources { sessionId, field, delta }
+// Événement écouté  : tecumah:update-session-resources { sessionId, field, delta }
 // Événement émis    : session-resources-update  { sessionId, complications }
 //                     → broadcast vers toute la room (GM + joueurs)
 //
@@ -20,7 +20,7 @@ const SLUG = 'tecumah';
  */
 module.exports = function register(io, socket) {
 
-    socket.on('update-session-resources', ({ sessionId, field, delta } = {}) => {
+    socket.on('tecumah:update-session-resources', ({ sessionId, field, delta } = {}) => {
         // Validation du payload
         if (
             !sessionId ||
@@ -28,7 +28,7 @@ module.exports = function register(io, socket) {
             typeof delta !== 'number' ||
             !Number.isInteger(delta)
         ) {
-            console.warn(`[${SLUG}/socket] update-session-resources: payload invalide`, { sessionId, field, delta });
+            console.warn(`[${SLUG}/socket] tecumah:update-session-resources: payload invalide`, { sessionId, field, delta });
             return;
         }
 
@@ -62,7 +62,7 @@ module.exports = function register(io, socket) {
 
             console.log(`[${SLUG}/socket] session-resources [session:${sessionId}]: complications → ${newVal}`);
         } catch (err) {
-            console.error(`[${SLUG}/socket] update-session-resources error:`, err);
+            console.error(`[${SLUG}/socket] tecumah:update-session-resources error:`, err);
         }
     });
 

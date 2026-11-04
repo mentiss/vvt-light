@@ -5,7 +5,7 @@
 // Seule ressource : complications.
 //
 // Qui peut modifier les complications ?
-//   - Via SOCKET (update-session-resources) : joueurs ET GM
+//   - Via SOCKET (tecumah:update-session-resources) : joueurs ET GM
 //       → déclenché automatiquement par la DiceModal quand Wild Die = 1
 //       → déclenché manuellement par le GM depuis TabResource
 //   - Via REST PUT : tout utilisateur authentifié (joueur ou GM)

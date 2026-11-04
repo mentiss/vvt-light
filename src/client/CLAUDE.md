@@ -42,7 +42,7 @@ Règles :
 
 - **Les mises à jour de personnage passent par HTTP** (`onCharacterUpdate` → PUT, `patchImmediate` → PUT/PATCH direct). Les composants n'émettent pas de socket pour modifier une fiche ; ils écoutent.
 - Les emits d'infrastructure (`join-session`, `leave-session`, `character-loaded`, `character-left`, `gm-set-active-session`, `gm-clear-session`) vivent dans les hooks et contextes génériques (`useGMSession`, `usePlayerSession`, `SessionContext`). Ne les réémets pas depuis un slug.
-- **Dette connue, non prioritaire** : les ressources de session 2D20 / D6 (`update-session-resources`) sont émises par socket depuis des composants de `dune`, `achtung`, `tecumah` (`SessionResourcesBar`, `TabResource`, `Sheet.jsx` de dune). Ne refactore pas ce code sans demande. Pour du nouveau code, ne propage pas ce pattern sans m'en parler.
+- **Dette connue, non prioritaire** : les ressources de session 2D20 / D6 (`<slug>:update-session-resources`, préfixé par le slug) sont émises par socket depuis des composants ou hooks de `dune`, `achtung`, `tecumah` (`useSessionResources` et `useDuneRoll` de dune, `TabResource`, `Sheet.jsx` d'achtung). Un événement émis vers le serveur par un slug porte toujours le préfixe du slug. Ne refactore pas ce code sans demande. Pour du nouveau code, ne propage pas ce pattern sans m'en parler.
 - L'écoute de `character-full-update` appartient à `useGMSession` / `GMPage` (générique), pas à un `TabSession` de slug. Un `TabSession` ne déclare que `session-resources-gm-update`.
 - Nettoie chaque listener au démontage (`socket.off` dans le cleanup de l'effet).
 

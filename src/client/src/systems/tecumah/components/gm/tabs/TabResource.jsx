@@ -1,6 +1,6 @@
 // src/client/src/systems/tecumah/gm/tabs/TabResource.jsx
 // Onglet Ressources GM — jauge complications.
-// Modifications via socket update-session-resources → broadcast session-resources-update.
+// Modifications via socket tecumah:update-session-resources → broadcast session-resources-update.
 // Historique en mémoire locale (remis à zéro à la déconnexion).
 
 import React, { useState, useEffect, useCallback, useRef } from 'react';
@@ -40,7 +40,7 @@ const TabResource = ({ activeSession }) => {
     // ── Émission modification ─────────────────────────────────────────────
     const emitUpdate = useCallback((delta, label) => {
         if (!socket || !sessionId) return;
-        socket.emit('update-session-resources', { sessionId, field: 'complications', delta });
+        socket.emit('tecumah:update-session-resources', { sessionId, field: 'complications', delta });
         setHistory(prev => [
             { delta, label, time: new Date().toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }) },
             ...prev.slice(0, 49), // garder 50 entrées max

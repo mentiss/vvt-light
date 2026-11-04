@@ -53,7 +53,7 @@ const ResourcesPanel = ({ sessionId, resources, onUpdate }) => {
 
     const emit = useCallback((field, delta) => {
         if (!socket || !sessionId) return;
-        socket.emit('update-session-resources', { sessionId, field, delta });
+        socket.emit('achtung:update-session-resources', { sessionId, field, delta });
         onUpdate(prev => ({ ...prev, [field]: Math.max(0, (prev[field] ?? 0) + delta) }));
     }, [socket, sessionId, onUpdate]);
 

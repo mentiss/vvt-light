@@ -3,7 +3,7 @@
 // Contexte du moteur de dés, notation, roll(), puis effets du jet :
 //   - Détermination consommée une fois le jet obtenu (C-16) ;
 //   - Impulsion dépensée, Menace générée, complications envoyées au MJ.
-// Les ressources de session passent par le socket update-session-resources :
+// Les ressources de session passent par le socket dune:update-session-resources :
 // dette connue du pattern 2D20 (src/client/CLAUDE.md), reprise telle quelle.
 
 import { useState, useCallback } from 'react';
@@ -29,7 +29,7 @@ export function useDuneRoll(character, onCharacterUpdate) {
 
     const emitResource = useCallback((field, delta) => {
         if (socket && activeGMSession && delta) {
-            socket.emit('update-session-resources', { sessionId: activeGMSession, field, delta });
+            socket.emit('dune:update-session-resources', { sessionId: activeGMSession, field, delta });
         }
     }, [socket, activeGMSession]);
 

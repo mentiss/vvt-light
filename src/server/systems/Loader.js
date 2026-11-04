@@ -19,7 +19,9 @@
 // Handlers Socket.io slug-spécifiques :
 //   Tout fichier .js dans socket/ exporte une fonction register(io, socket, db).
 //   Chaque fichier est enregistré automatiquement à chaque nouvelle connexion socket.
-//   Ex : socket/session-resources.js → écoute 'update-session-resources'
+//   Ex : socket/session-resources.js → écoute 'dune:update-session-resources'
+//   Les événements écoutés sont préfixés par le slug : tous les handlers de tous
+//   les slugs sont branchés sur chaque socket, un nom commun les réveillerait tous.
 
 const fs   = require('fs');
 const path = require('path');

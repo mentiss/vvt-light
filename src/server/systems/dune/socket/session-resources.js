@@ -3,7 +3,7 @@
 // Enregistré automatiquement par le loader à chaque nouvelle connexion socket.
 //
 // Événements écoutés :
-//   update-session-resources  { sessionId, field, delta }
+//   dune:update-session-resources  { sessionId, field, delta }
 //
 // Événements émis vers la room :
 //   session-resources-update      → tous (sans complications)
@@ -26,9 +26,9 @@ const CLAMP   = {
  */
 module.exports = function register(io, socket) {
 
-    socket.on('update-session-resources', ({ sessionId, field, delta } = {}) => {
+    socket.on('dune:update-session-resources', ({ sessionId, field, delta } = {}) => {
         if (!sessionId || !ALLOWED.includes(field) || typeof delta !== 'number' || !Number.isInteger(delta)) {
-            console.warn(`[${SLUG}/socket] update-session-resources: payload invalide`, { sessionId, field, delta });
+            console.warn(`[${SLUG}/socket] dune:update-session-resources: payload invalide`, { sessionId, field, delta });
             return;
         }
 
@@ -66,7 +66,7 @@ module.exports = function register(io, socket) {
 
             console.log(`[${SLUG}/socket] session-resources [session:${sessionId}]: ${field} → ${newVal}`);
         } catch (err) {
-            console.error(`[${SLUG}/socket] update-session-resources error:`, err);
+            console.error(`[${SLUG}/socket] dune:update-session-resources error:`, err);
         }
     });
 

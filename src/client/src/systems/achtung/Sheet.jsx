@@ -121,7 +121,7 @@ const Sheet = ({
 
     const updateResource = useCallback((field, delta) => {
         if (!socket || !activeGMSession) return;
-        socket.emit('update-session-resources', { sessionId: activeGMSession, field, delta });
+        socket.emit('achtung:update-session-resources', { sessionId: activeGMSession, field, delta });
         setSessionResources(prev => ({
             ...prev,
             [field]: Math.max(0, (prev[field] ?? 0) + delta),
