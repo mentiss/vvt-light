@@ -1,0 +1,932 @@
+<!doctype html>
+<html lang="fr" data-theme="light">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Planche — Vileborn</title>
+<!--
+  Planche graphique du slug vileborn (phase 2).
+  Autonome : tokens, polices et classes proposés ; une fois validés, ils sont
+  reportés tels quels dans systems/vileborn/theme.css et Brand.css.
+  Modèle : page 1 des fiches prétirées du kit (papier réglé, aquarelles vert-de-gris,
+  rouge sang, arcs noirs fins, cercles à double bordure, frise runique rouge).
+  ✦ = au-delà des conventions existantes de la plateforme.
+  Polices (Google Fonts) : titre Marcellus SC (retenue le 2026-11-04 ; Cormorant SC et Italiana restent comparables) ;
+  texte EB Garamond ; libellés Jost ; runes Noto Sans Runic.
+-->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+SC:wght@500;600&family=Italiana&family=Marcellus+SC&family=EB+Garamond:ital,wght@0,400;0,600;1,400;1,600&family=Jost:wght@400;500&family=Noto+Sans+Runic&display=swap" rel="stylesheet">
+<style>
+/* ── Équivalent du preflight Tailwind (sinon bordures de boutons du navigateur) ── */
+*, *::before, *::after { box-sizing: border-box; border: 0 solid; margin: 0; padding: 0; }
+button { font: inherit; color: inherit; background: none; cursor: pointer; }
+input, textarea { font: inherit; color: inherit; background: none; }
+
+/* ═════════════════════════════════════════════════════════════════════════
+   TOKENS — futur theme.css
+   ═════════════════════════════════════════════════════════════════════════ */
+/* Jour : la fiche papier — blanc cassé réglé, encre noire, rouge sang, vert-de-gris */
+:root {
+    --color-primary:     #8B1A1A;  /* rouge sang (dés, noms, runes) */
+    --color-secondary:   #5E7C76;  /* vert-de-gris des aquarelles */
+    --color-accent:      #4F6470;  /* gris-bleu ardoise des textes d'effet */
+    --color-danger:      #A3161A;
+    --color-success:     #3F6B57;
+    --color-bg:          #EEEDE9;  /* papier */
+    --color-surface:     #F8F7F4;
+    --color-surface-alt: #E2E8E5;  /* lavis de sauge */
+    --color-text:        #1C1A1B;  /* encre */
+    --color-text-muted:  #5A6A72;  /* ardoise */
+    --color-border:      #2B2728;  /* trait fin */
+
+    /* Variables du slug */
+    --vil-blood:      #8B1A1A;
+    --vil-sage:       #9DB5AE;     /* aquarelle (taches, lavis des titres) */
+    --vil-ink:        #1C1A1B;
+    --vil-rule:       rgba(70, 90, 100, .10);   /* réglure du papier */
+    --vil-paper:      #F8F7F4;
+    --vil-font-title: 'Marcellus SC', 'EB Garamond', Georgia, serif;
+    --vil-font-body:  'EB Garamond', Georgia, serif;
+    --vil-font-label: 'Jost', 'Segoe UI', sans-serif;
+    --vil-font-runes: 'Noto Sans Runic', 'Segoe UI Historic', serif;
+}
+/* Nuit : la même fiche à l'encre — ardoise bleu-noir, papier pâle, rouge éclairci */
+[data-theme="dark"] {
+    --color-primary:     #CF4A43;
+    --color-secondary:   #7FA39A;
+    --color-accent:      #93A9B4;
+    --color-danger:      #E2564D;
+    --color-success:     #7DB096;
+    --color-bg:          #121519;
+    --color-surface:     #191D22;
+    --color-surface-alt: #222A2C;
+    --color-text:        #E6E1D8;
+    --color-text-muted:  #94A4AB;
+    --color-border:      #C9C2B6;
+
+    --vil-blood:  #CF4A43;
+    --vil-sage:   #3E5752;
+    --vil-ink:    #E6E1D8;
+    --vil-rule:   rgba(200, 215, 220, .06);
+    --vil-paper:  #191D22;
+}
+
+/* ═════════════════════════════════════════════════════════════════════════
+   PAGE DE PLANCHE (hors thème)
+   ═════════════════════════════════════════════════════════════════════════ */
+body {
+    background: var(--color-bg); color: var(--color-text);
+    font-family: var(--vil-font-body); font-size: 17px; line-height: 1.4;
+    min-height: 100vh; transition: background .3s, color .3s;
+}
+.plate { padding: 16px; display: grid; gap: 18px; }
+.plate-bar { display: flex; flex-wrap: wrap; gap: 10px 16px; align-items: center; position: sticky; top: 0; z-index: 50;
+    background: var(--color-bg); padding: 8px 0; border-bottom: 1px solid color-mix(in srgb, var(--color-border) 25%, transparent); }
+.plate-h { font-family: var(--vil-font-label); font-weight: 500; font-size: 13px; letter-spacing: .14em; text-transform: uppercase;
+    color: var(--color-text-muted); border-bottom: 1px solid color-mix(in srgb, var(--color-border) 20%, transparent); padding-bottom: 4px; margin-top: 18px; }
+.plate-note { font-size: 14px; color: var(--color-text-muted); }
+.plate-note code { font-size: 12px; }
+.star { color: var(--vil-blood); font-weight: 600; }
+.grid { display: grid; gap: 22px; }
+.grid-2 { grid-template-columns: repeat(auto-fit, minmax(min(100%, 420px), 1fr)); }
+.grid-3 { grid-template-columns: repeat(auto-fit, minmax(min(100%, 300px), 1fr)); }
+.swatches { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 8px; font-size: 12px; font-family: var(--vil-font-label); }
+.sw i { display: block; height: 34px; border: 1px solid color-mix(in srgb, var(--color-border) 30%, transparent); margin-bottom: 3px; }
+.font-row { display: grid; grid-template-columns: 170px 1fr; gap: 8px 14px; align-items: baseline; }
+.font-row > span { font-family: var(--vil-font-label); font-size: 12px; color: var(--color-text-muted); }
+@media (max-width: 600px) { .font-row { grid-template-columns: 1fr; } }
+
+/* ═════════════════════════════════════════════════════════════════════════
+   THÈME — classes du slug (futur theme.css)
+   ═════════════════════════════════════════════════════════════════════════ */
+
+/* Papier réglé (fond des fiches, modales, cartes) */
+.vil-paper {
+    background-color: var(--vil-paper);
+    background-image:
+        radial-gradient(ellipse 38% 30% at 0% 0%, color-mix(in srgb, var(--vil-sage) 55%, transparent), transparent 70%),
+        radial-gradient(ellipse 30% 26% at 100% 100%, color-mix(in srgb, var(--vil-blood) 10%, transparent), transparent 70%),
+        repeating-linear-gradient(to bottom, transparent 0 25px, var(--vil-rule) 25px 26px);
+}
+
+/* Libellé de section : petite capitale fine sur un lavis de sauge */
+.vil-label {
+    font-family: var(--vil-font-label); font-size: 12px; font-weight: 400; letter-spacing: .08em; text-transform: uppercase;
+    display: block; padding: 3px 8px; margin: 0 -8px 6px;
+    background: linear-gradient(90deg, color-mix(in srgb, var(--vil-sage) 80%, transparent), transparent 85%);
+}
+.vil-label.is-right { text-align: right; background: linear-gradient(270deg, color-mix(in srgb, var(--vil-sage) 80%, transparent), transparent 85%); }
+.vil-label.is-plain { background: none; text-align: center; margin: 0; }
+
+/* Texte d'effet (états, mobiles, origine) : italique ardoise, termes en petites capitales */
+.vil-effect { font-style: italic; color: var(--color-text-muted); font-size: 15px; line-height: 1.3; }
+.vil-sc { font-variant: small-caps; font-style: normal; letter-spacing: .02em; }
+.vil-name { font-style: italic; font-weight: 600; }
+.vil-red { color: var(--vil-blood); }
+
+/* Case à cocher papier (pas de checkbox native) */
+.vil-check { width: 15px; height: 15px; border: 1.5px solid var(--vil-ink); border-radius: 3px; display: inline-grid; place-items: center;
+    flex-shrink: 0; transition: background .15s; vertical-align: -2px; }
+.vil-check.is-on::after { content: ''; width: 9px; height: 9px; background: var(--vil-blood); border-radius: 1px; }
+.vil-tick { width: 13px; height: 13px; border: 1.5px solid var(--vil-ink); border-radius: 50%; display: inline-block; background: var(--vil-paper); }
+.vil-tick.is-on { background: var(--vil-blood); border-color: var(--vil-blood); box-shadow: inset 0 0 0 2px var(--vil-paper); }
+
+/* ── La fiche ─────────────────────────────────────────────────────────── */
+.vil-sheet { position: relative; padding: 18px 22px 26px; border: 1px solid color-mix(in srgb, var(--color-border) 18%, transparent); overflow: hidden; }
+.vil-sheet-grid { display: grid; grid-template-columns: minmax(230px, 1fr) minmax(0, 600px) minmax(230px, 1fr); gap: 18px; align-items: start; }
+.vil-col { display: grid; gap: 16px; align-content: start; padding-top: 70px; }
+
+/* En-tête : arcs noirs fins, nom et devise */
+.vil-head { position: relative; text-align: center; padding-top: 4px; }
+.vil-head::before { content: ''; position: absolute; left: 50%; top: -260px; width: 1100px; height: 330px; transform: translateX(-50%);
+    border: 1px solid var(--vil-ink); border-radius: 50%; border-top-color: transparent; opacity: .85; pointer-events: none;
+    -webkit-mask: linear-gradient(90deg, #000 0 26%, transparent 26% 74%, #000 74%); mask: linear-gradient(90deg, #000 0 26%, transparent 26% 74%, #000 74%); }
+.vil-charname { font-family: var(--vil-font-title); font-size: 40px; line-height: 1; letter-spacing: .02em; font-weight: 500; }
+.vil-motto { font-style: italic; font-weight: 600; font-size: 15px; color: var(--color-text-muted); margin-top: 2px; }
+
+/* Approches en arc, rayons fins */
+.vil-approaches { display: flex; justify-content: center; gap: 6px; margin-top: 8px; }
+.vil-approach { position: relative; width: 84px; height: 62px; border: 1px solid var(--vil-ink); background: var(--vil-paper);
+    display: grid; grid-template-rows: auto 1fr; text-align: center; transition: transform .15s, box-shadow .15s; }
+.vil-approach::before { content: ''; position: absolute; inset: -18px; z-index: -1; pointer-events: none; opacity: .35;
+    background: repeating-conic-gradient(from 0deg, var(--vil-ink) 0 .6deg, transparent .6deg 7deg);
+    -webkit-mask: radial-gradient(closest-side, transparent 62%, #000 64%, transparent 100%); mask: radial-gradient(closest-side, transparent 62%, #000 64%, transparent 100%); }
+.vil-approach b { font-family: var(--vil-font-label); font-weight: 400; font-size: 10.5px; letter-spacing: .05em; padding-top: 3px; }
+.vil-approach span { font-weight: 600; font-size: 21px; color: var(--vil-blood); align-self: center; }
+.vil-approach small { position: absolute; right: 4px; bottom: 2px; font-size: 11px; color: var(--color-danger); font-family: var(--vil-font-label); }
+.vil-approach:hover { transform: translateY(-2px); box-shadow: 0 4px 0 -1px color-mix(in srgb, var(--vil-blood) 40%, transparent); }
+.vil-approach:nth-child(2), .vil-approach:nth-child(5) { margin-top: 24px; }
+.vil-approach:nth-child(3), .vil-approach:nth-child(4) { margin-top: 38px; }
+
+/* U de cercles autour du portrait */
+.vil-u { position: relative; height: 430px; margin-top: -8px; }
+.vil-u-portrait { position: absolute; left: 50%; top: 18px; width: 250px; height: 380px; transform: translateX(-50%); display: grid; place-items: center;
+    -webkit-mask: linear-gradient(to bottom, #000 78%, transparent); mask: linear-gradient(to bottom, #000 78%, transparent); cursor: pointer; }
+.vil-u-portrait svg { width: 100%; height: 100%; }
+.vil-u-portrait:hover::after { content: 'Changer le portrait'; position: absolute; bottom: 70px; font-family: var(--vil-font-label); font-size: 12px;
+    background: var(--vil-paper); padding: 2px 8px; border: 1px solid var(--vil-ink); }
+.vil-u-side { position: absolute; top: 150px; font-family: var(--vil-font-label); font-size: 10.5px; letter-spacing: .12em; writing-mode: vertical-rl; color: var(--color-text-muted); }
+.vil-u-side.is-left { left: 26%; transform: rotate(180deg); }
+.vil-u-side.is-right { right: 26%; }
+/* Runes : calque sous tous les cercles, pour qu'elles ne passent jamais dessus */
+.vil-circle-runes { position: absolute; width: 112px; height: 112px; margin: -56px 0 0 -56px; pointer-events: none; overflow: visible; }
+.vil-circle { position: absolute; width: 92px; height: 92px; margin: -46px 0 0 -46px; display: grid; place-items: center; text-align: center; }
+.vil-circle svg { position: absolute; inset: 0; width: 92px; height: 92px; overflow: visible; }
+.vil-circle .ring { fill: var(--vil-paper); stroke: var(--vil-ink); stroke-width: 1.2; }
+.vil-circle .ring-in { fill: none; stroke: var(--vil-ink); stroke-width: .7; stroke-dasharray: 2 2; }
+.vil-circle-runes .runes { font-family: var(--vil-font-runes); font-size: 7px; fill: var(--vil-blood); letter-spacing: 1px; }
+.vil-circle span { position: relative; font-style: italic; font-weight: 600; font-size: 15px; color: var(--vil-blood); line-height: 1.05; padding: 0 6px; }
+.vil-circle.is-empty span { color: var(--color-text-muted); font-weight: 400; opacity: 0; transition: opacity .15s; }
+.vil-circle.is-empty:hover span { opacity: .8; }
+.vil-u-link { position: absolute; inset: 0; pointer-events: none; }
+.vil-u-link path { fill: none; stroke: var(--vil-ink); stroke-width: 1; }
+.vil-u-heritage { position: absolute; left: 50%; bottom: 0; transform: translateX(-50%); font-family: var(--vil-font-label); font-size: 10px; letter-spacing: .06em; }
+
+/* Colonnes : états, blessures / origine, mobiles, ressources */
+.vil-row { display: grid; grid-template-columns: auto 1fr; gap: 0 8px; align-items: baseline; cursor: pointer; padding: 1px 4px; margin: 0 -4px; border-radius: 3px; }
+.vil-row:hover { background: color-mix(in srgb, var(--vil-sage) 30%, transparent); }
+.vil-row .vil-effect { grid-column: 2; }
+.vil-row.is-disabled { opacity: .45; cursor: not-allowed; }
+.vil-wound-note { border-bottom: 1px solid color-mix(in srgb, var(--color-border) 25%, transparent); min-height: 22px; font-style: italic; font-size: 15px; }
+.vil-right { text-align: right; }
+.vil-right .vil-row { grid-template-columns: 1fr auto; }
+.vil-right .vil-row .vil-effect { grid-column: 1 / -1; }
+.vil-resource + .vil-resource { margin-top: 6px; }
+
+/* Grand arc et frise runique */
+.vil-arc { position: relative; height: 70px; margin: -26px -22px 0; pointer-events: none; }
+.vil-arc svg { width: 100%; height: 100%; display: block; }
+.vil-arc .line { fill: none; stroke: var(--vil-ink); stroke-width: 1; }
+.vil-arc .runes { font-family: var(--vil-font-runes); font-size: 9px; fill: var(--vil-blood); letter-spacing: 2px; }
+
+/* Bandeau du bas : don · héritage + pulsion · don */
+.vil-band { display: grid; grid-template-columns: 1fr 1.25fr 1fr; gap: 26px; text-align: center; margin-top: -6px; }
+.vil-gift-title, .vil-heritage-name { font-style: italic; font-weight: 600; color: var(--vil-blood); font-size: 19px; }
+.vil-heritage-name { font-size: 28px; line-height: 1.1; }
+.vil-ticks { display: flex; align-items: center; gap: 4px; justify-content: center; margin: 4px 0 8px; }
+.vil-ticks::before, .vil-ticks::after { content: ''; height: 1px; background: var(--vil-ink); flex: 1; max-width: 120px; }
+.vil-ticks button { line-height: 0; }
+.vil-band p { font-size: 15.5px; line-height: 1.3; }
+.vil-band p + p { margin-top: 8px; }
+.vil-band .vil-effect { font-size: 14.5px; }
+.vil-band-actions { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; margin-top: 12px; }
+.vil-gift.is-on .vil-gift-title::after { content: ' · actif'; font-family: var(--vil-font-label); font-style: normal; font-weight: 400; font-size: 11px; }
+
+/* Liens */
+.vil-bonds { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; margin-top: 20px; }
+.vil-bond { display: flex; align-items: center; gap: 10px; border: 1px solid color-mix(in srgb, var(--color-border) 35%, transparent); padding: 4px 6px 4px 12px; background: var(--vil-paper); }
+.vil-bond em { color: var(--color-text-muted); font-size: 14px; }
+.vil-level { display: inline-flex; border: 1px solid var(--vil-ink); }
+.vil-level button { width: 26px; height: 22px; font-family: var(--vil-font-label); font-size: 13px; }
+.vil-level button + button { border-left: 1px solid var(--vil-ink); }
+.vil-level button.is-on { background: var(--vil-blood); color: var(--vil-paper); }
+
+/* Responsive : colonnes sous le U, puis tout empilé */
+@media (max-width: 1100px) {
+    .vil-sheet-grid { grid-template-columns: 1fr 1fr; }
+    .vil-center { grid-column: 1 / -1; order: -1; }
+    .vil-col { padding-top: 0; }
+}
+@media (max-width: 700px) {
+    .vil-sheet-grid { grid-template-columns: 1fr; }
+    .vil-sheet { padding: 14px 16px 20px; }
+    .vil-charname { font-size: 28px; }
+    .vil-head::before { display: none; }
+    .vil-right { text-align: left; }
+    .vil-right .vil-row { grid-template-columns: auto 1fr; }
+    .vil-approaches { flex-wrap: wrap; }
+    .vil-approach { margin-top: 0 !important; width: calc(33% - 6px); }
+    .vil-u { height: auto; display: grid; grid-template-columns: repeat(5, 1fr); gap: 4px; }
+    .vil-u-portrait { position: relative; left: 0; transform: none; grid-column: 1 / -1; width: 100%; height: 260px; order: -1; }
+    .vil-circle { position: relative !important; left: 0 !important; top: 0 !important; margin: 10px auto; width: 60px; height: 60px; }
+    .vil-circle svg { width: 60px; height: 60px; }
+    .vil-circle span { font-size: 11px; }
+    .vil-circle.is-left { order: 2; } .vil-circle.is-right { order: 4; }
+    .vil-u-side { position: static; writing-mode: horizontal-tb; transform: none; grid-column: 1 / -1; margin-top: 8px; }
+    .vil-u-side.is-left { order: 1; } .vil-u-side.is-right { order: 3; }
+    .vil-u-side.is-left, .vil-u-side.is-right { transform: none; left: auto; right: auto; }
+    .vil-circle-runes, .vil-u-link, .vil-u-heritage { display: none; }
+    .vil-band { grid-template-columns: 1fr; }
+    .vil-arc { height: 40px; }
+}
+
+/* ── Interrupteur et pills ──────────────────────────────────────────────── */
+.vil-toggle { display: inline-flex; align-items: center; gap: 8px; font-size: 16px; text-align: left; }
+.vil-toggle i { width: 32px; height: 18px; border: 1.5px solid var(--vil-ink); border-radius: 9px; position: relative; flex-shrink: 0; transition: background .15s; }
+.vil-toggle i::after { content: ''; position: absolute; top: 2px; left: 2px; width: 11px; height: 11px; border-radius: 50%; background: var(--vil-ink); transition: transform .15s; }
+.vil-toggle.is-on i { background: var(--vil-blood); border-color: var(--vil-blood); }
+.vil-toggle.is-on i::after { transform: translateX(14px); background: var(--vil-paper); }
+.vil-toggle[disabled] { opacity: .45; cursor: not-allowed; }
+.vil-toggle small { display: block; color: var(--color-text-muted); font-style: italic; font-size: 13px; }
+.vtt-pill { font-family: var(--vil-font-label); font-size: 13px; padding: 4px 11px; border: 1px solid var(--vil-ink); border-radius: 999px; background: var(--vil-paper); }
+.vtt-pill:hover { background: color-mix(in srgb, var(--vil-sage) 45%, var(--vil-paper)); }
+.vtt-pill.is-selected { background: var(--vil-blood); border-color: var(--vil-blood); color: var(--vil-paper); }
+.vil-pills { display: flex; flex-wrap: wrap; gap: 6px; }
+.vil-field-row { display: grid; grid-template-columns: 130px 1fr; gap: 10px; align-items: center; margin-bottom: 14px; }
+.vil-field-row > b { font-family: var(--vil-font-label); font-weight: 400; font-size: 12px; letter-spacing: .06em; text-transform: uppercase; }
+@media (max-width: 600px) { .vil-field-row { grid-template-columns: 1fr; } }
+.vil-stepper { display: inline-flex; align-items: center; border: 1px solid var(--vil-ink); justify-self: start; }
+.vil-stepper button { width: 28px; height: 28px; font-size: 16px; }
+.vil-stepper span { min-width: 34px; text-align: center; font-weight: 600; }
+
+/* ── Boutons de la plateforme ───────────────────────────────────────────── */
+.vtt-btn { font-family: var(--vil-font-label); font-size: 14px; letter-spacing: .03em; padding: 6px 16px; border: 1px solid var(--vil-ink);
+    background: var(--vil-paper); color: var(--color-text); border-radius: 2px; transition: background .15s, color .15s, box-shadow .15s; }
+.vtt-btn:hover { background: color-mix(in srgb, var(--vil-sage) 45%, var(--vil-paper)); }
+.vtt-btn:active { box-shadow: inset 0 1px 3px rgba(0,0,0,.25); }
+.vtt-btn:disabled { opacity: .45; cursor: not-allowed; }
+.vtt-btn-primary { background: var(--vil-blood); border-color: var(--vil-blood); color: #F8F2EC; }
+.vtt-btn-primary:hover { background: color-mix(in srgb, var(--vil-blood) 82%, #000); }
+.vtt-btn-danger { color: var(--color-danger); border-color: var(--color-danger); }
+.vtt-btn-danger:hover { background: var(--color-danger); color: #fff; }
+.vtt-btn-sm { font-size: 12.5px; padding: 4px 10px; }
+
+/* ── Bande fixe (header + sous-header) ──────────────────────────────────── */
+.vil-band-top { border-bottom: 1px solid var(--vil-ink); background: var(--color-bg); }
+.vil-topbar { display: flex; align-items: center; gap: 12px; padding: 6px 14px; }
+.vil-topbar .vil-brand.is-title { margin-right: auto; }
+.vil-subbar { display: flex; align-items: stretch; gap: 4px; padding: 0 14px; border-top: 1px solid color-mix(in srgb, var(--color-border) 20%, transparent); }
+.vil-tab { font-family: var(--vil-font-label); font-size: 13px; letter-spacing: .06em; text-transform: uppercase; padding: 8px 12px; border-bottom: 2px solid transparent; color: var(--color-text-muted); }
+.vil-tab.is-active { color: var(--color-text); border-bottom-color: var(--vil-blood); }
+.vil-subbar .vil-actions { margin-left: auto; display: flex; gap: 4px; align-items: center; }
+.vil-icon-btn { width: 32px; height: 32px; display: grid; place-items: center; border: 1px solid var(--vil-ink); background: var(--vil-paper); }
+.vil-icon-btn.is-on { background: var(--vil-blood); color: var(--vil-paper); border-color: var(--vil-blood); }
+.vil-icon-btn svg { width: 18px; height: 18px; }
+
+/* ── Menu ───────────────────────────────────────────────────────────────── */
+.vtt-menu-root { position: relative; display: inline-block; }
+.vtt-menu-button { width: 34px; height: 34px; border: 1px solid var(--vil-ink); background: var(--vil-paper); font-size: 18px; }
+.vtt-menu { margin-top: 6px; min-width: 250px; padding: 6px 0; border: 1px solid var(--vil-ink); box-shadow: 4px 4px 0 -1px color-mix(in srgb, var(--vil-sage) 70%, transparent); }
+.vtt-menu-item { display: flex; gap: 10px; align-items: center; width: 100%; text-align: left; padding: 6px 14px; font-size: 16px; }
+.vtt-menu-item:hover { background: linear-gradient(90deg, color-mix(in srgb, var(--vil-sage) 70%, transparent), transparent); }
+.vtt-menu-item.is-danger { color: var(--color-danger); }
+.vtt-menu-icon { width: 18px; height: 18px; color: var(--vil-blood); display: grid; place-items: center; }
+.vtt-menu-icon svg { width: 17px; height: 17px; }
+.vtt-menu-separator { height: 1px; margin: 5px 14px; background: color-mix(in srgb, var(--color-border) 30%, transparent); }
+
+/* ── Modale (décor : rosaces aux coins hauts, frise runique en pied) ────── */
+.vtt-modal-panel { position: relative; overflow: visible; border: 1px solid var(--vil-ink); color: var(--color-text);
+    box-shadow: 0 18px 50px -12px rgba(0,0,0,.45); }
+.vtt-modal-deco::before, .vtt-modal-deco::after {
+    content: ''; position: absolute; top: -14px; width: 62px; height: 62px; pointer-events: none; background: var(--color-secondary);
+    -webkit-mask: var(--vil-rose) center / contain no-repeat; mask: var(--vil-rose) center / contain no-repeat; }
+.vtt-modal-deco::before { left: -14px; }
+.vtt-modal-deco::after  { right: -14px; transform: scaleX(-1); }
+.vtt-modal-panel::after { content: 'ᚠᚢᚦᚨᚱᚲ ᚷᚹᚺᚾᛁᛃ ᛇᛈᛉᛊᛏᛒ ᛖᛗᛚᛜᛞᛟ ᚠᚢᚦᚨᚱᚲ ᚷᚹᚺᚾᛁᛃ ᛇᛈᛉᛊᛏᛒ'; position: absolute; left: 24px; right: 24px; bottom: 3px;
+    font-family: var(--vil-font-runes); font-size: 8px; letter-spacing: 3px; color: var(--vil-blood); opacity: .55; overflow: hidden; white-space: nowrap; text-align: center; pointer-events: none; }
+.vtt-modal-header { display: flex; align-items: center; gap: 10px; padding: 14px 22px 8px 30px; }
+.vtt-modal-heading { flex: 1; text-align: center; }
+.vtt-modal-title { font-family: var(--vil-font-title); font-weight: 500; font-size: 28px; line-height: 1; }
+.vtt-modal-subtitle { font-style: italic; font-size: 15px; color: var(--color-text-muted); }
+.vtt-modal-close { width: 30px; height: 30px; font-size: 22px; color: var(--color-text-muted); }
+.vtt-modal-close:hover, .vtt-modal-expand:hover { color: var(--vil-blood); }
+.vtt-modal-body { padding: 8px 26px 16px; }
+.vtt-modal-footer { display: flex; justify-content: flex-end; gap: 8px; padding: 10px 22px 22px; border-top: 1px solid color-mix(in srgb, var(--color-border) 20%, transparent); }
+.vtt-modal-backdrop { background: rgba(14, 18, 20, .55); }
+
+/* Fenêtre flottante réduite : bandeau seul, rosace réduite */
+.vtt-floating-panel { position: relative; border: 1px solid var(--vil-ink); max-width: 340px; }
+.vtt-floating-panel .vtt-modal-header { padding: 6px 10px 6px 34px; }
+.vtt-floating-panel .vtt-modal-title { font-size: 19px; }
+.vtt-floating-panel .vtt-modal-deco::before { top: -9px; left: -9px; width: 36px; height: 36px; }
+.vtt-floating-panel .vtt-modal-deco::after { display: none; }
+.vtt-floating-title-extra { font-family: var(--vil-font-body); font-style: italic; font-size: 14px; color: var(--color-text-muted); }
+.vtt-floating-btn { width: 24px; height: 24px; color: var(--color-text-muted); }
+
+/* ── Zone d'actions ─────────────────────────────────────────────────────── */
+.vtt-actions-bar { display: flex; gap: 8px; }
+.vtt-action-btn { width: 44px; height: 44px; border-radius: 50%; display: grid; place-items: center; border: 1px solid var(--vil-ink);
+    background: var(--vil-paper); color: var(--color-text); box-shadow: 0 0 0 3px var(--vil-paper), 0 0 0 4px color-mix(in srgb, var(--vil-blood) 35%, transparent); transition: background .15s; }
+.vtt-action-btn svg { width: 22px; height: 22px; }
+.vtt-action-btn:hover { background: color-mix(in srgb, var(--vil-sage) 50%, var(--vil-paper)); }
+.vtt-action-btn.is-active { background: var(--vil-blood); color: var(--vil-paper); border-color: var(--vil-blood); }
+.vtt-action-btn.is-highlighted { animation: vil-pulse 1.8s ease-in-out infinite; }
+@keyframes vil-pulse { 50% { box-shadow: 0 0 0 3px var(--vil-paper), 0 0 0 7px color-mix(in srgb, var(--vil-blood) 55%, transparent); } }
+
+/* ── Rendu d'un jet (historique et notification, sans marge extérieure) ─── */
+.vtt-history-entry { border: 1px solid color-mix(in srgb, var(--color-border) 30%, transparent); border-left: 3px solid var(--vil-blood); }
+.vil-roll { padding: 10px 14px; display: grid; gap: 6px; }
+.vil-roll-head { display: flex; justify-content: space-between; gap: 10px; align-items: baseline; }
+.vil-roll-head b { font-family: var(--vil-font-title); font-size: 21px; font-weight: 500; line-height: 1; }
+.vil-roll-head span { font-family: var(--vil-font-label); font-size: 11px; color: var(--color-text-muted); white-space: nowrap; }
+.vil-roll-sub { font-style: italic; font-size: 14.5px; color: var(--color-text-muted); }
+.vil-dice { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+.vil-die { min-width: 34px; height: 34px; padding: 0 4px; display: grid; place-items: center; font-weight: 600; font-size: 18px;
+    clip-path: polygon(50% 0, 100% 25%, 100% 75%, 50% 100%, 0 75%, 0 25%); background: var(--color-surface-alt); color: var(--color-text-muted); }
+.vil-die.is-kept { background: var(--vil-blood); color: #F8F2EC; }
+.vil-die.is-dark { background: var(--vil-ink); color: var(--vil-paper); clip-path: polygon(30% 0, 70% 0, 100% 30%, 100% 70%, 70% 100%, 30% 100%, 0 70%, 0 30%); }
+.vil-die.is-dark.is-kept { background: var(--vil-blood); }
+.vil-die-tag { font-family: var(--vil-font-label); font-size: 10.5px; color: var(--color-text-muted); }
+.vil-roll-calc { font-size: 15px; }
+.vil-verdict { font-family: var(--vil-font-title); font-size: 26px; line-height: 1; font-weight: 600; }
+.vil-verdict.is-success { color: var(--color-success); }
+.vil-verdict.is-tie { color: var(--color-accent); }
+.vil-verdict.is-complication { color: var(--vil-blood); }
+.vil-roll-dark { font-size: 14.5px; border-top: 1px dashed color-mix(in srgb, var(--color-border) 35%, transparent); padding-top: 5px; }
+.vil-roll-dark.is-hit { color: var(--vil-blood); font-weight: 600; }
+.vil-roll.is-event { grid-template-columns: auto 1fr; align-items: center; column-gap: 12px; }
+.vil-roll.is-event svg { width: 30px; height: 30px; color: var(--vil-blood); grid-row: span 2; }
+.vil-toast { max-width: 360px; background: var(--color-surface); box-shadow: 0 10px 30px -8px rgba(0,0,0,.4); border: 1px solid var(--vil-ink); }
+
+/* ── Barre de session ───────────────────────────────────────────────────── */
+.vtt-session-bar { width: 220px; border-right: 1px solid var(--vil-ink); padding: 8px 0; }
+.vtt-session-bar-header { display: flex; align-items: center; padding: 0 10px 8px; border-bottom: 1px solid color-mix(in srgb, var(--color-border) 20%, transparent); }
+.vtt-session-bar-heading { flex: 1; min-width: 0; }
+.vtt-session-bar-eyebrow { font-family: var(--vil-font-label); font-size: 10px; letter-spacing: .1em; text-transform: uppercase; color: var(--color-text-muted); }
+.vtt-session-bar-title { font-family: var(--vil-font-title); font-size: 19px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.vtt-session-bar-toggle { width: 24px; height: 24px; color: var(--color-text-muted); }
+.vtt-session-bar-toggle svg { width: 15px; height: 15px; }
+.vtt-session-bar-list { display: grid; gap: 4px; padding: 8px; }
+.vtt-session-bar-player { display: flex; gap: 10px; align-items: center; padding: 4px; border-radius: 3px; }
+.vtt-session-bar-player[data-me] { background: linear-gradient(90deg, color-mix(in srgb, var(--vil-sage) 60%, transparent), transparent); }
+.vtt-session-bar-avatar { position: relative; flex-shrink: 0; cursor: default; }
+.vtt-session-bar-frame { width: 42px; height: 42px; border-radius: 50%; display: grid; place-items: center; overflow: hidden;
+    border: 1px solid var(--vil-ink); box-shadow: 0 0 0 2px var(--vil-paper), 0 0 0 3px color-mix(in srgb, var(--vil-blood) 50%, transparent); background: var(--color-surface-alt); }
+.vtt-session-bar-initials { font-family: var(--vil-font-title); font-size: 17px; color: var(--vil-blood); }
+.vtt-session-bar-presence { position: absolute; right: -1px; bottom: -1px; width: 11px; height: 11px; border-radius: 50%; background: var(--color-success); border: 2px solid var(--vil-paper); }
+.vtt-session-bar-name { font-style: italic; font-weight: 600; font-size: 15.5px; line-height: 1.1; }
+.vtt-session-bar-player-name { font-family: var(--vil-font-label); font-size: 11px; color: var(--color-text-muted); }
+.vtt-session-bar-card { position: relative; width: 210px; padding: 16px 14px 12px; text-align: center; border: 1px solid var(--vil-ink); box-shadow: 0 12px 30px -10px rgba(0,0,0,.45); }
+.vtt-session-bar-card-deco::before { content: ''; position: absolute; top: -10px; left: -10px; width: 40px; height: 40px; background: var(--color-secondary);
+    -webkit-mask: var(--vil-rose) center / contain no-repeat; mask: var(--vil-rose) center / contain no-repeat; }
+.vtt-session-bar-card-image { width: 120px; height: 150px; margin: 0 auto 8px; display: grid; place-items: center; font-family: var(--vil-font-title); font-size: 40px; color: var(--vil-blood);
+    border-radius: 60px 60px 4px 4px; border: 1px solid var(--vil-ink); background: var(--color-surface-alt); overflow: hidden; }
+.vtt-session-bar-card-name { font-family: var(--vil-font-title); font-size: 21px; line-height: 1.05; }
+.vtt-session-bar-card-player-name { font-family: var(--vil-font-label); font-size: 12px; color: var(--color-text-muted); }
+.vtt-session-bar-card-status { margin-top: 6px; font-style: italic; font-size: 14px; color: var(--color-success); }
+
+/* ── Catalogue ──────────────────────────────────────────────────────────── */
+.vtt-input { width: 100%; border: 0; border-bottom: 1px solid var(--vil-ink); padding: 5px 2px; font-size: 16px; outline: none; }
+.vtt-input:focus { border-bottom-color: var(--vil-blood); }
+.vtt-catalog-controls { display: grid; gap: 8px; margin-bottom: 10px; }
+.vtt-segmented { display: inline-flex; border: 1px solid var(--vil-ink); }
+.vtt-segment { font-family: var(--vil-font-label); font-size: 12.5px; padding: 4px 12px; }
+.vtt-segment + .vtt-segment { border-left: 1px solid var(--vil-ink); }
+.vtt-segment.is-active { background: var(--vil-blood); color: var(--vil-paper); }
+.vtt-catalog-list { max-height: 300px; overflow: auto; border-top: 1px solid var(--vil-ink); }
+.vtt-catalog-group { font-family: var(--vil-font-label); font-size: 11px; letter-spacing: .1em; text-transform: uppercase; padding: 8px 0 3px; color: var(--color-text-muted); }
+.vtt-catalog-item { display: flex; gap: 12px; align-items: flex-start; padding: 7px 0; border-bottom: 1px solid color-mix(in srgb, var(--color-border) 15%, transparent); }
+.vtt-catalog-item-body { flex: 1; }
+.vtt-catalog-item.is-added { opacity: .55; }
+.vtt-catalog-count { font-family: var(--vil-font-label); font-size: 12px; color: var(--color-text-muted); }
+
+/* ── Aide de jeu ────────────────────────────────────────────────────────── */
+.vtt-reference { display: grid; grid-template-columns: 200px 1fr; gap: 22px; }
+@media (max-width: 700px) { .vtt-reference { grid-template-columns: 1fr; } }
+.vtt-reference-nav { display: grid; gap: 2px; position: sticky; top: var(--vtt-reference-top, 0); }
+.vtt-reference-nav-item { text-align: left; padding: 4px 10px; font-size: 15px; border-left: 2px solid transparent; }
+.vtt-reference-nav-item:hover, .vtt-reference-nav-item.is-active { border-left-color: var(--vil-blood); background: linear-gradient(90deg, color-mix(in srgb, var(--vil-sage) 55%, transparent), transparent); }
+.vtt-reference-search { margin-bottom: 12px; }
+.vtt-reference-section { border-bottom: 1px solid color-mix(in srgb, var(--color-border) 18%, transparent); padding: 10px 0; }
+.vtt-reference-section-head { display: flex; align-items: baseline; gap: 10px; width: 100%; text-align: left; }
+.vtt-reference-section-title { font-family: var(--vil-font-title); font-size: 24px; font-weight: 500; flex: 1; }
+.vtt-reference-badge { font-family: var(--vil-font-label); font-size: 10.5px; letter-spacing: .08em; text-transform: uppercase; border: 1px solid var(--vil-blood); color: var(--vil-blood); padding: 1px 6px; }
+.vtt-reference-body { padding-top: 6px; display: grid; gap: 8px; }
+.vtt-reference-heading { font-style: italic; font-weight: 600; color: var(--vil-blood); font-size: 18px; }
+.vtt-reference-table { border-collapse: collapse; font-size: 15px; }
+.vtt-reference-table th { font-family: var(--vil-font-label); font-weight: 400; font-size: 11px; letter-spacing: .08em; text-transform: uppercase; text-align: left; border-bottom: 1px solid var(--vil-ink); padding: 3px 14px 3px 0; }
+.vtt-reference-table td { padding: 3px 14px 3px 0; border-bottom: 1px solid color-mix(in srgb, var(--color-border) 15%, transparent); }
+.vtt-reference-block.is-gm { border-left: 3px solid var(--vil-blood); padding-left: 10px; background: linear-gradient(90deg, color-mix(in srgb, var(--vil-blood) 7%, transparent), transparent); }
+
+/* ── Assistant ──────────────────────────────────────────────────────────── */
+.vil-wizard { display: grid; grid-template-columns: 1fr 320px; gap: 24px; }
+@media (max-width: 900px) { .vil-wizard { grid-template-columns: 1fr; } }
+.vil-wizard-tabs { display: flex; flex-wrap: wrap; gap: 2px; border-bottom: 1px solid var(--vil-ink); margin-bottom: 16px; }
+.vil-wizard-tab { font-family: var(--vil-font-label); font-size: 12.5px; letter-spacing: .05em; text-transform: uppercase; padding: 7px 10px; color: var(--color-text-muted); border-bottom: 2px solid transparent; margin-bottom: -1px; }
+.vil-wizard-tab.is-active { color: var(--color-text); border-bottom-color: var(--vil-blood); }
+.vil-wizard-tab .ok { color: var(--color-success); margin-left: 4px; }
+.vil-wizard-tab .todo { color: var(--vil-blood); margin-left: 4px; }
+.vil-help { border-left: 1px solid var(--vil-ink); padding-left: 18px; }
+.vil-help h4 { font-style: italic; font-weight: 600; color: var(--vil-blood); font-size: 20px; }
+.vil-todo { font-size: 14.5px; margin-top: 16px; padding: 8px 12px; background: color-mix(in srgb, var(--vil-sage) 35%, transparent); }
+.vil-assign { display: grid; grid-template-columns: 120px 1fr; gap: 8px 14px; align-items: center; }
+.vil-assign b { font-family: var(--vil-font-label); font-weight: 400; font-size: 13px; letter-spacing: .05em; text-transform: uppercase; }
+.vil-heritage-cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 10px; }
+.vil-heritage-card { text-align: left; padding: 10px 12px; border: 1px solid color-mix(in srgb, var(--color-border) 40%, transparent); background: var(--vil-paper); }
+.vil-heritage-card b { font-style: italic; color: var(--vil-blood); font-size: 18px; display: block; }
+.vil-heritage-card span { font-size: 13.5px; color: var(--color-text-muted); font-style: italic; }
+.vil-heritage-card.is-selected { border-color: var(--vil-blood); box-shadow: inset 0 0 0 1px var(--vil-blood); }
+
+/* ═════════════════════════════════════════════════════════════════════════
+   MARQUE — futur Brand.css (classes vileborn-brand-* uniquement)
+   ═════════════════════════════════════════════════════════════════════════ */
+.vil-card { width: 300px; border: 1px solid #2b2728; background: #F2EFEA; color: #1C1A1B; font-family: 'Jost', sans-serif; font-size: 12px; }
+.vil-card-foot { display: flex; justify-content: space-between; padding: 6px 10px; border-top: 1px solid #2b2728; }
+.vileborn-brand { position: relative; display: grid; place-items: center; text-align: center; height: 190px; overflow: hidden; color: #F4EFE8;
+    background:
+        linear-gradient(160deg, transparent 52%, rgba(160, 32, 30, .85) 52.2%, rgba(120, 20, 22, .9) 75%, transparent 75.2%),
+        linear-gradient(200deg, transparent 52%, rgba(160, 32, 30, .7) 52.2%, rgba(110, 18, 20, .8) 72%, transparent 72.2%),
+        radial-gradient(ellipse 80% 60% at 30% 10%, #3E6F73, transparent 70%),
+        radial-gradient(ellipse 60% 50% at 80% 30%, #2D4F55, transparent 70%),
+        linear-gradient(#1F2A2E, #120C0E); }
+.vileborn-brand-sign { width: 44px; height: 44px; background: currentColor; -webkit-mask: var(--vil-sign) center / contain no-repeat; mask: var(--vil-sign) center / contain no-repeat; }
+.vileborn-brand-title { font-family: 'Marcellus SC', 'EB Garamond', Georgia, serif; font-weight: 400; font-size: 42px; letter-spacing: .14em; line-height: 1; margin-top: -4px; }
+.vileborn-brand-sub { font-family: 'Jost', sans-serif; font-size: 10.5px; letter-spacing: .32em; text-transform: uppercase; }
+.vileborn-brand.is-title { height: auto; background: none; color: var(--color-text, #1C1A1B); display: inline-flex; gap: 10px; align-items: center; overflow: visible; }
+.vileborn-brand.is-title .vileborn-brand-sign { width: 28px; height: 28px; color: var(--color-primary, #8B1A1A); }
+.vileborn-brand.is-title .vileborn-brand-title { font-size: 30px; margin: 0; }
+.vileborn-brand.is-title .vileborn-brand-sub { color: var(--color-text-muted, #5A6A72); font-size: 9px; letter-spacing: .26em; }
+@media (max-width: 600px) { .vileborn-brand.is-title .vileborn-brand-sub { display: none; } }
+.vil-brand.is-title { display: inline-flex; }
+</style>
+</head>
+<body>
+<div class="plate">
+  <div class="plate-bar">
+    <strong style="font-family:var(--vil-font-label);font-weight:500;letter-spacing:.06em">PLANCHE — VILEBORN</strong>
+    <button class="vtt-btn vtt-btn-sm" id="themeBtn">Passer en nuit</button>
+    <span class="plate-note">Police des titres :</span>
+    <span class="vil-pills" id="fontPills">
+      <button class="vtt-pill" data-font="'Cormorant SC'">Cormorant SC</button>
+      <button class="vtt-pill" data-font="'Italiana'">Italiana</button>
+      <button class="vtt-pill is-selected" data-font="'Marcellus SC'">Marcellus SC</button> <span class="plate-note">(retenue)</span>
+    </span>
+  </div>
+
+  <p class="plate-note">Proposition de la phase 2. L'identité reprend la <b>page 1 des fiches prétirées</b> : papier blanc cassé réglé, lavis vert-de-gris derrière les libellés, rouge sang pour les dés, les mots et les runes, arcs noirs fins, cercles à double bordure ceints de runes. La nuit inverse le papier en ardoise bleu-noir sans changer la composition. Tout est cliquable sur la fiche. <span class="star">✦</span> = au-delà des conventions de la plateforme.</p>
+
+  <!-- ═════ 1. Couleurs et polices ═════ -->
+  <h2 class="plate-h">1. Couleurs et polices</h2>
+  <div class="grid grid-2">
+    <div><div class="swatches" id="swatches"></div></div>
+    <div class="font-row">
+      <span>Titres et noms (Marcellus SC)</span><div style="font-family:var(--vil-font-title);font-size:32px;line-height:1.1">Raphaël de Normante</div>
+      <span>Texte (EB Garamond)</span><div>Effectuez un <span class="vil-sc">test</span> et explorez votre <span class="vil-sc">sombre héritage</span>. <i>Cependant,</i> le bruit du sang qui coule vous distrait.</div>
+      <span>Libellés (Jost)</span><div style="font-family:var(--vil-font-label);font-size:12px;letter-spacing:.08em">FORCE · VOLONTÉ · ÉTATS · SOMBRE HÉRITAGE</div>
+      <span>Runes (Noto Sans Runic)</span><div style="font-family:var(--vil-font-runes);color:var(--vil-blood);letter-spacing:3px">ᚠᚢᚦᚨᚱᚲ ᚷᚹᚺᚾᛁᛃ ᛇᛈᛉᛊᛏᛒ</div>
+      <span>Origine</span><div class="plate-note" style="margin:0">Toutes sur Google Fonts. Titres : Marcellus SC, retenue ; les deux autres candidates restent comparables avec le sélecteur ci-dessus. Les runes remplacent l'écriture runique rouge des fiches (frises, cercles).</div>
+    </div>
+  </div>
+
+  <!-- ═════ 2. Bande fixe + fiche ═════ -->
+  <h2 class="plate-h">2. Bande fixe et fiche (un seul onglet, d'après la page 1 des prétirés)</h2>
+  <p class="plate-note">Grand écran : trois colonnes comme le papier. Sous 1100 px, les colonnes passent sous le U ; sous 700 px, tout s'empile et les cercles se rangent en deux lignes (rétrécir la fenêtre pour voir). Clic sur une approche : fenêtre de jet. Clic sur un état coché : « Guérir » ou « Subir à nouveau » (Q34). Les cercles vides se remplissent en jeu. Le portrait est l'avatar du joueur (ici une silhouette).</p>
+  <div class="vil-band-top">
+    <div class="vil-topbar">
+      <span class="vil-brand is-title"><span class="vileborn-brand is-title"><span class="vileborn-brand-sign"></span><span class="vileborn-brand-title">Vileborn</span></span></span>
+      <div class="vtt-menu-root"><button class="vtt-menu-button" aria-label="Menu">☰</button></div>
+    </div>
+    <div class="vil-subbar">
+      <button class="vil-tab is-active">Fiche</button><button class="vil-tab">Journal</button><button class="vil-tab">Historique</button><button class="vil-tab">Aide de jeu</button>
+      <span class="vil-actions"><button class="vil-icon-btn" title="Mode Édition"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M4 20h4L19 9l-4-4L4 16z"/><path d="M13.5 6.5l4 4"/></svg></button></span>
+    </div>
+  </div>
+
+  <div class="vil-sheet vil-paper" id="sheet">
+    <div class="vil-sheet-grid">
+      <!-- Colonne gauche : états et blessures -->
+      <div class="vil-col">
+        <div>
+          <span class="vil-label">États</span>
+          <div id="states"></div>
+        </div>
+        <div>
+          <span class="vil-label">Blessures</span>
+          <div id="wounds"></div>
+        </div>
+      </div>
+
+      <!-- Centre : nom, approches, U de cercles -->
+      <div class="vil-center">
+        <div class="vil-head">
+          <div class="vil-charname">Raphaël de Normante</div>
+          <div class="vil-motto">« Tout s'achève dans le sang. »</div>
+        </div>
+        <div class="vil-approaches" id="approaches"></div>
+        <div class="vil-u" id="ucircles">
+          <div class="vil-u-portrait" title="Changer le portrait">
+            <svg viewBox="0 0 250 380" aria-hidden="true"><defs><linearGradient id="sil" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="currentColor" stop-opacity=".55"/><stop offset="1" stop-color="currentColor" stop-opacity=".15"/></linearGradient></defs>
+              <g style="color:var(--color-text-muted)" fill="url(#sil)"><circle cx="125" cy="78" r="40"/><path d="M60 380 C60 230 70 150 125 140 C180 150 190 230 190 380 Z"/></g></svg>
+          </div>
+          <span class="vil-u-side is-left">PERSONNALITÉ</span>
+          <span class="vil-u-side is-right">FORMATION</span>
+          <span class="vil-u-heritage">SOMBRE HÉRITAGE</span>
+        </div>
+      </div>
+
+      <!-- Colonne droite : origine, mobiles, ressources -->
+      <div class="vil-col vil-right">
+        <div>
+          <span class="vil-label is-right">Origine</span>
+          <div class="vil-name">Noble</div>
+          <div class="vil-effect">Vous pouvez cocher <b>colère</b> pour obtenir une <span class="vil-sc">réussite</span> d'<b>Influence</b>.</div>
+        </div>
+        <div>
+          <span class="vil-label is-right">Mobiles</span>
+          <div class="vil-row" data-check><span><span class="vil-name">Aspiration</span> · <i>Racheter le nom des Normante</i></span><span class="vil-check"></span><span class="vil-effect">Cochez pour guérir une <span class="vil-sc">blessure</span>.</span></div>
+          <div class="vil-row" data-check style="margin-top:8px"><span><span class="vil-name">Devoir</span> · <i>Achever votre formation</i></span><span class="vil-check"></span><span class="vil-effect">Cochez pour guérir un <span class="vil-sc">état</span>.</span></div>
+        </div>
+        <div>
+          <span class="vil-label is-right">Ressources</span>
+          <div class="vil-resource"><div class="vil-name">Anneau sigillaire des Normante</div><div class="vil-effect">Lorsque vous vous entretenez avec des militaires ou des individus de haut rang, vous bénéficiez d'un bonus de +1 au jet de dés.</div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Grand arc runique -->
+    <div class="vil-arc"><svg viewBox="0 0 1000 70" preserveAspectRatio="none" aria-hidden="true">
+      <path id="arcPath" class="line" d="M0 68 Q500 -12 1000 68"/>
+      <text class="runes"><textPath href="#arcPath" startOffset="2%" id="arcRunes"></textPath></text></svg></div>
+
+    <!-- Bandeau du bas -->
+    <div class="vil-band">
+      <div class="vil-gift" data-gift>
+        <span class="vil-label is-plain">Don</span>
+        <div class="vil-gift-title">Le cœur ne saurait mentir</div>
+        <div class="vil-ticks"><button title="Cocher le don"><span class="vil-tick"></span></button></div>
+        <p>Cochez ce <span class="vil-sc">don</span> pour percevoir les battements de cœur d'une cible. Pendant cette <span class="vil-sc">scène</span>, vous savez si elle ment ou pas.</p>
+        <p><i class="vil-red">Cependant,</i> le bruit du sang qui coule vous distrait. Malus de −1 aux <span class="vil-sc">tests</span> de <b>Précision</b> tant que ce don est coché.</p>
+      </div>
+      <div>
+        <div class="vil-heritage-name">Chantesang</div>
+        <div class="vil-ticks" id="heritageTicks"></div>
+        <p>Effectuez un <span class="vil-sc">test</span> et explorez votre <span class="vil-sc">sombre héritage</span>. Ajoutez un d12 à votre réserve : avec un résultat de 9+ à la première coche, 6+ à la deuxième et 3+ à la troisième, vous serez aussi confronté à une <span class="vil-sc">complication</span>.</p>
+        <p class="vil-effect">Exemples : Libérez le pouvoir de votre sang, affectez les émotions de ceux qui vous entourent, contrôlez le flux de sang autour de vous.</p>
+        <span class="vil-label is-plain" style="margin-top:12px">Pulsion</span>
+        <div class="vil-gift-title">Boire du sang humain</div>
+        <p>Quand vous le faites, retirez toutes les coches de votre <span class="vil-sc">sombre héritage</span> et de vos <span class="vil-sc">dons</span>.</p>
+        <div class="vil-band-actions"><button class="vtt-btn vtt-btn-sm" id="urgeBtn">Céder à la pulsion</button><button class="vtt-btn vtt-btn-sm vtt-btn-primary" id="reverieBtn">Consommer la Rêverie</button></div>
+      </div>
+      <div class="vil-gift" data-gift>
+        <span class="vil-label is-plain">Don</span>
+        <div class="vil-gift-title">Pouvoir du sang</div>
+        <div class="vil-ticks"><button title="Cocher le don (lance le d6)"><span class="vil-tick"></span></button></div>
+        <p>Cochez ce don pour jouir d'une force incroyable pendant un moment. Vous obtenez automatiquement une <span class="vil-sc">réussite</span> de Force.</p>
+        <p><i class="vil-red">Cependant,</i> vous soumettez votre cœur à rude épreuve. Lancez un d6 : avec un résultat de 1, vous subissez l'<span class="vil-sc">état</span> <b>épuisement</b>.</p>
+      </div>
+    </div>
+
+    <!-- Liens -->
+    <span class="vil-label is-plain" style="margin-top:22px">Liens</span>
+    <div class="vil-bonds" id="bonds"></div>
+  </div>
+
+  <!-- ═════ 3. Assistant ═════ -->
+  <h2 class="plate-h">3. Assistant de création (lot 1)</h2>
+  <div class="vil-sheet vil-paper">
+    <div class="vil-wizard-tabs">
+      <button class="vil-wizard-tab">Guide</button>
+      <button class="vil-wizard-tab">Héritage<span class="ok">✓</span></button>
+      <button class="vil-wizard-tab">Origine<span class="ok">✓</span></button>
+      <button class="vil-wizard-tab is-active">Approches<span class="todo">•</span></button>
+      <button class="vil-wizard-tab">Personnalité et Formation<span class="todo">•</span></button>
+      <button class="vil-wizard-tab">Ressource et mobiles</button>
+      <button class="vil-wizard-tab">Identité<span class="todo">•</span></button>
+    </div>
+    <div class="vil-wizard">
+      <div>
+        <div class="vil-field-row"><b>Répartition</b><span class="vil-pills" id="distPills">
+          <button class="vtt-pill is-selected" data-dist="10,8,8,6,6,6">d10 · d8 · d8 · d6 · d6 · d6</button>
+          <button class="vtt-pill" data-dist="8,8,8,8,6,6">d8 · d8 · d8 · d8 · d6 · d6</button></span></div>
+        <div class="vil-assign" id="assign"></div>
+        <div class="vil-todo" id="todo"></div>
+        <div style="display:flex;justify-content:space-between;margin-top:16px"><button class="vtt-btn">‹ Précédent</button><button class="vtt-btn vtt-btn-primary">Suivant ›</button></div>
+        <div style="margin-top:24px"><span class="vil-label">Héritage (aperçu de l'onglet)</span>
+          <div class="vil-heritage-cards" id="heritageCards"></div></div>
+      </div>
+      <aside class="vil-help">
+        <h4>Influence</h4>
+        <p>Le verbe et la persuasion : convaincre, séduire, commander, négocier.</p>
+        <p class="vil-effect" style="margin-top:10px">Le dé d'une approche est le dé que vous lancez pour un <span class="vil-sc">test</span>. Votre <span class="vil-sc">personnalité</span> et votre <span class="vil-sc">formation</span> ajoutent chacune un dé de la même taille quand elles s'appliquent ; on garde le meilleur.</p>
+      </aside>
+    </div>
+  </div>
+
+  <!-- ═════ 4. Jet ═════ -->
+  <h2 class="plate-h">4. Le jet : fenêtre, historique, notification</h2>
+  <div class="grid grid-2" style="align-items:start">
+    <div class="vtt-modal-panel vil-paper">
+      <span class="vtt-modal-deco"></span>
+      <header class="vtt-modal-header">
+        <div class="vtt-modal-heading"><h2 class="vtt-modal-title">Influence</h2><p class="vtt-modal-subtitle">d10 · Raphaël de Normante</p></div>
+        <button class="vtt-modal-close">×</button>
+      </header>
+      <div class="vtt-modal-body">
+        <div class="vil-field-row"><b>Difficulté</b><span class="vil-pills" data-single>
+          <button class="vtt-pill">Facile 4</button><button class="vtt-pill is-selected">Normale 5</button><button class="vtt-pill">Difficile 6</button><button class="vtt-pill">Très difficile 7</button></span></div>
+        <div style="display:grid;gap:12px;margin-bottom:14px">
+          <button class="vil-toggle is-on" data-toggle><i></i><span>Personnalité s'applique<small>+1 d10 · Raffiné</small></span></button>
+          <button class="vil-toggle" data-toggle disabled><i></i><span>Formation s'applique<small>Impossible : vous avez peur</small></span></button>
+          <button class="vil-toggle" data-toggle id="exploreToggle"><i></i><span>Explorer mon sombre héritage<small>Coche la 2ᵉ case · d12 · complication sur 6+</small></span></button>
+        </div>
+        <div class="vil-field-row"><b>Lien</b><span class="vil-pills" data-single><button class="vtt-pill is-selected">Aucun</button><button class="vtt-pill">Sélène +1</button><button class="vtt-pill">Igritte −1</button></span></div>
+        <div class="vil-field-row"><b>Modificateur</b><span class="vil-stepper"><button>−</button><span>+1</span><button>+</button></span></div>
+        <p class="vil-effect">Colère : −1 déjà compté pour Raison, Précision et Subterfuge (pas ici).</p>
+      </div>
+      <footer class="vtt-modal-footer"><button class="vtt-btn">Annuler</button><button class="vtt-btn vtt-btn-primary" id="rollBtn">Lancer 2d10</button></footer>
+    </div>
+    <div style="display:grid;gap:14px">
+      <div class="vtt-history-entry vil-paper"><div class="vil-roll" id="rollA"></div></div>
+      <div class="vtt-history-entry vil-paper"><div class="vil-roll" id="rollB"></div></div>
+      <div class="vtt-history-entry vil-paper"><div class="vil-roll" id="rollDark"></div></div>
+      <div class="vtt-history-entry vil-paper"><div class="vil-roll" id="rollGift"></div></div>
+      <div class="vtt-history-entry vil-paper"><div class="vil-roll is-event"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M9 3h6M10 3v5l-5 9a3 3 0 0 0 2.6 4h8.8A3 3 0 0 0 19 17l-5-9V3"/><path d="M7.5 14h9"/></svg>
+        <div class="vil-roll-head"><b>Rêverie consommée</b><span>21:47 · Raphaël</span></div>
+        <div class="vil-roll-sub">Soin complet : blessures, états et hors jeu effacés. Les coches restent.</div></div></div>
+      <p class="plate-note">Dé gardé en rouge ; le d12 d'obscurité est un dé noir à huit pans, gardé s'il est le meilleur (il compte dans la réserve). Verdict d'un mot : Réussite (vert-de-gris foncé), Égalité (ardoise), Complication (sang). Dé d'obscurité du MJ, d6 d'un don, Rêverie et Pulsion ont leur propre ligne <span class="star">✦</span> (Q32). « Lancer » rejoue l'exemple.</p>
+      <div class="vil-toast vil-paper"><div class="vil-roll" id="rollC"></div></div>
+    </div>
+  </div>
+
+  <!-- ═════ 5. Menu, zone d'actions, fenêtre réduite, boutons ═════ -->
+  <h2 class="plate-h">5. Menu, zone d'actions, fenêtre réduite, boutons</h2>
+  <div class="grid grid-3" style="align-items:start">
+    <div class="vtt-menu-root">
+      <button class="vtt-menu-button" aria-label="Menu">☰</button>
+      <div class="vtt-menu vil-paper" id="menu"></div>
+      <p class="plate-note" style="margin-top:8px">Icônes de la plateforme (au trait), en rouge sang ; lavis de sauge au survol.</p>
+    </div>
+    <div style="display:grid;gap:18px">
+      <div class="vtt-actions-bar">
+        <button class="vtt-action-btn" title="Réglages du son"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M4 9h4l5-4v14l-5-4H4z"/><path d="M17 9a4 4 0 0 1 0 6"/></svg></button>
+        <button class="vtt-action-btn is-highlighted" title="En lecture"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M4 9h4l5-4v14l-5-4H4z"/><path d="M17 9a4 4 0 0 1 0 6M19.5 6.5a8 8 0 0 1 0 11"/></svg></button>
+        <button class="vtt-action-btn is-active" title="Historique ouvert"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="12" r="8"/><path d="M12 8v4l3 2"/></svg></button>
+      </div>
+      <p class="plate-note" style="margin:0">Repos, <i>is-highlighted</i> (le son joue : l'anneau rouge pulse), <i>is-active</i> (panneau ouvert).</p>
+      <section class="vtt-floating-panel vil-paper">
+        <span class="vtt-modal-deco"></span>
+        <header class="vtt-modal-header">
+          <div class="vtt-modal-heading" style="text-align:left"><h2 class="vtt-modal-title">Historique<small class="vtt-floating-title-extra"> · 12 jets</small></h2></div>
+          <button class="vtt-floating-btn">▢</button><button class="vtt-modal-close" style="width:24px;height:24px;font-size:18px">×</button>
+        </header>
+      </section>
+      <p class="plate-note" style="margin:0">Fenêtre flottante réduite : bandeau seul, petite rosace au coin.</p>
+    </div>
+    <div style="display:grid;gap:12px;justify-items:start">
+      <button class="vtt-btn">Bouton</button>
+      <button class="vtt-btn vtt-btn-primary">Bouton principal</button>
+      <button class="vtt-btn vtt-btn-danger">Supprimer</button>
+      <button class="vtt-btn vtt-btn-sm">Petit bouton</button>
+      <button class="vtt-btn" disabled>Désactivé</button>
+      <button class="vil-toggle is-on" data-toggle><i></i>Interrupteur</button>
+    </div>
+  </div>
+
+  <!-- ═════ 6. Barre de session, catalogue, aide de jeu ═════ -->
+  <h2 class="plate-h">6. Barre de session, catalogue, aide de jeu</h2>
+  <div class="grid grid-3" style="align-items:start">
+    <div style="display:flex;gap:14px;align-items:flex-start">
+      <aside class="vtt-session-bar vil-paper" data-mode="panel">
+        <div class="vtt-session-bar-header"><div class="vtt-session-bar-heading"><div class="vtt-session-bar-eyebrow">Table</div><div class="vtt-session-bar-title">Lex Umbræ</div></div>
+          <button class="vtt-session-bar-toggle" title="Réduire en rail"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 6l-6 6 6 6"/></svg></button></div>
+        <div class="vtt-session-bar-list">
+          <div class="vtt-session-bar-player" data-me data-online><div class="vtt-session-bar-avatar"><span class="vtt-session-bar-frame"><span class="vtt-session-bar-initials">RN</span></span><span class="vtt-session-bar-presence"></span></div><div><div class="vtt-session-bar-name">Raphaël</div><div class="vtt-session-bar-player-name">Mentiss</div></div></div>
+          <div class="vtt-session-bar-player" data-online><div class="vtt-session-bar-avatar"><span class="vtt-session-bar-frame"><span class="vtt-session-bar-initials">SC</span></span><span class="vtt-session-bar-presence"></span></div><div><div class="vtt-session-bar-name">Sélène</div><div class="vtt-session-bar-player-name">Joueuse 2</div></div></div>
+          <div class="vtt-session-bar-player"><div class="vtt-session-bar-avatar"><span class="vtt-session-bar-frame"><span class="vtt-session-bar-initials">LD</span></span></div><div><div class="vtt-session-bar-name">Lucien</div><div class="vtt-session-bar-player-name">Joueur 3</div></div></div>
+        </div>
+      </aside>
+      <div class="vtt-session-bar-card vil-paper" data-online>
+        <div class="vtt-session-bar-card-deco"></div>
+        <div class="vtt-session-bar-card-image">SC</div>
+        <div class="vtt-session-bar-card-name">Sélène Cervantes</div>
+        <div class="vtt-session-bar-card-player-name">Joueuse 2</div>
+        <div class="vtt-session-bar-card-status">En ligne</div>
+      </div>
+    </div>
+
+    <div class="vtt-modal-panel vil-paper">
+      <span class="vtt-modal-deco"></span>
+      <header class="vtt-modal-header"><div class="vtt-modal-heading"><h2 class="vtt-modal-title">Ressources</h2><p class="vtt-modal-subtitle">Catalogue (habillage générique)</p></div><button class="vtt-modal-close">×</button></header>
+      <div class="vtt-modal-body">
+        <div class="vtt-catalog-controls"><input class="vtt-input" placeholder="Rechercher…"><div class="vtt-segmented"><button class="vtt-segment is-active">Toutes</button><button class="vtt-segment">Contre les nuisibles</button></div></div>
+        <div class="vtt-catalog-list vtt-scroll">
+          <div class="vtt-catalog-group">Contre les nuisibles</div>
+          <div class="vtt-catalog-item"><div class="vtt-catalog-item-body"><div class="vil-name">Dague d'argentacier</div><div class="vil-effect">+1 pour blesser un polymorphe ou un Masquegriffe.</div></div><button class="vtt-btn vtt-btn-sm vtt-catalog-add">Ajouter</button></div>
+          <div class="vtt-catalog-item"><div class="vtt-catalog-item-body"><div class="vil-name">Sac de salpêtre</div><div class="vil-effect">Force les déchus à se matérialiser.</div></div><button class="vtt-btn vtt-btn-sm vtt-catalog-add">Ajouter</button></div>
+          <div class="vtt-catalog-group">Autres</div>
+          <div class="vtt-catalog-item is-added"><div class="vtt-catalog-item-body"><div class="vil-name">Anneau sigillaire</div><div class="vil-effect">+1 avec les militaires et les gens de haut rang.</div></div><button class="vtt-btn vtt-btn-sm vtt-catalog-add" disabled>Ajouté</button></div>
+          <div class="vtt-catalog-item"><div class="vtt-catalog-item-body"><div class="vil-name">Luminaria séchée</div><div class="vil-effect">À ingérer pour guérir une blessure.</div></div><button class="vtt-btn vtt-btn-sm vtt-catalog-add">Ajouter</button></div>
+        </div>
+      </div>
+      <footer class="vtt-modal-footer"><span class="vtt-catalog-count" style="margin-right:auto">4 ressources</span><button class="vtt-btn">Fermer</button></footer>
+    </div>
+
+    <div class="vtt-reference">
+      <nav class="vtt-reference-nav"><button class="vtt-reference-nav-item is-active">Le test</button><button class="vtt-reference-nav-item">États et blessures</button><button class="vtt-reference-nav-item">Sombre héritage</button><button class="vtt-reference-nav-item">Obscurité</button></nav>
+      <div class="vtt-reference-main">
+        <input class="vtt-input vtt-reference-search" placeholder="Rechercher une règle…">
+        <section class="vtt-reference-section"><div class="vtt-reference-section-head"><span class="vtt-reference-section-title">Le test</span></div>
+          <div class="vtt-reference-body">
+            <p class="vtt-reference-text">Lancez le dé de l'approche, plus un dé si votre personnalité s'applique et un si votre formation s'applique. Gardez le meilleur.</p>
+            <table class="vtt-reference-table"><tr><th>Difficulté</th><th>Seuil</th></tr><tr><td>Facile</td><td>4</td></tr><tr><td>Normale</td><td>5</td></tr><tr><td>Difficile</td><td>6</td></tr><tr><td>Très difficile</td><td>7</td></tr></table>
+            <h4 class="vtt-reference-heading">Égalité</h4><p class="vtt-reference-text">Vous racontez ensemble avec l'Obscurité.</p>
+          </div></section>
+        <section class="vtt-reference-section"><div class="vtt-reference-section-head"><span class="vtt-reference-section-title">Obscurité</span><span class="vtt-reference-badge">MJ</span></div>
+          <div class="vtt-reference-body vtt-reference-block is-gm"><p class="vtt-reference-text">Complication sur 9+ si l'obscurité est faible, 6+ si elle est moyenne, 3+ si elle est puissante.</p></div></section>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═════ 7. Marque ═════ -->
+  <h2 class="plate-h">7. Marque (carte d'accueil et titre)</h2>
+  <div style="display:flex;flex-wrap:wrap;gap:28px;align-items:center">
+    <div class="vil-card">
+      <div class="vileborn-brand"><span class="vileborn-brand-sign"></span><span class="vileborn-brand-title">Vileborn</span><span class="vileborn-brand-sub">Accepte ta part de ténèbres</span></div>
+      <div class="vil-card-foot"><code>/vileborn/</code><span>MJ</span></div>
+    </div>
+    <span class="vileborn-brand is-title"><span class="vileborn-brand-sign"></span><span class="vileborn-brand-title">Vileborn</span><span class="vileborn-brand-sub">Accepte ta part de ténèbres</span></span>
+    <p class="plate-note" style="max-width:360px">Carte d'accueil : les couleurs de la couverture du kit (ciel vert-de-gris, chevrons rouges, nuit en bas), le sceau en V et le titre en capitales espacées, couleurs fixes. Titre des pages d'accès : sceau rouge et titre aux couleurs du thème courant (sous-titre masqué sur petit écran).</p>
+  </div>
+</div>
+
+<script>
+/* ── Démo uniquement : rien de ceci n'est du code du slug ── */
+const $ = (s, r = document) => r.querySelector(s);
+const html = document.documentElement;
+const RUNES = 'ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗᛚᛜᛞᛟ';
+const runeText = (n, seed = 1) => Array.from({ length: n }, (_, i) => (i % 7 === 6 ? ' ' : RUNES[(i * 7 + seed * 3) % RUNES.length])).join('');
+
+// Décors en masque (couleur du thème) : rosace des coins, sceau en V
+const rose = `<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100' fill='none' stroke='black' stroke-width='1.4'><circle cx='50' cy='50' r='30'/><circle cx='50' cy='50' r='22' stroke-dasharray='2 3'/><circle cx='50' cy='50' r='6'/>${Array.from({ length: 16 }, (_, i) => { const a = i * Math.PI / 8, r1 = i % 2 ? 32 : 30, r2 = i % 2 ? 40 : 49; return `<line x1='${50 + r1 * Math.cos(a)}' y1='${50 + r1 * Math.sin(a)}' x2='${50 + r2 * Math.cos(a)}' y2='${50 + r2 * Math.sin(a)}'/>`; }).join('')}<path d='M50 20 L54 50 L50 80 L46 50Z M20 50 L50 46 L80 50 L50 54Z' fill='black' fill-opacity='.35'/></svg>`;
+const sign = `<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><circle cx='50' cy='50' r='46' fill='none' stroke='black' stroke-width='5'/><path d='M22 26 L50 84 L78 26 L66 26 L50 62 L34 26Z' fill='black'/><circle cx='50' cy='36' r='9' fill='none' stroke='black' stroke-width='4'/></svg>`;
+html.style.setProperty('--vil-rose', `url("data:image/svg+xml,${encodeURIComponent(rose)}")`);
+html.style.setProperty('--vil-sign', `url("data:image/svg+xml,${encodeURIComponent(sign)}")`);
+
+// Thème jour / nuit
+$('#themeBtn').onclick = () => {
+    const dark = html.dataset.theme === 'dark';
+    html.dataset.theme = dark ? 'light' : 'dark';
+    $('#themeBtn').textContent = dark ? 'Passer en nuit' : 'Passer en jour';
+    drawSwatches();
+};
+function drawSwatches() {
+    const cs = getComputedStyle(html);
+    $('#swatches').innerHTML = ['primary','secondary','accent','danger','success','bg','surface','surface-alt','text','text-muted','border']
+        .map(k => { const v = cs.getPropertyValue('--color-' + k).trim(); return `<div class="sw"><i style="background:${v}"></i>--color-${k}<br><code>${v}</code></div>`; }).join('');
+}
+if (location.hash === '#nuit') { html.dataset.theme = 'dark'; $('#themeBtn').textContent = 'Passer en jour'; }
+drawSwatches();
+
+// Police des titres
+document.querySelectorAll('#fontPills .vtt-pill').forEach(b => b.onclick = () => {
+    document.querySelectorAll('#fontPills .vtt-pill').forEach(x => x.classList.toggle('is-selected', x === b));
+    html.style.setProperty('--vil-font-title', `${b.dataset.font}, 'EB Garamond', Georgia, serif`);
+    document.querySelectorAll('.vileborn-brand-title').forEach(t => t.style.fontFamily = `${b.dataset.font}, 'EB Garamond', serif`);
+});
+
+// États
+const STATES = [
+    ['Colère', `−1 aux <span class="vil-sc">tests</span> de <b>Raison</b>, <b>Précision</b> et <b>Subterfuge</b>.`, true],
+    ['Épuisement', `−1 aux <span class="vil-sc">tests</span> de <b>Force</b>, <b>Volonté</b> et <b>Influence</b>.`],
+    ['Honte', `Vous ne pouvez pas utiliser votre <span class="vil-sc">personnalité</span>.`],
+    ['Peur', `Vous ne pouvez pas utiliser votre <span class="vil-sc">formation</span>.`, true],
+    ['Insécurité', `Vous ne pouvez pas utiliser vos <span class="vil-sc">mobiles</span>.`],
+];
+$('#states').innerHTML = STATES.map(([n, e, on]) => `<div class="vil-row" data-check style="margin-bottom:5px"><span class="vil-check${on ? ' is-on' : ''}"></span><span class="vil-name">${n}</span><span class="vil-effect">${e}</span></div>`).join('');
+$('#wounds').innerHTML = [['Épaule démise', true], ['', false], ['', false]].map(([t, on]) =>
+    `<div class="vil-row" data-check style="margin-bottom:3px"><span class="vil-check${on ? ' is-on' : ''}"></span><span class="vil-wound-note">${t}</span></div>`).join('')
+    + `<div class="vil-row" data-check style="margin-top:6px"><span class="vil-check"></span><span class="vil-name">Hors jeu</span><span class="vil-effect">Vous ne pouvez ni agir ni effectuer de <span class="vil-sc">tests</span>.</span></div>`;
+
+// Approches
+const APPROACHES = [['Force', 6], ['Volonté', 6], ['Influence', 10], ['Raison', 8, -1], ['Précision', 8, -1], ['Subterfuge', 6, -1]];
+$('#approaches').innerHTML = APPROACHES.map(([n, d, m]) => `<button class="vil-approach" title="Lancer ${n}"><b>${n.toUpperCase()}</b><span>d${d}</span>${m ? `<small>${m}</small>` : ''}</button>`).join('');
+
+// U de cercles : arc d'un grand cercle, 5 à gauche (personnalité), 5 à droite (formation)
+// Angle mesuré depuis le bas : du haut du U (125°) vers son creux (22°), comme sur la fiche
+const U = $('#ucircles'), W = 600, CX = W / 2, CY = 178, R = 215, PHI = [125, 100, 75, 50, 22];
+const words = { left: ['Raffiné', 'Courageux', 'Diplomate', '', ''], right: ['Escrime', 'Étiquette', 'Comploter', '', ''] };
+const pts = { left: [], right: [] };
+['left', 'right'].forEach(side => PHI.forEach((p, i) => {
+    const a = p * Math.PI / 180, x = CX + (side === 'left' ? -1 : 1) * R * Math.sin(a), y = CY + R * Math.cos(a);
+    pts[side].push([x, y]);
+    const w = words[side][i], id = `c${side}${i}`, pos = `left:${x / W * 100}%;top:${y}px`;
+    // Calque des runes (sous les cercles), puis le cercle lui-même
+    U.insertAdjacentHTML('afterbegin', `<svg class="vil-circle-runes" style="${pos}" viewBox="-56 -56 112 112" aria-hidden="true">
+        <defs><path id="${id}" d="M0,-50 a50,50 0 1,1 -0.1,0"/></defs>
+        <text class="runes"><textPath href="#${id}">${runeText(44, i + (side === 'left' ? 0 : 5))}</textPath></text></svg>`);
+    U.insertAdjacentHTML('beforeend', `<div class="vil-circle is-${side}${w ? '' : ' is-empty'}" style="${pos}">
+      <svg viewBox="-46 -46 92 92"><circle class="ring" r="45.5"/><circle class="ring-in" r="40.5"/></svg><span>${w || 'Ajouter…'}</span></div>`);
+}));
+const link = side => pts[side].map(([x, y], i) => `${i ? 'L' : 'M'}${x} ${y}`).join(' ');
+U.insertAdjacentHTML('afterbegin', `<svg class="vil-u-link" viewBox="0 0 ${W} 430" preserveAspectRatio="none"><path d="${link('left')}"/><path d="${link('right')}"/></svg>`);
+$('#arcRunes').textContent = runeText(140, 2);
+
+// Coches du sombre héritage
+let ticks = 1;
+const drawTicks = () => { $('#heritageTicks').innerHTML = [0, 1, 2].map(i => `<button data-i="${i}"><span class="vil-tick${i < ticks ? ' is-on' : ''}"></span></button>`).join(''); };
+$('#heritageTicks').onclick = e => { const b = e.target.closest('button'); if (b) { const i = +b.dataset.i; ticks = ticks === i + 1 ? i : i + 1; drawTicks(); } };
+drawTicks();
+
+// Cases et dons cliquables
+document.addEventListener('click', e => {
+    const row = e.target.closest('[data-check]');
+    if (row) row.querySelector('.vil-check')?.classList.toggle('is-on');
+    const g = e.target.closest('[data-gift] .vil-ticks button');
+    if (g) { const t = g.querySelector('.vil-tick'); t.classList.toggle('is-on'); g.closest('[data-gift]').classList.toggle('is-on', t.classList.contains('is-on')); }
+    const tg = e.target.closest('[data-toggle]');
+    if (tg && !tg.disabled) tg.classList.toggle('is-on');
+    const pill = e.target.closest('[data-single] .vtt-pill');
+    if (pill) pill.parentElement.querySelectorAll('.vtt-pill').forEach(p => p.classList.toggle('is-selected', p === pill));
+});
+// Pulsion : efface héritage et dons. Rêverie : soin complet (états, blessures, hors jeu), coches conservées
+$('#reverieBtn').onclick = () => document.querySelectorAll('#states .vil-check, #wounds .vil-check').forEach(c => c.classList.remove('is-on'));
+$('#urgeBtn').onclick = () => {
+    ticks = 0; drawTicks();
+    document.querySelectorAll('[data-gift]').forEach(g => { g.classList.remove('is-on'); g.querySelector('.vil-tick').classList.remove('is-on'); });
+};
+
+// Liens
+$('#bonds').innerHTML = [['Sélène', 'Une confiance de chasseurs', 1], ['Igritte', 'Elle me méprise, je la crains', -1], ['Lucien', 'Je ne sais pas encore', 0]]
+    .map(([n, d, l]) => `<div class="vil-bond"><span><b class="vil-name">${n}</b> <em>${d}</em></span><span class="vil-level" data-level>${[-1, 0, 1].map(v => `<button class="${v === l ? 'is-on' : ''}">${v > 0 ? '+1' : v < 0 ? '−1' : '0'}</button>`).join('')}</span></div>`).join('');
+$('#bonds').onclick = e => { const b = e.target.closest('[data-level] button'); if (b) b.parentElement.querySelectorAll('button').forEach(x => x.classList.toggle('is-on', x === b)); };
+
+// Assistant : répartition et placement des dés
+const APP = ['Force', 'Volonté', 'Influence', 'Raison', 'Précision', 'Subterfuge'];
+let dist = [10, 8, 8, 6, 6, 6], placed = { Influence: 10, Raison: 8 };
+function drawAssign() {
+    const left = [...dist]; Object.values(placed).forEach(v => left.splice(left.indexOf(v), 1));
+    $('#assign').innerHTML = APP.map(a => {
+        const opts = [...new Set([...left, placed[a]].filter(Boolean))].sort((x, y) => y - x);
+        return `<b>${a}</b><span class="vil-pills">${opts.map(d => `<button class="vtt-pill${placed[a] === d ? ' is-selected' : ''}" data-a="${a}" data-d="${d}">d${d}</button>`).join('')}</span>`;
+    }).join('');
+    const rest = APP.filter(a => !placed[a]);
+    $('#todo').innerHTML = rest.length ? `<b>À faire :</b> placer ${left.map(d => 'd' + d).join(', ')} sur ${rest.join(', ')}.` : 'Approches terminées.';
+}
+$('#assign').onclick = e => { const b = e.target.closest('[data-a]'); if (!b) return; const a = b.dataset.a, d = +b.dataset.d; if (placed[a] === d) delete placed[a]; else placed[a] = d; drawAssign(); };
+$('#distPills').onclick = e => { const b = e.target.closest('[data-dist]'); if (!b) return; $('#distPills').querySelectorAll('.vtt-pill').forEach(p => p.classList.toggle('is-selected', p === b)); dist = b.dataset.dist.split(',').map(Number); placed = {}; drawAssign(); };
+drawAssign();
+$('#heritageCards').innerHTML = ['Chantesang', 'Masquegriffe', 'Danselombre', 'Marchespectre', 'Tramesort', 'Porteruine', 'Cherchenature']
+    .map((h, i) => `<button class="vil-heritage-card${i === 0 ? ' is-selected' : ''}"><b>${h}</b><span>${['Boire du sang humain', 'Chasser des humains', 'Terroriser les humains', 'Obéir aux esprits vengeurs', 'Jouer avec la vie d\'autrui', 'Provoquer d\'effroyables malheurs', 'Détruire les traces de la civilisation'][i]}</span></button>`).join('');
+$('#heritageCards').onclick = e => { const b = e.target.closest('.vil-heritage-card'); if (b) $('#heritageCards').querySelectorAll('.vil-heritage-card').forEach(c => c.classList.toggle('is-selected', c === b)); };
+
+// Rendu des jets
+const VERDICT = { success: 'Réussite', tie: 'Égalité', complication: 'Complication' };
+function testRoll(el, { who, approach, die, values, dark, ticks: tk, mod, diff, time }) {
+    const all = [...values, ...(dark ? [dark] : [])], kept = Math.max(...all), total = kept + mod;
+    const verdict = total > diff ? 'success' : total < diff ? 'complication' : 'tie';
+    const thr = { 1: 9, 2: 6, 3: 3 }[tk];
+    let keptDone = false;
+    const chip = (v, isDark) => { const k = !keptDone && v === kept && (isDark ? true : !(dark === kept && dark > Math.max(...values))); if (k) keptDone = true; return `<span class="vil-die${isDark ? ' is-dark' : ''}${k ? ' is-kept' : ''}">${v}</span>`; };
+    el.innerHTML = `<div class="vil-roll-head"><b>${approach} · d${die}</b><span>${time} · ${who}</span></div>
+      <div class="vil-dice">${values.map(v => chip(v)).join('')}${dark ? `<span class="vil-die-tag">+ obscurité</span>${chip(dark, true)}` : ''}</div>
+      <div class="vil-roll-calc">Dé gardé <b>${kept}</b>${mod ? ` ${mod > 0 ? '+' : '−'} ${Math.abs(mod)}` : ''} contre <b>${diff}</b></div>
+      <div class="vil-verdict is-${verdict}">${VERDICT[verdict]}</div>
+      ${dark ? `<div class="vil-roll-dark${dark >= thr ? ' is-hit' : ''}">Sombre héritage (${tk}ᵉ coche) : d12 = ${dark}, ${dark >= thr ? `complication (${thr}+)` : `pas de complication (${thr}+)`}</div>` : ''}`;
+}
+const d = n => 1 + Math.floor(Math.random() * n);
+const drawRolls = () => {
+    testRoll($('#rollA'), { who: 'Raphaël', approach: 'Influence', die: 10, values: [d(10), d(10)], mod: 1, diff: 5, time: '21:42' });
+    testRoll($('#rollB'), { who: 'Sélène', approach: 'Force', die: 10, values: [d(10)], dark: d(12), ticks: 2, mod: 0, diff: 6, time: '21:44' });
+    testRoll($('#rollC'), { who: 'Lucien', approach: 'Volonté', die: 10, values: [4, 5], mod: 0, diff: 5, time: '21:45' });
+};
+drawRolls();
+$('#rollBtn').onclick = drawRolls;
+$('#rollDark').innerHTML = `<div class="vil-roll-head"><b>Dé d'obscurité</b><span>21:46 · Obscurité</span></div>
+  <div class="vil-dice"><span class="vil-die is-dark is-kept">7</span><span class="vil-roll-sub">Obscurité moyenne · complication sur 6+</span></div>
+  <div class="vil-verdict is-complication">Complication</div>`;
+$('#rollGift').innerHTML = `<div class="vil-roll-head"><b>Pouvoir du sang</b><span>21:46 · Raphaël</span></div>
+  <div class="vil-dice"><span class="vil-die is-kept">1</span><span class="vil-roll-sub">d6 du don : sur 1, état <b>épuisement</b></span></div>
+  <div class="vil-roll-dark is-hit">Épuisement coché automatiquement.</div>`;
+
+// Menu joueur
+const ico = p => `<span class="vtt-menu-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round">${p}</svg></span>`;
+$('#menu').innerHTML = [
+    ['Créer un personnage', '<path d="M12 5v14M5 12h14"/>'], ['Changer de personnage', '<circle cx="9" cy="8" r="3"/><path d="M3 20c0-4 3-6 6-6s6 2 6 6M17 11l3-3-3-3"/>'],
+    ['Jet de dés libre', '<rect x="4" y="4" width="16" height="16" rx="3"/><circle cx="9" cy="9" r="1"/><circle cx="15" cy="15" r="1"/>'],
+    ['Code d\'accès', '<circle cx="8" cy="12" r="4"/><path d="M12 12h9M18 12v3"/>'], ['Configuration des dés', '<circle cx="12" cy="12" r="3"/><path d="M12 3v3M12 18v3M3 12h3M18 12h3"/>'],
+    null, ['Interface MJ', '<path d="M3 18h18L19 8l-4 4-3-6-3 6-4-4z"/>'], ['Déconnexion', '<path d="M15 4h4v16h-4M10 8l-4 4 4 4M6 12h10"/>', true],
+].map(it => it ? `<button class="vtt-menu-item${it[2] ? ' is-danger' : ''}">${ico(it[1])}${it[0]}</button>` : '<div class="vtt-menu-separator"></div>').join('');
+</script>
+</body>
+</html>

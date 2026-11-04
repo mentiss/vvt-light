@@ -1,0 +1,41 @@
+/* src/client/src/systems/vileborn/Brand.css */
+/* ─────────────────────────────────────────────────────────────────────────────
+   Marque Vileborn (spec_plateforme_accueil.md §5) : carte de l'accueil et titre
+   des pages d'accès. Importé par Brand.jsx (accueil) et par theme.css. Classes
+   .vileborn-brand-* uniquement, aucune couleur globale (--color-* lues, jamais
+   définies). Source validée : documentations/vileborn/planche_vileborn.html.
+   Polices : Marcellus SC et Jost (Google Fonts, ci-dessous).
+   ─────────────────────────────────────────────────────────────────────────── */
+
+@import url('https://fonts.googleapis.com/css2?family=Marcellus+SC&family=Jost:wght@400;500&display=swap');
+
+/* ── Carte : les couleurs de la couverture du kit (ciel vert-de-gris, chevrons rouges, nuit) ── */
+.vileborn-brand {
+    position: relative; height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center;
+    gap: 4px; text-align: center; overflow: hidden; color: #F4EFE8;
+    background:
+        linear-gradient(160deg, transparent 52%, rgba(160, 32, 30, .85) 52.2%, rgba(120, 20, 22, .9) 75%, transparent 75.2%),
+        linear-gradient(200deg, transparent 52%, rgba(160, 32, 30, .7) 52.2%, rgba(110, 18, 20, .8) 72%, transparent 72.2%),
+        radial-gradient(ellipse 80% 60% at 30% 10%, #3E6F73, transparent 70%),
+        radial-gradient(ellipse 60% 50% at 80% 30%, #2D4F55, transparent 70%),
+        linear-gradient(#1F2A2E, #120C0E);
+}
+.vileborn-brand-sign {
+    width: 40px; height: 40px; flex-shrink: 0; background: currentColor;
+    -webkit-mask: url('./assets/sign.svg') center / contain no-repeat; mask: url('./assets/sign.svg') center / contain no-repeat;
+}
+.vileborn-brand-title { font-family: 'Marcellus SC', 'EB Garamond', Georgia, serif; font-size: 2.1rem; letter-spacing: .14em; line-height: 1; }
+.vileborn-brand-sub { font-family: 'Jost', 'Segoe UI', sans-serif; font-size: .62rem; letter-spacing: .3em; text-transform: uppercase; }
+
+/* ── Titre (pages d'accès, Reprendre, bande fixe) : sceau rouge, couleurs du thème ── */
+.vileborn-brand.is-title {
+    height: auto; flex-direction: row; flex-wrap: wrap; justify-content: center; gap: .15em .5em;
+    background: none; overflow: visible; color: var(--color-text, #1C1A1B);
+}
+.vileborn-brand.is-title > span { white-space: nowrap; }
+.vileborn-brand.is-title .vileborn-brand-sign { width: 1.2em; height: 1.2em; color: var(--color-primary, #8B1A1A); }
+.vileborn-brand.is-title .vileborn-brand-title { font-size: 1.4em; letter-spacing: .12em; }
+.vileborn-brand.is-title .vileborn-brand-sub { font-size: .55em; color: var(--color-text-muted, #5A6A72); }
+/* Place comptée (bloc « Reprendre ») : sceau et nom seulement */
+.vtt-resume-brand .vileborn-brand.is-title { justify-content: flex-start; }
+.vtt-resume-brand .vileborn-brand.is-title .vileborn-brand-sub { display: none; }

@@ -103,7 +103,8 @@ Tous sont des systèmes en usage réel, aucun n'est un brouillon :
 | `dune` | Dune (2D20) | |
 | `noctis` | Noctis Solis (Vermine 2047) | Intégration `accessCode` en attente ; masqué de l'accueil (`hidden`) |
 | `tecumah` | Tecumah Gulch (D6) | |
-| `woddavampire` | Vampire : l'Âge des Ténèbres (V20 Dark Ages) | Le plus récent (v5.10.0) : organisation du code de référence (`config/rules/`, sections partagées joueur / MJ, hooks), aide de jeu en Markdown, coterie |
+| `woddavampire` | Vampire : l'Âge des Ténèbres (V20 Dark Ages) | Organisation du code de référence (`config/rules/`, sections partagées joueur / MJ, hooks), aide de jeu en Markdown, coterie |
+| `vileborn` | Vileborn (kit d'initiation) | Le plus récent : création déduite des prétirés, fiche calquée sur la page 1 des prétirés, mode Édition partagé joueur / MJ |
 
 ### Base de données
 

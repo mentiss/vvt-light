@@ -1,0 +1,480 @@
+/* src/client/src/systems/vileborn/theme.css */
+/* ─────────────────────────────────────────────────────────────────────────────
+   Thème Vileborn — la page 1 des fiches prétirées du kit : papier blanc cassé
+   réglé, lavis vert-de-gris, rouge sang, arcs noirs fins, cercles à double
+   bordure ceints de runes. La nuit inverse le papier en ardoise bleu-noir.
+   Source validée : documentations/vileborn/planche_vileborn.html (spec §II).
+   Chargé par PlayerPage / GMPage (import.meta.glob), jamais importé par le slug.
+   Polices : Marcellus SC et Jost (Brand.css), EB Garamond et Noto Sans Runic
+   (Google, ci-dessous).
+   ─────────────────────────────────────────────────────────────────────────── */
+
+@import './Brand.css';
+@import url('https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,400;0,600;1,400;1,600&family=Noto+Sans+Runic&display=swap');
+
+/* ── Mode JOUR : la fiche papier ─────────────────────────────────────────── */
+:root {
+    --color-primary:     #8B1A1A;  /* rouge sang (dés, noms, runes) */
+    --color-secondary:   #5E7C76;  /* vert-de-gris des aquarelles */
+    --color-accent:      #4F6470;  /* gris-bleu ardoise des textes d'effet */
+    --color-danger:      #A3161A;
+    --color-success:     #3F6B57;
+    --color-bg:          #EEEDE9;  /* papier */
+    --color-surface:     #F8F7F4;
+    --color-surface-alt: #E2E8E5;  /* lavis de sauge */
+    --color-text:        #1C1A1B;  /* encre */
+    --color-text-muted:  #5A6A72;  /* ardoise */
+    --color-border:      #2B2728;  /* trait fin */
+
+    /* Variables du slug */
+    --vil-blood:      #8B1A1A;
+    --vil-sage:       #9DB5AE;     /* aquarelle (taches, lavis des titres) */
+    --vil-ink:        #1C1A1B;
+    --vil-rule:       rgba(70, 90, 100, .10);   /* réglure du papier */
+    --vil-paper:      #F8F7F4;
+    --vil-rose:       #2E4A44;     /* rosaces des modales : vert-de-gris foncé, lisible sur le fond assombri */
+    --vil-font-title: 'Marcellus SC', 'EB Garamond', Georgia, serif;
+    --vil-font-body:  'EB Garamond', Georgia, serif;
+    --vil-font-label: 'Jost', 'Segoe UI', sans-serif;
+    --vil-font-runes: 'Noto Sans Runic', 'Segoe UI Historic', serif;
+}
+
+/* ── Mode NUIT : la même fiche à l'encre ──────────────────────────────────── */
+[data-theme="dark"] {
+    --color-primary:     #CF4A43;
+    --color-secondary:   #7FA39A;
+    --color-accent:      #93A9B4;
+    --color-danger:      #E2564D;
+    --color-success:     #7DB096;
+    --color-bg:          #121519;
+    --color-surface:     #191D22;
+    --color-surface-alt: #222A2C;
+    --color-text:        #E6E1D8;
+    --color-text-muted:  #94A4AB;
+    --color-border:      #C9C2B6;
+
+    --vil-blood:  #CF4A43;
+    --vil-sage:   #3E5752;
+    --vil-ink:    #E6E1D8;
+    --vil-rule:   rgba(200, 215, 220, .06);
+    --vil-paper:  #191D22;
+    --vil-rose:   #7FA39A;
+}
+
+/* ── Racine du slug (fiche, MJ, création) et emplacement à modales ──────── */
+.vil-root, .vtt-modal-host { font-family: var(--vil-font-body); font-variant-numeric: lining-nums; }
+.vil-root { background: var(--color-bg); color: var(--color-text); min-height: 100vh; font-size: 17px; line-height: 1.4;
+    --vtt-reference-top: calc(var(--vil-band-h, 0px) + 12px); }   /* sommaire de l'aide de jeu collé sous la bande fixe */
+.vil-font-title { font-family: var(--vil-font-title); font-weight: 400; letter-spacing: .02em; }
+.vil-page { padding: 18px clamp(12px, 2vw, 28px) 60px; }
+.vil-note { font-size: 15px; color: var(--color-text-muted); }
+
+/* Papier réglé (fond des fiches, modales, cartes) */
+.vil-paper {
+    background-color: var(--vil-paper);
+    background-image:
+        radial-gradient(ellipse 38% 30% at 0% 0%, color-mix(in srgb, var(--vil-sage) 55%, transparent), transparent 70%),
+        radial-gradient(ellipse 30% 26% at 100% 100%, color-mix(in srgb, var(--vil-blood) 10%, transparent), transparent 70%),
+        repeating-linear-gradient(to bottom, transparent 0 25px, var(--vil-rule) 25px 26px);
+}
+
+/* Libellé de section : petite capitale fine sur un lavis de sauge */
+.vil-label {
+    font-family: var(--vil-font-label); font-size: 12px; font-weight: 400; letter-spacing: .08em; text-transform: uppercase;
+    display: block; padding: 3px 8px; margin: 0 -8px 6px;
+    background: linear-gradient(90deg, color-mix(in srgb, var(--vil-sage) 80%, transparent), transparent 85%);
+}
+.vil-label.is-right { text-align: right; background: linear-gradient(270deg, color-mix(in srgb, var(--vil-sage) 80%, transparent), transparent 85%); }
+.vil-label.is-plain { background: none; text-align: center; margin: 0; }
+
+/* Texte d'effet : italique ardoise ; termes en petites capitales */
+.vil-effect { font-style: italic; color: var(--color-text-muted); font-size: 15px; line-height: 1.3; }
+.vil-sc { font-variant: small-caps; font-style: normal; letter-spacing: .02em; }
+.vil-name { font-style: italic; font-weight: 600; }
+.vil-red { color: var(--vil-blood); }
+
+/* Case et coche papier (jamais de checkbox native) */
+.vil-check { width: 15px; height: 15px; border: 1.5px solid var(--vil-ink); border-radius: 3px; display: inline-grid; place-items: center;
+    flex-shrink: 0; vertical-align: -2px; background: transparent; }
+.vil-check.is-on::after { content: ''; width: 9px; height: 9px; background: var(--vil-blood); border-radius: 1px; }
+.vil-tick { width: 13px; height: 13px; border: 1.5px solid var(--vil-ink); border-radius: 50%; display: inline-block; background: var(--vil-paper); }
+.vil-tick.is-on { background: var(--vil-blood); border-color: var(--vil-blood); box-shadow: inset 0 0 0 2px var(--vil-paper); }
+
+/* ═════════════ Bande fixe (header + sous-header) ═════════════ */
+.vil-sticky-top { position: sticky; top: 0; z-index: calc(var(--vtt-z-floating, 46) - 1); /* sous les fenêtres flottantes */
+    background: var(--color-bg); border-bottom: 1px solid var(--vil-ink); }
+.vil-topbar { display: flex; align-items: center; gap: 12px; padding: 6px clamp(12px, 2vw, 28px); font-size: 21px; }
+.vil-topbar-sub { font-family: var(--vil-font-label); font-size: 12px; letter-spacing: .08em; text-transform: uppercase; color: var(--color-text-muted); }
+.vil-topbar-tools { margin-left: auto; display: flex; align-items: center; gap: 8px; font-size: 16px; }
+.vil-subbar { display: flex; align-items: stretch; gap: 8px; padding: 0 clamp(12px, 2vw, 28px);
+    border-top: 1px solid color-mix(in srgb, var(--color-border) 20%, transparent); }
+.vil-tabs { display: flex; gap: 2px; overflow-x: auto; scrollbar-width: none; min-width: 0; }
+.vil-tabs::-webkit-scrollbar { display: none; }
+.vil-tab { font-family: var(--vil-font-label); font-size: 13px; letter-spacing: .06em; text-transform: uppercase; white-space: nowrap;
+    padding: 9px 12px; border-bottom: 2px solid transparent; color: var(--color-text-muted); }
+.vil-tab:hover { color: var(--color-text); }
+.vil-tab.is-active { color: var(--color-text); border-bottom-color: var(--vil-blood); }
+.vil-tab-badge { margin-left: 5px; font-size: 11px; }
+.vil-tab-badge.is-done { color: var(--color-success); }
+.vil-tab-badge.is-left { color: var(--vil-blood); }
+.vil-actions { margin-left: auto; display: flex; gap: 6px; align-items: center; padding: 4px 0; }
+.vil-icon-btn { width: 34px; height: 34px; display: grid; place-items: center; border: 1px solid var(--vil-ink); background: var(--vil-paper); color: var(--color-text); }
+.vil-icon-btn:hover { background: color-mix(in srgb, var(--vil-sage) 45%, var(--vil-paper)); }
+.vil-icon-btn.is-on { background: var(--vil-blood); color: var(--vil-paper); border-color: var(--vil-blood); }
+.vil-actions .vtt-btn-sm { height: 34px; }
+.vil-dark-btn { display: inline-flex; align-items: center; gap: 6px; }
+.vil-sheet-body { position: relative; }
+.vil-root.is-sheet-page .vil-sheet-body { min-height: calc(100vh - var(--vil-band-h, 0px)); }
+
+/* ═════════════ La fiche ═════════════ */
+.vil-sheet { position: relative; padding: 18px 22px 26px; border: 1px solid color-mix(in srgb, var(--color-border) 18%, transparent); overflow: hidden; }
+.vil-sheet-grid { display: grid; grid-template-columns: minmax(230px, 1fr) minmax(0, 600px) minmax(230px, 1fr); gap: 18px; align-items: start; }
+.vil-col { display: grid; gap: 16px; align-content: start; padding-top: 70px; min-width: 0; }
+
+/* En-tête : arcs noirs fins, nom et devise */
+.vil-head { position: relative; text-align: center; padding-top: 4px; }
+.vil-head::before { content: ''; position: absolute; left: 50%; top: -260px; width: 1100px; height: 330px; transform: translateX(-50%);
+    border: 1px solid var(--vil-ink); border-radius: 50%; border-top-color: transparent; opacity: .85; pointer-events: none;
+    -webkit-mask: linear-gradient(90deg, #000 0 26%, transparent 26% 74%, #000 74%); mask: linear-gradient(90deg, #000 0 26%, transparent 26% 74%, #000 74%); }
+.vil-charname { font-family: var(--vil-font-title); font-size: 40px; line-height: 1; letter-spacing: .02em; }
+.vil-motto { font-style: italic; font-weight: 600; font-size: 15px; color: var(--color-text-muted); margin-top: 2px; }
+
+/* Approches en arc, rayons fins */
+.vil-approaches { display: flex; justify-content: center; gap: 6px; margin-top: 8px; }
+.vil-approach { position: relative; width: 84px; height: 62px; border: 1px solid var(--vil-ink); background: var(--vil-paper); color: var(--color-text);
+    display: grid; grid-template-rows: auto 1fr; text-align: center; transition: transform .15s, box-shadow .15s; }
+.vil-approach::before { content: ''; position: absolute; inset: -18px; z-index: -1; pointer-events: none; opacity: .35;
+    background: repeating-conic-gradient(from 0deg, var(--vil-ink) 0 .6deg, transparent .6deg 7deg);
+    -webkit-mask: radial-gradient(closest-side, transparent 62%, #000 64%, transparent 100%); mask: radial-gradient(closest-side, transparent 62%, #000 64%, transparent 100%); }
+.vil-approach b { font-family: var(--vil-font-label); font-weight: 400; font-size: 10.5px; letter-spacing: .05em; padding-top: 3px; text-transform: uppercase; }
+.vil-approach span { font-weight: 600; font-size: 21px; color: var(--vil-blood); align-self: center; }
+.vil-approach small { position: absolute; right: 4px; bottom: 2px; font-size: 11px; color: var(--color-danger); font-family: var(--vil-font-label); }
+button.vil-approach:hover { transform: translateY(-2px); box-shadow: 0 4px 0 -1px color-mix(in srgb, var(--vil-blood) 40%, transparent); }
+.vil-approach:nth-child(2), .vil-approach:nth-child(5) { margin-top: 24px; }
+.vil-approach:nth-child(3), .vil-approach:nth-child(4) { margin-top: 38px; }
+
+/* U de cercles autour du portrait */
+.vil-u { position: relative; height: 430px; margin-top: -8px; }
+.vil-u-portrait { position: absolute; left: 50%; top: 18px; width: 250px; height: 380px; transform: translateX(-50%); display: grid; place-items: center;
+    -webkit-mask: linear-gradient(to bottom, #000 78%, transparent); mask: linear-gradient(to bottom, #000 78%, transparent); color: var(--color-text-muted); }
+.vil-u-portrait img { width: 100%; height: 100%; object-fit: cover; object-position: top center; }
+.vil-u-portrait svg { width: 100%; height: 100%; }
+button.vil-u-portrait:hover::after { content: 'Changer le portrait'; position: absolute; bottom: 70px; font-family: var(--vil-font-label); font-size: 12px;
+    color: var(--color-text); background: var(--vil-paper); padding: 2px 8px; border: 1px solid var(--vil-ink); }
+.vil-u-side { position: absolute; top: 150px; font-family: var(--vil-font-label); font-size: 10.5px; letter-spacing: .12em; writing-mode: vertical-rl; color: var(--color-text-muted); }
+.vil-u-side.is-left { left: 26%; transform: rotate(180deg); }
+.vil-u-side.is-right { right: 26%; }
+/* Runes : calque sous tous les cercles, pour qu'elles ne passent jamais dessus */
+.vil-circle-runes { position: absolute; width: 112px; height: 112px; margin: -56px 0 0 -56px; pointer-events: none; overflow: visible; }
+.vil-circle-runes .runes { font-family: var(--vil-font-runes); font-size: 7px; fill: var(--vil-blood); letter-spacing: 1px; }
+.vil-circle { position: absolute; width: 92px; height: 92px; margin: -46px 0 0 -46px; display: grid; place-items: center; text-align: center; }
+.vil-circle svg { position: absolute; inset: 0; width: 92px; height: 92px; overflow: visible; }
+.vil-circle .ring { fill: var(--vil-paper); stroke: var(--vil-ink); stroke-width: 1.2; }
+.vil-circle .ring-in { fill: none; stroke: var(--vil-ink); stroke-width: .7; stroke-dasharray: 2 2; }
+.vil-circle span { position: relative; font-style: italic; font-weight: 600; font-size: 15px; color: var(--vil-blood); line-height: 1.05; padding: 0 6px; overflow-wrap: anywhere; }
+.vil-u-link { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; }
+.vil-u-link path { fill: none; stroke: var(--vil-ink); stroke-width: 1; }
+.vil-u-heritage { position: absolute; left: 50%; bottom: 0; transform: translateX(-50%); font-family: var(--vil-font-label); font-size: 10px; letter-spacing: .06em; }
+
+/* Colonnes : états, blessures / origine, mobiles, ressources */
+.vil-row { display: grid; grid-template-columns: auto 1fr; gap: 0 8px; align-items: baseline; padding: 1px 4px; margin: 0 -4px 5px; border-radius: 3px; }
+.vil-row .vil-effect { grid-column: 2; }
+.vil-wound-note { border-bottom: 1px solid color-mix(in srgb, var(--color-border) 25%, transparent); min-height: 22px; font-style: italic; font-size: 15px; }
+.vil-right { text-align: right; }
+.vil-right .vil-row { grid-template-columns: 1fr auto; }
+.vil-right .vil-row .vil-effect { grid-column: 1 / -1; }
+.vil-resource + .vil-resource { margin-top: 6px; }
+
+/* Grand arc et frise runique */
+.vil-arc { position: relative; height: 70px; margin: -26px -22px 0; pointer-events: none; }
+.vil-arc svg { width: 100%; height: 100%; display: block; }
+.vil-arc .line { fill: none; stroke: var(--vil-ink); stroke-width: 1; }
+.vil-arc .runes { font-family: var(--vil-font-runes); font-size: 9px; fill: var(--vil-blood); letter-spacing: 2px; }
+
+/* Bandeau du bas : don · héritage + pulsion · don */
+.vil-band { display: grid; grid-template-columns: 1fr 1.25fr 1fr; gap: 26px; text-align: center; margin-top: -6px; }
+.vil-gift-title, .vil-heritage-name { font-style: italic; font-weight: 600; color: var(--vil-blood); font-size: 19px; }
+.vil-heritage-name { font-size: 28px; line-height: 1.1; }
+.vil-ticks { display: flex; align-items: center; gap: 4px; justify-content: center; margin: 4px 0 8px; }
+.vil-ticks::before, .vil-ticks::after { content: ''; height: 1px; background: var(--vil-ink); flex: 1; max-width: 120px; }
+.vil-band p { font-size: 15.5px; line-height: 1.3; }
+.vil-band p + p { margin-top: 8px; }
+.vil-band .vil-effect { font-size: 14.5px; }
+.vil-band-actions { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; margin-top: 12px; }
+
+/* Interactions (lot 2) */
+button.vil-check, button.vil-tick { cursor: pointer; transition: box-shadow .15s; }
+button.vil-check:hover, button.vil-tick:hover { box-shadow: 0 0 0 3px color-mix(in srgb, var(--vil-sage) 70%, transparent); }
+.vil-wound-input { border: 0; border-bottom: 1px solid color-mix(in srgb, var(--color-border) 25%, transparent); background: transparent; color: var(--color-text);
+    width: 100%; padding: 0; outline: none; font-family: var(--vil-font-body); }
+.vil-wound-input:focus { border-bottom-color: var(--vil-blood); }
+.vil-row-out { margin-top: 6px; }
+.vil-row-gap { margin-top: 8px; }
+.vil-blocked .vil-check { opacity: .45; }
+.vil-mt { margin-top: 12px; }
+.vil-gift.is-on .vil-gift-title::after { content: ' · actif'; font-family: var(--vil-font-label); font-style: normal; font-weight: 400; font-size: 11px; }
+.vil-bonds-block { margin-top: 22px; }
+.vil-bond-remove { width: 22px; height: 22px; color: var(--color-text-muted); font-size: 17px; line-height: 1; }
+.vil-bond-remove:hover { color: var(--vil-blood); }
+.vil-level button { color: inherit; }
+.vil-level button:hover:not(.is-on) { background: color-mix(in srgb, var(--vil-sage) 45%, transparent); }
+
+/* Mode Édition */
+.vil-edit { display: grid; gap: 22px; }
+.vil-edit-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 260px), 1fr)); gap: 14px 24px; }
+.vil-edit-field { display: block; }
+.vil-edit-row { display: grid; gap: 10px 16px; padding-bottom: 10px; border-bottom: 1px dashed color-mix(in srgb, var(--color-border) 25%, transparent); }
+.vil-edit-row > .vtt-btn { justify-self: end; }
+
+/* Liens */
+.vil-bonds { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; margin-top: 10px; }
+.vil-bond { display: flex; align-items: center; gap: 10px; border: 1px solid color-mix(in srgb, var(--color-border) 35%, transparent); padding: 4px 6px 4px 12px; background: var(--vil-paper); }
+.vil-bond em { color: var(--color-text-muted); font-size: 14px; }
+.vil-level { display: inline-flex; border: 1px solid var(--vil-ink); font-family: var(--vil-font-label); font-size: 13px; }
+.vil-level > * { width: 26px; height: 22px; display: grid; place-items: center; }
+.vil-level > * + * { border-left: 1px solid var(--vil-ink); }
+.vil-level .is-on { background: var(--vil-blood); color: var(--vil-paper); }
+
+/* Responsive : colonnes sous le U, puis tout empilé */
+@media (max-width: 1100px) {
+    .vil-sheet-grid { grid-template-columns: 1fr 1fr; }
+    .vil-center { grid-column: 1 / -1; order: -1; }
+    .vil-col { padding-top: 0; }
+}
+@media (max-width: 700px) {
+    .vil-sheet-grid { grid-template-columns: 1fr; }
+    .vil-sheet { padding: 14px 16px 20px; }
+    .vil-charname { font-size: 28px; }
+    .vil-head::before { display: none; }
+    .vil-right { text-align: left; }
+    .vil-right .vil-row { grid-template-columns: auto 1fr; }
+    .vil-label.is-right { text-align: left; background: linear-gradient(90deg, color-mix(in srgb, var(--vil-sage) 80%, transparent), transparent 85%); }
+    .vil-approaches { flex-wrap: wrap; }
+    .vil-approach { margin-top: 0 !important; width: calc(33% - 6px); }
+    .vil-u { height: auto; display: grid; grid-template-columns: repeat(5, 1fr); gap: 4px; }
+    .vil-u-portrait { position: relative; left: 0; transform: none; grid-column: 1 / -1; width: 100%; height: 260px; order: -1; }
+    .vil-circle { position: relative !important; left: 0 !important; top: 0 !important; margin: 10px auto; width: 60px; height: 60px; }
+    .vil-circle svg { width: 60px; height: 60px; }
+    .vil-circle span { font-size: 11px; }
+    .vil-circle.is-left { order: 2; } .vil-circle.is-right { order: 4; }
+    .vil-u-side { position: static; writing-mode: horizontal-tb; transform: none; grid-column: 1 / -1; margin-top: 8px; }
+    .vil-u-side.is-left { order: 1; } .vil-u-side.is-right { order: 3; }
+    .vil-u-side.is-left, .vil-u-side.is-right { transform: none; left: auto; right: auto; }
+    .vil-circle-runes, .vil-u-link, .vil-u-heritage { display: none; }
+    .vil-band { grid-template-columns: 1fr; }
+    .vil-arc { height: 40px; margin-top: 12px; }
+}
+
+/* ═════════════ Champs, pills, interrupteur ═════════════ */
+.vtt-input, .vil-input { width: 100%; border: 0; border-bottom: 1px solid var(--vil-ink); padding: 5px 2px; font-size: 16px; outline: none; background: transparent; color: var(--color-text); }
+.vtt-input:focus, .vil-input:focus { border-bottom-color: var(--vil-blood); }
+.vil-textarea { width: 100%; border: 1px solid color-mix(in srgb, var(--color-border) 40%, transparent); padding: 6px 8px; font-size: 16px; background: transparent; color: var(--color-text); outline: none; resize: vertical; }
+.vil-textarea:focus { border-color: var(--vil-blood); }
+.vtt-field-label { font-family: var(--vil-font-label); font-size: 12px; letter-spacing: .06em; text-transform: uppercase; }
+.vtt-pill { font-family: var(--vil-font-label); font-size: 13px; padding: 4px 11px; border: 1px solid var(--vil-ink); border-radius: 999px; background: var(--vil-paper); color: var(--color-text); }
+.vtt-pill:hover:not(:disabled) { background: color-mix(in srgb, var(--vil-sage) 45%, var(--vil-paper)); }
+.vtt-pill.is-selected { background: var(--vil-blood); border-color: var(--vil-blood); color: var(--vil-paper); }
+.vtt-pill:disabled { opacity: .4; cursor: not-allowed; }
+.vil-pills { display: flex; flex-wrap: wrap; gap: 6px; }
+.vil-stepper { display: inline-flex; align-items: center; border: 1px solid var(--vil-ink); justify-self: start; }
+.vil-stepper button { width: 30px; height: 30px; font-size: 16px; color: var(--color-text); }
+.vil-stepper button:disabled { opacity: .35; }
+.vil-stepper span { min-width: 36px; text-align: center; font-weight: 600; }
+.vil-toggle { display: inline-flex; align-items: center; gap: 8px; font-size: 16px; text-align: left; }
+.vil-toggle i { width: 32px; height: 18px; border: 1.5px solid var(--vil-ink); border-radius: 9px; position: relative; flex-shrink: 0; transition: background .15s; }
+.vil-toggle i::after { content: ''; position: absolute; top: 2px; left: 2px; width: 11px; height: 11px; border-radius: 50%; background: var(--vil-ink); transition: transform .15s; }
+.vil-toggle.is-on i { background: var(--vil-blood); border-color: var(--vil-blood); }
+.vil-toggle.is-on i::after { transform: translateX(14px); background: var(--vil-paper); }
+.vil-toggle:disabled { opacity: .45; cursor: not-allowed; }
+.vil-toggle small { display: block; color: var(--color-text-muted); font-style: italic; font-size: 13px; }
+
+/* ═════════════ Boutons (classes plateforme) ═════════════ */
+.vtt-btn { font-family: var(--vil-font-label); font-weight: 400; font-size: 14px; letter-spacing: .03em; padding: 6px 16px; border: 1px solid var(--vil-ink);
+    background: var(--vil-paper); color: var(--color-text); border-radius: 2px; transition: background .15s, color .15s, box-shadow .15s; }
+.vtt-btn:hover:not(:disabled) { background: color-mix(in srgb, var(--vil-sage) 45%, var(--vil-paper)); }
+.vtt-btn:active:not(:disabled) { box-shadow: inset 0 1px 3px rgba(0, 0, 0, .25); }
+.vtt-btn:disabled { opacity: .45; cursor: not-allowed; }
+.vtt-btn-primary { background: var(--vil-blood); border-color: var(--vil-blood); color: #F8F2EC; }
+.vtt-btn-primary:hover:not(:disabled) { background: color-mix(in srgb, var(--vil-blood) 82%, #000); }
+.vtt-btn-danger { color: var(--color-danger); border-color: var(--color-danger); }
+.vtt-btn-danger:hover:not(:disabled) { background: var(--color-danger); color: #fff; }
+.vtt-btn-sm { font-size: 12.5px; padding: 4px 10px; }
+
+/* ═════════════ Menu hamburger (classes plateforme) ═════════════ */
+.vtt-menu-button { width: 34px; height: 34px; display: grid; place-items: center; border: 1px solid var(--vil-ink); background: var(--vil-paper); color: var(--color-text); font-size: 18px; }
+.vtt-menu { min-width: 250px; padding: 6px 0; border-radius: 0; background: var(--vil-paper); color: var(--color-text); border: 1px solid var(--vil-ink);
+    box-shadow: 4px 4px 0 -1px color-mix(in srgb, var(--vil-sage) 70%, transparent), 0 12px 30px rgba(0, 0, 0, .25); font-family: var(--vil-font-body); }
+.vtt-menu-item { display: flex; gap: 10px; align-items: center; width: 100%; text-align: left; padding: 6px 14px; font-size: 16px; color: var(--color-text); border-radius: 0; }
+.vtt-menu-item:hover:not(:disabled) { background: linear-gradient(90deg, color-mix(in srgb, var(--vil-sage) 70%, transparent), transparent); }
+.vtt-menu-item.is-danger { color: var(--color-danger); }
+.vtt-menu-icon { width: 18px; height: 18px; color: var(--vil-blood); display: grid; place-items: center; }
+.vtt-menu-separator { height: 1px; margin: 5px 14px; background: color-mix(in srgb, var(--color-border) 30%, transparent); }
+
+/* ═════════════ Modales (classes plateforme) ═════════════ */
+.vtt-modal-backdrop { background: rgba(14, 18, 20, .55); }
+.vtt-modal-panel { overflow: visible;   /* les rosaces débordent ; le corps défile seul (vtt-modal-body) */
+    background: var(--vil-paper); color: var(--color-text); border: 1px solid var(--vil-ink); border-radius: 0;
+    background-image: repeating-linear-gradient(to bottom, transparent 0 25px, var(--vil-rule) 25px 26px);
+    box-shadow: 0 18px 50px -12px rgba(0, 0, 0, .45); }
+/* Rosaces aux coins hauts (décor de la plateforme), frise runique en pied (pseudo-élément du panneau) */
+.vtt-modal-deco::before, .vtt-modal-deco::after {
+    content: ''; position: absolute; z-index: 0; top: -14px; width: 62px; height: 62px; pointer-events: none; background: var(--vil-rose);
+    -webkit-mask: url('./assets/rose.svg') center / contain no-repeat; mask: url('./assets/rose.svg') center / contain no-repeat; }
+.vtt-modal-deco::before { left: -14px; }
+.vtt-modal-deco::after  { right: -14px; transform: scaleX(-1); }
+.vtt-modal-panel::after { content: 'ᚠᚢᚦᚨᚱᚲ ᚷᚹᚺᚾᛁᛃ ᛇᛈᛉᛊᛏᛒ ᛖᛗᛚᛜᛞᛟ ᚠᚢᚦᚨᚱᚲ ᚷᚹᚺᚾᛁᛃ ᛇᛈᛉᛊᛏᛒ'; position: absolute; left: 24px; right: 24px; bottom: 3px;
+    font-family: var(--vil-font-runes); font-size: 8px; letter-spacing: 3px; color: var(--vil-blood); opacity: .55; overflow: hidden; white-space: nowrap; text-align: center; pointer-events: none; }
+@media (max-width: 640px) { .vtt-modal-deco::before, .vtt-modal-deco::after { width: 40px; height: 40px; top: -9px; } .vtt-modal-deco::before { left: -9px; } .vtt-modal-deco::after { right: -9px; } }
+/* En-tête au-dessus des rosaces : le titre dégage la rosace de gauche, la croix reste au coin, sur la rosace de droite */
+.vtt-modal-header { position: relative; z-index: 1; border-bottom: 1px solid color-mix(in srgb, var(--color-border) 20%, transparent); padding-left: 52px; }
+@media (max-width: 640px) { .vtt-modal-header { padding-left: 36px; } }
+/* Croix sans fond (la rosace reste visible derrière) : encre, trait épaissi, halo papier collé au tracé */
+.vtt-modal-close { position: relative; background: transparent; color: var(--color-text); }
+.vtt-modal-close svg { stroke-width: 2.6; filter: drop-shadow(0 0 1px var(--vil-paper)) drop-shadow(0 0 2px var(--vil-paper)); }
+.vtt-modal-title { font-family: var(--vil-font-title); font-weight: 400; font-size: 26px; line-height: 1.05; }
+.vtt-modal-subtitle { font-style: italic; color: var(--color-text-muted); }
+.vtt-modal-close:hover, .vtt-modal-expand:hover { color: var(--vil-blood); background: transparent; }
+.vtt-modal-footer { border-top: 1px solid color-mix(in srgb, var(--color-border) 20%, transparent); }
+
+/* Fenêtre flottante (lecteur audio, historique) : rosace réduite, sans frise */
+.vtt-floating-panel .vtt-modal-deco::before { top: -9px; left: -9px; width: 36px; height: 36px; }
+.vtt-floating-panel .vtt-modal-deco::after { display: none; }
+.vtt-floating-panel.vtt-modal-panel::after { display: none; }
+.vtt-floating-title-extra { font-family: var(--vil-font-body); font-style: italic; color: var(--color-text-muted); }
+
+/* ═════════════ Zone d'actions ═════════════ */
+.vtt-actions-bar { gap: 8px; }
+.vtt-action-btn { width: 44px; height: 44px; border-radius: 50%; display: grid; place-items: center; border: 1px solid var(--vil-ink);
+    background: var(--vil-paper); color: var(--color-text); box-shadow: 0 0 0 3px var(--vil-paper), 0 0 0 4px color-mix(in srgb, var(--vil-blood) 35%, transparent); transition: background .15s; }
+.vtt-action-btn:hover { background: color-mix(in srgb, var(--vil-sage) 50%, var(--vil-paper)); }
+.vtt-action-btn.is-active { background: var(--vil-blood); color: var(--vil-paper); border-color: var(--vil-blood); }
+.vtt-action-btn.is-highlighted { animation: vil-pulse 1.8s ease-in-out infinite; }
+@keyframes vil-pulse { 50% { box-shadow: 0 0 0 3px var(--vil-paper), 0 0 0 7px color-mix(in srgb, var(--vil-blood) 55%, transparent); } }
+
+/* ═════════════ Ascenseurs ═════════════ */
+@supports not selector(::-webkit-scrollbar) { .vtt-scroll { scrollbar-width: thin; scrollbar-color: var(--color-secondary) transparent; } }
+.vtt-scroll::-webkit-scrollbar { width: 10px; height: 10px; }
+.vtt-scroll::-webkit-scrollbar-track { background: color-mix(in srgb, var(--vil-sage) 25%, transparent); }
+.vtt-scroll::-webkit-scrollbar-thumb { background: var(--color-secondary); border: 2px solid transparent; background-clip: padding-box; border-radius: 5px; }
+.vtt-scroll::-webkit-scrollbar-thumb:hover { background-color: var(--vil-blood); }
+
+/* ═════════════ Rendu d'un jet (historique et notification, sans marge extérieure) ═════════════ */
+.vtt-history-entry { background: var(--vil-paper); border: 1px solid color-mix(in srgb, var(--color-border) 30%, transparent); border-left: 3px solid var(--vil-blood); }
+.vil-roll { padding: 10px 14px; display: grid; gap: 6px; }
+.vil-roll-head { display: flex; justify-content: space-between; gap: 10px; align-items: baseline; }
+.vil-roll-head b { font-family: var(--vil-font-title); font-size: 20px; font-weight: 400; line-height: 1.05; }
+.vil-roll-head span { font-family: var(--vil-font-label); font-size: 11px; color: var(--color-text-muted); white-space: nowrap; }
+.vil-roll-sub { font-style: italic; font-size: 14.5px; color: var(--color-text-muted); }
+.vil-dice { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+.vil-die { min-width: 34px; height: 34px; padding: 0 4px; display: grid; place-items: center; font-weight: 600; font-size: 18px;
+    clip-path: polygon(50% 0, 100% 25%, 100% 75%, 50% 100%, 0 75%, 0 25%); background: var(--color-surface-alt); color: var(--color-text-muted); }
+.vil-die.is-kept { background: var(--vil-blood); color: #F8F2EC; }
+.vil-die.is-dark { background: var(--vil-ink); color: var(--vil-paper); clip-path: polygon(30% 0, 70% 0, 100% 30%, 100% 70%, 70% 100%, 30% 100%, 0 70%, 0 30%); }
+.vil-die.is-dark.is-kept { background: var(--vil-blood); color: #F8F2EC; }
+.vil-die-tag { font-family: var(--vil-font-label); font-size: 10.5px; color: var(--color-text-muted); }
+.vil-roll-calc { font-size: 15px; }
+.vil-verdict { font-family: var(--vil-font-title); font-size: 25px; line-height: 1; }
+.vil-verdict.is-success { color: var(--color-success); }
+.vil-verdict.is-tie { color: var(--color-accent); }
+.vil-verdict.is-complication { color: var(--vil-blood); }
+.vil-roll-dark { font-size: 14.5px; border-top: 1px dashed color-mix(in srgb, var(--color-border) 35%, transparent); padding-top: 5px; }
+.vil-roll-dark.is-hit { color: var(--vil-blood); font-weight: 600; }
+
+/* ═════════════ Barre de session (classes plateforme) ═════════════ */
+.vtt-session-bar { border-right: 1px solid color-mix(in srgb, var(--color-border) 35%, transparent); background: var(--vil-paper); }
+.vtt-session-bar-header { border-bottom: 1px solid color-mix(in srgb, var(--color-border) 20%, transparent); }
+.vtt-session-bar-eyebrow { font-family: var(--vil-font-label); font-size: 10px; letter-spacing: .1em; text-transform: uppercase; color: var(--color-text-muted); }
+.vtt-session-bar-title { font-family: var(--vil-font-title); font-size: 18px; }
+.vtt-session-bar-toggle { color: var(--color-text-muted); }
+.vtt-session-bar-toggle:hover { color: var(--vil-blood); }
+.vtt-session-bar-player[data-me] { background: linear-gradient(90deg, color-mix(in srgb, var(--vil-sage) 60%, transparent), transparent); }
+.vtt-session-bar-frame { border-radius: 50%; border: 1px solid var(--vil-ink); background: var(--color-surface-alt);
+    box-shadow: 0 0 0 2px var(--vil-paper), 0 0 0 3px color-mix(in srgb, var(--vil-blood) 50%, transparent); }
+.vtt-session-bar-initials { font-family: var(--vil-font-title); color: var(--vil-blood); }
+.vtt-session-bar-presence { background: var(--color-success); border: 2px solid var(--vil-paper); }
+.vtt-session-bar-name { font-style: italic; font-weight: 600; }
+.vtt-session-bar-player-name { font-family: var(--vil-font-label); font-size: 11px; color: var(--color-text-muted); }
+.vtt-session-bar-reopen { border: 1px solid var(--vil-ink); background: var(--vil-paper); color: var(--color-text); }
+.vtt-session-bar-card { background: var(--vil-paper); color: var(--color-text); border: 1px solid var(--vil-ink); box-shadow: 0 12px 30px -10px rgba(0, 0, 0, .45); }
+.vtt-session-bar-card-deco::before { content: ''; position: absolute; top: -10px; left: -10px; width: 40px; height: 40px; background: var(--vil-rose);
+    -webkit-mask: url('./assets/rose.svg') center / contain no-repeat; mask: url('./assets/rose.svg') center / contain no-repeat; }
+.vtt-session-bar-card-image { border-radius: 60px 60px 4px 4px; border: 1px solid var(--vil-ink); background: var(--color-surface-alt); font-family: var(--vil-font-title); color: var(--vil-blood); }
+.vtt-session-bar-card-name { font-family: var(--vil-font-title); font-size: 20px; }
+.vtt-session-bar-card-player-name { font-family: var(--vil-font-label); font-size: 12px; color: var(--color-text-muted); }
+.vtt-session-bar-card-status { font-style: italic; color: var(--color-success); }
+
+/* ═════════════ Catalogue (classes plateforme) ═════════════ */
+.vtt-catalog-controls { margin-bottom: 10px; }
+.vtt-segmented { display: inline-flex; border: 1px solid var(--vil-ink); }
+.vtt-segment { font-family: var(--vil-font-label); font-size: 12.5px; padding: 4px 12px; }
+.vtt-segment + .vtt-segment { border-left: 1px solid var(--vil-ink); }
+.vtt-segment.is-active { background: var(--vil-blood); color: var(--vil-paper); }
+.vtt-catalog-list { border-top: 1px solid var(--vil-ink); }
+.vtt-catalog-group { font-family: var(--vil-font-label); font-size: 11px; letter-spacing: .1em; text-transform: uppercase; padding: 8px 0 3px; color: var(--color-text-muted); }
+.vtt-catalog-item { border-bottom: 1px solid color-mix(in srgb, var(--color-border) 15%, transparent); }
+.vtt-catalog-item.is-added { opacity: .55; }
+.vtt-catalog-count { font-family: var(--vil-font-label); font-size: 12px; color: var(--color-text-muted); }
+
+/* ═════════════ Aide de jeu (classes plateforme) ═════════════ */
+.vtt-reference-nav-item { border-left: 2px solid transparent; }
+.vtt-reference-nav-item:hover, .vtt-reference-nav-item.is-active { border-left-color: var(--vil-blood); background: linear-gradient(90deg, color-mix(in srgb, var(--vil-sage) 55%, transparent), transparent); }
+.vtt-reference-section { border-bottom: 1px solid color-mix(in srgb, var(--color-border) 18%, transparent); }
+.vtt-reference-section-title { font-family: var(--vil-font-title); font-size: 23px; font-weight: 400; }
+.vtt-reference-badge { font-family: var(--vil-font-label); font-size: 10.5px; letter-spacing: .08em; text-transform: uppercase; border: 1px solid var(--vil-blood); color: var(--vil-blood); padding: 1px 6px; }
+.vtt-reference-heading { font-style: italic; font-weight: 600; color: var(--vil-blood); font-size: 18px; }
+.vtt-reference-table th { font-family: var(--vil-font-label); font-weight: 400; font-size: 11px; letter-spacing: .08em; text-transform: uppercase; text-align: left; border-bottom: 1px solid var(--vil-ink); }
+.vtt-reference-table td { border-bottom: 1px solid color-mix(in srgb, var(--color-border) 15%, transparent); }
+.vtt-reference-block.is-gm { border-left: 3px solid var(--vil-blood); padding-left: 10px; background: linear-gradient(90deg, color-mix(in srgb, var(--vil-blood) 7%, transparent), transparent); }
+
+/* ═════════════ Assistant de création ═════════════ */
+.vil-wizard-head { text-align: center; padding: 18px 12px 6px; }
+.vil-wizard-title { font-family: var(--vil-font-title); font-size: 34px; line-height: 1; }
+.vil-wizard-tabs { display: flex; flex-wrap: wrap; gap: 2px; border-bottom: 1px solid var(--vil-ink); margin-bottom: 12px; }
+.vil-wizard-body { display: grid; grid-template-columns: minmax(0, 1fr) 320px; gap: 24px; align-items: start; }
+.vil-wizard-body.is-single { grid-template-columns: minmax(0, 1fr); }
+@media (max-width: 900px) { .vil-wizard-body { grid-template-columns: minmax(0, 1fr); } }
+.vil-help { border-left: 1px solid var(--vil-ink); padding-left: 18px; position: sticky; top: 12px; }
+@media (max-width: 900px) { .vil-help { border-left: 0; border-top: 1px solid var(--vil-ink); padding: 12px 0 0; position: static; } }
+.vil-help-title { font-style: italic; font-weight: 600; color: var(--vil-blood); font-size: 20px; }
+.vil-help-kicker { font-family: var(--vil-font-label); font-size: 11px; letter-spacing: .1em; text-transform: uppercase; color: var(--color-text-muted); }
+.vil-help p + p { margin-top: 8px; }
+.vil-help-back { font-family: var(--vil-font-label); font-size: 12px; color: var(--color-text-muted); margin-bottom: 6px; }
+.vil-help-back:hover { color: var(--vil-blood); }
+.vil-todo { font-size: 14.5px; margin: 0 0 12px; padding: 7px 12px; background: color-mix(in srgb, var(--vil-sage) 35%, transparent); }
+.vil-todo.is-done { color: var(--color-success); }
+.vil-step-nav { display: flex; justify-content: space-between; gap: 10px; margin-top: 22px; }
+.vil-field-row { display: grid; grid-template-columns: 130px 1fr; gap: 10px; align-items: center; margin-bottom: 14px; }
+.vil-field-row > b { font-family: var(--vil-font-label); font-weight: 400; font-size: 12px; letter-spacing: .06em; text-transform: uppercase; }
+@media (max-width: 600px) { .vil-field-row { grid-template-columns: 1fr; } }
+.vil-assign { display: grid; grid-template-columns: 120px 1fr; gap: 8px 14px; align-items: center; }
+.vil-assign b { font-family: var(--vil-font-label); font-weight: 400; font-size: 13px; letter-spacing: .05em; text-transform: uppercase; }
+.vil-cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 10px; }
+.vil-card-choice { text-align: left; padding: 10px 12px; border: 1px solid color-mix(in srgb, var(--color-border) 40%, transparent); background: var(--vil-paper); color: var(--color-text); }
+.vil-card-choice:hover { border-color: var(--vil-ink); }
+.vil-card-choice b { font-style: italic; color: var(--vil-blood); font-size: 18px; display: block; }
+.vil-card-choice span { font-size: 13.5px; color: var(--color-text-muted); font-style: italic; }
+.vil-card-choice.is-selected { border-color: var(--vil-blood); box-shadow: inset 0 0 0 1px var(--vil-blood); }
+.vil-word-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 320px), 1fr)); gap: 24px; }
+.vil-word-inputs { display: grid; gap: 8px; margin-bottom: 10px; }
+.vil-identity { display: grid; grid-template-columns: 150px minmax(0, 1fr); gap: 20px; align-items: start; }
+@media (max-width: 600px) { .vil-identity { grid-template-columns: 1fr; } }
+.vil-portrait-pick { width: 150px; height: 200px; border: 1px solid var(--vil-ink); border-radius: 75px 75px 4px 4px; overflow: hidden; display: grid; place-items: center;
+    background: var(--color-surface-alt); color: var(--color-text-muted); font-family: var(--vil-font-label); font-size: 12px; }
+.vil-portrait-pick img { width: 100%; height: 100%; object-fit: cover; object-position: top center; }
+.vil-fields { display: grid; gap: 14px; }
+.vil-name-fields { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 200px), 1fr)); gap: 14px; }
+.vil-code { font-family: var(--vil-font-title); font-size: 40px; letter-spacing: .2em; color: var(--vil-blood); }
+
+/* ═════════════ Interface MJ ═════════════ */
+.vil-gm-layout { display: grid; grid-template-columns: 240px minmax(0, 1fr); gap: 18px; align-items: start; }
+@media (max-width: 900px) { .vil-gm-layout { grid-template-columns: 1fr; } }
+.vil-gm-table { display: grid; gap: 8px; }
+.vil-gm-pc { display: flex; gap: 10px; align-items: center; width: 100%; text-align: left; padding: 6px 8px; border: 1px solid color-mix(in srgb, var(--color-border) 25%, transparent);
+    background: var(--vil-paper); color: var(--color-text); }
+.vil-gm-pc.is-selected { border-color: var(--vil-blood); box-shadow: inset 3px 0 0 var(--vil-blood); }
+.vil-gm-pc-av { position: relative; width: 40px; height: 40px; flex-shrink: 0; border-radius: 50%; border: 1px solid var(--vil-ink); overflow: hidden;
+    display: grid; place-items: center; background: var(--color-surface-alt); font-family: var(--vil-font-title); color: var(--vil-blood); }
+.vil-gm-pc-av img { width: 100%; height: 100%; object-fit: cover; }
+.vil-gm-pc-av.is-online::after { content: ''; position: absolute; right: 1px; bottom: 1px; width: 9px; height: 9px; border-radius: 50%; background: var(--color-success); border: 2px solid var(--vil-paper); }
+.vil-gm-sheet-bar { display: flex; align-items: center; justify-content: flex-end; gap: 8px; margin-bottom: 10px; }
+.vil-gm-pc small { display: block; font-family: var(--vil-font-label); font-size: 11px; color: var(--color-text-muted); }
