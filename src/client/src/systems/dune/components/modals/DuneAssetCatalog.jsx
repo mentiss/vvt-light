@@ -18,6 +18,18 @@ const CATALOG_GROUP  = { getValue: a => a.group };
 const CATALOG_SEARCH = ['name', 'keywords', 'description', 'asAsset'];
 const CUSTOM_DEFAULTS = { name: '', description: '', qualite: null, motsCles: '' };
 
+// Disposition de la planche (planche_dune.html §5) : familles en pills avec « Atout libre »
+// au bout, puis la recherche (spec_ui_catalogue.md D-19)
+const CATALOG_LAYOUT = ['filters', 'search'];
+const CATALOG_LABELS = {
+    customTab: 'Atout libre',
+    search:    'Rechercher un atout…',
+    countOne:  'atout',
+    countMany: 'atouts',
+    added:     'Atout ajouté',
+};
+const ASSETS_SUBTITLE =`Catalogue · ${ASSETS.length} exemples du livre`;
+
 /** Qualité affichée au catalogue : valeur, fourchette du livre (« 3-4 »), sinon 0 (livre p. 192). */
 const catalogQuality = (a) => a.quality ?? (/^\d/.test(a.qualityNote ?? '') ? a.qualityNote.split(' ')[0] : 0);
 
@@ -69,10 +81,13 @@ const CustomForm = ({ value, onChange }) => (
  * @param {Function} props.onAdd    (atout) => void
  * @param {Function} props.onClose
  */
-const DuneAssetCatalog = ({ title = 'Atouts', subtitle = 'Exemples du livre ou atout libre', onAdd, onClose }) => (
+const DuneAssetCatalog = ({ title = 'Atouts', subtitle = ASSETS_SUBTITLE, onAdd, onClose }) => (
     <CatalogModal
         title={title}
         subtitle={subtitle}
+        labels={CATALOG_LABELS}
+        layout={CATALOG_LAYOUT}
+        tabsAs="pill"
         items={ASSETS}
         getKey={a => a.id}
         filters={CATALOG_FILTERS}

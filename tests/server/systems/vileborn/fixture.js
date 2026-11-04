@@ -28,6 +28,7 @@ export default {
             { giftKey: 'blood_power',      name: 'Pouvoir du sang',           effect: '', drawback: '', checked: false },
         ],
         resources: [{ name: 'Anneau sigillaire des Normante', effect: '+1 avec les militaires' }],
+        bonds:     [{ name: 'Lien test', description: 'Description', level: 1 }],
     },
     edit: { field: 'motto', value: 'Devise modifiée' },
 };

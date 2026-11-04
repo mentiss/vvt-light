@@ -89,6 +89,10 @@ function _openDatabase(slug, dbPath, schemaPath) {
     }
 
     db.pragma('journal_mode = WAL');
+    // Clés étrangères actives (réglage par connexion, rien n'est écrit dans la base) :
+    // les ON DELETE CASCADE / SET NULL des schémas jouent. scripts/migrate.js les
+    // désactive pendant une migration (reconstruction de table sans cascade).
+    db.pragma('foreign_keys = ON');
     return db;
 }
 

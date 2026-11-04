@@ -21,6 +21,17 @@ const CATALOG_FILTERS = [{
 }];
 const CATALOG_SEARCH = ['name', 'description'];
 
+// Même disposition que les atouts (planche_dune.html §5) : restrictions en pills avec
+// « Talent libre » au bout, puis la recherche (spec_ui_catalogue.md D-19)
+const CATALOG_LAYOUT = ['filters', 'search'];
+const CATALOG_LABELS = {
+    customTab: 'Talent libre',
+    search:    'Rechercher un talent…',
+    countOne:  'talent',
+    countMany: 'talents',
+    added:     'Talent ajouté',
+};
+
 const CatalogRow = ({ t }) => (
     <div>
         <div className="dn-item-name">
@@ -38,7 +49,10 @@ const CatalogRow = ({ t }) => (
 const DuneTalentCatalog = ({ onAdd, onClose }) => (
     <CatalogModal
         title="Talents"
-        subtitle="Talents du livre ou talent libre"
+        subtitle={`Catalogue · ${TALENTS.length} talents du livre`}
+        labels={CATALOG_LABELS}
+        layout={CATALOG_LAYOUT}
+        tabsAs="pill"
         items={TALENTS}
         getKey={t => t.id}
         filters={CATALOG_FILTERS}

@@ -19,6 +19,8 @@
 //   - CRUD sur tags (par entity_type + entity_id)
 // ─────────────────────────────────────────────────────────────────────────────
 
+const { updateOrInsert } = require('../../utils/characters');
+
 // ── Helpers tags ─────────────────────────────────────────────────────────────
 
 /**
@@ -35,20 +37,32 @@ function _loadTags(db, entityType, entityId) {
 }
 
 /**
- * Remplace tous les tags d'une entité (delete + insert).
+ * Synchronise les tags d'une entité, ids stables (même principe que syncSubTable,
+ * mais la table est polymorphe : entity_type + entity_id au lieu de character_id).
+ * Tag avec id de cette entité → mise à jour ; sans id (ou id inconnu) → insertion ;
+ * tag de l'entité absent du tableau → suppression.
  * @param {object} db
  * @param {string} entityType
  * @param {number} entityId
- * @param {Array<{tag_text, tag_variant}>} tagsArray
+ * @param {Array<{id?, tag_text, tag_variant}>} tagsArray
  */
 function _saveTags(db, entityType, entityId, tagsArray) {
-    db.prepare('DELETE FROM tags WHERE entity_type = ? AND entity_id = ?').run(entityType, entityId);
     if (!Array.isArray(tagsArray)) return;
-    const stmt = db.prepare(
-        'INSERT INTO tags (entity_type, entity_id, tag_text, tag_variant) VALUES (?, ?, ?, ?)'
-    );
-    for (const t of tagsArray) {
-        stmt.run(entityType, entityId, t.tag_text ?? '', t.tag_variant ?? 'neutral');
+    const incoming = tagsArray.filter(Boolean);
+    const incomingIds = incoming.filter(t => t.id).map(t => t.id);
+    const existingIds = db.prepare('SELECT id FROM tags WHERE entity_type = ? AND entity_id = ?')
+        .all(entityType, entityId).map(r => r.id);
+
+    for (const eid of existingIds) {
+        if (!incomingIds.includes(eid)) db.prepare('DELETE FROM tags WHERE id = ?').run(eid);
+    }
+    for (const t of incoming) {
+        const values = [t.tag_text ?? '', t.tag_variant ?? 'neutral'];
+        updateOrInsert(db, t,
+            'UPDATE tags SET tag_text = ?, tag_variant = ? WHERE id = ? AND entity_type = ? AND entity_id = ?',
+            [...values, t.id, entityType, entityId],
+            'INSERT INTO tags (entity_type, entity_id, tag_text, tag_variant) VALUES (?, ?, ?, ?)',
+            [entityType, entityId, ...values]);
     }
 }
 

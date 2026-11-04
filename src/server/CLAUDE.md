@@ -31,6 +31,7 @@ Middlewares dans `middlewares/auth.js` : `authenticate`, `requireOwnerOrGM`, `re
 ## SQLite
 
 - Requêtes **paramétrées** uniquement, jamais de concaténation de valeurs dans le SQL.
+- **Clés étrangères actives** (`PRAGMA foreign_keys = ON` à chaque connexion, `db/index.js`) : les `ON DELETE CASCADE` / `SET NULL` des schémas jouent, une insertion vers une ligne absente est refusée. Toute clé vers `characters` ou `game_sessions` déclare son `ON DELETE`. Pas d'`INSERT OR REPLACE` sur une table parente (le remplacement supprime la ligne, donc ses enfants). `scripts/migrate.js` coupe les clés pendant une migration.
 - **COALESCE** dans les UPDATE pour ne pas écraser les champs non fournis (modèle : `FLAT_COLUMNS` de `vikings` et `fabula`). Un texte vidé (`''`) est bien enregistré ; une colonne ne se remet pas à `NULL` par la sauvegarde de fiche, c'est assumé.
 - Écritures multi-tables (`saveFullCharacter`) dans une **transaction** ; `saveFullCharacter` renvoie la fiche rechargée. Les sous-tables (équipement, liens…) se synchronisent avec `syncSubTable` et `updateOrInsert` de `utils/characters.js` (ids stables), jamais une copie locale ni un « tout supprimer puis réinsérer ».
 - `saveFullCharacter` doit mapper `accessCode → access_code` dans l'UPDATE des colonnes à plat.

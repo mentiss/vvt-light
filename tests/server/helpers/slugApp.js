@@ -44,6 +44,7 @@ export async function startSlugApp(slug, routeName = 'characters') {
     const config = Loader.getSystem(slug);
     const db = new Database(':memory:');
     db.exec(fs.readFileSync(config.schemaPath, 'utf8'));
+    db.pragma('foreign_keys = ON');   // comme src/server/db/index.js
 
     const emits = [];
     const io = { to: (room) => ({ emit: (event, payload) => emits.push({ room, event, payload }) }) };

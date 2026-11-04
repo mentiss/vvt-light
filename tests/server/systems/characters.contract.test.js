@@ -164,8 +164,12 @@ describe.each(listSlugs())('%s : contrat /characters', (slug) => {
         expect((await api.request('DELETE', '/-1', { token: gmToken() })).status).toBe(403);
         expect((await api.request('DELETE', '/999999', { token: gmToken() })).status).toBe(404);
         expect((await api.request('DELETE', `/${other.id}`, { token: playerToken(other.id) })).status).toBe(403);
+        // Clés étrangères actives : l'inscription à une table part avec le personnage
+        api.db.prepare('INSERT INTO session_characters (session_id, character_id) VALUES (?, ?)').run(sessionId, other.id);
         const res = await api.request('DELETE', `/${other.id}`, { token: gmToken() });
         expect(res.status).toBeLessThan(300);
         expect((await api.request('GET', `/${other.id}`, { token: gmToken() })).status).toBe(404);
+        expect(api.db.prepare('SELECT COUNT(*) AS n FROM session_characters WHERE character_id = ?').get(other.id).n).toBe(0);
+        expect(api.db.pragma('foreign_key_check')).toEqual([]);
     });
 });

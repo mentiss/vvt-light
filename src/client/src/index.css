@@ -319,6 +319,8 @@ select:disabled {
   /* ── Catalogue (CatalogModal, spec_ui_catalogue.md) ─────────────────────── */
   /* La liste déborde du padding du corps de la modale : lignes bord à bord */
   .vtt-catalog-filters { display: flex; flex-wrap: wrap; gap: 0.375rem; }
+  /* Recherche grisée sur l'onglet libre quand elle est placée avant les onglets (D-19) */
+  .vtt-catalog-search:disabled { opacity: 0.5; cursor: not-allowed; }
   .vtt-catalog-list {
     flex: 1 1 auto; min-height: 0; overflow-y: auto;
     margin: 0 -1.25rem; border-top: 1px solid var(--color-border);

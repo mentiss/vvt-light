@@ -65,7 +65,7 @@ module.exports = {
 
 | Route | Type | Raison |
 |---|---|---|
-| `characters` | **Spécifique** | Structure personnage différente par système |
+| `characters` | **Partagée** (depuis 2026-11-04) | Route commune ; le slug fournit son `CharacterController.js` et, au besoin, ses routes propres (`spec_characters_route.md`) |
 | `combat` | **Spécifique** | Mécaniques de dommages différentes (tokens/PV/etc.) |
 | `sessions` | **Partagée** | Structure identique partout |
 | `journal` | **Partagée** | Structure identique partout |
@@ -74,7 +74,7 @@ module.exports = {
 ### Montage dynamique dans server.js
 Pour chaque système chargé, le serveur monte automatiquement :
 ```
-/api/:slug/characters  →  systems/:slug/routes/characters.js
+/api/:slug/characters  →  systems/:slug/routes/characters.js (facultatif) puis routes/characters.js (commune)
 /api/:slug/combat      →  systems/:slug/routes/combat.js
 /api/:slug/sessions    →  routes/shared/sessions.js
 /api/:slug/journal     →  routes/shared/journal.js
@@ -199,14 +199,7 @@ Inchangée. JWT + refresh token cookie httpOnly.
 
 ## 9. Ajouter un nouveau système (checklist)
 
-1. Créer `src/server/systems/:slug/config.jsx`
-2. Créer `src/server/systems/:slug/characterController.js`
-3. Créer `src/server/systems/:slug/routes/characters.js`
-4. Créer `src/server/systems/:slug/routes/combat.js`
-5. Créer `database-template/:slug-schema.sql`
-6. Ajouter le slug dans `SYSTEMS` de `src/client/src/hooks/useSystem.js`
-7. Ajouter le slug dans `KNOWN_SYSTEMS` de `src/client/src/AppRouter.jsx`
-8. Créer les composants frontend dans `src/client/src/components/systems/:slug/`
+Checklist d'origine périmée (registres centraux supprimés, route `/characters` commune) : la référence est la commande `/new-slug` et le code de `fabula`.
 
 ---
 
