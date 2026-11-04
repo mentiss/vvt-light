@@ -28,3 +28,4 @@
 31102026_audio_track_duration.sql
 03112026_woddavampire_coterie.sql
 03112026_woddavampire_equipment_items.sql
+04112026_dune_identite_atouts.sql
