@@ -24,6 +24,7 @@ import useSystem from "../../hooks/useSystem.js";
 import VkPanel from "./components/ui/VkPanel.jsx";
 import VkModal from "./components/ui/VkModal.jsx";
 import VkIcon from "./components/ui/VkIcon.jsx";
+import CopyAccessButton from "../../components/ui/CopyAccessButton.jsx";
 
 const TOTAL_CARAC_POINTS = 14;
 const TOTAL_SKILL_POINTS = 10;
@@ -93,7 +94,6 @@ const Creation = ({ onCreated, onCancel, darkMode, onToggleDarkMode }) => {
     const [created,  setCreated]  = useState(null);
     const [loading,  setLoading]  = useState(false);
     const [error,    setError]    = useState(null);
-    const [copied,   setCopied]   = useState(false);
     const [step, setStep] = useState(1);
     const [customCode, setCustomCode] = useState('');
     const [skillSearch, setSkillSearch] = useState('');
@@ -398,12 +398,6 @@ const Creation = ({ onCreated, onCancel, darkMode, onToggleDarkMode }) => {
             }
         };
 
-        const copyCode = () => {
-            navigator.clipboard.writeText(created.accessCode);
-            setCopied(true);
-            setTimeout(() => setCopied(false), 2000);
-        };
-
         // ── Écran post-création ──
         if (created) {
             return (
@@ -413,9 +407,7 @@ const Creation = ({ onCreated, onCancel, darkMode, onToggleDarkMode }) => {
                     <VkPanel variant="sm" className="mx-auto max-w-xs">
                         <div className="vk-field-label">Votre code d'accès</div>
                         <div className="vk-title vk-num text-4xl tracking-widest mb-3">{created.accessCode}</div>
-                        <button type="button" className="vk-btn vk-btn-sm" onClick={copyCode}>
-                            {copied ? <><VkIcon name="check" />Copié</> : <><VkIcon name="key" />Copier le code</>}
-                        </button>
+                        <CopyAccessButton character={created} name={formatFullName(created)} icon={<VkIcon name="key" />} className="vtt-btn-sm" />
                         <p className="text-xs text-muted mt-2">Conservez ce code : c'est votre clé d'accès permanente.</p>
                     </VkPanel>
                     <div className="text-xs text-muted">Lien : <span className="vk-num">{created.accessUrl}</span></div>

@@ -15,6 +15,7 @@ import React, { useState, useMemo, useEffect, useRef } from 'react';
 import './theme.css';
 import { useSystem } from '../../hooks/useSystem.js';
 import ThemeToggle from '../../components/ui/ThemeToggle.jsx';
+import CopyAccessButton from '../../components/ui/CopyAccessButton.jsx';
 import {
     PRINCIPES, COMPETENCES, ARCHETYPES, getArchetype,
     FOCUS_CATALOG, getMaximesForArchetype, VERITES_CATALOG, TALENTS_CATALOG,
@@ -179,7 +180,6 @@ const Creation = ({ onCreated, onCancel, darkMode, onToggleDarkMode }) => {
     const [creating, setCreating]     = useState(false);
     const [createError, setCreateError] = useState(null);
     const [created, setCreated]       = useState(null);
-    const [copied, setCopied]         = useState(false);
 
     const principeRang = (key) => {
         const socle = socleFor(key, archetype?.principeMajeur, archetype?.principeMineur);
@@ -305,12 +305,6 @@ const Creation = ({ onCreated, onCancel, darkMode, onToggleDarkMode }) => {
         }
     };
 
-    const copyCode = () => {
-        navigator.clipboard.writeText(created.accessCode);
-        setCopied(true);
-        setTimeout(() => setCopied(false), 2000);
-    };
-
     if (created) {
         return (
             <div className="zb-root zb-grain relative min-h-screen bg-default text-default"
@@ -322,9 +316,7 @@ const Creation = ({ onCreated, onCancel, darkMode, onToggleDarkMode }) => {
                     <div className="rounded-xl p-6 mx-auto max-w-sm bg-surface-alt border border-default">
                         <div className="text-sm text-muted mb-2">Votre code d'accès</div>
                         <div className="font-mono text-4xl font-bold tracking-widest text-default mb-4">{created.accessCode}</div>
-                        <button onClick={copyCode} className="px-4 py-2 text-sm rounded-full bg-primary text-white">
-                            {copied ? '✅ Copié !' : '📋 Copier le code'}
-                        </button>
+                        <CopyAccessButton character={created} />
                         <p className="text-xs text-muted mt-3">Conservez ce code — c'est votre clé d'accès permanente à la fiche.</p>
                     </div>
                     <button onClick={() => onCreated?.(created)} className="px-6 py-3 rounded-sm bg-accent text-white font-semibold zb-display">

@@ -14,6 +14,7 @@
 import React, { useState, useCallback } from 'react';
 import './theme.css';
 import { useSystem }   from '../../hooks/useSystem.js';
+import CopyAccessButton from '../../components/ui/CopyAccessButton.jsx';
 import {
     ATTRIBUTS, ATTRIBUT_LABELS, SKILLS, SKILLS_BY_ATTR,
     BACKGROUNDS, BACKGROUNDS_BY_ID,
@@ -106,7 +107,6 @@ const Creation = ({ onCreated, onCancel, darkMode, onToggleDarkMode }) => {
     const [creating,    setCreating]    = useState(false);
     const [createError, setCreateError] = useState(null);
     const [created,     setCreated]     = useState(null);
-    const [copied,      setCopied]      = useState(false);
 
     // ── Budgets ───────────────────────────────────────────────────────────
     // Attributs : pips dépensés au-dessus du minimum (1D offert)
@@ -687,9 +687,7 @@ const Creation = ({ onCreated, onCancel, darkMode, onToggleDarkMode }) => {
                                         <div className="rounded-xl p-4 mx-auto max-w-xs" style={{ background: 'var(--color-surface-alt)', border: '2px solid var(--color-accent)' }}>
                                             <p style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)', marginBottom: 6 }}>Votre code d'accès</p>
                                             <p className="font-mono text-4xl font-bold tracking-widest" style={{ color: 'var(--color-accent)' }}>{created.accessCode}</p>
-                                            <button onClick={() => { navigator.clipboard.writeText(created.accessCode); setCopied(true); setTimeout(() => setCopied(false), 2000); }} className="mt-3 px-4 py-1 rounded text-sm" style={{ background: 'var(--color-surface)', border: '1px solid var(--color-border)', color: 'var(--color-text)' }}>
-                                                {copied ? '✅ Copié !' : '📋 Copier'}
-                                            </button>
+                                            <CopyAccessButton character={created} className="vtt-btn-sm mt-3" />
                                             <p style={{ fontSize: '0.7rem', color: 'var(--color-text-muted)', marginTop: 8 }}>Conservez ce code — c'est votre clé d'accès permanente.</p>
                                         </div>
                                         <p style={{ fontSize: '0.78rem', color: 'var(--color-text-muted)' }}>

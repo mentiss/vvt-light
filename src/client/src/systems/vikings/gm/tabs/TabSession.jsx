@@ -17,6 +17,7 @@ import { useSystem } from '../../../../hooks/useSystem.js';
 import GMSendModal    from '../../../../components/gm/modals/GMSendModal.jsx';
 import AvatarUploader from '../../../../components/AvatarUploader.jsx';
 import AudioSessionToggle from '../../../../components/audio/AudioSessionToggle.jsx';
+import CopyAccessButton from '../../../../components/ui/CopyAccessButton.jsx';
 
 import SheetLayout     from '../../components/layout/SheetLayout.jsx';
 import DiceModal       from '../../components/modals/DiceModal.jsx';
@@ -67,7 +68,7 @@ const Empty = ({ icon, title, children }) => (
 // ── Onglet ───────────────────────────────────────────────────────────────────
 
 const TabSession = ({ activeSession, onlineCharacters = [], characterUpdates }) => {
-    const { slug, apiBase } = useSystem();
+    const { apiBase } = useSystem();
     const fetchWithAuth = useFetch();
 
     const [characters, setCharacters] = useState({});   // { [id]: personnage complet }
@@ -83,7 +84,6 @@ const TabSession = ({ activeSession, onlineCharacters = [], characterUpdates }) 
     const [showEditModal,     setShowEditModal]     = useState(null);
     const [showTableActions,  setShowTableActions]  = useState(false);
     const [diceContext,       setDiceContext]       = useState(null);
-    const [copied,            setCopied]            = useState(false);
 
     // Dernier état connu, lu par update() : deux mises à jour successives
     // (dépense puis restitution d'un jet) s'enchaînent sans se perdre.
@@ -190,20 +190,6 @@ const TabSession = ({ activeSession, onlineCharacters = [], characterUpdates }) 
         update(prev => ({ ...prev, ...edited }));
     };
 
-    // ── Copier le lien et le code d'accès ─────────────────────────────────
-    const handleCopyCode = () => {
-        const c = characters[selectedId];
-        if (!c) return;
-        const text = [
-            `Pure Vikings — ${formatFullName(c)}`,
-            `Lien : ${window.location.origin}/${slug}/${c.accessUrl}`,
-            `Code : ${c.accessCode}`,
-        ].join('\n');
-        navigator.clipboard.writeText(text).then(() => {
-            setCopied(true);
-            setTimeout(() => setCopied(false), 2000);
-        });
-    };
 
     // ── Envoi d'objet au journal (route générique ; les messages sont envoyés par GMSendModal) ──
     const handleGMSendItem = async (sendData) => {
@@ -263,9 +249,7 @@ const TabSession = ({ activeSession, onlineCharacters = [], characterUpdates }) 
                 ) : (
                     <>
                         <div className="flex items-center gap-2 flex-wrap justify-end mb-4">
-                            <button type="button" onClick={handleCopyCode} className="vk-btn vk-btn-sm">
-                                {copied ? <><VkIcon name="check" />Copié</> : <><VkIcon name="key" />Copier lien + code</>}
-                            </button>
+                            <CopyAccessButton character={char} name={formatFullName(char)} icon={<VkIcon name="key" />} className="vtt-btn-sm" />
                             {editMode ? (
                                 <>
                                     <button type="button" onClick={cancelEdit} className="vk-btn vk-btn-danger vk-btn-sm">Annuler</button>

@@ -16,6 +16,7 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
 import { useSystem } from '../../hooks/useSystem.js';
+import CopyAccessButton from '../../components/ui/CopyAccessButton.jsx';
 import './theme.css';
 
 import cyberpunkConfig, {
@@ -1078,7 +1079,7 @@ const Step7Finalisation = ({
                     >
                         {created.accessCode}
                     </span>
-                    <CopyButton text={created.accessCode} />
+                    <CopyAccessButton character={created} className="vtt-btn-sm" />
                 </div>
 
                 <button
@@ -1183,24 +1184,6 @@ const RecapLine = ({ label, value }) => (
         <span style={{ color: 'var(--color-text)' }}>{value ?? '—'}</span>
     </div>
 );
-
-const CopyButton = ({ text }) => {
-    const [copied, setCopied] = useState(false);
-    return (
-        <button
-            onClick={() => { navigator.clipboard.writeText(text); setCopied(true); setTimeout(() => setCopied(false), 2000); }}
-            className="text-xs px-3 py-1 rounded-lg"
-            style={{
-                background: 'var(--color-surface-alt)',
-                border:     '1px solid var(--color-border)',
-                color:      'var(--color-text-muted)',
-                cursor:     'pointer',
-            }}
-        >
-            {copied ? '✅ Copié !' : '📋 Copier'}
-        </button>
-    );
-};
 
 // ─────────────────────────────────────────────────────────────────────────────
 // WIZARD PRINCIPAL

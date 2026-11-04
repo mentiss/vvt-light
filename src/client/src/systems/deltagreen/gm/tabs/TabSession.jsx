@@ -29,6 +29,7 @@ import PhysicalDescriptionSection from '../../components/layout/PhysicalDescriot
 import DiceModal                 from '../../components/modals/DiceModal.jsx';
 import GMSendModal               from '../../../../components/gm/modals/GMSendModal.jsx';
 import AudioSessionToggle        from '../../../../components/audio/AudioSessionToggle.jsx';
+import CopyAccessButton          from '../../../../components/ui/CopyAccessButton.jsx';
 
 // ── Constantes ────────────────────────────────────────────────────────────────
 
@@ -223,12 +224,10 @@ const AgentCompactRow = ({ character, isOnline, isActiveTurn, isSelected, onSele
 // GMAgentPanel — fiche complète GM (panneau droit)
 // ══════════════════════════════════════════════════════════════════════════════
 const GMAgentPanel = ({ char, isOnline, sessionId, onCharacterUpdate, onSendNote, onPalierChange, onTagChange }) => {
-    const { slug } = useSystem();
 
     const [localChar, setLocalChar] = useState(char);
     const [dirty,     setDirty]     = useState(false);
     const [editMode,  setEditMode]  = useState(false); // ← lecture par défaut
-    const [copied,    setCopied]    = useState(false);
 
     const localCharRef = useRef(localChar);
     useEffect(() => { localCharRef.current = localChar; }, [localChar]);
@@ -263,14 +262,6 @@ const GMAgentPanel = ({ char, isOnline, sessionId, onCharacterUpdate, onSendNote
     const handleSave = () => {
         onCharacterUpdate(localChar);
         setDirty(false);
-    };
-
-    const handleCopyLink = () => {
-        const url  = `${window.location.origin}/${slug}/${localChar.accessUrl}`;
-        const code = localChar.accessCode ?? '';
-        navigator.clipboard.writeText(`${url}\nCode : ${code}`);
-        setCopied(true);
-        setTimeout(() => setCopied(false), 2000);
     };
 
     const handlePalier = (p)   => patchImmediate({ degradationPalier: p });
@@ -333,10 +324,7 @@ const GMAgentPanel = ({ char, isOnline, sessionId, onCharacterUpdate, onSendNote
                             ].join(' ')}
                             title={editMode ? 'Repasser en lecture' : 'Activer le mode édition'}
                         >{editMode ? '✎ Édition' : '👁 Lecture'}</button>
-                        <button
-                            onClick={handleCopyLink}
-                            className="text-xs font-mono border border-default px-2 py-1 hover:border-accent hover:text-accent transition-colors"
-                        >{copied ? '✓ Copié' : '📋 Lien'}</button>
+                        <CopyAccessButton character={localChar} className="vtt-btn-sm" />
                         <button
                             onClick={onSendNote}
                             className="text-xs font-mono border border-default px-2 py-1 hover:border-accent hover:text-accent transition-colors"

@@ -12,10 +12,11 @@
 // Dérangements, liens | Équipement (bourse : catalogue).
 // Les actions de jeu (jauges, états, équipement) s'enregistrent tout de suite.
 //
-// Props : c, onPatch(patch), onRoll(setup), onModify(), onNote(), onCopyCode(), copied, onGiveXp()
+// Props : c, onPatch(patch), onRoll(setup), onModify(), onNote(), onGiveXp()
 // ─────────────────────────────────────────────────────────────────────────────
 
 import React from 'react';
+import CopyAccessButton from '../../../../components/ui/CopyAccessButton.jsx';
 import { DISCIPLINES, IMPOSED_STATES, IMPOSED_STATE_ORDER } from '../../config.jsx';
 import { characterProfile, archetypeLabel, traitMaxFor, disciplineSummary } from '../../config/rules/character.js';
 import { woundSummary, xpAvailable } from '../../config/rules/sheetRules.js';
@@ -28,7 +29,7 @@ import { VdaWeakness, VdaDerangements, VdaBloodBonds } from './VdaConditions.jsx
 const noEdit = () => {};
 
 /** Identité en une ligne de faits, avec les actions du Conteur sur ce personnage */
-const GmIdentity = ({ c, onNote, onCopyCode, copied, onModify }) => {
+const GmIdentity = ({ c, onNote, onModify }) => {
     const { clanLabel, bloodMax, perTurn, road, roadStatus } = characterProfile(c);
     return (
         <div className="vda-gm-id">
@@ -46,7 +47,7 @@ const GmIdentity = ({ c, onNote, onCopyCode, copied, onModify }) => {
             </div>
             <div className="vda-gm-id-actions">
                 <button type="button" className="vtt-btn vtt-btn-sm" onClick={onNote}>✉ Note</button>
-                <button type="button" className="vtt-btn vtt-btn-sm" onClick={onCopyCode}>{copied ? 'Copié' : 'Copier le code'}</button>
+                <CopyAccessButton character={c} className="vtt-btn-sm" />
                 <button type="button" className="vtt-btn vtt-btn-sm" onClick={onModify}>Modifier</button>
             </div>
         </div>
@@ -108,10 +109,10 @@ const GmDisciplines = ({ c }) => {
     );
 };
 
-const VdaGmSheet = ({ c, onPatch, onRoll, onModify, onNote, onCopyCode, copied, onGiveXp }) => (
+const VdaGmSheet = ({ c, onPatch, onRoll, onModify, onNote, onGiveXp }) => (
     <section className="vda-sheet vda-gm-sheet">
         <VdaCorners />
-        <GmIdentity c={c} onNote={onNote} onCopyCode={onCopyCode} copied={copied} onModify={onModify} />
+        <GmIdentity c={c} onNote={onNote} onModify={onModify} />
         <GmState c={c} onPatch={onPatch} onGiveXp={onGiveXp} />
 
         <div className="vda-col-title vda-gm-h">Attributs</div>

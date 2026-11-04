@@ -15,7 +15,6 @@
 import React, { useState } from 'react';
 import AudioSessionToggle from '../../../../components/audio/AudioSessionToggle.jsx';
 import GMSendModal from '../../../../components/gm/modals/GMSendModal.jsx';
-import { useSystem } from '../../../../hooks/useSystem.js';
 
 import VdaSheet from '../../components/layout/VdaSheet.jsx';
 import VdaGmSheet from '../../components/layout/VdaGmSheet.jsx';
@@ -23,12 +22,10 @@ import VdaGmTableRow from '../../components/layout/VdaGmTableRow.jsx';
 import VdaDiceModal from '../../components/modals/VdaDiceModal.jsx';
 
 const TabSession = ({ activeSession, onlineCharacters, characters, order, loading, patchCharacter, onGiveXp }) => {
-    const { slug } = useSystem();
     const [selectedId, setSelectedId] = useState(null);
     const [draft, setDraft] = useState(null);           // fiche en édition (Modifier) ou null
     const [rollSetup, setRollSetup] = useState(null);
     const [noteOpen, setNoteOpen] = useState(false);
-    const [copied, setCopied] = useState(false);
 
     const online = new Set((onlineCharacters ?? []).map(o => o.characterId));
     const currentId = selectedId && characters[selectedId] ? selectedId : order[0] ?? null;
@@ -39,10 +36,6 @@ const TabSession = ({ activeSession, onlineCharacters, characters, order, loadin
     const select = (id) => { setSelectedId(id); setDraft(null); };
     const patch = (p) => patchCharacter(currentId, p);
     const saveDraft = async () => { await patchCharacter(currentId, draft); setDraft(null); };
-    const copyCode = () => {
-        const text = [`Vampire : l'Âge des Ténèbres — ${c.nom}`, `Lien : ${window.location.origin}/${slug}/${c.accessUrl}`, `Code : ${c.accessCode}`].join('\n');
-        navigator.clipboard?.writeText(text).then(() => { setCopied(true); setTimeout(() => setCopied(false), 2000); });
-    };
 
     return (
         <div className="vda-gm-session">
@@ -58,7 +51,7 @@ const TabSession = ({ activeSession, onlineCharacters, characters, order, loadin
             <div className="min-w-0">
                 {!c && <p className="vda-note p-6">Sélectionnez un personnage.</p>}
                 {c && !draft && (
-                    <VdaGmSheet c={c} onPatch={patch} onRoll={setRollSetup} copied={copied} onCopyCode={copyCode}
+                    <VdaGmSheet c={c} onPatch={patch} onRoll={setRollSetup}
                                 onNote={() => setNoteOpen(true)} onGiveXp={() => onGiveXp(currentId)} onModify={() => setDraft({ ...c })} />
                 )}
                 {c && draft && (

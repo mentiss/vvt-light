@@ -10,6 +10,7 @@
 
 import React, { useState } from 'react';
 import AudioSessionToggle from '../../../../components/audio/AudioSessionToggle.jsx';
+import CopyAccessButton from '../../../../components/ui/CopyAccessButton.jsx';
 import VilGmTableRow from '../../components/layout/VilGmTableRow.jsx';
 import VilSheet from '../../components/layout/VilSheet.jsx';
 import VilEditForm from '../../components/layout/VilEditForm.jsx';
@@ -51,7 +52,10 @@ const TabSession = ({ activeSession, onlineCharacters, characters, order, loadin
                                 <button type="button" className="vtt-btn vtt-btn-sm vtt-btn-primary" onClick={saveEdit}>Enregistrer</button>
                             </>
                         ) : (
-                            <button type="button" className="vil-icon-btn" onClick={() => setDraft(editDraft(current))} title="Mode Édition" aria-label="Mode Édition"><EditIcon /></button>
+                            <>
+                                <CopyAccessButton character={current} className="vtt-btn-sm" />
+                                <button type="button" className="vil-icon-btn" onClick={() => setDraft(editDraft(current))} title="Mode Édition" aria-label="Mode Édition"><EditIcon /></button>
+                            </>
                         )}
                     </div>
                     {draft ? <VilEditForm draft={draft} setDraft={setDraft} /> : <VilSheet c={current} act={act} />}

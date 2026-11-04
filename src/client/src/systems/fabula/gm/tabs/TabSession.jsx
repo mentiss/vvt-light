@@ -20,6 +20,7 @@ import { useSystem } from '../../../../hooks/useSystem.js';
 import GMSendModal from '../../../../components/gm/modals/GMSendModal.jsx';
 import AudioSessionToggle from '../../../../components/audio/AudioSessionToggle.jsx';
 import AvatarUploader from '../../../../components/AvatarUploader.jsx';
+import CopyAccessButton from '../../../../components/ui/CopyAccessButton.jsx';
 
 import { CLASSES, computeDerivedStats } from '../../config.jsx';
 import FicheGrid       from '../../components/layout/FicheGrid.jsx';
@@ -41,7 +42,6 @@ const TabSession = ({ activeSession, onlineCharacters, characterUpdates }) => {
     const [showSendModal, setShowSendModal] = useState(false);
     const [showAvatarUploader, setShowAvatarUploader] = useState(false);
     const [diceModalAttrs, setDiceModalAttrs] = useState(null);
-    const [copied, setCopied] = useState(false);
     const [saving, setSaving] = useState(false);
 
     // Compteur GM de Points Fabula dépensés par personnage, pour cette session
@@ -197,21 +197,6 @@ const TabSession = ({ activeSession, onlineCharacters, characterUpdates }) => {
         }
     };
 
-    // ── Copier le code d'accès ────────────────────────────────────────────────
-    const handleCopyCode = () => {
-        const c = characters[selectedId];
-        if (!c) return;
-        const text = [
-            `Fabula Ultima — ${c.nom || 'Sans nom'}`,
-            `Lien : ${window.location.origin}/fabula/${c.accessUrl}`,
-            `Code : ${c.accessCode}`,
-        ].join('\n');
-        navigator.clipboard.writeText(text).then(() => {
-            setCopied(true);
-            setTimeout(() => setCopied(false), 2000);
-        });
-    };
-
     const sessionCharsForModal = (activeSession?.characters ?? []).map(sc => ({
         id: sc.id,
         name: characters[sc.id]?.nom ?? `#${sc.id}`,
@@ -301,9 +286,7 @@ const TabSession = ({ activeSession, onlineCharacters, characterUpdates }) => {
                             <button onClick={() => setShowSendModal(true)} className="px-2 py-1 rounded border border-default text-xs">
                                 ✉ Note
                             </button>
-                            <button onClick={handleCopyCode} className="px-2 py-1 rounded border border-default text-xs">
-                                {copied ? '✓ Copié' : '⎘ Copier'}
-                            </button>
+                            <CopyAccessButton character={char} className="vtt-btn-sm" />
                             {editMode ? (
                                 <>
                                     <button onClick={cancelEdit} className="px-2 py-1 rounded border border-default text-xs">Annuler</button>

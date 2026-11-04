@@ -17,6 +17,7 @@ import React, { useCallback, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useSystem } from '../../hooks/useSystem.js';
 import ThemeToggle   from '../../components/ui/ThemeToggle.jsx';
+import CopyAccessButton from '../../components/ui/CopyAccessButton.jsx';
 
 import { ROLL_TYPES, BONUS_COSTS } from './config.jsx';
 import { useVdaRoll } from './hooks/useVdaRoll.js';
@@ -145,7 +146,6 @@ const Creation = ({ darkMode, onToggleDarkMode }) => {
     const [submitting, setSubmitting] = useState(false);
     const [error, setError]         = useState(null);
     const [created, setCreated]     = useState(null);   // { accessCode, accessUrl }
-    const [copied, setCopied]       = useState(false);
 
     // Chaque modification rend les points des traits devenus interdits (sanitizeCreation)
     const patch = useCallback((p) => setWs(prev => sanitizeCreation({ ...prev, ...p })), []);
@@ -188,12 +188,6 @@ const Creation = ({ darkMode, onToggleDarkMode }) => {
         }
     };
 
-    const copyCode = () => {
-        navigator.clipboard?.writeText(created.accessCode);
-        setCopied(true);
-        setTimeout(() => setCopied(false), 2000);
-    };
-
     // ── Onglets et compteurs ─────────────────────────────────────────────────
     const badge = (left, errors) => (left === 0 && !errors ? { badge: '✓', badgeClass: 'is-done' } : { badge: left || '!', badgeClass: 'is-left' });
     const attrLeft = sumValues(attributeRemaining(ws));
@@ -223,7 +217,7 @@ const Creation = ({ darkMode, onToggleDarkMode }) => {
                     <div className="vda-label">Code d'accès</div>
                     <div className="vda-font-title text-4xl tracking-widest text-accent mb-3">{created.accessCode}</div>
                     <div className="flex flex-col gap-2 items-center">
-                        <button type="button" className="vtt-btn" onClick={copyCode}>{copied ? 'Copié' : 'Copier le code'}</button>
+                        <CopyAccessButton character={{ ...ws, ...created }} />
                         <button type="button" className="vtt-btn vtt-btn-primary" onClick={() => navigate(`/${slug}/${created.accessUrl}`)}>
                             Accéder à ma fiche
                         </button>

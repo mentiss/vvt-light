@@ -13,6 +13,7 @@ import React, { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useSystem } from '../../hooks/useSystem.js';
 import ThemeToggle   from '../../components/ui/ThemeToggle.jsx';
+import CopyAccessButton from '../../components/ui/CopyAccessButton.jsx';
 
 import { INITIAL_CREATION, creationTodo, isCreationComplete, buildCharacterPayload } from './config/rules/creation.js';
 import { displayName } from './config/rules/character.js';
@@ -59,7 +60,6 @@ const Creation = ({ darkMode, onToggleDarkMode }) => {
     const [submitting, setSubmitting] = useState(false);
     const [error, setError]         = useState(null);
     const [created, setCreated]     = useState(null);   // { accessCode, accessUrl }
-    const [copied, setCopied]       = useState(false);
 
     const todo = useMemo(() => creationTodo(ws), [ws]);
     const complete = isCreationComplete(ws);
@@ -89,12 +89,6 @@ const Creation = ({ darkMode, onToggleDarkMode }) => {
         }
     };
 
-    const copyCode = () => {
-        navigator.clipboard?.writeText(created.accessCode);
-        setCopied(true);
-        setTimeout(() => setCopied(false), 2000);
-    };
-
     // ── Écran post-création : le code d'accès d'abord, sinon impossible de revenir ──
     if (created) {
         return (
@@ -105,7 +99,7 @@ const Creation = ({ darkMode, onToggleDarkMode }) => {
                     <span className="vil-label is-plain">Code d'accès</span>
                     <div className="vil-code mb-3">{created.accessCode}</div>
                     <div className="flex flex-col gap-2 items-center">
-                        <button type="button" className="vtt-btn" onClick={copyCode}>{copied ? 'Copié' : 'Copier le code'}</button>
+                        <CopyAccessButton character={{ ...ws, ...created }} />
                         <button type="button" className="vtt-btn vtt-btn-primary" onClick={() => navigate(`/${slug}/${created.accessUrl}`)}>
                             Accéder à ma fiche
                         </button>

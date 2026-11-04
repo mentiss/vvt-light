@@ -5,6 +5,7 @@
 // d'aide contextuelle au survol ou au focus d'un élément.
 
 import React, { useState } from 'react';
+import CopyAccessButton from '../../../../components/ui/CopyAccessButton.jsx';
 import DuneIcon from '../ui/DuneIcon.jsx';
 import DuneWorm from '../ui/DuneWorm.jsx';
 import { DuneField, DuneFrame, DuneStepper } from '../ui/DuneFields.jsx';
@@ -282,8 +283,6 @@ export const RecapStep = ({ state, error }) => {
 // ── Écran du code d'accès ───────────────────────────────────────────────────
 
 export const CreatedScreen = ({ created, onEnter }) => {
-    const [copied, setCopied] = useState(false);
-    const copy = () => navigator.clipboard?.writeText(created.accessCode).then(() => { setCopied(true); setTimeout(() => setCopied(false), 2000); });
     return (
         <div className="dn-empty">
             <DuneWorm />
@@ -291,7 +290,7 @@ export const CreatedScreen = ({ created, onEnter }) => {
             <p>Votre code d’accès</p>
             <div className="dn-access-code">{created.accessCode}</div>
             <div className="flex gap-2 flex-wrap justify-center">
-                <button type="button" className="vtt-btn" onClick={copy}>{copied ? 'Copié' : 'Copier le code'}</button>
+                <CopyAccessButton character={created} icon={<DuneIcon name="key" className="dn-ico w-4 h-4" />} />
                 <button type="button" className="vtt-btn vtt-btn-primary" onClick={() => onEnter(created)}>Accéder à la fiche</button>
             </div>
             <p>Conservez ce code : c’est votre clé d’accès.</p>

@@ -23,6 +23,7 @@ Avant d'écrire un composant qui reçoit des props de la plateforme, **ouvre la 
 - `SessionPlayersBar` vit aussi dans `src/components/layout/`.
 - Aide de jeu (référence des règles) : `components/reference/ReferenceGuide.jsx` (props `sections`, `isGM`, `renderBlock?`, `placeholder?`), contenu en Markdown converti par `markdownToSections` (`tools/reference.js`), visibilité `gm` / `player`. Contrat dans `documentations/spec_ui_reference.md`.
 - Onglet courant gardé dans le hash de l'URL : `useHashTab(TABS, défaut)` (`hooks/useHashTab.js`).
+- Copie des accès d'un personnage (message Discord : jeu, nom, lien, code) : `components/ui/CopyAccessButton.jsx` (props `character`, `name?`, `label?`, `icon?`, `className?`), habillé par `.vtt-btn`. Posé dans le `TabSession` et l'écran de fin de création de chaque slug.
 
 ## Moteur de dés (`src/tools/diceEngine.js`)
 

@@ -21,7 +21,7 @@ import {
     BACKGROUNDS_BY_ID, BLESSURE_LABELS,
 } from '../../../config.jsx';
 import SendItemModal from "../modals/SendItemModal.jsx";
-import {useParams} from "react-router-dom";
+import CopyAccessButton from '../../../../../components/ui/CopyAccessButton.jsx';
 
 // ─────────────────────────────────────────────────────────────────────────────
 
@@ -192,7 +192,6 @@ const TabSession = ({ activeSession, onlineCharacters }) => {
 const CharSheet = ({ char, isOnline, onUpdate }) => {
     const pd = char.points_destin    ?? 0;
     const pp = char.points_personnage ?? 0;
-    const { system } = useParams();
 
     return (
         <div className="flex flex-col gap-6 rounded-xl p-4"
@@ -220,10 +219,7 @@ const CharSheet = ({ char, isOnline, onUpdate }) => {
                                   style={{ background: isOnline ? 'var(--color-success)' : 'var(--color-surface-alt)', color: isOnline ? '#fff' : 'var(--color-text-muted)' }}>
                                 {isOnline ? '🟢 En ligne' : '⚫ Hors ligne'}
                             </span>
-                            <CopyLinkButton
-                                char={char}
-                                system={system}
-                            />
+                            <CopyAccessButton character={char} className="vtt-btn-sm" />
                         </div>
                         <p style={{ fontSize: '0.8rem', color: 'var(--color-text-muted)', marginTop: 2 }}>{char.playerName}</p>
                         {(char.age || char.taille || char.sexe) && (
@@ -384,32 +380,5 @@ const GmBtn = ({ onClick, children }) => (
         {children}
     </button>
 );
-
-const CopyLinkButton = ({ char, system }) => {
-    const [copied, setCopied] = useState(false);
-
-    const handleCopy = () => {
-        const text = `🤠 ${char.prenom} ${char.nom}\nCode : ${char.accessCode}\nURL : ${window.location.origin}/${system}/${char.accessUrl}`;
-        navigator.clipboard.writeText(text);
-        setCopied(true);
-        setTimeout(() => setCopied(false), 2000);
-    };
-
-    return (
-        <button
-            onClick={handleCopy}
-            title="Copier le lien d'accès"
-            className="px-3 py-1.5 rounded text-xs font-semibold transition-all duration-200"
-            style={{
-                background:  copied ? 'var(--color-success)' : 'var(--color-surface)',
-                border:      `1px solid ${copied ? 'var(--color-success)' : 'var(--color-border)'}`,
-                color:       copied ? '#fff' : 'var(--color-text)',
-                transform:   copied ? 'scale(1.05)' : 'scale(1)',
-            }}
-        >
-            {copied ? '✓ Copié !' : '🔗 Copier le lien'}
-        </button>
-    );
-};
 
 export default TabSession;

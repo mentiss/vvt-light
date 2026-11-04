@@ -25,6 +25,7 @@ import { useFetch }    from '../../hooks/useFetch.js';
 import { useNavigate } from 'react-router-dom';
 import { roll }        from '../../tools/diceEngine.js';
 import ThemeToggle      from '../../components/ui/ThemeToggle.jsx';
+import CopyAccessButton from '../../components/ui/CopyAccessButton.jsx';
 import fabulaConfig, { CLASSES, CLASS_ORDER, SPELL_LISTS, ARCANA_LISTS, equipItem, unequipItem, classAtoutBonuses } from './config.jsx';
 import EquipmentEditForm, { EquipmentItemSummary, EMPLACEMENT_LABELS, createEmptyItem } from './components/layout/EquipmentEditForm.jsx';
 import EquipmentCatalogModal from './components/modals/EquipmentCatalogModal.jsx';
@@ -184,7 +185,6 @@ const Creation = ({ darkMode, onToggleDarkMode }) => {
     const [dragOverAttr, setDragOverAttr]     = useState(null);
     const [accessCode, setAccessCode] = useState(null);
     const [accessUrl, setAccessUrl]   = useState(null);
-    const [copied, setCopied]         = useState(false);
 
     const [ws, setWs] = useState({
         // Étape 8 (dernière)
@@ -516,12 +516,6 @@ const Creation = ({ darkMode, onToggleDarkMode }) => {
         }
     };
 
-    const copyCode = () => {
-        navigator.clipboard.writeText(accessCode);
-        setCopied(true);
-        setTimeout(() => setCopied(false), 2000);
-    };
-
     // ══════════════════════════════════════════════════════════════════════════
     // ÉCRAN POST-CRÉATION — affiché avant toute navigation
     // ══════════════════════════════════════════════════════════════════════════
@@ -535,9 +529,7 @@ const Creation = ({ darkMode, onToggleDarkMode }) => {
                     <p className="text-xs text-muted mb-4">Notez ce code — c'est votre seule façon de retrouver votre fiche.</p>
                     <div className="text-xs text-muted mb-1">Code d'accès</div>
                     <div className="fu-font-title text-3xl tracking-widest text-accent mb-3">{accessCode}</div>
-                    <button onClick={copyCode} className="px-3 py-1 rounded border border-default text-sm mb-4">
-                        {copied ? '✓ Copié !' : '⎘ Copier le code'}
-                    </button>
+                    <CopyAccessButton character={{ ...ws, accessCode, accessUrl }} className="vtt-btn-sm mb-4" />
                     <button onClick={() => navigate(`/${slug}/${accessUrl}`)}
                             className="px-4 py-2 rounded bg-primary text-white w-full">
                         Accéder à ma fiche →

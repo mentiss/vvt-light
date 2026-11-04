@@ -11,6 +11,7 @@
 import React, { useState, useCallback } from 'react';
 import { useNavigate }   from 'react-router-dom';
 import { useSystem }     from '../../hooks/useSystem.js';
+import CopyAccessButton  from '../../components/ui/CopyAccessButton.jsx';
 import { BASE_SKILLS, PROFESSIONS, SKILL_BY_KEY } from './config.jsx';
 import './theme.css';
 
@@ -448,6 +449,7 @@ const Creation = ({ darkMode, onToggleDarkMode }) => {
     const [submitting, setSubmitting] = useState(false);
     const [error,      setError]      = useState('');
     const [accessCode, setAccessCode] = useState(null);
+    const [accessUrl,  setAccessUrl]  = useState(null);
 
     // Données du wizard
     const [stats,      setStats]      = useState({ str: 10, con: 10, dex: 10, int: 10, pow: 10, cha: 10 });
@@ -486,6 +488,7 @@ const Creation = ({ darkMode, onToggleDarkMode }) => {
 
             const char = await res.json();
             setAccessCode(char.accessCode);
+            setAccessUrl(char.accessUrl);
             // Ne pas naviguer immédiatement — afficher le code d'accès d'abord
         } catch (err) {
             setError(err.message);
@@ -514,12 +517,14 @@ const Creation = ({ darkMode, onToggleDarkMode }) => {
                         <p className="font-mono text-3xl font-black tracking-widest">{accessCode}</p>
                     </div>
 
+                    <CopyAccessButton character={{ ...details, accessCode, accessUrl }} className="vtt-btn-sm" />
+
                     <p className="text-xs text-muted font-mono italic">
                         Ne partagez pas ce code. Il vous identifie comme Agent Delta Green.
                     </p>
 
                     <button
-                        onClick={() => navigate(`/${slug}/`)}
+                        onClick={() => navigate(`/${slug}/${accessUrl}`)}
                         className="w-full py-2 bg-danger text-white text-xs font-mono uppercase tracking-wider hover:opacity-90 mt-4"
                     >
                         Accéder à ma fiche

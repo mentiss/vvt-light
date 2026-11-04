@@ -24,6 +24,7 @@ import { useSystem }  from '../../../../hooks/useSystem.js';
 import TableManagementModal from '../../../../components/gm/modals/TableManagementModal.jsx';
 import GMSendModal          from '../../../../components/gm/modals/GMSendModal.jsx';
 import AudioSessionToggle   from '../../../../components/audio/AudioSessionToggle.jsx';
+import CopyAccessButton     from '../../../../components/ui/CopyAccessButton.jsx';
 
 import { ARCHETYPES } from '../../config.jsx';
 
@@ -140,7 +141,7 @@ const SidebarCharItem = ({ character, isOnline, isSelected, onClick }) => {
 // ── Sous-composant : barre d'actions GM ───────────────────────────────────────
 // Défini au niveau module.
 
-const GMActionBar = ({ char, editMode, copied, onToggleEdit, onSendNote, onCopyCode, onManageSessions }) => (
+const GMActionBar = ({ char, editMode, onToggleEdit, onSendNote, onManageSessions }) => (
     <div className="ac-card flex items-center gap-2 flex-wrap">
         <button
             onClick={onToggleEdit}
@@ -155,13 +156,7 @@ const GMActionBar = ({ char, editMode, copied, onToggleEdit, onSendNote, onCopyC
                 <button onClick={onSendNote} className="ac-btn ac-btn-secondary">
                     ✉ Envoyer une note
                 </button>
-                <button
-                    onClick={onCopyCode}
-                    className="ac-btn ac-btn-secondary"
-                    style={copied ? { color: 'var(--ac-success)', borderColor: 'var(--ac-success)' } : {}}
-                >
-                    {copied ? '✓ Copié !' : '⎘ Code d\'accès'}
-                </button>
+                <CopyAccessButton character={char} />
             </>
         )}
 
@@ -187,7 +182,6 @@ const TabSession = ({ activeSession, onSessionChange, onlineCharacters }) => {
     const [loading,       setLoading]       = useState(false);
     const [editMode,      setEditMode]      = useState(false);
     const [showSendModal, setShowSendModal] = useState(false);
-    const [copied,        setCopied]        = useState(false);
     const [showTable,     setShowTable]     = useState(false);
     const [resources,     setResources]     = useState({ momentum: 0, threat: 0, complications: 0 });
 
@@ -309,22 +303,6 @@ const TabSession = ({ activeSession, onSessionChange, onlineCharacters }) => {
         }
     }, [editMode, saveEdit]);
 
-    // ── Copier le code d'accès ────────────────────────────────────────────────
-    const handleCopyCode = useCallback(() => {
-        const char = characters[selectedId];
-        if (!char) return;
-        const fullName = [char.prenom, char.nom].filter(Boolean).join(' ') || 'Anonyme';
-        const text = [
-            `Achtung! Cthulhu — ${fullName}`,
-            `Lien : ${window.location.origin}/achtung/${char.accessUrl}`,
-            `Code : ${char.accessCode}`,
-        ].join('\n');
-        navigator.clipboard.writeText(text).then(() => {
-            setCopied(true);
-            setTimeout(() => setCopied(false), 2000);
-        });
-    }, [characters, selectedId]);
-
     // ── Données dérivées ──────────────────────────────────────────────────────
     const sessionCharacters    = activeSession?.characters ?? [];
     const char                 = selectedId ? characters[selectedId] : null;
@@ -398,10 +376,8 @@ const TabSession = ({ activeSession, onSessionChange, onlineCharacters }) => {
                     <GMActionBar
                         char={char}
                         editMode={editMode}
-                        copied={copied}
                         onToggleEdit={handleToggleEdit}
                         onSendNote={() => setShowSendModal(true)}
-                        onCopyCode={handleCopyCode}
                         onManageSessions={() => setShowTable(true)}
                     />
                 </div>

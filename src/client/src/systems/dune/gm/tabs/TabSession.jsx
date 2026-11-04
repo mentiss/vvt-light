@@ -12,6 +12,7 @@
 import React, { useState } from 'react';
 import AudioSessionToggle from '../../../../components/audio/AudioSessionToggle.jsx';
 import GMSendModal from '../../../../components/gm/modals/GMSendModal.jsx';
+import CopyAccessButton from '../../../../components/ui/CopyAccessButton.jsx';
 import { useFetch }  from '../../../../hooks/useFetch.js';
 import { useSystem } from '../../../../hooks/useSystem.js';
 import DuneIcon from '../../components/ui/DuneIcon.jsx';
@@ -86,6 +87,7 @@ const TabSession = ({ activeSession, onlineCharacters, characters, order, loadin
                                 <button type="button" className="vtt-btn vtt-btn-sm" onClick={() => setAssetOpen(true)}>
                                     <DuneIcon name="blade" className="dn-ico w-4 h-4" />Envoyer un atout
                                 </button>
+                                <CopyAccessButton character={current} className="vtt-btn-sm" icon={<DuneIcon name="key" className="dn-ico w-4 h-4" />} />
                                 <button type="button" className="vtt-btn vtt-btn-sm" onClick={() => setDraft(current)} title="Mode Édition">
                                     <DuneIcon name="quill" className="dn-ico w-4 h-4" />Édition
                                 </button>
