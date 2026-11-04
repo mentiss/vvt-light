@@ -41,7 +41,7 @@ const GMApp = ({ activeSession, onSessionChange, onlineCharacters, characterUpda
     const [showFreeDice, setShowFreeDice] = useState(false);
 
     return (
-        <div className="min-h-screen bg-default text-default fu-font-body" data-theme={darkMode ? 'dark' : 'light'}>
+        <div className="min-h-screen bg-default text-default fu-font-body">
 
             {/* ── HEADER ──────────────────────────────────────────────────── */}
             <header className="flex items-center justify-between px-4 py-2 border-b border-default bg-surface">

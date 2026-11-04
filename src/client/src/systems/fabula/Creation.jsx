@@ -522,8 +522,7 @@ const Creation = ({ darkMode, onToggleDarkMode }) => {
 
     if (accessCode) {
         return (
-            <div className="min-h-screen bg-default text-default fu-font-body flex items-center justify-center p-4"
-                 data-theme={darkMode ? 'dark' : 'light'}>
+            <div className="min-h-screen bg-default text-default fu-font-body flex items-center justify-center p-4">
                 <div className="bg-surface border border-default rounded-lg p-6 max-w-sm w-full text-center">
                     <div className="fu-font-title text-lg text-primary mb-1">✦ {ws.nom || 'Personnage'} est prêt·e !</div>
                     <p className="text-xs text-muted mb-4">Notez ce code — c'est votre seule façon de retrouver votre fiche.</p>
@@ -544,7 +543,7 @@ const Creation = ({ darkMode, onToggleDarkMode }) => {
     // ══════════════════════════════════════════════════════════════════════════
 
     return (
-        <div className="min-h-screen bg-default text-default fu-font-body" data-theme={darkMode ? 'dark' : 'light'}>
+        <div className="min-h-screen bg-default text-default fu-font-body">
             <div className="max-w-3xl mx-auto p-4">
 
                 <div className="flex items-center justify-between mb-4">

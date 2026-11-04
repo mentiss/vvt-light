@@ -1189,7 +1189,7 @@ const RecapLine = ({ label, value }) => (
 // WIZARD PRINCIPAL
 // ─────────────────────────────────────────────────────────────────────────────
 
-const Creation = ({ darkMode, onToggleDarkMode, onCreated, onCancel }) => {
+const Creation = ({ onToggleDarkMode, onCreated, onCancel }) => {
     const { apiBase } = useSystem();
 
     const [step, setStep] = useState(1);
@@ -1334,7 +1334,6 @@ const Creation = ({ darkMode, onToggleDarkMode, onCreated, onCancel }) => {
         <div
             className="min-h-screen flex items-start justify-center px-4 py-8"
             style={{ background: 'var(--color-bg)', color: 'var(--color-text)' }}
-            data-theme={darkMode ? 'dark' : undefined}
         >
             <div className="w-full max-w-2xl flex flex-col gap-0">
 

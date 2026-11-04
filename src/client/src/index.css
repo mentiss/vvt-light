@@ -576,7 +576,7 @@ select:disabled {
   /* ── Thème de la plateforme (spec_plateforme_accueil.md §3) ─────────────── */
   /* Palette anthracite / laiton, posée sur l'enveloppe des pages hors slug : définies
      ici, ces couleurs l'emportent sur celles d'un thème de slug resté chargé.
-     Nuit : .dark sur <html> (préférence « global »). */
+     Nuit : [data-theme="dark"] sur <html> (préférence « global »). */
   .vtt-platform {
     --color-primary:     #9a7a3a;
     --color-on-primary:  #fffdf8;
@@ -596,7 +596,7 @@ select:disabled {
     color: var(--color-text);
     font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
   }
-  .dark .vtt-platform {
+  [data-theme="dark"] .vtt-platform {
     --color-primary:     #c9a45c;
     --color-on-primary:  #17181a;
     --color-secondary:   #8b97a0;

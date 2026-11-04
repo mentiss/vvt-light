@@ -239,8 +239,7 @@ const GMApp = ({
     }, [sessionId, apiBase]);
 
     return (
-        <div className="zb-root zb-grain relative min-h-screen bg-default text-default"
-             data-theme={darkMode ? 'dark' : 'light'}>
+        <div className="zb-root zb-grain relative min-h-screen bg-default text-default">
 
             <ToastNotifications
                 sessionId={sessionId}

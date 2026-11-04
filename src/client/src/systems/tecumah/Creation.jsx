@@ -72,7 +72,7 @@ const StepBar = ({ current }) => (
 
 // ── Composant principal ───────────────────────────────────────────────────────
 
-const Creation = ({ onCreated, onCancel, darkMode, onToggleDarkMode }) => {
+const Creation = ({ onCreated, onCancel, onToggleDarkMode }) => {
     const { apiBase, slug } = useSystem();
 
     const [step, setStep] = useState(1);
@@ -203,7 +203,6 @@ const Creation = ({ onCreated, onCancel, darkMode, onToggleDarkMode }) => {
         <div
             className="min-h-screen flex items-center justify-center px-4 py-8"
             style={{ background: 'var(--color-bg)', color: 'var(--color-text)' }}
-            data-theme={darkMode ? 'dark' : undefined}
         >
             <div className="w-full max-w-4xl">
                 <div className="text-center mb-6">

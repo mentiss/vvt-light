@@ -136,7 +136,6 @@ const Sheet = ({
     return (
         <div
             className="min-h-screen"
-            data-theme={darkMode ? 'dark' : 'light'}
             style={{ background: 'var(--ac-bg)', color: 'var(--ac-text)', fontFamily: 'var(--ac-font-body)' }}
         >
             <ToastNotifications

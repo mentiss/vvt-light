@@ -1,15 +1,13 @@
 // src/client/src/components/platform/SlugPage.jsx
 // Enveloppe des pages génériques d'un slug (arrivée, connexion MJ, erreurs,
-// chargement) : thème du slug, déjà chargé par SystemLayout. Pose data-theme pour
-// les slugs qui ne définissent leur mode nuit que sur cet attribut.
+// chargement) : thème du slug, déjà chargé par SystemLayout. Le mode nuit vient
+// de data-theme sur <html>, posé par SystemLayout.
 
 import React from 'react';
-import { useOutletContext } from 'react-router-dom';
 
 const SlugPage = ({ children }) => {
-    const darkMode = useOutletContext()?.darkMode ?? false;
     return (
-        <div className="min-h-screen bg-default text-default flex items-center justify-center p-4" data-theme={darkMode ? 'dark' : 'light'}>
+        <div className="min-h-screen bg-default text-default flex items-center justify-center p-4">
             {children}
         </div>
     );

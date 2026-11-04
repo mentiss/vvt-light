@@ -6,10 +6,9 @@ import { PLATFORM_SCOPE, readStored, storageKey, writeStored } from './browserSt
 // Gestion du thème
 
 // Jour / nuit posé sur <html> : tout ce qui est rendu dans la page en hérite,
-// y compris hors de la fiche (modales). La classe .dark reste pour les thèmes qui l'écoutent encore.
+// y compris hors de la fiche (modales). Seul [data-theme] porte le mode : pas de classe .dark.
 // Appelé par la page qui porte la préférence : HomePage (global) ou SystemLayout (slug).
 export const applyTheme = (isDark) => {
-    document.documentElement.classList.toggle('dark', isDark);
     document.documentElement.dataset.theme = isDark ? 'dark' : 'light';
 };
 

@@ -92,7 +92,7 @@ const Creation = ({ darkMode, onToggleDarkMode }) => {
     // ── Écran post-création : le code d'accès d'abord, sinon impossible de revenir ──
     if (created) {
         return (
-            <div className="vil-root flex items-center justify-center p-4" data-theme={darkMode ? 'dark' : 'light'}>
+            <div className="vil-root flex items-center justify-center p-4">
                 <div className="vil-sheet vil-paper text-center max-w-md w-full">
                     <div className="vil-wizard-title mb-1">{displayName(ws)}</div>
                     <p className="vil-note mb-4">rejoint la Malengeance. Notez ce code : c'est votre seule façon de retrouver votre fiche.</p>
@@ -115,7 +115,7 @@ const Creation = ({ darkMode, onToggleDarkMode }) => {
     const remaining = Object.values(todo).flat();
 
     return (
-        <div className="vil-root" data-theme={darkMode ? 'dark' : 'light'}>
+        <div className="vil-root">
             <header className="vil-sticky-top">
                 <div className="vil-topbar">
                     <Brand variant="title" />

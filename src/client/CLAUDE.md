@@ -70,7 +70,7 @@ Règles :
 - Utilise **uniquement les classes générées par `generate-css-utils.js`** (tokens `primary`, `secondary`, `accent`, `danger`, `success`, `surface`, `surface-alt`, `default`, `muted` ; variantes `bg`/`text`/`border`/`ring`/`glow`/`placeholder`, états hover/focus/active/disabled/group-hover, opacités comme `bg-primary/10`).
 - `style=` est réservé aux valeurs réellement dynamiques ou en px fixes. S'il manque une classe, on l'ajoute dans `theme.css`, on ne contourne pas avec `style=`.
 - Tokens `xxx-default` (`bg-default`, `text-default`…). `xxx-base` est un alias legacy à ne pas utiliser.
-- Mode sombre via l'attribut **`data-theme`**, jamais une classe `.dark`.
+- Mode sombre via l'attribut **`data-theme`**, jamais une classe `.dark`. Il est posé sur `<html>` par la plateforme (`applyTheme`) : ne le repose pas sur la racine d'une page du slug. Variables jour sur `:root`, nuit sur `[data-theme="dark"]`.
 - `theme.css` est chargé au niveau page (`import.meta.glob` dans `PlayerPage`/`GMPage`), pas importé dans `Sheet.jsx`. Les `import './theme.css'` restés dans d'anciens slugs sont en trop mais sans effet : n'en ajoute pas dans un nouveau slug.
 - **Pas de `<select>` ni de `<input type="checkbox">`** : boutons « pill » stylés.
 - Tailwind v4 : `shrink-0` et non `flex-shrink-0`.

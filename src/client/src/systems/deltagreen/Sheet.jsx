@@ -228,7 +228,6 @@ const Sheet = ({
     return (
         <div
             className="min-h-screen bg-default text-default"
-            data-theme={darkMode ? 'dark' : 'light'}
             {...palierAttr}
         >
 

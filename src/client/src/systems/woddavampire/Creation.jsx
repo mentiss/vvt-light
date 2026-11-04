@@ -209,7 +209,7 @@ const Creation = ({ darkMode, onToggleDarkMode }) => {
     // ══════════════════════════════════════════════════════════════════════════
     if (created) {
         return (
-            <div className="vda-root flex items-center justify-center p-4" data-theme={darkMode ? 'dark' : 'light'}>
+            <div className="vda-root flex items-center justify-center p-4">
                 <div className="vda-sheet text-center max-w-md w-full">
                     <VdaCorners />
                     <div className="vda-font-title text-2xl text-primary mb-1">{ws.nom} entre dans la nuit</div>
@@ -230,7 +230,7 @@ const Creation = ({ darkMode, onToggleDarkMode }) => {
     const tabProps = { ws, patch, setIn, bonusMode };
 
     return (
-        <div className="vda-root" data-theme={darkMode ? 'dark' : 'light'}>
+        <div className="vda-root">
             <header className="vda-header">
                 <div>
                     <div className="vda-header-title">Création d'un Caïnite</div>

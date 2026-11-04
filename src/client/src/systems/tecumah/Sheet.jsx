@@ -115,7 +115,6 @@ const Sheet = ({
         <div
             className="min-h-screen flex"
             style={{ background: 'var(--color-bg)', color: 'var(--color-text)' }}
-            data-theme={darkMode ? 'dark' : undefined}
         >
             <div className="flex-1 flex flex-col min-w-0">
 

@@ -501,8 +501,7 @@ const Creation = ({ darkMode, onToggleDarkMode }) => {
 
     if (accessCode) {
         return (
-            <div className="min-h-screen bg-default text-default flex items-center justify-center p-4"
-                 data-theme={darkMode ? 'dark' : 'light'}>
+            <div className="min-h-screen bg-default text-default flex items-center justify-center p-4">
                 <div className="max-w-md w-full border border-default bg-surface p-8 text-center space-y-4"
                      style={{ fontFamily: 'var(--dg-font-body)' }}>
                     <div className="dg-header py-4 px-6 mb-6">
@@ -537,7 +536,7 @@ const Creation = ({ darkMode, onToggleDarkMode }) => {
     // ─────────────────────────────────────────────────────────────────────────
 
     return (
-        <div className="min-h-screen bg-default text-default" data-theme={darkMode ? 'dark' : 'light'}
+        <div className="min-h-screen bg-default text-default"
              style={{ fontFamily: 'var(--dg-font-body)' }}>
 
             {/* En-tête */}

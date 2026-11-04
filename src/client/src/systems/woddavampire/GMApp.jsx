@@ -70,7 +70,7 @@ const GMApp = ({ activeSession, onSessionChange, onlineCharacters, characterUpda
     };
 
     return (
-        <div className="vda-root" data-theme={darkMode ? 'dark' : 'light'} style={{ '--vda-band-h': `${band.height ?? 0}px` }}>
+        <div className="vda-root" style={{ '--vda-band-h': `${band.height ?? 0}px` }}>
             <VdaTopBar ref={stickyRef} title={<>Vampire <span className="vda-header-sub">Conteur{activeSession ? ` · ${activeSession.name}` : ''}</span></>}
                        darkMode={darkMode} onToggleDarkMode={onToggleDarkMode} tabs={TABS} active={activeTab} onSelect={setActiveTab}
                        menu={<>

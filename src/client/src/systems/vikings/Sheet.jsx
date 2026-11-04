@@ -131,7 +131,7 @@ const Sheet = ({
     };
 
     return (
-        <div className="vk-root min-h-screen" data-theme={darkMode ? 'dark' : 'light'}>
+        <div className="vk-root min-h-screen">
 
             {/* ── BANDEAU + ONGLETS (collants) ── */}
             <div className="sticky top-0 z-40" ref={stickyRef}>

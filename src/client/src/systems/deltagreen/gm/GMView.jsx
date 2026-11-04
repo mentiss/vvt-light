@@ -43,7 +43,6 @@ const GMView = ({ activeSession, onSessionChange, onlineCharacters, darkMode, on
     return (
         <div
             className="min-h-screen flex flex-col bg-default text-default"
-            data-theme={darkMode ? 'dark' : 'light'}
         >
 
             <ToastNotifications

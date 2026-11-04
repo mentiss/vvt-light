@@ -486,7 +486,7 @@ const Creation = ({ onCreated, onCancel, darkMode, onToggleDarkMode }) => {
     };
 
     return (
-        <div className="vk-root min-h-screen p-4 md:p-6" data-theme={darkMode ? 'dark' : 'light'}>
+        <div className="vk-root min-h-screen p-4 md:p-6">
             <div className="max-w-5xl mx-auto">
                 <div className="text-center mb-4 relative">
                     <div className="vk-rune text-3xl">ᚢᛁᚲᛁᛜ</div>

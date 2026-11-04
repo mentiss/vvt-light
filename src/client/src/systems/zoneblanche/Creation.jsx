@@ -307,8 +307,7 @@ const Creation = ({ onCreated, onCancel, darkMode, onToggleDarkMode }) => {
 
     if (created) {
         return (
-            <div className="zb-root zb-grain relative min-h-screen bg-default text-default"
-                 data-theme={darkMode ? 'dark' : 'light'}>
+            <div className="zb-root zb-grain relative min-h-screen bg-default text-default">
                 <BroadcastBar darkMode={darkMode} onToggleDarkMode={onToggleDarkMode} subtitle="Fiche enregistrée" />
                 <div className="max-w-2xl mx-auto py-16 px-6 text-center space-y-6">
                     <div className="text-6xl">📼</div>
@@ -330,8 +329,7 @@ const Creation = ({ onCreated, onCancel, darkMode, onToggleDarkMode }) => {
     // ── Étape 0 — Brief : ce qu'est le jeu, ce qu'on va choisir ────────────
     if (showIntro) {
         return (
-            <div className="zb-root zb-grain relative min-h-screen bg-default text-default"
-                 data-theme={darkMode ? 'dark' : 'light'}>
+            <div className="zb-root zb-grain relative min-h-screen bg-default text-default">
                 <BroadcastBar darkMode={darkMode} onToggleDarkMode={onToggleDarkMode} subtitle="Brief de production" />
 
                 <div className="max-w-4xl mx-auto py-10 px-6 space-y-8">
@@ -421,8 +419,7 @@ const Creation = ({ onCreated, onCancel, darkMode, onToggleDarkMode }) => {
     }
 
     return (
-        <div className="zb-root zb-grain relative min-h-screen bg-default text-default"
-             data-theme={darkMode ? 'dark' : 'light'}>
+        <div className="zb-root zb-grain relative min-h-screen bg-default text-default">
             <BroadcastBar darkMode={darkMode} onToggleDarkMode={onToggleDarkMode} subtitle="Création de personnage" />
             <div className="max-w-5xl mx-auto py-8 px-6">
                 <StepBar current={step} onJump={setStep} />

@@ -58,8 +58,8 @@
     --vk-corner-l-br: url('./assets/corner-light-br.png');
 }
 
-/* ── Mode NUIT — fer (.dark posé par l'app sur <html>, data-theme par le slug) ── */
-.dark, [data-theme="dark"] {
+/* ── Mode NUIT — fer ([data-theme="dark"] posé par la plateforme sur <html>) ── */
+[data-theme="dark"] {
     --color-primary:     #ebcb8b;   /* or pâle */
     --color-secondary:   #5e81ac;   /* bleu nordique */
     --color-accent:      #bf616a;

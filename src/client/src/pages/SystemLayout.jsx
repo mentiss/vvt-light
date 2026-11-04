@@ -21,7 +21,7 @@ const SystemLayout = () => {
     // Le slug ne change pas sans rechargement (useSlugGuard) : pas besoin de la relire.
     const [darkMode, setDarkMode] = useState(() => (system ? loadTheme(system) : false));
 
-    // Jour / nuit du slug sur <html> (classe .dark et data-theme)
+    // Jour / nuit du slug sur <html> (data-theme)
     useEffect(() => {
         applyTheme(darkMode);
     }, [darkMode]);

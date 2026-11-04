@@ -107,7 +107,7 @@ const Sheet = ({ character, onCharacterUpdate, journalUnread, onJournalRead, dar
     const { intensity, hungry } = imposed || editMode || activeTab !== 'fiche' ? { intensity: 0, hungry: false } : thirst(character);
 
     return (
-        <div className={`vda-root is-sheet-page${imposed ? ` is-${imposed}` : ''}`} data-theme={darkMode ? 'dark' : 'light'}
+        <div className={`vda-root is-sheet-page${imposed ? ` is-${imposed}` : ''}`}
              style={{ '--vda-thirst': intensity.toFixed(3), '--vda-band-h': `${band.height ?? 0}px`, '--vda-sheet-left': `${page.left}px`, '--vda-sheet-w': `${page.width}px` }}>
             {imposed && <div className={`vda-imposed is-${imposed}`} aria-hidden="true" />}
             {/* Effet de soif : devant la fiche (sous la bande fixe), plus la réserve baisse, plus les bords s'assombrissent ; battement sous le seuil de la faim */}

@@ -51,7 +51,7 @@ const GMApp = ({ activeSession, onSessionChange, onlineCharacters, characterUpda
     const sessionId = activeSession?.id ?? null;
 
     return (
-        <div className="vil-root" data-theme={darkMode ? 'dark' : 'light'} style={{ '--vil-band-h': `${band.height ?? 0}px` }}>
+        <div className="vil-root" style={{ '--vil-band-h': `${band.height ?? 0}px` }}>
             <VilTopBar ref={stickyRef} subtitle={`Obscurité${activeSession ? ` · ${activeSession.name}` : ''}`}
                        darkMode={darkMode} onToggleDarkMode={onToggleDarkMode} tabs={TABS} active={activeTab} onSelect={setActiveTab}
                        menu={<>

@@ -73,7 +73,7 @@ const Sheet = ({ character, onCharacterUpdate, journalUnread, onJournalRead, dar
     const saveEdit = () => { patch(editPatch(character, draft)); setDraft(null); };
 
     return (
-        <div className="vil-root is-sheet-page" data-theme={darkMode ? 'dark' : 'light'} style={{ '--vil-band-h': `${band.height ?? 0}px` }}>
+        <div className="vil-root is-sheet-page" style={{ '--vil-band-h': `${band.height ?? 0}px` }}>
             <VilTopBar ref={stickyRef} darkMode={darkMode} onToggleDarkMode={onToggleDarkMode}
                        tabs={tabs} active={activeTab} onSelect={changeTab}
                        menu={<>

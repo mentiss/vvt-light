@@ -8,8 +8,7 @@
    ⚠ Les deux jeux de variables texte sont définis (--color-default/--color-muted
    ET --color-text/--color-text-muted) : le générateur d'utilitaires produit
    text-default/text-muted, mais plusieurs composants partagés lisent --color-text.
-   Les deux sélecteurs de mode nuit sont couverts : .dark (posé sur <html> par
-   AppRouter) et [data-theme="dark"] (posé par le slug sur son wrapper).
+   Mode nuit : [data-theme="dark"], posé sur <html> par la plateforme.
    ─────────────────────────────────────────────────────────────────────────── */
 
 /* Marque du slug (titre des pages d'accès) et polices Google */
@@ -59,7 +58,6 @@
 }
 
 /* ── Mode NUIT — found footage ───────────────────────────────────────────── */
-.dark,
 [data-theme="dark"] {
     --color-primary:     #4dff85;
     --color-secondary:   #2f6b45;
