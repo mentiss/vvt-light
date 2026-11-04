@@ -1,0 +1,55 @@
+/* src/client/src/systems/nimble/Brand.css */
+/* ─────────────────────────────────────────────────────────────────────────────
+   Marque Nimble (spec_plateforme_accueil.md §5) : carte de l'accueil et titre
+   des pages d'accès. Importé par Brand.jsx (accueil) et par theme.css. Classes
+   .nimble-brand-* uniquement, aucune couleur globale (--color-* lues, jamais
+   définies). Source : documentations/nimble/planche_nimble.html (spec_nimble.md §7).
+   Typographie maison (le logo Nimble est réservé par la licence) :
+   Fraunces et Sofia Sans Condensed (Google Fonts, ci-dessous).
+   ─────────────────────────────────────────────────────────────────────────── */
+
+@import url('https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,600;0,9..144,800;1,9..144,700;1,9..144,900&family=Sofia+Sans+Condensed:wght@500;700;800&display=swap');
+
+/* ── Carte : écu de gueules, bande d'encre crantée, titre à la feuille d'or ── */
+.nimble-brand {
+    position: relative; height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center;
+    gap: 6px; text-align: center; overflow: hidden; color: #F6EBD3;
+    background:
+        radial-gradient(ellipse 70% 55% at 50% 42%, rgba(236, 190, 96, .22), transparent 70%),
+        repeating-linear-gradient(135deg, rgba(255, 255, 255, .025) 0 2px, transparent 2px 9px),
+        linear-gradient(170deg, #8E2A21, #5C1712 70%, #3A0F0C);
+}
+/* Bande d'encre crantée en travers, derrière le titre */
+.nimble-brand::before {
+    content: ''; position: absolute; left: 6%; right: 6%; top: 50%; height: 46px; transform: translateY(-50%);
+    background: #26221F;
+    -webkit-mask: radial-gradient(circle 9px at 0 50%, transparent 98%, #000) left / 51% 100% no-repeat,
+                  radial-gradient(circle 9px at 100% 50%, transparent 98%, #000) right / 51% 100% no-repeat;
+            mask: radial-gradient(circle 9px at 0 50%, transparent 98%, #000) left / 51% 100% no-repeat,
+                  radial-gradient(circle 9px at 100% 50%, transparent 98%, #000) right / 51% 100% no-repeat;
+}
+.nimble-brand > * { position: relative; }
+.nimble-brand-title {
+    font-family: 'Fraunces', 'Crimson Pro', Georgia, serif; font-style: italic; font-weight: 900; font-size: 2.6rem; line-height: 1;
+    letter-spacing: -.01em; transform: skewX(-4deg);
+    background: linear-gradient(180deg, #F9E3A6 10%, #E0B055 55%, #A87422 90%); -webkit-background-clip: text; background-clip: text; color: transparent;
+    filter: drop-shadow(0 2px 0 #1A1614);
+}
+.nimble-brand-sub { font-family: 'Sofia Sans Condensed', 'Arial Narrow', sans-serif; font-weight: 700; font-size: .66rem; letter-spacing: .32em; text-transform: uppercase; }
+.nimble-brand-mark { font-size: .8rem; color: #E0B055; letter-spacing: .5em; }
+
+/* ── Titre (pages d'accès, Reprendre, bande fixe) : couleurs du thème ── */
+.nimble-brand.is-title {
+    height: auto; flex-direction: row; flex-wrap: wrap; justify-content: center; align-items: baseline; gap: .1em .55em;
+    background: none; overflow: visible; color: var(--color-text, #2B2826);
+}
+.nimble-brand.is-title::before { display: none; }
+.nimble-brand.is-title > span { white-space: nowrap; }
+.nimble-brand.is-title .nimble-brand-title {
+    font-size: 1.45em; background: none; color: var(--color-primary, #9E2A22); filter: none;
+}
+.nimble-brand.is-title .nimble-brand-sub { font-size: .52em; color: var(--color-text-muted, #6B6157); }
+.nimble-brand.is-title .nimble-brand-mark { display: none; }
+/* Place comptée (bloc « Reprendre ») : le nom seul */
+.vtt-resume-brand .nimble-brand.is-title { justify-content: flex-start; }
+.vtt-resume-brand .nimble-brand.is-title .nimble-brand-sub { display: none; }

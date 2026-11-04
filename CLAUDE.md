@@ -106,7 +106,8 @@ Tous sont des systèmes en usage réel, aucun n'est un brouillon :
 | `noctis` | Noctis Solis (Vermine 2047) | Intégration `accessCode` en attente ; masqué de l'accueil (`hidden`) |
 | `tecumah` | Tecumah Gulch (D6) | |
 | `woddavampire` | Vampire : l'Âge des Ténèbres (V20 Dark Ages) | Organisation du code de référence (`config/rules/`, sections partagées joueur / MJ, hooks), aide de jeu en Markdown, coterie |
-| `vileborn` | Vileborn (kit d'initiation) | Le plus récent : création déduite des prétirés, fiche calquée sur la page 1 des prétirés, mode Édition partagé joueur / MJ |
+| `vileborn` | Vileborn (kit d'initiation) | Création déduite des prétirés, fiche calquée sur la page 1 des prétirés, mode Édition partagé joueur / MJ |
+| `nimble` | Nimble 3.x (hack allégé de D&D 5e) | Le plus récent (`spec_nimble.md`) : catalogues transcrits et traduits (11 classes, sorts, bestiaire), critique explosif du dé primaire, montée de niveau guidée, onglet Rencontre côté MJ |
 
 ### Base de données
 
