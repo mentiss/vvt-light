@@ -106,3 +106,17 @@
 .vtt-action-btn:hover { color: var(--color-text); border-color: var(--color-primary); }
 .vtt-action-btn.is-highlighted,
 .vtt-action-btn.is-active { color: var(--color-primary); border-color: var(--color-primary); }
+
+/* ── Tableau partagé (components/board, spec_tableau.md §10.8) ── */
+/* Affiche de western : double filet, capitales DayRoman, titres BleedingCowboys, couleur principale pour ce qui est actif ou montré. */
+.vtt-board { font-family: 'DayRoman', Georgia, serif; }
+.vtt-board-slides { padding: .6rem; border-radius: 0; border: 3px double var(--color-border); background: var(--color-surface); }
+.vtt-board-slides-title, .vtt-board-view-title { font-family: 'BleedingCowboys', Georgia, serif; font-weight: 400; font-size: 1.15rem; letter-spacing: .04em; text-transform: none; color: var(--color-primary); }
+.vtt-board-slide, .vtt-board-rail-slide, .vtt-board-tool, .vtt-board-icon-btn, .vtt-board-slides-reopen, .vtt-board-swatch, .vtt-board-picker-item, .vtt-board-badge { border-radius: 0; }
+.vtt-board-slide.is-selected, .vtt-board-rail-slide.is-selected { border-color: var(--color-primary); }
+.vtt-board-tool { border-style: double; border-width: 3px; }
+.vtt-board-tool.is-active { background: var(--color-primary); border-color: var(--color-primary); }
+.vtt-board-stage { border-radius: 0; border: 3px double var(--color-border); }
+.vtt-board-token-text, .vtt-board-ruler text { font-family: 'DayRoman', Georgia, serif; }
+.vtt-board-banner { border-radius: 0; border: 3px double var(--color-primary); background: var(--color-surface); }
+.vtt-board-banner strong { font-family: 'BleedingCowboys', Georgia, serif; font-weight: 400; font-size: 1.05rem; color: var(--color-primary); }

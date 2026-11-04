@@ -16,6 +16,7 @@ import ToastNotifications   from '../../../components/layout/ToastNotifications.
 import DiceHistoryPanel     from '../../../components/layout/DiceHistoryPanel.jsx';
 import ThemeToggle          from '../../../components/ui/ThemeToggle.jsx';
 import TabJournal           from '../../../components/gm/tabs/TabJournal.jsx';
+import Board                from '../../../components/board/Board.jsx';
 import { HamburgerMenu } from '../../../components/ui/HamburgerMenu.jsx';
 import {
     HamburgerMenuItemTableManagement, HamburgerMenuItemFreeDice, HamburgerMenuItemDiceConfig, HamburgerMenuItemLogout,
@@ -40,6 +41,7 @@ const GM_TABS = [
     { id: 'moves',     label: '⬡ Manœuvres'  },
     { id: 'history',   label: '▤ Historique'  },
     { id: 'journal',   label: '⧉ Journal'   },
+    { id: 'tableau', label: '◫ Tableau' },
     { id: 'reference',  label: '◈ Référence' },
 ];
 
@@ -210,6 +212,12 @@ const GMView = ({ activeSession, onSessionChange, onlineCharacters, darkMode, on
                     </div>
                 )}
 
+                {/* Tableau partagé (brique plateforme, spec_tableau.md §10.8) */}
+                {activeTab === 'tableau' && (
+                    <div className="vtt-board-page">
+                        <Board sessionId={activeSession?.id ?? null} role="gm" />
+                    </div>
+                )}
                 {activeTab === 'history' && (
                     <div className="m-1">
                         <DiceHistoryPage

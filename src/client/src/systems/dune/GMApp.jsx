@@ -19,6 +19,7 @@ import DiceHistoryPage    from '../../components/layout/DiceHistoryPage.jsx';
 import DiceHistoryPanel   from '../../components/layout/DiceHistoryPanel.jsx';
 import TabNPC             from '../../components/gm/tabs/TabNPC.jsx';
 import TabJournal         from '../../components/gm/tabs/TabJournal.jsx';
+import Board              from '../../components/board/Board.jsx';
 import { HamburgerMenu, HamburgerMenuSeparator } from '../../components/ui/HamburgerMenu.jsx';
 import {
     HamburgerMenuItemTableManagement, HamburgerMenuItemDiceConfig, HamburgerMenuItemPlayerView,
@@ -40,6 +41,7 @@ const GM_TABS = [
     { id: 'maison',     label: 'Maison' },
     { id: 'npc',        label: 'PNJ' },
     { id: 'journal',    label: 'Journal' },
+    { id: 'tableau', label: 'Tableau' },
     { id: 'historique', label: 'Historique' },
 ];
 
@@ -139,6 +141,12 @@ const GMApp = ({ activeSession, onSessionChange, onlineCharacters, characterUpda
                     </div>
                 )}
                 {activeTab === 'journal' && <div className="p-6"><TabJournal /></div>}
+                {/* Tableau partagé (brique plateforme, spec_tableau.md §10.8) */}
+                {activeTab === 'tableau' && (
+                    <div className="vtt-board-page">
+                        <Board sessionId={activeSession?.id ?? null} role="gm" />
+                    </div>
+                )}
                 {activeTab === 'historique' && <div className="p-6"><DiceHistoryPage sessionId={sessionId} /></div>}
             </main>
 

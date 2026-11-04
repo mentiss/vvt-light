@@ -544,3 +544,24 @@ button.vtt-list-item:hover { border-left-color: var(--dn-gold); }
 .vtt-session-bar-card-name { font-family: var(--dn-font-title); font-weight: 700; font-size: 18px; letter-spacing: .1em; color: var(--color-text); }
 .vtt-session-bar-card-player-name { font: 700 11px/1.2 var(--dn-font-tech); letter-spacing: .14em; text-transform: uppercase; }
 .vtt-session-bar-card-status { font-family: var(--dn-font-tech); letter-spacing: .12em; }
+
+/* ── Tableau partagé (components/board, spec_tableau.md §10.8) ── */
+/* Sable et épice : bande sombre, pans coupés, épice pour ce qui est actif ou montré. */
+.vtt-board { font-family: var(--dn-font-body); }
+.vtt-board-page { padding: 1.25rem; }
+.vtt-board-slides { padding: .6rem; border-radius: 0; border: 1px solid var(--dn-gold-soft); background: var(--color-surface); clip-path: var(--dn-cut-8); }
+.vtt-board-slides-title, .vtt-board-view-title { font-family: var(--dn-font-tech); font-weight: 600; letter-spacing: .16em; text-transform: uppercase; color: var(--dn-gold); }
+.vtt-board-slide, .vtt-board-rail-slide, .vtt-board-tool, .vtt-board-icon-btn, .vtt-board-slides-reopen, .vtt-board-swatch, .vtt-board-picker-item, .vtt-board-badge { border-radius: 0; }
+.vtt-board-slide, .vtt-board-rail-slide { border-color: var(--dn-gold-soft); }
+.vtt-board-slide.is-selected, .vtt-board-rail-slide.is-selected { border-color: var(--dn-gold); }
+.vtt-board-slide.is-shown { box-shadow: inset 3px 0 0 var(--dn-spice); }
+.vtt-board-rail-slide { font-family: var(--dn-font-tech); }
+.vtt-board-rail-slide.is-shown, .vtt-board-badge { background: var(--dn-spice); border-color: var(--dn-spice); color: var(--dn-on-spice); }
+.vtt-board-badge { font-family: var(--dn-font-tech); letter-spacing: .1em; }
+.vtt-board-tool { clip-path: var(--dn-cut-4); }
+.vtt-board-tool:hover:not(:disabled) { border-color: var(--dn-spice); color: var(--dn-spice); }
+.vtt-board-tool.is-active { background: var(--dn-spice); border-color: var(--dn-spice); color: var(--dn-on-spice); }
+.vtt-board-stage { border-radius: 0; border: 1px solid var(--dn-gold-soft); clip-path: var(--dn-cut-8); }
+.vtt-board-token-text, .vtt-board-ruler text { font-family: var(--dn-font-tech); }
+.vtt-board-banner { border-radius: 0; border: 1px solid var(--dn-gold-soft); border-left: 3px solid var(--dn-spice); background: var(--dn-band-bg); color: var(--dn-band-text); font-family: var(--dn-font-body); }
+.vtt-board-banner strong { font-family: var(--dn-font-tech); letter-spacing: .12em; text-transform: uppercase; color: var(--dn-spice); }

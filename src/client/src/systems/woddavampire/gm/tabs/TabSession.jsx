@@ -14,6 +14,7 @@
 
 import React, { useState } from 'react';
 import AudioSessionToggle from '../../../../components/audio/AudioSessionToggle.jsx';
+import BoardSessionToggle from '../../../../components/board/BoardSessionToggle.jsx';
 import GMSendModal from '../../../../components/gm/modals/GMSendModal.jsx';
 
 import VdaSheet from '../../components/layout/VdaSheet.jsx';
@@ -41,6 +42,8 @@ const TabSession = ({ activeSession, onlineCharacters, characters, order, loadin
         <div className="vda-gm-session">
             <aside className="vda-gm-table">
                 <AudioSessionToggle sessionId={activeSession.id} className="vtt-btn vtt-btn-sm w-full" />
+                {/* Tableau partagé de la table (spec_tableau.md §10.8) */}
+                <BoardSessionToggle sessionId={activeSession.id} className="vtt-btn vtt-btn-sm w-full" />
                 {loading && <p className="vda-note">Chargement…</p>}
                 {order.map(id => (
                     <VdaGmTableRow key={id} c={characters[id]} online={online.has(id)} selected={id === currentId} onSelect={() => select(id)} />

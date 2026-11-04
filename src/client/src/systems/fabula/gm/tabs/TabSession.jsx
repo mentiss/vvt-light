@@ -19,6 +19,7 @@ import { useSystem } from '../../../../hooks/useSystem.js';
 
 import GMSendModal from '../../../../components/gm/modals/GMSendModal.jsx';
 import AudioSessionToggle from '../../../../components/audio/AudioSessionToggle.jsx';
+import BoardSessionToggle from '../../../../components/board/BoardSessionToggle.jsx';
 import AvatarUploader from '../../../../components/AvatarUploader.jsx';
 import CopyAccessButton from '../../../../components/ui/CopyAccessButton.jsx';
 
@@ -219,6 +220,8 @@ const TabSession = ({ activeSession, onlineCharacters, characterUpdates }) => {
                     <p className="fu-font-title text-xs text-primary">{activeSession.name}</p>
                     {/* Musique de la table (brique audio, spec_audio.md §11.7) */}
                     <AudioSessionToggle sessionId={activeSession.id} className="vtt-btn vtt-btn-sm w-full mt-2" />
+                    {/* Tableau partagé de la table (spec_tableau.md §10.8) */}
+                    <BoardSessionToggle sessionId={activeSession.id} className="vtt-btn vtt-btn-sm w-full mt-2" />
                 </div>
 
                 {loading && <p className="p-3 text-xs text-muted italic">Chargement...</p>}

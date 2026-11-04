@@ -805,3 +805,23 @@
 /* ── Fenêtres flottantes (components/ui/FloatingPanel.jsx, spec_ui_panneaux.md) ── */
 /* Réduite : sans le filet sous l'en-tête (il doublait le bord du panneau) */
 .vtt-floating-panel.is-minimized .vtt-modal-header { background: none; }
+
+/* ── Tableau partagé (components/board, spec_tableau.md §10.8) ── */
+/* Interface néon : angles coupés, trames, accent néon pour ce qui est actif ou montré. */
+.vtt-board { font-family: 'Rajdhani', sans-serif; --vtt-board-fog: #05070c; }
+.vtt-board-page { padding: 1rem; }
+.vtt-board-slides { padding: .6rem; border-radius: 0; border: 1px solid var(--color-border); background: var(--color-surface); clip-path: polygon(10px 0, 100% 0, 100% calc(100% - 10px), calc(100% - 10px) 100%, 0 100%, 0 10px); }
+.vtt-board-slides-title, .vtt-board-view-title { font-family: 'Rajdhani', 'Orbitron', sans-serif; font-weight: 700; letter-spacing: .14em; text-transform: uppercase; color: var(--color-accent); }
+.vtt-board-slide, .vtt-board-rail-slide, .vtt-board-tool, .vtt-board-icon-btn, .vtt-board-slides-reopen, .vtt-board-swatch, .vtt-board-picker-item, .vtt-board-badge { border-radius: 0; }
+.vtt-board-slide, .vtt-board-rail-slide { background: var(--color-surface-alt); }
+.vtt-board-slide:hover, .vtt-board-rail-slide:hover { border-color: var(--color-accent); }
+.vtt-board-slide.is-shown { box-shadow: inset 3px 0 0 var(--color-primary), 0 0 8px color-mix(in srgb, var(--color-primary) 35%, transparent); }
+.vtt-board-rail-slide.is-shown { background: color-mix(in srgb, var(--color-primary) 22%, var(--color-surface)); border-color: var(--color-primary); color: var(--color-primary); }
+.vtt-board-badge { background: transparent; border: 1px solid var(--color-primary); color: var(--color-primary); }
+.vtt-board-tool { clip-path: polygon(5px 0, 100% 0, 100% calc(100% - 5px), calc(100% - 5px) 100%, 0 100%, 0 5px); background: var(--color-surface-alt); color: var(--color-text-muted); }
+.vtt-board-tool:hover:not(:disabled) { color: var(--color-accent); border-color: var(--color-accent); }
+.vtt-board-tool.is-active { color: var(--color-primary); border-color: var(--color-primary); background: repeating-linear-gradient(0deg, rgba(255,255,255,.03) 0 1px, transparent 1px 3px), color-mix(in srgb, var(--color-primary) 14%, var(--color-surface)); }
+.vtt-board-stage { border-radius: 0; clip-path: polygon(14px 0, 100% 0, 100% calc(100% - 14px), calc(100% - 14px) 100%, 0 100%, 0 14px); }
+.vtt-board-ruler text { font-family: 'Share Tech Mono', ui-monospace, monospace; }
+.vtt-board-banner { border-radius: 0; border: 1px solid var(--color-primary); background: var(--color-surface); box-shadow: 0 0 14px color-mix(in srgb, var(--color-primary) 35%, transparent); }
+.vtt-board-banner strong { font-family: 'Rajdhani', 'Orbitron', sans-serif; letter-spacing: .1em; text-transform: uppercase; color: var(--color-primary); }

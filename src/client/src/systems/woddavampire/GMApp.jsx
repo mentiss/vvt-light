@@ -18,6 +18,7 @@ import ToastNotifications from '../../components/layout/ToastNotifications.jsx';
 import DiceHistoryPage    from '../../components/layout/DiceHistoryPage.jsx';
 import DiceHistoryPanel   from '../../components/layout/DiceHistoryPanel.jsx';
 import TabJournal         from '../../components/gm/tabs/TabJournal.jsx';
+import Board              from '../../components/board/Board.jsx';
 import { useHashTab }     from '../../hooks/useHashTab.js';
 import ReferenceGuide     from '../../components/reference/ReferenceGuide.jsx';
 import { HamburgerMenuSeparator } from '../../components/ui/HamburgerMenu.jsx';
@@ -42,6 +43,7 @@ const TABS = [
     { id: 'session',    label: 'Session' },
     { id: 'coterie',    label: 'Coterie' },
     { id: 'journal',    label: 'Journal' },
+    { id: 'tableau', label: 'Tableau' },
     { id: 'historique', label: 'Historique' },
     { id: 'aide',       label: 'Aide de jeu' },
 ];
@@ -109,6 +111,12 @@ const GMApp = ({ activeSession, onSessionChange, onlineCharacters, characterUpda
                 )}
                 {activeTab === 'aide' && <div className="vda-page"><ReferenceGuide sections={REFERENCE_SECTIONS} isGM placeholder="Rechercher une règle (ex. diablerie, manœuvre, soleil)…" /></div>}
                 {activeTab === 'journal' && <div className="vda-page"><TabJournal characterId={-1} /></div>}
+                {/* Tableau partagé (brique plateforme, spec_tableau.md §10.8) */}
+                {activeTab === 'tableau' && (
+                    <div className="vtt-board-page">
+                        <Board sessionId={activeSession?.id ?? null} role="gm" />
+                    </div>
+                )}
                 {activeTab === 'historique' && <div className="vda-page"><DiceHistoryPage sessionId={activeSession?.id ?? null} /></div>}
             </main>
 

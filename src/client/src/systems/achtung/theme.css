@@ -1663,3 +1663,21 @@ button.vtt-list-item:hover { border-color: var(--ac-ink); background: rgba(var(-
 /* Réduite : barre compacte, sans le double filet (il doublait le cadre imprimé) */
 .vtt-floating-panel.is-minimized .vtt-modal-header { border-bottom: 0; padding-top: .55rem; padding-bottom: .55rem; }
 .vtt-floating-panel.is-minimized .vtt-modal-title { font-size: 1rem; }
+
+/* ── Tableau partagé (components/board, spec_tableau.md §10.8) ── */
+/* Papier et encre : bordure d'encre, ombre portée décalée, tampon olive pour ce qui est actif ou montré. */
+.vtt-board { font-family: var(--ac-font-body); --vtt-board-fog: #1d1a14; }
+.vtt-board-page { padding: 1rem; }
+.vtt-board-slides { padding: .6rem; border-radius: 2px; border: 1.5px solid var(--ac-ink); background: var(--ac-paper); color: var(--ac-ink); box-shadow: 2px 3px 0 rgba(var(--ac-ink-rgb), .25); }
+.vtt-board-slides-title, .vtt-board-view-title { font-family: var(--ac-font-heading); letter-spacing: .08em; text-transform: uppercase; color: var(--ac-ink); }
+.vtt-board-slide, .vtt-board-rail-slide { border-radius: 2px; border-color: rgba(var(--ac-ink-rgb), .3); background: color-mix(in srgb, var(--ac-ink) 4%, var(--ac-paper)); color: var(--ac-ink); }
+.vtt-board-slide.is-selected, .vtt-board-rail-slide.is-selected { border-color: var(--ac-ink); }
+.vtt-board-slide.is-shown { box-shadow: inset 3px 0 0 var(--ac-ink-olive); }
+.vtt-board-rail-slide.is-shown, .vtt-board-badge { background: var(--ac-ink-olive); border-color: var(--ac-ink-olive); color: var(--ac-paper); }
+.vtt-board-badge { border-radius: 2px; }
+.vtt-board-tool, .vtt-board-icon-btn, .vtt-board-slides-reopen, .vtt-board-swatch, .vtt-board-picker-item { border-radius: 2px; }
+.vtt-board-tool.is-active { background: var(--ac-ink-olive); border-color: var(--ac-ink-olive); color: var(--ac-paper); }
+.vtt-board-stage { border-radius: 2px; border: 1.5px solid var(--ac-ink); box-shadow: 2px 3px 0 rgba(var(--ac-ink-rgb), .25); }
+.vtt-board-token-text, .vtt-board-ruler text { font-family: var(--ac-font-heading); }
+.vtt-board-banner { border-radius: 2px; border: 1.5px solid var(--ac-ink); background: var(--ac-paper); color: var(--ac-ink); box-shadow: 2px 3px 0 rgba(var(--ac-ink-rgb), .25), 0 6px 14px rgba(0,0,0,.3); font-family: var(--ac-font-body); }
+.vtt-board-banner strong { font-family: var(--ac-font-heading); letter-spacing: .06em; text-transform: uppercase; color: var(--ac-ink-olive); }

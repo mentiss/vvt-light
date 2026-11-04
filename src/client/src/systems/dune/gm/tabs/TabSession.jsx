@@ -11,6 +11,7 @@
 
 import React, { useState } from 'react';
 import AudioSessionToggle from '../../../../components/audio/AudioSessionToggle.jsx';
+import BoardSessionToggle from '../../../../components/board/BoardSessionToggle.jsx';
 import GMSendModal from '../../../../components/gm/modals/GMSendModal.jsx';
 import CopyAccessButton from '../../../../components/ui/CopyAccessButton.jsx';
 import { useFetch }  from '../../../../hooks/useFetch.js';
@@ -57,6 +58,8 @@ const TabSession = ({ activeSession, onlineCharacters, characters, order, loadin
         <div className="dn-gm-layout">
             <aside className="dn-gm-table">
                 <AudioSessionToggle sessionId={activeSession.id} className="vtt-btn vtt-btn-sm w-full" />
+                {/* Tableau partagé de la table (spec_tableau.md §10.8) */}
+                <BoardSessionToggle sessionId={activeSession.id} className="vtt-btn vtt-btn-sm w-full" />
                 {loading && <p className="dn-gm-note">Chargement des fiches…</p>}
                 {!loading && order.length === 0 && <p className="dn-gm-note">Aucun personnage à cette table.</p>}
                 {order.map(id => (

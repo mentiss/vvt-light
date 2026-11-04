@@ -849,3 +849,21 @@ button.vda-power-name:hover { color: var(--color-primary); }
     .vda-sheet { padding: 28px 16px; }
     .vda-corner { width: 90px; height: 90px; }
 }
+
+/* ── Tableau partagé (components/board, spec_tableau.md §10.8) ── */
+/* Velours et or : filet doré, rouge sang pour ce qui est actif ou montré, titres en capitales. */
+.vtt-board { font-family: var(--vda-font-body); --vtt-board-fog: #0a0607; }
+.vtt-board-page { padding: 1rem clamp(12px, 2vw, 28px); }
+.vtt-board-slides { padding: .6rem; border-radius: 0; border: 1px solid var(--vda-gold); background: var(--color-surface); box-shadow: 0 0 0 3px var(--color-surface), 0 0 0 4px var(--color-border); }
+.vtt-board-slides-title, .vtt-board-view-title { font-family: var(--vda-font-title); letter-spacing: .08em; color: var(--vda-gold); }
+.vtt-board-slide, .vtt-board-rail-slide, .vtt-board-tool, .vtt-board-icon-btn, .vtt-board-slides-reopen, .vtt-board-swatch, .vtt-board-picker-item, .vtt-board-badge { border-radius: 0; }
+.vtt-board-slide.is-selected, .vtt-board-rail-slide.is-selected { border-color: var(--vda-gold); }
+.vtt-board-slide.is-shown { box-shadow: inset 3px 0 0 var(--vda-blood); }
+.vtt-board-rail-slide { font-family: var(--vda-font-title); }
+.vtt-board-rail-slide.is-shown, .vtt-board-badge { background: radial-gradient(circle at 40% 35%, #c42a33, var(--vda-blood-dark)); border-color: var(--vda-blood-dark); color: #F3E6CC; }
+.vtt-board-tool:hover:not(:disabled) { color: var(--color-accent); border-color: var(--vda-gold); }
+.vtt-board-tool.is-active { background: radial-gradient(circle at 40% 35%, #c42a33, var(--vda-blood-dark)); border-color: var(--vda-gold); color: #F3E6CC; }
+.vtt-board-stage { border-radius: 0; border: 1px solid var(--vda-gold); box-shadow: 0 0 0 3px var(--color-surface), 0 0 0 4px var(--color-border), 0 6px 18px rgba(0, 0, 0, .5); }
+.vtt-board-token-text, .vtt-board-ruler text { font-family: var(--vda-font-title); }
+.vtt-board-banner { border-radius: 0; border: 1px solid var(--vda-gold); border-left: 3px solid var(--vda-blood); background: var(--color-surface); box-shadow: 0 6px 18px rgba(0, 0, 0, .5); font-family: var(--vda-font-body); }
+.vtt-board-banner strong { font-family: var(--vda-font-title); letter-spacing: .06em; color: var(--vda-gold); }

@@ -10,6 +10,7 @@ import React, { useState, useCallback } from 'react';
 import ToastNotifications from '../../../components/layout/ToastNotifications.jsx';
 import ThemeToggle        from '../../../components/ui/ThemeToggle.jsx';
 import TabJournal         from '../../../components/gm/tabs/TabJournal.jsx';
+import Board              from '../../../components/board/Board.jsx';
 import { HamburgerMenu, HamburgerMenuSeparator } from '../../../components/ui/HamburgerMenu.jsx';
 import {
     HamburgerMenuItemTableManagement, HamburgerMenuItemPlayerView, HamburgerMenuItemDiceConfig,
@@ -26,6 +27,7 @@ import FreeDiceModal from "../../../components/modals/FreeDiceModal.jsx";
 const GM_TABS = [
     { id: 'session',    label: '⛶ Session'    },
     { id: 'journal',    label: '⧉ Journal'     },
+    { id: 'tableau', label: '◫ Tableau' },
     { id: 'historique', label: '▤ Historique'  },
 ];
 
@@ -148,6 +150,12 @@ const GMView = ({ activeSession, onSessionChange, onlineCharacters, darkMode, on
                     />
                 )}
 
+                {/* Tableau partagé (brique plateforme, spec_tableau.md §10.8) */}
+                {activeTab === 'tableau' && (
+                    <div className="vtt-board-page">
+                        <Board sessionId={activeSession?.id ?? null} role="gm" />
+                    </div>
+                )}
                 {activeTab === 'historique' && (
                     <DiceHistoryPage
                         sessionId={activeSession?.id ?? null}

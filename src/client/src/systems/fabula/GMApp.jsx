@@ -24,6 +24,7 @@ import {
     HamburgerMenuItemTableManagement, HamburgerMenuItemDiceConfig, HamburgerMenuItemLogout,
 } from '../../components/ui/HamburgerMenuItems.jsx';
 import TabJournal          from '../../components/gm/tabs/TabJournal.jsx';
+import Board               from '../../components/board/Board.jsx';
 
 import TabSession          from './gm/tabs/TabSession.jsx';
 import ReferenceTab        from './components/ReferenceTab.jsx';
@@ -31,6 +32,7 @@ import ReferenceTab        from './components/ReferenceTab.jsx';
 const TABS = [
     { id: 'session',    label: '🎭 Session' },
     { id: 'journal',    label: '📓 Journal' },
+    { id: 'tableau', label: '🗺️ Tableau' },
     { id: 'historique', label: '📜 Historique' },
     { id: 'reference',  label: '📖 Référence' },
 ];
@@ -89,6 +91,12 @@ const GMApp = ({ activeSession, onSessionChange, onlineCharacters, characterUpda
                 {activeTab === 'journal' && (
                     <div className="max-w-4xl mx-auto p-4">
                         <TabJournal characterId={-1} />
+                    </div>
+                )}
+                {/* Tableau partagé (brique plateforme, spec_tableau.md §10.8) */}
+                {activeTab === 'tableau' && (
+                    <div className="vtt-board-page">
+                        <Board sessionId={activeSession?.id ?? null} role="gm" />
                     </div>
                 )}
                 {activeTab === 'historique' && (

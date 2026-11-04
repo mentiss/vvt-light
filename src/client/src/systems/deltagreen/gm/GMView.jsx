@@ -10,6 +10,7 @@ import React, { useState } from 'react';
 import ToastNotifications   from '../../../components/layout/ToastNotifications.jsx';
 import TableManagementModal from '../../../components/gm/modals/TableManagementModal.jsx';
 import TabJournal           from '../../../components/gm/tabs/TabJournal.jsx';
+import Board                from '../../../components/board/Board.jsx';
 import TabSession from "./tabs/TabSession.jsx";
 import DiceHistoryPage from "../../../components/layout/DiceHistoryPage.jsx";
 import FreeDiceModal from "../../../components/modals/FreeDiceModal.jsx";
@@ -21,6 +22,7 @@ import {
 const GM_TABS = [
     { id: 'session', label: 'Agents'   },
     { id: 'journal', label: 'Journal'  },
+    { id: 'tableau', label: 'Tableau' },
     { id: 'historique', label: 'Historique'  },
 ];
 
@@ -141,6 +143,12 @@ const GMView = ({ activeSession, onSessionChange, onlineCharacters, darkMode, on
                         <div className="max-w-full mx-auto px-4 py-6">
                             <TabJournal characterId={-1} />
                         </div>
+                    </div>
+                )}
+                {/* Tableau partagé (brique plateforme, spec_tableau.md §10.8) */}
+                {activeTab === 'tableau' && (
+                    <div className="vtt-board-page">
+                        <Board sessionId={activeSession?.id ?? null} role="gm" />
                     </div>
                 )}
                 {activeTab === 'historique' && (

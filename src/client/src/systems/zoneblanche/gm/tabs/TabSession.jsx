@@ -21,6 +21,7 @@ import { useFetch }  from '../../../../hooks/useFetch.js';
 import AvatarUploader from '../../../../components/AvatarUploader.jsx';
 import GMSendModal    from '../../../../components/gm/modals/GMSendModal.jsx';
 import AudioSessionToggle from '../../../../components/audio/AudioSessionToggle.jsx';
+import BoardSessionToggle from '../../../../components/board/BoardSessionToggle.jsx';
 import CopyAccessButton   from '../../../../components/ui/CopyAccessButton.jsx';
 
 import SheetLayout            from '../../components/layout/SheetLayout.jsx';
@@ -233,6 +234,8 @@ const TabSession = ({
                 </button>
                 {/* Musique de la table (brique audio, spec_audio.md §11.7) */}
                 <AudioSessionToggle sessionId={activeSession.id} className="zb-btn-ghost w-full mt-2 px-4 py-2 rounded-sm text-sm" />
+                {/* Tableau partagé de la table (spec_tableau.md §10.8) */}
+                <BoardSessionToggle sessionId={activeSession.id} className="zb-btn-ghost w-full mt-2 px-4 py-2 rounded-sm text-sm" />
             </aside>
 
             {/* ── Fiche ────────────────────────────────────────────────────── */}

@@ -29,6 +29,7 @@ import PhysicalDescriptionSection from '../../components/layout/PhysicalDescriot
 import DiceModal                 from '../../components/modals/DiceModal.jsx';
 import GMSendModal               from '../../../../components/gm/modals/GMSendModal.jsx';
 import AudioSessionToggle        from '../../../../components/audio/AudioSessionToggle.jsx';
+import BoardSessionToggle        from '../../../../components/board/BoardSessionToggle.jsx';
 import CopyAccessButton          from '../../../../components/ui/CopyAccessButton.jsx';
 
 // ── Constantes ────────────────────────────────────────────────────────────────
@@ -677,6 +678,9 @@ const TabSession = ({ activeSession, onlineCharacters }) => {
                 <div className="px-3 py-2 border-b border-default/40 shrink-0">
                     <AudioSessionToggle sessionId={activeSession.id}
                                         className="w-full text-[10px] font-mono uppercase tracking-wider border border-default/40 text-muted px-1.5 py-1 hover:border-default transition-colors" />
+                    {/* Tableau partagé de la table (spec_tableau.md §10.8) */}
+                    <BoardSessionToggle sessionId={activeSession.id}
+                                        className="w-full mt-1 text-[10px] font-mono uppercase tracking-wider border border-default/40 text-muted px-1.5 py-1 hover:border-default transition-colors" />
                 </div>
 
                 {/* Barre initiative — masquée en mode compact */}

@@ -478,3 +478,22 @@ button.vil-check:hover, button.vil-tick:hover { box-shadow: 0 0 0 3px color-mix(
 .vil-gm-pc-av.is-online::after { content: ''; position: absolute; right: 1px; bottom: 1px; width: 9px; height: 9px; border-radius: 50%; background: var(--color-success); border: 2px solid var(--vil-paper); }
 .vil-gm-sheet-bar { display: flex; align-items: center; justify-content: flex-end; gap: 8px; margin-bottom: 10px; }
 .vil-gm-pc small { display: block; font-family: var(--vil-font-label); font-size: 11px; color: var(--color-text-muted); }
+
+/* ── Tableau partagé (components/board, spec_tableau.md §10.8) ── */
+/* Encre et papier : trait d'encre, sang pour ce qui est actif ou montré, sauge au survol. */
+.vtt-board { font-family: var(--vil-font-body); }
+.vtt-board-page { padding: 1rem clamp(12px, 2vw, 28px); }
+.vtt-board-slides { padding: .6rem; border-radius: 0; border: 1px solid var(--vil-ink); background: var(--vil-paper); }
+.vtt-board-slides-title, .vtt-board-view-title { font-family: var(--vil-font-label); letter-spacing: .1em; text-transform: uppercase; color: var(--vil-blood); }
+.vtt-board-slide, .vtt-board-rail-slide, .vtt-board-tool, .vtt-board-icon-btn, .vtt-board-slides-reopen, .vtt-board-swatch, .vtt-board-picker-item, .vtt-board-badge { border-radius: 0; }
+.vtt-board-slide, .vtt-board-rail-slide { border-color: color-mix(in srgb, var(--vil-ink) 25%, transparent); background: var(--vil-paper); }
+.vtt-board-slide:hover, .vtt-board-rail-slide:hover { background: color-mix(in srgb, var(--vil-sage) 35%, var(--vil-paper)); }
+.vtt-board-slide.is-selected, .vtt-board-rail-slide.is-selected { border-color: var(--vil-ink); }
+.vtt-board-slide.is-shown { box-shadow: inset 3px 0 0 var(--vil-blood); }
+.vtt-board-rail-slide.is-shown, .vtt-board-badge { background: var(--vil-blood); border-color: var(--vil-blood); color: var(--vil-paper); }
+.vtt-board-tool:hover:not(:disabled) { background: color-mix(in srgb, var(--vil-sage) 50%, var(--vil-paper)); border-color: var(--vil-ink); }
+.vtt-board-tool.is-active { background: var(--vil-blood); border-color: var(--vil-blood); color: var(--vil-paper); }
+.vtt-board-stage { border-radius: 0; border: 1px solid var(--vil-ink); }
+.vtt-board-token-text, .vtt-board-ruler text { font-family: var(--vil-font-label); }
+.vtt-board-banner { border-radius: 0; border: 1px solid var(--vil-ink); border-left: 3px solid var(--vil-blood); background: var(--vil-paper); font-family: var(--vil-font-body); }
+.vtt-board-banner strong { font-family: var(--vil-font-label); letter-spacing: .08em; text-transform: uppercase; color: var(--vil-blood); }

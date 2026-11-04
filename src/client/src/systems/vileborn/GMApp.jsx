@@ -18,6 +18,7 @@ import ToastNotifications from '../../components/layout/ToastNotifications.jsx';
 import DiceHistoryPage    from '../../components/layout/DiceHistoryPage.jsx';
 import DiceHistoryPanel   from '../../components/layout/DiceHistoryPanel.jsx';
 import TabJournal         from '../../components/gm/tabs/TabJournal.jsx';
+import Board              from '../../components/board/Board.jsx';
 import FreeDiceModal      from '../../components/modals/FreeDiceModal.jsx';
 import { useHashTab }     from '../../hooks/useHashTab.js';
 import ReferenceGuide     from '../../components/reference/ReferenceGuide.jsx';
@@ -37,6 +38,7 @@ import { REFERENCE_SECTIONS } from './config/reference.js';
 const TABS = [
     { id: 'session',    label: 'Session' },
     { id: 'journal',    label: 'Journal' },
+    { id: 'tableau', label: 'Tableau' },
     { id: 'historique', label: 'Historique' },
     { id: 'aide',       label: 'Aide de jeu' },
 ];
@@ -73,6 +75,12 @@ const GMApp = ({ activeSession, onSessionChange, onlineCharacters, characterUpda
                                 characters={characters} order={order} loading={loading} patchCharacter={patchCharacter} />
                 )}
                 {activeTab === 'journal' && <div className="vil-page"><TabJournal characterId={-1} /></div>}
+                {/* Tableau partagé (brique plateforme, spec_tableau.md §10.8) */}
+                {activeTab === 'tableau' && (
+                    <div className="vtt-board-page">
+                        <Board sessionId={activeSession?.id ?? null} role="gm" />
+                    </div>
+                )}
                 {activeTab === 'historique' && <div className="vil-page"><DiceHistoryPage sessionId={sessionId} /></div>}
                 {activeTab === 'aide' && <div className="vil-page"><ReferenceGuide sections={REFERENCE_SECTIONS} isGM placeholder="Rechercher une règle (ex. dé d'obscurité, Igritte, défi)…" /></div>}
             </main>

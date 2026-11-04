@@ -24,6 +24,7 @@ import { useSystem }  from '../../../../hooks/useSystem.js';
 import TableManagementModal from '../../../../components/gm/modals/TableManagementModal.jsx';
 import GMSendModal          from '../../../../components/gm/modals/GMSendModal.jsx';
 import AudioSessionToggle   from '../../../../components/audio/AudioSessionToggle.jsx';
+import BoardSessionToggle   from '../../../../components/board/BoardSessionToggle.jsx';
 import CopyAccessButton     from '../../../../components/ui/CopyAccessButton.jsx';
 
 import { ARCHETYPES } from '../../config.jsx';
@@ -357,6 +358,8 @@ const TabSession = ({ activeSession, onSessionChange, onlineCharacters }) => {
                 {activeSession && (
                     <div className="p-2">
                         <AudioSessionToggle sessionId={activeSession.id} className="ac-btn ac-btn-secondary w-full" />
+                        {/* Tableau partagé de la table (spec_tableau.md §10.8) */}
+                        <BoardSessionToggle sessionId={activeSession.id} className="ac-btn ac-btn-secondary w-full mt-2" />
                     </div>
                 )}
             </aside>

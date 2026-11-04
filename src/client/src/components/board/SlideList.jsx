@@ -124,6 +124,19 @@ const SlideList = ({ board, selectedId, onSelect, confirm, slugGrid, tableGrid }
     };
     const toggle = (key) => board.updateSlide(selected.id, { [key]: !selected[key] });
 
+    // Grille : la diapositive suit le défaut de la table tant qu'elle n'a pas sa propre valeur
+    const followsTable = !!selected && selected.gridValue === null && selected.gridUnit === null;
+    const toggleTableDefault = async () => {
+        if (followsTable) {
+            // Désactivé : la diapositive garde la valeur actuelle comme la sienne
+            await board.updateSlide(selected.id, { gridValue: tableGrid.value, gridUnit: tableGrid.unit });
+        } else {
+            // Activé : sa valeur devient le défaut de la table, et elle le suit désormais
+            await board.setGrid({ gridValue: selected.gridValue ?? tableGrid.value, gridUnit: selected.gridUnit ?? tableGrid.unit });
+            await board.updateSlide(selected.id, { gridValue: null, gridUnit: null });
+        }
+    };
+
     // ── Masquée : un bouton pour rouvrir, dans le dernier mode visible ──────
     if (prefs.mode === 'hidden') {
         return (
@@ -227,18 +240,21 @@ const SlideList = ({ board, selectedId, onSelect, confirm, slugGrid, tableGrid }
                                 <NumberField value={selected.gridSize} min={5} onCommit={gridSize => gridSize && board.updateSlide(selected.id, { gridSize })} />
                                 unités du tableau
                             </label>
-                            <GridValue label="1 case =" value={selected.gridValue} unit={selected.gridUnit} inherited={tableGrid}
-                                       onChange={patch => board.updateSlide(selected.id, patch)} />
+                            {/* Une seule ligne de valeur (retour du MJ) : soit la diapositive suit le défaut
+                                de la table et la ligne règle ce défaut, soit elle a sa propre valeur */}
+                            <GridValue label="1 case =" inherited={followsTable ? slugGrid : tableGrid}
+                                       value={followsTable ? board.grid.value : selected.gridValue}
+                                       unit={followsTable ? board.grid.unit : selected.gridUnit}
+                                       onChange={patch => (followsTable ? board.setGrid(patch) : board.updateSlide(selected.id, patch))} />
+                            <div className="vtt-board-pills">
+                                <span title="Activé : cette valeur vaut pour toute la table ; les autres diapositives avec grille la reprennent">
+                                    <Toggle on={followsTable} onClick={toggleTableDefault}>Défaut de la table</Toggle>
+                                </span>
+                            </div>
                         </>
                     )}
                 </div>
             )}
-
-            <div className="vtt-board-slide-settings">
-                <span className="vtt-field-label">Grille de la table</span>
-                <GridValue label="1 case =" value={board.grid.value} unit={board.grid.unit} inherited={slugGrid}
-                           onChange={patch => board.setGrid(patch)} />
-            </div>
 
             {board.size > 0 && <p className="vtt-board-size">Images : {formatSize(board.size)}</p>}
         </aside>

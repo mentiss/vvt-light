@@ -10,6 +10,7 @@ import tecumahConfig from "../../config.jsx";
 import TabSession from "./tabs/TabSession.jsx";
 import TabResource from "./tabs/TabResource.jsx";
 import TabJournal from "../../../../components/gm/tabs/TabJournal.jsx";
+import Board      from '../../../../components/board/Board.jsx';
 import CombatPanel from "../../../../components/combat/CombatPanel.jsx";
 import DiceHistoryPage from "../../../../components/layout/DiceHistoryPage.jsx";
 import ToastNotifications from "../../../../components/layout/ToastNotifications.jsx";
@@ -26,6 +27,7 @@ const GM_TABS = [
     { id: 'session',    label: '📜 Session'    },
     { id: 'ressources', label: '⚡ Ressources'  },
     { id: 'journal',    label: '📓 Journal'     },
+    { id: 'tableau', label: '🗺️ Tableau' },
     { id: 'combat',     label: '⚔️ Combat'      },
     { id: 'historique', label: '🎲 Historique'  },
 ];
@@ -249,6 +251,12 @@ const GMView = ({ activeSession, onSessionChange, onlineCharacters, darkMode, on
                         />
                     )}
 
+                    {/* Tableau partagé (brique plateforme, spec_tableau.md §10.8) */}
+                    {activeTab === 'tableau' && (
+                        <div className="vtt-board-page">
+                            <Board sessionId={activeSession?.id ?? null} role="gm" />
+                        </div>
+                    )}
                     {activeTab === 'historique' && (
                         <DiceHistoryPage
                             sessionId={activeSession?.id ?? null}

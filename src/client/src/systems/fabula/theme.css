@@ -316,3 +316,33 @@ button.vtt-list-item:hover { border-color: var(--fu-win-edge); }
 .vtt-action-btn svg { filter: drop-shadow(1px 1px 0 var(--fu-win-shadow)); }
 /* Bouton principal du panneau (lecture / pause) : petite fenêtre aux angles arrondis */
 .vtt-audio-icon-btn.is-main { border-radius: 10px; box-shadow: inset 0 0 0 2px var(--fu-win-edge); }
+
+/* ── Tableau partagé (components/board, spec_tableau.md §10.8) ── */
+/* Fenêtre de JRPG : dégradé bleu, liseré clair, or pour ce qui est actif ou montré aux joueurs. */
+.vtt-board { font-family: 'PT Sans Narrow', Arial, sans-serif; --vtt-board-fog: #0b1230; }
+.vtt-board-page { padding: 1rem; }
+.vtt-board-slides {
+    padding: .6rem; border-radius: var(--fu-radius-md); border: 2px solid var(--fu-win-edge);
+    background: linear-gradient(180deg, var(--fu-win-top), var(--fu-win-bottom)); color: var(--fu-win-text);
+    box-shadow: 0 0 0 1px var(--fu-win-shadow), 0 6px 16px rgba(0,0,0,.4);
+}
+.vtt-board-slides-title, .vtt-board-view-title { font-family: 'Antonio', 'Arial Narrow', sans-serif; letter-spacing: .06em; text-transform: uppercase; }
+.vtt-board-slides-title { color: var(--fu-win-gold); }
+.vtt-board-slides .vtt-field-label, .vtt-board-slides .vtt-board-size { color: var(--fu-win-muted); }
+.vtt-board-slide, .vtt-board-rail-slide { border-color: var(--fu-win-shadow); background: var(--fu-win-field); color: var(--fu-win-text); }
+.vtt-board-slide.is-selected, .vtt-board-rail-slide.is-selected { border-color: var(--fu-win-gold); }
+.vtt-board-slide.is-shown { box-shadow: inset 3px 0 0 var(--fu-win-gold); }
+.vtt-board-rail-slide.is-shown { background: var(--fu-win-gold); color: var(--fu-win-bottom); }
+.vtt-board-badge { background: var(--fu-win-gold); color: var(--fu-win-bottom); }
+.vtt-board-slides .vtt-board-icon-btn { color: var(--fu-win-muted); }
+.vtt-board-slides .vtt-board-icon-btn:hover { color: var(--fu-win-text); background: var(--fu-win-field); }
+.vtt-board-tool { border-radius: var(--fu-radius); }
+.vtt-board-tool.is-active { background: linear-gradient(180deg, var(--fu-win-top), var(--fu-win-bottom)); border-color: var(--fu-win-edge); color: var(--fu-win-gold); }
+.vtt-board-stage { border-radius: var(--fu-radius-md); border: 2px solid var(--fu-win-edge); box-shadow: 0 0 0 1px var(--fu-win-shadow), 0 6px 16px rgba(0,0,0,.35); }
+.vtt-board-token-text, .vtt-board-ruler text { font-family: 'Antonio', 'Arial Narrow', sans-serif; }
+.vtt-board-banner {
+    border-radius: var(--fu-radius-md); border: 2px solid var(--fu-win-edge); color: var(--fu-win-text);
+    background: linear-gradient(180deg, var(--fu-win-top), var(--fu-win-bottom)); box-shadow: 0 0 0 1px var(--fu-win-shadow), 0 8px 20px rgba(0,0,0,.45);
+}
+.vtt-board-banner strong { color: var(--fu-win-gold); }
+.vtt-board-picker-item { border-radius: var(--fu-radius); }
