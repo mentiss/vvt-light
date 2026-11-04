@@ -32,4 +32,8 @@ module.exports = {
     dbPath:     path.join(__dirname, '../../../../database/cyberpunk.db'),
     schemaPath: path.join(__dirname, '../../../../database-template/cyberpunk-schema.sql'),
     generateAccessUrl,
+    // Route /characters commune (spec_characters_route.md §4.2) ; seul playerName est requis
+    characters: {
+        listColumns: ['playbook', 'cred', 'info_tokens', 'matos_tokens', 'retenue', 'xp', 'base_advancements'],
+    },
 };

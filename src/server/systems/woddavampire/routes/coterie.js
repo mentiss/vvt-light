@@ -19,7 +19,8 @@ const express = require('express');
 const router  = express.Router();
 
 const { authenticate, requireGM, requireOwnerOrGM } = require('../../../middlewares/auth');
-const { loadFullCharacter, broadcastCharacterUpdate } = require('../CharacterController');
+const { loadFullCharacter } = require('../CharacterController');
+const { broadcastCharacterUpdate } = require('../../../utils/characters');
 const {
     CoterieError, loadCoterie, createCoterie, updateCoterieTexts, setStoryPoints, contribute, withdraw,
 } = require('../CoterieController');
@@ -38,7 +39,7 @@ const write = (label, fn, { status = 200, characterUpdated = false } = {}) => (r
         broadcastCoterie(req, sessionId, coterie);
         if (characterUpdated) {
             const characterId = Number(req.params.characterId);
-            broadcastCharacterUpdate(req.app.get('io'), req.db, characterId, loadFullCharacter(req.db, characterId));
+            broadcastCharacterUpdate(req.app.get('io'), req.db, SLUG, characterId, loadFullCharacter(req.db, characterId));
         }
         res.status(status).json(coterie);
     } catch (err) {

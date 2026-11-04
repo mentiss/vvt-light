@@ -19,41 +19,7 @@
 //   - CRUD complet sur chaque sous-table (upsert par id + delete des absents)
 // ─────────────────────────────────────────────────────────────────────────────
 
-// ── Helpers CRUD sous-tables ──────────────────────────────────────────────────
-
-/**
- * Synchronise une sous-table en CRUD complet.
- * Les entrées avec id existant sont mises à jour (upsert).
- * Les entrées sans id sont insérées.
- * Les entrées présentes en BDD mais absentes du tableau sont supprimées.
- *
- * @param {object}   db
- * @param {string}   table        - nom de la table
- * @param {number}   characterId
- * @param {Array}    incoming     - tableau d'objets depuis le client
- * @param {Function} upsertFn     - (db, characterId, item) → void, gère insert/update
- */
-function _syncSubTable(db, table, characterId, incoming, upsertFn) {
-    if (!Array.isArray(incoming)) return;
-
-    const existingIds = db.prepare(
-        `SELECT id FROM ${table} WHERE character_id = ?`
-    ).all(characterId).map(r => r.id);
-
-    const incomingIds = incoming.filter(i => i.id).map(i => i.id);
-
-    // Supprimer les entrées disparues
-    for (const eid of existingIds) {
-        if (!incomingIds.includes(eid)) {
-            db.prepare(`DELETE FROM ${table} WHERE id = ?`).run(eid);
-        }
-    }
-
-    // Upsert chaque entrée entrante
-    for (const item of incoming) {
-        upsertFn(db, characterId, item);
-    }
-}
+const { syncSubTable, parseJson } = require('../../utils/characters');
 
 // ── loadFullCharacter ─────────────────────────────────────────────────────────
 
@@ -146,7 +112,7 @@ function loadFullCharacter(db, id) {
 
         // Contrôles GM (transmis au joueur — le front décide de l'affichage)
         degradationPalier: row.degradation_palier ?? 0,
-        tags:              _parseJson(row.tags, []),
+        tags:              parseJson(row.tags, []),
 
         // Santé physique
         firstAidApplied: !!row.first_aid_applied,
@@ -157,8 +123,8 @@ function loadFullCharacter(db, id) {
         familyDevelopments: row.family_developments ?? '',
 
         // JSON structurés
-        specialTraining:   _parseJson(row.special_training,  []),
-        distinctiveTraits: _parseJson(row.distinctive_traits, {}),
+        specialTraining:   parseJson(row.special_training,  []),
+        distinctiveTraits: parseJson(row.distinctive_traits, {}),
 
         // Admin
         officerResponsible: row.officer_responsible ?? '',
@@ -218,7 +184,7 @@ function loadFullCharacter(db, id) {
             slot:            e.slot             ?? null,
             quantity:        e.quantity         ?? 1,
             notes:           e.notes            ?? '',
-            jsonDetails:     _parseJson(e.json_details, {}),
+            jsonDetails:     parseJson(e.json_details, {}),
         })),
 
         // Métadonnées
@@ -332,7 +298,7 @@ function saveFullCharacter(db, id, data) {
         });
 
         // ── 2. Attaches ───────────────────────────────────────────────────────
-        _syncSubTable(db, 'character_bonds', id, data.bonds, (db, charId, b) => {
+        syncSubTable(db, 'character_bonds', id, data.bonds, (db, charId, b) => {
             if (b.id) {
                 db.prepare(`
                     UPDATE character_bonds SET
@@ -349,7 +315,7 @@ function saveFullCharacter(db, id, data) {
         });
 
         // ── 3. Motivations ────────────────────────────────────────────────────
-        _syncSubTable(db, 'character_motivations', id, data.motivations, (db, charId, m) => {
+        syncSubTable(db, 'character_motivations', id, data.motivations, (db, charId, m) => {
             if (m.id) {
                 db.prepare(`
                     UPDATE character_motivations SET text = ?, type = ?, position = ?
@@ -385,7 +351,7 @@ function saveFullCharacter(db, id, data) {
         }
 
         // ── 5. Langues ────────────────────────────────────────────────────────
-        _syncSubTable(db, 'character_languages', id, data.languages, (db, charId, l) => {
+        syncSubTable(db, 'character_languages', id, data.languages, (db, charId, l) => {
             if (l.id) {
                 db.prepare(`
                     UPDATE character_languages SET name = ?, score = ?, failed_check = ?
@@ -400,7 +366,7 @@ function saveFullCharacter(db, id, data) {
         });
 
         // ── 6. Équipement ─────────────────────────────────────────────────────
-        _syncSubTable(db, 'character_equipment', id, data.equipment, (db, charId, e) => {
+        syncSubTable(db, 'character_equipment', id, data.equipment, (db, charId, e) => {
             const details = e.jsonDetails != null ? JSON.stringify(e.jsonDetails) : '{}';
             if (e.id) {
                 db.prepare(`
@@ -451,11 +417,6 @@ function saveFullCharacter(db, id, data) {
 }
 
 // ── Helpers privés ────────────────────────────────────────────────────────────
-
-function _parseJson(value, fallback) {
-    if (value == null) return fallback;
-    try { return JSON.parse(value); } catch (_) { return fallback; }
-}
 
 // ── Exports ───────────────────────────────────────────────────────────────────
 

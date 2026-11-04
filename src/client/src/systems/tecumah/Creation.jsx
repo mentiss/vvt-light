@@ -686,7 +686,7 @@ const Creation = ({ onCreated, onCancel, onToggleDarkMode }) => {
                                         <div className="rounded-xl p-4 mx-auto max-w-xs" style={{ background: 'var(--color-surface-alt)', border: '2px solid var(--color-accent)' }}>
                                             <p style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)', marginBottom: 6 }}>Votre code d'accès</p>
                                             <p className="font-mono text-4xl font-bold tracking-widest" style={{ color: 'var(--color-accent)' }}>{created.accessCode}</p>
-                                            <CopyAccessButton character={created} className="vtt-btn-sm mt-3" />
+                                            <CopyAccessButton character={created} codeOnly className="vtt-btn-sm mt-3" />
                                             <p style={{ fontSize: '0.7rem', color: 'var(--color-text-muted)', marginTop: 8 }}>Conservez ce code — c'est votre clé d'accès permanente.</p>
                                         </div>
                                         <p style={{ fontSize: '0.78rem', color: 'var(--color-text-muted)' }}>

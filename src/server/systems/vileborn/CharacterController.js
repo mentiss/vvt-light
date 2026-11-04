@@ -3,7 +3,6 @@
 // Contrat :
 //   loadFullCharacter(db, id) → objet complet ou null
 //   saveFullCharacter(db, id, data) → objet complet mis à jour
-//   broadcastCharacterUpdate(io, db, id, character) → diffusion character-full-update
 //
 // loadFullCharacter agrège characters (colonnes à plat) et les sous-tables :
 // words (personnalité, formation), gifts, resources, bonds.
@@ -12,10 +11,12 @@
 //   - UPDATE characters : colonnes à plat en COALESCE, un champ absent (ou null)
 //     n'est pas écrasé → envoi partiel possible (PATCH). Un texte vidé ('') est
 //     bien enregistré vide.
-//   - Sous-tables synchronisées par _syncSubTable : mise à jour par id, insertion
+//   - Sous-tables synchronisées par syncSubTable : mise à jour par id, insertion
 //     sans id, suppression des lignes absentes du tableau ; un tableau absent
 //     laisse la sous-table intacte.
 // ─────────────────────────────────────────────────────────────────────────────
+
+const { syncSubTable, updateOrInsert } = require('../../utils/characters');
 
 // ── Colonnes à plat : clé camelCase envoyée par le client → colonne SQL ──────
 
@@ -77,42 +78,10 @@ const WORD_KINDS = ['personality', 'training'];
 const _int = (value, fallback = 0) => (Number.isFinite(Number(value)) ? Math.trunc(Number(value)) : fallback);
 const _clamp = (value, min, max) => Math.min(max, Math.max(min, value));
 
-/**
- * Synchronise une sous-table en CRUD complet (même helper que woddavampire et
- * fabula). Entrée avec id → mise à jour ; sans id → insertion ; présente en BDD
- * mais absente du tableau → suppression. L'index est transmis à upsertFn.
- */
-function _syncSubTable(db, table, characterId, incoming, upsertFn) {
-    if (!Array.isArray(incoming)) return;
-
-    const existingIds = db.prepare(
-        `SELECT id FROM ${table} WHERE character_id = ?`
-    ).all(characterId).map(r => r.id);
-
-    const incomingIds = incoming.filter(i => i?.id).map(i => i.id);
-
-    for (const eid of existingIds) {
-        if (!incomingIds.includes(eid)) {
-            db.prepare(`DELETE FROM ${table} WHERE id = ?`).run(eid);
-        }
-    }
-
-    incoming.forEach((item, index) => {
-        if (item) upsertFn(db, characterId, item, index);
-    });
-}
-
-// Mise à jour par id, sinon insertion. Un id inconnu de la base (id temporaire
-// créé côté client) est traité comme une insertion.
-function _updateOrInsert(db, entry, updateSql, updateValues, insertSql, insertValues) {
-    const changes = entry.id ? db.prepare(updateSql).run(...updateValues).changes : 0;
-    if (!changes) db.prepare(insertSql).run(...insertValues);
-}
-
 function _upsertWord(db, charId, w) {
     if (!WORD_KINDS.includes(w.kind) || !w.label?.trim()) return;
     const values = [w.kind, _int(w.position), w.label.trim()];
-    _updateOrInsert(db, w,
+    updateOrInsert(db, w,
         'UPDATE character_words SET kind = ?, position = ?, label = ? WHERE id = ? AND character_id = ?',
         [...values, w.id, charId],
         'INSERT INTO character_words (character_id, kind, position, label) VALUES (?, ?, ?, ?)',
@@ -122,7 +91,7 @@ function _upsertWord(db, charId, w) {
 function _upsertGift(db, charId, g, index) {
     if (!g.name?.trim()) return;
     const values = [index, g.giftKey ?? null, g.name.trim(), g.effect ?? '', g.drawback ?? '', g.checked ? 1 : 0];
-    _updateOrInsert(db, g,
+    updateOrInsert(db, g,
         `UPDATE character_gifts SET position = ?, gift_key = ?, name = ?, effect = ?, drawback = ?, checked = ?
          WHERE id = ? AND character_id = ?`, [...values, g.id, charId],
         `INSERT INTO character_gifts (character_id, position, gift_key, name, effect, drawback, checked)
@@ -132,7 +101,7 @@ function _upsertGift(db, charId, g, index) {
 function _upsertResource(db, charId, r, index) {
     if (!r.name?.trim()) return;
     const values = [index, r.name.trim(), r.effect ?? ''];
-    _updateOrInsert(db, r,
+    updateOrInsert(db, r,
         'UPDATE character_resources SET position = ?, name = ?, effect = ? WHERE id = ? AND character_id = ?',
         [...values, r.id, charId],
         'INSERT INTO character_resources (character_id, position, name, effect) VALUES (?, ?, ?, ?)',
@@ -142,7 +111,7 @@ function _upsertResource(db, charId, r, index) {
 function _upsertBond(db, charId, b, index) {
     if (!b.name?.trim()) return;
     const values = [index, b.name.trim(), b.description ?? '', _clamp(_int(b.level), -1, 1)];
-    _updateOrInsert(db, b,
+    updateOrInsert(db, b,
         'UPDATE character_bonds SET position = ?, name = ?, description = ?, level = ? WHERE id = ? AND character_id = ?',
         [...values, b.id, charId],
         'INSERT INTO character_bonds (character_id, position, name, description, level) VALUES (?, ?, ?, ?, ?)',
@@ -222,10 +191,10 @@ function saveFullCharacter(db, id, data) {
             WHERE id = @id
         `).run(params);
 
-        _syncSubTable(db, 'character_words',     id, data.words,     _upsertWord);
-        _syncSubTable(db, 'character_gifts',     id, data.gifts,     _upsertGift);
-        _syncSubTable(db, 'character_resources', id, data.resources, _upsertResource);
-        _syncSubTable(db, 'character_bonds',     id, data.bonds,     _upsertBond);
+        syncSubTable(db, 'character_words',     id, data.words,     _upsertWord);
+        syncSubTable(db, 'character_gifts',     id, data.gifts,     _upsertGift);
+        syncSubTable(db, 'character_resources', id, data.resources, _upsertResource);
+        syncSubTable(db, 'character_bonds',     id, data.bonds,     _upsertBond);
 
         db.prepare('COMMIT').run();
     } catch (err) {
@@ -236,18 +205,4 @@ function saveFullCharacter(db, id, data) {
     return loadFullCharacter(db, id);
 }
 
-// ── Diffusion ─────────────────────────────────────────────────────────────────
-
-/**
- * Diffuse la fiche à jour (character-full-update) dans chaque room de session du
- * personnage.
- */
-function broadcastCharacterUpdate(io, db, characterId, character) {
-    if (!io) return;
-    const sessions = db.prepare('SELECT session_id FROM session_characters WHERE character_id = ?').all(characterId);
-    for (const { session_id } of sessions) {
-        io.to(`vileborn_session_${session_id}`).emit('character-full-update', { characterId, character });
-    }
-}
-
-module.exports = { loadFullCharacter, saveFullCharacter, broadcastCharacterUpdate };
+module.exports = { loadFullCharacter, saveFullCharacter };

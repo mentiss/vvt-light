@@ -265,12 +265,12 @@ Les rooms sont isolées par système et session : `${system}_session_${sessionId
 ### Ajouter un nouveau système
 
 1. Créer `src/server/systems/:slug/config.jsx`
-2. Créer `src/server/systems/:slug/characterController.js`
-3. Créer `src/server/systems/:slug/routes/characters.js`
-4. Créer `src/server/systems/:slug/routes/combat.js`
-5. Créer `database-template/:slug-schema.sql`
-6. Créer les composants frontend dans `src/client/src/components/systems/:slug/`
-7. Ajouter la config dés dans `src/client/src/systems/:slug/config.jsx`
+2. Créer `src/server/systems/:slug/CharacterController.js` (la route `/characters` est commune)
+3. Créer `database-template/:slug-schema.sql`
+4. Créer les composants frontend dans `src/client/src/systems/:slug/`
+5. Ajouter la config dés dans `src/client/src/systems/:slug/config.jsx`
+
+La commande `/new-slug` de Claude Code détaille la procédure.
 
 > Le système est découvert automatiquement au démarrage. Aucun fichier central à modifier.
 

@@ -3,7 +3,9 @@
 //
 // Contrat :
 //   loadFullCharacter(db, id) → objet complet avec compétences/principes reshapés en tableaux
-//   saveFullCharacter(db, id, data) → persistance en transaction, reshape inverse
+//   saveFullCharacter(db, id, data) → persistance en transaction, reshape inverse ; renvoie la fiche rechargée
+
+const { syncSubTable } = require('../../utils/characters');
 
 // ── Listes fixes ─────────────────────────────────────────────────────────────
 
@@ -68,22 +70,6 @@ function _flattenPrincipes(principes = []) {
         cols[`${p.key}_maxime`] = p.maxime ?? '';
     }
     return cols;
-}
-
-/**
- * Synchronise une sous-table (pattern _syncSubTable, src/server/CLAUDE.md) :
- * entrées avec id mises à jour, sans id insérées, absentes supprimées.
- * Les identifiants restent stables d'une sauvegarde à l'autre.
- */
-function _syncSubTable(db, table, characterId, incoming, upsertFn) {
-    if (!Array.isArray(incoming)) return;
-    const existingIds = db.prepare(`SELECT id FROM ${table} WHERE character_id = ?`)
-        .all(characterId).map(r => r.id);
-    const incomingIds = incoming.filter(i => i.id).map(i => i.id);
-    for (const eid of existingIds) {
-        if (!incomingIds.includes(eid)) db.prepare(`DELETE FROM ${table} WHERE id = ?`).run(eid);
-    }
-    for (const item of incoming) upsertFn(db, characterId, item);
 }
 
 /** Qualité d'un atout : entier de 0 à 4, ou null (non renseignée, atouts d'avant la refonte). */
@@ -289,7 +275,7 @@ function saveFullCharacter(db, id, data) {
         // ── Talents : synchronisation (ids stables) ───────────────────────
         // Une entrée sans nom est ignorée (et supprimée si elle existait).
         const validTalents = Array.isArray(talents) ? talents.filter(t => t.talentName?.trim()) : talents;
-        _syncSubTable(db, 'character_talents', id, validTalents, (db, charId, t) => {
+        syncSubTable(db, 'character_talents', id, validTalents, (db, charId, t) => {
             if (t.id) {
                 db.prepare('UPDATE character_talents SET talent_name = ?, description = ? WHERE id = ? AND character_id = ?')
                     .run(t.talentName.trim(), t.description ?? '', t.id, charId);
@@ -302,7 +288,7 @@ function saveFullCharacter(db, id, data) {
         // ── Atouts : synchronisation (ids stables) ────────────────────────
         // qualite et motsCles sont facultatifs (Q-14) : absents → NULL et ''.
         const validItems = Array.isArray(items) ? items.filter(i => i.nom?.trim()) : items;
-        _syncSubTable(db, 'character_items', id, validItems, (db, charId, item) => {
+        syncSubTable(db, 'character_items', id, validItems, (db, charId, item) => {
             const values = [item.nom.trim(), item.description ?? '', item.quantite ?? 1,
                 _normalizeQualite(item.qualite), item.motsCles ?? ''];
             if (item.id) {
@@ -318,6 +304,7 @@ function saveFullCharacter(db, id, data) {
         db.prepare('ROLLBACK').run();
         throw err;
     }
+    return loadFullCharacter(db, id);
 }
 
 /**

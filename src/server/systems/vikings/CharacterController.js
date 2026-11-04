@@ -7,9 +7,11 @@
 //                                runes et items portent chacun leur id.
 //   saveFullCharacter(db, id, data) → transaction ; colonnes à plat en COALESCE
 //                                (un champ absent n'est pas écrasé → PATCH) ;
-//                                sous-tables synchronisées par _syncSubTable
+//                                sous-tables synchronisées par syncSubTable
 //                                (un tableau absent laisse la sous-table intacte).
 // Aucune règle métier ici (plafond SAGA, gains, triple 10 : côté client).
+
+const { syncSubTable, updateOrInsert, parseJson } = require('../../utils/characters');
 
 // ── Colonnes à plat : clé camelCase envoyée par le client → colonne SQL ──────
 
@@ -45,41 +47,9 @@ const FLAT_COLUMNS = {
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
 
-/**
- * Synchronise une sous-table en CRUD complet (même helper que deltagreen).
- * Entrée avec id → mise à jour ; sans id → insertion ;
- * présente en BDD mais absente du tableau → suppression.
- */
-function _syncSubTable(db, table, characterId, incoming, upsertFn) {
-    if (!Array.isArray(incoming)) return;
-
-    const existingIds = db.prepare(
-        `SELECT id FROM ${table} WHERE character_id = ?`
-    ).all(characterId).map(r => r.id);
-
-    const incomingIds = incoming.filter(i => i.id).map(i => i.id);
-
-    for (const eid of existingIds) {
-        if (!incomingIds.includes(eid)) {
-            db.prepare(`DELETE FROM ${table} WHERE id = ?`).run(eid);
-        }
-    }
-
-    for (const item of incoming) {
-        upsertFn(db, characterId, item);
-    }
-}
-
-// Mise à jour par id, sinon insertion. Un id inconnu de la base (id temporaire
-// créé côté client, ex. Date.now() dans l'inventaire) est traité comme une insertion.
-function _updateOrInsert(db, entry, updateSql, updateValues, insertSql, insertValues) {
-    const changes = entry.id ? db.prepare(updateSql).run(...updateValues).changes : 0;
-    if (!changes) db.prepare(insertSql).run(...insertValues);
-}
-
 function _upsertSkill(db, charId, s) {
     const values = [s.name, s.specialization || null, s.level ?? 0, s.currentPoints ?? 0];
-    _updateOrInsert(db, s,
+    updateOrInsert(db, s,
         `UPDATE character_skills SET skill_name = ?, specialization = ?, level = ?, current_points = ?
          WHERE id = ? AND character_id = ?`, [...values, s.id, charId],
         `INSERT INTO character_skills (character_id, skill_name, specialization, level, current_points)
@@ -87,13 +57,13 @@ function _upsertSkill(db, charId, s) {
 }
 
 function _upsertTrait(db, charId, t) {
-    _updateOrInsert(db, t,
+    updateOrInsert(db, t,
         'UPDATE character_traits SET trait_name = ? WHERE id = ? AND character_id = ?', [t.name, t.id, charId],
         'INSERT INTO character_traits (character_id, trait_name) VALUES (?, ?)', [charId, t.name]);
 }
 
 function _upsertRune(db, charId, r) {
-    _updateOrInsert(db, r,
+    updateOrInsert(db, r,
         'UPDATE character_runes SET rune_name = ?, level = ? WHERE id = ? AND character_id = ?', [r.name, r.level ?? 1, r.id, charId],
         'INSERT INTO character_runes (character_id, rune_name, level) VALUES (?, ?, ?)', [charId, r.name, r.level ?? 1]);
 }
@@ -104,17 +74,13 @@ function _upsertItem(db, charId, item) {
         item.weaponType || null, item.damage ?? null, item.range || null, item.armorValue ?? 0,
         JSON.stringify(item.requirements ?? {}), item.customItem ? 1 : 0,
     ];
-    _updateOrInsert(db, item,
+    updateOrInsert(db, item,
         `UPDATE character_items SET name = ?, category = ?, quantity = ?, location = ?, notes = ?,
              weapon_type = ?, damage = ?, range = ?, armor_value = ?, requirements = ?, custom_item = ?
          WHERE id = ? AND character_id = ?`, [...values, item.id, charId],
         `INSERT INTO character_items (character_id, name, category, quantity, location, notes,
              weapon_type, damage, range, armor_value, requirements, custom_item)
          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`, [charId, ...values]);
-}
-
-function _parseJson(text, fallback) {
-    try { return text ? JSON.parse(text) : fallback; } catch { return fallback; }
 }
 
 // ── API publique ─────────────────────────────────────────────────────────────
@@ -147,7 +113,7 @@ function loadFullCharacter(db, characterId) {
         damage:       item.damage,
         range:        item.range,
         armorValue:   item.armor_value,
-        requirements: _parseJson(item.requirements, {}),
+        requirements: parseJson(item.requirements, {}),
         customItem:   item.custom_item === 1,
     }));
 
@@ -208,10 +174,10 @@ function saveFullCharacter(db, id, data) {
             WHERE id = @id
         `).run(params);
 
-        _syncSubTable(db, 'character_skills', id, data.skills, _upsertSkill);
-        _syncSubTable(db, 'character_traits', id, data.traits, _upsertTrait);
-        _syncSubTable(db, 'character_runes',  id, data.runes,  _upsertRune);
-        _syncSubTable(db, 'character_items',  id, data.items,  _upsertItem);
+        syncSubTable(db, 'character_skills', id, data.skills, _upsertSkill);
+        syncSubTable(db, 'character_traits', id, data.traits, _upsertTrait);
+        syncSubTable(db, 'character_runes',  id, data.runes,  _upsertRune);
+        syncSubTable(db, 'character_items',  id, data.items,  _upsertItem);
 
         db.prepare('COMMIT').run();
     } catch (err) {

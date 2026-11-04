@@ -42,4 +42,8 @@ module.exports = {
 
     generateAccessCode,
     generateAccessUrl,
+    // Route /characters commune (spec_characters_route.md §4.2) ; seul playerName est requis
+    characters: {
+        listColumns: ['blessure_niveau', 'points_destin', 'points_personnage'],
+    },
 };

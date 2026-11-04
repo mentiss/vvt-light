@@ -34,4 +34,9 @@ module.exports = {
     dbPath:     path.join(__dirname, '../../../../database/achtung.db'),
     schemaPath: path.join(__dirname, '../../../../database-template/achtung-schema.sql'),
     generateAccessUrl,
+    // Route /characters commune (spec_characters_route.md §4.2)
+    characters: {
+        listColumns:      ['nationality', 'rank', 'archetype', 'background', 'characteristic', 'stress', 'injuries', 'fortune'],
+        requiredOnCreate: ['playerName', 'nom'],
+    },
 };

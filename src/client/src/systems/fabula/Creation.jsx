@@ -528,7 +528,7 @@ const Creation = ({ darkMode, onToggleDarkMode }) => {
                     <p className="text-xs text-muted mb-4">Notez ce code — c'est votre seule façon de retrouver votre fiche.</p>
                     <div className="text-xs text-muted mb-1">Code d'accès</div>
                     <div className="fu-font-title text-3xl tracking-widest text-accent mb-3">{accessCode}</div>
-                    <CopyAccessButton character={{ ...ws, accessCode, accessUrl }} className="vtt-btn-sm mb-4" />
+                    <CopyAccessButton character={{ accessCode }} codeOnly className="vtt-btn-sm mb-4" />
                     <button onClick={() => navigate(`/${slug}/${accessUrl}`)}
                             className="px-4 py-2 rounded bg-primary text-white w-full">
                         Accéder à ma fiche →

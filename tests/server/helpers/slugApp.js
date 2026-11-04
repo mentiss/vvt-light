@@ -48,7 +48,10 @@ export async function startSlugApp(slug, routeName = 'characters') {
     const emits = [];
     const io = { to: (room) => ({ emit: (event, payload) => emits.push({ room, event, payload }) }) };
 
-    const router = Loader.getSystemRoute(slug, routeName);
+    // /characters : même pile que server.js (route du slug s'il en a une, puis route commune)
+    const routers = routeName === 'characters'
+        ? Loader.getCharacterRouters(slug)
+        : [Loader.getSystemRoute(slug, routeName)];
     const app = express();
     app.use(express.json({ limit: '20mb' }));
     app.set('io', io);
@@ -56,15 +59,15 @@ export async function startSlugApp(slug, routeName = 'characters') {
         req.db = db;
         req.system = config;
         next();
-    }, router);
+    }, ...routers);
 
     const server = await new Promise(resolve => {
         const s = app.listen(0, '127.0.0.1', () => resolve(s));
     });
     const baseUrl = `http://127.0.0.1:${server.address().port}/${routeName}`;
 
-    // Routes déclarées par le routeur, ex. « PATCH /:id »
-    const routes = router.stack
+    // Routes déclarées par les routeurs, ex. « PATCH /:id »
+    const routes = routers.flatMap(r => r.stack)
         .filter(layer => layer.route)
         .flatMap(layer => Object.keys(layer.route.methods).map(m => `${m.toUpperCase()} ${layer.route.path}`));
 

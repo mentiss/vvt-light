@@ -217,7 +217,7 @@ const Creation = ({ darkMode, onToggleDarkMode }) => {
                     <div className="vda-label">Code d'accès</div>
                     <div className="vda-font-title text-4xl tracking-widest text-accent mb-3">{created.accessCode}</div>
                     <div className="flex flex-col gap-2 items-center">
-                        <CopyAccessButton character={{ ...ws, ...created }} />
+                        <CopyAccessButton character={created} codeOnly />
                         <button type="button" className="vtt-btn vtt-btn-primary" onClick={() => navigate(`/${slug}/${created.accessUrl}`)}>
                             Accéder à ma fiche
                         </button>

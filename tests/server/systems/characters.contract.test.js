@@ -1,10 +1,9 @@
 // tests/server/systems/characters.contract.test.js
 // ─────────────────────────────────────────────────────────────────────────────
 // Contrat des routes /characters de TOUS les slugs (découverts par le Loader :
-// un nouveau slug est testé d'office). Routes obligatoires = celles que la
-// plateforme appelle ; PATCH /:id et DELETE /:id ne sont testés que s'ils
-// existent. Règles : src/server/CLAUDE.md (droits, COALESCE, _syncSubTable,
-// diffusion character-full-update).
+// un nouveau slug est testé d'office), montées comme dans server.js : route du
+// slug s'il en a une, puis route commune (spec_characters_route.md). Règles :
+// src/server/CLAUDE.md (droits, COALESCE, syncSubTable, diffusion character-full-update).
 //
 // Chaque slug fournit tests/server/systems/<slug>/fixture.js :
 //   { create: corps minimal de POST /, edit: { field, value } pour l'envoi partiel }
@@ -84,6 +83,19 @@ describe.each(listSlugs())('%s : contrat /characters', (slug) => {
         expect((await api.request('GET', '/by-code/ZZZZZZ')).status).toBe(404);
     });
 
+    it('GET /by-code/:code ne tient pas compte de la casse', async () => {
+        const res = await api.request('GET', `/by-code/${created.accessCode.toLowerCase()}`);
+        expect(res.body?.id).toBe(created.id);
+    });
+
+    // Code choisi à la création (spec_characters_route.md §5) : contrat de la route
+    // commune, un slug qui remplace POST / (Noctis) n'y est pas soumis
+    it('POST / avec un code d’accès déjà pris : 409', async ({ skip }) => {
+        if (api.routes.filter(r => r === 'POST /').length > 1) skip();
+        const res = await api.request('POST', '/', { body: { ...fixture.create, accessCode: created.accessCode } });
+        expect(res.status).toBe(409);
+    });
+
     // ── Droits ───────────────────────────────────────────────────────────────
 
     it('GET /:id : 401 sans jeton, 403 autre joueur, 200 propriétaire et MJ, 404 inconnu', async () => {
@@ -139,16 +151,18 @@ describe.each(listSlugs())('%s : contrat /characters', (slug) => {
         expect(emit?.payload?.characterId).toBe(created.id);
     });
 
-    // ── Routes facultatives : testées si le slug les déclare ─────────────────
+    // ── Envoi partiel et suppression (route commune) ─────────────────────────
 
-    it('PATCH /:id (s’il existe) : 401 sans jeton, 403 autre joueur', async ({ skip }) => {
-        if (!api.routes.includes('PATCH /:id')) skip();
+    it('PATCH /:id : 401 sans jeton, 403 autre joueur', async () => {
+        expect(api.routes).toContain('PATCH /:id');
         expect((await api.request('PATCH', `/${created.id}`, { body: {} })).status).toBe(401);
         expect((await api.request('PATCH', `/${created.id}`, { body: {}, token: playerToken(other.id) })).status).toBe(403);
     });
 
-    it('DELETE /:id (s’il existe) : réservé au MJ', async ({ skip }) => {
-        if (!api.routes.includes('DELETE /:id')) skip();
+    it('DELETE /:id : réservé au MJ, le compte MJ jamais supprimé', async () => {
+        expect(api.routes).toContain('DELETE /:id');
+        expect((await api.request('DELETE', '/-1', { token: gmToken() })).status).toBe(403);
+        expect((await api.request('DELETE', '/999999', { token: gmToken() })).status).toBe(404);
         expect((await api.request('DELETE', `/${other.id}`, { token: playerToken(other.id) })).status).toBe(403);
         const res = await api.request('DELETE', `/${other.id}`, { token: gmToken() });
         expect(res.status).toBeLessThan(300);

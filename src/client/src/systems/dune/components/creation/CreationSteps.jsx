@@ -290,7 +290,7 @@ export const CreatedScreen = ({ created, onEnter }) => {
             <p>Votre code d’accès</p>
             <div className="dn-access-code">{created.accessCode}</div>
             <div className="flex gap-2 flex-wrap justify-center">
-                <CopyAccessButton character={created} icon={<DuneIcon name="key" className="dn-ico w-4 h-4" />} />
+                <CopyAccessButton character={created} codeOnly icon={<DuneIcon name="key" className="dn-ico w-4 h-4" />} />
                 <button type="button" className="vtt-btn vtt-btn-primary" onClick={() => onEnter(created)}>Accéder à la fiche</button>
             </div>
             <p>Conservez ce code : c’est votre clé d’accès.</p>

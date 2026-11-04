@@ -3,7 +3,7 @@
 //
 // Contrat :
 //   loadFullCharacter(db, id) → objet complet (colonnes plates + backgrounds[] + items[])
-//   saveFullCharacter(db, id, data) → persistance en transaction, CRUD propre sur backgrounds/items
+//   saveFullCharacter(db, id, data) → persistance en transaction, CRUD propre sur backgrounds/items ; renvoie la fiche rechargée
 
 // ── Liste des colonnes attributs et compétences ───────────────────────────────
 // Utilisée pour construire dynamiquement la clause UPDATE sans risque d'injection.
@@ -353,6 +353,7 @@ function saveFullCharacter(db, id, data) {
         db.prepare('ROLLBACK').run();
         throw err;
     }
+    return loadFullCharacter(db, id);
 }
 
 module.exports = { loadFullCharacter, saveFullCharacter, ATTRIBUTS, COMPETENCES };

@@ -28,13 +28,16 @@ Un corps de création avec des sous-tables remplies (comme `fabula`) rend l'alle
 |---|---|
 | `POST /` | publique ; 201 ; renvoie la fiche avec `id`, `accessCode`, `accessUrl` |
 | `GET /` | publique ; jamais le compte MJ (`id -1`) ; chaque entrée a `id`, `accessCode`, `accessUrl`, `playerName`, `avatar` |
-| `GET /by-url/:url`, `GET /by-code/:code` | publiques ; 404 si inconnu |
+| `GET /by-url/:url`, `GET /by-code/:code` | publiques ; 404 si inconnu ; code insensible à la casse |
+| `POST /` avec `accessCode` déjà pris | 409 (route commune ; un slug qui remplace `POST /` n'y est pas soumis) |
 | `GET /:id` | 401 sans jeton, 403 pour un autre joueur, 200 propriétaire et MJ, 404 si inconnu |
 | `PUT /:id` | 401 sans jeton, 403 pour un autre joueur, 404 si inconnu |
 | `GET /:id/sessions` | liste les tables du personnage |
 | `PUT /:id` (écriture) | **aller-retour** : renvoyer la fiche chargée ne change rien, ids des sous-tables compris ; **envoi partiel** : seul le champ envoyé change ; diffuse `character-full-update { characterId }` vers `${slug}_session_${id}` de chaque table |
-| `PATCH /:id` *(si déclarée)* | 401 sans jeton, 403 pour un autre joueur |
-| `DELETE /:id` *(si déclarée)* | 403 pour un joueur ; le MJ supprime |
+| `PATCH /:id` | présente (route commune) ; 401 sans jeton, 403 pour un autre joueur |
+| `DELETE /:id` | présente (route commune) ; 403 pour un joueur et pour le compte MJ (`id -1`), 404 si inconnu ; le MJ supprime |
+
+Depuis la route commune (`spec_characters_route.md`), le banc monte la même pile que `server.js` : `routes/characters.js` du slug s'il existe, puis la route commune.
 
 Champs ignorés dans les comparaisons : `updatedAt`, `lastAccessed` (et leurs formes snake_case).
 

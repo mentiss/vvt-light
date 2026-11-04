@@ -1,5 +1,7 @@
 // src/server/systems/achtung/CharacterController.js
 
+const { syncSubTable, updateOrInsert } = require('../../utils/characters');
+
 const ATTRIBUTES = ['agility', 'brawn', 'coordination', 'insight', 'reason', 'will'];
 
 const SKILLS = [
@@ -159,6 +161,61 @@ function loadFullCharacter(db, id) {
     };
 }
 
+// ── Sous-tables : une ligne par entrée, ordre = position dans le tableau ──────
+
+// Tableau absent → undefined (sous-table intacte) ; lignes sans nom écartées
+const _named = (list) => (Array.isArray(list) ? list.filter(e => e?.name?.trim()) : undefined);
+const _json  = (value) => JSON.stringify(Array.isArray(value) ? value : []);
+
+function _upsertTalent(db, charId, t, i) {
+    const values = [t.name.trim(), t.keywords ?? '', t.effect ?? '', i];
+    updateOrInsert(db, t,
+        'UPDATE character_talents SET name = ?, keywords = ?, effect = ?, sort_order = ? WHERE id = ? AND character_id = ?', [...values, t.id, charId],
+        'INSERT INTO character_talents (character_id, name, keywords, effect, sort_order) VALUES (?, ?, ?, ?, ?)', [charId, ...values]);
+}
+
+function _upsertWeapon(db, charId, w, i) {
+    const values = [
+        w.name.trim(), w.focus ?? '', w.range ?? '', w.damage ?? 0,
+        _json(w.salvo), w.size ?? '', _json(w.qualities), _json(w.effect), i,
+    ];
+    updateOrInsert(db, w,
+        `UPDATE character_weapons SET name = ?, focus = ?, range = ?, damage = ?, salvo = ?, size = ?,
+         qualities = ?, effect = ?, sort_order = ? WHERE id = ? AND character_id = ?`, [...values, w.id, charId],
+        `INSERT INTO character_weapons (character_id, name, focus, range, damage, salvo, size, qualities, effect, sort_order)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`, [charId, ...values]);
+}
+
+function _upsertItem(db, charId, item, i) {
+    const values = [item.name.trim(), item.description ?? '', item.effect ?? '', i];
+    updateOrInsert(db, item,
+        'UPDATE character_items SET name = ?, description = ?, effect = ?, sort_order = ? WHERE id = ? AND character_id = ?', [...values, item.id, charId],
+        'INSERT INTO character_items (character_id, name, description, effect, sort_order) VALUES (?, ?, ?, ?, ?)', [charId, ...values]);
+}
+
+function _upsertSpell(db, charId, s, i) {
+    const values = [
+        s.name.trim(),
+        s.skillUsed      ?? s.skill_used      ?? '',
+        s.difficulty     ?? 1,
+        s.cost           ?? '',
+        s.duration       ?? '',
+        s.effect         ?? '',
+        s.momentumSpends ?? s.momentum_spends ?? '',
+        s.spellKey       ?? s.spell_key       ?? null,
+        s.tradition      ?? null,
+        s.flawed ? 1 : 0,
+        i,
+    ];
+    updateOrInsert(db, s,
+        `UPDATE character_spells SET name = ?, skill_used = ?, difficulty = ?, cost = ?, duration = ?, effect = ?,
+         momentum_spends = ?, spell_key = ?, tradition = ?, flawed = ?, sort_order = ? WHERE id = ? AND character_id = ?`, [...values, s.id, charId],
+        `INSERT INTO character_spells
+         (character_id, name, skill_used, difficulty, cost, duration,
+          effect, momentum_spends, spell_key, tradition, flawed, sort_order)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`, [charId, ...values]);
+}
+
 // ── saveFullCharacter ─────────────────────────────────────────────────────────
 // Met à jour UNIQUEMENT les champs explicitement présents dans data.
 
@@ -239,73 +296,13 @@ function saveFullCharacter(db, id, data) {
         }
 
         // ── Tables liées ──────────────────────────────────────────────────────
+        // syncSubTable : ids stables (mise à jour par id, insertion sans id,
+        // suppression des absents). Une ligne sans nom est retirée, comme avant.
 
-        if (Array.isArray(data.talents)) {
-            db.prepare('DELETE FROM character_talents WHERE character_id = ?').run(id);
-            const ins = db.prepare(
-                'INSERT INTO character_talents (character_id, name, keywords, effect, sort_order) VALUES (?, ?, ?, ?, ?)'
-            );
-            data.talents.forEach((t, i) => {
-                if (!t.name?.trim()) return;
-                ins.run(id, t.name.trim(), t.keywords ?? '', t.effect ?? '', i);
-            });
-        }
-
-        if (Array.isArray(data.weapons)) {
-            db.prepare('DELETE FROM character_weapons WHERE character_id = ?').run(id);
-            const ins = db.prepare(
-                'INSERT INTO character_weapons (character_id, name, focus, range, damage, salvo, size, qualities, effect, sort_order) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)'
-            );
-            data.weapons.forEach((w, i) => {
-                if (!w.name?.trim()) return;
-                ins.run(
-                    id, w.name.trim(), w.focus ?? '', w.range ?? '', w.damage ?? 0,
-                    JSON.stringify(Array.isArray(w.salvo) ? w.salvo : []),
-                    w.size ?? '',
-                    JSON.stringify(Array.isArray(w.qualities) ? w.qualities : []),
-                    JSON.stringify(Array.isArray(w.effect) ? w.effect : []),
-                    i
-                );
-            });
-        }
-
-        if (Array.isArray(data.items)) {
-            db.prepare('DELETE FROM character_items WHERE character_id = ?').run(id);
-            const ins = db.prepare(
-                'INSERT INTO character_items (character_id, name, description, effect, sort_order) VALUES (?, ?, ?, ?, ?)'
-            );
-            data.items.forEach((item, i) => {
-                if (!item.name?.trim()) return;
-                ins.run(id, item.name.trim(), item.description ?? '', item.effect ?? '', i);
-            });
-        }
-
-        if (Array.isArray(data.spells)) {
-            db.prepare('DELETE FROM character_spells WHERE character_id = ?').run(id);
-            const ins = db.prepare(
-                `INSERT INTO character_spells
-                 (character_id, name, skill_used, difficulty, cost, duration,
-                  effect, momentum_spends, spell_key, tradition, flawed, sort_order)
-                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
-            );
-            data.spells.forEach((s, i) => {
-                if (!s.name?.trim()) return;
-                ins.run(
-                    id,
-                    s.name.trim(),
-                    s.skillUsed      ?? s.skill_used      ?? '',
-                    s.difficulty     ?? 1,
-                    s.cost           ?? '',
-                    s.duration       ?? '',
-                    s.effect         ?? '',
-                    s.momentumSpends ?? s.momentum_spends ?? '',
-                    s.spellKey       ?? s.spell_key       ?? null,
-                    s.tradition      ?? null,
-                    s.flawed ? 1 : 0,
-                    i
-                );
-            });
-        }
+        syncSubTable(db, 'character_talents', id, _named(data.talents), _upsertTalent);
+        syncSubTable(db, 'character_weapons', id, _named(data.weapons), _upsertWeapon);
+        syncSubTable(db, 'character_items',   id, _named(data.items),   _upsertItem);
+        syncSubTable(db, 'character_spells',  id, _named(data.spells),  _upsertSpell);
 
         db.prepare('COMMIT').run();
     } catch (err) {

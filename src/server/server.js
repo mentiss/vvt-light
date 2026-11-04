@@ -11,7 +11,7 @@ const { Server }  = require('socket.io');
 const compression = require('compression');
 const cookieParser = require('cookie-parser');
 
-const { loadAllSystems, getAllSystems, getSystemRoute, getSharedRoute, getSystemExtraRoutes, getSystemSocketHandlers } = require('./systems/Loader');
+const { loadAllSystems, getAllSystems, getCharacterRouters, getSharedRoute, getSystemExtraRoutes, getSystemSocketHandlers } = require('./systems/Loader');
 const systemResolver       = require('./middlewares/systemResolver');
 const { closeAllDatabases } = require('./db/index');
 const authRouter           = require('./routes/auth');
@@ -80,7 +80,7 @@ for (const [slug] of getAllSystems()) {
 
     // ── Routes partagées (toujours montées) ──────────────────────────────────
     app.use(`${prefix}/auth`,       resolver, authRouter);
-    app.use(`${prefix}/characters`, resolver, getSystemRoute(slug, 'characters'));
+    app.use(`${prefix}/characters`, resolver, ...getCharacterRouters(slug));
     app.use(`${prefix}/combat`,     resolver, getSharedRoute('combat'));
     app.use(`${prefix}/npc`,        resolver, getSharedRoute('npc'));
     app.use(`${prefix}/npc-sets`,   resolver, getSharedRoute('npc-sets'));

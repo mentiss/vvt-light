@@ -1079,7 +1079,7 @@ const Step7Finalisation = ({
                     >
                         {created.accessCode}
                     </span>
-                    <CopyAccessButton character={created} className="vtt-btn-sm" />
+                    <CopyAccessButton character={created} codeOnly className="vtt-btn-sm" />
                 </div>
 
                 <button

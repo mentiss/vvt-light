@@ -25,4 +25,9 @@ module.exports = {
     dbPath:     path.join(__dirname, '../../../../database/pure-vikings.db'),
     schemaPath: path.join(__dirname, '../../../../database-template/vikings-schema.sql'),
     generateAccessUrl,
+    // Route /characters commune (spec_characters_route.md §4.2) ; nom = nom du parent, facultatif
+    characters: {
+        listColumns:      ['surnom', 'age', 'sexe', 'saga_actuelle', 'saga_totale', 'tokens_blessure', 'tokens_fatigue'],
+        requiredOnCreate: ['playerName', 'prenom'],
+    },
 };

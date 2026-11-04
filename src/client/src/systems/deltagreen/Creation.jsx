@@ -516,7 +516,7 @@ const Creation = ({ darkMode, onToggleDarkMode }) => {
                         <p className="font-mono text-3xl font-black tracking-widest">{accessCode}</p>
                     </div>
 
-                    <CopyAccessButton character={{ ...details, accessCode, accessUrl }} className="vtt-btn-sm" />
+                    <CopyAccessButton character={{ accessCode }} codeOnly className="vtt-btn-sm" />
 
                     <p className="text-xs text-muted font-mono italic">
                         Ne partagez pas ce code. Il vous identifie comme Agent Delta Green.

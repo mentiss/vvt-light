@@ -1,11 +1,13 @@
 // src/client/src/components/ui/CopyAccessButton.jsx
 // Bouton générique — copie dans le presse-papier les accès d'un personnage
-// (jeu, nom, lien, code), au format d'un message Discord.
+// (jeu, nom, lien, code), au format d'un message Discord ; ou le code seul.
 //
 // Contrat :
 //   character — personnage ({ prenom?, nom?, accessUrl, accessCode })
+//   codeOnly? — copie le code d'accès seul (fin de création : le joueur le colle
+//               tel quel pour se reconnecter) ; défaut : le message complet
 //   name?     — nom affiché, si le slug le compose autrement que « prénom nom »
-//   label?    — texte du bouton (défaut « Copier les accès »)
+//   label?    — texte du bouton (défaut « Copier les accès », « Copier le code » en codeOnly)
 //   icon?     — icône du slug, placée avant le texte
 //   className — classes ajoutées à .vtt-btn (ex. vtt-btn-sm)
 //
@@ -27,7 +29,7 @@ const buildAccessMessage = ({ label, slug, character, name }) => {
     ].join('\n');
 };
 
-const CopyAccessButton = ({ character, name, label = 'Copier les accès', icon, className = '' }) => {
+const CopyAccessButton = ({ character, codeOnly = false, name, label, icon, className = '' }) => {
     const { slug, label: systemLabel } = useSystem();
     const [status, setStatus] = useState(null);   // null | 'copied' | 'failed'
 
@@ -38,10 +40,12 @@ const CopyAccessButton = ({ character, name, label = 'Copier les accès', icon, 
         return () => clearTimeout(timer);
     }, [status]);
 
-    if (!character?.accessUrl || !character?.accessCode) return null;
+    if (!character?.accessCode || (!codeOnly && !character.accessUrl)) return null;
 
     const copy = () => {
-        const text = buildAccessMessage({ label: systemLabel, slug, character, name });
+        const text = codeOnly
+            ? character.accessCode
+            : buildAccessMessage({ label: systemLabel, slug, character, name });
         // navigator.clipboard n'existe qu'en contexte sûr (HTTPS ou localhost)
         const write = navigator.clipboard ? navigator.clipboard.writeText(text) : Promise.reject(new Error('clipboard'));
         write
@@ -50,9 +54,11 @@ const CopyAccessButton = ({ character, name, label = 'Copier les accès', icon, 
     };
 
     return (
-        <button type="button" onClick={copy} className={`vtt-btn ${className}`.trim()} title="Copier le lien et le code d'accès">
+        <button type="button" onClick={copy} className={`vtt-btn ${className}`.trim()}
+                title={codeOnly ? 'Copier le code d\'accès' : 'Copier le lien et le code d\'accès'}>
             {icon}
-            {status === 'copied' ? 'Copié !' : status === 'failed' ? 'Copie impossible' : label}
+            {status === 'copied' ? 'Copié !' : status === 'failed' ? 'Copie impossible'
+                : (label ?? (codeOnly ? 'Copier le code' : 'Copier les accès'))}
         </button>
     );
 };

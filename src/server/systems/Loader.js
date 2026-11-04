@@ -4,12 +4,15 @@
 // Un système invalide logue un warning et est ignoré — le serveur continue.
 //
 // Contrat d'un système : son dossier DOIT contenir :
-//   config.js              → { slug, label, dbPath, schemaPath[, generateAccessUrl][, hidden] }
+//   config.js              → { slug, label, dbPath, schemaPath[, generateAccessUrl][, hidden][, characters] }
 //                            hidden: true → slug absent de la page d'accueil, accessible par son adresse
-//   routes/characters.js   → router Express spécifique
+//                            characters: { listColumns, requiredOnCreate } (route /characters commune)
+//   CharacterController.js → { loadFullCharacter, saveFullCharacter } (spec_characters_route.md §4)
 //
 // Routes génériques montées automatiquement (pas besoin de les déclarer) :
-//   sessions, journal, dice, combat, npc
+//   characters, sessions, journal, dice, combat, npc
+//   routes/characters.js du slug (facultatif) : monté avant la route commune
+//   /characters, il ajoute ses routes propres ou remplace une route commune.
 //
 // Routes extra slug-spécifiques :
 //   Tout fichier .js dans routes/ qui n'est PAS characters.js ni combat.js
@@ -39,8 +42,11 @@ const SHARED_ROUTES = {
     audio:      path.join(__dirname, '../routes/audio.js'),
 };
 
-// Routes que chaque système DOIT fournir
-const REQUIRED_ROUTES = ['characters'];
+// Fichiers que chaque système DOIT fournir (à la racine de son dossier)
+const REQUIRED_FILES = ['CharacterController.js'];
+
+// Route /characters commune (src/server/routes/characters.js)
+const CHARACTERS_ROUTE = path.join(__dirname, '../routes/characters.js');
 
 // Noms interdits à un slug : portée de la plateforme dans le stockage navigateur
 const RESERVED_SLUGS = ['platform'];
@@ -110,6 +116,26 @@ function getSystemRoute(slug, routeName) {
     const system = getSystem(slug);
     if (!system) throw new Error(`Unknown system: ${slug}`);
     return require(path.join(SYSTEMS_DIR, slug, 'routes', `${routeName}.js`));
+}
+
+/**
+ * Routeurs de /characters, dans l'ordre de montage : celui du slug s'il a un
+ * routes/characters.js (routes propres, remplacements), puis la route commune.
+ * @param {string} slug
+ * @returns {import('express').Router[]}
+ */
+function getCharacterRouters(slug) {
+    const own = path.join(SYSTEMS_DIR, slug, 'routes', 'characters.js');
+    return [...(fs.existsSync(own) ? [require(own)] : []), require(CHARACTERS_ROUTE)];
+}
+
+/**
+ * Contrôleur des personnages du slug (loadFullCharacter, saveFullCharacter…).
+ * @param {string} slug
+ */
+function getCharacterController(slug) {
+    if (!getSystem(slug)) throw new Error(`Unknown system: ${slug}`);
+    return require(path.join(SYSTEMS_DIR, slug, 'CharacterController.js'));
 }
 
 /**
@@ -195,10 +221,9 @@ function _validateConfig(config, systemDir) {
     // Portée réservée du stockage navigateur (vtt:platform:…, spec_browser_storage.md §7)
     if (RESERVED_SLUGS.includes(config.slug)) throw new Error(`Reserved slug "${config.slug}": choose another name`);
 
-    for (const routeName of REQUIRED_ROUTES) {
-        const routePath = path.join(systemDir, 'routes', `${routeName}.js`);
-        if (!fs.existsSync(routePath)) {
-            throw new Error(`Missing required route: routes/${routeName}.js`);
+    for (const file of REQUIRED_FILES) {
+        if (!fs.existsSync(path.join(systemDir, file))) {
+            throw new Error(`Missing required file: ${file}`);
         }
     }
 }
@@ -208,6 +233,8 @@ module.exports = {
     getSystem,
     getAllSystems,
     getSystemRoute,
+    getCharacterRouters,
+    getCharacterController,
     getSharedRoute,
     getSystemExtraRoutes,
     getSystemSocketHandlers,

@@ -34,4 +34,9 @@ module.exports = {
     dbPath:     path.join(__dirname, '../../../../database/dune.db'),
     schemaPath: path.join(__dirname, '../../../../database-template/dune-schema.sql'),
     generateAccessUrl,
+    // Route /characters commune (spec_characters_route.md §4.2)
+    characters: {
+        listColumns:      ['statut_social', 'determination', 'determination_max'],
+        requiredOnCreate: ['playerName', 'nom'],
+    },
 };

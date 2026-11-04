@@ -75,8 +75,9 @@ Pas de campagne de rattrapage : on ajoute un test quand on touche une règle de 
 **Zéro registre central.** `Loader.js` scanne `src/server/systems/` au démarrage : tout dossier contenant un `config.js` valide devient un système actif. Aucun fichier hors du dossier du slug ne doit être modifié pour en ajouter un.
 
 Fichiers d'un slug :
-- `src/server/systems/:slug/config.js` — `{ slug, label, dbPath, schemaPath, generateAccessUrl?, hidden? }` (`hidden: true` : absent de l'accueil, joignable par son adresse)
-- `src/server/systems/:slug/routes/characters.js` — routeur Express (obligatoire)
+- `src/server/systems/:slug/config.js` — `{ slug, label, dbPath, schemaPath, generateAccessUrl?, hidden?, characters? }` (`hidden: true` : absent de l'accueil, joignable par son adresse ; `characters: { listColumns, requiredOnCreate }` pour la route commune)
+- `src/server/systems/:slug/CharacterController.js` — `loadFullCharacter` / `saveFullCharacter` (obligatoire) ; la route `/characters` est commune (`src/server/routes/characters.js`, `documentations/spec_characters_route.md`)
+- `src/server/systems/:slug/routes/characters.js` — facultatif : routes personnage propres au slug (XP, objets…), montées avant la route commune
 - `database-template/:slug-schema.sql` — schéma SQLite (bâti sur `base.sql`)
 - `src/client/src/systems/:slug/config.jsx` — config front (hooks de dés, combat, `diceConfigDefault`)
 - `src/client/src/systems/:slug/Sheet.jsx` — fiche joueur
@@ -84,6 +85,7 @@ Fichiers d'un slug :
 - `src/client/src/systems/:slug/Creation.jsx` — assistant de création
 
 Routes supplémentaires : tout `.js` de `routes/` (sauf `characters.js`, `combat.js`) est monté sur `/api/:slug/<fichier>`.
+Helpers de sauvegarde et de diffusion partagés (`syncSubTable`, `updateOrInsert`, `parseJson`, `broadcastCharacterUpdate`, `emitToCharacterSessions`) : `src/server/utils/characters.js`, jamais recopiés dans un slug.
 Handlers socket supplémentaires : tout `.js` de `socket/` exporte `function register(io, socket, db)`.
 
 Pour créer un slug, utilise la commande `/new-slug`. Un slug ne peut pas s'appeler `platform` (portée réservée du stockage navigateur, refusée par le Loader).

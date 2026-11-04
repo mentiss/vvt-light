@@ -407,7 +407,7 @@ const Creation = ({ onCreated, onCancel, darkMode, onToggleDarkMode }) => {
                     <VkPanel variant="sm" className="mx-auto max-w-xs">
                         <div className="vk-field-label">Votre code d'accès</div>
                         <div className="vk-title vk-num text-4xl tracking-widest mb-3">{created.accessCode}</div>
-                        <CopyAccessButton character={created} name={formatFullName(created)} icon={<VkIcon name="key" />} className="vtt-btn-sm" />
+                        <CopyAccessButton character={created} codeOnly icon={<VkIcon name="key" />} className="vtt-btn-sm" />
                         <p className="text-xs text-muted mt-2">Conservez ce code : c'est votre clé d'accès permanente.</p>
                     </VkPanel>
                     <div className="text-xs text-muted">Lien : <span className="vk-num">{created.accessUrl}</span></div>

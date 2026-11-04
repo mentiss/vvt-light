@@ -10,6 +10,8 @@
 //
 // Table cible : npc_templates (créée par 28022026_add_npc_templates.sql)
 
+const { parseJson } = require('../utils/characters');
+
 const express = require('express');
 const router  = express.Router();
 
@@ -23,15 +25,9 @@ function parseTemplate(row) {
     if (!row) return null;
     return {
         ...row,
-        combat_stats: _parseJson(row.combat_stats, {}),
-        system_data:  _parseJson(row.system_data,  {}),
+        combat_stats: parseJson(row.combat_stats, {}),
+        system_data:  parseJson(row.system_data,  {}),
     };
-}
-
-function _parseJson(value, fallback) {
-    if (value === null || value === undefined) return fallback;
-    if (typeof value === 'object') return value;
-    try { return JSON.parse(value); } catch { return fallback; }
 }
 
 // ─── GET / — Liste tous les templates ────────────────────────────────────────

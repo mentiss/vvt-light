@@ -12,6 +12,7 @@ Règles Express / SQLite / Socket.io. Complète le CLAUDE.md racine.
 
 ## Routes et contrôleurs
 
+- **Route `/characters` commune** (`routes/characters.js`, spec `documentations/spec_characters_route.md`) : liste, by-url, by-code, `/:id`, `/:id/sessions`, création (code choisi facultatif, 409 s'il est pris), `PUT`, `PATCH`, `DELETE`. Elle appelle le `CharacterController.js` du slug (obligatoire) et lit `config.characters` (`listColumns`, `requiredOnCreate`). Un `systems/:slug/routes/characters.js` n'existe que pour des routes propres au slug (XP, envoi d'objet…) ; monté avant la route commune, il pourrait en remplacer une (seul Noctis le fait, en attente de refonte).
 - Contrôleurs clairs : la route valide l'entrée et délègue, la logique métier ne se disperse pas dans les handlers.
 - **Ordre de déclaration** : les routes spécifiques (`GET /:id/sessions`) avant les génériques (`GET /:id`), sinon collision.
 - `GET /characters` reste **public** (sélection du personnage). Les routes MJ exigent un JWT valide.
@@ -31,7 +32,7 @@ Middlewares dans `middlewares/auth.js` : `authenticate`, `requireOwnerOrGM`, `re
 
 - Requêtes **paramétrées** uniquement, jamais de concaténation de valeurs dans le SQL.
 - **COALESCE** dans les UPDATE pour ne pas écraser les champs non fournis (modèle : `FLAT_COLUMNS` de `vikings` et `fabula`). Un texte vidé (`''`) est bien enregistré ; une colonne ne se remet pas à `NULL` par la sauvegarde de fiche, c'est assumé.
-- Écritures multi-tables (`saveFullCharacter`) dans une **transaction**. Les sous-tables (équipement, liens…) se synchronisent avec le pattern `_syncSubTable`.
+- Écritures multi-tables (`saveFullCharacter`) dans une **transaction** ; `saveFullCharacter` renvoie la fiche rechargée. Les sous-tables (équipement, liens…) se synchronisent avec `syncSubTable` et `updateOrInsert` de `utils/characters.js` (ids stables), jamais une copie locale ni un « tout supprimer puis réinsérer ».
 - `saveFullCharacter` doit mapper `accessCode → access_code` dans l'UPDATE des colonnes à plat.
 - Schéma d'un slug : partir de `database-template/base.sql`, ne jamais redéfinir les tables partagées (`game_sessions`, `refresh_tokens`, `dice_history`, `character_journal`, `session_characters`). `characters` doit avoir `login_attempts`, `last_attempt_at`, `last_accessed`, et la colonne d'avatar s'appelle `avatar` (pas `avatar_url`).
 - Toute évolution de structure : schéma **et** migration (voir CLAUDE.md racine).
@@ -56,7 +57,7 @@ Middlewares dans `middlewares/auth.js` : `authenticate`, `requireOwnerOrGM`, `re
 
 ### Règles pour le nouveau code
 
-- Mise à jour d'un personnage : route HTTP, puis le serveur diffuse `character-full-update { characterId, character }` vers **chaque room de session** du personnage (helper `broadcastCharacterUpdate` des routes `characters.js`).
+- Mise à jour d'un personnage : route HTTP, puis le serveur diffuse `character-full-update { characterId, character }` vers **chaque room de session** du personnage (helper `broadcastCharacterUpdate(io, db, slug, id, fiche)` de `utils/characters.js` ; `emitToCharacterSessions` pour un autre événement, ex. `gm-item-received`).
 - Émission vers une room précise (`io.to(room)`), pas d'`io.emit` global pour un événement de session. L'activation de session ne doit pas provoquer d'`io.emit` supplémentaire (rechargements de la page MJ).
 - **Modèle de confiance assumé** : tout ce qui part dans une room est reçu par tous ses membres, et c'est voulu. Une info MJ peut être diffusée à la room et filtrée par le client MJ (pattern `session-resources-gm-update` pour les complications 2D20). Pas de room MJ dédiée ni de contrôle d'appartenance serveur à ajouter sans demande explicite.
 - Handlers de slug : `systems/:slug/socket/*.js` exporte `register(io, socket)` (la DB s'obtient par `getDbForSystem(getConfigForSystem(SLUG))`). Ils valident le payload (champ autorisé, type, bornes) et encadrent l'écriture d'un `try/catch` ; pas de validations factices.

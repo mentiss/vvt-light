@@ -1395,7 +1395,7 @@ const Creation = ({ darkMode, onToggleDarkMode }) => {
                     <div style={{ fontFamily: 'var(--ac-font-heading)', fontWeight: 700, letterSpacing: '0.25em', color: 'var(--ac-secondary)', fontSize: '1.6rem', marginBottom: '0.5rem' }}>{accessCode}</div>
                     <p style={{ fontSize: '0.76rem', color: 'var(--ac-text-muted)', marginBottom: '1.5rem' }}>Notez ce code — il est votre seule façon de retrouver votre fiche.</p>
                     <div className="flex flex-col gap-2">
-                        <CopyAccessButton character={{ ...ws, accessCode, accessUrl }} className="w-full" />
+                        <CopyAccessButton character={{ accessCode }} codeOnly className="w-full" />
                         <button onClick={() => navigate(`/${slug}/${accessUrl}`)} className="ac-btn ac-btn-primary w-full">Accéder à ma fiche →</button>
                         <button onClick={() => navigate(`/${slug}/`)} className="ac-btn ac-btn-ghost w-full">Retour à l'accueil</button>
                     </div>

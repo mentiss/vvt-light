@@ -20,9 +20,11 @@
 //     null) n'est pas écrasé → envoi partiel possible (PATCH). Un texte vidé
 //     ('') est bien enregistré vide.
 //   - Sous-tables (classes, skills, arcana, bonds, equipment) synchronisées par
-//     _syncSubTable : mise à jour par id, insertion sans id, suppression des
+//     syncSubTable : mise à jour par id, insertion sans id, suppression des
 //     lignes absentes du tableau ; un tableau absent laisse la sous-table intacte.
 // ─────────────────────────────────────────────────────────────────────────────
+
+const { syncSubTable, updateOrInsert, parseJson } = require('../../utils/characters');
 
 // ── Colonnes à plat : clé camelCase envoyée par le client → colonne SQL ──────
 // (alterationsEtat et boostsAttributs, en JSON, sont traités à part)
@@ -70,43 +72,10 @@ const BOND_TARGETS = ['pj', 'pnj', 'lieu', 'organisation'];
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
 
-/**
- * Synchronise une sous-table en CRUD complet (même helper que vikings et
- * deltagreen). Entrée avec id → mise à jour ; sans id → insertion ; présente
- * en BDD mais absente du tableau → suppression. L'index est transmis à
- * upsertFn (ordre de l'équipement).
- */
-function _syncSubTable(db, table, characterId, incoming, upsertFn) {
-    if (!Array.isArray(incoming)) return;
-
-    const existingIds = db.prepare(
-        `SELECT id FROM ${table} WHERE character_id = ?`
-    ).all(characterId).map(r => r.id);
-
-    const incomingIds = incoming.filter(i => i?.id).map(i => i.id);
-
-    for (const eid of existingIds) {
-        if (!incomingIds.includes(eid)) {
-            db.prepare(`DELETE FROM ${table} WHERE id = ?`).run(eid);
-        }
-    }
-
-    incoming.forEach((item, index) => {
-        if (item) upsertFn(db, characterId, item, index);
-    });
-}
-
-// Mise à jour par id, sinon insertion. Un id inconnu de la base (id temporaire
-// créé côté client) est traité comme une insertion.
-function _updateOrInsert(db, entry, updateSql, updateValues, insertSql, insertValues) {
-    const changes = entry.id ? db.prepare(updateSql).run(...updateValues).changes : 0;
-    if (!changes) db.prepare(insertSql).run(...insertValues);
-}
-
 function _upsertClass(db, charId, c) {
     if (!c.classKey) return;
     const values = [c.classKey, c.niveau ?? 0];
-    _updateOrInsert(db, c,
+    updateOrInsert(db, c,
         'UPDATE character_classes SET class_key = ?, niveau = ? WHERE id = ? AND character_id = ?', [...values, c.id, charId],
         'INSERT INTO character_classes (character_id, class_key, niveau) VALUES (?, ?, ?)', [charId, ...values]);
 }
@@ -117,7 +86,7 @@ function _upsertSkill(db, charId, s) {
         s.classKey, s.skillKey, s.rang ?? 0,
         JSON.stringify(Array.isArray(s.spellsChoisis) ? s.spellsChoisis : []),
     ];
-    _updateOrInsert(db, s,
+    updateOrInsert(db, s,
         `UPDATE character_skills SET class_key = ?, skill_key = ?, rang = ?, spells_choisis = ?
          WHERE id = ? AND character_id = ?`, [...values, s.id, charId],
         `INSERT INTO character_skills (character_id, class_key, skill_key, rang, spells_choisis)
@@ -127,7 +96,7 @@ function _upsertSkill(db, charId, s) {
 function _upsertArcanum(db, charId, a) {
     if (!a.arcanumKey) return;
     const values = [a.arcanumKey, a.etat === 'fusionne' ? 'fusionne' : 'lie'];
-    _updateOrInsert(db, a,
+    updateOrInsert(db, a,
         'UPDATE character_arcana SET arcanum_key = ?, etat = ? WHERE id = ? AND character_id = ?', [...values, a.id, charId],
         'INSERT INTO character_arcana (character_id, arcanum_key, etat) VALUES (?, ?, ?)', [charId, ...values]);
 }
@@ -139,7 +108,7 @@ function _upsertBond(db, charId, b) {
         JSON.stringify(Array.isArray(b.sentiments) ? b.sentiments.slice(0, 3) : []),
         b.notes ?? '',
     ];
-    _updateOrInsert(db, b,
+    updateOrInsert(db, b,
         `UPDATE character_bonds SET cible_nom = ?, cible_type = ?, sentiments = ?, notes = ?
          WHERE id = ? AND character_id = ?`, [...values, b.id, charId],
         `INSERT INTO character_bonds (character_id, cible_nom, cible_type, sentiments, notes)
@@ -175,7 +144,7 @@ function _upsertEquipment(db, charId, e, index) {
         EMPLACEMENTS.includes(e.emplacementEquipe) ? e.emplacementEquipe : null,
         e.ordre ?? index,
     ];
-    _updateOrInsert(db, e,
+    updateOrInsert(db, e,
         `UPDATE character_equipment SET
              type_emplacement = ?, equipment_key = ?, nom_libre = ?, notes_libres = ?, prix = ?,
              categorie = ?, est_martial = ?, qualite = ?,
@@ -192,15 +161,6 @@ function _upsertEquipment(db, charId, e, index) {
               mod_defense, mod_defense_magique, mod_initiative, def_fixe,
               emplacement_equipe, ordre)
          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`, [charId, ...values]);
-}
-
-function _parseJson(str, fallback) {
-    if (!str) return fallback;
-    try {
-        return JSON.parse(str);
-    } catch {
-        return fallback;
-    }
 }
 
 // ── loadFullCharacter ─────────────────────────────────────────────────────────
@@ -286,8 +246,8 @@ function loadFullCharacter(db, id) {
         pointsFabula:      row.points_fabula,
 
         groupeNom:         row.groupe_nom,
-        alterationsEtat:   _parseJson(row.alterations_etat, []),
-        boostsAttributs:   _parseJson(row.boosts_attributs, {}),
+        alterationsEtat:   parseJson(row.alterations_etat, []),
+        boostsAttributs:   parseJson(row.boosts_attributs, {}),
 
         // Sous-tables
         classes: classes.map(c => ({
@@ -300,7 +260,7 @@ function loadFullCharacter(db, id) {
             classKey:      s.class_key,
             skillKey:      s.skill_key,
             rang:          s.rang,
-            spellsChoisis: _parseJson(s.spells_choisis, []),
+            spellsChoisis: parseJson(s.spells_choisis, []),
         })),
         arcana: arcana.map(a => ({
             id:         a.id,
@@ -311,7 +271,7 @@ function loadFullCharacter(db, id) {
             id:         b.id,
             cibleNom:   b.cible_nom,
             cibleType:  b.cible_type,
-            sentiments: _parseJson(b.sentiments, []),
+            sentiments: parseJson(b.sentiments, []),
             notes:      b.notes,
         })),
         equipment: equipment.map(e => ({
@@ -392,11 +352,11 @@ function saveFullCharacter(db, id, data) {
             WHERE id = @id
         `).run(params);
 
-        _syncSubTable(db, 'character_classes',   id, data.classes,   _upsertClass);
-        _syncSubTable(db, 'character_skills',    id, data.skills,    _upsertSkill);
-        _syncSubTable(db, 'character_arcana',    id, data.arcana,    _upsertArcanum);
-        _syncSubTable(db, 'character_bonds',     id, data.bonds,     _upsertBond);
-        _syncSubTable(db, 'character_equipment', id, data.equipment, _upsertEquipment);
+        syncSubTable(db, 'character_classes',   id, data.classes,   _upsertClass);
+        syncSubTable(db, 'character_skills',    id, data.skills,    _upsertSkill);
+        syncSubTable(db, 'character_arcana',    id, data.arcana,    _upsertArcanum);
+        syncSubTable(db, 'character_bonds',     id, data.bonds,     _upsertBond);
+        syncSubTable(db, 'character_equipment', id, data.equipment, _upsertEquipment);
 
         db.prepare('COMMIT').run();
     } catch (err) {

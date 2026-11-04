@@ -33,4 +33,8 @@ module.exports = {
     dbPath:     path.join(__dirname, '../../../../database/deltagreen.db'),
     schemaPath: path.join(__dirname, '../../../../database-template/deltagreen-schema.sql'),
     generateAccessUrl,
+    // Route /characters commune (spec_characters_route.md §4.2) ; seul playerName est requis
+    characters: {
+        listColumns: ['alias', 'profession'],
+    },
 };

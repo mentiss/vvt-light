@@ -315,7 +315,7 @@ const Creation = ({ onCreated, onCancel, darkMode, onToggleDarkMode }) => {
                     <div className="rounded-xl p-6 mx-auto max-w-sm bg-surface-alt border border-default">
                         <div className="text-sm text-muted mb-2">Votre code d'accès</div>
                         <div className="font-mono text-4xl font-bold tracking-widest text-default mb-4">{created.accessCode}</div>
-                        <CopyAccessButton character={created} />
+                        <CopyAccessButton character={created} codeOnly />
                         <p className="text-xs text-muted mt-3">Conservez ce code — c'est votre clé d'accès permanente à la fiche.</p>
                     </div>
                     <button onClick={() => onCreated?.(created)} className="px-6 py-3 rounded-sm bg-accent text-white font-semibold zb-display">

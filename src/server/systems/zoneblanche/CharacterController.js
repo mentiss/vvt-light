@@ -6,7 +6,10 @@
 //                                 tableaux, Vérités/Focus/Talents chargés depuis
 //                                 leurs tables dédiées.
 //   saveFullCharacter(db, id, data) → persistance en transaction, reshape inverse,
-//                                       remplacement complet Vérités/Focus/Talents.
+//                                       Vérités/Focus par syncSubTable (ids stables),
+//                                       remplacement complet des Talents (clés de catalogue).
+
+const { syncSubTable, updateOrInsert } = require('../../utils/characters');
 
 const PRINCIPES   = ['logique', 'instinct', 'technique', 'presence'];
 const COMPETENCES = ['investigation', 'operation', 'deplacement', 'esoterisme'];
@@ -128,30 +131,25 @@ function saveFullCharacter(db, id, data) {
             id,
         });
 
-        // ── Vérités : remplacement complet ──────────────────────────────────
-        if (Array.isArray(verites)) {
-            db.prepare('DELETE FROM character_verites WHERE character_id = ?').run(id);
-            const insertVerite = db.prepare(
-                'INSERT INTO character_verites (character_id, nom, texte) VALUES (?, ?, ?)'
-            );
-            for (const v of verites) {
-                if (!v.nom?.trim()) continue;
-                insertVerite.run(id, v.nom.trim(), v.texte ?? '');
-            }
-        }
+        // ── Vérités et Focus : syncSubTable (ids stables) ───────────────────
+        // Une entrée incomplète (vérité sans nom, focus sans texte ou hors
+        // compétences) est écartée, donc retirée si elle existait.
+        syncSubTable(db, 'character_verites', id,
+            Array.isArray(verites) ? verites.filter(v => v?.nom?.trim()) : undefined,
+            (db, charId, v) => updateOrInsert(db, v,
+                'UPDATE character_verites SET nom = ?, texte = ? WHERE id = ? AND character_id = ?',
+                [v.nom.trim(), v.texte ?? '', v.id, charId],
+                'INSERT INTO character_verites (character_id, nom, texte) VALUES (?, ?, ?)',
+                [charId, v.nom.trim(), v.texte ?? '']));
 
-        // ── Focus : remplacement complet ─────────────────────────────────────
-        if (Array.isArray(focus)) {
-            db.prepare('DELETE FROM character_focus WHERE character_id = ?').run(id);
-            const insertFocus = db.prepare(
-                'INSERT INTO character_focus (character_id, competence_key, texte) VALUES (?, ?, ?)'
-            );
-            for (const f of focus) {
-                const competenceKey = f.competenceKey ?? f.competence_key;
-                if (!f.texte?.trim() || !COMPETENCES.includes(competenceKey)) continue;
-                insertFocus.run(id, competenceKey, f.texte.trim());
-            }
-        }
+        const focusKey = (f) => f.competenceKey ?? f.competence_key;
+        syncSubTable(db, 'character_focus', id,
+            Array.isArray(focus) ? focus.filter(f => f?.texte?.trim() && COMPETENCES.includes(focusKey(f))) : undefined,
+            (db, charId, f) => updateOrInsert(db, f,
+                'UPDATE character_focus SET competence_key = ?, texte = ? WHERE id = ? AND character_id = ?',
+                [focusKey(f), f.texte.trim(), f.id, charId],
+                'INSERT INTO character_focus (character_id, competence_key, texte) VALUES (?, ?, ?)',
+                [charId, focusKey(f), f.texte.trim()]));
 
         // ── Talents : remplacement complet (référence catalogue) ────────────
         if (Array.isArray(talents)) {

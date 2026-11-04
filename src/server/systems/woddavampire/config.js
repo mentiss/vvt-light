@@ -36,4 +36,9 @@ module.exports = {
     dbPath:     path.join(__dirname, '../../../../database/woddavampire.db'),
     schemaPath: path.join(__dirname, '../../../../database-template/woddavampire-schema.sql'),
     generateAccessUrl,
+    // Route /characters commune (spec_characters_route.md §4.2)
+    characters: {
+        listColumns:      ['clan_key', 'generation'],
+        requiredOnCreate: ['playerName', 'nom'],
+    },
 };
