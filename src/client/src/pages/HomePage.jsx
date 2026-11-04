@@ -126,6 +126,11 @@ const HomePage = ({ darkMode, onToggleDarkMode }) => {
                 </a>
                 <span>Version {RELEASE_VERSION && `v${RELEASE_VERSION} · `}{VERSION_HASH}{VERSION_DATE && ` · ${new Date(VERSION_DATE).toLocaleDateString('fr-FR')}`}</span>
                 <span>{listed.length} système{listed.length > 1 ? 's' : ''}</span>
+                {/* Icônes du tableau : licence CC BY 3.0, crédits ici et dans le README (spec_tableau.md §10.7) */}
+                <span>
+                    Icônes du tableau : <a href="https://game-icons.net" target="_blank" rel="noopener noreferrer">game-icons.net</a>,{' '}
+                    <a href="https://creativecommons.org/licenses/by/3.0/" target="_blank" rel="noopener noreferrer">CC BY 3.0</a>
+                </span>
             </footer>
 
             {showFreeDice && <FreeDiceModal persist={false} onClose={() => setShowFreeDice(false)} />}

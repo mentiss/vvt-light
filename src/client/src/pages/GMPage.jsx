@@ -17,6 +17,7 @@ import { useSystem } from '../hooks/useSystem.js';
 import { ModalHostProvider } from '../components/ui/ModalHost.jsx';
 import { ActionZoneProvider } from '../components/ui/ActionZone.jsx';
 import AudioLayer    from '../components/audio/AudioLayer.jsx';
+import BoardLayer    from '../components/board/BoardLayer.jsx';
 
 const SYSTEM_GM_APPS = import.meta.glob('../systems/*/GMApp.jsx');
 const THEMES    = import.meta.glob('../systems/*/theme.css');
@@ -94,6 +95,8 @@ const GMPage = () => {
                 </Suspense>
                 {/* Musique de la table active, si le MJ l'a activée (spec_audio.md §11.7) */}
                 <AudioLayer role="gm" sessionId={activeSession?.id ?? null} />
+                {/* Tableau partagé de la table active (spec_tableau.md §10.8) */}
+                <BoardLayer role="gm" sessionId={activeSession?.id ?? null} />
             </ActionZoneProvider>
             </ModalHostProvider>
         );

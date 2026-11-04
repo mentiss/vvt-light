@@ -17,6 +17,7 @@ import { useSystem } from '../../../../hooks/useSystem.js';
 import GMSendModal    from '../../../../components/gm/modals/GMSendModal.jsx';
 import AvatarUploader from '../../../../components/AvatarUploader.jsx';
 import AudioSessionToggle from '../../../../components/audio/AudioSessionToggle.jsx';
+import BoardSessionToggle from '../../../../components/board/BoardSessionToggle.jsx';
 import CopyAccessButton from '../../../../components/ui/CopyAccessButton.jsx';
 
 import SheetLayout     from '../../components/layout/SheetLayout.jsx';
@@ -239,6 +240,8 @@ const TabSession = ({ activeSession, onlineCharacters = [], characterUpdates }) 
                     </button>
                     {/* Musique de la table (brique audio, spec_audio.md §11.7) */}
                     <AudioSessionToggle sessionId={activeSession.id} className="vk-btn vk-btn-sm col-span-2" />
+                    {/* Tableau partagé de la table (spec_tableau.md §10.8) */}
+                    <BoardSessionToggle sessionId={activeSession.id} className="vk-btn vk-btn-sm col-span-2" />
                 </div>
             </aside>
 

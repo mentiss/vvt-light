@@ -20,6 +20,7 @@ import { ModalHostProvider } from '../components/ui/ModalHost.jsx';
 import { ActionZoneProvider } from '../components/ui/ActionZone.jsx';
 import { useSession }       from '../context/SessionContext.jsx';
 import AudioLayer           from '../components/audio/AudioLayer.jsx';
+import BoardLayer           from '../components/board/BoardLayer.jsx';
 
 const SHEETS    = import.meta.glob('../systems/*/Sheet.jsx');
 const THEMES    = import.meta.glob('../systems/*/theme.css');
@@ -253,6 +254,8 @@ const PlayerPage = () => {
 
             {/* Musique de la table active, si le MJ l'a activée (spec_audio.md §11.7) */}
             <AudioLayer role="player" sessionId={activeGMSession ?? null} />
+            {/* Tableau partagé, si le MJ l'a activé pour la table (spec_tableau.md §10.8) */}
+            <BoardLayer role="player" sessionId={activeGMSession ?? null} />
 
             {/* CodeModal disponible en mode playing aussi (changer de perso depuis Sheet) */}
             <CodeModal

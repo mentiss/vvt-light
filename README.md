@@ -312,3 +312,9 @@ Le moteur (`diceEngine.js`) est générique. Chaque système déclare ses propre
 | `npm run dev`                  | Lance backend + frontend en développement |
 | `npm start`                    | Lance le serveur en production           |
 | `npm run migrate <fichier.sql>`| Joue une migration sur la BDD            |
+
+---
+
+## 🎨 Crédits
+
+- **Icônes du tableau partagé** (`src/client/public/board/icons/`) : [game-icons.net](https://game-icons.net), par Lorc, Delapouite et les autres contributeurs cités dans leur [dépôt](https://github.com/game-icons/icons), sous licence [CC BY 3.0](https://creativecommons.org/licenses/by/3.0/). Tracés passés en `currentColor`, fond retiré ; index et catégories relevés une fois par `scripts/board-icons.js`, puis retouchables à la main.

@@ -9,6 +9,7 @@
  *   presence.js : character-loaded, character-left
  *   sessions.js : gm-set-active-session, gm-clear-session, join-session, leave-session
  *   audio.js    : audio-ping
+ *   board.js    : board-ping, board-drag (relais éphémère du tableau, sans écriture)
  * Puis les handlers des slugs, découverts par le Loader (systems/:slug/socket/*.js).
  *
  * Structures :
@@ -23,6 +24,7 @@ const { getAllSystems, getSystemSocketHandlers } = require('../systems/Loader');
 const presence = require('./platform/presence');
 const sessions = require('./platform/sessions');
 const audio    = require('./platform/audio');
+const board    = require('./platform/board');
 
 const { presenceKey } = presence;
 
@@ -44,6 +46,7 @@ function initSocket(io) {
         presence.register(io, socket, sharedState);
         sessions.register(io, socket, sharedState);
         audio.register(io, socket, sharedState);
+        board.register(io, socket, sharedState);
 
         // Slugs : handlers découverts par le Loader
         for (const [slug] of getAllSystems()) {

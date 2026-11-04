@@ -40,6 +40,7 @@ const SHARED_ROUTES = {
     npc:        path.join(__dirname, '../routes/npc.js'),
     'npc-sets': path.join(__dirname, '../routes/npc-sets.js'),
     audio:      path.join(__dirname, '../routes/audio.js'),
+    board:      path.join(__dirname, '../routes/board.js'),
 };
 
 // Fichiers que chaque système DOIT fournir (à la racine de son dossier)

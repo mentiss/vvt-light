@@ -116,12 +116,20 @@ export function useGMSession({ apiBase }) {
     useEffect(() => {
         if (!socket) return;
 
-        if (activeSession) {
+        const announce = () => {
             socket.emit('gm-set-active-session', { sessionId: activeSession.id, system: slug });
             socket.emit('join-session',           { sessionId: activeSession.id, system: slug });
+        };
+        if (activeSession) {
+            announce();
+            // Reconnexion (serveur relancé, réseau coupé) : le serveur a oublié la room et la
+            // session active ; on les reprend. Pas au premier « connect » : les envois ci-dessus
+            // sont déjà mis en attente par socket.io jusqu'à la connexion.
+            socket.io.on('reconnect', announce);
         }
 
         return () => {
+            socket.io.off('reconnect', announce);
             if (activeSession) {
                 // Désactivation explicite à la sortie (changement ou démontage)
                 socket.emit('gm-clear-session', { sessionId: activeSession.id, system: slug });

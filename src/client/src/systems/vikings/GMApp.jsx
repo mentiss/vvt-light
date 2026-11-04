@@ -18,6 +18,7 @@ import ToastNotifications   from '../../components/layout/ToastNotifications.jsx
 import DiceHistoryPage      from '../../components/layout/DiceHistoryPage.jsx';
 import TabJournal           from '../../components/gm/tabs/TabJournal.jsx';
 import ReferenceGuide       from '../../components/reference/ReferenceGuide.jsx';
+import Board                from '../../components/board/Board.jsx';
 import { HamburgerMenu, HamburgerMenuSeparator } from '../../components/ui/HamburgerMenu.jsx';
 import {
     HamburgerMenuItemTableManagement, HamburgerMenuItemFreeDice, HamburgerMenuItemDiceConfig,
@@ -34,6 +35,7 @@ import { REFERENCE_SECTIONS } from './config/reference.js';
 const TABS = [
     { id: 'session',    label: 'Session' },
     { id: 'combat',     label: 'Combat' },
+    { id: 'tableau',    label: 'Tableau' },
     { id: 'journal',    label: 'Journal' },
     { id: 'historique', label: 'Historique' },
     { id: 'aide',       label: 'Aide de jeu' },
@@ -103,6 +105,12 @@ const GMApp = ({ activeSession, onSessionChange, onlineCharacters, characterUpda
                     <TabSession activeSession={activeSession} onlineCharacters={onlineCharacters} characterUpdates={characterUpdates} />
                 )}
                 {activeTab === 'combat' && <TabCombat {...combat} sessionId={sessionId} />}
+                {/* Tableau partagé (brique plateforme, spec_tableau.md §10.8) */}
+                {activeTab === 'tableau' && (
+                    <div className="vtt-board-page">
+                        <Board sessionId={sessionId} role="gm" />
+                    </div>
+                )}
                 {activeTab === 'journal' && (
                     <div className="max-w-4xl mx-auto">
                         {/* TabJournal force characterId={-1} en interne */}

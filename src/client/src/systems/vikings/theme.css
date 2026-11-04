@@ -727,3 +727,51 @@ html { scrollbar-color: color-mix(in srgb, var(--color-primary) 45%, transparent
 .vtt-reference-table td:first-child { white-space: normal; min-width: 8em; }   /* nom du trait puis sa description */
 .vtt-reference-table td s { color: var(--color-text-muted); }
 .vtt-reference-block.is-gm { border-left: 2px solid var(--vk-gold-dim); padding-left: .7rem; }
+
+/* ── Tableau partagé (components/board, spec_tableau.md §10.8) ── */
+/* Vocabulaire de la fiche et de la barre de session : panneaux sombres à coins légers,
+   intitulés en Grenze Gotisch, angles vifs, or pour ce qui est actif ou montré aux joueurs. */
+.vtt-board { font-family: var(--vk-font-body); --vtt-board-fog: color-mix(in srgb, var(--color-bg) 85%, #000); }
+.vtt-board-slides { padding: .6rem; background: var(--color-surface); border: 2px solid var(--color-border); box-shadow: var(--vk-panel-shadow); }
+.vtt-board-slides-title, .vtt-board-view-title {
+    font-family: var(--vk-font-label); font-weight: 400; font-size: 1.15rem; letter-spacing: .03em; text-transform: none; color: var(--color-primary);
+}
+.vtt-board-slide, .vtt-board-rail-slide { border-radius: 0; border-color: var(--vk-border-soft); background: var(--vk-field-bg); }
+.vtt-board-slide:hover, .vtt-board-rail-slide:hover { border-color: var(--color-border); }
+.vtt-board-slide.is-selected, .vtt-board-rail-slide.is-selected { border-color: var(--color-primary); }
+.vtt-board-rail-slide { font-family: var(--vk-font-title); font-weight: 400; color: var(--color-text-muted); }
+.vtt-board-rail-slide.is-shown { background-image: linear-gradient(180deg, var(--color-primary), var(--vk-gold-dim)); color: var(--vk-on-primary); }
+.vtt-board-badge { border-radius: 2px; border: 1px solid var(--vk-gold-dim); background: color-mix(in srgb, var(--color-primary) 15%, transparent); color: var(--color-primary); }
+.vtt-board-tool, .vtt-board-icon-btn, .vtt-board-slides-reopen, .vtt-board-swatch { border-radius: 2px; }
+.vtt-board-tool { background: transparent; color: var(--color-text-muted); }
+.vtt-board-tool:hover:not(:disabled) { color: var(--color-text); background: color-mix(in srgb, var(--color-primary) 10%, transparent); }
+.vtt-board-tool.is-active {
+    background-image: linear-gradient(180deg, var(--color-primary), var(--vk-gold-dim)); border-color: var(--vk-gold-dim); color: var(--vk-on-primary);
+    box-shadow: inset 0 1px 0 rgba(255,255,255,.25);
+}
+.vtt-board-slides-reopen { border-width: 2px; color: var(--color-primary); box-shadow: var(--vk-panel-shadow); }
+.vtt-board-notice { border-radius: 0; border-left: 3px solid var(--color-primary); background: color-mix(in srgb, var(--color-primary) 8%, var(--color-surface)); }
+
+/* Le plan : cadre du panneau à deux coins légers, posés au-dessus du dessin */
+.vtt-board-stage { border-radius: 0; border: 2px solid var(--color-border); box-shadow: var(--vk-panel-shadow); background: var(--color-bg); }
+.vtt-board-stage::before, .vtt-board-stage::after {
+    content: ''; position: absolute; width: 34px; height: 34px; z-index: 1; pointer-events: none;
+    background-size: contain; background-repeat: no-repeat; filter: var(--vk-ornament-filter);
+}
+.vtt-board-stage::before { top: 0;    left: 0;  background-image: var(--vk-corner-l-tl); }
+.vtt-board-stage::after  { bottom: 0; right: 0; background-image: var(--vk-corner-l-br); }
+.vtt-board-token-text { font-family: var(--vk-font-title); font-weight: 400; }
+.vtt-board-ruler text { font-family: var(--vk-font-label); font-weight: 400; }
+
+/* Bandeau « Le MJ partage un visuel » : comme les notifications (vk-toast) */
+.vtt-board-banner {
+    border-radius: 0; border: 1px solid var(--color-border); border-left: 3px solid var(--color-primary);
+    background: var(--color-surface); box-shadow: 0 8px 24px rgba(0,0,0,.5); font-family: var(--vk-font-body);
+}
+.vtt-board-banner strong { font-family: var(--vk-font-label); font-weight: 400; font-size: 1.05rem; letter-spacing: .03em; color: var(--color-primary); }
+
+/* Sélecteur d'icônes */
+/* Sélecteur d'icônes : vignettes en parchemin, pour que les icônes noires restent visibles */
+.vtt-board-picker-item { border-radius: 0; border-color: var(--vk-border-soft); background: #e8dcc8; }
+.vtt-board-picker-item:hover { border-color: var(--color-primary); box-shadow: 0 0 0 1px var(--color-primary); }
+.vtt-board-picker-name { color: #4a3b2a; }

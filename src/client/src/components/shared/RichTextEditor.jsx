@@ -10,6 +10,7 @@ import Placeholder from '@tiptap/extension-placeholder';
 
 import './RichTextEditor.css';
 import AlertModal from "../modals/AlertModal.jsx";
+import { resizeImage } from '../../tools/imageResize.js';
 
 // --- Bouton toolbar ---
 const ToolbarButton = ({ onClick, active, title, children }) => (
@@ -56,36 +57,8 @@ const SourceAwareImage = Image.extend({
 
 // --- Réduction des images à l'insertion (spec_journal.md §2.3) ---
 // Plus grand côté ramené à 1600 px, format d'origine gardé ; GIF gardés tels quels (animation).
-const MAX_IMAGE_SIDE = 1600;
+// Réduction partagée avec le tableau : tools/imageResize.js
 const MAX_GIF_SIZE   = 5 * 1024 * 1024;
-const KEPT_FORMATS   = ['image/jpeg', 'image/png', 'image/webp'];
-
-const readAsDataUrl = (file) => new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onload  = () => resolve(reader.result);
-    reader.onerror = reject;
-    reader.readAsDataURL(file);
-});
-
-const loadImage = (src) => new Promise((resolve, reject) => {
-    const img = new window.Image();
-    img.onload  = () => resolve(img);
-    img.onerror = reject;
-    img.src = src;
-});
-
-const prepareImage = async (file) => {
-    const src = await readAsDataUrl(file);
-    if (file.type === 'image/gif') return src;
-    const img   = await loadImage(src);
-    const scale = Math.min(1, MAX_IMAGE_SIDE / Math.max(img.naturalWidth, img.naturalHeight));
-    if (scale === 1) return src;
-    const canvas  = document.createElement('canvas');
-    canvas.width  = Math.round(img.naturalWidth  * scale);
-    canvas.height = Math.round(img.naturalHeight * scale);
-    canvas.getContext('2d').drawImage(img, 0, 0, canvas.width, canvas.height);
-    return canvas.toDataURL(KEPT_FORMATS.includes(file.type) ? file.type : 'image/jpeg', 0.85);
-};
 
 const RichTextEditor = ({
                             content = '',
@@ -192,7 +165,7 @@ const RichTextEditor = ({
             return;
         }
         try {
-            const src = await prepareImage(file);
+            const { dataUrl: src } = await resizeImage(file);
             editor?.chain().focus().setImage({ src }).run();
         } catch (error) {
             console.error('[RichTextEditor] Error reading image:', error);
