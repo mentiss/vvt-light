@@ -1,214 +1,110 @@
 // src/client/src/systems/dune/gm/tabs/TabSession.jsx
-import React, { useState, useEffect, useCallback } from 'react';
-import { useSocket }         from '../../../../context/SocketContext.jsx';
-import { useFetch }          from '../../../../hooks/useFetch.js';
-import { useSystem }         from '../../../../hooks/useSystem.js';
-import DuneCharacterCard     from '../pj/DuneCharacterCard.jsx';
-import EditCharacterModal    from '../modals/EditCharacterModal.jsx';
-import SendNoteModal         from '../modals/SendNoteModal.jsx';
-import SendItemModal         from '../modals/SendItemModal.jsx';
-import GMSendModal from "../../../../components/gm/modals/GMSendModal.jsx";
+// ─────────────────────────────────────────────────────────────────────────────
+// Onglet Table de l'interface MJ (spec_dune.md §6.4, Q-2) : musique de la table,
+// personnages et leur présence, puis LA MÊME FICHE que le joueur (DuneSheetBody) :
+// jouable (Détermination, atouts, talents) et modifiable en mode Édition.
+// Actions du MJ au-dessus de la fiche : envoyer une note, envoyer un atout.
+// Les fiches viennent de useTableCharacters (GMApp) ; l'écoute de
+// character-full-update reste au générique (C-7).
+// Props : activeSession, onlineCharacters, characters, order, loading, patchCharacter, addRow
+// ─────────────────────────────────────────────────────────────────────────────
+
+import React, { useState } from 'react';
 import AudioSessionToggle from '../../../../components/audio/AudioSessionToggle.jsx';
+import GMSendModal from '../../../../components/gm/modals/GMSendModal.jsx';
+import { useFetch }  from '../../../../hooks/useFetch.js';
+import { useSystem } from '../../../../hooks/useSystem.js';
+import DuneIcon from '../../components/ui/DuneIcon.jsx';
+import DuneWorm from '../../components/ui/DuneWorm.jsx';
+import DuneSheetBody from '../../components/layout/DuneSheetBody.jsx';
+import DuneAssetCatalog from '../../components/modals/DuneAssetCatalog.jsx';
+import { characterFullName } from '../../config/traits.js';
 
-const TabSession = ({ activeSession, onlineCharacters }) => {
-    const { apiBase }   = useSystem();
+const EmptyTable = ({ text }) => (
+    <div className="dn-empty">
+        <DuneWorm />
+        <p>{text}</p>
+    </div>
+);
+
+const TabSession = ({ activeSession, onlineCharacters, characters, order, loading, patchCharacter, addRow }) => {
+    const { apiBase } = useSystem();
     const fetchWithAuth = useFetch();
-    const socket        = useSocket();
+    const [selectedId, setSelectedId] = useState(null);
+    const [draft, setDraft] = useState(null);         // brouillon du mode Édition du personnage affiché
+    const [noteOpen, setNoteOpen] = useState(false);
+    const [assetOpen, setAssetOpen] = useState(false);
 
-    const [characters,    setCharacters]    = useState({});
-    const [selectedId,    setSelectedId]    = useState(null);
-    const [loading,       setLoading]       = useState(false);
+    if (!activeSession) return <EmptyTable text={<>Aucune table active<br />Choisissez une table dans le menu</>} />;
 
-    const [editModal,     setEditModal]     = useState(null);
-    const [showSendModal,    setShowSendModal]    = useState(false);
-    const [sendPreSelectedId,setSendPreSelectedId]= useState(null);
-    const [sendItemModal, setSendItemModal] = useState(null);
+    const currentId = characters[selectedId] ? selectedId : order[0];
+    const current = characters[currentId];
+    const online = new Set((onlineCharacters ?? []).map(o => o.characterId));
+    const select = (id) => { setSelectedId(id); setDraft(null); };
+    const saveEdit = () => { patchCharacter(currentId, draft); setDraft(null); };
 
-    const onlineIds = new Set((onlineCharacters ?? []).map(c => c.characterId));
+    // Envoi d'un atout : route send-item (toast et journal côté joueur)
+    const sendAsset = (item) => {
+        fetchWithAuth(`${apiBase}/characters/${currentId}/send-item`, {
+            method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(item),
+        }).catch(err => console.error('[dune/gm] envoi d’atout :', err));
+    };
 
-    // ── Chargement des fiches ─────────────────────────────────────────────
-    useEffect(() => {
-        if (!activeSession?.characters?.length) {
-            setCharacters({});
-            setSelectedId(null);
-            return;
-        }
-        const load = async () => {
-            setLoading(true);
-            const loaded = {};
-            await Promise.all(
-                (activeSession.characters ?? []).map(async c => {
-                    try {
-                        const r = await fetchWithAuth(`${apiBase}/characters/${c.id}`);
-                        if (r.ok) loaded[c.id] = await r.json();
-                    } catch (e) {
-                        console.error(`[TabSession/dune] Erreur chargement perso ${c.id}:`, e);
-                    }
-                })
-            );
-            setCharacters(loaded);
-            if (!selectedId || !loaded[selectedId]) {
-                setSelectedId(activeSession.characters[0]?.id ?? null);
-            }
-            setLoading(false);
-        };
-        load();
-    }, [activeSession?.id, activeSession?.characters?.length]);
-
-    // ── Mises à jour temps réel ───────────────────────────────────────────
-    useEffect(() => {
-        if (!socket) return;
-        const onUpdate = ({ characterId, character }) => {
-            setCharacters(prev => prev[characterId] ? { ...prev, [characterId]: character } : prev);
-        };
-        socket.on('character-full-update', onUpdate);
-        socket.on('character-update',      onUpdate);
-        return () => {
-            socket.off('character-full-update', onUpdate);
-            socket.off('character-update',      onUpdate);
-        };
-    }, [socket]);
-
-    // ── Mise à jour détermination — plus de determinationMax ─────────────
-    const handleUpdateDetermination = useCallback(async (charId, { determination }) => {
-        try {
-            const r = await fetchWithAuth(`${apiBase}/characters/${charId}`, {
-                method:  'PUT',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ determination }),
-            });
-            if (r.ok) {
-                const updated = await r.json();
-                setCharacters(prev => ({ ...prev, [charId]: updated }));
-            }
-        } catch (e) {
-            console.error('[TabSession/dune] Erreur update détermination:', e);
-        }
-        setEditModal(null);
-    }, [apiBase, fetchWithAuth]);
-
-    // ── sessionCharacters au format attendu par GMSendModal (qui envoie elle-même) ──
-    const sessionCharacters = (activeSession?.characters ?? []).map(sc => ({
-        id:     sc.id,
-        name:   characters[sc.id]?.nom ?? sc.name ?? `Perso ${sc.id}`,
-        avatar: sc.avatar,
-    }));
-
-    // ── États vides ───────────────────────────────────────────────────────
-    if (!activeSession) {
-        return (
-            <div className="text-center py-12" style={{ color: 'var(--dune-text-muted)' }}>
-                <div className="text-4xl mb-3">🏜️</div>
-                <p className="text-sm">Aucune session active.<br />Sélectionnez une table dans le menu.</p>
-            </div>
-        );
-    }
-
-    if (loading && Object.keys(characters).length === 0) {
-        return (
-            <div className="text-center py-12" style={{ color: 'var(--dune-text-muted)' }}>
-                <div className="text-2xl animate-pulse mb-2">⏳</div>
-                <p className="text-sm">Chargement des fiches…</p>
-            </div>
-        );
-    }
-
-    const selectedChar = selectedId ? characters[selectedId] : null;
+    const sessionCharacters = order.map(id => ({ id, name: characterFullName(characters[id]), avatar: characters[id]?.avatar }));
 
     return (
-        <div className="space-y-4">
-            {/* ── Barre de sélection ───────────────────────────────── */}
-            <div className="flex gap-2 overflow-x-auto pb-1 flex-wrap">
-                {(activeSession.characters ?? []).map(sc => {
-                    const char     = characters[sc.id];
-                    const isOnline = onlineIds.has(sc.id);
-                    const isSel    = selectedId === sc.id;
-                    return (
-                        <button
-                            key={sc.id}
-                            onClick={() => setSelectedId(sc.id)}
-                            className="flex items-center gap-2 px-3 py-2 rounded-lg transition-all"
-                            style={{
-                                background: isSel ? 'var(--dune-gold)'            : 'var(--dune-surface)',
-                                color:      isSel ? 'var(--dune-dark)'            : 'var(--dune-text)',
-                                border:     isSel ? '2px solid var(--dune-ochre)' : '2px solid var(--dune-border)',
-                                fontWeight: isSel ? 700 : 400,
-                            }}
-                        >
-                            <span
-                                className="w-2 h-2 rounded-full flex-shrink-0"
-                                style={{ background: isOnline ? 'var(--dune-success)' : 'var(--dune-dust)' }}
-                            />
-                            <span className="text-sm whitespace-nowrap">
-                                {char?.prenom ?? sc.prenom} {char?.nom ?? sc.name ?? `Perso ${sc.id}`}
-                            </span>
-                        </button>
-                    );
-                })}
-                {/* Musique de la table (brique audio, spec_audio.md §11.7) */}
-                <AudioSessionToggle sessionId={activeSession.id} className="dune-btn-secondary text-xs ml-auto" />
-            </div>
+        <div className="dn-gm-layout">
+            <aside className="dn-gm-table">
+                <AudioSessionToggle sessionId={activeSession.id} className="vtt-btn vtt-btn-sm w-full" />
+                {loading && <p className="dn-gm-note">Chargement des fiches…</p>}
+                {!loading && order.length === 0 && <p className="dn-gm-note">Aucun personnage à cette table.</p>}
+                {order.map(id => (
+                    <button key={id} type="button" onClick={() => select(id)}
+                            className={`dn-gm-row${id === currentId ? ' is-selected' : ''}${online.has(id) ? ' is-online' : ''}`}>
+                        <span className="dn-gm-dot" title={online.has(id) ? 'En ligne' : 'Hors ligne'} />
+                        <span className="min-w-0">
+                            <b>{characterFullName(characters[id])}</b>
+                            <small>{characters[id].playerName}</small>
+                        </span>
+                    </button>
+                ))}
+            </aside>
 
-            {selectedChar ? (
-                <>
-                    {/* ── Boutons actions GM — EN HAUT pour l'accessibilité ── */}
-                    <div className="flex flex-wrap gap-2">
-                        <button
-                            onClick={() => setEditModal(selectedId)}
-                            className="dune-btn-secondary text-xs"
-                        >
-                            🎯 Détermination
-                        </button>
-                        <button
-                            onClick={() => { setSendPreSelectedId(selectedId); setShowSendModal(true); }}
-                            className="dune-btn-secondary text-xs"
-                        >
-                            📩 Envoyer une note
-                        </button>
-                        <button
-                            onClick={() => setSendItemModal(selectedId)}
-                            className="dune-btn-secondary text-xs"
-                        >
-                            🎁 Envoyer un atout
-                        </button>
+            {current ? (
+                <div className="min-w-0">
+                    <div className="dn-gm-bar">
+                        {draft ? (
+                            <>
+                                <button type="button" className="vtt-btn vtt-btn-sm" onClick={() => setDraft(null)}>Annuler</button>
+                                <button type="button" className="vtt-btn vtt-btn-sm vtt-btn-primary" onClick={saveEdit}>Enregistrer</button>
+                            </>
+                        ) : (
+                            <>
+                                <button type="button" className="vtt-btn vtt-btn-sm" onClick={() => setNoteOpen(true)}>
+                                    <DuneIcon name="send" className="dn-ico w-4 h-4" />Envoyer une note
+                                </button>
+                                <button type="button" className="vtt-btn vtt-btn-sm" onClick={() => setAssetOpen(true)}>
+                                    <DuneIcon name="blade" className="dn-ico w-4 h-4" />Envoyer un atout
+                                </button>
+                                <button type="button" className="vtt-btn vtt-btn-sm" onClick={() => setDraft(current)} title="Mode Édition">
+                                    <DuneIcon name="quill" className="dn-ico w-4 h-4" />Édition
+                                </button>
+                            </>
+                        )}
                     </div>
-
-                    {/* ── Fiche sélectionnée ── */}
-                    <div className="dune-card">
-                        <DuneCharacterCard
-                            character={selectedChar}
-                            isOnline={onlineIds.has(selectedId)}
-                        />
-                    </div>
-                </>
-            ) : (
-                <div className="text-center py-8" style={{ color: 'var(--dune-text-muted)' }}>
-                    <p className="text-sm">Sélectionnez un personnage.</p>
+                    <DuneSheetBody character={current} draft={draft} setDraft={setDraft}
+                                   onPatch={fields => patchCharacter(currentId, fields)}
+                                   onAddRow={(field, row) => addRow(currentId, field, row)} />
                 </div>
-            )}
+            ) : null}
 
-            {/* ── Modales ──────────────────────────────────────────────── */}
-            {editModal && characters[editModal] && (
-                <EditCharacterModal
-                    character={characters[editModal]}
-                    onSave={data => handleUpdateDetermination(editModal, data)}
-                    onClose={() => setEditModal(null)}
-                />
+            {noteOpen && (
+                <GMSendModal onClose={() => setNoteOpen(false)} sessionId={activeSession.id}
+                             sessionCharacters={sessionCharacters} preSelectedCharId={currentId} />
             )}
-            {showSendModal && (
-                <GMSendModal
-                    onClose={() => { setShowSendModal(false); setSendPreSelectedId(null); }}
-                    sessionId={activeSession?.id ?? null}
-                    sessionCharacters={sessionCharacters}
-                    preSelectedCharId={sendPreSelectedId}
-                />
-            )}
-            {sendItemModal && (
-                <SendItemModal
-                    characterId={sendItemModal}
-                    characterName={characters[sendItemModal]?.nom}
-                    onClose={() => setSendItemModal(null)}
-                />
+            {assetOpen && current && (
+                <DuneAssetCatalog title="Envoyer un atout" subtitle={`À ${characterFullName(current)}`}
+                                  onAdd={sendAsset} onClose={() => setAssetOpen(false)} />
             )}
         </div>
     );

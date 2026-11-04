@@ -1,119 +1,120 @@
 // src/client/src/systems/dune/config.jsx
 // ─────────────────────────────────────────────────────────────────────────────
 // Configuration CLIENT du système Dune: Adventures in the Imperium.
-// Point d'entrée unique : métadonnées + hooks dés 2D20.
-// ⚠️  Module ES — uniquement importé par le frontend React.
+// Point d'entrée unique : métadonnées, hooks dés 2D20, bloc combat, PNJ, dés 3D.
+// Module ES, importé uniquement par le frontend React.
 // ─────────────────────────────────────────────────────────────────────────────
 
-// ── Barème Impulsions → dés supplémentaires ───────────────────────────────
-// Index = nb de dés achetés (0, 1, 2, 3)
-import DuneHistoryEntry from "./components/DuneHistoryEntry.jsx";
-import DuneNPCForm from "./gm/npc/DuneNPCForm.jsx";
-import DuneNPCSummary from "./gm/npc/DuneNPCSummary.jsx";
-import DuneNPCDetail from "./gm/npc/DuneNPCDetail.jsx";
+import DuneHistoryEntry from "./components/layout/DuneHistoryEntry.jsx";
+import DuneNPCForm from "./components/layout/DuneNPCForm.jsx";
+import DuneNPCSummary from "./components/layout/DuneNPCSummary.jsx";
+import DuneNPCDetail from "./components/layout/DuneNPCDetail.jsx";
 import {RollError} from "../../tools/diceEngine.js";
+import { BASE_DICE, MAX_DICE, resolveRoll } from './config/rules/roll.js';
+import { traitLabel } from './config/traits.js';
+import DuneIcon from './components/ui/DuneIcon.jsx';
 
-const IMPULSION_COST = [0, 1, 3, 6];
-
-/**
- * Calcule les succès d'un jet 2D20 Dune.
- * - dé ≤ rang                              → 1 succès
- * - dé ≤ rang ET hasSpecialisation = true  → 2 succès
- * - dé = 20                                → Complication (0 succès)
- *
- * @param {number[]} results  - Valeurs brutes des dés
- * @param {number}   rang     - Rang total (compétence + principe)
- * @param {boolean}  hasSpec  - Spécialisation active sur la compétence
- * @param {number}   specSeuil - Rang de la compétence si spécialisée, 0 sinon
- * @returns {{ succes: number, complications: number }}
- */
-function countSuccesses(results, rang, hasSpec, specSeuil) {
-    let succes = 0;
-    let complications = 0;
-    for (const val of results) {
-        if (val === 20) {
-            complications++;
-        } else if (hasSpec && val <= specSeuil) {
-            succes += 2;
-        } else if (val <= rang) {
-            succes += 1;
-        }
-    }
-    return { succes, complications };
-}
+// ── Bloc combat : pas de combat dédié dans Dune (spec : les conflits se jouent en jets) ──
+const combat = {
+    renderHealthDisplay: () => null,
+    actions:             [],
+    attack:              null,
+};
 
 // ── Config système ─────────────────────────────────────────────────────────
 
 const duneConfig = {
     slug:  'dune',
     label: 'Dune: Adventures in the Imperium',
+    combat,
+
+    // Dés 3D : épice, chiffres sable, filet du pont (planche documentations/dune/planche_dune.html)
+    diceConfigDefault: {
+        mode:   'custom',
+        custom: {
+            foreground: '#EAD8B6',   // sable lunaire : chiffres
+            background: '#B4501A',   // épice
+            outline:    '#1E140B',   // pont de vaisseau
+            edge:       '#6E2E0E',   // épice brûlée
+            texture:    '',
+            material:   'glass',
+        },
+        lightColor:       '#E8792B',
+        strength:         5,
+        gravity:          500,
+        sounds:           true,
+        animationEnabled: true,
+    },
+
+    // Zone d'actions : icône de l'historique au trait du slug
+    actionIcons: {
+        history: <DuneIcon name="hourglass" />,
+    },
 
     // ─── Hooks dés 2D20 ───────────────────────────────────────────────────
     dice: {
 
         // ── buildNotation ─────────────────────────────────────────────────────────
-        // Appelé par DuneDiceModal AVANT roll().
-        // Dune : NdD20 — pas d'explosion, pas de seuil intégré.
+        // Appelé par le hook useDuneRoll AVANT roll().
+        // Le dé de la Détermination n'est pas lancé : il est posé sur 1 (Q-1).
         buildNotation: (ctx) => {
-            const { nbDes } = ctx.systemData;
-            if (!nbDes || nbDes < 1) throw new RollError('NO_DICE', 'Aucun dé à lancer');
-            return `${nbDes}d20`;
+            const { nbDes, useDetermination } = ctx.systemData;
+            const rolled = nbDes - (useDetermination ? 1 : 0);
+            if (!rolled || rolled < 1) throw new RollError('NO_DICE', 'Aucun dé à lancer');
+            return `${rolled}d20`;
         },
 
         // ── beforeRoll ────────────────────────────────────────────────────────────
         // Validation cohérence dépenses.
         beforeRoll: (ctx) => {
             const { nbDes, impulsionsDepensees = 0, menaceGeneree = 0 } = ctx.systemData;
-            const totalExtra = impulsionsDepensees + menaceGeneree;
 
-            if (nbDes < 2 || nbDes > 5)
-                throw new RollError('INVALID_DICE', `Nombre de dés invalide : ${nbDes} (min 2, max 5)`);
-            if (totalExtra !== nbDes - 2)
+            if (nbDes < BASE_DICE || nbDes > MAX_DICE)
+                throw new RollError('INVALID_DICE', `Nombre de dés invalide : ${nbDes} (min ${BASE_DICE}, max ${MAX_DICE})`);
+            if (impulsionsDepensees + menaceGeneree !== nbDes - BASE_DICE)
                 throw new RollError('RESOURCE_MISMATCH', 'Incohérence entre dés achetés et ressources dépensées');
 
             return ctx;
         },
 
         // ── afterRoll ─────────────────────────────────────────────────────────────
-        // Nouveau format : utilise raw.groups[0].values (faces de dés uniquement).
+        // Résolution par config/rules/roll.js. Les anciens champs (results, succes,
+        // reussite…) restent pour l'historique des jets d'avant la refonte ;
+        // dice détaille chaque dé (forced = dé de la Détermination).
         afterRoll: (raw, ctx) => {
             const {
                 rang, hasSpec, competenceRang,
-                difficulte, useDetermination,
-                impulsionsDepensees = 0, menaceGeneree = 0, selectedSpecialization = false
+                difficulte, useDetermination = false,
+                impulsionsDepensees = 0, menaceGeneree = 0, selectedSpecialization = false,
             } = ctx.systemData;
 
-            const results = raw.groups[0].values;  // ← nouveau format v2
-            let succesTotal = 0, complications = 0;
+            const specialisationThreshold = hasSpec && selectedSpecialization ? competenceRang : 0;
+            const r = resolveRoll({
+                values:     raw.groups[0].values,
+                forcedOnes: useDetermination ? 1 : 0,
+                threshold:  rang,
+                specialisationThreshold,
+                difficulty: difficulte,
+            });
 
-            for (const value of results) {
-                if (value === 20) { complications++; continue; }
-                if (value <= rang) {
-                    succesTotal += ((hasSpec && value <= competenceRang && selectedSpecialization) || value === 1) ? 2 : 1;
-                }
-            }
-
-            // La Détermination ajoute 1 succès automatique
-            if (useDetermination) succesTotal += 1;
-
-            const reussite = succesTotal >= difficulte;
-            const excedent = Math.max(0, succesTotal - difficulte);
             return {
-                results,
+                results:             r.dice.map(d => d.value),
+                dice:                r.dice,
                 rang,
+                specialisationThreshold,
                 hasSpec:             !!hasSpec,
                 selectedSpecialization,
-                succes:              succesTotal,
-                complications,
+                succes:              r.successes,
+                complications:       r.complications,
                 difficulte,
-                reussite,
-                excedent,
+                reussite:            r.success,
+                excedent:            r.excess,
                 useDetermination:    !!useDetermination,
                 impulsionsDepensees,
                 menaceGeneree,
                 label: ctx.label,
                 // successes pour le moteur générique (persist)
-                successes:           succesTotal,
+                successes:           r.successes,
             };
         },
 
@@ -166,26 +167,18 @@ const duneConfig = {
                 (best, p) => p.rang > best ? p.rang : best, 0
             );
 
-            const LABELS = {
-                analyse: 'Analyse', combat: 'Combat', discipline: 'Discipline',
-                mobilite: 'Mobilité', rhetorique: 'Rhétorique',
-            };
-
             return competences.map(comp => ({
-                label: LABELS[comp.key] ?? comp.key,
+                label: traitLabel(comp.key),
                 onRoll: (npcArg, openDiceModal) => {
                     if (!openDiceModal) return;
                     openDiceModal({
                         rang:  (comp.rang ?? 4) + meilleurPrincipe,
-                        label: `${npcArg.name} — ${LABELS[comp.key] ?? comp.key}`,
+                        label: `${npcArg.name} — ${traitLabel(comp.key)}`,
                     });
                 },
             }));
         },
     },
-    // ─── Constantes utiles côté client ────────────────────────────────────
-    IMPULSION_COST,
-    countSuccesses,
 };
 
 export default duneConfig;

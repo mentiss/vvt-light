@@ -10,8 +10,20 @@ const router  = express.Router();
 
 const { authenticate, requireOwnerOrGM, requireGM } = require('../../../middlewares/auth');
 const { ensureUniqueCode } = require('../../../utils/characters');
-const { loadFullCharacter, saveFullCharacter } = require('../CharacterController');
+const { loadFullCharacter, saveFullCharacter, addItem, addTalent } = require('../CharacterController');
 const {generateAccessUrl} = require("../config");
+
+/**
+ * Diffuse la fiche à chaque table du personnage (une émission par room).
+ * La boucle d'origine était imbriquée : N² émissions.
+ */
+function broadcastCharacterUpdate(io, db, characterId, character) {
+    if (!io) return;
+    const sessions = db.prepare('SELECT session_id FROM session_characters WHERE character_id = ?').all(characterId);
+    for (const { session_id } of sessions) {
+        io.to(`dune_session_${session_id}`).emit('character-full-update', { characterId, character });
+    }
+}
 
 // ── GET / — Liste résumée (GM uniquement) ────────────────────────────────────
 
@@ -177,10 +189,11 @@ router.post('/', (req, res) => {
 
         const charId = result.lastInsertRowid;
 
-        // Persistance des relations (compétences en colonnes + talents/items)
-        saveFullCharacter(req.db, charId, {
-            competences, principes, talents, items,
-        });
+        // Le reste de l'identité (prénom, rôle, faction, physique…), compétences, principes,
+        // talents et atouts : l'assistant envoie tout, la sauvegarde complète s'en charge
+        // (le code d'accès est déjà fixé ci-dessus)
+        const { accessCode: _ignored, ...rest } = req.body;
+        saveFullCharacter(req.db, charId, { ...rest, competences, principes, talents, items });
 
         res.status(201).json(loadFullCharacter(req.db, charId));
     } catch (err) {
@@ -201,24 +214,49 @@ router.put('/:id', authenticate, requireOwnerOrGM, (req, res) => {
 
         saveFullCharacter(req.db, id, req.body);
         const updated = loadFullCharacter(req.db, id);
-
-        // Broadcast Socket.io si le personnage est dans une session active
-        const io = req.app.get('io');
-        if (io) {
-            const sessions = req.db.prepare(
-                'SELECT session_id FROM session_characters WHERE character_id = ?'
-            ).all(id);
-            for (const { session_id } of sessions) {
-                const payload = { characterId: id, character: updated };
-                for (const { session_id } of sessions) {
-                    io.to(`dune_session_${session_id}`).emit('character-full-update', payload);
-                }
-            }
-        }
-
+        broadcastCharacterUpdate(req.app.get('io'), req.db, id, updated);
         res.json(updated);
     } catch (err) {
         console.error('[dune] PUT /:id:', err);
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// ── POST /:id/items et /:id/talents — Ajout d'une ligne (joueur ou MJ) ──────
+// Renvoie la ligne créée avec son id réel : le client l'ajoute à la fiche la plus
+// récente, sans risque d'écraser un ajout précédent encore en vol (catalogue,
+// ajouts successifs). Les qualité et mots-clefs d'un atout sont facultatifs.
+
+router.post('/:id/items', authenticate, requireOwnerOrGM, (req, res) => {
+    try {
+        const id = Number(req.params.id);
+        if (!req.db.prepare('SELECT id FROM characters WHERE id = ?').get(id)) {
+            return res.status(404).json({ error: 'Personnage introuvable' });
+        }
+        const { nom, description = '', quantite = 1, qualite = null, motsCles = '' } = req.body ?? {};
+        if (!nom?.trim()) return res.status(400).json({ error: 'Le nom de l\'atout est requis' });
+        const item = addItem(req.db, id, { nom, description, quantite, qualite, motsCles });
+        broadcastCharacterUpdate(req.app.get('io'), req.db, id, loadFullCharacter(req.db, id));
+        res.status(201).json(item);
+    } catch (err) {
+        console.error('[dune] POST /:id/items:', err);
+        res.status(500).json({ error: err.message });
+    }
+});
+
+router.post('/:id/talents', authenticate, requireOwnerOrGM, (req, res) => {
+    try {
+        const id = Number(req.params.id);
+        if (!req.db.prepare('SELECT id FROM characters WHERE id = ?').get(id)) {
+            return res.status(404).json({ error: 'Personnage introuvable' });
+        }
+        const { talentName, description = '' } = req.body ?? {};
+        if (!talentName?.trim()) return res.status(400).json({ error: 'Le nom du talent est requis' });
+        const talent = addTalent(req.db, id, { talentName, description });
+        broadcastCharacterUpdate(req.app.get('io'), req.db, id, loadFullCharacter(req.db, id));
+        res.status(201).json(talent);
+    } catch (err) {
+        console.error('[dune] POST /:id/talents:', err);
         res.status(500).json({ error: err.message });
     }
 });
@@ -248,16 +286,14 @@ router.delete('/:id', authenticate, requireGM, (req, res) => {
 router.post('/:id/send-item', authenticate, requireGM, (req, res) => {
     try {
         const charId = parseInt(req.params.id);
-        const { nom, description = '', quantite = 1 } = req.body;
+        const { nom, description = '', quantite = 1, qualite = null, motsCles = '' } = req.body;
 
         if (!nom?.trim()) {
             return res.status(400).json({ error: 'Le nom de l\'atout est requis' });
         }
 
-        req.db.prepare(`
-            INSERT INTO character_items (character_id, nom, description, quantite)
-            VALUES (?, ?, ?, ?)
-        `).run(charId, nom.trim(), description.trim(), Math.max(1, quantite));
+        // qualite / motsCles : facultatifs (spec_dune.md §3.2), remplis par le catalogue
+        addItem(req.db, charId, { nom, description: description.trim(), quantite, qualite, motsCles });
 
         // Broadcast socket : le joueur recharge sa fiche
         const io = req.app.get('io');

@@ -70,6 +70,29 @@ function _flattenPrincipes(principes = []) {
     return cols;
 }
 
+/**
+ * Synchronise une sous-table (pattern _syncSubTable, src/server/CLAUDE.md) :
+ * entrées avec id mises à jour, sans id insérées, absentes supprimées.
+ * Les identifiants restent stables d'une sauvegarde à l'autre.
+ */
+function _syncSubTable(db, table, characterId, incoming, upsertFn) {
+    if (!Array.isArray(incoming)) return;
+    const existingIds = db.prepare(`SELECT id FROM ${table} WHERE character_id = ?`)
+        .all(characterId).map(r => r.id);
+    const incomingIds = incoming.filter(i => i.id).map(i => i.id);
+    for (const eid of existingIds) {
+        if (!incomingIds.includes(eid)) db.prepare(`DELETE FROM ${table} WHERE id = ?`).run(eid);
+    }
+    for (const item of incoming) upsertFn(db, characterId, item);
+}
+
+/** Qualité d'un atout : entier de 0 à 4, ou null (non renseignée, atouts d'avant la refonte). */
+function _normalizeQualite(value) {
+    if (value === null || value === undefined || value === '') return null;
+    const n = Number(value);
+    return Number.isFinite(n) ? Math.min(4, Math.max(0, Math.round(n))) : null;
+}
+
 // ── API publique ─────────────────────────────────────────────────────────────
 
 /**
@@ -89,7 +112,7 @@ function loadFullCharacter(db, id) {
     ).all(id);
 
     const items = db.prepare(
-        'SELECT id, nom, description, quantite FROM character_items WHERE character_id = ? ORDER BY id'
+        'SELECT id, nom, description, quantite, qualite, mots_cles FROM character_items WHERE character_id = ? ORDER BY id'
     ).all(id);
 
     return {
@@ -109,6 +132,10 @@ function loadFullCharacter(db, id) {
         taille:       row.taille ?? '',
         poids:        row.poids ?? '',
         motto:        row.motto ?? '',
+        role:               row.role                ?? '',
+        faction:            row.faction             ?? '',
+        traitsPersonnalite: row.traits_personnalite ?? '',
+        ambition:           row.ambition            ?? '',
 
         // Détermination
         determination:    row.determination     ?? 1,
@@ -129,6 +156,8 @@ function loadFullCharacter(db, id) {
             nom:         i.nom,
             description: i.description ?? '',
             quantite:    i.quantite     ?? 1,
+            qualite:     i.qualite      ?? null,
+            motsCles:    i.mots_cles    ?? '',
         })),
 
         // Métadonnées
@@ -153,6 +182,7 @@ function saveFullCharacter(db, id, data) {
         competences, principes,
         talents, items, avatar,
         prenom, age, taille, poids, sexe, motto,
+        role, faction, traitsPersonnalite, ambition,
         accessCode,
     } = data;
 
@@ -177,6 +207,10 @@ function saveFullCharacter(db, id, data) {
                 taille            = COALESCE(?, taille),
                 poids             = COALESCE(?, poids),
                 motto             = COALESCE(?, motto),
+                role                = COALESCE(?, role),
+                faction             = COALESCE(?, faction),
+                traits_personnalite = COALESCE(?, traits_personnalite),
+                ambition            = COALESCE(?, ambition),
 
                 -- Compétences
                 analyse_rang              = COALESCE(?, analyse_rang),
@@ -220,6 +254,10 @@ function saveFullCharacter(db, id, data) {
             taille ?? null,
             poids ?? null,
             motto ?? null,
+            role               ?? null,
+            faction            ?? null,
+            traitsPersonnalite ?? null,
+            ambition           ?? null,
 
             competenceCols.analyse_rang              ?? null,
             competenceCols.analyse_specialisation    ?? null,
@@ -248,29 +286,33 @@ function saveFullCharacter(db, id, data) {
             id
         );
 
-        // ── Talents : remplacement complet ────────────────────────────────
-        if (Array.isArray(talents)) {
-            db.prepare('DELETE FROM character_talents WHERE character_id = ?').run(id);
-            const insertTalent = db.prepare(
-                'INSERT INTO character_talents (character_id, talent_name, description) VALUES (?, ?, ?)'
-            );
-            for (const t of talents) {
-                if (!t.talentName?.trim()) continue;
-                insertTalent.run(id, t.talentName.trim(), t.description ?? '');
+        // ── Talents : synchronisation (ids stables) ───────────────────────
+        // Une entrée sans nom est ignorée (et supprimée si elle existait).
+        const validTalents = Array.isArray(talents) ? talents.filter(t => t.talentName?.trim()) : talents;
+        _syncSubTable(db, 'character_talents', id, validTalents, (db, charId, t) => {
+            if (t.id) {
+                db.prepare('UPDATE character_talents SET talent_name = ?, description = ? WHERE id = ? AND character_id = ?')
+                    .run(t.talentName.trim(), t.description ?? '', t.id, charId);
+            } else {
+                db.prepare('INSERT INTO character_talents (character_id, talent_name, description) VALUES (?, ?, ?)')
+                    .run(charId, t.talentName.trim(), t.description ?? '');
             }
-        }
+        });
 
-        // ── Items : remplacement complet ──────────────────────────────────
-        if (Array.isArray(items)) {
-            db.prepare('DELETE FROM character_items WHERE character_id = ?').run(id);
-            const insertItem = db.prepare(
-                'INSERT INTO character_items (character_id, nom, description, quantite) VALUES (?, ?, ?, ?)'
-            );
-            for (const item of items) {
-                if (!item.nom?.trim()) continue;
-                insertItem.run(id, item.nom.trim(), item.description ?? '', item.quantite ?? 1);
+        // ── Atouts : synchronisation (ids stables) ────────────────────────
+        // qualite et motsCles sont facultatifs (Q-14) : absents → NULL et ''.
+        const validItems = Array.isArray(items) ? items.filter(i => i.nom?.trim()) : items;
+        _syncSubTable(db, 'character_items', id, validItems, (db, charId, item) => {
+            const values = [item.nom.trim(), item.description ?? '', item.quantite ?? 1,
+                _normalizeQualite(item.qualite), item.motsCles ?? ''];
+            if (item.id) {
+                db.prepare(`UPDATE character_items SET nom = ?, description = ?, quantite = ?, qualite = ?, mots_cles = ?
+                            WHERE id = ? AND character_id = ?`).run(...values, item.id, charId);
+            } else {
+                db.prepare(`INSERT INTO character_items (character_id, nom, description, quantite, qualite, mots_cles)
+                            VALUES (?, ?, ?, ?, ?, ?)`).run(charId, ...values);
             }
-        }
+        });
         db.prepare('COMMIT').run();
     } catch (err) {
         db.prepare('ROLLBACK').run();
@@ -278,4 +320,28 @@ function saveFullCharacter(db, id, data) {
     }
 }
 
-module.exports = { loadFullCharacter, saveFullCharacter, COMPETENCES, PRINCIPES };
+/**
+ * Ajoute un atout et le renvoie au format client (id réel).
+ * @returns {{ id, nom, description, quantite, qualite, motsCles }}
+ */
+function addItem(db, characterId, { nom, description = '', quantite = 1, qualite = null, motsCles = '' }) {
+    const q = _normalizeQualite(qualite);
+    const qty = Math.max(1, Number(quantite) || 1);
+    const { lastInsertRowid } = db.prepare(`
+        INSERT INTO character_items (character_id, nom, description, quantite, qualite, mots_cles) VALUES (?, ?, ?, ?, ?, ?)
+    `).run(characterId, nom.trim(), String(description ?? ''), qty, q, String(motsCles ?? ''));
+    return { id: Number(lastInsertRowid), nom: nom.trim(), description: String(description ?? ''), quantite: qty, qualite: q, motsCles: String(motsCles ?? '') };
+}
+
+/**
+ * Ajoute un talent et le renvoie au format client (id réel).
+ * @returns {{ id, talentName, description }}
+ */
+function addTalent(db, characterId, { talentName, description = '' }) {
+    const { lastInsertRowid } = db.prepare(
+        'INSERT INTO character_talents (character_id, talent_name, description) VALUES (?, ?, ?)'
+    ).run(characterId, talentName.trim(), String(description ?? ''));
+    return { id: Number(lastInsertRowid), talentName: talentName.trim(), description: String(description ?? '') };
+}
+
+module.exports = { loadFullCharacter, saveFullCharacter, addItem, addTalent, COMPETENCES, PRINCIPES };

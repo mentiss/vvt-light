@@ -100,7 +100,7 @@ Tous sont des systèmes en usage réel, aucun n'est un brouillon :
 | `achtung` | Achtung! Cthulhu | |
 | `cyberpunk` | The Sprawl (PbtA) | |
 | `deltagreen` | Delta Green | |
-| `dune` | Dune (2D20) | |
+| `dune` | Dune (2D20) | Refondu (`spec_dune.md`) : bande partagée joueur / MJ, fiche partagée, catalogues d'atouts et de talents tirés du livre |
 | `noctis` | Noctis Solis (Vermine 2047) | Intégration `accessCode` en attente ; masqué de l'accueil (`hidden`) |
 | `tecumah` | Tecumah Gulch (D6) | |
 | `woddavampire` | Vampire : l'Âge des Ténèbres (V20 Dark Ages) | Organisation du code de référence (`config/rules/`, sections partagées joueur / MJ, hooks), aide de jeu en Markdown, coterie |

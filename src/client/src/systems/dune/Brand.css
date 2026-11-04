@@ -3,29 +3,49 @@
    Marque Dune (spec_plateforme_accueil.md §5) : carte de l'accueil et titre des
    pages d'accès. Importé par Brand.jsx (accueil) et par theme.css.
    Classes .dune-brand-* uniquement, aucune couleur globale.
-   DuneRise : public/fonts/fonts.css (chargé partout).
+   Base : la bande fixe du slug (spec_dune.md, demande du MJ) : nuit de l'espace,
+   rosace de vitrail orange, arcs de trajectoire, poussière d'épice, crête de dunes.
+   DuneRise : public/fonts/fonts.css (chargé partout) ; Cinzel : Google Fonts.
    ─────────────────────────────────────────────────────────────────────────── */
 
-/* ── Carte : désert au crépuscule, dunes et soleil ─────────────────────── */
+@import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@600&display=swap');
+
+/* ── Carte : la bande du slug en grand ─────────────────────────────────── */
 .dune-brand {
-    height: 100%; position: relative; overflow: hidden; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 0.4rem;
+    position: relative; height: 100%; overflow: hidden; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: .55rem;
+    color: #EAD8B6;
     background:
-            radial-gradient(ellipse 160% 60% at 20% 118%, #8B6F47 50%, transparent 51%),
-            radial-gradient(ellipse 140% 55% at 85% 112%, #B5651D 50%, transparent 51%),
-            radial-gradient(circle at 86% 18%, rgba(245, 230, 200, 0.85) 0 5%, rgba(224, 123, 57, 0.35) 6%, transparent 24%),
-            linear-gradient(180deg, #2C1A0E 0%, #6B3A1A 55%, #C8A96E 100%);
-    color: #F5E6C8;
+        radial-gradient(circle at 50% 46%, rgba(240, 120, 30, .38) 0, rgba(240, 120, 30, .12) 28%, transparent 52%),
+        radial-gradient(ellipse 120% 40% at 50% 112%, rgba(180, 80, 26, .55), transparent 70%),
+        #06070B;
+}
+/* Rosace de vitrail : anneaux et rayons fins derrière le titre */
+.dune-brand::before {
+    content: ''; position: absolute; left: 50%; top: 46%; width: 220px; height: 220px; transform: translate(-50%, -50%); opacity: .55; pointer-events: none;
+    background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 200'%3E%3Cg fill='none' stroke='%23E8792B' stroke-width='.7'%3E%3Ccircle cx='100' cy='100' r='96'/%3E%3Ccircle cx='100' cy='100' r='72'/%3E%3Ccircle cx='100' cy='100' r='40'/%3E%3Cpath d='M100 4v192M4 100h192M32 32l136 136M168 32L32 168' stroke-dasharray='2 5'/%3E%3C/g%3E%3C/svg%3E") center / contain no-repeat;
+}
+/* Arcs de trajectoire et crête de dunes en bas */
+.dune-brand::after {
+    content: ''; position: absolute; inset: 0; pointer-events: none;
+    background:
+        url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 400 200' preserveAspectRatio='none'%3E%3Cg fill='none' stroke='rgba(232,121,43,.45)' stroke-width='.8'%3E%3Cpath d='M0 120 Q200 -40 400 120'/%3E%3Cpath d='M60 200 Q200 60 340 200' stroke-dasharray='2 6'/%3E%3C/g%3E%3Cpath d='M0 188 C60 188 80 172 140 172 S220 186 280 182 S360 168 400 176' fill='none' stroke='rgba(196,154,82,.7)' stroke-width='1.2'/%3E%3C/svg%3E") center / 100% 100% no-repeat;
 }
 .dune-brand-title {
-    position: relative; font-family: 'DuneRise', Georgia, serif; font-size: 2.6rem; line-height: 1; letter-spacing: 0.08em;
-    color: #F5E6C8; text-shadow: 0 2px 12px rgba(44, 26, 14, 0.8);
+    position: relative; z-index: 1; font-family: 'DuneRise', Georgia, serif; font-size: 2.4rem; line-height: 1;
+    letter-spacing: .32em; padding-left: .32em; color: #EAD8B6; text-shadow: 0 0 24px rgba(240, 120, 30, .45);
 }
 .dune-brand-sub {
-    position: relative; font-size: 0.72rem; font-weight: 600; letter-spacing: 0.25em; text-transform: uppercase;
-    color: #EDD9A3; text-shadow: 0 1px 4px rgba(44, 26, 14, 0.9);
+    position: relative; z-index: 1; font-family: 'Cinzel', Georgia, serif; font-weight: 600; font-size: .62rem;
+    letter-spacing: .5em; padding-left: .5em; text-transform: uppercase; color: #8F7D60;
 }
+/* Poussière d'épice : quelques grains en dérive */
+.dune-brand-dust { position: absolute; inset: 0; pointer-events: none; }
+.dune-brand-dust i { position: absolute; width: 2px; height: 2px; border-radius: 50%; background: #F0A050; opacity: 0; animation: dune-brand-drift 12s linear infinite; }
+@keyframes dune-brand-drift { 0% { transform: translate(0, 0); opacity: 0; } 15% { opacity: .6; } 85% { opacity: .35; } 100% { transform: translate(140px, -24px); opacity: 0; } }
+@media (prefers-reduced-motion: reduce) { .dune-brand-dust { display: none; } }
 
-/* ── Titre (pages d'accès, Reprendre) : ocre du thème (lisible jour et nuit) ── */
+/* ── Titre (pages d'accès, Reprendre) : épice du thème, lisible jour et nuit ── */
 .dune-brand.is-title { height: auto; overflow: visible; background: none; gap: 0; }
+.dune-brand.is-title::before, .dune-brand.is-title::after, .dune-brand.is-title .dune-brand-dust { display: none; }
 .dune-brand.is-title .dune-brand-sub { display: none; }
-.dune-brand.is-title .dune-brand-title { font-size: 1.5em; text-shadow: none; color: var(--dune-ochre, #B5651D); white-space: nowrap; }
+.dune-brand.is-title .dune-brand-title { font-size: 1.5em; letter-spacing: .3em; text-shadow: none; color: var(--color-primary, #B4501A); white-space: nowrap; }

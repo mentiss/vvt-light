@@ -31,6 +31,11 @@ CREATE TABLE IF NOT EXISTS characters (
                                           motto           TEXT DEFAULT '',
                                           statut_social   TEXT DEFAULT '',
                                           description     TEXT DEFAULT '',
+    -- Feuille officielle (spec_dune.md §3.2, Q-13) : texte libre, facultatif
+                                          role                TEXT DEFAULT '',
+                                          faction             TEXT DEFAULT '',
+                                          traits_personnalite TEXT DEFAULT '',
+                                          ambition            TEXT DEFAULT '',
 
     -- Détermination (ressource personnelle)
                                           determination       INTEGER DEFAULT 1,
@@ -106,6 +111,9 @@ CREATE TABLE IF NOT EXISTS character_items (
                                                nom             TEXT    NOT NULL,
                                                description     TEXT    DEFAULT '',
                                                quantite        INTEGER DEFAULT 1,
+    -- Livre (spec_dune.md §3.2, Q-14) : facultatifs ; NULL = qualité non renseignée
+                                               qualite         INTEGER DEFAULT NULL,
+                                               mots_cles       TEXT    DEFAULT '',
                                                FOREIGN KEY (character_id) REFERENCES characters(id) ON DELETE CASCADE
 );
 
