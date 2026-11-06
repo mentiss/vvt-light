@@ -10,7 +10,8 @@
 // - « Utiliser un objet » près des PI : objets de la fiche de groupe payés en PI
 //   (UseItemMenu, spec_fabula.md §7), avec trace dans l'historique.
 // - Crise, Défense, Déf. mag., Initiative : valeurs dérivées en lecture seule ;
-//   Zénits modifiable directement.
+//   Zénits modifiable directement. Avec onRollInitiative (fiche du joueur), la
+//   case Initiative est un bouton qui ouvre le jet d'initiative.
 // ─────────────────────────────────────────────────────────────────────────────
 
 import React from 'react';
@@ -49,7 +50,7 @@ const STATS = [
     { key: 'initiative',     label: 'Initiative', icon: 'boot' },
 ];
 
-const ResourceBar = ({ character, onQuickUpdate, sessionId }) => {
+const ResourceBar = ({ character, onQuickUpdate, sessionId, onRollInitiative }) => {
     const crisis = isInCrisis(character);
 
     return (
@@ -71,13 +72,24 @@ const ResourceBar = ({ character, onQuickUpdate, sessionId }) => {
 
             <div className="fu-sep" />
             <div className="fu-derived">
-                {STATS.map(s => (
-                    <div key={s.key} className={`fu-stat${s.tone ? ` ${s.tone}` : ''}`}>
-                        <FuIcon name={s.icon} className="fu-ico-sm" />
-                        <b>{character[s.key] ?? '—'}</b>
-                        <span className="fu-label">{s.label}</span>
-                    </div>
-                ))}
+                {STATS.map(s => {
+                    const content = (
+                        <>
+                            <FuIcon name={s.icon} className="fu-ico-sm" />
+                            <b>{character[s.key] ?? '—'}</b>
+                            <span className="fu-label">{s.label}</span>
+                        </>
+                    );
+                    // Initiative : un clic lance le jet d'initiative (spec_fabula.md §11.2)
+                    return s.key === 'initiative' && onRollInitiative ? (
+                        <button key={s.key} type="button" className="fu-stat is-roll" onClick={onRollInitiative}
+                                title="Jet d'initiative [DEX + INT] + initiative">
+                            {content}
+                        </button>
+                    ) : (
+                        <div key={s.key} className={`fu-stat${s.tone ? ` ${s.tone}` : ''}`}>{content}</div>
+                    );
+                })}
                 <div className="fu-stat">
                     <FuIcon name="coin" className="fu-ico-sm" />
                     <input type="number" value={character.zenit ?? 0} aria-label="Zénits"

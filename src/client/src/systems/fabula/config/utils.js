@@ -140,8 +140,6 @@ export function classAtoutBonuses(classes) {
 }
 
 export function computeDerivedStats(character) {
-    const dexDe = character.dexDe ?? 8;
-    const intDe = character.intDe ?? 8;
     const puiDe = character.puiDe ?? 8;
     const volDe = character.volDe ?? 8;
 
@@ -183,7 +181,9 @@ export function computeDerivedStats(character) {
         pmMax,
         piMax,
         seuilCrise,
-        initiative: Math.floor((dexDe + intDe) / 2) + modInit,
+        // PJ : 0 + modificateurs de l'équipement porté, négatif possible
+        // (la moyenne des dés DEX et INT est la formule des PNJ, spec_fabula.md §11.1)
+        initiative: modInit,
         defense: (defFixe ?? dexEffectif) + modDef,
         defenseMagique: intEffectif + modDefMag,
         // Les *Actuel ne sont jamais recalculés ici — uniquement via steppers manuels.

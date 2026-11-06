@@ -604,6 +604,9 @@ button.vtt-list-item:hover { border-color: var(--fu-win-edge); }
 .fu-stat b { display: block; font-family: var(--fu-font-title); font-weight: 700; font-size: 1.25rem; line-height: 1; }
 .fu-stat input { width: 100%; text-align: center; font-family: var(--fu-font-title); font-weight: 700; font-size: 1.25rem; line-height: 1; color: var(--fu-win-gold); background: transparent; }
 .fu-stat .fu-label { display: block; font-size: .56rem; margin-top: .25rem; }
+/* Initiative cliquable : jet d'initiative (spec_fabula.md §11.2) */
+.fu-stat.is-roll { color: inherit; cursor: pointer; transition: border-color .15s, box-shadow .15s; }
+.fu-stat.is-roll:hover { border-color: var(--fu-win-gold); box-shadow: 0 0 10px rgba(242,210,122,.35); }
 @media (max-width: 520px) { .fu-derived { grid-template-columns: repeat(3, minmax(0, 1fr)); } .fu-res-val { min-width: 0; font-size: 1.1rem; } }
 
 /* Dés en gemmes (FuDie) : la couleur dit la taille */
@@ -879,6 +882,23 @@ button.fu-die:disabled { cursor: default; }
 .fu-clock.is-full .fu-clock-dial path.is-on { fill: var(--color-danger); }
 .fu-clock.is-full .fu-clock-dial { filter: drop-shadow(0 0 12px rgba(255,93,108,.7)); }
 .fu-clock.is-hidden { border-style: dashed; opacity: .8; }
+.fu-clock.is-compact { gap: .6rem; padding: .55rem; }
+.fu-clock.is-compact .fu-clock-dial { width: 72px; height: 72px; }
+.fu-clock-name { font-weight: 700; font-size: .9rem; overflow-wrap: anywhere; }
+
+/* Volet des cadrans de la fiche (spec_fabula.md §11.3) : languette au bord droit,
+   fenêtre posée à côté quand il est ouvert ; au-dessus du contenu, sous la bande */
+.fu-drawer { position: fixed; right: 0; top: 9rem; z-index: 25; display: flex; align-items: flex-start; max-width: calc(100vw - 16px); }
+.fu-drawer-tab {
+    display: flex; flex-direction: column; align-items: center; gap: .4rem; padding: .6rem .35rem; margin-top: .6rem;
+    border-radius: 10px 0 0 10px; border: 2px solid var(--fu-win-edge); border-right: 0; color: var(--fu-win-text);
+    background: linear-gradient(180deg, var(--fu-win-top), var(--fu-win-bottom)); box-shadow: var(--fu-win-glow);
+}
+.fu-drawer-tab:hover { color: var(--fu-win-gold); }
+.fu-drawer-count { min-width: 1.5rem; height: 1.5rem; display: grid; place-items: center; border-radius: 999px; font-family: var(--fu-font-title); font-weight: 700; font-size: .85rem; color: #1A1440; background: var(--fu-win-gold); text-shadow: none; }
+.fu-drawer-label { writing-mode: vertical-rl; transform: rotate(180deg); font-family: var(--fu-font-title); font-weight: 600; font-size: .75rem; letter-spacing: .12em; text-transform: uppercase; }
+.fu-drawer-panel { width: min(19rem, calc(100vw - 4rem)); max-height: calc(100vh - 11rem); overflow-y: auto; border-right: 0; border-radius: var(--fu-radius-lg) 0 0 var(--fu-radius-lg); }
+.fu-drawer-clocks { display: grid; gap: .5rem; }
 .fu-jentry { display: grid; gap: .4rem; padding: .55rem .6rem; border-radius: 9px; background: rgba(0,0,0,.2); border: 1px solid rgba(238,240,250,.14); }
 .fu-jentry + .fu-jentry { margin-top: .4rem; }
 

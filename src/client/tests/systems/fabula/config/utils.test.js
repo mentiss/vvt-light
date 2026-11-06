@@ -4,7 +4,7 @@
 // Arcana avec Arcanum d'urgence, cycle Lié → Fusionné → Renvoi → Lié.
 import { describe, it, expect } from 'vitest';
 import {
-    effectiveAttrDie, attrAdjustable, adjustAttrBoost, arcanumFusionCost, nextArcanumState,
+    effectiveAttrDie, attrAdjustable, adjustAttrBoost, arcanumFusionCost, nextArcanumState, computeDerivedStats,
 } from '../../../../src/systems/fabula/config.jsx';
 
 const hero = (patch = {}) => ({ dexDe: 8, intDe: 10, puiDe: 6, volDe: 12, boostsAttributs: {}, alterationsEtat: [], ...patch });
@@ -53,5 +53,19 @@ describe('arcana : fusion', () => {
         expect(nextArcanumState('fusionne', true)).toBe('renvoi');
         expect(nextArcanumState('renvoi', true)).toBe('lie');
         expect(nextArcanumState('fusionne', false)).toBe('lie');
+    });
+});
+
+// spec_fabula.md §11.1 : un PJ a 0 + les modificateurs de l'équipement porté
+describe('initiative des PJ', () => {
+    const item = (modInitiative, emplacementEquipe) => ({ modInitiative, emplacementEquipe });
+
+    it('sans équipement : 0, quels que soient les dés DEX et INT', () => {
+        expect(computeDerivedStats(hero({ dexDe: 12, intDe: 12, equipment: [] })).initiative).toBe(0);
+    });
+
+    it('modificateurs de l\'équipement porté additionnés, négatif possible, sac ignoré', () => {
+        const equipment = [item(-2, 'armure'), item(1, 'accessoire'), item(4, null)];
+        expect(computeDerivedStats(hero({ equipment })).initiative).toBe(-1);
     });
 });

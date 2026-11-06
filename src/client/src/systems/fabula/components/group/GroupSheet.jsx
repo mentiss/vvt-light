@@ -44,7 +44,8 @@ const segmentPath = (n, i) => {
 
 // Carte horizontale : disque à gauche ; nom, avancée (−1 / +1) et visibilité à
 // droite ; réglages rares (sections, suppression confirmée) derrière l'engrenage.
-const Clock = ({ cadran, isGM, onPatch, onRemove }) => {
+// compact (volet de la fiche, ClockDrawer) : nom en texte, sans réglages.
+export const Clock = ({ cadran, isGM, onPatch, onRemove, compact = false }) => {
     const [settingsOpen, setSettingsOpen] = useState(false);
     const [confirmDelete, setConfirmDelete] = useState(false);
     const full = cadran.remplies >= cadran.sections;
@@ -53,7 +54,7 @@ const Clock = ({ cadran, isGM, onPatch, onRemove }) => {
     const clickSegment = (i) => setFill(i === cadran.remplies - 1 ? i : i + 1);
     const toggleSettings = () => { setSettingsOpen(o => !o); setConfirmDelete(false); };
     return (
-        <div className={`fu-clock${cadran.cache ? ' is-hidden' : ''}${full ? ' is-full' : ''}`}>
+        <div className={`fu-clock${cadran.cache ? ' is-hidden' : ''}${full ? ' is-full' : ''}${compact ? ' is-compact' : ''}`}>
             <svg viewBox="0 0 100 100" className="fu-clock-dial" role="img" aria-label={`${cadran.nom || 'Cadran'} : ${cadran.remplies} sur ${cadran.sections}`}>
                 <circle cx="50" cy="50" r="48" className="fu-clock-face" />
                 {Array.from({ length: cadran.sections }, (_, i) => (
@@ -62,19 +63,23 @@ const Clock = ({ cadran, isGM, onPatch, onRemove }) => {
                 ))}
             </svg>
             <div className="fu-clock-body">
-                <BlurField value={cadran.nom} onSave={nom => onPatch({ nom })} placeholder="Nom du cadran" />
+                {compact
+                    ? <b className="fu-clock-name">{cadran.nom || 'Cadran'}</b>
+                    : <BlurField value={cadran.nom} onSave={nom => onPatch({ nom })} placeholder="Nom du cadran" />}
                 <div className="fu-clock-count">
                     <span className="fu-clock-num"><b>{cadran.remplies}</b> / {cadran.sections}</span>
                     <button type="button" className="fu-btn fu-btn-sm" disabled={cadran.remplies <= 0}
                             onClick={() => setFill(cadran.remplies - 1)}>−1</button>
                     <button type="button" className="fu-btn fu-btn-sm" disabled={full}
                             onClick={() => setFill(cadran.remplies + 1)}>+1</button>
-                    <button type="button" className={`fu-clock-gear${settingsOpen ? ' is-on' : ''}`} onClick={toggleSettings}
-                            aria-expanded={settingsOpen} title="Réglages du cadran">
-                        <FuIcon name="gear" className="fu-ico-sm" />
-                    </button>
+                    {!compact && (
+                        <button type="button" className={`fu-clock-gear${settingsOpen ? ' is-on' : ''}`} onClick={toggleSettings}
+                                aria-expanded={settingsOpen} title="Réglages du cadran">
+                            <FuIcon name="gear" className="fu-ico-sm" />
+                        </button>
+                    )}
                 </div>
-                {isGM && (
+                {isGM && !compact && (
                     <button type="button" className={`fu-clock-vis${cadran.cache ? ' is-hidden' : ''}`}
                             onClick={() => onPatch({ cache: !cadran.cache })}
                             title={cadran.cache ? 'Montrer le cadran à la table' : 'Cacher le cadran aux joueurs'}>

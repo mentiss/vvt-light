@@ -15,7 +15,9 @@
 //     est ajouté à l'historique (POST /dice/roll) et la fiche mise à jour.
 //
 // Props : character, sessionId, onClose, initialAttr1, initialAttr2, initialLabel,
-//         weaponContext?, spellContext?, onCharacterPatch? (patch immédiat de la fiche)
+//         weaponContext?, spellContext?, onCharacterPatch? (patch immédiat de la fiche),
+//         initiativeRoll? (jet d'initiative, §11.2 : DEX + INT + initiative, rôle
+//         soutien à ND 10 ou meneur, rôle écrit dans l'intitulé pour l'historique)
 // ─────────────────────────────────────────────────────────────────────────────
 
 import React, { useState, useCallback, useMemo } from 'react';
@@ -41,7 +43,7 @@ const degatsLabel = (key) => TYPES_DEGATS.find(t => t.key === key)?.label ?? key
 const signed = (n) => (n >= 0 ? `+${n}` : `−${-n}`);
 
 // ── Résultat (colonne de droite) ─────────────────────────────────────────────
-const RollResult = ({ result, lucky, canLuck, onLuck, onLuckReset, onReroll }) => {
+const RollResult = ({ result, lucky, canLuck, support, onLuck, onLuckReset, onReroll }) => {
     const { die1, die2, dieSize1, dieSize2, vh, total, modifier, bonus, nd, criticalSuccess, criticalFailure, success, skills } = result;
     const showDmg = result.type === 'attaque' && result.degats != null && !criticalFailure && (success !== false);
     return (
@@ -64,6 +66,9 @@ const RollResult = ({ result, lucky, canLuck, onLuck, onLuckReset, onReroll }) =
                 {criticalSuccess ? <span className="fu-verdict is-crit">Réussite critique</span>
                     : criticalFailure ? <span className="fu-verdict is-ko">Échec critique · +1 PF</span>
                     : success != null && <span className={`fu-verdict ${success ? 'is-ok' : 'is-ko'}`}>{success ? 'Réussite' : 'Échec'}</span>}
+                {support && success != null && (
+                    <div className="fu-total-detail mt-2">{success ? 'Réussi : +1 au meneur' : 'Raté : pas de bonus pour le meneur'}</div>
+                )}
                 {showDmg && (
                     <div className="fu-total-detail mt-2">Dégâts {result.degats} ({degatsLabel(result.degatsType)}) — VH {vh} + {result.degatsBonus}</div>
                 )}
@@ -99,7 +104,7 @@ const RollResult = ({ result, lucky, canLuck, onLuck, onLuckReset, onReroll }) =
 const FabulaDiceModal = ({
     character, sessionId = null, onClose,
     initialAttr1 = 'dex', initialAttr2 = 'int', initialLabel = '',
-    weaponContext = null, spellContext = null, onCharacterPatch,
+    weaponContext = null, spellContext = null, initiativeRoll = false, onCharacterPatch,
 }) => {
     const fetchWithAuth = useFetch();
     const { apiBase }   = useSystem();
@@ -113,9 +118,15 @@ const FabulaDiceModal = ({
 
     const [attr1, setAttr1]       = useState(weaponContext?.precisionAttr1 ?? initialAttr1);
     const [attr2, setAttr2]       = useState(weaponContext ? weaponContext.precisionAttr2 : (initialAttr2 === initialAttr1 ? (initialAttr1 === 'dex' ? 'int' : 'dex') : initialAttr2));
-    const [modifier, setModifier] = useState(weaponContext?.precisionBonus ?? 0);
+    const [modifier, setModifier] = useState(weaponContext?.precisionBonus ?? (initiativeRoll ? (character.initiative ?? 0) : 0));
     const [nd, setNd]             = useState('');
-    const [label, setLabel]       = useState(weaponContext ? `Attaque : ${weaponContext.nomLibre}` : initialLabel);
+    // Jet d'initiative (§11.2) : le soutien vise 10 et donne +1 au meneur s'il
+    // réussit ; le meneur vise l'initiative du PNJ, +1 par soutien réussi
+    const [role, setRole]         = useState(initiativeRoll ? 'soutien' : null);
+    const initiativeLabel = (r) => `Initiative · ${r === 'meneur' ? 'meneur' : 'soutien'}`;
+    const [label, setLabel]       = useState(weaponContext ? `Attaque : ${weaponContext.nomLibre}` : initiativeRoll ? initiativeLabel('soutien') : initialLabel);
+    const pickRole = (r) => { setRole(r); setLabel(initiativeLabel(r)); };
+    const ndValue = role === 'soutien' ? 10 : (nd !== '' ? parseInt(nd) : null);
 
     const rollCtx = useMemo(() => ({
         mode,
@@ -169,7 +180,7 @@ const FabulaDiceModal = ({
                     dieSize1: effectiveAttrDie(character, attr1),
                     dieSize2: effectiveAttrDie(character, attr2),
                     modifier: parseInt(modifier) || 0,
-                    nd: nd !== '' ? parseInt(nd) : null,
+                    nd: ndValue,
                     bonus: mods.bonus,
                     critAnyDouble: mods.critAnyDouble,
                     skills: mods.names,
@@ -185,7 +196,7 @@ const FabulaDiceModal = ({
         } finally {
             setRolling(false);
         }
-    }, [rolling, attr1, attr2, modifier, nd, label, character, apiBase, sessionId, mode, mods.bonus, mods.critAnyDouble, mods.names, mods.damage, dmgBase]); // fetchWithAuth exclu (référence instable)
+    }, [rolling, attr1, attr2, modifier, ndValue, label, character, apiBase, sessionId, mode, mods.bonus, mods.critAnyDouble, mods.names, mods.damage, dmgBase]); // fetchWithAuth exclu (référence instable)
 
     // Nombre porte-bonheur : jet corrigé, ajouté à l'historique, fiche mise à jour
     const applyLuck = async (index) => {
@@ -230,7 +241,7 @@ const FabulaDiceModal = ({
 
     const d1 = effectiveAttrDie(character, attr1);
     const d2 = effectiveAttrDie(character, attr2);
-    const title = mode === 'attaque' ? (spellContext ? 'Sort offensif' : 'Attaque') : spellContext ? 'Sort' : "Test d'attribut";
+    const title = mode === 'attaque' ? (spellContext ? 'Sort offensif' : 'Attaque') : spellContext ? 'Sort' : initiativeRoll ? "Jet d'initiative" : "Test d'attribut";
 
     return (
         <Modal onClose={onClose} title={title} size="xl" className="fu-roll-modal">
@@ -248,6 +259,20 @@ const FabulaDiceModal = ({
                             <FuIcon name={spellContext.offensif ? 'bolt' : 'spark'} className="fu-ico-sm text-primary" />
                             <b>{spellContext.nom}</b>
                             <span className="text-muted">{[spellContext.cout, spellContext.cible, spellContext.duree].filter(Boolean).join(' · ')}</span>
+                        </div>
+                    )}
+
+                    {initiativeRoll && (
+                        <div className="mb-3">
+                            <div className="fu-label mb-1.5">Rôle dans le test de groupe</div>
+                            <div className="flex flex-wrap gap-1.5">
+                                <button type="button" className={`fu-skill-pill${role === 'soutien' ? ' is-on' : ''}`} onClick={() => pickRole('soutien')}>
+                                    Soutien<small>ND 10, +1 au meneur si réussi</small>
+                                </button>
+                                <button type="button" className={`fu-skill-pill${role === 'meneur' ? ' is-on' : ''}`} onClick={() => pickRole('meneur')}>
+                                    Meneur<small>ND : initiative du PNJ, +1 par soutien réussi</small>
+                                </button>
+                            </div>
                         </div>
                     )}
 
@@ -298,7 +323,7 @@ const FabulaDiceModal = ({
                     </div>
                     <div className="flex gap-4 flex-wrap items-end">
                         <div className="vtt-field">
-                            <span className="vtt-field-label">Modificateur{weaponContext ? ' (arme)' : ''}</span>
+                            <span className="vtt-field-label">Modificateur{weaponContext ? ' (arme)' : role === 'meneur' ? ' (initiative + soutiens réussis)' : initiativeRoll ? ' (initiative)' : ''}</span>
                             <div className="fu-step">
                                 <button type="button" className="fu-step-btn" onClick={() => setModifier(m => (parseInt(m) || 0) - 1)} aria-label="Diminuer"><FuIcon name="minus" className="fu-ico-sm" /></button>
                                 <span className="fu-step-val">{signed(parseInt(modifier) || 0)}</span>
@@ -307,7 +332,9 @@ const FabulaDiceModal = ({
                         </div>
                         <div className="vtt-field">
                             <label className="vtt-field-label">ND (facultatif)</label>
-                            <input type="number" value={nd} onChange={e => setNd(e.target.value)} placeholder="—" title="Difficulté annoncée par le MJ" className="vtt-input w-24 text-center" />
+                            {role === 'soutien'
+                                ? <input type="number" value={10} readOnly disabled title="Le soutien vise toujours 10" className="vtt-input w-24 text-center" />
+                                : <input type="number" value={nd} onChange={e => setNd(e.target.value)} placeholder="—" title={role === 'meneur' ? "Initiative du PNJ, annoncée par le MJ" : 'Difficulté annoncée par le MJ'} className="vtt-input w-24 text-center" />}
                         </div>
                     </div>
 
@@ -320,7 +347,7 @@ const FabulaDiceModal = ({
 
                 <section>
                     {result ? (
-                        <RollResult result={result} lucky={lucky} canLuck={hasLucky}
+                        <RollResult result={result} lucky={lucky} canLuck={hasLucky} support={role === 'soutien'}
                                     onLuck={applyLuck} onLuckReset={resetLuck} onReroll={handleRoll} />
                     ) : (
                         <div className="fu-stage">

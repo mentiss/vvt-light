@@ -241,3 +241,47 @@ Les questions pour le MJ de Fabula (compétences au jet, Nombre porte-bonheur, r
 | Q-6 | Cadrans : visibles et modifiables par les joueurs, ou réservés au MJ (avec des cadrans cachés) ? | Visibles par tous, cadrans cachés possibles pour le MJ. | |
 | Q-7 | « Utiliser un objet » : laisse une trace dans l'historique des jets ? | Oui : la table voit qui a dépensé quoi. | |
 | Q-8 | 3D en attendant la modification de la bibliothèque (§4.1) : couleur du joueur pour tout le lancer, ou configuration appliquée quand tout le lancer résout la même ? | Couleur du joueur : rien ne change en 3D d'ici là. | Une configuration pour tout le lancer : celle imposée par le joueur, sinon celle du slug, sinon celle de base de la plateforme. |
+
+---
+
+## 11. Retours du MJ après essai (2026-11-06)
+
+### 11.1 Valeur d'initiative des PJ (correctif, validé)
+
+La fiche calculait l'initiative avec la formule des PNJ (moyenne des tailles de dé DEX et INT + équipement). Pour un PJ, l'initiative vaut **0 + les modificateurs d'initiative de l'équipement porté**. Elle peut être négative.
+
+- Le calcul est corrigé partout où il est fait : fiche, interface MJ, assistant de création.
+- **Personnages existants** : une migration recalcule la valeur enregistrée à partir de l'équipement porté, pour que toutes les fiches soient justes dès la mise en prod.
+- Test : la règle de calcul (sans équipement : 0 ; modificateurs additionnés ; valeur négative possible ; objets du sac ignorés).
+
+### 11.2 Jet d'initiative depuis la case Initiative (validé : raccourci individuel)
+
+Règle (livre, Scènes de conflit, Initiative) : test de groupe 【DEX + INT】 + initiative. Un PJ mène le test, les autres le soutiennent. Le meneur doit atteindre l'initiative la plus haute parmi les PNJ ; chaque soutien doit atteindre 10, et chaque soutien réussi ajoute +1 au résultat du meneur.
+
+- Un clic sur la case Initiative du Statut (hors mode Édition) ouvre la fenêtre de jet, préremplie : DEX + INT, initiative en modificateur, libellé « Initiative ».
+- La fenêtre propose un choix **Meneur / Soutien** :
+  - **Soutien** : ND fixé à 10 ; le résultat affiche « Réussi : +1 au meneur » ou « Raté » ;
+  - **Meneur** : ND saisi d'après l'annonce du MJ ; les +1 des soutiens réussis s'ajoutent au pas à pas du modificateur.
+- Les compétences qui touchent le jet restent proposées, comme pour tout test.
+- Le jet part dans l'historique avec son rôle (meneur ou soutien) : la table voit les soutiens.
+- Pas de nouvelle donnée en base, pas de nouvel événement socket.
+- **Backlog** : test de groupe orchestré par le MJ (désignation du meneur, demande de jet aux joueurs, total et verdict du groupe).
+
+### 11.3 Volet des cadrans sur la fiche (validé)
+
+Demande : quand un cadran est actif et visible des joueurs, un volet s'ouvre sur le côté de la fiche, pour ne pas devoir passer par l'onglet Groupe.
+
+- Volet replié au bord droit de la fiche du joueur, présent seulement s'il y a au moins un cadran **visible et pas plein** (un cadran plein est résolu : il reste dans l'onglet Groupe).
+- Fermé, c'est une languette qui porte le nombre de cadrans. Il s'ouvre d'un clic, et tout seul quand un cadran avance. Ouvert ou fermé est retenu par le navigateur.
+- Ouvert, il montre les cadrans en version compacte, modifiables comme dans l'onglet Groupe (clic sur une section, −1 / +1), sans les réglages (Q-6 inchangée).
+- Mise à jour en direct, comme l'onglet Groupe. Rien ne change côté serveur.
+- Pas de volet côté MJ : il a l'onglet Groupe.
+
+**§11.1 à §11.3 implémentés le 2026-11-06** (non commités) : `computeDerivedStats` et l'assistant de création (initiative = équipement porté), migration `06112026_fabula_initiative_pj.sql`, test `config/utils.test.js` ; case Initiative cliquable (`ResourceBar`, prop `onRollInitiative` de `FicheGrid`, fiche du joueur seulement), fenêtre de jet en mode `initiativeRoll` ; volet `components/group/ClockDrawer.jsx` (cadran `Clock` de `GroupSheet` en version `compact`).
+
+| # | Question | Recommandation | Réponse |
+|---|---|---|---|
+| C-1 | « Cadran actif » : tout cadran visible, ou seulement ceux qui ne sont pas encore pleins ? | Visible et pas plein. | Reco validée par le MJ (2026-11-06). |
+| C-2 | Volet en lecture seule, ou avec le clic et −1 / +1 comme dans l'onglet Groupe ? | Modifiable, sans les réglages. | Reco validée. |
+| C-3 | Volet ouvert d'office dès qu'un cadran apparaît, ou languette à ouvrir ? | Languette avec le nombre de cadrans, ouverture automatique quand un cadran avance, état retenu par le navigateur. | Reco validée. |
+| C-4 | Volet aussi côté MJ, sur la fiche d'un PJ ? | Non. | Reco validée. |

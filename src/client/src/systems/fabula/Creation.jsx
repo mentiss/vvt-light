@@ -117,7 +117,7 @@ function computeStats(ws) {
     const modDef    = sum(equipes.filter(e => !(defFixe !== null && e === armure)).map(e => e.modDefense ?? 0));
     const modDefMag = sum(equipes.map(e => e.modDefenseMagique ?? 0));
 
-    const initiative     = Math.floor((dexDe + intDe) / 2) + modInit;
+    const initiative     = modInit;   // PJ : 0 + équipement (spec_fabula.md §11.1)
     const defense        = (defFixe ?? dexDe) + modDef;
     const defenseMagique = intDe + modDefMag;
 

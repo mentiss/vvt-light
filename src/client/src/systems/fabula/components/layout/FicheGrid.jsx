@@ -5,8 +5,9 @@
 // "Fiche — mêmes composants, même ordre que Sheet.jsx".
 //
 // Contrat : { character, editMode, onFieldChange, onArrayChange, onQuickUpdate,
-//             onAvatarClick, onRollAttribute, onAttack, onCastSpell, sessionId }
+//             onAvatarClick, onRollAttribute, onRollInitiative, onAttack, onCastSpell, sessionId }
 //   sessionId : table active (objets de la fiche de groupe près des PI)
+//   onRollInitiative (optionnel) : clic sur la case Initiative du Statut (joueur)
 //   onAttack (optionnel) : ouvre FabulaDiceModal en mode attaque pour une arme
 //   équipée. Fourni par Sheet.jsx (joueur) UNIQUEMENT — TabSession.jsx (GM) ne
 //   le passe pas, donc le bouton "⚔ Attaquer" de WeaponsCard reste invisible
@@ -32,7 +33,7 @@ import BackpackCard       from './BackpackCard.jsx';
 //      Sorts, Sac). Les Liens grandissent avec les liens (jusqu'à 6) : dans
 //      une colonne libre, ils ne creusent pas de vide sous une rangée.
 // En une colonne (écran étroit), les actions passent avant Liens et Classes.
-const FicheGrid = ({ character, editMode, onFieldChange, onArrayChange, onQuickUpdate, onAvatarClick, onRollAttribute, onAttack, onCastSpell, sessionId }) => (
+const FicheGrid = ({ character, editMode, onFieldChange, onArrayChange, onQuickUpdate, onAvatarClick, onRollAttribute, onRollInitiative, onAttack, onCastSpell, sessionId }) => (
     <div className="flex flex-col gap-3 w-full">
         <div className="fu-row-stretch grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_minmax(0,19rem)] gap-3">
             <TraitsPanel character={character} editMode={editMode} onFieldChange={onFieldChange}
@@ -41,7 +42,7 @@ const FicheGrid = ({ character, editMode, onFieldChange, onArrayChange, onQuickU
         </div>
 
         <div className="fu-row-stretch grid grid-cols-1 lg:grid-cols-2 gap-3">
-            <ResourceBar character={character} onQuickUpdate={onQuickUpdate} sessionId={sessionId} />
+            <ResourceBar character={character} onQuickUpdate={onQuickUpdate} sessionId={sessionId} onRollInitiative={onRollInitiative} />
             <AttributesPanel character={character} editMode={editMode}
                              onFieldChange={onFieldChange}
                              onQuickUpdate={onQuickUpdate}

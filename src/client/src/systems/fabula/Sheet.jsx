@@ -38,6 +38,7 @@ import FuBand              from './components/ui/FuBand.jsx';
 import FuIcon              from './components/ui/FuIcon.jsx';
 import FuWorld             from './components/ui/FuWorld.jsx';
 import GroupSheet          from './components/group/GroupSheet.jsx';
+import ClockDrawer         from './components/group/ClockDrawer.jsx';
 import FabulaDiceModal    from './components/modals/FabulaDiceModal.jsx';
 import ReferenceTab       from './components/ReferenceTab.jsx';
 import { computeDerivedStats } from './config.jsx';
@@ -138,6 +139,8 @@ const Sheet = ({
 
     const openDiceModal = (attr1 = 'dex', attr2 = 'int', label = '', spell = null) => setDiceModalAttrs({ attr1, attr2, label, spell });
     const openAttackModal = (weaponItem) => setAttackContext(weaponItem);
+    // Jet d'initiative (spec_fabula.md §11.2) : [DEX + INT] + initiative, meneur ou soutien
+    const openInitiativeModal = () => setDiceModalAttrs({ attr1: 'dex', attr2: 'int', label: 'Initiative', spell: null, initiative: true });
 
     return (
         <div className="fu-root fu-font-body">
@@ -209,10 +212,14 @@ const Sheet = ({
                             onQuickUpdate={patchImmediate}
                             onAvatarClick={() => setShowAvatarUploader(true)}
                             onRollAttribute={(attrKey) => !editMode && openDiceModal(attrKey, attrKey === 'dex' ? 'int' : 'dex')}
+                            onRollInitiative={() => !editMode && openInitiativeModal()}
                             onAttack={(weaponItem) => !editMode && openAttackModal(weaponItem)}
                             onCastSpell={(a1, a2, lbl, spell) => !editMode && openDiceModal(a1, a2, lbl, spell)}
                         />
                     )}
+
+                    {/* Volet des cadrans actifs, sur la fiche seulement (spec_fabula.md §11.3) */}
+                    {activeTab === 'fiche' && <ClockDrawer sessionId={activeGMSession ?? null} />}
 
                     {/* Fiche de groupe de la table (spec_fabula.md §7) */}
                     {activeTab === 'groupe' && (
@@ -256,6 +263,7 @@ const Sheet = ({
                     initialAttr2={diceModalAttrs.attr2}
                     initialLabel={diceModalAttrs.label}
                     spellContext={diceModalAttrs.spell}
+                    initiativeRoll={!!diceModalAttrs.initiative}
                     onCharacterPatch={patchImmediate}
                     onClose={() => setDiceModalAttrs(null)}
                 />
