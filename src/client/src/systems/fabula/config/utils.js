@@ -61,6 +61,56 @@ export function effectiveAttrDie(character, attrKey) {
     return DIE_STEPS[idx];
 }
 
+/**
+ * Chevrons ▲ / ▼ d'un attribut (spec_fabula.md §3.1, demande du MJ) : on monte
+ * ou on descend d'un cran, sous la base comprise. ▲ disparaît quand le dé
+ * effectif est à d12, ▼ quand il est à d6.
+ */
+export function attrAdjustable(character, attrKey) {
+    const die = effectiveAttrDie(character, attrKey);
+    return { up: die < 12, down: die > 6 };
+}
+
+/**
+ * Nouvel ajustement d'un attribut après un clic sur ▲ (+1) ou ▼ (−1). La valeur
+ * enregistrée reste dans la plage permise par le dé de base (de d6 − base à
+ * d12 − base), pour qu'aucun clic ne soit « perdu » quand une altération est
+ * levée ensuite.
+ */
+export function adjustAttrBoost(character, attrKey, delta) {
+    const base = character?.[ATTR_DIE_FIELD[attrKey]] ?? 8;
+    const baseIdx = Math.max(0, DIE_STEPS.indexOf(base));
+    const current = character?.boostsAttributs?.[attrKey] ?? 0;
+    return Math.max(0 - baseIdx, Math.min(DIE_STEPS.length - 1 - baseIdx, current + delta));   // 0 − x : jamais −0
+}
+
+/** Rang d'une compétence du personnage (0 si absente). */
+export const skillRank = (character, classKey, skillKey) =>
+    (character?.skills ?? []).find(s => s.classKey === classKey && s.skillKey === skillKey)?.rang ?? 0;
+
+/** En Crise : PV actuels au seuil de Crise ou en dessous. */
+export const isInCrisis = (character) =>
+    (character?.pvActuel ?? 0) <= (character?.seuilCrise ?? 0);
+
+/**
+ * Coût de fusion d'un Arcanum (spec_fabula.md §3.2) : 40 PM, moins [NC × 5]
+ * d'Arcanum d'urgence quand le personnage est en Crise. Jamais négatif.
+ */
+export function arcanumFusionCost(character) {
+    const urgence = isInCrisis(character) ? skillRank(character, 'arcaniste', 'arcanum_urgence') * 5 : 0;
+    return Math.max(0, 40 - urgence);
+}
+
+/**
+ * Étape suivante du cycle Lié → Fusionné → Renvoi → Lié. Un Arcanum sans effet
+ * de renvoi passe directement de Fusionné à Lié.
+ */
+export function nextArcanumState(etat, hasRenvoi) {
+    if (etat === 'lie') return 'fusionne';
+    if (etat === 'fusionne') return hasRenvoi ? 'renvoi' : 'lie';
+    return 'lie';
+}
+
 // ── Équipement — état ─────────────────────────────────────────────────────────
 
 /** Un item est équipé ssi il occupe un emplacement. */

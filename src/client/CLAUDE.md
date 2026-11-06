@@ -34,6 +34,7 @@ Agnostique. Chaque `config.jsx` déclare les hooks :
 - `afterRoll(raw, ctx)` → résultat interprété (succès, critiques…).
 - `buildAnimationSequence(raw, ctx, result)` → config d'animation.
 - `renderHistoryEntry(entry)` → élément React ou `null`.
+- Dés 2D (`spec_diceengine_v2.md` « Dés 2D et apparence ») : `dice.renderer: '2d'` dans `config.jsx` fait jouer `DiceOverlay2D` au lieu de la 3D (aiguillage dans `DiceAnimationOverlay`, 3D chargée à la demande). Apparence d'un dé = configuration au format de `diceConfigDefault.custom`, résolue champ par champ : `waves[n].colors[i]` > `groups[n].color` (objet) > `dice.byType` du slug > réglages du joueur (`tools/dice2d.js`). Brique `components/dice/Die2D.jsx` (props `type`, `value`, `config`) réutilisable par les rendus de jet ; habillage `.vtt-die2d*` à partir des variables `--die-*`, jamais de couleurs en dur.
 
 Règles :
 - **`roll()` renvoie directement le résultat de `afterRoll()`**, jamais l'objet brut. Le non-respect provoque des bugs persistants.

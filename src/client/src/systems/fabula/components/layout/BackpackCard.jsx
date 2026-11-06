@@ -13,6 +13,7 @@ import React, { useState } from 'react';
 import { equipItem, isEquipped } from '../../config.jsx';
 import EquipmentEditForm, { EquipmentItemSummary, createEmptyItem } from './EquipmentEditForm.jsx';
 import EquipmentCatalogModal from '../modals/EquipmentCatalogModal.jsx';
+import FuIcon from '../ui/FuIcon.jsx';
 
 const BackpackCard = ({ character, editMode, onArrayChange }) => {
     const [catalogOpen, setCatalogOpen] = useState(false);
@@ -28,22 +29,23 @@ const BackpackCard = ({ character, editMode, onArrayChange }) => {
     const equip     = (index)        => onArrayChange('equipment', equipItem(equipment, index));
 
     return (
-        <div className="bg-surface border border-default rounded-lg p-3">
-            <div className="flex items-center justify-between mb-2">
-                <h3 className="fu-font-title text-primary text-sm">Sac à dos</h3>
+        <div className="fu-win">
+            <div className="fu-win-head">
+                <h3 className="fu-title">Sac à dos<span className="fu-kana" aria-hidden="true">道具</span></h3>
+                <span className="fu-rule" />
                 <div className="flex gap-1">
                     {/* Le catalogue est une action d'AJOUT (préremplissage), pas une
                         édition de texte libre — toujours disponible, indépendamment
                         du mode édition. Seule la saisie libre manuelle ("+ Ajouter")
                         reste réservée au mode édition. */}
                     <button type="button" onClick={() => setCatalogOpen(true)}
-                            className="px-2 py-1 rounded-full bg-default border border-default text-xs"
+                            className="fu-btn fu-btn-sm"
                             title="Ouvrir le catalogue d'équipement">
-                        📖 Catalogue
+                        <FuIcon name="search" className="fu-ico-sm" /> Catalogue
                     </button>
                     {editMode && (
-                        <button type="button" onClick={addItem} className="px-2 py-1 rounded-full bg-primary text-white text-xs">
-                            + Ajouter
+                        <button type="button" onClick={addItem} className="fu-btn fu-btn-sm">
+                            <FuIcon name="plus" className="fu-ico-sm" />Ajouter
                         </button>
                     )}
                 </div>
@@ -53,19 +55,19 @@ const BackpackCard = ({ character, editMode, onArrayChange }) => {
 
             <div className="flex flex-col gap-2">
                 {backpackItems.map(({ e: item, i: index }) => (
-                    <div key={index} className="bg-surface-alt rounded p-2 flex flex-col gap-1">
+                    <div key={index} className="fu-item">
                         {editMode ? (
                             <div className="flex items-start gap-2">
                                 <div className="flex-1 min-w-0">
                                     <EquipmentEditForm item={item} onChange={patch => update(index, patch)} />
                                 </div>
-                                <button type="button" onClick={() => remove(index)} className="text-danger text-sm shrink-0">✕</button>
+                                <button type="button" onClick={() => remove(index)} className="fu-btn fu-btn-sm fu-btn-danger shrink-0" aria-label="Retirer"><FuIcon name="close" className="fu-ico-sm" /></button>
                             </div>
                         ) : (
                             <EquipmentItemSummary item={item} />
                         )}
                         <button type="button" onClick={() => equip(index)}
-                                className="self-start px-2 py-0.5 rounded-full text-xs border bg-default border-default">
+                                className="self-start fu-btn fu-btn-sm">
                             Équiper
                         </button>
                     </div>

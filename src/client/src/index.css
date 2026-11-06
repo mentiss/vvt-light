@@ -1083,6 +1083,54 @@ select:disabled {
   @media (prefers-reduced-motion: reduce) {
     .vtt-board-ping circle:first-child { animation: none; }
   }
+
+  /* ── Dés 2D (components/dice/Die2D.jsx, components/shared/DiceOverlay2D.jsx) ──
+     La configuration du dé donne les valeurs (--die-fg, --die-bg, --die-outline,
+     --die-edge, data-material) ; ce CSS ne dessine qu'à partir d'elles. Un slug
+     reprend ces variables dans son theme.css pour ses effets. */
+  .vtt-die2d { position: relative; display: inline-grid; place-items: center; width: 3.25rem; height: 3.25rem; flex: none;
+    --die-fg: #fff; --die-bg: #4b5563; --die-outline: #000; --die-edge: var(--die-outline); }
+  .vtt-die2d svg { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
+  .vtt-die2d-body { fill: var(--die-bg); }
+  .vtt-die2d-texture { opacity: 0.55; mix-blend-mode: multiply; }
+  .vtt-die2d-gloss { opacity: 0.3; }
+  .vtt-die2d-facets { fill: none; stroke: var(--die-edge); stroke-width: 1.1; opacity: 0.45; }
+  .vtt-die2d-edge { fill: none; stroke: var(--die-edge); stroke-width: 2; stroke-linejoin: round; }
+  .vtt-die2d-value { position: relative; font-weight: 800; font-size: 1.05rem; line-height: 1; color: var(--die-fg);
+    paint-order: stroke; -webkit-text-stroke: 3px var(--die-outline); font-variant-numeric: tabular-nums; }
+  .vtt-die2d[data-type="d4"] .vtt-die2d-value { margin-top: 0.6rem; }
+  .vtt-die2d[data-type="d10"] .vtt-die2d-value,
+  .vtt-die2d[data-type="d100"] .vtt-die2d-value { margin-top: -0.2rem; }
+  /* Matière : plastique (reflet doux, défaut), métal (reflet dur), verre (translucide), bois et aucune (mat) */
+  .vtt-die2d[data-material="metal"] .vtt-die2d-gloss { opacity: 0.6; }
+  .vtt-die2d[data-material="metal"] .vtt-die2d-body { filter: brightness(1.1) contrast(1.15); }
+  .vtt-die2d[data-material="glass"] .vtt-die2d-body { fill-opacity: 0.72; }
+  .vtt-die2d[data-material="glass"] .vtt-die2d-gloss { opacity: 0.5; }
+  .vtt-die2d[data-material="wood"] .vtt-die2d-gloss,
+  .vtt-die2d[data-material="none"] .vtt-die2d-gloss { opacity: 0; }
+
+  .vtt-dice2d { position: fixed; inset: 0; z-index: 200; display: grid; place-items: center; background: rgb(8 5 2 / 0.6); }
+  .vtt-dice2d.is-exploding { background: radial-gradient(circle at center, rgb(251 146 60 / 0.35), rgb(8 5 2 / 0.6) 70%); }
+  .vtt-dice2d-label { position: absolute; top: 2rem; left: 50%; transform: translateX(-50%); padding: 0.5rem 1.5rem; border-radius: 999px;
+    background: rgb(255 255 255 / 0.12); color: rgb(255 255 255 / 0.85); font-size: 0.875rem; font-weight: 700; letter-spacing: 0.15em; text-transform: uppercase; white-space: nowrap; }
+  .vtt-dice2d-tray { display: flex; flex-wrap: wrap; justify-content: center; gap: 2rem; max-width: 90vw; padding: 2rem; }
+  .vtt-dice2d-slot .vtt-die2d { width: 7rem; height: 7rem; }
+  .vtt-dice2d-slot .vtt-die2d-value { font-size: 2.4rem; -webkit-text-stroke-width: 5px; }
+  .vtt-dice2d-slot.is-rolling { animation: vtt-dice2d-throw 0.9s cubic-bezier(.2,.8,.3,1) var(--vtt-dice2d-delay, 0ms) both; }
+  .vtt-dice2d-slot.is-landed { animation: vtt-dice2d-land 0.35s ease-out both; }
+  .vtt-dice2d-skip { position: absolute; right: 1.5rem; bottom: 1.5rem; padding: 0.5rem 1rem; border-radius: 0.5rem; font-size: 0.75rem;
+    color: rgb(255 255 255 / 0.5); border: 1px solid rgb(255 255 255 / 0.15); }
+  .vtt-dice2d-skip:hover { color: rgb(255 255 255 / 0.85); border-color: rgb(255 255 255 / 0.35); }
+  @keyframes vtt-dice2d-throw {
+    0%   { transform: translate(calc(var(--vtt-dice2d-from) * 45vw), 30vh) rotate(calc(var(--vtt-dice2d-from) * -720deg)) scale(0.5); }
+    70%  { transform: translate(0, -24px) rotate(calc(var(--vtt-dice2d-from) * 15deg)) scale(1.08); }
+    85%  { transform: translate(0, 6px) rotate(calc(var(--vtt-dice2d-from) * -4deg)); }
+    100% { transform: none; }
+  }
+  @keyframes vtt-dice2d-land { 0% { transform: scale(1.25); filter: brightness(1.8); } 100% { transform: none; filter: none; } }
+  @media (prefers-reduced-motion: reduce) {
+    .vtt-dice2d-slot.is-rolling, .vtt-dice2d-slot.is-landed { animation: none; }
+  }
 }
 
 /* ── Placements imposés par la plateforme (hors couche) ─────────────────────

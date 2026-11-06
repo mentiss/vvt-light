@@ -19,11 +19,11 @@ const AccessoryCard = ({ character, editMode, onArrayChange }) => {
     const unequip = () => onArrayChange('equipment', unequipItem(equipment, index));
 
     return (
-        <div className="bg-surface border border-default rounded-lg p-3">
-            <h3 className="fu-font-title text-primary text-sm mb-2">Accessoire équipé</h3>
-            {!item && <p className="text-xs text-muted italic">Aucun accessoire équipé.</p>}
+        <section className="fu-equip-slot">
+            <h4 className="fu-slot-title">Accessoire<span className="fu-kana" aria-hidden="true">アクセサリー</span></h4>
+            {!item && <p className="fu-item is-empty">Aucun accessoire équipé.</p>}
             {item && (
-                <div className="bg-surface-alt rounded p-2 flex flex-col gap-1">
+                <div className="fu-item">
                     {editMode ? (
                         <EquipmentEditForm item={item} onChange={update} showType={false} />
                     ) : (
@@ -32,12 +32,12 @@ const AccessoryCard = ({ character, editMode, onArrayChange }) => {
                     {/* Déséquiper est une action de jeu immédiate, pas une édition de
                         texte libre — toujours disponible, comme "Équiper" au sac à dos. */}
                     <button type="button" onClick={unequip}
-                            className="self-start px-2 py-0.5 rounded-full text-xs border bg-default border-default text-danger">
+                            className="self-start fu-btn fu-btn-sm fu-btn-danger">
                         Déséquiper
                     </button>
                 </div>
             )}
-        </div>
+        </section>
     );
 };
 

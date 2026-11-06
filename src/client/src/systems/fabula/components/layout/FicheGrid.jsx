@@ -5,7 +5,8 @@
 // "Fiche — mêmes composants, même ordre que Sheet.jsx".
 //
 // Contrat : { character, editMode, onFieldChange, onArrayChange, onQuickUpdate,
-//             onAvatarClick, onRollAttribute, onAttack, onCastSpell }
+//             onAvatarClick, onRollAttribute, onAttack, onCastSpell, sessionId }
+//   sessionId : table active (objets de la fiche de groupe près des PI)
 //   onAttack (optionnel) : ouvre FabulaDiceModal en mode attaque pour une arme
 //   équipée. Fourni par Sheet.jsx (joueur) UNIQUEMENT — TabSession.jsx (GM) ne
 //   le passe pas, donc le bouton "⚔ Attaquer" de WeaponsCard reste invisible
@@ -20,50 +21,44 @@ import ResourceBar         from './ResourceBar.jsx';
 import FabulaPointsPanel  from './FabulaPointsPanel.jsx';
 import BondsPanel         from './BondsPanel.jsx';
 import ClassesSkillsPanel from './ClassesSkillsPanel.jsx';
-import ArmorCard          from './ArmorCard.jsx';
-import WeaponsCard        from './WeaponsCard.jsx';
-import AccessoryCard      from './AccessoryCard.jsx';
+import EquipmentCard      from './EquipmentCard.jsx';
 import ArcanaSpellsPanel  from './ArcanaSpellsPanel.jsx';
 import BackpackCard       from './BackpackCard.jsx';
 
-const FicheGrid = ({ character, editMode, onFieldChange, onArrayChange, onQuickUpdate, onAvatarClick, onRollAttribute, onAttack, onCastSpell }) => (
+// Disposition (retour de l'utilisateur, 2026-11-06) :
+//   1. Héros en bandeau · Points Fabula, à même hauteur ;
+//   2. rangée « en jeu » : Statut · Attributs, à même hauteur ;
+//   3. deux colonnes indépendantes : Liens, Classes · actions (Équipement,
+//      Sorts, Sac). Les Liens grandissent avec les liens (jusqu'à 6) : dans
+//      une colonne libre, ils ne creusent pas de vide sous une rangée.
+// En une colonne (écran étroit), les actions passent avant Liens et Classes.
+const FicheGrid = ({ character, editMode, onFieldChange, onArrayChange, onQuickUpdate, onAvatarClick, onRollAttribute, onAttack, onCastSpell, sessionId }) => (
     <div className="flex flex-col gap-3 w-full">
-
-        {/* Rangée 1 — Identité · Attributs+Ressources · Points Fabula+Liens
-            Colonnes asymétriques (retour MJ) : la colonne PF/Liens rétrécit au
-            profit des attributs/ressources, plus denses. */}
-        <div className="grid grid-cols-1 lg:grid-cols-[1fr_1.25fr_0.75fr] gap-3 items-start">
+        <div className="fu-row-stretch grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_minmax(0,19rem)] gap-3">
             <TraitsPanel character={character} editMode={editMode} onFieldChange={onFieldChange}
                          onAvatarClick={onAvatarClick} />
+            <FabulaPointsPanel character={character} onQuickUpdate={onQuickUpdate} />
+        </div>
 
-            <div className="flex flex-col gap-3">
-                <AttributesPanel character={character} editMode={editMode}
-                                 onFieldChange={onFieldChange}
-                                 onQuickUpdate={onQuickUpdate}
-                                 onRollAttribute={onRollAttribute} />
-                <ResourceBar character={character} onQuickUpdate={onQuickUpdate} />
-            </div>
+        <div className="fu-row-stretch grid grid-cols-1 lg:grid-cols-2 gap-3">
+            <ResourceBar character={character} onQuickUpdate={onQuickUpdate} sessionId={sessionId} />
+            <AttributesPanel character={character} editMode={editMode}
+                             onFieldChange={onFieldChange}
+                             onQuickUpdate={onQuickUpdate}
+                             onRollAttribute={onRollAttribute} />
+        </div>
 
-            <div className="flex flex-col gap-3">
-                <FabulaPointsPanel character={character} onQuickUpdate={onQuickUpdate} />
+        <div className="flex flex-col gap-3 lg:grid lg:grid-cols-2 lg:items-start">
+            <div className="order-2 lg:order-1 flex flex-col gap-3 min-w-0">
                 <BondsPanel character={character} editMode={editMode} onArrayChange={onArrayChange} />
+                <ClassesSkillsPanel character={character} editMode={editMode} onArrayChange={onArrayChange} />
             </div>
-        </div>
-
-        {/* Rangée 2 — Classes · Équipement équipé (empilé) */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 items-start">
-            <ClassesSkillsPanel character={character} editMode={editMode} onArrayChange={onArrayChange} />
-            <div className="flex flex-col gap-3">
-                <ArmorCard character={character} editMode={editMode} onArrayChange={onArrayChange} />
-                <WeaponsCard character={character} editMode={editMode} onArrayChange={onArrayChange} onAttack={onAttack} />
-                <AccessoryCard character={character} editMode={editMode} onArrayChange={onArrayChange} />
+            <div className="order-1 lg:order-2 flex flex-col gap-3 min-w-0">
+                <EquipmentCard character={character} editMode={editMode} onArrayChange={onArrayChange} onAttack={onAttack} />
+                <ArcanaSpellsPanel character={character} editMode={editMode} onArrayChange={onArrayChange}
+                                   onQuickUpdate={onQuickUpdate} onCastSpell={onCastSpell} />
+                <BackpackCard character={character} editMode={editMode} onArrayChange={onArrayChange} />
             </div>
-        </div>
-
-        {/* Rangée 3 — Arcana & Sorts · Sac à dos */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 items-start">
-            <ArcanaSpellsPanel character={character} editMode={editMode} onArrayChange={onArrayChange} onCastSpell={onCastSpell} />
-            <BackpackCard character={character} editMode={editMode} onArrayChange={onArrayChange} />
         </div>
     </div>
 );

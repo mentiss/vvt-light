@@ -51,6 +51,10 @@ CREATE TABLE IF NOT EXISTS characters (
     -- Économie narrative
                                           zenit                INTEGER  DEFAULT 0,
                                           points_fabula        INTEGER  DEFAULT 3,
+    -- Nombre porte-bonheur de l'Entropiste (7 en début de séance) et son usage
+    -- dans la scène en cours (0/1) — spec_fabula.md §3.3
+                                          porte_bonheur        INTEGER  DEFAULT 7,
+                                          porte_bonheur_utilise INTEGER DEFAULT 0,
 
                                           groupe_nom           TEXT     DEFAULT '',
                                           alterations_etat     TEXT     DEFAULT '[]',
@@ -177,7 +181,7 @@ CREATE TABLE IF NOT EXISTS character_arcana (
                                                 id           INTEGER PRIMARY KEY AUTOINCREMENT,
                                                 character_id INTEGER NOT NULL REFERENCES characters(id) ON DELETE CASCADE,
                                                 arcanum_key  TEXT    NOT NULL,
-                                                etat         TEXT    NOT NULL DEFAULT 'lie' CHECK(etat IN ('lie', 'fusionne')),
+                                                etat         TEXT    NOT NULL DEFAULT 'lie' CHECK(etat IN ('lie', 'fusionne', 'renvoi')),
                                                 UNIQUE(character_id, arcanum_key)
 );
 CREATE INDEX IF NOT EXISTS idx_fabula_arcana_char ON character_arcana(character_id);
@@ -267,3 +271,43 @@ CREATE INDEX IF NOT EXISTS idx_fabula_equipment_char ON character_equipment(char
 -- Compteur GM de Points Fabula dépensés par personnage et par session de jeu
 -- (calcul d'XP de fin de session). Manuel, visible GM uniquement.
 ALTER TABLE session_characters ADD COLUMN pf_depenses INTEGER DEFAULT 0;
+-- ─────────────────────────────────────────────────────────────────────────────
+-- Fiche de groupe (spec_fabula.md §7) : une par table de jeu, partagée par les
+-- joueurs et le MJ. Objets d'inventaire ajoutés par la table (les objets officiels
+-- sont une donnée du slug, config/groupItems.js), notes, cadrans, journal.
+-- ─────────────────────────────────────────────────────────────────────────────
+CREATE TABLE IF NOT EXISTS groupes (
+    id          INTEGER PRIMARY KEY AUTOINCREMENT,
+    session_id  INTEGER NOT NULL UNIQUE REFERENCES game_sessions(id) ON DELETE CASCADE,
+    notes       TEXT    NOT NULL DEFAULT ''
+);
+
+CREATE TABLE IF NOT EXISTS groupe_objets (
+    id          INTEGER PRIMARY KEY AUTOINCREMENT,
+    groupe_id   INTEGER NOT NULL REFERENCES groupes(id) ON DELETE CASCADE,
+    nom         TEXT    NOT NULL DEFAULT '',
+    pi          INTEGER NOT NULL DEFAULT 1,
+    effet       TEXT    NOT NULL DEFAULT ''
+);
+CREATE INDEX IF NOT EXISTS idx_fabula_groupe_objets ON groupe_objets(groupe_id);
+
+-- Cadrans : sections remplies sur un total ; « cache » = visible du MJ seul
+CREATE TABLE IF NOT EXISTS groupe_cadrans (
+    id          INTEGER PRIMARY KEY AUTOINCREMENT,
+    groupe_id   INTEGER NOT NULL REFERENCES groupes(id) ON DELETE CASCADE,
+    nom         TEXT    NOT NULL DEFAULT '',
+    sections    INTEGER NOT NULL DEFAULT 6,
+    remplies    INTEGER NOT NULL DEFAULT 0,
+    cache       INTEGER NOT NULL DEFAULT 0
+);
+CREATE INDEX IF NOT EXISTS idx_fabula_groupe_cadrans ON groupe_cadrans(groupe_id);
+
+-- Journal : personnages, créatures et lieux rencontrés, avec leurs notes
+CREATE TABLE IF NOT EXISTS groupe_journal (
+    id          INTEGER PRIMARY KEY AUTOINCREMENT,
+    groupe_id   INTEGER NOT NULL REFERENCES groupes(id) ON DELETE CASCADE,
+    nom         TEXT    NOT NULL DEFAULT '',
+    type        TEXT    NOT NULL DEFAULT 'personnage' CHECK(type IN ('personnage', 'creature', 'lieu')),
+    notes       TEXT    NOT NULL DEFAULT ''
+);
+CREATE INDEX IF NOT EXISTS idx_fabula_groupe_journal ON groupe_journal(groupe_id);

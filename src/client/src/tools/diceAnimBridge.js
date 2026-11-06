@@ -34,8 +34,11 @@ export const diceAnimBridge = {
      * @returns {Promise<void>}
      */
     play: (seq) => new Promise((res) => {
+        // Aucun rendu à l'écoute (configuration du slug pas encore chargée, rendu
+        // en cours de remplacement) : on rend la main, le jet n'attend pas une animation
+        if (!_listener) { res(); return; }
         _resolve = res;
-        _listener?.(seq);
+        _listener(seq);
     }),
 
     /**

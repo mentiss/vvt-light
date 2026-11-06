@@ -380,9 +380,10 @@ roll(notation, ctx, hooks) appelé
             //                   → l'overlay l'utilise telle quelle : "1d100+1d10@40,5"
             //                   Règle de détection : contient '+' OU commence par /^\d+d/
 
-            color:    string,   // 'default' | 'wild' | 'fortune' | 'saga' | 'danger'
+            color:    string | object,   // 'default' (ou autre chaîne : sans effet sur l'apparence)
+                                         // | configuration d'apparence du groupe (voir « Dés 2D et apparence »)
             label:    string,
-            waves:    [{ dice: number[] }],
+            waves:    [{ dice: number[], colors?: object[] }],   // colors : une configuration par dé, facultative
             // waves[i].dice doit lister les valeurs dans l'ORDRE des types déclarés
             // dans diceType. Exemple pour '1d100+1d10' :
             //   dice: [40, 5]   ← 40 pour le d100 (dizaines), 5 pour le d10 (unités)
@@ -490,3 +491,45 @@ notre `buildBoxNotation` qui ne généraient que des notations mono-type.
 
 - La carte d'historique (`DiceHistoryList`, commune à l'onglet et au panneau) pose la marge intérieure via la classe habillable `vtt-history-entry` (`index.css`) ; la notification a la sienne (`ToastShell`).
 - Le rendu du slug (`dice.renderHistoryEntry`) **ne met aucune marge extérieure**. Seul un décor propre au slug garde un espacement interne au décor : bande teintée et filet gauche de Delta Green, bloc encadré `zb-history-entry` de Zone Blanche.
+
+---
+
+## Dés 2D et apparence des dés *(2026-11-06, spec_fabula.md §4)*
+
+### Choix du rendu
+
+`DiceAnimationOverlay` est un aiguillage, monté comme avant (une fois par page) :
+
+| `config.jsx` du slug | Rendu |
+|---|---|
+| `dice.renderer: '2d'` | `components/shared/DiceOverlay2D.jsx` |
+| absent ou `'3d'` (et hors slug) | `components/shared/DiceOverlay3D.jsx` (dice-box-threejs), chargé à la demande |
+
+- Un slug en 2D ne charge pas la 3D. Tant que la configuration du slug n'est pas chargée, aucun rendu n'écoute : `diceAnimBridge.play()` rend alors la main sans animation (il ne bloque plus un jet sans rendu). Chaque rendu se désabonne du pont au démontage.
+- `diceEngine.roll()`, le pont et les hooks des slugs ne changent pas. Les deux rendus suivent le même rythme (`DICE_TIMING`, `tools/dice2d.js`) : groupes en séquence, vagues, éclair des explosions, résultat affiché avant de rendre la main, « Passer » à tout moment.
+- 2D : chaque dé (`Die2D`) est jeté depuis un bord, ses chiffres défilent, puis il se pose sur sa valeur.
+
+### Apparence d'un dé : une même notation pour la 2D et la 3D
+
+Une configuration de dé, complète ou partielle, au format que lit déjà la 3D (`diceConfigDefault.custom`) : `foreground` (chiffre), `background` (corps), `outline` (contour du chiffre), `edge` (arête), `texture` (clé de la bibliothèque : `marble`, `wood`, `stars`…, images de `public/dice-assets/textures/`), `material` (`plastic`, `metal`, `glass`, `wood`, `none`).
+
+Résolution **champ par champ** (`resolveDieConfig`, `tools/dice2d.js`, testée) — la première valeur trouvée gagne :
+
+1. le dé : `waves[n].colors[i]` ;
+2. le groupe : `groups[n].color` (objet ; une chaîne comme `'default'` ou `'fortune'` ne fixe rien) ;
+3. le type de dé, déclaré par le slug : `dice.byType: { d6: {…}, d8: {…} }` dans `config.jsx` ;
+4. le joueur : « Réglages des dés » (un jeu nommé y est ramené aux couleurs de son aperçu).
+
+Sans `colors`, `color` objet ni `byType`, rien ne change pour un slug.
+
+### Règle d'habillage : la configuration donne les valeurs, le CSS le traitement
+
+`Die2D` (`components/dice/Die2D.jsx`) pose sur le dé `--die-fg`, `--die-bg`, `--die-outline`, `--die-edge` et les attributs `data-type`, `data-material`. Le CSS de base (`index.css`, `.vtt-die2d*`, `.vtt-dice2d*`) dessine à partir de ces variables seulement : texture découpée à la forme du dé, matière en traitement de surface (plastique : reflet doux ; métal : reflet dur ; verre : translucide ; bois et aucune : mat). Un slug peut passer par la configuration (rendu valable en 2D et, plus tard, en 3D) et / ou styler en CSS (`.vtt-die2d[data-type="d8"]`, rendu propre à la 2D) ; ses effets reprennent les variables (lueur en `var(--die-edge)`), jamais des couleurs en dur. `Die2D` est réutilisable par les rendus de jet des slugs.
+
+### Réglages des dés en 2D
+
+Force, gravité, lumière et sons ne servent qu'à la 3D : masqués quand le slug est en 2D. Couleurs, texture et matière restent (elles s'appliquent à tout ce que le slug ne fixe pas).
+
+### 3D d'ici la modification de la bibliothèque
+
+La bibliothèque n'applique qu'un jeu de couleurs par lancer : la 3D garde une configuration pour tout le lancer, celle du joueur, sinon celle du slug, sinon celle de la plateforme. Colorer chaque dé en 3D est au backlog (modifier la bibliothèque, `patch-package`).

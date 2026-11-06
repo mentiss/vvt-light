@@ -26,6 +26,9 @@ import CopyAccessButton from '../../../../components/ui/CopyAccessButton.jsx';
 import { CLASSES, computeDerivedStats } from '../../config.jsx';
 import FicheGrid       from '../../components/layout/FicheGrid.jsx';
 import FabulaDiceModal from '../../components/modals/FabulaDiceModal.jsx';
+import FuIcon          from '../../components/ui/FuIcon.jsx';
+import FuGauge         from '../../components/ui/FuGauge.jsx';
+import { isInCrisis }  from '../../config.jsx';
 
 const classSummary = (classes) => (classes ?? [])
     .map(c => `${CLASSES[c.classKey]?.nom ?? c.classKey} ${c.niveau}`)
@@ -207,17 +210,20 @@ const TabSession = ({ activeSession, onlineCharacters, characterUpdates }) => {
     const openDiceModal = (attr1 = 'dex', attr2 = 'int') => setDiceModalAttrs({ attr1, attr2 });
 
     if (!activeSession) {
-        return <p className="p-6 text-sm text-muted italic">Aucune session active — gérez votre table via ⚙ Table.</p>;
+        return <p className="fu-win m-4 text-sm text-muted italic">Aucune session active — gérez votre table depuis le menu, « Gestion des tables ».</p>;
     }
 
     return (
         <div className="flex" style={{ minHeight: 'calc(100vh - 7rem)' }}>
 
             {/* ── Sidebar personnages ─────────────────────────────────────── */}
-            <aside className="w-64 shrink-0 border-r border-default bg-surface overflow-y-auto">
+            <aside className="w-72 shrink-0 border-r border-default bg-surface">
+              {/* Contenu collé en haut au défilement (comme la barre de session du
+                  joueur) ; le fond de la barre garde toute la hauteur. */}
+              <div className="sticky top-0 max-h-screen overflow-y-auto">
                 <div className="px-3 py-2 border-b border-default">
-                    <p className="text-[10px] uppercase tracking-wide text-muted">Personnages</p>
-                    <p className="fu-font-title text-xs text-primary">{activeSession.name}</p>
+                    <p className="fu-label">Personnages</p>
+                    <p className="fu-title text-sm">{activeSession.name}</p>
                     {/* Musique de la table (brique audio, spec_audio.md §11.7) */}
                     <AudioSessionToggle sessionId={activeSession.id} className="vtt-btn vtt-btn-sm w-full mt-2" />
                     {/* Tableau partagé de la table (spec_tableau.md §10.8) */}
@@ -226,86 +232,99 @@ const TabSession = ({ activeSession, onlineCharacters, characterUpdates }) => {
 
                 {loading && <p className="p-3 text-xs text-muted italic">Chargement...</p>}
 
-                {!loading && (activeSession.characters ?? []).map(c => {
-                    const full     = characters[c.id];
-                    const online   = onlineIds.has(c.id);
-                    const selected = selectedId === c.id;
-                    return (
-                        // ⚠️ Élément englobant délibérément un <div>, pas un <button> : il
-                        // contient les boutons +/- du compteur PF (ligne ci-dessous), et un
-                        // <button> ne peut pas englober d'autres <button> (HTML invalide —
-                        // cassait le rendu/les clics). role="button" + clavier pour
-                        // l'accessibilité, comportement de clic inchangé.
-                        <div key={c.id} role="button" tabIndex={0}
-                             onClick={() => { setSelectedId(c.id); setEditMode(false); }}
-                             onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') { setSelectedId(c.id); setEditMode(false); } }}
-                             className={`w-full text-left px-3 py-2 border-b border-default flex items-center gap-2 cursor-pointer ${
-                                 selected ? 'bg-primary/10 border-l-2 border-l-primary' : 'hover:bg-surface-alt'
-                             }`}>
-                            <div className="relative shrink-0">
-                                <div className="w-8 h-8 rounded-full overflow-hidden bg-surface-alt border border-default flex items-center justify-center">
-                                    {full?.avatar ? <img src={full.avatar} alt="" className="w-full h-full object-cover" /> : <span className="text-xs">🗡️</span>}
+                {/* Cartes de l'équipe (planche §7) : PV, PM, PI en mini-jauges, Crise qui pulse,
+                    Points Fabula en cristaux, compteur MJ des PF dépensés */}
+                <div className="fu-party">
+                    {!loading && (activeSession.characters ?? []).map(c => {
+                        const full     = characters[c.id];
+                        const online   = onlineIds.has(c.id);
+                        const selected = selectedId === c.id;
+                        const crisis   = full ? isInCrisis(full) : false;
+                        const pf       = full?.pointsFabula ?? 0;
+                        const select   = () => { setSelectedId(c.id); setEditMode(false); };
+                        return (
+                            // ⚠️ Élément englobant délibérément un <div>, pas un <button> : il
+                            // contient les boutons +/- du compteur PF, et un <button> ne peut pas
+                            // englober d'autres <button> (HTML invalide). role="button" + clavier
+                            // pour l'accessibilité.
+                            <div key={c.id} role="button" tabIndex={0}
+                                 onClick={select}
+                                 onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') select(); }}
+                                 className={`fu-member${selected ? ' is-on' : ''}`}>
+                                <div className="fu-member-avatar">
+                                    {full?.avatar ? <img src={full.avatar} alt="" /> : <FuIcon name="hero" className="fu-ico-sm" />}
+                                    <span className={`fu-member-online${online ? ' is-on' : ''}`} title={online ? 'En ligne' : 'Hors ligne'} />
                                 </div>
-                                <span className={`absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full border border-surface ${online ? 'bg-success' : 'bg-default'}`} />
+                                <div className="min-w-0">
+                                    <div className="fu-member-name">
+                                        <span>{[full?.prenom, full?.nom].filter(Boolean).join(' ') || '…'}</span>
+                                        {crisis && <span className="fu-tag text-danger">Crise</span>}
+                                    </div>
+                                    <div className="fu-member-sub">{full?.playerName || '—'} · {classSummary(full?.classes)}</div>
+                                </div>
+                                {full && (
+                                    <div className="fu-member-bars">
+                                        {[['pv', 'PV', full.pvActuel, full.pvMax], ['pm', 'PM', full.pmActuel, full.pmMax], ['pi', 'PI', full.piActuel, full.piMax]].map(([k, label, v, max]) => (
+                                            <div key={k} className={`fu-minibar fu-res${k === 'pv' && crisis ? ' is-crisis' : ''}`} data-k={k}>
+                                                <span className="fu-res-key">{label}</span>
+                                                <FuGauge value={v ?? 0} max={max ?? 0} />
+                                                <span className="fu-res-val">{v ?? 0}/{max ?? 0}</span>
+                                            </div>
+                                        ))}
+                                    </div>
+                                )}
+                                <div className="fu-member-foot">
+                                    {Array.from({ length: Math.min(pf, 6) }, (_, n) => <i key={n} className="fu-crystal fu-crystal-sm" />)}
+                                    <span>{pf} PF</span>
+                                    {/* Compteur PF dépensés — MJ uniquement, jamais visible du joueur */}
+                                    <span className="fu-micro-step" onClick={e => e.stopPropagation()} title="Points Fabula dépensés cette session">
+                                        dépensés
+                                        <button type="button" onClick={() => adjustPfDepenses(c.id, -1)} aria-label="PF dépensés : −1">−</button>
+                                        <b>{pfDepenses[c.id] ?? 0}</b>
+                                        <button type="button" onClick={() => adjustPfDepenses(c.id, 1)} aria-label="PF dépensés : +1">+</button>
+                                    </span>
+                                </div>
                             </div>
-                            <div className="min-w-0 flex-1">
-                                <p className={`text-sm truncate ${selected ? 'font-semibold text-primary' : ''}`}>{full?.nom || '…'}</p>
-                                <p className="text-[10px] text-muted truncate">{full?.playerName}</p>
-                                <p className="text-[10px] text-muted truncate">{classSummary(full?.classes)}</p>
-                            </div>
-                            {/* Compteur PF dépensés — GM uniquement, jamais visible joueur */}
-                            <div className="flex items-center gap-0.5 shrink-0" onClick={e => e.stopPropagation()}>
-                                <button type="button" onClick={() => adjustPfDepenses(c.id, -1)}
-                                        title="PF dépensés : −1"
-                                        className="w-4 h-4 rounded border border-default bg-default text-[10px] leading-none cursor-pointer">
-                                    −
-                                </button>
-                                <span className="text-[10px] text-muted min-w-[1rem] text-center" title="Points Fabula dépensés cette session">
-                                    {pfDepenses[c.id] ?? 0}
-                                </span>
-                                <button type="button" onClick={() => adjustPfDepenses(c.id, 1)}
-                                        title="PF dépensés : +1"
-                                        className="w-4 h-4 rounded border border-default bg-default text-[10px] leading-none cursor-pointer">
-                                    +
-                                </button>
-                            </div>
-                        </div>
-                    );
-                })}
+                        );
+                    })}
+                </div>
+              </div>
             </aside>
 
             {/* ── Colonne fiche ────────────────────────────────────────────── */}
             <div className="flex-1 overflow-y-auto min-w-0">
                 {!char ? (
-                    <p className="p-6 text-sm text-muted italic">Sélectionnez un personnage.</p>
+                    <p className="fu-win m-4 text-sm text-muted italic">Sélectionnez un personnage.</p>
                 ) : (
                     <>
                         <div className="flex items-center gap-2 flex-wrap px-4 py-2 border-b border-default bg-surface-alt">
-                            <span className="fu-font-title text-sm text-primary">{char.nom}</span>
+                            <span className="fu-title">{[char.prenom, char.nom].filter(Boolean).join(' ') || char.nom}</span>
                             {char.pvActuel <= char.seuilCrise && (
-                                <span className="px-1.5 py-0.5 rounded-full text-[10px] bg-danger text-white">Crise</span>
+                                <span className="fu-tag text-danger">Crise</span>
                             )}
                             <div className="flex-1" />
-                            <button onClick={() => setShowSendModal(true)} className="px-2 py-1 rounded border border-default text-xs">
-                                ✉ Note
+                            <button onClick={() => setShowSendModal(true)} className="fu-btn fu-btn-sm">
+                                <FuIcon name="send" className="fu-ico-sm" /> Note
                             </button>
-                            <CopyAccessButton character={char} className="vtt-btn-sm" />
+                            <CopyAccessButton character={char} className="fu-btn fu-btn-sm"
+                                              icon={<FuIcon name="copy" className="fu-ico-sm" />} />
                             {editMode ? (
                                 <>
-                                    <button onClick={cancelEdit} className="px-2 py-1 rounded border border-default text-xs">Annuler</button>
+                                    <button onClick={cancelEdit} className="fu-btn fu-btn-sm">Annuler</button>
                                     <button onClick={toggleEditMode} disabled={saving}
-                                            className="px-2 py-1 rounded bg-success text-white text-xs disabled:opacity-50">
-                                        {saving ? 'Enregistrement...' : '✓ Enregistrer'}
+                                            className="fu-btn fu-btn-sm fu-btn-gold">
+                                        {saving ? 'Enregistrement...' : 'Enregistrer'}
                                     </button>
                                 </>
                             ) : (
-                                <button onClick={toggleEditMode} className="px-2 py-1 rounded bg-primary text-white text-xs">✎ Éditer</button>
+                                <button onClick={toggleEditMode} className="fu-btn fu-btn-sm"><FuIcon name="edit" className="fu-ico-sm" />Édition</button>
                             )}
                         </div>
 
                         <div className="p-4">
                             <FicheGrid
                                 character={char}
+                                sessionId={activeSession?.id ?? null}
                                 editMode={editMode}
                                 onFieldChange={setField}
                                 onArrayChange={setArr}
@@ -340,6 +359,7 @@ const TabSession = ({ activeSession, onlineCharacters, characterUpdates }) => {
                     sessionId={activeSession?.id ?? null}
                     initialAttr1={diceModalAttrs.attr1}
                     initialAttr2={diceModalAttrs.attr2}
+                    onCharacterPatch={patchImmediate}
                     onClose={() => setDiceModalAttrs(null)}
                 />
             )}

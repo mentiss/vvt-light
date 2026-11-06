@@ -15,7 +15,6 @@
 import React, { useState } from 'react';
 import './theme.css';
 
-import ThemeToggle        from '../../components/ui/ThemeToggle.jsx';
 import ToastNotifications from '../../components/layout/ToastNotifications.jsx';
 import DiceHistoryPage    from '../../components/layout/DiceHistoryPage.jsx';
 import FreeDiceModal      from '../../components/modals/FreeDiceModal.jsx';
@@ -28,13 +27,18 @@ import Board               from '../../components/board/Board.jsx';
 
 import TabSession          from './gm/tabs/TabSession.jsx';
 import ReferenceTab        from './components/ReferenceTab.jsx';
+import FuBand              from './components/ui/FuBand.jsx';
+import FuIcon              from './components/ui/FuIcon.jsx';
+import FuWorld             from './components/ui/FuWorld.jsx';
+import GroupSheet          from './components/group/GroupSheet.jsx';
 
 const TABS = [
-    { id: 'session',    label: '🎭 Session' },
-    { id: 'journal',    label: '📓 Journal' },
-    { id: 'tableau', label: '🗺️ Tableau' },
-    { id: 'historique', label: '📜 Historique' },
-    { id: 'reference',  label: '📖 Référence' },
+    { id: 'session',    label: 'Session',    icon: 'party' },
+    { id: 'groupe',     label: 'Groupe',     icon: 'bond' },
+    { id: 'tableau',    label: 'Tableau',    icon: 'map' },
+    { id: 'journal',    label: 'Journal',    icon: 'journal' },
+    { id: 'historique', label: 'Historique', icon: 'scroll' },
+    { id: 'reference',  label: 'Référence',  icon: 'book' },
 ];
 
 const GMApp = ({ activeSession, onSessionChange, onlineCharacters, characterUpdates, darkMode, onToggleDarkMode }) => {
@@ -43,41 +47,31 @@ const GMApp = ({ activeSession, onSessionChange, onlineCharacters, characterUpda
     const [showFreeDice, setShowFreeDice] = useState(false);
 
     return (
-        <div className="min-h-screen bg-default text-default fu-font-body">
+        <div className="fu-root fu-font-body">
+            <FuWorld />
 
-            {/* ── HEADER ──────────────────────────────────────────────────── */}
-            <header className="flex items-center justify-between px-4 py-2 border-b border-default bg-surface">
-                <div className="flex items-center gap-2">
-                    <h1 className="fu-font-logo text-2xl text-primary">Fabula Ultima</h1>
-                    <span className="text-xs text-muted">— Meneur de Jeu</span>
-                </div>
-                <div className="flex items-center gap-2">
-                    <button onClick={() => setShowFreeDice(true)} className="px-3 py-1.5 rounded bg-primary text-white text-sm">
-                        🎲
-                    </button>
-                    <ThemeToggle darkMode={darkMode} onToggle={onToggleDarkMode} />
-                    {/* Menu hamburger générique (spec_ui_menu.md), habillé dans theme.css, emojis du slug ;
-                        déconnexion ajoutée (D-4) */}
-                    <HamburgerMenu button="☰">
-                        <HamburgerMenuItemTableManagement
-                            icon="⚙"
-                            activeSessionId={activeSession?.id ?? null}
-                            onSelectTable={(session) => onSessionChange?.(session)}
-                        />
-                        <HamburgerMenuItemDiceConfig icon="🎛️" />
-                        <HamburgerMenuSeparator />
-                        <HamburgerMenuItemLogout icon="🚪" />
-                    </HamburgerMenu>
-                </div>
-            </header>
+            {/* ── BANDE ───────────────────────────────────────────────────── */}
+            <FuBand subtitle="Meneur de jeu" darkMode={darkMode} onToggleDarkMode={onToggleDarkMode} onDice={() => setShowFreeDice(true)}>
+                {/* Menu hamburger générique (spec_ui_menu.md), habillé dans theme.css, icônes du slug ;
+                    déconnexion ajoutée (D-4) */}
+                <HamburgerMenu button={<FuIcon name="menu" />} buttonClassName="fu-icon-btn">
+                    <HamburgerMenuItemTableManagement
+                        icon={<FuIcon name="gear" />}
+                        activeSessionId={activeSession?.id ?? null}
+                        onSelectTable={(session) => onSessionChange?.(session)}
+                    />
+                    <HamburgerMenuItemDiceConfig icon={<FuIcon name="sliders" />} />
+                    <HamburgerMenuSeparator />
+                    <HamburgerMenuItemLogout icon={<FuIcon name="exit" />} />
+                </HamburgerMenu>
+            </FuBand>
 
-            {/* ── ONGLETS ─────────────────────────────────────────────────── */}
-            <nav className="flex gap-1 px-4 border-b border-default bg-surface-alt">
+            {/* ── ONGLETS : commandes de menu ─────────────────────────────── */}
+            <nav className="fu-tabs">
                 {TABS.map(tab => (
                     <button key={tab.id} onClick={() => setActiveTab(tab.id)}
-                            className={`px-3 py-2 text-sm border-b-2 ${
-                                activeTab === tab.id ? 'border-primary text-primary font-semibold' : 'border-transparent text-muted'
-                            }`}>
+                            className={`fu-tab${activeTab === tab.id ? ' is-active' : ''}`}>
+                        <FuIcon name={tab.icon} className="fu-ico-sm" />
                         {tab.label}
                     </button>
                 ))}
@@ -88,9 +82,18 @@ const GMApp = ({ activeSession, onSessionChange, onlineCharacters, characterUpda
                 {activeTab === 'session' && (
                     <TabSession activeSession={activeSession} onlineCharacters={onlineCharacters} characterUpdates={characterUpdates} />
                 )}
+                {/* Fiche de groupe de la table (spec_fabula.md §7) : le MJ voit et cache les cadrans */}
+                {activeTab === 'groupe' && (
+                    <div className="p-4">
+                        <GroupSheet sessionId={activeSession?.id ?? null} isGM />
+                    </div>
+                )}
+                {/* Onglets hors session : dans une fenêtre, pour ne jamais poser de texte sur le monde */}
                 {activeTab === 'journal' && (
-                    <div className="max-w-4xl mx-auto p-4">
-                        <TabJournal characterId={-1} />
+                    <div className="p-4">
+                        <div className="fu-win">
+                            <TabJournal characterId={-1} />
+                        </div>
                     </div>
                 )}
                 {/* Tableau partagé (brique plateforme, spec_tableau.md §10.8) */}
@@ -100,15 +103,19 @@ const GMApp = ({ activeSession, onSessionChange, onlineCharacters, characterUpda
                     </div>
                 )}
                 {activeTab === 'historique' && (
-                    <div className="max-w-4xl mx-auto p-4">
-                        <DiceHistoryPage
-                            sessionId={activeSession?.id ?? null}
-                        />
+                    <div className="p-4">
+                        <div className="fu-win">
+                            <DiceHistoryPage
+                                sessionId={activeSession?.id ?? null}
+                            />
+                        </div>
                     </div>
                 )}
                 {activeTab === 'reference' && (
                     <div className="p-4">
-                        <ReferenceTab />
+                        <div className="fu-win">
+                            <ReferenceTab />
+                        </div>
                     </div>
                 )}
             </main>

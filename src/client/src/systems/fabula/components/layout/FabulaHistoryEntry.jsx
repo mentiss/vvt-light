@@ -1,34 +1,52 @@
 // src/client/src/systems/fabula/components/layout/FabulaHistoryEntry.jsx
 // ─────────────────────────────────────────────────────────────────────────────
-// Rendu riche des entrées d'historique — utilisé par renderHistoryEntry (config.jsx)
-// ET par renderDiceToast (ToastNotifications) : même affichage dans les deux.
+// Rendu d'un jet (planche §5) — utilisé par renderHistoryEntry (config.jsx) ET
+// par les notifications : même affichage partout, sans marge extérieure (la
+// carte de la plateforme la porte).
+//   gemmes miniatures à gauche · intitulé · total en grand à droite ·
+//   ligne de détail : formule, VH, ND, verdict incliné, compétences appliquées,
+//   dégâts ; un critique garde le total doré.
 //
-// Gère roll_type === 'fabula_test' / 'fabula_economie' (FabulaDiceModal) et le
+// Gère roll_type === 'fabula_test' / 'fabula_economie' (FabulaDiceModal),
+// 'fabula_objet' (objet de la fiche de groupe utilisé, sans dé) et le
 // jet libre 'free_roll' (FreeDiceModal, appelants en renderAllRollTypes). Tout le
 // reste retourne null → l'appelant retombe sur son rendu générique.
 // ─────────────────────────────────────────────────────────────────────────────
 
 import React from 'react';
 import { parseFreeRoll } from '../../../../tools/freeRoll.js';
+import FuIcon from '../ui/FuIcon.jsx';
+import FuDie from '../ui/FuDie.jsx';
 
-// Jet libre : libellé et total, dés par type
-const FreeRollEntry = ({ free }) => (
-    <div className="flex flex-col gap-1 text-sm">
-        <div className="flex items-center gap-2">
-            <span className="fu-font-title text-primary">🎲</span>
-            <span className="flex-1 font-semibold">{free.label}</span>
-            <span>= <strong className="text-default">{free.total}</strong></span>
+const GEMS = [6, 8, 10, 12];
+const signed = (n) => (n >= 0 ? `+ ${n}` : `− ${-n}`);
+const TYPE_LABELS = { physique: 'physiques', feu: 'de feu', glace: 'de glace', foudre: 'de foudre', air: "d'air", terre: 'de terre', lumiere: 'de lumière', tenebres: 'de ténèbres', poison: 'de poison' };
+
+// Jet libre : un dé en gemme quand sa taille en a une, sinon la notation
+const FreeRollEntry = ({ free }) => {
+    const dice = free.groups.flatMap(g => {
+        const sides = Number(String(g.notation).match(/d(\d+)/)?.[1]);
+        return GEMS.includes(sides) ? g.values.map(v => ({ sides, v })) : [];
+    });
+    // Dés sans gemme (d4, d20, d100…) : valeurs écrites dans la ligne de détail
+    const describe = (g) => GEMS.includes(Number(String(g.notation).match(/d(\d+)/)?.[1]))
+        ? g.notation : `${g.notation} = ${g.values.join(' + ')}`;
+    return (
+        <div className="fu-log">
+            <div className="fu-log-dice">
+                {dice.length > 0
+                    ? dice.slice(0, 4).map((d, i) => <FuDie key={i} size={d.sides} label={d.v} small />)
+                    : <span className="fu-log-icon"><FuIcon name="dice" className="fu-ico-sm" /></span>}
+            </div>
+            <div className="fu-log-title">{free.label}</div>
+            <div className="fu-log-total">{free.total}</div>
+            <div className="fu-log-line">
+                {free.groups.map(describe).join(' · ')}
+                {free.modifier ? <span>{signed(free.modifier)}</span> : null}
+            </div>
         </div>
-        <div className="text-muted flex items-center gap-2 flex-wrap">
-            {free.groups.map((g, i) => (
-                <span key={i} className="fu-die-badge bg-default border border-default text-[10px]">
-                    {g.notation} = {g.values.join(' + ')}
-                </span>
-            ))}
-            {free.modifier ? <span>{free.modifier > 0 ? '+' : '−'} {Math.abs(free.modifier)}</span> : null}
-        </div>
-    </div>
-);
+    );
+};
 
 const parseResult = (entry) => {
     const raw = entry?.roll_result;
@@ -47,58 +65,70 @@ const FabulaHistoryEntry = ({ roll }) => {
     const free = parseFreeRoll(entry);
     if (free) return <FreeRollEntry free={free} />;
 
-    if (!result || !['fabula_test', 'fabula_economie'].includes(rollType)) {
+    if (!result || !['fabula_test', 'fabula_economie', 'fabula_objet'].includes(rollType)) {
         return null; // rendu générique
     }
 
     const label = result.label || entry?.notation || 'Jet';
 
-    if (result.type === 'economie') {
+    // Objet de la fiche de groupe utilisé (spec_fabula.md §7, Q-7) : pas de dé, coût en PI
+    if (result.type === 'objet') {
         return (
-            <div className="flex items-center gap-2 text-sm">
-                <span className="fu-font-title text-accent">💰</span>
-                <span className="flex-1">{label}</span>
-                <span className="font-bold">{result.values?.join(' + ')} × 10 = {result.total} z</span>
+            <div className="fu-log">
+                <div className="fu-log-dice"><span className="fu-log-icon"><FuIcon name="potion" className="fu-ico-sm" /></span></div>
+                <div className="fu-log-title">{label}</div>
+                <div className="fu-log-total is-pi">−{result.pi} PI</div>
+                <div className="fu-log-line">Objet du groupe · {result.effet}</div>
             </div>
         );
     }
 
-    // type === 'test' ou 'attaque' — même jet de précision, l'attaque ajoute
-    // juste une ligne Dégâts en dessous (VH + bonus arme, déjà calculé par
-    // afterRoll). Fabula Ultima n'a pas de jet de dégâts séparé.
-    const isAttaque = result.type === 'attaque';
-    let badge = null;
-    if (result.criticalSuccess) badge = { text: '★ Critique', cls: 'bg-success text-white' };
-    else if (result.criticalFailure) badge = { text: '✕ Échec critique', cls: 'bg-danger text-white' };
-    else if (result.success === true) badge = { text: 'Réussite', cls: 'bg-success/20 text-success' };
-    else if (result.success === false) badge = { text: 'Échec', cls: 'bg-danger/20 text-danger' };
+    if (result.type === 'economie') {
+        return (
+            <div className="fu-log">
+                <div className="fu-log-dice">
+                    {(result.values ?? []).map((v, i) => <FuDie key={i} size={6} label={v} small />)}
+                </div>
+                <div className="fu-log-title">{label}</div>
+                <div className="fu-log-total">{result.total} z</div>
+                <div className="fu-log-line">({(result.values ?? []).join(' + ')}) × 10 zénits</div>
+            </div>
+        );
+    }
+
+    const crit = !!result.criticalSuccess;
+    const fumble = !!result.criticalFailure;
+    let verdict = null;
+    if (crit) verdict = <span className="fu-verdict is-sm is-crit">Critique</span>;
+    else if (fumble) verdict = <span className="fu-verdict is-sm is-ko">Échec critique</span>;
+    else if (result.success === true) verdict = <span className="fu-verdict is-sm is-ok">Réussite</span>;
+    else if (result.success === false) verdict = <span className="fu-verdict is-sm is-ko">Échec</span>;
+    const showDmg = result.type === 'attaque' && result.degats != null && !fumble && result.success !== false;
 
     return (
-        <div className="flex flex-col gap-1 text-sm">
-            <div className="flex items-center gap-2">
-                <span className="fu-font-title text-primary">{isAttaque ? '⚔' : '🎲'}</span>
-                <span className="flex-1 font-semibold">{label}</span>
-                {badge && (
-                    <span className={`px-1.5 py-0.5 rounded-full text-[10px] font-bold ${badge.cls}`}>
-                        {badge.text}
-                    </span>
-                )}
+        <div className="fu-log">
+            <div className="fu-log-dice">
+                <FuDie size={result.dieSize1} label={result.die1} small />
+                <FuDie size={result.dieSize2} label={result.die2} small />
             </div>
-            <div className="text-muted flex items-center gap-2 flex-wrap">
-                <span className="fu-die-badge bg-default border border-default text-[10px]">d{result.dieSize1}={result.die1}</span>
-                <span>+</span>
-                <span className="fu-die-badge bg-default border border-default text-[10px]">d{result.dieSize2}={result.die2}</span>
-                {result.modifier ? <span>+ {result.modifier}</span> : null}
-                <span>= <strong className="text-default">{result.total}</strong></span>
-                <span className="italic">(VH {result.vh})</span>
-                {result.nd != null && <span>vs ND {result.nd}</span>}
+            <div className="fu-log-title">
+                {result.type === 'attaque' && <FuIcon name="sword" className="fu-ico-sm text-primary mr-1" />}
+                {label}
             </div>
-            {isAttaque && (
-                <div className="flex items-center gap-1.5">
-                    <span className="text-accent font-semibold">Dégâts : {result.degats}</span>
-                    <span className="text-muted text-[10px]">({result.degatsType}, VH {result.vh} + {result.degatsBonus})</span>
-                </div>
-            )}
+            <div className={`fu-log-total${crit ? ' is-crit' : fumble ? ' is-ko' : ''}`}>{result.total}</div>
+            <div className="fu-log-line">
+                <span>
+                    {result.die1} + {result.die2}
+                    {result.modifier ? ` ${signed(result.modifier)}` : ''}
+                    {result.bonus ? ` ${signed(result.bonus)}` : ''}
+                    {' · '}VH {result.vh}
+                    {result.nd != null ? ` · ND ${result.nd}` : ''}
+                </span>
+                {verdict}
+                {(result.skills ?? []).map(n => <span key={n} className="fu-tag text-primary">{n}</span>)}
+                {result.lucky && <span className="fu-tag text-secondary">Porte-bonheur : {result.lucky.from} → {result.lucky.to}</span>}
+                {showDmg && <span className="fu-log-dmg">Dégâts {result.degats} {TYPE_LABELS[result.degatsType] ?? result.degatsType}</span>}
+            </div>
         </div>
     );
 };

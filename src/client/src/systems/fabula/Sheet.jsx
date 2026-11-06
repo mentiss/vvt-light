@@ -17,7 +17,6 @@
 import React, { useState, useCallback } from 'react';
 import './theme.css';
 
-import ThemeToggle         from '../../components/ui/ThemeToggle.jsx';
 import SessionPlayersBar   from '../../components/layout/SessionPlayersBar.jsx';
 import ToastNotifications  from '../../components/layout/ToastNotifications.jsx';
 import JournalTab          from '../../components/tabs/JournalTab.jsx';
@@ -35,15 +34,20 @@ import { useSystem }  from '../../hooks/useSystem.js';
 import { useFetch }   from '../../hooks/useFetch.js';
 
 import FicheGrid           from './components/layout/FicheGrid.jsx';
+import FuBand              from './components/ui/FuBand.jsx';
+import FuIcon              from './components/ui/FuIcon.jsx';
+import FuWorld             from './components/ui/FuWorld.jsx';
+import GroupSheet          from './components/group/GroupSheet.jsx';
 import FabulaDiceModal    from './components/modals/FabulaDiceModal.jsx';
 import ReferenceTab       from './components/ReferenceTab.jsx';
 import { computeDerivedStats } from './config.jsx';
 
 const TABS = [
-    { id: 'fiche',      label: '📋 Fiche' },
-    { id: 'journal',    label: '📓 Journal' },
-    { id: 'historique', label: '📜 Historique' },
-    { id: 'reference',  label: '📖 Référence' },
+    { id: 'fiche',      label: 'Fiche',      icon: 'sheet' },
+    { id: 'groupe',     label: 'Groupe',     icon: 'party' },
+    { id: 'journal',    label: 'Journal',    icon: 'journal' },
+    { id: 'historique', label: 'Historique', icon: 'scroll' },
+    { id: 'reference',  label: 'Référence',  icon: 'book' },
 ];
 
 const Sheet = ({
@@ -132,70 +136,63 @@ const Sheet = ({
     };
 
 
-    const openDiceModal = (attr1 = 'dex', attr2 = 'int', label = '') => setDiceModalAttrs({ attr1, attr2, label });
+    const openDiceModal = (attr1 = 'dex', attr2 = 'int', label = '', spell = null) => setDiceModalAttrs({ attr1, attr2, label, spell });
     const openAttackModal = (weaponItem) => setAttackContext(weaponItem);
 
     return (
-        <div className="min-h-screen bg-default text-default fu-font-body">
+        <div className="fu-root fu-font-body">
+            <FuWorld />
 
-            {/* ── HEADER — uniquement le titre du jeu ─────────────────────── */}
-            <header className="flex items-center justify-between px-4 py-2 border-b border-default bg-surface">
-                <h1 className="fu-font-logo text-2xl text-primary">Fabula Ultima</h1>
-                <div className="flex items-center gap-2">
-                    <button onClick={() => openDiceModal()} className="px-3 py-1.5 rounded bg-primary text-white text-sm">
-                        🎲
+            {/* ── BANDE — uniquement le titre du jeu ──────────────────────── */}
+            <FuBand darkMode={darkMode} onToggleDarkMode={onToggleDarkMode} onDice={() => openDiceModal()}>
+                {/* Menu hamburger générique (spec_ui_menu.md), habillé dans theme.css, icônes du slug */}
+                <HamburgerMenu button={<FuIcon name="menu" />} buttonClassName="fu-icon-btn">
+                    <HamburgerMenuItemCreateCharacter icon={<FuIcon name="plus" />} />
+                    <HamburgerMenuItemSwitchCharacter icon={<FuIcon name="swap" />} currentCharId={character?.id} />
+                    <HamburgerMenuItemFreeDice
+                        icon={<FuIcon name="dice" />}
+                        characterId={character.id}
+                        characterName={character.nom}
+                        sessionId={activeGMSession}
+                    />
+                    <HamburgerMenuItemAccessCode icon={<FuIcon name="key" />} character={character} onSuccess={onCharacterUpdate} />
+                    <HamburgerMenuItemDiceConfig icon={<FuIcon name="sliders" />} />
+                    <HamburgerMenuItemGMInterface icon={<FuIcon name="crown" />} />
+                    <HamburgerMenuSeparator />
+                    <HamburgerMenuItemLogout icon={<FuIcon name="exit" />} />
+                </HamburgerMenu>
+            </FuBand>
+
+            {/* ── ONGLETS : commandes de menu ─────────────────────────────── */}
+            <nav className="fu-tabs">
+                {TABS.map(tab => (
+                    <button key={tab.id} onClick={() => changeTab(tab.id)}
+                            className={`fu-tab${activeTab === tab.id ? ' is-active' : ''}`}>
+                        <FuIcon name={tab.icon} className="fu-ico-sm" />
+                        {tab.label}
+                        {tab.id === 'journal' && journalUnread > 0 && (
+                            <span className="fu-tab-count">{journalUnread}</span>
+                        )}
                     </button>
-                    <ThemeToggle darkMode={darkMode} onToggle={onToggleDarkMode} />
-                    {/* Menu hamburger générique (spec_ui_menu.md), habillé dans theme.css, emojis du slug */}
-                    <HamburgerMenu button="☰">
-                        <HamburgerMenuItemCreateCharacter icon="✨" />
-                        <HamburgerMenuItemSwitchCharacter icon="🔄" currentCharId={character?.id} />
-                        <HamburgerMenuItemFreeDice
-                            icon="🎲"
-                            characterId={character.id}
-                            characterName={character.nom}
-                            sessionId={activeGMSession}
-                        />
-                        <HamburgerMenuItemAccessCode icon="🔑" character={character} onSuccess={onCharacterUpdate} />
-                        <HamburgerMenuItemDiceConfig icon="🎛️" />
-                        <HamburgerMenuItemGMInterface icon="🎭" />
-                        <HamburgerMenuSeparator />
-                        <HamburgerMenuItemLogout icon="🚪" />
-                    </HamburgerMenu>
-                </div>
-            </header>
-
-            {/* ── ONGLETS ─────────────────────────────────────────────────── */}
-            <div className="flex items-center justify-between px-4 border-b border-default bg-surface-alt">
-                <nav className="flex gap-1">
-                    {TABS.map(tab => (
-                        <button key={tab.id} onClick={() => changeTab(tab.id)}
-                                className={`px-3 py-2 text-sm border-b-2 ${
-                                    activeTab === tab.id ? 'border-primary text-primary font-semibold' : 'border-transparent text-muted'
-                                }`}>
-                            {tab.label}
-                            {tab.id === 'journal' && journalUnread > 0 && (
-                                <span className="ml-1 px-1.5 py-0.5 text-[10px] bg-danger text-white rounded-full">{journalUnread}</span>
-                            )}
-                        </button>
-                    ))}
-                </nav>
+                ))}
                 {activeTab === 'fiche' && (
-                    <div className="py-1.5 flex items-center gap-2">
+                    <div className="fu-tabs-end">
                         {editMode ? (
                             <>
-                                <button onClick={cancelEdit} className="px-3 py-1 rounded border border-default text-xs">Annuler</button>
-                                <button onClick={toggleEditMode} disabled={saving}
-                                        className="px-3 py-1 rounded bg-success text-white text-xs disabled:opacity-50">
-                                    {saving ? 'Enregistrement...' : '✓ Enregistrer'}
+                                <button onClick={cancelEdit} className="fu-btn fu-btn-sm">Annuler</button>
+                                <button onClick={toggleEditMode} disabled={saving} className="fu-btn fu-btn-sm fu-btn-gold">
+                                    <FuIcon name="check" className="fu-ico-sm" />
+                                    {saving ? 'Enregistrement...' : 'Enregistrer'}
                                 </button>
                             </>
                         ) : (
-                            <button onClick={toggleEditMode} className="px-3 py-1 rounded bg-primary text-white text-xs">✎ Édition</button>
+                            <button onClick={toggleEditMode} className="fu-btn fu-btn-sm">
+                                <FuIcon name="edit" className="fu-ico-sm" />Édition
+                            </button>
                         )}
                     </div>
                 )}
-            </div>
+            </nav>
 
             {/* ── CONTENU ─────────────────────────────────────────────────── */}
             <div className="flex">
@@ -205,6 +202,7 @@ const Sheet = ({
                     {activeTab === 'fiche' && (
                         <FicheGrid
                             character={char}
+                            sessionId={activeGMSession ?? null}
                             editMode={editMode}
                             onFieldChange={setField}
                             onArrayChange={setArr}
@@ -212,22 +210,34 @@ const Sheet = ({
                             onAvatarClick={() => setShowAvatarUploader(true)}
                             onRollAttribute={(attrKey) => !editMode && openDiceModal(attrKey, attrKey === 'dex' ? 'int' : 'dex')}
                             onAttack={(weaponItem) => !editMode && openAttackModal(weaponItem)}
-                            onCastSpell={(a1, a2, lbl) => openDiceModal(a1, a2, lbl)}
+                            onCastSpell={(a1, a2, lbl, spell) => !editMode && openDiceModal(a1, a2, lbl, spell)}
                         />
                     )}
 
+                    {/* Fiche de groupe de la table (spec_fabula.md §7) */}
+                    {activeTab === 'groupe' && (
+                        <GroupSheet sessionId={activeGMSession ?? null} character={character} onQuickUpdate={patchImmediate} />
+                    )}
+
+                    {/* Onglets hors fiche : dans une fenêtre, pour ne jamais poser de texte sur le monde */}
                     {activeTab === 'journal' && (
-                        <JournalTab characterId={character.id} onRead={onJournalRead} />
+                        <div className="fu-win">
+                            <JournalTab characterId={character.id} onRead={onJournalRead} />
+                        </div>
                     )}
 
                     {activeTab === 'historique' && (
-                        <DiceHistoryPage
-                            sessionId={activeGMSession ?? null}
-                        />
+                        <div className="fu-win">
+                            <DiceHistoryPage
+                                sessionId={activeGMSession ?? null}
+                            />
+                        </div>
                     )}
 
                     {activeTab === 'reference' && (
-                        <ReferenceTab character={character} />
+                        <div className="fu-win">
+                            <ReferenceTab character={character} />
+                        </div>
                     )}
                 </div>
             </div>
@@ -245,6 +255,8 @@ const Sheet = ({
                     initialAttr1={diceModalAttrs.attr1}
                     initialAttr2={diceModalAttrs.attr2}
                     initialLabel={diceModalAttrs.label}
+                    spellContext={diceModalAttrs.spell}
+                    onCharacterPatch={patchImmediate}
                     onClose={() => setDiceModalAttrs(null)}
                 />
             )}
@@ -253,6 +265,7 @@ const Sheet = ({
                     character={character}
                     sessionId={activeGMSession}
                     weaponContext={attackContext}
+                    onCharacterPatch={patchImmediate}
                     onClose={() => setAttackContext(null)}
                 />
             )}

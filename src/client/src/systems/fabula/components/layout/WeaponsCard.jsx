@@ -7,7 +7,7 @@
 // Aucune contrainte de nature : un bouclier en main directrice est légal
 // (Boucliers doubles du Gardien).
 //
-// Bouton "⚔ Attaquer" (aligné à droite) : uniquement sur un item avec un
+// Bouton "<FuIcon name="sword" className="fu-ico-sm" /> Attaquer" (aligné à droite) : uniquement sur un item avec un
 // profil d'attaque (precisionAttr1/2 renseignés — donc les armes, jamais les
 // boucliers/armures qui n'en portent pas). N'apparaît que si `onAttack` est
 // fourni par le parent (Sheet.jsx uniquement — le GM ne joue pas les
@@ -25,6 +25,7 @@
 import React from 'react';
 import { unequipItem, switchHand } from '../../config.jsx';
 import EquipmentEditForm, { EquipmentItemSummary } from './EquipmentEditForm.jsx';
+import FuIcon from '../ui/FuIcon.jsx';
 
 const findSkillRang = (skills, classKey, skillKey) =>
     (skills ?? []).find(s => s.classKey === classKey && s.skillKey === skillKey)?.rang ?? 0;
@@ -34,11 +35,11 @@ const hasAttackProfile = (item) => !!item && item.precisionAttr1 && item.precisi
 
 const HandSlot = ({ label, entry, editMode, onUpdate, onUnequip, onSwitch, onAttack }) => (
     <div>
-        <div className="text-[10px] text-muted uppercase mb-1">{label}</div>
+        <div className="fu-label mb-1">{label}</div>
         {!entry ? (
-            <p className="text-xs text-muted italic">Vide</p>
+            <p className="fu-item is-empty">Vide</p>
         ) : (
-            <div className="bg-surface-alt rounded p-2 flex flex-col gap-1">
+            <div className="fu-item">
                 <div className="flex items-start gap-2">
                     <div className="flex-1 min-w-0">
                         {editMode ? (
@@ -50,9 +51,9 @@ const HandSlot = ({ label, entry, editMode, onUpdate, onUnequip, onSwitch, onAtt
                     {/* Tout à droite de l'item, toujours visible (action de jeu). */}
                     {onAttack && hasAttackProfile(entry.e) && (
                         <button type="button" onClick={() => onAttack(entry.e, entry.i)}
-                                className="shrink-0 px-2 py-0.5 rounded-full text-xs border bg-secondary hover:bg-secondary/0 text-white hover:text-secondary border-secondary"
+                                className="fu-btn fu-btn-sm fu-btn-gold shrink-0"
                                 title="Lancer une attaque avec cette arme">
-                            ⚔ Attaquer
+                            <FuIcon name="sword" className="fu-ico-sm" /> Attaquer
                         </button>
                     )}
                 </div>
@@ -60,13 +61,13 @@ const HandSlot = ({ label, entry, editMode, onUpdate, onUnequip, onSwitch, onAtt
                     {/* Déséquiper est une action de jeu immédiate, pas une édition de
                         texte libre — toujours disponible, comme "⇄ Changer de main". */}
                     <button type="button" onClick={() => onUnequip(entry.i)}
-                            className="px-2 py-0.5 rounded-full text-xs border bg-default border-default text-danger">
+                            className="fu-btn fu-btn-sm fu-btn-danger">
                         Déséquiper
                     </button>
                     {onSwitch && (
                         <button type="button" onClick={() => onSwitch(entry.i)}
-                                className="px-2 py-0.5 rounded-full text-xs border bg-default border-default">
-                            ⇄ Changer de main
+                                className="fu-btn fu-btn-sm">
+                            <FuIcon name="swap" className="fu-ico-sm" />Changer de main
                         </button>
                     )}
                 </div>
@@ -101,8 +102,8 @@ const WeaponsCard = ({ character, editMode, onArrayChange, onAttack }) => {
     };
 
     return (
-        <div className="bg-surface border border-default rounded-lg p-3">
-            <h3 className="fu-font-title text-primary text-sm mb-2">Armes équipées</h3>
+        <section className="fu-equip-slot">
+            <h4 className="fu-slot-title">Armes<span className="fu-kana" aria-hidden="true">武器</span></h4>
             <div className="flex flex-col gap-2">
                 {twoHands ? (
                     <HandSlot label="Deux mains" entry={twoHands}
@@ -119,22 +120,22 @@ const WeaponsCard = ({ character, editMode, onArrayChange, onAttack }) => {
                 {/* Boucliers jumeaux — profil d'attaque défini par la compétence
                     Boucliers doubles (règles officielles), pas une extrapolation. */}
                 {showBouclierJumeaux && (
-                    <div className="bg-accent/10 border border-accent rounded p-2 flex items-center justify-between gap-2">
+                    <div className="bg-surface-alt border border-accent rounded p-2 flex items-center justify-between gap-2">
                         <div className="text-xs">
                             <span className="font-semibold">Boucliers jumeaux</span>
                             <span className="text-muted"> — [PUI+PUI] · [VH+{5 + maitriseDefensiveNC}] physiques</span>
                         </div>
                         {onAttack && (
                             <button type="button" onClick={() => onAttack(bouclierJumeauxContext, null)}
-                                    className="shrink-0 px-2 py-0.5 rounded-full text-xs border bg-secondary hover:bg-secondary/0 text-white hover:text-secondary border-accent"
+                                    className="fu-btn fu-btn-sm fu-btn-gold shrink-0"
                                     title="Attaquer avec vos deux boucliers (Boucliers doubles)">
-                                ⚔ Attaquer
+                                <FuIcon name="sword" className="fu-ico-sm" /> Attaquer
                             </button>
                         )}
                     </div>
                 )}
             </div>
-        </div>
+        </section>
     );
 };
 

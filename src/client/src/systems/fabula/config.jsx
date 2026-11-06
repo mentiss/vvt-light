@@ -10,12 +10,18 @@
 
 import { RollError } from '../../tools/diceEngine.js';
 import FabulaHistoryEntry from './components/layout/FabulaHistoryEntry.jsx';
+import FuIcon from './components/ui/FuIcon.jsx';
+import { resolveFabulaTest } from './config/rolls.js';
 
 export { CLASSES, CLASS_ORDER } from './config/classes.js';
 export { SPELL_LISTS }          from './config/spells.js';
 export { ARCANA_LISTS }         from './config/arcana.js';
 export {
+    applicableRollSkills, rollModifiers, resolveFabulaTest, parseSpellDamage, applyLuckyNumber, equippedWeapon,
+} from './config/rolls.js';
+export {
     computeDerivedStats, getAttributeAfflictions, effectiveAttrDie, classAtoutBonuses,
+    attrAdjustable, adjustAttrBoost, skillRank, isInCrisis, arcanumFusionCost, nextArcanumState,
     equipItem, unequipItem, switchHand, isEquipped, isInHands,
     formatPrecision, formatDegats, formatDefense, formatDefenseMagique,
 } from './config/utils.js';
@@ -34,6 +40,16 @@ export {
 //   'economie' → Jet d'économies de départ (2d6 × 10 zenits, Étape 6 du wizard)
 
 const dice = {
+
+    // Dés 2D (spec_fabula.md §4) et gemmes par taille (§4.1) : d6 pierre, d8 émeraude,
+    // d10 saphir, d12 topaze. Les réglages du joueur gardent le reste (texture…).
+    renderer: '2d',
+    byType: {
+        d6:  { background: '#5E6E96', outline: '#2A3352', edge: '#D9E2F5', foreground: '#FFFFFF', material: 'glass' },
+        d8:  { background: '#1F8E5C', outline: '#0B3B26', edge: '#9FF5C6', foreground: '#FFFFFF', material: 'glass' },
+        d10: { background: '#2266C9', outline: '#0B2552', edge: '#A8E6FF', foreground: '#FFFFFF', material: 'glass' },
+        d12: { background: '#C08A1E', outline: '#4A3006', edge: '#FFF0B8', foreground: '#FFFFFF', material: 'metal' },
+    },
 
     buildNotation: (ctx) => {
         const { type } = ctx.systemData ?? {};
@@ -77,37 +93,38 @@ const dice = {
         // l'arme] calculés immédiatement après le test. Seule 'attaque' porte
         // en plus degatsBonus/degatsType (fournis par FabulaDiceModal depuis
         // weaponContext) et calcule la ligne Dégâts.
+        // Compétences cochées dans la fenêtre de jet (spec_fabula.md §3.3) :
+        // bonus au test, critique sur tout double (Frénésie), noms pour l'historique.
+        // Les dégâts ajoutés (Adrénaline) sont déjà dans degatsBonus.
+        const { bonus = 0, critAnyDouble = false, skills = [] } = ctx.systemData ?? {};
         const die1 = raw.groups[0].values[0];
         const die2 = raw.groups[1].values[0];
-        const vh   = Math.max(die1, die2);
-        const total = die1 + die2 + modifier;
-
-        const criticalSuccess = die1 === die2 && die1 >= 6;
-        const criticalFailure = die1 === 1 && die2 === 1;
-
-        let success = null;
-        if (criticalSuccess) success = true;
-        else if (criticalFailure) success = false;
-        else if (nd != null) success = total >= nd;
+        const r = resolveFabulaTest({
+            die1, die2, modifier, bonus, nd, critAnyDouble,
+            degatsBonus: type === 'attaque' ? (degatsBonus ?? 0) : null,
+        });
 
         const base = {
             type: type === 'attaque' ? 'attaque' : 'test',
             die1, die2, dieSize1, dieSize2,
-            vh,
+            vh:              r.vh,
             modifier,
-            total,
+            bonus,
+            total:           r.total,
             nd,
-            criticalSuccess,
-            criticalFailure,
-            success,
+            criticalSuccess: r.criticalSuccess,
+            criticalFailure: r.criticalFailure,
+            critAnyDouble,
+            success:         r.success,
+            skills,
             label: ctx.label ?? (type === 'attaque' ? 'Attaque' : 'Test d\'Attribut'),
-            successes: success === true ? 1 : 0,
+            successes: r.success === true ? 1 : 0,
         };
 
         if (type === 'attaque') {
             base.degatsBonus = degatsBonus ?? 0;
             base.degatsType  = degatsType ?? 'physique';
-            base.degats      = vh + (degatsBonus ?? 0);
+            base.degats      = r.degats;
         }
 
         return base;
@@ -163,22 +180,28 @@ const fabulaConfig = {
     dice,
     combat,
 
-    // Style par défaut des dés (lu par useDiceConfig) — aligné sur la palette
-    // du thème jour fournie par le MJ (theme.css) : corps vert feuille
-    // (--color-primary), contour orange cuivré (--color-accent, la couleur
-    // des Points Fabula), chiffres lisibles sur fond clair, tranche dans le
-    // ton bordure sombre du thème.
+    // Zone d'actions : icônes au trait du slug (FuIcon)
+    actionIcons: {
+        history: <FuIcon name="scroll" />,
+        music:   <FuIcon name="music" />,
+        board:   <FuIcon name="map" />,
+    },
+
+    // Style par défaut des dés (lu par useDiceConfig) — aux couleurs des
+    // fenêtres du thème (theme.css) : corps bleu nuit, contour or du curseur,
+    // chiffres blancs, tranche ombre des fenêtres. Les gemmes par taille
+    // viendront avec les dés 2D (spec_fabula.md §4.1).
     diceConfigDefault: {
         mode:   'custom',
         custom: {
-            foreground: '#EAF0F4', // clair — chiffres lisibles (proche --color-bg)
-            background: '#3E7232', // vert feuille (--color-primary)
-            outline:    '#D37928', // orange cuivré (--color-accent)
-            edge:       '#2B4A42', // bordure sombre du thème (--color-border)
+            foreground: '#FFFFFF', // chiffres blancs (--fu-win-text)
+            background: '#2E3F98', // bleu des fenêtres (--fu-win-top)
+            outline:    '#F2D27A', // or du curseur (--color-primary)
+            edge:       '#070B2A', // ombre des fenêtres (--fu-win-shadow)
             texture:    '',
             material:   'plastic',
         },
-        lightColor:       '#D37928',
+        lightColor:       '#F2D27A',
         strength:         5,
         gravity:          500,
         sounds:           true,

@@ -46,6 +46,10 @@ const SliderField = ({ label, value, min, max, step = 1, onChange, formatValue }
 
 const DiceConfigModal = ({ onClose, slugDefaults }) => {
     const { config, saveConfig  } = useDiceConfig();
+    // Slug en dés 2D (dice.renderer: '2d') : force, gravité, lumière et sons ne
+    // servent qu'à la 3D ; les couleurs, texture et matière restent (spec_fabula.md §4.1)
+    const slugConfig  = useSlugConfig();
+    const is2D        = slugConfig?.dice?.renderer === '2d';
     const initialized = useRef(false);
     const [draft, setDraft] = useState(null);
     const { confirm, confirmEl } = useConfirm();
@@ -234,6 +238,14 @@ const DiceConfigModal = ({ onClose, slugDefaults }) => {
                             </div>
                         )}
 
+                        {is2D && (
+                            <p className="text-xs text-muted pt-2 border-t border-default">
+                                Ce jeu lance des dés en 2D : ces couleurs s'appliquent à tout ce que le jeu ne fixe pas lui-même.
+                            </p>
+                        )}
+
+                        {/* Physique, lumière et sons : 3D seulement */}
+                        {!is2D && (<>
                         {/* Physique */}
                         <div className="space-y-4 pt-2 border-t border-default">
                             <SliderField
@@ -281,6 +293,7 @@ const DiceConfigModal = ({ onClose, slugDefaults }) => {
                                 </div>
                             </button>
                         </div>
+                        </>)}
                     </div>
             </Modal>
         </>

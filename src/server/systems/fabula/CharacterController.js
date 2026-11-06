@@ -59,6 +59,8 @@ const FLAT_COLUMNS = {
     defenseMagique: 'defense_magique',
     zenit:          'zenit',
     pointsFabula:   'points_fabula',
+    porteBonheur:        'porte_bonheur',
+    porteBonheurUtilise: 'porte_bonheur_utilise',
     groupeNom:      'groupe_nom',
 };
 
@@ -95,7 +97,9 @@ function _upsertSkill(db, charId, s) {
 
 function _upsertArcanum(db, charId, a) {
     if (!a.arcanumKey) return;
-    const values = [a.arcanumKey, a.etat === 'fusionne' ? 'fusionne' : 'lie'];
+    // Cycle Lié → Fusionné → Renvoi → Lié (spec_fabula.md §3.2) ; toute autre valeur retombe sur Lié
+    const etat = ['fusionne', 'renvoi'].includes(a.etat) ? a.etat : 'lie';
+    const values = [a.arcanumKey, etat];
     updateOrInsert(db, a,
         'UPDATE character_arcana SET arcanum_key = ?, etat = ? WHERE id = ? AND character_id = ?', [...values, a.id, charId],
         'INSERT INTO character_arcana (character_id, arcanum_key, etat) VALUES (?, ?, ?)', [charId, ...values]);
@@ -244,6 +248,8 @@ function loadFullCharacter(db, id) {
         // Économie narrative
         zenit:             row.zenit,
         pointsFabula:      row.points_fabula,
+        porteBonheur:        row.porte_bonheur ?? 7,
+        porteBonheurUtilise: !!row.porte_bonheur_utilise,
 
         groupeNom:         row.groupe_nom,
         alterationsEtat:   parseJson(row.alterations_etat, []),
@@ -333,6 +339,8 @@ function saveFullCharacter(db, id, data) {
     // Pas de plafond de Points Fabula (règle de table du MJ — la limite
     // officielle de 6 de la spec §4.1 est explicitement écartée), plancher à 0.
     if (params.points_fabula !== null) params.points_fabula = Math.max(0, params.points_fabula);
+    // SQLite ne lie pas de booléen : usage du Nombre porte-bonheur en 0 / 1
+    if (params.porte_bonheur_utilise !== null) params.porte_bonheur_utilise = params.porte_bonheur_utilise ? 1 : 0;
 
     // JSON : écrits seulement s'ils sont fournis, au bon format
     params.alterations_etat = Array.isArray(data.alterationsEtat) ? JSON.stringify(data.alterationsEtat) : null;

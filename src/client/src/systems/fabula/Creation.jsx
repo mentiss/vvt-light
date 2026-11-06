@@ -24,11 +24,13 @@ import { useSystem }   from '../../hooks/useSystem.js';
 import { useFetch }    from '../../hooks/useFetch.js';
 import { useNavigate } from 'react-router-dom';
 import { roll }        from '../../tools/diceEngine.js';
-import ThemeToggle      from '../../components/ui/ThemeToggle.jsx';
 import CopyAccessButton from '../../components/ui/CopyAccessButton.jsx';
 import fabulaConfig, { CLASSES, CLASS_ORDER, SPELL_LISTS, ARCANA_LISTS, equipItem, unequipItem, classAtoutBonuses } from './config.jsx';
 import EquipmentEditForm, { EquipmentItemSummary, EMPLACEMENT_LABELS, createEmptyItem } from './components/layout/EquipmentEditForm.jsx';
 import EquipmentCatalogModal from './components/modals/EquipmentCatalogModal.jsx';
+import FuBand  from './components/ui/FuBand.jsx';
+import FuIcon  from './components/ui/FuIcon.jsx';
+import FuWorld from './components/ui/FuWorld.jsx';
 
 // ══════════════════════════════════════════════════════════════════════════════
 // CONSTANTES
@@ -522,8 +524,9 @@ const Creation = ({ darkMode, onToggleDarkMode }) => {
 
     if (accessCode) {
         return (
-            <div className="min-h-screen bg-default text-default fu-font-body flex items-center justify-center p-4">
-                <div className="bg-surface border border-default rounded-lg p-6 max-w-sm w-full text-center">
+            <div className="fu-root fu-font-body flex items-center justify-center p-4">
+                <FuWorld />
+                <div className="fu-win p-6 max-w-sm w-full text-center">
                     <div className="fu-font-title text-lg text-primary mb-1">✦ {ws.nom || 'Personnage'} est prêt·e !</div>
                     <p className="text-xs text-muted mb-4">Notez ce code — c'est votre seule façon de retrouver votre fiche.</p>
                     <div className="text-xs text-muted mb-1">Code d'accès</div>
@@ -543,13 +546,10 @@ const Creation = ({ darkMode, onToggleDarkMode }) => {
     // ══════════════════════════════════════════════════════════════════════════
 
     return (
-        <div className="min-h-screen bg-default text-default fu-font-body">
-            <div className="max-w-3xl mx-auto p-4">
-
-                <div className="flex items-center justify-between mb-4">
-                    <h1 className="fu-font-logo text-2xl text-primary">Création de personnage — Fabula Ultima</h1>
-                    <ThemeToggle darkMode={darkMode} onToggle={onToggleDarkMode} />
-                </div>
+        <div className="fu-root fu-font-body">
+            <FuWorld />
+            <FuBand subtitle="Création de personnage" darkMode={darkMode} onToggleDarkMode={onToggleDarkMode} />
+            <div className="fu-win max-w-3xl mx-auto my-4">
 
                 {/* Barre d'étapes — cliquable pour revenir à une étape déjà atteinte */}
                 <div className="flex flex-wrap gap-2 mb-6">
@@ -736,7 +736,7 @@ const Creation = ({ darkMode, onToggleDarkMode }) => {
                                         Glissez chaque dé du pool sur l'attribut de votre choix.
                                         {' '}{statPool.length > 0
                                         ? `${statPool.length} dé${statPool.length > 1 ? 's' : ''} restant${statPool.length > 1 ? 's' : ''} à placer.`
-                                        : 'Tous les dés sont placés ✓'}
+                                        : 'Tous les dés sont placés.'}
                                     </p>
 
                                     {/* Pool des dés non placés */}
@@ -828,7 +828,7 @@ const Creation = ({ darkMode, onToggleDarkMode }) => {
                                 <h2 className="fu-font-title text-lg">Équipement Initial</h2>
                                 <button type="button" onClick={() => setCatalogOpen(true)}
                                         className="px-3 py-1 rounded-full bg-primary text-white text-sm">
-                                    📖 Catalogue
+                                    <FuIcon name="search" className="fu-ico-sm" /> Catalogue
                                 </button>
                             </div>
                             <div className="text-sm">
@@ -844,7 +844,7 @@ const Creation = ({ darkMode, onToggleDarkMode }) => {
                                         <div className="flex-1 min-w-0">
                                             <EquipmentEditForm item={item} onChange={patch => updateEquipmentItem(i, patch)} />
                                         </div>
-                                        <button type="button" onClick={() => removeEquipmentItem(i)} className="text-danger text-sm shrink-0">✕</button>
+                                        <button type="button" onClick={() => removeEquipmentItem(i)} className="text-danger text-sm shrink-0" aria-label="Retirer"><FuIcon name="close" className="fu-ico-sm" /></button>
                                     </div>
                                     <div className="flex items-center gap-2">
                                         {item.emplacementEquipe != null ? (
@@ -944,7 +944,7 @@ const Creation = ({ darkMode, onToggleDarkMode }) => {
                                                 </button>
                                             ))}
                                         </div>
-                                        <button type="button" onClick={() => removeBond(i)} className="text-danger text-sm">✕</button>
+                                        <button type="button" onClick={() => removeBond(i)} className="text-danger text-sm" aria-label="Retirer le lien"><FuIcon name="close" className="fu-ico-sm" /></button>
                                     </div>
                                     <div className="flex gap-3 text-xs flex-wrap">
                                         {SENTIMENT_PAIRS.map(pair => (

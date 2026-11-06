@@ -5,6 +5,18 @@
 // Aucune automatisation mécanique des effets — cohérent avec le traitement
 // des talents Achtung! Cthulhu.
 //
+// Exception (spec_fabula.md §3.3) : les compétences qui modifient un jet portent
+// un `rollEffect`, lu par config/rolls.js pour la fenêtre de jet :
+//   type     'bonus' (+perRank × NC au test), 'damage' (+perRank × NC aux dégâts),
+//            'critAnyDouble' (critique sur tout double, sauf double 1),
+//            'shortcut' (préremplit attrs + bonus), 'weaponFormula' (Sorcelame :
+//            formule de précision de l'arme), 'lucky' (Nombre porte-bonheur, après le jet)
+//   show     quand la compétence est proposée : weaponAttack, offensiveSpell,
+//            damage, test, attrs [a, b], weapon ; {} = toujours
+//   auto     quand elle s'active d'elle-même : weaponCategories, portee,
+//            arcaneWeapon, crisis ; absent = à cliquer
+//   note     précision affichée sur la pill
+//
 // Les compétences qui donnent accès à une liste de sorts (learnsSpell: true)
 // référencent une spellList définie dans spells.js (fichier séparé, à venir).
 // La compétence "Lier et invoquer" de l'Arcaniste référence de la même façon
@@ -132,6 +144,7 @@ TECHNOMAGIE :
         competences: [
             {
                 key: 'artillerie_magique', nom: 'Artillerie magique', ncMax: 3,
+                rollEffect: { type: 'bonus', perRank: 2, show: { offensiveSpell: true }, auto: { arcaneWeapon: true } },
                 description: 'Quand vous lancez un sort offensif en étant équipé d\'une arme arcanique, vous bénéficiez d\'un bonus égal à [NC × 2] au test de magie.',
             },
             {
@@ -144,6 +157,7 @@ TECHNOMAGIE :
             },
             {
                 key: 'sorcelame', nom: 'Sorcelame', ncMax: 4,
+                rollEffect: { type: 'weaponFormula', show: { offensiveSpell: true, weapon: true }, note: 'précision de l\'arme' },
                 description: 'Quand vous lancez un sort offensif visant une seule créature en étant équipé d\'une arme arme/lutte/dague/articulé/lance/épée, si le coût total en PM du sort est inférieur ou égal à [NC × 10], vous pouvez utiliser la formule de précision de l\'arme pour le test de magie.',
             },
             {
@@ -172,6 +186,7 @@ TECHNOMAGIE :
             },
             {
                 key: 'nombre_porte_bonheur', nom: 'Nombre Porte-Bonheur', ncMax: 1,
+                rollEffect: { type: 'lucky', show: {}, note: 'après le jet' },
                 description: 'Vous avez un nombre porte-bonheur (7 au début de chaque séance). Une fois par scène, après un test, vous pouvez remplacer le résultat d\'un des dés lancés par ce nombre (même hors plage normale du dé). Le résultat remplacé devient votre nouveau nombre porte-bonheur.',
             },
             {
@@ -196,6 +211,7 @@ TECHNOMAGIE :
         competences: [
             {
                 key: 'adrenaline', nom: 'Adrénaline', ncMax: 5,
+                rollEffect: { type: 'damage', perRank: 2, show: { damage: true }, auto: { crisis: true }, note: 'en Crise' },
                 description: 'Tant que vous êtes en Crise, vous infligez [NC × 2] dégâts supplémentaires (attaques, sorts, Arcana, objets ou autres méthodes).',
             },
             {
@@ -208,10 +224,12 @@ TECHNOMAGIE :
             },
             {
                 key: 'frenesie', nom: 'Frénésie', ncMax: 1,
+                rollEffect: { type: 'critAnyDouble', show: { weaponAttack: true }, auto: { weaponCategories: ['lutte', 'dague', 'articulee', 'jet'] }, note: 'critique sur tout double' },
                 description: 'Vos tests de précision avec armes lutte/dague/articulé/jet déclenchent une réussite critique dès que les deux dés affichent le même résultat (hors échec critique).',
             },
             {
                 key: 'provocation', nom: 'Provocation', ncMax: 5,
+                rollEffect: { type: 'shortcut', perRank: 1, attrs: ['pui', 'vol'], show: { test: true } },
                 description: 'Action + 5 PM pour un test opposé [PUI + VOL] contre une créature visible : en cas de réussite, elle subit l\'état enragé et doit vous cibler prioritairement. Bonus égal au [NC] sur ce test.',
             },
         ],
@@ -270,6 +288,7 @@ TECHNOMAGIE :
             },
             {
                 key: 'maitrise_armes_cac', nom: 'Maîtrise des armes de corps à corps', ncMax: 4,
+                rollEffect: { type: 'bonus', perRank: 1, show: { weaponAttack: true }, auto: { portee: 'cac' } },
                 description: 'Bonus de [NC] à tous les tests de précision effectués avec des armes de corps à corps.',
             },
             {
@@ -288,6 +307,7 @@ TECHNOMAGIE :
         competences: [
             {
                 key: 'concentration', nom: 'Concentration', ncMax: 5,
+                rollEffect: { type: 'bonus', perRank: 1, show: { attrs: ['int', 'int'] }, note: 'test ouvert' },
                 description: 'Votre maximum de PM augmente définitivement de [NC × 3]. Sur un test ouvert d\'[INT + INT], bonus égal à [NC] au résultat (uniquement tests ouverts).',
             },
             {
@@ -322,6 +342,7 @@ TECHNOMAGIE :
             },
             {
                 key: 'condamnation', nom: 'Condamnation', ncMax: 4,
+                rollEffect: { type: 'shortcut', perRank: 1, attrs: ['int', 'vol'], show: { test: true } },
                 description: 'Action + 5 PM pour un test opposé [INT + VOL] contre une créature qui vous comprend : en cas de réussite, elle perd [NC × 10] PM et subit étourdi ou traumatisé (au choix). Bonus égal au [NC] sur ce test.',
             },
             {
@@ -360,10 +381,12 @@ TECHNOMAGIE :
             },
             {
                 key: 'vivacite', nom: 'Vivacité', ncMax: 3,
+                rollEffect: { type: 'bonus', perRank: 1, show: {}, note: 'début de conflit' },
                 description: 'Au début d\'un conflit, dépensez 10 PM pour effectuer avant le premier round une attaque gratuite ou une action Gêne/Objectif, avec bonus égal à [NC] sur les tests liés.',
             },
             {
                 key: 'vol_spirituel', nom: 'Vol spirituel', ncMax: 5,
+                rollEffect: { type: 'shortcut', perRank: 1, attrs: ['dex', 'vol'], show: { test: true } },
                 description: 'Action pour un test [DEX + VOL] contre la Défense magique d\'une créature visible. Réussite contre un soldat : récupérez [NC] PI. Contre élite/champion : trésor spirituel (valeur ≤ niveau×30, ou 50 si Méchant), une seule fois par créature. Bonus égal au [NC] sur ce test.',
             },
         ],
@@ -383,6 +406,7 @@ TECHNOMAGIE :
             },
             {
                 key: 'douloureuse_lecon', nom: 'Douloureuse leçon', ncMax: 3,
+                rollEffect: { type: 'bonus', perRank: 1, show: { test: true }, note: 'Analyse' },
                 description: 'Après avoir perdu des PV à cause d\'une autre créature, réalisez gratuitement l\'action Analyse sur elle avec bonus égal à [NC] (une fois par aspect de la créature).',
             },
             {
@@ -446,6 +470,7 @@ TECHNOMAGIE :
             },
             {
                 key: 'maitrise_armes_distance', nom: 'Maîtrise des armes à distance', ncMax: 4,
+                rollEffect: { type: 'bonus', perRank: 1, show: { weaponAttack: true }, auto: { portee: 'distance' } },
                 description: 'Bonus de [NC] à tous les tests de précision effectués avec des armes à distance.',
             },
             {

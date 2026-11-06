@@ -3,8 +3,8 @@
 // Armure équipée (emplacementEquipe === 'armure'). Le formulaire partagé gère
 // le double modèle de Défense : dé DEX + mod (armures légères) ou DEF fixe
 // (armures lourdes, defFixe non nul → le dé DEX est ignoré par
-// computeDerivedStats). Les chips d'en-tête affichent les valeurs dérivées
-// globales du personnage, toutes pièces équipées confondues.
+// computeDerivedStats). Section de la fenêtre Équipement (EquipmentCard), qui
+// porte les valeurs dérivées du personnage.
 // ─────────────────────────────────────────────────────────────────────────────
 
 import React from 'react';
@@ -20,20 +20,13 @@ const ArmorCard = ({ character, editMode, onArrayChange }) => {
     const unequip = () => onArrayChange('equipment', unequipItem(equipment, index));
 
     return (
-        <div className="bg-surface border border-default rounded-lg p-3">
-            <div className="flex items-center justify-between flex-wrap gap-2 mb-2">
-                <h3 className="fu-font-title text-primary text-sm">Armure équipée</h3>
-                <div className="flex gap-2 text-[10px]">
-                    <span className="bg-surface-alt rounded px-1.5 py-0.5">Déf. <strong>{character.defense}</strong></span>
-                    <span className="bg-surface-alt rounded px-1.5 py-0.5">Déf.Mag. <strong>{character.defenseMagique}</strong></span>
-                    <span className="bg-surface-alt rounded px-1.5 py-0.5">Init. <strong>{character.initiative}</strong></span>
-                </div>
-            </div>
+        <section className="fu-equip-slot">
+            <h4 className="fu-slot-title">Armure<span className="fu-kana" aria-hidden="true">防具</span></h4>
 
-            {!item && <p className="text-xs text-muted italic">Aucune armure équipée.</p>}
+            {!item && <p className="fu-item is-empty">Aucune armure équipée.</p>}
 
             {item && (
-                <div className="bg-surface-alt rounded p-2 flex flex-col gap-1">
+                <div className="fu-item">
                     {editMode ? (
                         <EquipmentEditForm item={item} onChange={update} showType={false} />
                     ) : (
@@ -42,12 +35,12 @@ const ArmorCard = ({ character, editMode, onArrayChange }) => {
                     {/* Déséquiper est une action de jeu immédiate, pas une édition de
                         texte libre — toujours disponible, comme "Équiper" au sac à dos. */}
                     <button type="button" onClick={unequip}
-                            className="self-start px-2 py-0.5 rounded-full text-xs border bg-default border-default text-danger">
+                            className="self-start fu-btn fu-btn-sm fu-btn-danger">
                         Déséquiper
                     </button>
                 </div>
             )}
-        </div>
+        </section>
     );
 };
 

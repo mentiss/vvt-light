@@ -1,99 +1,262 @@
 /* src/client/src/systems/fabula/theme.css */
 /* ─────────────────────────────────────────────────────────────────────────────
-   Thème Fabula Ultima — Tome héroïque JRPG
-   Mode jour : palette du livre de règles (proposition MJ) — vert feuille,
-               bleu profond, orange cuivré sur fonds vert d'eau
-   Mode nuit  : indigo nocturne façon menu JRPG, or et cramoisi en glow doux
+   Thème Fabula Ultima — « Cristal & Commandes » (spec_fabula.md, planche
+   documentations/fabula/planche_fabula.html = référence du thème)
+   Les fenêtres de menu bleu nuit sont la matière de toute l'interface, en jour
+   comme en nuit ; c'est le monde derrière (FuWorld) qui change :
+   - jour : plaine du matin en demi-teinte (vert d'eau et ciel du livre), pétales ;
+   - nuit : ciel étoilé, aurore, cristaux qui montent.
+   Polices classiques (Q-2) : Credit Valley (marque), Antonio (intitulés, chiffres),
+   PT Sans Narrow (texte). Surtitres japonais décoratifs (.fu-kana).
    ─────────────────────────────────────────────────────────────────────────── */
 
 /* Marque du slug (titre des pages d'accès, police du logo) et polices Google */
 @import './Brand.css';
 
-/* ── Mode JOUR (par défaut) ─────────────────────────────────────────────── */
+/* ── Couleurs : identiques jour et nuit (tout est fenêtre) ─────────────────── */
 :root {
-    /* Couleurs plateforme — palette livre de règles (proposition MJ) */
-    --color-primary:        #3E7232;   /* Vert feuille — titres, actions principales */
-    --color-secondary:      #00619C;   /* Bleu profond — éléments secondaires */
-    --color-accent:         #D37928;   /* Orange cuivré — Points Fabula, mise en avant */
-    --color-danger:         #B82315;
-    --color-success:        #3F7D4F;
+    --color-primary:        #F2D27A;   /* or du curseur : sélection, intitulés */
+    --color-secondary:      #7FD8FF;   /* cristal : PM, aides */
+    --color-accent:         #FFB04A;   /* cuivre : Points Fabula */
+    --color-danger:         #FF5D6C;
+    --color-success:        #5FE0A0;
 
-    /* Surfaces — vert d'eau */
-    --color-bg:             #EAF0F4;
-    --color-surface:        #E1EFE3;
-    --color-surface-alt:    #CDDDD9;
+    --color-bg:             #0B1140;   /* champ de saisie, fond des pastilles */
+    --color-surface:        #1A2466;   /* corps des fenêtres */
+    --color-surface-alt:    #121A52;   /* bloc creusé dans une fenêtre */
 
-    /* Texte */
-    --color-text:           #2B2118;   /* Encre brune */
-    --color-text-muted:     #6B5D4F;
+    --color-text:           #FFFFFF;
+    --color-text-muted:     #AEB8EC;
+    --color-border:         rgba(238, 240, 250, .32);
 
-    /* Bordure — ⚠ volontairement sombre/saturée (choix MJ, à juger sur pièce) */
-    --color-border:         #2B4A42;
-
-    /* ── Variables slug-spécifiques ───────────────────────────────────────── */
+    /* ── Variables du slug ────────────────────────────────────────────────── */
     --fu-fabula-color:      var(--color-accent);   /* Points Fabula (joueurs) */
-    --fu-ultima-color:      #6A2A8A;                /* Points Ultima (Méchants) */
+    --fu-ultima-color:      #C58BFF;                /* Points Ultima, Arcana */
     --fu-crisis-color:      var(--color-danger);    /* Seuil de Crise */
     --fu-pm-color:          var(--color-secondary); /* Points de Magie */
-    --fu-pi-color:          #5A7D5E;                /* Points d'Inventaire */
+    --fu-pi-color:          #FFB04A;                /* Points d'Inventaire */
+
+    /* Fenêtres JRPG (barre de session, modales, menu, fiche) */
+    --fu-win-top:    #3A52B0;
+    --fu-win-bottom: #121A52;
+    --fu-win-field:  #0B1140;
+    --fu-win-edge:   #EEF0FA;
+    --fu-win-shadow: #070B2A;
+    --fu-win-text:   #FFFFFF;
+    --fu-win-muted:  #AEB8EC;
+    --fu-win-gold:   #F2D27A;
+    --fu-win-glow:   0 10px 30px rgba(18, 40, 70, .28);
+
+    /* Jauges */
+    --fu-hp-a: #4BE39A; --fu-hp-b: #C6F56E;
+    --fu-mp-a: #3C8BFF; --fu-mp-b: #8FF0FF;
+    --fu-ip-a: #FF9A3C; --fu-ip-b: #FFE07A;
+    --fu-crisis-a: #FF3E5E; --fu-crisis-b: #FF9A6B;
+
+    /* Texte posé directement sur le monde (hors fenêtre) */
+    --fu-world-ink: #0E2621;
+
+    --fu-font-title: 'Antonio', 'Arial Narrow', sans-serif;
+    --fu-font-body:  'PT Sans Narrow', Arial, sans-serif;
+    --fu-font-kana:  'M PLUS 1p', 'Yu Gothic', sans-serif;
 
     --fu-radius:    4px;
     --fu-radius-md: 8px;
-    --fu-radius-lg: 12px;
+    --fu-radius-lg: 14px;
 }
 
-/* ── Mode NUIT ──────────────────────────────────────────────────────────── */
+/* ── Nuit : les fenêtres s'éclairent, le monde s'assombrit ───────────────── */
 [data-theme="dark"] {
-    --color-primary:        #E8C468;   /* Or — glow doux */
-    --color-secondary:      #8EA0D8;
-    --color-accent:         #E0525A;   /* Cramoisi — inversion jour/nuit volontaire */
-    --color-danger:         #E0525A;
-    --color-success:        #6FBF7A;
-
-    --color-bg:             #14101F;   /* Indigo nocturne profond */
-    --color-surface:        #1F1A30;
-    --color-surface-alt:    #2A2340;
-
-    --color-text:           #F2EAD9;
-    --color-text-muted:     #A89BC4;
-
-    --color-border:         #3D3560;
-
-    --fu-fabula-color:      #E8C468;
-    --fu-ultima-color:      #B47FE0;
-    --fu-crisis-color:      #E0525A;
-    --fu-pm-color:          #8EA0D8;
-    --fu-pi-color:          #7FBF8A;
+    --fu-win-top:    #2E3F98;
+    --fu-win-bottom: #0D1240;
+    --fu-win-glow:   0 0 0 1px rgba(127, 160, 255, .08), 0 0 34px rgba(90, 120, 255, .28), 0 14px 34px rgba(0, 0, 0, .55);
+    --fu-world-ink:  #DCE2FF;
 }
 
-/* ── Typographie slug — hiérarchie inspirée du matériel officiel ──────────── */
-
+/* ── Typographie ─────────────────────────────────────────────────────────── */
 /* Grand titre de page (.fu-font-logo) : Brand.css */
-
-/* Titres de section — "Attributs & Altérations", noms de classe, etc. */
 .fu-font-title,
 .vtt-reference-section-title, .vtt-reference-heading {   /* titres de l'onglet Référence (brique ReferenceGuide) */
-    font-family: 'Antonio', 'Arial Narrow', sans-serif;
+    font-family: var(--fu-font-title);
     font-weight: 600;
-    letter-spacing: 0.03em;
+    letter-spacing: 0.04em;
     text-transform: uppercase;
 }
+.fu-font-body { font-family: var(--fu-font-body); }
 
-/* Corps de texte — descriptions, champs, contenu courant */
-.fu-font-body {
-    font-family: 'PT Sans Narrow', Arial, sans-serif;
+/* Intitulé de fenêtre : or, capitales ; surtitre japonais décoratif (jamais seul porteur d'une info) */
+.fu-title {
+    font-family: var(--fu-font-title); font-weight: 600; font-size: 1.05rem; line-height: 1.1;
+    letter-spacing: .05em; text-transform: uppercase; color: var(--fu-win-gold);
+    text-shadow: 1px 1px 0 var(--fu-win-shadow);
+}
+.fu-kana {
+    margin-left: .55rem; font: 500 .62rem/1 var(--fu-font-kana); letter-spacing: .3em;
+    color: var(--fu-win-muted); opacity: .75; text-transform: none; text-shadow: none; white-space: nowrap;
+}
+.fu-label {
+    font-family: var(--fu-font-title); font-weight: 600; font-size: .68rem; letter-spacing: .16em;
+    text-transform: uppercase; color: var(--fu-win-muted);
 }
 
-/* ── Utilitaires slug-spécifiques ─────────────────────────────────────────── */
+/* Icônes (FuIcon) */
+.fu-ico    { width: 18px; height: 18px; flex: none; display: inline-block; vertical-align: -3px; }
+.fu-ico-sm { width: 14px; height: 14px; flex: none; display: inline-block; vertical-align: -2px; }
+
+/* ── Racine des pages du slug : le monde se voit derrière ─────────────────── */
+html:has(.fu-root), body:has(.fu-root) { background: var(--fu-win-field); }
+.fu-root { position: relative; isolation: isolate; min-height: 100vh; color: var(--color-text); font-family: var(--fu-font-body); }
+
+/* ── Monde (components/ui/FuWorld.jsx) ──────────────────────────────────── */
+.fu-world { position: fixed; inset: 0; z-index: -1; overflow: hidden; pointer-events: none;
+    background:
+        radial-gradient(ellipse 70% 45% at 12% -5%, rgba(255, 222, 170, .55), transparent 60%),
+        radial-gradient(ellipse 55% 40% at 92% 6%, rgba(170, 214, 245, .55), transparent 62%),
+        radial-gradient(ellipse 90% 40% at 50% 110%, rgba(70, 130, 95, .45), transparent 70%),
+        linear-gradient(180deg, #8FB2CC 0%, #97BDB6 50%, #84AE92 100%);
+}
+.fu-world::before {   /* collines lointaines */
+    content: ''; position: absolute; left: -5%; right: -5%; bottom: 0; height: 32vh; opacity: .6;
+    background:
+        radial-gradient(ellipse 40% 60% at 20% 100%, #5F8F78, transparent 70%),
+        radial-gradient(ellipse 45% 70% at 70% 100%, #557F6A, transparent 70%),
+        radial-gradient(ellipse 30% 50% at 95% 100%, #6A9A80, transparent 70%);
+}
+.fu-aurora { position: absolute; inset: -20% -10% auto; height: 70vh; opacity: 0; filter: blur(40px);
+    background:
+        linear-gradient(100deg, transparent 10%, rgba(80, 255, 200, .35) 30%, transparent 45%),
+        linear-gradient(80deg, transparent 40%, rgba(140, 110, 255, .4) 58%, transparent 75%),
+        linear-gradient(95deg, transparent 60%, rgba(70, 170, 255, .3) 80%, transparent 95%);
+    animation: fu-aurora 18s ease-in-out infinite alternate; }
+.fu-starfield { position: absolute; inset: 0; opacity: 0;
+    background-image:
+        radial-gradient(1.2px 1.2px at 20px 30px, #fff, transparent),
+        radial-gradient(1px 1px at 120px 80px, #cfe0ff, transparent),
+        radial-gradient(1.6px 1.6px at 200px 150px, #fff, transparent),
+        radial-gradient(1px 1px at 60px 190px, #ffe9b0, transparent),
+        radial-gradient(1.3px 1.3px at 260px 40px, #fff, transparent);
+    background-size: 300px 220px; animation: fu-twinkle 5s ease-in-out infinite alternate; }
+[data-theme="dark"] .fu-world { background:
+        radial-gradient(ellipse 60% 40% at 80% 0%, rgba(90, 70, 200, .35), transparent 65%),
+        radial-gradient(ellipse 70% 50% at 10% 100%, rgba(30, 90, 140, .35), transparent 70%),
+        linear-gradient(180deg, #070718 0%, #0E0C2C 55%, #120F35 100%); }
+[data-theme="dark"] .fu-world::before { opacity: .9; background:
+        radial-gradient(ellipse 40% 60% at 20% 100%, #141A3E, transparent 70%),
+        radial-gradient(ellipse 45% 70% at 70% 100%, #10163A, transparent 70%); }
+[data-theme="dark"] .fu-aurora { opacity: .85; }
+[data-theme="dark"] .fu-starfield { opacity: 1; }
+.fu-mote { position: absolute; bottom: -20px; width: 8px; height: 12px; opacity: 0;
+    clip-path: polygon(50% 0, 100% 50%, 50% 100%, 0 50%);
+    background: linear-gradient(180deg, #fff, #9fe6ff); animation: fu-rise linear infinite; }
+.fu-mote.is-petal { width: 13px; height: 10px; clip-path: none; border-radius: 80% 0 80% 0;
+    background: linear-gradient(135deg, #FFF0F5, #FF8FB8); animation-name: fu-petal; filter: drop-shadow(0 1px 2px rgba(120, 30, 70, .35)); }
+[data-theme="dark"] .fu-mote { background: linear-gradient(180deg, #fff, #7fd8ff); filter: drop-shadow(0 0 6px #7fd8ff); }
+[data-theme="dark"] .fu-mote.is-petal { background: linear-gradient(135deg, #fff3c4, #f2d27a); border-radius: 0; clip-path: polygon(50% 0, 100% 50%, 50% 100%, 0 50%); filter: drop-shadow(0 0 6px #f2d27a); }
+@keyframes fu-rise  { 0% { transform: translateY(0) rotate(0) scale(var(--fu-mote-scale, 1)); opacity: 0; } 10% { opacity: .9; } 90% { opacity: .8; } 100% { transform: translateY(-105vh) rotate(220deg) scale(var(--fu-mote-scale, 1)); opacity: 0; } }
+@keyframes fu-petal { 0% { transform: translate(0, 0) rotate(0) scale(var(--fu-mote-scale, 1)); opacity: 0; } 10% { opacity: .9; } 50% { transform: translate(-60px, -50vh) rotate(260deg) scale(var(--fu-mote-scale, 1)); } 100% { transform: translate(40px, -105vh) rotate(540deg) scale(var(--fu-mote-scale, 1)); opacity: 0; } }
+@keyframes fu-aurora  { 0% { transform: translateX(-6%) skewX(-4deg); } 100% { transform: translateX(6%) skewX(4deg); } }
+@keyframes fu-twinkle { 0% { opacity: .55; } 100% { opacity: 1; } }
+@keyframes fu-cursor  { 0%, 100% { transform: translate(0, -50%); } 50% { transform: translate(3px, -50%); } }
+@keyframes fu-sheen   { 0%, 70% { background-position: 150% 0; } 100% { background-position: -50% 0; } }
+@media (prefers-reduced-motion: reduce) {
+    .fu-mote { display: none; }
+    .fu-aurora, .fu-starfield, .fu-logo::after { animation: none; }
+}
+
+/* ── Fenêtre JRPG (.fu-win) : verre, reflet, liseré argent, éclat doré au coin ──
+   Une modale peut s'ouvrir DANS un panneau (catalogue du Sac) : rien ici ne doit
+   créer de bloc conteneur pour les éléments fixes (pas de backdrop-filter, filter,
+   transform) ni toucher au positionnement des enfants. Le reflet est donc une
+   couche du fond, pas un calque posé par-dessus le contenu. */
+.fu-win {
+    position: relative; border-radius: var(--fu-radius-lg); color: var(--fu-win-text);
+    background:
+        linear-gradient(180deg, rgba(255,255,255,.12), transparent 40%),
+        linear-gradient(180deg, color-mix(in srgb, var(--fu-win-top) 94%, transparent), color-mix(in srgb, var(--fu-win-bottom) 97%, transparent));
+    border: 2px solid var(--fu-win-edge);
+    box-shadow: 0 0 0 1px var(--fu-win-shadow), inset 0 0 0 1px var(--fu-win-shadow), inset 0 1px 0 1px rgba(255,255,255,.18), var(--fu-win-glow);
+    text-shadow: 1px 1px 0 var(--fu-win-shadow);
+    padding: .85rem 1rem 1rem;
+}
+.fu-win::after {    /* éclat de coin */
+    content: ''; position: absolute; top: -5px; left: 14px; width: 8px; height: 8px; transform: rotate(45deg); pointer-events: none;
+    background: var(--fu-win-gold); box-shadow: 0 0 8px var(--fu-win-gold), 0 0 0 1px var(--fu-win-shadow);
+}
+
+/* ── Bande du haut (titre du jeu, jamais le nom du personnage) ──────────── */
+.fu-band {
+    position: relative; z-index: 20; display: flex; align-items: center; gap: 1rem; padding: .55rem 1rem;   /* pas d'overflow: hidden : le menu déroulant en dépasse */
+    background: linear-gradient(90deg, #0A0F3A, #1B2780 45%, #0A0F3A); border-bottom: 2px solid var(--fu-win-edge);
+    box-shadow: 0 1px 0 var(--fu-win-shadow), 0 8px 24px rgba(10, 16, 60, .35); color: var(--fu-win-text);
+}
+.fu-band::before {   /* coupes diagonales façon écran-titre */
+    content: ''; position: absolute; inset: 0; pointer-events: none; opacity: .18;
+    background: repeating-linear-gradient(115deg, transparent 0 46px, rgba(255,255,255,.5) 46px 47px, transparent 47px 90px);
+}
+.fu-band > * { position: relative; }
+.fu-band-sub { font-family: var(--fu-font-title); font-weight: 600; font-size: .72rem; letter-spacing: .22em; text-transform: uppercase; color: var(--fu-win-muted); }
+.fu-band-actions { margin-left: auto; display: flex; align-items: center; gap: .5rem; }
+.fu-icon-btn {
+    width: 34px; height: 34px; display: grid; place-items: center; border-radius: 9px; color: var(--fu-win-text);
+    border: 1.5px solid rgba(238, 240, 250, .45); background: linear-gradient(180deg, rgba(255,255,255,.1), rgba(255,255,255,0));
+    transition: background .15s, border-color .15s;
+}
+.fu-icon-btn:hover { border-color: var(--fu-win-edge); background: linear-gradient(90deg, rgba(255,255,255,.24), rgba(255,255,255,.06)); color: var(--fu-win-gold); }
+.fu-band .vtt-menu-button { color: var(--fu-win-text); }
+
+/* ── Onglets : commandes de menu, curseur ▶ sur l'onglet actif ──────────── */
+.fu-tabs { display: flex; align-items: center; gap: .25rem; padding: .5rem 1rem 0; flex-wrap: wrap; }
+.fu-tab {
+    position: relative; display: inline-flex; align-items: center; gap: .5rem; padding: .55rem 1.1rem .6rem 1.6rem;
+    font-family: var(--fu-font-title); font-weight: 600; font-size: .85rem; letter-spacing: .12em; text-transform: uppercase;
+    color: var(--fu-world-ink); opacity: .75; clip-path: polygon(10px 0, 100% 0, calc(100% - 10px) 100%, 0 100%);
+    transition: opacity .15s, background .2s;
+}
+.fu-tab:hover { opacity: 1; }
+.fu-tab.is-active { opacity: 1; color: #fff; text-shadow: 1px 1px 0 var(--fu-win-shadow); background: linear-gradient(180deg, var(--fu-win-top), var(--fu-win-bottom)); }
+.fu-tab.is-active::after { content: ''; position: absolute; left: 12px; right: 12px; bottom: 3px; height: 2px; background: var(--fu-win-gold); box-shadow: 0 0 8px var(--fu-win-gold); }
+.fu-tab.is-active::before {   /* ✦ curseur de menu */
+    content: ''; position: absolute; left: .6rem; top: 50%; width: 9px; height: 10px; background: #fff;
+    clip-path: polygon(0 0, 100% 50%, 0 100%, 25% 50%); animation: fu-cursor .8s ease-in-out infinite;
+}
+.fu-tab-count { min-width: 18px; padding: 2px 5px; border-radius: 999px; background: var(--color-danger); color: #fff; font-size: .65rem; letter-spacing: 0; text-align: center; box-shadow: 0 0 8px var(--color-danger); }
+.fu-tabs-end { margin-left: auto; display: flex; gap: .5rem; padding-bottom: .25rem; }
+
+/* ── Commandes : boutons de menu ───────────────────────────────────────── */
+.fu-btn {
+    display: inline-flex; align-items: center; justify-content: center; gap: .45rem; position: relative;
+    padding: .45rem .9rem; border-radius: 8px; border: 1.5px solid rgba(238,240,250,.45);
+    font-family: var(--fu-font-title); font-weight: 600; font-size: .8rem; letter-spacing: .1em; text-transform: uppercase;
+    color: var(--fu-win-text); text-shadow: 1px 1px 0 var(--fu-win-shadow);
+    background: linear-gradient(180deg, color-mix(in srgb, var(--fu-win-top) 90%, transparent), var(--fu-win-bottom));
+    transition: transform .1s, background .15s, border-color .15s;
+}
+.fu-btn:hover:not(:disabled) { border-color: var(--fu-win-edge); background: linear-gradient(90deg, rgba(255,255,255,.24), rgba(255,255,255,.06)), var(--fu-win-bottom); }
+.fu-btn:active:not(:disabled) { transform: translateY(1px); }
+.fu-btn:disabled { opacity: .45; cursor: not-allowed; }
+.fu-btn-gold { color: #1A1440; text-shadow: none; border-color: #fff8de;
+    background: linear-gradient(180deg, #FFF0C2 0%, #F2D27A 45%, #D9A93E 100%); box-shadow: 0 0 0 1px var(--fu-win-shadow), 0 4px 14px rgba(242, 210, 122, .35); }
+.fu-btn-gold:hover:not(:disabled) { background: linear-gradient(180deg, #FFF8DE, #F7DD95 45%, #E2B54C); }
+.fu-btn-sm { padding: .3rem .6rem; font-size: .7rem; border-radius: 6px; }
+
+/* Boutons des composants existants (bg-primary / bg-success / bg-accent + text-white) :
+   sur l'or et le vert clair du thème, le texte blanc est illisible → encre sombre.
+   Les composants passent aux .fu-btn au lot 2. */
+.fu-root .bg-primary.text-white, .fu-root .bg-success.text-white, .fu-root .bg-accent.text-white,
+.vtt-modal-host .bg-primary.text-white, .vtt-modal-host .bg-success.text-white, .vtt-modal-host .bg-accent.text-white,
+.fu-root .bg-secondary.text-white:not(:hover) { color: #1A1440; text-shadow: none; }   /* « Attaquer » : cyan, transparent au survol */
+
+/* ── Utilitaires du slug ─────────────────────────────────────────────────── */
 /* Pastilles Points Fabula / Ultima — visuellement distinctes du reste de l'UI */
 .fu-badge-fabula {
-    background-color: color-mix(in srgb, var(--fu-fabula-color) 15%, transparent);
+    background-color: color-mix(in srgb, var(--fu-fabula-color) 18%, transparent);
     color: var(--fu-fabula-color);
     border: 1px solid var(--fu-fabula-color);
+    text-shadow: 0 0 8px color-mix(in srgb, var(--fu-fabula-color) 60%, transparent);
 }
 
 .fu-badge-ultima {
-    background-color: color-mix(in srgb, var(--fu-ultima-color) 15%, transparent);
+    background-color: color-mix(in srgb, var(--fu-ultima-color) 18%, transparent);
     color: var(--fu-ultima-color);
     border: 1px solid var(--fu-ultima-color);
 }
@@ -106,7 +269,7 @@
     min-width: 2.75rem;
     padding: 0.25rem 0.5rem;
     border-radius: var(--fu-radius-md);
-    font-family: 'Antonio', 'Arial Narrow', sans-serif;
+    font-family: var(--fu-font-title);
     font-weight: 600;
     font-size: 0.85rem;
     letter-spacing: 0.02em;
@@ -122,23 +285,18 @@
 /* ── Fabula : ✦ fenêtres de menu JRPG (dégradé bleu nuit, liseré argent, texte blanc ombré,
    curseur ▶), quel que soit le mode jour / nuit ; repris du slug : Antonio / PT Sans Narrow
    (fu-font-title / fu-font-body), or des points Fabula, filet à gemme de la marque ── */
-:root {
-    --fu-win-top:    #34489e;
-    --fu-win-bottom: #121a52;
-    --fu-win-edge:   #eef0fa;
-    --fu-win-shadow: #070b2a;
-    --fu-win-text:   #ffffff;
-    --fu-win-muted:  #aeb8ec;
-    --fu-win-gold:   #f2d27a;
-}
 .vtt-session-bar {   /* ✦ fenêtre flottante */
     margin: .5rem 0 .5rem .5rem; border-radius: 10px;
     background: linear-gradient(180deg, var(--fu-win-top), var(--fu-win-bottom));
     border: 2px solid var(--fu-win-edge);
-    box-shadow: 0 0 0 1px var(--fu-win-shadow), inset 0 0 0 1px var(--fu-win-shadow), 0 6px 18px rgba(0,0,0,.35);
+    box-shadow: 0 0 0 1px var(--fu-win-shadow), inset 0 0 0 1px var(--fu-win-shadow), inset 0 1px 0 1px rgba(255,255,255,.18), 0 6px 18px rgba(0,0,0,.35);
     color: var(--fu-win-text); text-shadow: 1px 1px 0 var(--fu-win-shadow);
     font-family: 'PT Sans Narrow', Arial, sans-serif;
 }
+/* Liste fixée au défilement : la fenêtre restée en place derrière est masquée,
+   seule la liste fixée reste visible. */
+.vtt-session-bar:has(> .vtt-session-bar-list.is-fixed) { visibility: hidden; }
+.vtt-session-bar-list.is-fixed { visibility: visible; }
 .vtt-session-bar-header { position: relative; border-bottom: none; padding-bottom: .95rem; }
 .vtt-session-bar-header::after {   /* fu-brand-divider */
     content: ''; position: absolute; left: 12%; right: 12%; bottom: 3px; height: 1px;
@@ -180,7 +338,7 @@
 .vtt-session-bar-card {   /* ✦ fenêtre de statut */
     border-radius: 10px; border: 2px solid var(--fu-win-edge);
     background: linear-gradient(180deg, var(--fu-win-top), var(--fu-win-bottom));
-    box-shadow: 0 0 0 1px var(--fu-win-shadow), inset 0 0 0 1px var(--fu-win-shadow), 0 18px 40px rgba(0,0,0,.5);
+    box-shadow: 0 0 0 1px var(--fu-win-shadow), inset 0 0 0 1px var(--fu-win-shadow), inset 0 1px 0 1px rgba(255,255,255,.18), 0 18px 40px rgba(0,0,0,.5);
     color: var(--fu-win-text); text-shadow: 1px 1px 0 var(--fu-win-shadow); font-family: 'PT Sans Narrow', sans-serif;
 }
 .vtt-session-bar-card-image {
@@ -203,7 +361,6 @@
 /* ── Modales génériques et journal (components/ui/Modal.jsx, spec_ui_modales.md §11) ─ */
 /* ── Fabula : ✦ fenêtres de menu JRPG (comme la barre de session), en jour comme en nuit ;
    Antonio (fu-font-title), or des points Fabula ; ✦ curseur ▶ sur l'élément survolé ── */
-:root { --fu-win-field: #0c1240; }   /* --fu-win-* : section barre de session */
 /* Couleurs du thème redéfinies dans les fenêtres JRPG : les textes posés par les composants
    (text-muted, text-primary…) restent lisibles sur le bleu nuit, en jour comme en nuit */
 .vtt-modal-panel, .vtt-panel {
@@ -214,7 +371,7 @@
 .vtt-modal-panel {
     border-radius: 10px; border: 2px solid var(--fu-win-edge);
     background: linear-gradient(180deg, var(--fu-win-top), var(--fu-win-bottom));
-    box-shadow: 0 0 0 1px var(--fu-win-shadow), inset 0 0 0 1px var(--fu-win-shadow), 0 20px 50px rgba(0,0,0,.5);
+    box-shadow: 0 0 0 1px var(--fu-win-shadow), inset 0 0 0 1px var(--fu-win-shadow), inset 0 1px 0 1px rgba(255,255,255,.18), 0 20px 50px rgba(0,0,0,.5);
     color: var(--fu-win-text); font-family: 'PT Sans Narrow', Arial, sans-serif;
 }
 .vtt-modal-header, .vtt-modal-footer { border-color: rgba(238, 240, 250, .22); }
@@ -234,6 +391,12 @@
 .vtt-btn:hover:not(:disabled)::before {   /* ✦ curseur de menu */
     content: '▶'; position: absolute; left: -1rem; top: 50%; transform: translateY(-50%); font-size: .6rem; color: var(--fu-win-text);
 }
+/* Bouton de plateforme habillé en commande Fabula (ex. CopyAccessButton avec
+   className « fu-btn ») : .fu-btn l'emporte sur l'option de menu .vtt-btn */
+.vtt-btn.fu-btn { border-radius: 6px; border-color: rgba(238,240,250,.45); letter-spacing: .1em;
+    background: linear-gradient(180deg, color-mix(in srgb, var(--fu-win-top) 90%, transparent), var(--fu-win-bottom)); }
+.vtt-btn.fu-btn:hover:not(:disabled) { background: linear-gradient(90deg, rgba(255,255,255,.24), rgba(255,255,255,.06)), var(--fu-win-bottom); }
+.vtt-btn.fu-btn:hover:not(:disabled)::before { content: none; }
 .vtt-btn-primary { color: var(--fu-win-bottom); text-shadow: none; border-color: var(--fu-win-edge); background: linear-gradient(180deg, #f8e3a2, #d9b24e); }
 .vtt-btn-primary:hover:not(:disabled) { background: linear-gradient(180deg, #fff0c4, #e6c264); filter: none; }
 .vtt-btn-danger { background: linear-gradient(180deg, #e0525a, #a8323a); border-color: var(--fu-win-edge); color: #fff; }
@@ -285,7 +448,7 @@ button.vtt-list-item:hover { border-color: var(--fu-win-edge); }
 .vtt-menu {
     border-radius: 10px; border: 2px solid var(--fu-win-edge); padding: .4rem 0;
     background: linear-gradient(180deg, var(--fu-win-top), var(--fu-win-bottom));
-    box-shadow: 0 0 0 1px var(--fu-win-shadow), inset 0 0 0 1px var(--fu-win-shadow), 0 14px 36px rgba(0,0,0,.45);
+    box-shadow: 0 0 0 1px var(--fu-win-shadow), inset 0 0 0 1px var(--fu-win-shadow), inset 0 1px 0 1px rgba(255,255,255,.18), 0 14px 36px rgba(0,0,0,.45);
 }
 .vtt-menu-item {
     position: relative; padding: .45rem 1rem .45rem 1.6rem; color: var(--fu-win-text);
@@ -346,3 +509,426 @@ button.vtt-list-item:hover { border-color: var(--fu-win-edge); }
 }
 .vtt-board-banner strong { color: var(--fu-win-gold); }
 .vtt-board-picker-item { border-radius: var(--fu-radius); }
+
+/* ═════════════════════════════════════════════════════════════════════════════
+   FICHE (lot 2, planche §3) — briques du slug : jauges, dés en gemmes, arbre des
+   altérations, cristaux, liens, rangs, sorts, arcana, équipe du MJ
+   ═════════════════════════════════════════════════════════════════════════════ */
+.fu-num { font-family: var(--fu-font-title); font-variant-numeric: tabular-nums; }
+.fu-sep { height: 1px; margin: .75rem 0; background: linear-gradient(90deg, transparent, rgba(238,240,250,.35), transparent); }
+.fu-win-head { display: flex; align-items: center; gap: .6rem; margin-bottom: .75rem; flex-wrap: wrap; }
+.fu-win-head .fu-rule { flex: 1; min-width: 1rem; height: 1px; background: linear-gradient(90deg, rgba(242,210,122,.7), transparent); }
+.fu-aside { font-family: var(--fu-font-title); font-weight: 600; font-size: .78rem; letter-spacing: .08em; color: var(--fu-win-muted); white-space: nowrap; }
+.fu-aside b { color: var(--fu-win-text); font-size: .9rem; }
+.fu-tag { display: inline-flex; align-items: center; gap: .25rem; padding: .1rem .5rem; border-radius: 999px; font-family: var(--fu-font-title); font-weight: 600; font-size: .66rem; letter-spacing: .08em; text-transform: uppercase;
+    border: 1px solid currentColor; background: color-mix(in srgb, currentColor 14%, transparent); white-space: nowrap; }
+.fu-btn-danger { color: #FF9AA5; }
+.fu-btn-danger:hover:not(:disabled) { color: #fff; border-color: #FF9AA5; }
+
+/* Pills (choix) */
+.fu-pill {
+    display: inline-flex; align-items: center; gap: .35rem; padding: .2rem .65rem; border-radius: 999px;
+    border: 1.5px solid rgba(238,240,250,.35); color: var(--fu-win-muted);
+    font-family: var(--fu-font-title); font-weight: 600; font-size: .72rem; letter-spacing: .06em; text-transform: uppercase;
+    transition: color .15s, border-color .15s, background .15s;
+}
+.fu-pill:hover:not(:disabled) { color: var(--fu-win-text); border-color: var(--fu-win-edge); }
+.fu-pill.is-on { color: #1A1440; border-color: #fff8de; text-shadow: none; background: linear-gradient(180deg, #FFF0C2, #E6BE5C); }
+.fu-pill:disabled { opacity: .4; cursor: not-allowed; }
+
+/* Pas-à-pas (Stepper) */
+.fu-step { display: inline-flex; align-items: center; gap: .4rem; }
+.fu-step-btn { width: 24px; height: 24px; display: grid; place-items: center; border-radius: 6px; border: 1.5px solid rgba(238,240,250,.4); background: var(--fu-win-field); color: var(--fu-win-muted); font-weight: 700; }
+.fu-step-btn:hover:not(:disabled) { color: var(--fu-win-gold); border-color: var(--fu-win-gold); }
+.fu-step-btn:disabled { opacity: .3; cursor: not-allowed; }
+.fu-step-val { min-width: 3rem; text-align: center; font-family: var(--fu-font-title); font-weight: 600; font-size: .95rem; }
+
+/* Héros */
+.fu-portrait { position: relative; width: 104px; height: 124px; flex: none; border-radius: 10px; overflow: hidden; display: grid; place-items: center;
+    border: 2px solid var(--fu-win-edge); box-shadow: 0 0 0 1px var(--fu-win-shadow), 0 0 18px rgba(127,216,255,.25);
+    background: radial-gradient(circle at 50% 38%, rgba(255,255,255,.18) 0 22%, transparent 23%), linear-gradient(160deg, #6A7FE0, #2A2F7A 60%, #3B1F6E); }
+.fu-portrait img { width: 100%; height: 100%; object-fit: cover; }
+.fu-portrait.is-editable { cursor: pointer; }
+.fu-portrait.is-editable:hover { box-shadow: 0 0 0 1px var(--fu-win-shadow), 0 0 0 3px var(--fu-win-gold); }
+.fu-portrait .fu-lv { position: absolute; left: 6px; bottom: 6px; padding: 2px 6px; border-radius: 6px; background: rgba(7,11,42,.85); border: 1px solid var(--fu-win-gold);
+    font-family: var(--fu-font-title); font-weight: 600; font-size: .7rem; letter-spacing: .1em; color: var(--fu-win-gold); }
+.fu-hero-name { font-family: var(--fu-font-title); font-weight: 600; font-size: 1.45rem; line-height: 1.05; letter-spacing: .04em; text-transform: uppercase; }
+.fu-hero-player { font-size: .85rem; color: var(--fu-win-muted); margin-top: .15rem; }
+.fu-jobs { display: flex; flex-wrap: wrap; gap: .35rem; margin-top: .6rem; }
+.fu-job { display: inline-flex; align-items: center; gap: .35rem; padding: .15rem .55rem .15rem .2rem; border-radius: 999px; background: rgba(255,255,255,.08); border: 1px solid rgba(238,240,250,.3);
+    font-family: var(--fu-font-title); font-weight: 600; font-size: .7rem; letter-spacing: .08em; text-transform: uppercase; }
+.fu-job i { width: 18px; height: 18px; border-radius: 50%; display: grid; place-items: center; font-style: normal; font-size: .65rem; color: #1A1440; background: var(--fu-win-gold); text-shadow: none; }
+.fu-concept-line { display: grid; grid-template-columns: 5rem 1fr; gap: .6rem; align-items: baseline; }
+.fu-concept-line + .fu-concept-line { margin-top: .45rem; }
+.fu-mini-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: .4rem; }
+.fu-mini { padding: .35rem .2rem; border-radius: 7px; background: rgba(0,0,0,.22); text-align: center; }
+.fu-mini b { display: block; font-family: var(--fu-font-title); font-weight: 600; font-size: .95rem; }
+
+/* Jauges PV / PM / PI : seuil de Crise posé sur la jauge, dégâts qui traînent */
+.fu-res { display: grid; grid-template-columns: 2.2rem 1fr auto; gap: .25rem .75rem; align-items: center; }
+.fu-res + .fu-res { margin-top: .7rem; }
+.fu-res-key { font-family: var(--fu-font-title); font-weight: 700; font-size: .95rem; letter-spacing: .06em; font-style: italic; }
+.fu-res-val { font-family: var(--fu-font-title); font-weight: 700; font-size: 1.35rem; line-height: 1; font-style: italic; font-variant-numeric: tabular-nums; text-align: right; min-width: 6rem; }
+.fu-res-val small { font-size: .8rem; color: var(--fu-win-muted); font-style: normal; }
+.fu-gauge-wrap { position: relative; }
+.fu-gauge { position: relative; height: 16px; background: rgba(0,0,0,.5); border: 1px solid rgba(238,240,250,.4);
+    clip-path: polygon(7px 0, 100% 0, calc(100% - 7px) 100%, 0 100%); overflow: hidden; }
+.fu-gauge-lag, .fu-gauge-fill { position: absolute; top: 0; bottom: 0; left: 0; }
+.fu-gauge-lag { background: #fff; opacity: .8; transition: width .7s ease .45s; }
+.fu-gauge-fill { transition: width .25s ease-out; box-shadow: inset 0 3px 0 rgba(255,255,255,.35); }
+.fu-gauge::after { content: ''; position: absolute; inset: 0; pointer-events: none;
+    background: repeating-linear-gradient(90deg, transparent 0 calc(10% - 1px), rgba(7,11,42,.45) calc(10% - 1px) 10%); }
+.fu-res[data-k="pv"] .fu-gauge-fill { background: linear-gradient(90deg, var(--fu-hp-a), var(--fu-hp-b)); }
+.fu-res[data-k="pm"] .fu-gauge-fill { background: linear-gradient(90deg, var(--fu-mp-a), var(--fu-mp-b)); }
+.fu-res[data-k="pi"] .fu-gauge-fill { background: linear-gradient(90deg, var(--fu-ip-a), var(--fu-ip-b)); }
+.fu-res[data-k="pv"] .fu-res-key { color: var(--fu-hp-b); }
+.fu-res[data-k="pm"] .fu-res-key { color: var(--fu-mp-b); }
+.fu-res[data-k="pi"] .fu-res-key { color: var(--fu-ip-b); }
+.fu-crisis-mark { position: absolute; top: -5px; bottom: -5px; width: 2px; margin-left: -1px; background: var(--color-danger); box-shadow: 0 0 6px var(--color-danger); z-index: 2; }
+.fu-crisis-flag { position: absolute; top: -14px; transform: translateX(-50%); font-family: var(--fu-font-title); font-weight: 600; font-size: .55rem; letter-spacing: .12em; color: #FF9AA5; text-transform: uppercase; }
+.fu-res.is-crisis .fu-gauge-fill { background: linear-gradient(90deg, var(--fu-crisis-a), var(--fu-crisis-b)); animation: fu-pulse 1.1s ease-in-out infinite; }
+.fu-res.is-crisis .fu-res-key, .fu-res.is-crisis .fu-res-val { color: #FF8C98; }
+@keyframes fu-pulse { 0%, 100% { filter: brightness(1); } 50% { filter: brightness(1.45); } }
+.fu-quick { grid-column: 2 / -1; display: flex; gap: .25rem; flex-wrap: wrap; }
+.fu-quick button { padding: .15rem .45rem; border-radius: 5px; font-family: var(--fu-font-title); font-weight: 600; font-size: .7rem; color: var(--fu-win-muted); border: 1px solid rgba(238,240,250,.25); background: rgba(0,0,0,.2); }
+.fu-quick button:hover:not(:disabled) { color: #fff; border-color: var(--fu-win-edge); }
+.fu-quick button.is-dmg:hover:not(:disabled) { color: #FF9AA5; border-color: #FF9AA5; }
+.fu-quick button.is-heal:hover:not(:disabled) { color: #9FF5C6; border-color: #9FF5C6; }
+.fu-quick button:disabled { opacity: .35; cursor: not-allowed; }
+.fu-quick .fu-gap { flex: 1; }
+.fu-derived { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: .5rem; }
+.fu-stat { padding: .5rem .3rem .4rem; text-align: center; border-radius: 9px; background: rgba(0,0,0,.25); border: 1px solid rgba(238,240,250,.18); }
+.fu-stat .fu-ico-sm { display: block; margin: 0 auto .2rem; color: var(--fu-win-gold); }
+.fu-stat.is-crisis .fu-ico-sm { color: var(--color-danger); }
+.fu-stat.is-magic .fu-ico-sm { color: var(--color-secondary); }
+.fu-stat b { display: block; font-family: var(--fu-font-title); font-weight: 700; font-size: 1.25rem; line-height: 1; }
+.fu-stat input { width: 100%; text-align: center; font-family: var(--fu-font-title); font-weight: 700; font-size: 1.25rem; line-height: 1; color: var(--fu-win-gold); background: transparent; }
+.fu-stat .fu-label { display: block; font-size: .56rem; margin-top: .25rem; }
+@media (max-width: 520px) { .fu-derived { grid-template-columns: repeat(3, minmax(0, 1fr)); } .fu-res-val { min-width: 0; font-size: 1.1rem; } }
+
+/* Dés en gemmes (FuDie) : la couleur dit la taille */
+.fu-die { position: relative; width: 52px; height: 52px; display: grid; place-items: center; flex: none; transition: transform .15s; }
+.fu-die svg { position: absolute; inset: 0; width: 100%; height: 100%; fill: var(--die-b); stroke: var(--die-a); stroke-width: 2; stroke-linejoin: round;
+    filter: drop-shadow(0 0 6px color-mix(in srgb, var(--die-a) 55%, transparent)) drop-shadow(1px 2px 0 var(--fu-win-shadow)); }
+.fu-die svg .fu-die-facet { fill: none; stroke-width: 1.1; opacity: .5; }
+.fu-die > span { position: relative; font-family: var(--fu-font-title); font-weight: 700; font-size: .95rem; color: #fff; text-shadow: 1px 1px 0 rgba(0,0,0,.55); }
+.fu-die[data-s="6"]  { --die-a: #D9E2F5; --die-b: #5E6E96; }   /* pierre */
+.fu-die[data-s="8"]  { --die-a: #9FF5C6; --die-b: #1F8E5C; }   /* émeraude */
+.fu-die[data-s="10"] { --die-a: #A8E6FF; --die-b: #2266C9; }   /* saphir */
+.fu-die[data-s="12"] { --die-a: #FFF0B8; --die-b: #C08A1E; }   /* topaze */
+.fu-die-sm { width: 30px; height: 30px; }
+.fu-die-sm > span { font-size: .62rem; }
+button.fu-die:hover:not(:disabled) { transform: translateY(-2px) scale(1.06); }
+button.fu-die:disabled { cursor: default; }
+
+/* Attributs et altérations en arbre (retour MJ) : paire DEX/INT → Enragé, PUI/VOL → Empoisonné */
+.fu-tree { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .75rem 1.1rem; }
+.fu-pair { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0 .5rem; }
+.fu-pair-col { display: grid; justify-items: stretch; align-content: start; }
+.fu-attr { position: relative; display: grid; justify-items: center; gap: .35rem; padding: .6rem .35rem .55rem; border-radius: 11px;
+    background: radial-gradient(ellipse at 50% 30%, rgba(255,255,255,.1), transparent 70%), rgba(0,0,0,.22); border: 1px solid rgba(238,240,250,.2); }
+.fu-attr-key { font-family: var(--fu-font-title); font-weight: 700; font-size: .85rem; letter-spacing: .16em; }
+.fu-attr-name { font-size: .72rem; color: var(--fu-win-muted); margin-top: -.2rem; }
+.fu-attr-base { font-family: var(--fu-font-title); font-weight: 600; font-size: .64rem; letter-spacing: .08em; color: var(--fu-win-muted); }
+.fu-attr-base .is-up { color: #9FF5C6; } .fu-attr-base .is-down { color: #FF9AA5; }
+.fu-boost { position: absolute; top: .35rem; right: .35rem; display: grid; gap: 2px; }
+.fu-boost button { width: 18px; height: 14px; display: grid; place-items: center; border-radius: 3px; color: var(--fu-win-muted); }
+.fu-boost button:hover { color: #9FF5C6; background: rgba(255,255,255,.08); }
+.fu-boost button.is-down:hover { color: #FF9AA5; }
+.fu-attr-dots { position: absolute; top: .4rem; left: .4rem; display: flex; gap: 2px; }
+.fu-attr-dots i { width: 7px; height: 7px; border-radius: 50%; background: currentColor; box-shadow: 0 0 5px currentColor; }
+.fu-attr-bases { display: flex; flex-wrap: wrap; justify-content: center; gap: .2rem; }
+.fu-stem { justify-self: center; width: 2px; height: 9px; background: rgba(238,240,250,.3); transition: background .2s, box-shadow .2s; }
+.fu-stem.is-on { background: var(--st); box-shadow: 0 0 6px var(--st); }
+.fu-branch { grid-column: 1 / -1; position: relative; height: 13px; margin: 0 25%; border: 2px solid rgba(238,240,250,.3); border-top: 0; border-radius: 0 0 10px 10px; transition: border-color .2s, box-shadow .2s; }
+.fu-branch::after { content: ''; position: absolute; left: 50%; bottom: -11px; width: 2px; height: 9px; margin-left: -1px; background: rgba(238,240,250,.3); }
+.fu-branch.is-on { border-color: var(--st); box-shadow: 0 4px 8px -4px var(--st); }
+.fu-branch.is-on::after { background: var(--st); box-shadow: 0 0 6px var(--st); }
+.fu-status { display: inline-flex; align-items: center; justify-content: center; gap: .35rem; padding: .3rem .35rem; border-radius: 9px; color: var(--fu-win-muted);
+    border: 1px dashed rgba(238,240,250,.28); font-family: var(--fu-font-title); font-weight: 600; font-size: .66rem; letter-spacing: .06em; text-transform: uppercase; transition: color .15s, border-color .15s, background .15s, box-shadow .15s; }
+.fu-status .fu-ico-sm { width: 15px; height: 15px; }
+.fu-status:hover { color: #fff; border-color: rgba(238,240,250,.6); }
+.fu-status.is-on { color: #fff; border-style: solid; border-color: var(--st); background: color-mix(in srgb, var(--st) 28%, transparent);
+    box-shadow: 0 0 12px color-mix(in srgb, var(--st) 50%, transparent), inset 0 0 10px color-mix(in srgb, var(--st) 30%, transparent); }
+.fu-status.is-on .fu-ico-sm { color: var(--st); filter: drop-shadow(0 0 4px var(--st)); }
+.fu-pair > .fu-status { grid-column: 1 / -1; justify-self: center; margin-top: 9px; min-width: 62%; }
+@media (max-width: 560px) { .fu-tree { grid-template-columns: 1fr; } }
+
+/* Points Fabula : cristaux */
+.fu-pf { display: flex; align-items: center; gap: .6rem; }
+.fu-pf-crystals { flex: 1; display: flex; flex-wrap: wrap; gap: 4px; min-height: 28px; align-items: center; }
+.fu-crystal { width: 16px; height: 26px; position: relative; filter: drop-shadow(0 0 5px rgba(255,176,74,.7)); flex: none; }
+.fu-crystal::before { content: ''; position: absolute; inset: 0; clip-path: polygon(50% 0, 100% 30%, 80% 100%, 20% 100%, 0 30%); background: linear-gradient(160deg, #FFF3C9 0%, #FFB04A 45%, #C96A12 100%); }
+.fu-crystal::after { content: ''; position: absolute; left: 30%; top: 12%; width: 20%; height: 45%; background: rgba(255,255,255,.75); clip-path: polygon(50% 0, 100% 20%, 60% 100%, 0 80%); }
+.fu-crystal-sm { width: 10px; height: 16px; }
+.fu-pf-count { font-family: var(--fu-font-title); font-weight: 700; font-size: 2rem; line-height: 1; color: var(--fu-copper, #FFB04A); text-shadow: 0 0 14px rgba(255,176,74,.6), 1px 2px 0 var(--fu-win-shadow); min-width: 2.2rem; text-align: center; }
+.fu-help { display: grid; place-items: center; width: 22px; height: 22px; border-radius: 50%; border: 1px solid rgba(238,240,250,.4); color: var(--fu-win-muted); font-family: var(--fu-font-title); font-weight: 600; font-size: .75rem; }
+.fu-help:hover, .fu-help.is-on { color: var(--fu-win-gold); border-color: var(--fu-win-gold); }
+.fu-rules { margin-top: .6rem; padding: .6rem .75rem; border-radius: 9px; background: rgba(0,0,0,.28); font-size: .85rem; line-height: 1.55; }
+.fu-rules b { font-family: var(--fu-font-title); color: #FFB04A; }
+
+/* Liens : sentiments par paires */
+.fu-bond { padding: .6rem .7rem; border-radius: 10px; background: rgba(0,0,0,.22); border: 1px solid rgba(238,240,250,.16); }
+.fu-bond + .fu-bond { margin-top: .5rem; }
+.fu-feelings { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: .3rem; margin-top: .45rem; }
+.fu-feel { display: grid; grid-template-columns: 1fr 1fr; border-radius: 7px; overflow: hidden; border: 1px solid rgba(238,240,250,.25); }
+.fu-feel button { padding: .3rem .1rem; font-family: var(--fu-font-title); font-weight: 600; font-size: .62rem; letter-spacing: .04em; text-transform: uppercase; color: var(--fu-win-muted); }
+.fu-feel button + button { border-left: 1px solid rgba(238,240,250,.2); }
+.fu-feel button:hover { color: #fff; }
+.fu-feel button.is-on { color: #fff; background: linear-gradient(180deg, #FF8FB5, #C23C78); text-shadow: 1px 1px 0 rgba(0,0,0,.4); }
+.fu-feel button.is-on.is-neg { background: linear-gradient(180deg, #8C7BFF, #4A36B8); }
+
+/* Classes : niveaux en losanges, rangs en étoiles, descriptions dépliables */
+.fu-jobcard { padding: .7rem; border-radius: 11px; background: rgba(0,0,0,.2); border: 1px solid rgba(238,240,250,.18); }
+.fu-jobcard + .fu-jobcard { margin-top: .6rem; }
+.fu-jobcard-head { display: flex; align-items: center; gap: .6rem; flex-wrap: wrap; }
+.fu-jobcard-name { font-family: var(--fu-font-title); font-weight: 600; font-size: 1.05rem; letter-spacing: .05em; text-transform: uppercase; }
+.fu-pips { display: flex; gap: 3px; }
+.fu-pips i { width: 9px; height: 9px; transform: rotate(45deg); border: 1px solid rgba(238,240,250,.5); }
+.fu-pips i.is-on { background: var(--fu-win-gold); border-color: #fff4cc; box-shadow: 0 0 5px var(--fu-win-gold); }
+.fu-perks { display: flex; flex-direction: column; gap: .25rem; margin: .5rem 0 .3rem; }
+.fu-perk { display: flex; align-items: flex-start; gap: .4rem; font-size: .75rem; color: var(--fu-win-muted); }
+.fu-fold > button, .fu-fold-toggle { width: 100%; display: flex; align-items: center; gap: .55rem; padding: .4rem .5rem; border-radius: 8px; text-align: left; }
+.fu-fold > button:hover, .fu-fold-toggle:hover { background: rgba(255,255,255,.07); }
+.fu-fold-name { flex: 1; min-width: 0; font-weight: 700; font-size: .9rem; }
+.fu-fold-name small { display: block; font-weight: 400; font-size: .74rem; color: var(--fu-win-muted); }
+.fu-fold-chev { transition: transform .2s; color: var(--fu-win-muted); }
+.fu-fold.is-open .fu-fold-chev { transform: rotate(90deg); color: var(--fu-win-gold); }
+.fu-fold-body { padding: .1rem .6rem .6rem 1.9rem; font-size: .82rem; line-height: 1.5; color: #D6DCFA; white-space: pre-line; }
+.fu-stars { display: flex; gap: 1px; color: var(--fu-win-gold); flex-wrap: wrap; justify-content: flex-end; }
+.fu-stars .fu-ico-sm { width: 12px; height: 12px; filter: drop-shadow(0 0 4px rgba(242,210,122,.6)); }
+.fu-stars .is-off { color: rgba(238,240,250,.25); filter: none; }
+
+/* Sorts et Arcana */
+.fu-mp-cost { padding: .15rem .5rem; border-radius: 999px; font-family: var(--fu-font-title); font-weight: 600; font-size: .7rem; color: #CFF6FF; background: rgba(60,139,255,.25); border: 1px solid rgba(143,240,255,.6); white-space: nowrap; }
+.fu-arcanum { display: grid; grid-template-columns: 40px minmax(0, 1fr); gap: .45rem .7rem; padding: .7rem; border-radius: 11px; border: 1px solid rgba(238,240,250,.2); background: rgba(0,0,0,.2); transition: border-color .3s, box-shadow .3s; }
+.fu-arcanum + .fu-arcanum { margin-top: .5rem; }
+.fu-arcanum-sigil { width: 40px; height: 40px; color: var(--fu-ultima-color); transition: color .4s; }
+.fu-arcanum[data-stage="fusionne"] { border-color: var(--fu-ultima-color); background: radial-gradient(ellipse at 10% 30%, rgba(197,139,255,.4), transparent 60%), rgba(0,0,0,.2);
+    box-shadow: 0 0 16px rgba(197,139,255,.4), inset 0 0 14px rgba(197,139,255,.2); }
+.fu-arcanum[data-stage="fusionne"] .fu-arcanum-sigil { color: #F3E3FF; filter: drop-shadow(0 0 8px var(--fu-ultima-color)); animation: fu-spin 8s linear infinite; }
+.fu-arcanum[data-stage="renvoi"] { border-color: var(--fu-win-gold); background: radial-gradient(ellipse at 10% 30%, rgba(242,210,122,.3), transparent 60%), rgba(0,0,0,.2); box-shadow: 0 0 16px rgba(242,210,122,.35); }
+.fu-arcanum[data-stage="renvoi"] .fu-arcanum-sigil { color: var(--fu-win-gold); filter: drop-shadow(0 0 8px var(--fu-win-gold)); animation: fu-pulse 1.1s ease-in-out infinite; }
+.fu-arcanum.is-locked { opacity: .6; }
+.fu-arc-steps { display: flex; align-items: center; gap: .35rem; flex-wrap: wrap; font-family: var(--fu-font-title); font-weight: 600; font-size: .62rem; letter-spacing: .1em; text-transform: uppercase; color: var(--fu-win-muted); }
+.fu-arc-steps i { width: 12px; height: 1px; background: rgba(238,240,250,.3); }
+.fu-arc-steps span.is-on { color: #fff; padding: .1rem .45rem; border-radius: 999px; background: color-mix(in srgb, var(--stc) 40%, transparent); border: 1px solid var(--stc); }
+.fu-arc-text { grid-column: 2; font-size: .82rem; line-height: 1.5; color: #D6DCFA; }
+.fu-arc-text b { font-family: var(--fu-font-title); letter-spacing: .08em; text-transform: uppercase; font-size: .66rem; color: var(--fu-win-gold); margin-right: .3rem; }
+.fu-arc-actions { grid-column: 2; display: flex; gap: .4rem; flex-wrap: wrap; align-items: center; }
+.fu-arc-actions small { font-size: .74rem; color: var(--fu-win-muted); }
+@keyframes fu-spin { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) { .fu-arcanum .fu-arcanum-sigil, .fu-res.is-crisis .fu-gauge-fill { animation: none; } }
+
+/* Équipe du MJ (barre latérale en cartes) */
+.fu-party { display: grid; gap: .5rem; padding: .5rem; }
+.fu-member { display: grid; grid-template-columns: 40px 1fr; gap: .3rem .6rem; padding: .55rem .65rem; cursor: pointer; border-radius: 11px;
+    background: rgba(0,0,0,.22); border: 1.5px solid rgba(238,240,250,.16); transition: border-color .15s, background .15s; }
+.fu-member:hover { border-color: rgba(238,240,250,.5); }
+.fu-member.is-on { border-color: var(--fu-win-gold); background: linear-gradient(90deg, rgba(255,255,255,.14), rgba(0,0,0,.15)); box-shadow: 0 0 16px rgba(242,210,122,.25); }
+.fu-member-avatar { position: relative; width: 40px; height: 40px; border-radius: 8px; border: 1.5px solid var(--fu-win-edge); overflow: hidden; display: grid; place-items: center; background: linear-gradient(160deg, #5466CC, #1B1F5C); color: var(--fu-win-gold); }
+.fu-member-avatar img { width: 100%; height: 100%; object-fit: cover; }
+.fu-member-online { position: absolute; right: -3px; bottom: -3px; width: 10px; height: 10px; border-radius: 50%; border: 2px solid var(--fu-win-bottom); background: rgba(238,240,250,.3); }
+.fu-member-online.is-on { background: #7FE0A0; box-shadow: 0 0 6px #7FE0A0; }
+.fu-member-name { font-family: var(--fu-font-title); font-weight: 600; font-size: .9rem; letter-spacing: .05em; text-transform: uppercase; display: flex; align-items: center; gap: .35rem; min-width: 0; }
+.fu-member-name span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.fu-member-sub { font-size: .7rem; color: var(--fu-win-muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.fu-member-bars { grid-column: 1 / -1; display: grid; gap: .2rem; }
+.fu-minibar { display: grid; grid-template-columns: 1.4rem 1fr 3.2rem; gap: .4rem; align-items: center; font-family: var(--fu-font-title); font-weight: 600; font-size: .66rem; }
+.fu-minibar + .fu-minibar { margin-top: 0; }
+.fu-minibar .fu-gauge { height: 8px; clip-path: polygon(4px 0, 100% 0, calc(100% - 4px) 100%, 0 100%); }
+.fu-minibar .fu-res-val { font-size: .7rem; min-width: 0; }
+.fu-member-foot { grid-column: 1 / -1; display: flex; align-items: center; gap: .35rem; font-family: var(--fu-font-title); font-weight: 600; font-size: .66rem; color: var(--fu-win-muted); letter-spacing: .06em; }
+.fu-micro-step { display: inline-flex; align-items: center; gap: .25rem; margin-left: auto; }
+.fu-micro-step button { width: 18px; height: 18px; border-radius: 4px; border: 1px solid rgba(238,240,250,.3); display: grid; place-items: center; line-height: 1; }
+.fu-micro-step button:hover { border-color: var(--fu-win-gold); color: var(--fu-win-gold); }
+.fu-micro-step b { color: #fff; min-width: .9rem; text-align: center; }
+
+/* ═════════════════════════════════════════════════════════════════════════════
+   FENÊTRE DE JET ET HISTORIQUE (lot 3, planche §4 et §5)
+   ═════════════════════════════════════════════════════════════════════════════ */
+.fu-btn-big { padding: .75rem 1.6rem; font-size: .95rem; border-radius: 10px; letter-spacing: .2em; }
+.fu-roll { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.1fr); gap: 0; margin: -1.25rem; }   /* annule le padding de .vtt-modal-body */
+.fu-roll > section { padding: 1rem 1.1rem 1.1rem; min-width: 0; }
+.fu-roll > section + section { border-left: 1px solid rgba(238,240,250,.22); background: radial-gradient(ellipse at 50% 40%, rgba(127,216,255,.12), transparent 70%); }
+@media (max-width: 860px) { .fu-roll { grid-template-columns: 1fr; } .fu-roll > section + section { border-left: 0; border-top: 1px solid rgba(238,240,250,.22); } }
+.fu-roll-ref { display: flex; align-items: center; gap: .5rem; flex-wrap: wrap; margin-bottom: .9rem; padding: .5rem .7rem; border-radius: 9px; background: rgba(0,0,0,.25); font-size: .85rem; }
+.fu-pick { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: .4rem; }
+.fu-pick button { display: grid; justify-items: center; gap: .25rem; padding: .45rem .2rem .35rem; border-radius: 10px; border: 1.5px solid rgba(238,240,250,.2); background: rgba(0,0,0,.2); }
+.fu-pick button:hover { border-color: rgba(238,240,250,.6); }
+.fu-pick button.is-on { border-color: var(--fu-win-gold); background: rgba(242,210,122,.14); box-shadow: 0 0 12px rgba(242,210,122,.3); }
+.fu-pick .fu-label { font-size: .6rem; }
+.fu-formula { display: flex; align-items: center; justify-content: center; gap: .5rem; flex-wrap: wrap; padding: .6rem; margin: .2rem 0 .9rem; border-radius: 10px; background: rgba(0,0,0,.3);
+    font-family: var(--fu-font-title); font-weight: 600; font-size: 1.05rem; letter-spacing: .06em; }
+.fu-op { color: var(--fu-win-muted); }
+.fu-skill-pill { display: inline-flex; align-items: center; gap: .35rem; padding: .25rem .6rem; border-radius: 999px; border: 1.5px solid rgba(238,240,250,.35); color: var(--fu-win-muted);
+    font-family: var(--fu-font-title); font-weight: 600; font-size: .7rem; letter-spacing: .06em; text-transform: uppercase; }
+.fu-skill-pill small { font-size: .64rem; letter-spacing: .02em; text-transform: none; opacity: .85; }
+.fu-skill-pill:hover:not(:disabled) { color: #fff; border-color: var(--fu-win-edge); }
+.fu-skill-pill.is-on { color: #1A1440; text-shadow: none; border-color: #fff8de; background: linear-gradient(180deg, #FFF0C2, #E6BE5C); }
+.fu-skill-pill:disabled { cursor: default; border-style: dashed; }
+.fu-auto { padding: 0 .3rem; border-radius: 4px; background: rgba(26,20,64,.18); font-size: .55rem; letter-spacing: .1em; }
+
+/* Scène du résultat */
+.fu-stage { position: relative; min-height: 18rem; height: 100%; display: grid; place-items: center; text-align: center; overflow: hidden; border-radius: 10px; }
+.fu-stage-idle { display: grid; gap: .6rem; justify-items: center; color: var(--fu-win-muted); font-family: var(--fu-font-title); font-weight: 600; font-size: .78rem; letter-spacing: .2em; text-transform: uppercase; }
+.fu-stage-idle .fu-ico { width: 64px; height: 64px; color: rgba(238,240,250,.35); animation: fu-spin 14s linear infinite; }
+.fu-stage-body { position: relative; z-index: 2; padding: 1rem 0; }
+.fu-stage-body.has-stamp { padding-top: 5.5rem; }
+.fu-dice-pair { display: flex; align-items: center; justify-content: center; gap: 1.1rem; }
+.fu-plus { font-family: var(--fu-font-title); font-weight: 700; font-size: 1.6rem; color: var(--fu-win-muted); }
+.fu-die-slot { position: relative; padding-bottom: 1rem; }
+.fu-die-slot.is-hi::after { content: 'VH'; position: absolute; left: 50%; bottom: 0; transform: translateX(-50%); font-family: var(--fu-font-title); font-weight: 700; font-size: .62rem; letter-spacing: .14em; color: var(--fu-win-gold); }
+.fu-die-lg { width: 80px; height: 80px; }
+.fu-die-lg > span { font-size: 1.9rem; }
+.fu-total { font-family: var(--fu-font-title); font-weight: 700; font-size: 3.6rem; line-height: 1; font-style: italic; margin-top: .6rem; padding-right: .12em;
+    text-shadow: 2px 3px 0 var(--fu-win-shadow), 0 0 22px rgba(127,216,255,.5); }
+.fu-total-detail { font-family: var(--fu-font-title); font-weight: 600; font-size: .82rem; letter-spacing: .06em; color: var(--fu-win-muted); }
+.fu-verdict { display: inline-block; margin-top: .6rem; padding: .35rem 1rem; font-family: var(--fu-font-title); font-weight: 700; font-size: .85rem; letter-spacing: .2em; text-transform: uppercase; transform: skewX(-12deg); text-shadow: none; }
+.fu-verdict.is-ok   { background: linear-gradient(90deg, #2FB57A, #6FE6A8); color: #052814; }
+.fu-verdict.is-ko   { background: linear-gradient(90deg, #A8263F, #FF6577); color: #fff; }
+.fu-verdict.is-crit { background: linear-gradient(90deg, #D9A93E, #FFF0C2); color: #2A1600; }
+.fu-verdict.is-sm   { margin-top: 0; padding: .1rem .55rem; font-size: .6rem; }
+.fu-dmg { position: absolute; right: 7%; top: 9%; z-index: 3; font-family: var(--fu-font-title); font-weight: 700; font-size: 2.8rem; line-height: 1; font-style: italic; color: #FFF0C2;
+    -webkit-text-stroke: 2px #7A2A10; text-shadow: 0 4px 0 #7A2A10, 0 0 20px rgba(255,160,80,.8); animation: fu-dmg-pop .7s cubic-bezier(.3,1.7,.5,1) both; }
+.fu-dmg small { display: block; font-size: .7rem; -webkit-text-stroke: 0; letter-spacing: .16em; text-transform: uppercase; text-shadow: 1px 1px 0 #000; color: #FFB08A; margin-top: .2rem; }
+@keyframes fu-dmg-pop { 0% { transform: translateY(20px) scale(.3); opacity: 0; } 60% { transform: translateY(-14px) scale(1.15); opacity: 1; } 100% { transform: none; } }
+.fu-stage.is-crit::before { content: ''; position: absolute; inset: -20px; pointer-events: none; opacity: .55;
+    background: repeating-conic-gradient(from 0deg at 50% 45%, rgba(255,240,190,.55) 0 2deg, transparent 2deg 9deg);
+    -webkit-mask: radial-gradient(circle at 50% 45%, transparent 22%, #000 60%); mask: radial-gradient(circle at 50% 45%, transparent 22%, #000 60%);
+    animation: fu-speed .5s linear infinite; }
+.fu-stage.is-fumble::before { content: ''; position: absolute; inset: 0; pointer-events: none; border-radius: 10px; background: radial-gradient(circle, transparent 30%, rgba(120,10,40,.55)); }
+@keyframes fu-speed { to { transform: rotate(9deg); } }
+.fu-stamp { position: absolute; top: 5%; left: 50%; transform: translateX(-50%) rotate(-8deg); padding: .35rem 1.3rem .45rem; z-index: 3; white-space: nowrap;
+    font-family: 'Credit Valley', var(--fu-font-title); font-size: 2rem; line-height: 1; letter-spacing: .06em; color: #2A1600; text-shadow: none;
+    background: linear-gradient(180deg, #FFF6D0, #F2D27A 50%, #D99A2B); border: 3px solid #fff; box-shadow: 0 0 0 2px #2A1600, 0 0 30px rgba(255,220,120,.9);
+    animation: fu-stamp .45s cubic-bezier(.2,1.8,.5,1) both; }
+.fu-stamp small { display: block; font: 700 .6rem/1 var(--fu-font-kana); letter-spacing: .6em; margin-top: .2rem; }
+.fu-stamp.is-fumble { color: #fff; background: linear-gradient(180deg, #FF8C98, #B0203C); box-shadow: 0 0 0 2px #2A0010, 0 0 30px rgba(255,60,90,.7); }
+@keyframes fu-stamp { 0% { transform: translateX(-50%) rotate(-8deg) scale(2.6); opacity: 0; } 100% { transform: translateX(-50%) rotate(-8deg) scale(1); opacity: 1; } }
+.fu-luck { display: grid; gap: .45rem; justify-items: center; margin-top: .9rem; padding: .6rem .7rem; border-radius: 10px; border: 1px dashed rgba(127,216,255,.5); background: rgba(127,216,255,.08); }
+.fu-luck b { color: var(--fu-crystal, #7FD8FF); font-size: .9rem; }
+@media (prefers-reduced-motion: reduce) { .fu-stage.is-crit::before, .fu-stage-idle .fu-ico, .fu-dmg, .fu-stamp { animation: none; } }
+
+/* Historique et notification : même rendu (FabulaHistoryEntry) */
+.fu-log { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: .2rem .7rem; align-items: center; }
+.fu-log-dice { grid-row: span 2; display: flex; gap: 2px; align-items: center; }
+.fu-log-title { font-weight: 700; font-size: .92rem; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.fu-log-total { font-family: var(--fu-font-title); font-weight: 700; font-size: 1.7rem; line-height: 1; font-style: italic; text-align: right; padding-right: .15em; }
+.fu-log-total.is-crit { color: var(--fu-win-gold); text-shadow: 0 0 10px rgba(242,210,122,.6); }
+.fu-log-total.is-ko { color: #FF8C98; }
+.fu-log-line { grid-column: 2 / -1; display: flex; align-items: center; gap: .4rem; flex-wrap: wrap; font-family: var(--fu-font-title); font-weight: 600; font-size: .72rem; letter-spacing: .04em; color: var(--fu-win-muted); }
+.fu-log-dmg { color: #FFB08A; }
+.fu-log-icon { width: 30px; height: 30px; border-radius: 8px; display: grid; place-items: center; color: var(--fu-win-gold);
+    background: radial-gradient(circle at 35% 30%, rgba(255,255,255,.22), transparent 60%), linear-gradient(160deg, #3A4FB8, #141B5A); border: 1.5px solid rgba(238,240,250,.55); }
+
+/* ── Dés 2D (lot 4, components/shared/DiceOverlay2D.jsx) : les gemmes viennent de
+   dice.byType (config.jsx) ; ici seulement le traitement, construit sur les variables
+   du dé (lueur = son arête), et la scène aux couleurs des fenêtres ── */
+.vtt-dice2d { background: radial-gradient(circle at 50% 50%, rgba(46, 63, 152, .45), rgba(7, 11, 42, .78) 70%); }
+.vtt-dice2d.is-exploding { background: radial-gradient(circle at 50% 50%, rgba(242, 210, 122, .35), rgba(7, 11, 42, .78) 70%); }
+.vtt-die2d { filter: drop-shadow(0 0 8px color-mix(in srgb, var(--die-edge) 55%, transparent)) drop-shadow(1px 2px 0 var(--fu-win-shadow)); }
+.vtt-die2d-value { font-family: var(--fu-font-title); font-weight: 700; }
+.vtt-dice2d-slot .vtt-die2d { filter: drop-shadow(0 0 18px color-mix(in srgb, var(--die-edge) 70%, transparent)) drop-shadow(2px 4px 0 var(--fu-win-shadow)); }
+.vtt-dice2d-label {
+    border-radius: 10px; border: 2px solid var(--fu-win-edge); color: var(--fu-win-gold); text-shadow: 1px 1px 0 var(--fu-win-shadow);
+    background: linear-gradient(180deg, var(--fu-win-top), var(--fu-win-bottom)); box-shadow: 0 0 0 1px var(--fu-win-shadow), 0 8px 20px rgba(0,0,0,.4);
+    font-family: var(--fu-font-title); font-weight: 600; letter-spacing: .14em;
+}
+.vtt-dice2d-skip {
+    border-radius: 8px; border: 1.5px solid rgba(238,240,250,.45); color: var(--fu-win-muted);
+    background: linear-gradient(180deg, var(--fu-win-top), var(--fu-win-bottom));
+    font-family: var(--fu-font-title); font-weight: 600; letter-spacing: .1em; text-transform: uppercase;
+}
+.vtt-dice2d-skip:hover { color: var(--fu-win-text); border-color: var(--fu-win-edge); }
+
+/* ═════════════════════════════════════════════════════════════════════════════
+   FICHE DE GROUPE ET OBJETS PAYÉS EN PI (lot 5, planche §8)
+   ═════════════════════════════════════════════════════════════════════════════ */
+.fu-group { display: grid; gap: .75rem; grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr); align-items: start; }
+@media (max-width: 1000px) { .fu-group { grid-template-columns: 1fr; } }
+.fu-slot-ico { width: 34px; height: 34px; border-radius: 8px; display: grid; place-items: center; color: var(--fu-win-gold); flex: none;
+    background: radial-gradient(circle at 35% 30%, rgba(255,255,255,.22), transparent 60%), linear-gradient(160deg, #3A4FB8, #141B5A); border: 1.5px solid rgba(238,240,250,.55); }
+.fu-pi-cost { padding: .15rem .5rem; border-radius: 999px; font-family: var(--fu-font-title); font-weight: 600; font-size: .7rem; color: #FFE9C4; background: rgba(255,154,60,.22); border: 1px solid rgba(255,224,122,.6); white-space: nowrap; }
+.fu-gitems { display: grid; gap: 2px; }
+.fu-gitem { display: grid; grid-template-columns: 34px minmax(0, 1fr) auto auto; gap: .7rem; align-items: center; padding: .55rem .6rem; border-radius: 9px; }
+.fu-gitem:nth-child(odd) { background: rgba(0,0,0,.18); }
+.fu-gitem b { font-weight: 700; font-size: .9rem; display: block; }
+.fu-gitem p { font-size: .8rem; color: #D6DCFA; line-height: 1.4; }
+.fu-gitem.is-custom { border: 1px dashed rgba(238,240,250,.25); }
+.fu-gitem-choice { grid-column: 2 / -1; display: flex; gap: .35rem; flex-wrap: wrap; align-items: center; }
+.fu-clocks { display: grid; grid-template-columns: repeat(auto-fill, minmax(290px, 1fr)); gap: .7rem; }
+.fu-clock { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: .8rem; align-items: center; padding: .7rem; border-radius: 11px; background: rgba(0,0,0,.2); border: 1px solid rgba(238,240,250,.16); }
+.fu-clock-body { display: flex; flex-direction: column; gap: .45rem; min-width: 0; }
+.fu-clock-count { display: flex; align-items: center; gap: .35rem; }
+.fu-clock-num { margin-right: auto; font-family: var(--fu-font-title); font-weight: 600; font-size: .95rem; color: var(--fu-win-muted); }
+.fu-clock-num b { font-size: 1.5rem; color: var(--fu-win-text); }
+.fu-clock-gear { flex: none; width: 28px; height: 28px; display: grid; place-items: center; border-radius: 6px; color: var(--fu-win-muted); border: 1px solid transparent; }
+.fu-clock-gear:hover, .fu-clock-gear.is-on { color: var(--fu-win-gold); border-color: rgba(242,210,122,.5); }
+.fu-clock-vis { align-self: flex-start; display: inline-flex; align-items: center; gap: .35rem; font-size: .75rem; color: var(--fu-win-muted); }
+.fu-clock-vis:hover { color: var(--fu-win-text); }
+.fu-clock-vis.is-hidden { color: var(--fu-win-gold); }
+.fu-clock-settings { display: flex; align-items: center; gap: .5rem; flex-wrap: wrap; padding-top: .45rem; border-top: 1px solid rgba(238,240,250,.14); }
+.fu-btn-danger.is-armed { color: #fff; border-color: #FF9AA5; background: linear-gradient(180deg, #e0525a, #a8323a); }
+/* Le disque seul (.fu-clock-dial) : les icônes des boutons du cadran sont aussi des svg */
+.fu-clock-dial { width: 104px; height: 104px; filter: drop-shadow(0 0 8px rgba(127,216,255,.25)); }
+.fu-clock-face { fill: var(--fu-win-field); stroke: var(--fu-win-edge); stroke-width: 2; }
+.fu-clock-dial path { fill: rgba(255,255,255,.07); stroke: var(--fu-win-field); stroke-width: 2; cursor: pointer; transition: fill .2s; }
+.fu-clock-dial path:hover { fill: rgba(242,210,122,.35); }
+.fu-clock-dial path.is-on { fill: var(--fu-win-gold); }
+.fu-clock.is-full .fu-clock-dial path.is-on { fill: var(--color-danger); }
+.fu-clock.is-full .fu-clock-dial { filter: drop-shadow(0 0 12px rgba(255,93,108,.7)); }
+.fu-clock.is-hidden { border-style: dashed; opacity: .8; }
+.fu-jentry { display: grid; gap: .4rem; padding: .55rem .6rem; border-radius: 9px; background: rgba(0,0,0,.2); border: 1px solid rgba(238,240,250,.14); }
+.fu-jentry + .fu-jentry { margin-top: .4rem; }
+
+/* « Utiliser un objet » près des PI : la fenêtre ouverte passe devant ses voisines */
+.fu-win:has(.fu-items-pop) { z-index: 30; }
+.fu-use-item { position: relative; display: inline-flex; }
+.fu-quick .fu-use-item-btn { color: #FFE07A; border-color: rgba(255,224,122,.5); }
+.fu-quick .fu-use-item-btn:hover { color: #fff; border-color: #FFE07A; }
+.fu-items-pop { position: absolute; left: 0; top: calc(100% + 6px); z-index: 40; width: min(22rem, 85vw); padding: .5rem 0; text-align: left; }
+.fu-use-row { width: 100%; display: grid; grid-template-columns: 22px 1fr auto; gap: .6rem; align-items: center; padding: .45rem .8rem .45rem 1.2rem; text-align: left; }
+.fu-use-row:hover:not(:disabled) { background: linear-gradient(90deg, rgba(255,255,255,.18), transparent); }
+.fu-use-row:disabled { opacity: .4; cursor: not-allowed; }
+.fu-use-row b { display: block; font-weight: 700; font-size: .86rem; }
+.fu-use-row small { display: block; font-size: .74rem; line-height: 1.35; color: var(--fu-win-muted); }
+.fu-log-total.is-pi { font-size: 1.2rem; color: #FFE07A; }
+
+/* ── Carte Héros en bandeau : identité · concept évocateur · mensurations ── */
+/* Écran étroit : zones empilées, séparées par un filet. */
+.fu-hero-body { display: grid; grid-template-columns: minmax(0, 1fr); gap: .9rem; }
+.fu-hero-zone { padding-top: .9rem; border-top: 1px solid rgba(238,240,250,.16); }
+.fu-hero-zone.fu-mini-grid { align-content: center; }
+@media (min-width: 1024px) {
+    .fu-hero-body { grid-template-columns: minmax(0, 1.6fr) minmax(0, 1.1fr) minmax(0, .75fr); gap: 1.5rem; align-items: center; }
+    .fu-hero-zone { padding: 0 0 0 1.5rem; border-top: 0; border-left: 1px solid rgba(238,240,250,.16); }
+    .fu-hero-zone.fu-mini-grid { grid-template-columns: repeat(2, 1fr); align-self: stretch; }
+}
+
+/* Rangées à même hauteur (Héros · Points Fabula, Statut · Attributs) : la
+   fenêtre la plus basse s'étire, son contenu se centre verticalement. */
+.fu-row-stretch > .fu-win { display: flex; flex-direction: column; }
+.fu-row-stretch .fu-hero-body,
+.fu-row-stretch .fu-tree { margin-block: auto; }
+
+/* Objets (équipement, sac) encadrés comme les arcanes ; emplacement vide en pointillés */
+.fu-item { display: flex; flex-direction: column; gap: .25rem; padding: .6rem .7rem; border-radius: 11px; border: 1px solid rgba(238,240,250,.2); background: rgba(0,0,0,.2); }
+.fu-item.is-empty { border-style: dashed; background: transparent; color: var(--fu-win-muted); font-size: .75rem; font-style: italic; }
+
+/* Pastilles de classe du Héros : lien vers la classe, qui brille à l'arrivée */
+.fu-job.is-link { cursor: pointer; transition: border-color .2s, background .2s; }
+.fu-job.is-link:hover { border-color: var(--fu-win-gold); background: rgba(242,210,122,.16); }
+.fu-jobcard { scroll-margin-top: 5rem; }
+.fu-jobcard.is-flash { animation: fu-job-flash 1.6s ease-out; }
+@keyframes fu-job-flash {
+    0%, 30% { border-color: var(--fu-win-gold); box-shadow: 0 0 0 2px rgba(242,210,122,.55), 0 0 22px rgba(242,210,122,.35); }
+    100% { box-shadow: 0 0 0 0 rgba(242,210,122,0); }
+}
+
+/* Fenêtre Équipement : armure, armes, accessoire en sections */
+.fu-equip-slot + .fu-equip-slot { margin-top: .75rem; padding-top: .75rem; border-top: 1px solid rgba(238,240,250,.16); }
+.fu-slot-title {
+    margin-bottom: .45rem; font-family: var(--fu-font-title); font-weight: 600; font-size: .82rem;
+    letter-spacing: .12em; text-transform: uppercase; color: var(--fu-win-gold);
+}
