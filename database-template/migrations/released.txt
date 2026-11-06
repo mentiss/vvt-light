@@ -32,3 +32,4 @@
 05112026_fabula_arcana_renvoi.sql
 05112026_fabula_porte_bonheur.sql
 06112026_fabula_fiche_groupe.sql
+06112026_fabula_initiative_pj.sql
