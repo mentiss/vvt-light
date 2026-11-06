@@ -35,7 +35,8 @@ const GM_DICE_HOOKS = {
     },
     buildAnimationSequence: (raw, ctx) => ({
         mode: 'single',
-        groups: [{ id: 'gm-roll', diceType: 'd20', color: 'default', label: ctx.label, waves: raw.groups[0].waves }],
+        // Une seule vague (pas d'explosion en 2d20) : le moteur ne fournit pas de waves dans raw
+        groups: [{ id: 'gm-roll', diceType: 'd20', color: 'default', label: ctx.label, waves: [{ dice: raw.groups[0].values }] }],
     }),
 };
 
