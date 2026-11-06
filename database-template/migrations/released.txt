@@ -29,3 +29,6 @@
 03112026_woddavampire_coterie.sql
 03112026_woddavampire_equipment_items.sql
 04112026_dune_identite_atouts.sql
+05112026_fabula_arcana_renvoi.sql
+05112026_fabula_porte_bonheur.sql
+06112026_fabula_fiche_groupe.sql
