@@ -178,3 +178,20 @@
     font-display: swap;
 }
 
+/* Imperium Maledictum (maledictum) : Bank Gothic, titres (Medium) et libellés (Light).
+   Dessin de Morris Fuller Benton (1930), domaine public (MJ, 2026-11-06) */
+@font-face {
+    font-family: 'Bank Gothic Medium';
+    src: url('./BankGothic_Medium.ttf') format('truetype');
+    font-weight: normal;
+    font-style: normal;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'Bank Gothic Light';
+    src: url('./BankGothic_Light.ttf') format('truetype');
+    font-weight: normal;
+    font-style: normal;
+    font-display: swap;
+}

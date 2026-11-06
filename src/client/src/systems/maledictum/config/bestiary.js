@@ -1,0 +1,1225 @@
+// Imperium Maledictum — bestiaire des PNJ (données seules, contrat : documentations/maledictum/format_catalogues.md §2).
+// Sources :
+//   - Livre de base (source 'core'), ch. XII Bestiary p.316-354 (règles des rôles p.317-318, rencontres p.310).
+//   - Inquisition Gamemaster's Guide (source 'igmg') : menaces du secteur ch. VII p.135-159, bestiaire annexe 1 p.172-174.
+//   - Inquisition Player's Guide (source 'ipg') : bestiaire des familiers ch. VI p.111-115.
+// Pages = numéros imprimés (identiques aux numéros de page des PDF).
+//
+// Conventions :
+//   - skills : valeurs finales du livre ; clé 'skill' ou 'skill.spec' (snake_case du nom VO de la spécialisation).
+//   - attacks : skill = 'skill.spec' utilisé, value = valeur du Test, damage tel qu'écrit (« 6 + DR » à distance,
+//     « 3 + écart de DR » en mêlée, BF déjà inclus), range = portée (immediate, short, medium, long, extreme) ou null,
+//     traits = texte des traits d'arme en français ; warpRating pour les attaques psychiques ; group pour les listes
+//     d'armes optionnelles (spécialistes et armes lourdes de l'Astra Militarum).
+//   - armour : nombre, ou chaîne quand l'Armure est tirée (« 1d10 », « 2 + 1d10 », « 1d5 + 2 »).
+//   - powers : clés des pouvoirs psychiques (snake_case des noms VO, cf. powers.js).
+//   - faction : clé de faction du contrat quand elle s'applique (Inquisition : 'inquisition', clé d'Influence),
+//     sinon texte (« Imperium », « Hérétique », « Xénos », « Démon »).
+//   - basedOn : variante présentée sans profil complet dans le livre ; reprend le profil de base (champs à null),
+//     compétences, traits, attaques et pouvoirs ajoutés ou remplaçant ceux de la base.
+//   - Champs ajoutés au contrat : labelEn des traits et attaques, threat (menace du GMG), transient (Murmureur),
+//     fly (vol), et pour les familiers familiar, encounter, instincts, cost, availability.
+//
+// À relire :
+//   - Spécialisations absentes de skills.js : logic.mathematics, navigation.stellar, piloting.voidship, tech.aeldari,
+//     ranged.digi_weapons, athletics.divebomb (clés tirées du nom VO) ; spécialisations libres (« Various ») :
+//     linguistics.sisters_of_silence_sign_language, linguistics.lingua_technis, lore.macharian_sector.
+//     « Intuition (People) » (Adepte de l'Administratum, Chasseur de primes, trait de l'Acolyte) rattaché à intuition.human ;
+//     « Logic (Evaluate) » (Contrebandier) rattaché à logic.evaluation.
+//   - Pouvoirs cités par les profils mais absents de powers.js (clés gardées d'après le nom du profil) : overwhelm,
+//     telekinetic_finesse, telekinetic_leverage (Psyker Primaris, Biomancien), thermal_lance (Pyromancien) ; noms
+//     probablement hérités d'une version antérieure du livre. « Objuration Mechanicum » (p.321) rattaché à abjuration_mechanicum.
+//   - Noms d'armes, d'équipement et de PNJ traduits sans glossaire (Matraque à choc pour Shock Maul, Technaugure pour
+//     Tech-Priest, Exécuteur pour Enforcer, Sanguinaire, Portepeste, Démonhôte, Garde spectral…) : à valider.
+//   - Coquilles reprises telles quelles : Fusil à pompe du Membre d'équipage de Vaisseau noir « 6 Damage » (sans + DR) ;
+//     Couteau énergétique de l'Interrogateur « Penetrating (40) » ; Fusil automatique du Cultiste à 5 + DR (6 ailleurs) ;
+//     Grenades krak, charge de brèche, missile krak, canon laser sans « + DR » ; Mizrax a Mêlée 90 mais attaque à 75.
+//   - Portées absentes dans le livre (range: null) : Fusil automatique, Revolver à balles et Grenade suffocante de
+//     l'Exécuteur, Grenade suffocante de l'équipage de Vaisseau noir, Fioles chimiques de Gantus Black.
+//   - Blessures critiques atypiques pour le rôle, reprises du livre : Acolyte (Élite) 0, Guerrier kabalite (Élite) 3,
+//     Horreur bleue et Horreur soufrée (Élite) 0.
+//   - Détermination : Serviteur « See Traits » (resolve: null, rien dans les traits) ; Démonhôte « 3* » (5 une fois libéré).
+//   - Vitesse : Enfant du Chaos « – » (tirée au d10, speed: null) ; Aile-rasoir « Fly » seul (speed: null, fly: true) ;
+//     Disque de Tzeentch « Fast, Fly ».
+//   - Taille absente : Murmureur (size: null). Les Gardes renégats et Exécuteur renégat n'ont pas de type (« Medium (Heretic) »).
+//   - Arbitrator : type « Administratum » dans le profil, mais l'encadré p.327 précise que l'Adeptus Arbites n'en dépend pas.
+//   - Marchand et Capitaine de vaisseau : type « Navis Imperialis » (faction imperial_navy), le texte vise aussi les
+//     Libres-Marchands (rogue_trader).
+//   - Capitaine de vaisseau : le trait Masters of Close Confines nomme « the Voidmaster » ; portée « Close Range » non
+//     définie dans le glossaire (Contact ou Courte ?).
+//   - Marque de Khorne (core p.344) : « The +10 Perception increases Wounds » (coquille probable pour Strength, cf. GMG p.141).
+//   - Crâne-serviteur (core p.323) : description sans profil ; le familier Crâne-serviteur polyvalent (ipg p.114) en tient lieu.
+//   - Variantes sans profil : Biomancien et Pyromancien Primaris (basedOn primaris_psyker), Serviteur d'artillerie et
+//     Serviteur médicae (basedOn servitor).
+//   - Familiers : la Morsure du Cyber-molosse, l'attaque à mains nues du Jokaero et le Bec du Psyber-aigle n'ont pas de
+//     spécialisation (skill: 'melee') ; dégâts « 3 + DR » / « 7 + DR » des familiers en mêlée tels qu'écrits.
+//   - Non repris : véhicules (core p.226) et profils des Contacts du GMG (p.122-134), hors périmètre demandé.
+//     Storm's Eye, Xandro Cosmar & Ankhet et les suivants de Valastra renvoient à des profils du livre de base.
+
+// Règles des rôles de PNJ (core p.317-318).
+export const NPC_ROLES = [
+    { key: 'troop', label: 'Troupe', labelEn: 'Troop', charMax: 50, charTotal: 280, advances: 5, criticalWounds: 0, source: 'core', page: 317,
+        summary: 'Membres les plus faibles d\'une faction, dangereux en groupe ou par la ruse. Aucune Blessure critique : la première les met hors de combat.' },
+    { key: 'elite', label: 'Élite', labelEn: 'Elite', charMax: 60, charTotal: 380, advances: 15, criticalWounds: 1, source: 'core', page: 317,
+        summary: 'Équivalents d\'un personnage joueur. Une Blessure critique : la deuxième les met hors de combat. Option : leur donner un total complet de Blessures critiques (égal au BE), comme un Meneur.' },
+    { key: 'leader', label: 'Meneur', labelEn: 'Leader', charMax: 70, charTotal: 480, advances: 25, criticalWounds: 'tghB', source: 'core', page: 317,
+        summary: 'Chefs de groupe ou individus puissants, souvent dotés de traits pour commander leurs subordonnés. Total complet de Blessures critiques, comme un personnage joueur.' },
+];
+
+// Règles générales des PNJ (texte court).
+export const NPC_RULES = {
+    suddenDeath: { label: 'Mort subite', page: 317,
+        summary: 'Une Troupe est mise hors de combat dès qu\'elle devrait subir une Blessure critique ; une Élite à sa deuxième Blessure critique ; un Meneur dispose d\'un total complet (BE).' },
+    promotion: { label: 'Promotion', page: 318,
+        summary: 'Pour promouvoir une Troupe en Élite, ou une Élite en Meneur : +10 à chaque caractéristique et +10 aux compétences qui ont déjà une Avance, et Blessures critiques ajustées au nouveau rôle.' },
+    lookOutSir: { label: '« Attention, chef ! »', labelEn: 'Look Out, Sir!', page: 318,
+        summary: 'Quand un Meneur est visé par une attaque à distance, une Troupe ou une Élite dévouée à Portée de contact et non Engagée peut, en Réaction, faire un Test Exigeant (+0) de Réflexes (Esquive) : si elle réussit, l\'attaque la touche à la place.' },
+    armour: { label: 'Armure des PNJ', page: 316,
+        summary: 'Une seule valeur d\'Armure appliquée à toutes les localisations (sauf choix du MJ, par exemple sans casque). Une Armure tirée (« 2 + 1d10 », champ de force) se lance à chaque attaque subie.' },
+    resolve: { label: 'Détermination', page: 318,
+        summary: 'Si la Supériorité du groupe dépasse la Détermination d\'un PNJ (ou de son chef évident), le MJ envisage sa reddition ou sa fuite. Détermination augmentée de 1 ou plus s\'ils sont en surnombre, acculés, si se rendre signifie la mort, si des renforts arrivent, si leur chef résiste encore ou s\'ils sont des bêtes sans raison.' },
+    friendsClose: { label: 'Alliés du groupe', page: 317,
+        summary: 'Une capacité de PNJ qui fait perdre de la Supériorité, utilisée par un PNJ allié du groupe, réduit plutôt la Détermination des ennemis de 1, une fois par rencontre.' },
+    encounterSize: { label: 'Taille des rencontres', page: 310,
+        summary: 'Groupe débutant : 1 Troupe par personnage, plus 1 ou 2 Élites ou Meneurs en option. 500-1500 XP : 1,5 Troupe par personnage, plus 1 à 3 Élites ou Meneurs. 2000 XP et plus : 2 Troupes par personnage, plus 2 à 4 Élites ou Meneurs.' },
+    ordoBonuses: { label: 'Bonus d\'Ordo', page: 334,
+        summary: 'Un membre d\'un Ordo (Acolyte, Interrogateur) a l\'Avantage aux Tests de Discipline (Psychique), Discipline (Peur) et Navigation (Pistage) quand la source ou la cible est un hérétique (Ordo Hereticus), un démon (Ordo Malleus) ou un xénos (Ordo Xenos).' },
+    hereticalMarks: { label: 'Marques hérétiques', page: 344,
+        summary: 'Applicables à tout PNJ hérétique. Mutation genestealer : relié à l\'Esprit-couvée, Avantage aux Tests de Discipline à Portée longue d\'un psyker genestealer. Marque de Khorne : +10 CC et Force (Blessures +1). Marque de Nurgle : +20 Endurance (Blessures +4). Marque de Slaanesh : +10 Perception et Sociabilité (Initiative +1). Marque de Tzeentch : +10 Intelligence et Force Mentale (Initiative et Blessures +1).' },
+};
+
+export const BESTIARY = [
+    // ─── Adeptus Astra Telepathica (core p.319-321) ───
+    { key: 'black_ship_crewmember', label: 'Membre d\'équipage de Vaisseau noir', labelEn: 'Black Ship Crewmember', size: 'medium', type: 'Humain (Adeptus Astra Telepathica)', role: 'troop',
+        chars: { ws: 35, bs: 25, str: 30, tgh: 35, ag: 30, int: 30, per: 35, wil: 40, fel: 20 },
+        armour: 2, wounds: 13, criticalWounds: 0, initiative: 6, speed: 'normal', resolve: 3, warpThreshold: null,
+        skills: { awareness: 40, discipline: 50, fortitude: 40, intuition: 40, melee: 40 },
+        traits: [
+            { label: 'Endurci contre la sorcellerie', labelEn: 'Inured to Witchcraft', summary: '+1 DR à tout Test opposé pour résister à un Pouvoir psychique.' },
+        ],
+        attacks: [
+            { label: 'Matraque à choc', labelEn: 'Shock Maul', skill: 'melee.one_handed', value: 40, damage: '5 + écart de DR', range: null, traits: 'Bruyante, Inflige (Hébété)' },
+            { label: 'Fusil à pompe', labelEn: 'Pump Action Shotgun', skill: 'ranged.long_gun', value: 25, damage: '6', range: 'medium', traits: 'Inflige (À terre), Bruyante, Dispersion, Deux mains' },
+            { label: 'Grenade suffocante', labelEn: 'Choke Grenade', skill: 'ranged.thrown', value: 25, damage: '0', range: null, traits: 'Instable, Inflige (Hébété)' },
+        ],
+        powers: [], possessions: 'Uniforme de cuir épais, icône sacrée, combinaison de vide.', faction: 'adeptus_astra_telepathica', source: 'core', page: 321 },
+    { key: 'astropath', label: 'Astropathe', labelEn: 'Astropath', size: 'medium', type: 'Humain (Adeptus Astra Telepathica)', role: 'elite',
+        chars: { ws: 25, bs: 25, str: 25, tgh: 25, ag: 25, int: 40, per: 60, wil: 60, fel: 25 },
+        armour: 1, wounds: 13, criticalWounds: 1, initiative: 6, speed: 'normal', resolve: 3, warpThreshold: 12,
+        skills: { 'awareness.psyniscience': 70, discipline: 70, 'discipline.psychic': 80, linguistics: 50, lore: 50, psychic_mastery: 70, 'psychic_mastery.telepathy': 80 },
+        traits: [
+            { label: 'Astropathe', labelEn: 'Astropath', summary: 'Test Ardu (−20) de Maîtrise psychique (Télépathie) pour un rituel d\'une heure, sans interruption, qui envoie ou reçoit un message d\'un autre astropathe ; le MJ module difficulté et durée selon la distance et les interférences du Warp.' },
+            { label: 'Aveugle', labelEn: 'Blind', summary: 'Échoue automatiquement aux Tests de Vigilance (Vue) ; perçoit le monde par Vigilance (Psyniscience). Immunisé à l\'état Aveuglé.' },
+            { label: 'Psyker sanctionné', labelEn: 'Sanctioned Psyker', summary: 'Seuil Warp égal au double du BFM (inclus).' },
+            { label: 'Âme liée', labelEn: 'Soul-Bound', summary: 'Avantage à tous les Tests pour résister à la Corruption.' },
+            { label: 'Pouvoirs psychiques', labelEn: 'Psychic Powers', summary: 'Pouvoirs mineurs : Soulsight, Smite.' },
+            { label: 'Télépathe', labelEn: 'Telepath', summary: 'Pouvoirs de Télépathie : Dowsing, Forewarning, Prescience, Psychometry, Scrying Gaze, Watchward (liste du livre, discipline citée « Telepath »).' },
+        ],
+        attacks: [
+            { label: 'Pistolet laser', labelEn: 'Laspistol', skill: 'ranged.pistol', value: 25, damage: '5 + DR', range: 'medium', traits: 'Proche, Bruyante, Fiable' },
+            { label: 'Bâton de force', labelEn: 'Force Staff', skill: 'melee.two_handed', value: 25, damage: '3 + écart de DR + Charge Warp', range: null, traits: 'Défensive, Deux mains' },
+            { label: 'Châtiment', labelEn: 'Smite', skill: 'psychic_mastery', value: 70, warpRating: 3, damage: '11 + DR', range: 'medium', traits: 'Ignore l\'Armure' },
+        ],
+        powers: ['soulsight', 'smite', 'dowsing', 'forewarning', 'prescience', 'psychometry', 'scrying_gaze', 'watchward'],
+        possessions: 'Robe d\'astropathe, jeu du Tarot de l\'Empereur, jeu de Régicide, focus psychique.', faction: 'adeptus_astra_telepathica', source: 'core', page: 320 },
+    { key: 'primaris_psyker', label: 'Psyker Primaris', labelEn: 'Primaris Psyker', size: 'medium', type: 'Humain (Adeptus Astra Telepathica)', role: 'elite',
+        chars: { ws: 25, bs: 25, str: 25, tgh: 40, ag: 30, int: 40, per: 50, wil: 60, fel: 25 },
+        armour: 1, wounds: 16, criticalWounds: 1, initiative: 8, speed: 'normal', resolve: 3, warpThreshold: 12,
+        skills: { 'awareness.psyniscience': 60, 'discipline.psychic': 70, psychic_mastery: 70, 'psychic_mastery.telekinesis': 80 },
+        traits: [
+            { label: 'Psyker sanctionné', labelEn: 'Sanctioned Psyker', summary: 'Seuil Warp égal au double du BFM (inclus).' },
+            { label: 'Pouvoirs psychiques', labelEn: 'Psychic Powers', summary: 'Pouvoirs mineurs : Dread Presence, Float, Overwhelm, Smite, Spasm, Soulsight, Telekinetic Finesse, Telekinetic Leverage.' },
+            { label: 'Télékinésiste', labelEn: 'Telekine', summary: 'Pouvoirs de Télékinésie : Crush, Objuration Mechanicum, Psychic Barrier, Psychic Maelstrom.' },
+        ],
+        attacks: [
+            { label: 'Bâton de force', labelEn: 'Force Staff', skill: 'melee.two_handed', value: 25, damage: '3 + écart de DR + Charge Warp', range: null, traits: 'Défensive, Deux mains' },
+            { label: 'Châtiment', labelEn: 'Smite', skill: 'psychic_mastery', value: 70, warpRating: 3, damage: '11 + DR', range: 'medium', traits: 'Ignore l\'Armure' },
+        ],
+        powers: ['dread_presence', 'float', 'overwhelm', 'smite', 'spasm', 'soulsight', 'telekinetic_finesse', 'telekinetic_leverage', 'crush', 'abjuration_mechanicum', 'psychic_barrier', 'psychic_maelstrom'],
+        possessions: 'Uniforme de Psyker Primaris, focus psychique.', faction: 'adeptus_astra_telepathica', source: 'core', page: 321 },
+    // Variantes du Psyker Primaris (encadré « Other Psychic Powers ») : profil du Psyker Primaris, compétence et pouvoirs remplacés.
+    { key: 'primaris_biomancer', label: 'Biomancien Primaris', labelEn: 'Primaris Biomancer', basedOn: 'primaris_psyker', size: 'medium', type: 'Humain (Adeptus Astra Telepathica)', role: 'elite',
+        chars: null, armour: null, wounds: null, criticalWounds: null, initiative: null, speed: null, resolve: null, warpThreshold: null,
+        skills: { 'psychic_mastery.biomancy': 80 },
+        traits: [
+            { label: 'Pouvoirs psychiques', labelEn: 'Psychic Powers', summary: 'Pouvoirs mineurs : Call Vermin, Dull Pain, Float, Overwhelm, Preternatural Senses, Seal Wounds, Smite, Spasm.' },
+            { label: 'Biomancien', labelEn: 'Biomancer', summary: 'Pouvoirs de Biomancie : Affliction, Bio-Lightning, Metabolic Overdrive, Shape Flesh.' },
+        ],
+        attacks: [],
+        powers: ['call_vermin', 'dull_pain', 'float', 'overwhelm', 'preternatural_senses', 'seal_wounds', 'smite', 'spasm', 'affliction', 'bio_lightning', 'metabolic_overdrive', 'shape_flesh'],
+        possessions: null, faction: 'adeptus_astra_telepathica', source: 'core', page: 321 },
+    { key: 'primaris_pyromancer', label: 'Pyromancien Primaris', labelEn: 'Primaris Pyromancer', basedOn: 'primaris_psyker', size: 'medium', type: 'Humain (Adeptus Astra Telepathica)', role: 'elite',
+        chars: null, armour: null, wounds: null, criticalWounds: null, initiative: null, speed: null, resolve: null, warpThreshold: null,
+        skills: { 'psychic_mastery.pyromancy': 80 },
+        traits: [
+            { label: 'Pouvoirs psychiques', labelEn: 'Psychic Powers', summary: 'Pouvoirs mineurs : Combustion, Dread Presence, Float, Ignite, Nova, Scalding Glance, Sear, Smite.' },
+            { label: 'Pyromancien', labelEn: 'Pyromancer', summary: 'Pouvoirs de Pyromancie : Fire Storm, Inferno, Plasma Torch, Thermal Lance.' },
+        ],
+        attacks: [],
+        powers: ['combustion', 'dread_presence', 'float', 'ignite', 'nova', 'scalding_glance', 'sear', 'smite', 'fire_storm', 'inferno', 'plasma_torch', 'thermal_lance'],
+        possessions: null, faction: 'adeptus_astra_telepathica', source: 'core', page: 321 },
+    { key: 'sister_of_silence', label: 'Sœur du Silence', labelEn: 'Sister of Silence', size: 'medium', type: 'Humain (Adeptus Astra Telepathica)', role: 'leader',
+        chars: { ws: 50, bs: 50, str: 50, tgh: 50, ag: 50, int: 40, per: 40, wil: 50, fel: 20 },
+        armour: 6, wounds: 20, criticalWounds: 5, initiative: 9, speed: 'normal', resolve: 3, warpThreshold: null,
+        skills: { awareness: 50, discipline: 60, 'discipline.psychic': 70, fortitude: 60, intuition: 50, 'linguistics.sisters_of_silence_sign_language': 50, melee: 60, 'melee.two_handed': 70, ranged: 60, 'ranged.long_gun': 70, reflexes: 60 },
+        traits: [
+            { label: 'Néant', labelEn: 'Blank', summary: 'Gagne tout Test opposé pour résister à un Pouvoir psychique, immunisée à la possession démoniaque ; la plupart des Tests de Sociabilité avec Désavantage. Manifester un pouvoir visant sa Zone, quelqu\'un dans sa Zone ou à Portée courte d\'elle se fait avec Désavantage ; sa Zone est un Danger mineur pour les démons ; un être lié à un esprit de ruche psychique qui y entre réussit un Test Exigeant (+0) de Discipline (Sang-froid) ou est Hébété.' },
+            { label: 'Regard de la Vierge du Néant', labelEn: 'Null Maiden\'s Glare', summary: 'Action : Test opposé Présence (Intimidation) contre Discipline (Peur) visant un psyker visible à Portée longue ; si elle gagne, la Supériorité du groupe baisse de 1.' },
+            { label: 'Chasseuse de sorcières', labelEn: 'Witch Hunter', summary: 'Avantage pour pister un psyker et +1 DR à tous ses Tests d\'attaque contre les psykers.' },
+            { label: 'Vœu de Tranquillité', labelEn: 'Vow of Tranquillity', summary: 'Ne parle en aucune circonstance ; communique par la langue des signes (p.96).' },
+        ],
+        attacks: [
+            { label: 'Bolter', labelEn: 'Boltgun', skill: 'ranged.long_gun', value: 70, damage: '8 + DR', range: 'long', traits: 'Bruyante, Perforante (4), Tir rapide (2), Dispersion, Deux mains' },
+            { label: 'Grande lame d\'exécuteur', labelEn: 'Executioner Greatblade', skill: 'melee.two_handed', value: 70, damage: '11 + écart de DR', range: null, traits: 'Lourde (2), Perforante (6), Deux mains' },
+            { label: 'Grenade psyk-out', labelEn: 'Psyk-out Grenade', skill: 'ranged.thrown', value: 60, damage: '0', range: 'medium', traits: 'Explosion (4), Bruyante, Instable ; dégâts doublés contre psykers et démons' },
+        ],
+        powers: [], possessions: 'Armure vratine.', faction: 'adeptus_astra_telepathica', source: 'core', page: 320 },
+
+    // ─── Adeptus Mechanicus (core p.322-324) ───
+    { key: 'manufactorum_labourer', label: 'Ouvrier de manufactorum', labelEn: 'Manufactorum Labourer', size: 'medium', type: 'Humain (Adeptus Mechanicus)', role: 'troop',
+        chars: { ws: 25, bs: 25, str: 35, tgh: 35, ag: 35, int: 25, per: 30, wil: 30, fel: 30 },
+        armour: 0, wounds: 12, criticalWounds: 0, initiative: 6, speed: 'normal', resolve: 1, warpThreshold: null,
+        skills: { athletics: 40, 'athletics.might': 50, dexterity: 40, fortitude: 40, 'fortitude.endurance': 50, 'fortitude.pain': 50 },
+        traits: [],
+        attacks: [
+            { label: 'Outils industriels (arme improvisée)', labelEn: 'Industrial Tools (Improvised Weapon)', skill: 'melee.one_handed', value: 25, damage: '4 + écart de DR', range: null, traits: 'Inefficace' },
+        ],
+        powers: [], possessions: 'Vêtements en lambeaux, bouchons filtrants (Médiocres), icône sacrée, 5 solars.', faction: 'adeptus_mechanicus', source: 'core', page: 323 },
+    { key: 'servitor', label: 'Serviteur', labelEn: 'Servitor', size: 'medium', type: 'Serviteur (Adeptus Mechanicus)', role: 'troop',
+        chars: { ws: 30, bs: 30, str: 50, tgh: 50, ag: 20, int: 10, per: 10, wil: 10, fel: 10 },
+        armour: 2, wounds: 16, criticalWounds: 0, initiative: 3, speed: 'slow', resolve: null, warpThreshold: null,
+        skills: { 'athletics.might': 60, dexterity: 30 },
+        traits: [
+            { label: 'Programmé pour servir', labelEn: 'Programmed to Serve', summary: 'Exécute sa tâche préprogrammée jusqu\'à reprogrammation (Test Ardu (−20) de Tech (Augmétique)) ; celui qui l\'a programmé peut lui donner des ordres simples. Détermination : « voir Traits ».' },
+        ],
+        attacks: [
+            { label: 'Servo-pince', labelEn: 'Servo Claw', skill: 'melee.brawling', value: 30, damage: '7 + écart de DR', range: null, traits: 'Perforante (2)' },
+        ],
+        powers: [], possessions: 'Aucune.', faction: 'adeptus_mechanicus', source: 'core', page: 323 },
+    // Variantes du Serviteur (même encadré) : profil du Serviteur, attaques et compétences ajoutées.
+    { key: 'gun_servitor', label: 'Serviteur d\'artillerie', labelEn: 'Gun Servitor', basedOn: 'servitor', size: 'medium', type: 'Serviteur (Adeptus Mechanicus)', role: 'troop',
+        chars: null, armour: null, wounds: null, criticalWounds: null, initiative: null, speed: null, resolve: null, warpThreshold: null,
+        skills: {},
+        traits: [
+            { label: 'Arme intégrée', labelEn: 'Installed weapon', summary: 'Porte une des armes ci-dessous, retirable seulement par un Test Ardu (−20) de Tech (Augmétique).' },
+        ],
+        attacks: [
+            { label: 'Bolter lourd', labelEn: 'Heavy Bolter', skill: 'ranged.ordnance', value: 40, damage: '10 + DR', range: 'long', traits: 'Lourde (4), Perforante (5), Bruyante, Tir rapide (3), Dispersion, Deux mains' },
+            { label: 'Multi-fuseur', labelEn: 'Multi-melta', skill: 'ranged.ordnance', value: 40, damage: '16 + DR', range: 'long', traits: 'Lourde (4), Déchirante (12), Deux mains' },
+            { label: 'Canon plasma', labelEn: 'Plasma Cannon', skill: 'ranged.ordnance', value: 40, damage: '12 + DR', range: 'extreme', traits: 'Bruyante, Lourde (4), Perforante (6), Surcharge (4), Deux mains, Instable' },
+        ],
+        powers: [], possessions: null, faction: 'adeptus_mechanicus', source: 'core', page: 323 },
+    { key: 'medicae_servitor', label: 'Serviteur médicae', labelEn: 'Medicae Servitor', basedOn: 'servitor', size: 'medium', type: 'Serviteur (Adeptus Mechanicus)', role: 'troop',
+        chars: null, armour: null, wounds: null, criticalWounds: null, initiative: null, speed: null, resolve: null, warpThreshold: null,
+        skills: { dexterity: 40, medicae: 30, 'medicae.human': 50, 'tech.augmetics': 50 },
+        traits: [
+            { label: 'Protocoles diagnostiques', labelEn: 'Diagnostor Protocols', summary: '+2 DR pour déceler une maladie chez un humain et aux Tests de Médicae de chirurgie, d\'arrêt d\'hémorragie et procédures similaires (dont pose ou retrait d\'augmétiques).' },
+        ],
+        attacks: [],
+        powers: [], possessions: null, faction: 'adeptus_mechanicus', source: 'core', page: 323 },
+    { key: 'tech_priest', label: 'Technaugure', labelEn: 'Tech-Priest', size: 'medium', type: 'Humain (Adeptus Mechanicus)', role: 'elite',
+        chars: { ws: 30, bs: 30, str: 30, tgh: 40, ag: 40, int: 60, per: 30, wil: 40, fel: 20 },
+        armour: 2, wounds: 15, criticalWounds: 1, initiative: 7, speed: 'fast', resolve: 2, warpThreshold: null,
+        skills: { awareness: 40, fortitude: 50, logic: 70, 'logic.mathematics': 80, lore: 70, medicae: 70, piloting: 50, tech: 70, 'tech.augmetics': 80, 'tech.engineering': 80 },
+        traits: [
+            { label: 'Lourdement augmenté', labelEn: 'Heavily Augmented', summary: 'Bras, locomotion, cœur, système respiratoire et organes sensoriels augmétiques, mécadendrites utilitaire et optique, interface biomécanique ; effets déjà inclus.' },
+            { label: 'Cœur augmétique', labelEn: 'Augmetic Heart', summary: 'Action : Test Exigeant (+0) de Robustesse ; en cas de réussite, retire un état Hémorragie.' },
+            { label: 'Système respiratoire augmétique', labelEn: 'Augmetic Respiratory System', summary: '+2 DR aux Tests de Robustesse contre toxines aériennes et gaz.' },
+            { label: 'Interface biomécanique', labelEn: 'Biomechanical Interface', summary: '+10 aux Tests de Tech pour faire fonctionner une machine dotée d\'une connexion adaptée (véhicules, processeurs environnementaux, chaînes de manufactorum…).' },
+            { label: 'Mécadendrite optique', labelEn: 'Optical Mechadendrite', summary: 'Fournit des données visuelles dans les espaces exigus ; sa lampe retire l\'état Obscurité (Dark) d\'une Zone.' },
+            { label: 'Mécadendrite utilitaire', labelEn: 'Utility Mechadendrite', summary: 'Sert d\'outil polyvalent (Combi-tool) et d\'arme de mêlée.' },
+        ],
+        attacks: [
+            { label: 'Mécadendrite utilitaire', labelEn: 'Utility Mechadendrite', skill: 'melee.one_handed', value: 30, damage: '5 + écart de DR', range: null, traits: '' },
+            { label: 'Pistolet plasma', labelEn: 'Plasma Pistol', skill: 'ranged.pistol', value: 30, damage: '10 + DR', range: 'medium', traits: 'Proche, Bruyante, Perforante (6), Surcharge (4), Instable' },
+        ],
+        powers: [], possessions: 'Robe de l\'Adeptus Mechanicus, auspex, outil polyvalent (Combi-tool), 300 solars.', faction: 'adeptus_mechanicus', source: 'core', page: 324 },
+
+    // ─── Adeptus Administratum (core p.325-327) ───
+    { key: 'administratum_adept', label: 'Adepte de l\'Administratum', labelEn: 'Administratum Adept', size: 'medium', type: 'Humain (Administratum)', role: 'troop',
+        chars: { ws: 25, bs: 25, str: 25, tgh: 25, ag: 35, int: 40, per: 35, wil: 30, fel: 30 },
+        armour: 1, wounds: 9, criticalWounds: 0, initiative: 6, speed: 'normal', resolve: 1, warpThreshold: null,
+        skills: { awareness: 40, dexterity: 40, 'intuition.human': 40, linguistics: 50, logic: 50, lore: 50, rapport: 40 },
+        traits: [
+            { label: 'Audace bureaucratique', labelEn: 'Bureaucratic Boldness', summary: 'Détermination 3 face à la paperasse, aux dîmes ou à toute discussion bureaucratique.' },
+            { label: 'Fouilleur de données', labelEn: 'Data Delver', summary: 'Avantage aux Tests pour trouver ou extraire une information d\'un document ou d\'une archive (analogique ou numérique).' },
+        ],
+        attacks: [
+            { label: 'Poings mous (à mains nues)', labelEn: 'Flaccid Fists (Unarmed)', skill: 'melee.brawling', value: 25, damage: '1 + écart de DR', range: null, traits: 'Inefficace' },
+        ],
+        powers: [], possessions: 'Robe de l\'Administratum, ardoise de données, rouleaux de registres, 30 solars.', faction: 'adeptus_administratum', source: 'core', page: 325 },
+    { key: 'overseer', label: 'Surveillant', labelEn: 'Overseer', size: 'medium', type: 'Humain (Administratum)', role: 'troop',
+        chars: { ws: 30, bs: 25, str: 25, tgh: 30, ag: 25, int: 35, per: 40, wil: 35, fel: 35 },
+        armour: 1, wounds: 11, criticalWounds: 0, initiative: 6, speed: 'normal', resolve: 2, warpThreshold: null,
+        skills: { awareness: 50, discipline: 40, 'intuition.human': 50, linguistics: 40, logic: 40, lore: 40, 'melee.one_handed': 40, presence: 40, 'presence.intimidation': 50, 'presence.leadership': 50, rapport: 40 },
+        traits: [
+            { label: 'Audace bureaucratique', labelEn: 'Bureaucratic Boldness', summary: 'Détermination 3 face à la paperasse, aux dîmes ou à toute discussion bureaucratique.' },
+            { label: 'Garde-chiourme', labelEn: 'Chief Whip', summary: 'Peut utiliser Présence (Intimidation) au lieu de Présence (Commandement) avec les membres de l\'Administratum. Action : ordonne à une Troupe de l\'Administratum de faire immédiatement une Action.' },
+        ],
+        attacks: [
+            { label: 'Matraque à choc', labelEn: 'Shock Maul', skill: 'melee.one_handed', value: 40, damage: '4 + écart de DR', range: null, traits: 'Bruyante, Inflige (Hébété)' },
+        ],
+        powers: [], possessions: 'Robe de l\'Administratum, ardoise de données, rouleaux de registres, chrono, 50 solars.', faction: 'adeptus_administratum', source: 'core', page: 326 },
+    { key: 'enforcer', label: 'Exécuteur', labelEn: 'Enforcer', size: 'medium', type: 'Humain (Administratum)', role: 'elite',
+        chars: { ws: 35, bs: 35, str: 40, tgh: 40, ag: 30, int: 25, per: 40, wil: 40, fel: 25 },
+        armour: 5, wounds: 16, criticalWounds: 1, initiative: 6, speed: 'normal', resolve: 2, warpThreshold: null,
+        skills: { athletics: 50, awareness: 50, discipline: 50, fortitude: 50, intuition: 50, melee: 40, 'melee.one_handed': 50, presence: 50, 'presence.interrogation': 60, 'presence.intimidation': 60, ranged: 40, rapport: 30 },
+        traits: [
+            { label: 'Demande de renfort', labelEn: 'Call for Backup', summary: 'Action : appel entendu par tous les Exécuteurs dans un rayon d\'un mile ; les renforts arrivent en général en 1d10 Rounds (ou minutes hors combat), selon la distance.' },
+            { label: 'Incarceratus', labelEn: 'Incarceratus', summary: 'Peut menotter en Action gratuite l\'individu qu\'il agrippe.' },
+        ],
+        attacks: [
+            { label: 'Matraque à choc', labelEn: 'Shock Maul', skill: 'melee.one_handed', value: 50, damage: '6 + écart de DR', range: null, traits: 'Bruyante, Inflige (Hébété)' },
+            { label: 'Fusil automatique', labelEn: 'Autogun', skill: 'ranged.long_gun', value: 40, damage: '6 + DR', range: null, traits: 'Bruyante, Deux mains' },
+            { label: 'Revolver à balles', labelEn: 'Stub Revolver', skill: 'ranged.pistol', value: 40, damage: '6 + DR', range: null, traits: 'Proche, Bruyante, Fiable' },
+            { label: 'Grenade suffocante', labelEn: 'Choke Grenade', skill: 'ranged.thrown', value: 40, damage: '0', range: null, traits: 'Instable, Inflige (Hébété)' },
+        ],
+        powers: [], possessions: 'Armure carapace d\'Exécuteur, ardoise de données sur les infractionnistes, menottes, micro-vox, 50 solars.', faction: 'adeptus_administratum', source: 'core', page: 327 },
+    { key: 'arbitrator', label: 'Arbitrator', labelEn: 'Arbitrator', size: 'medium', type: 'Humain (Administratum)', role: 'leader',
+        chars: { ws: 40, bs: 40, str: 50, tgh: 50, ag: 40, int: 40, per: 50, wil: 40, fel: 30 },
+        armour: 5, wounds: 19, criticalWounds: 5, initiative: 9, speed: 'normal', resolve: 3, warpThreshold: null,
+        skills: { athletics: 60, awareness: 60, discipline: 50, 'discipline.composure': 60, 'discipline.fear': 60, fortitude: 60, intuition: 60, melee: 50, 'melee.one_handed': 60, presence: 50, 'presence.interrogation': 60, 'presence.intimidation': 60, ranged: 50, 'ranged.long_gun': 60, rapport: 40 },
+        traits: [
+            { label: 'Commandant arbitrator', labelEn: 'Arbitrator Commander', summary: 'Action : Test de Présence (Commandement) ; par DR, un Exécuteur qui l\'entend peut faire une Action.' },
+            { label: 'Demande de renfort', labelEn: 'Call for Backup', summary: 'Action : appel entendu par tous les Exécuteurs dans un rayon d\'un mile ; les renforts arrivent en général en 1d10 Rounds (ou minutes hors combat), selon la distance.' },
+            { label: 'Coupable jusqu\'à preuve du contraire', labelEn: 'Guilty until Proven Innocent', summary: 'Action : Test opposé Présence (Intuition) contre Discipline (Sang-froid) pour mettre au jour une culpabilité ou la preuve d\'un crime ; en cas de réussite, la Supériorité du groupe baisse de 1.' },
+            { label: 'Incarceratus', labelEn: 'Incarceratus', summary: 'Peut menotter en Action gratuite l\'individu qu\'il agrippe.' },
+        ],
+        attacks: [
+            { label: 'Matraque à choc', labelEn: 'Shock Maul', skill: 'melee.one_handed', value: 60, damage: '7 + écart de DR', range: null, traits: 'Bruyante, Inflige (Hébété)' },
+            { label: 'Pistolet-canon', labelEn: 'Hand Cannon', skill: 'ranged.pistol', value: 50, damage: '8 + DR', range: 'medium', traits: 'Proche, Lourde (4), Bruyante, Perforante (2)' },
+            { label: 'Fusil de combat', labelEn: 'Combat Shotgun', skill: 'ranged.long_gun', value: 60, damage: '6 + DR', range: 'medium', traits: 'Dispersion, Inflige (À terre), Bruyante, Deux mains' },
+            { label: 'Grenade suffocante', labelEn: 'Choke Grenade', skill: 'ranged.thrown', value: 45, damage: '0', range: null, traits: 'Instable, Inflige (Hébété)' },
+        ],
+        powers: [], possessions: 'Armure carapace d\'Exécuteur, ardoise de données sur les infractionnistes, menottes, micro-vox, 100 solars.', faction: 'adeptus_administratum', source: 'core', page: 327 },
+
+    // ─── Astra Militarum (core p.328-330) ───
+    { key: 'astra_militarum_trooper', label: 'Soldat de l\'Astra Militarum', labelEn: 'Astra Militarum Trooper', size: 'medium', type: 'Humain (Astra Militarum)', role: 'troop',
+        chars: { ws: 30, bs: 30, str: 40, tgh: 40, ag: 30, int: 25, per: 30, wil: 30, fel: 25 },
+        armour: 4, wounds: 15, criticalWounds: 0, initiative: 6, speed: 'normal', resolve: 2, warpThreshold: null,
+        skills: { discipline: 40, medicae: 30, melee: 40, ranged: 40 },
+        traits: [
+            { label: 'Inébranlable', labelEn: 'Stalwart', summary: 'Avantage aux Tests pour résister à l\'état Effrayé ou y mettre fin.' },
+            { label: 'Soldats spécialistes', labelEn: 'Specialist Troopers', summary: 'Médic : Médicae (Humains) 50 et kit de chirurgien. Spécialiste vox : vox-caster et Tech (Ingénierie) 30. Découpeur : découpeur laser, Tech (Ingénierie) 30 et charge de brèche. Spécialiste en armes : une arme de la liste « Spécialiste en armes » au lieu du fusil laser.' },
+            { label: 'Équipes d\'armes lourdes', labelEn: 'Heavy Weapons Teams', summary: 'Deux soldats servent une arme d\'Artillerie de la liste « Équipe d\'armes lourdes », en plus de leurs armes ; si l\'un subit un état ou meurt, l\'autre la sert avec Désavantage.' },
+        ],
+        attacks: [
+            { label: 'Fusil laser', labelEn: 'Lasgun', skill: 'ranged.long_gun', value: 40, damage: '6 + DR', range: 'long', traits: 'Bruyante, Fiable, Deux mains' },
+            { label: 'Couteau', labelEn: 'Knife', skill: 'melee.one_handed', value: 40, damage: '4 + écart de DR', range: null, traits: 'Discrète, Lancer (Courte)' },
+            { label: 'Grenade frag', labelEn: 'Frag Grenade', skill: 'ranged.thrown', value: 30, damage: '0', range: 'medium', traits: 'Explosion 6, Bruyante, Instable' },
+            { label: 'Grenade krak', labelEn: 'Krak Grenade', skill: 'ranged.thrown', value: 30, damage: '12', range: 'medium', traits: 'Bruyante, Perforante (4), Dispersion, Instable' },
+            { group: 'Spécialiste en armes', label: 'Fusil de précision', labelEn: 'Sniper Rifle', skill: 'ranged.long_gun', value: 50, damage: '8 + DR', range: 'extreme', traits: 'Bruyante, Deux mains' },
+            { group: 'Spécialiste en armes', label: 'Lance-flammes', labelEn: 'Flamer', skill: 'ranged.long_gun', value: 50, damage: '8 + DR', range: 'medium', traits: 'Lance-flammes, Inflige (En feu), Bruyante, Deux mains' },
+            { group: 'Spécialiste en armes', label: 'Lance-grenades', labelEn: 'Grenade Launcher', skill: 'ranged.ordnance', value: 50, damage: '0', range: 'long', traits: 'Explosion (6), Bruyante, Deux mains' },
+            { group: 'Spécialiste en armes', label: 'Fuseur', labelEn: 'Meltagun', skill: 'ranged.long_gun', value: 50, damage: '16 + DR', range: 'medium', traits: 'Déchirante (12), Deux mains' },
+            { group: 'Spécialiste en armes', label: 'Fusil plasma', labelEn: 'Plasma Gun', skill: 'ranged.long_gun', value: 50, damage: '10 + DR', range: 'long', traits: 'Bruyante, Perforante (6), Surcharge (4), Deux mains, Instable' },
+            { group: 'Spécialiste en armes', label: 'Charge de brèche', labelEn: 'Breacher Charge', skill: 'ranged.thrown', value: 30, damage: '10', range: 'medium', traits: 'Bruyante, Dispersion, Instable' },
+            { group: 'Équipe d\'armes lourdes', label: 'Bolter lourd', labelEn: 'Heavy Bolter', skill: 'ranged.ordnance', value: 50, damage: '10 + DR', range: 'long', traits: 'Lourde (4), Perforante (5), Bruyante, Deux mains' },
+            { group: 'Équipe d\'armes lourdes', label: 'Lance-missiles (missile frag)', labelEn: 'Missile Launcher (Frag Missile)', skill: 'ranged.ordnance', value: 50, damage: '0', range: 'extreme', traits: 'Explosion (8), Lourde (4), Bruyante, Deux mains' },
+            { group: 'Équipe d\'armes lourdes', label: 'Lance-missiles (missile krak)', labelEn: 'Missile Launcher (Krak Missile)', skill: 'ranged.ordnance', value: 50, damage: '16', range: 'extreme', traits: 'Lourde (4), Bruyante, Perforante (6), Deux mains, Dispersion' },
+            { group: 'Équipe d\'armes lourdes', label: 'Canon laser', labelEn: 'Lascannon', skill: 'ranged.ordnance', value: 50, damage: '18', range: 'extreme', traits: 'Lourde (4), Bruyante, Perforante (10), Deux mains' },
+        ],
+        powers: [], possessions: 'Armure pare-éclats de l\'Astra Militarum, plaques d\'identité, masque à gaz, pelle de tranchée, exemplaire de l\'Imperial Infantryman\'s Uplifting Primer, uniforme, équipement de survie dans un sac à dos, 30 solars.', faction: 'astra_militarum', source: 'core', page: 329 },
+    { key: 'tempestus_scion', label: 'Scion du Tempestus', labelEn: 'Tempestus Scion', size: 'medium', type: 'Humain (Astra Militarum)', role: 'elite',
+        chars: { ws: 40, bs: 45, str: 50, tgh: 50, ag: 40, int: 30, per: 40, wil: 30, fel: 25 },
+        armour: 6, wounds: 18, criticalWounds: 1, initiative: 8, speed: 'normal', resolve: 3, warpThreshold: null,
+        skills: { athletics: 60, awareness: 50, discipline: 50, fortitude: 60, medicae: 40, melee: 50, navigation: 40, ranged: 50, 'ranged.long_gun': 60, reflexes: 50 },
+        traits: [
+            { label: 'Zone de mort', labelEn: 'Killing Zone', summary: 'Quand il inflige une Blessure par une attaque à distance, les autres Scions qui attaquent à distance la même cible gagnent +1 DR jusqu\'au début de son prochain tour.' },
+            { label: 'Troupe de choc', labelEn: 'Shock Trooper', summary: 'Une cible surprise par son attaque réussit un Test Exigeant (+0) de Discipline (Peur) ou devient Effrayée ; si tout le groupe est Effrayé, sa Supériorité tombe à 0.' },
+            { label: 'Inébranlable', labelEn: 'Stalwart', summary: 'Avantage aux Tests pour résister à l\'état Effrayé ou y mettre fin.' },
+        ],
+        attacks: [
+            { label: 'Fusil laser à haute énergie', labelEn: 'Hot-shot Lasgun', skill: 'ranged.long_gun', value: 60, damage: '8 + DR', range: 'long', traits: 'Bruyante, Perforante (2), Deux mains' },
+            { label: 'Couteau', labelEn: 'Knife', skill: 'melee.one_handed', value: 50, damage: '5 + écart de DR', range: null, traits: 'Discrète, Lancer (Courte)' },
+            { label: 'Grenade frag', labelEn: 'Frag Grenade', skill: 'ranged.thrown', value: 50, damage: '0', range: 'medium', traits: 'Explosion 6, Bruyante, Instable' },
+            { label: 'Grenade krak', labelEn: 'Krak Grenade', skill: 'ranged.thrown', value: 50, damage: '12', range: 'medium', traits: 'Bruyante, Perforante (4), Dispersion, Instable' },
+        ],
+        powers: [], possessions: 'Armure carapace de Scion du Tempestus, kit de chirurgien, plaques d\'identité, magnoculaires, enregistreur picte, casque Omnishield (casque carapace PA 6 avec photo-viseurs, respirateur et micro-vox), exemplaire de l\'Imperial Infantryman\'s Uplifting Primer.', faction: 'astra_militarum', source: 'core', page: 330 },
+    { key: 'commissar', label: 'Commissaire', labelEn: 'Commissar', size: 'medium', type: 'Humain (Astra Militarum)', role: 'leader',
+        chars: { ws: 45, bs: 45, str: 40, tgh: 50, ag: 30, int: 40, per: 40, wil: 50, fel: 40 },
+        armour: 2, wounds: 19, criticalWounds: 5, initiative: 7, speed: 'normal', resolve: 3, warpThreshold: null,
+        skills: { athletics: 50, awareness: 50, discipline: 60, 'discipline.fear': 70, 'intuition.human': 50, lore: 50, melee: 50, 'melee.one_handed': 60, presence: 50, 'presence.intimidation': 70, 'presence.leadership': 60, ranged: 50, 'ranged.pistol': 60, rapport: 50 },
+        traits: [
+            { label: 'Aura de discipline', labelEn: 'Aura of Discipline', summary: 'Tous ses alliés qui le voient gagnent +1 DR aux Tests de Discipline (Peur).' },
+            { label: 'Inébranlable', labelEn: 'Stalwart', summary: 'Avantage aux Tests pour résister à l\'état Effrayé ou y mettre fin.' },
+            { label: 'Exécution sommaire', labelEn: 'Summary Execution', summary: 'Réaction : exécute un PNJ de son camp à Portée courte qui rate un Test de Discipline ou tire sur la table des Périls du Warp. Tant qu\'il vit, ses alliés qui le voient réussissent automatiquement leurs Tests de Discipline jusqu\'à la fin de la rencontre, et la Supériorité du groupe baisse de 1.' },
+        ],
+        attacks: [
+            { label: 'Pistolet bolter', labelEn: 'Bolt Pistol', skill: 'ranged.pistol', value: 60, damage: '8 + DR', range: 'short', traits: 'Proche, Bruyante, Perforante (4)' },
+            { label: 'Épée énergétique', labelEn: 'Power Sword', skill: 'melee.one_handed', value: 60, damage: '8 + écart de DR', range: null, traits: 'Perforante (4)' },
+        ],
+        powers: [], possessions: 'Uniforme de commissaire, plaques d\'identité, cape pare-éclats, exemplaire annoté de l\'Imperial Infantryman\'s Uplifting Primer, 100 solars.', faction: 'astra_militarum', source: 'core', page: 330 },
+
+    // ─── Ecclésiarchie / Adeptus Ministorum (core p.331-332) ───
+    { key: 'devout', label: 'Dévot', labelEn: 'Devout', size: 'medium', type: 'Humain (Ecclésiarchie)', role: 'troop',
+        chars: { ws: 25, bs: 25, str: 25, tgh: 35, ag: 30, int: 30, per: 25, wil: 40, fel: 35 },
+        armour: 0, wounds: 12, criticalWounds: 0, initiative: 5, speed: 'normal', resolve: 1, warpThreshold: null,
+        skills: { discipline: 50, 'fortitude.pain': 40, lore: 40, 'lore.theology': 50, presence: 40, rapport: 40 },
+        traits: [
+            { label: 'Vraie foi', labelEn: 'True Faith', summary: 'Dispose d\'1 point de Destin.' },
+        ],
+        attacks: [
+            { label: 'Fouet de flagellation', labelEn: 'Flagellation Whip', skill: 'melee.one_handed', value: 25, damage: '2 + écart de DR', range: null, traits: 'Bruyante, Allonge' },
+        ],
+        powers: [], possessions: 'Robe en lambeaux, icône sacrée.', faction: 'adeptus_ministorum', source: 'core', page: 331 },
+    { key: 'ministorum_priest', label: 'Prêtre du Ministorum', labelEn: 'Ministorum Priest', size: 'medium', type: 'Humain (Ecclésiarchie)', role: 'elite',
+        chars: { ws: 30, bs: 30, str: 30, tgh: 30, ag: 30, int: 40, per: 40, wil: 50, fel: 40 },
+        armour: '1d10', wounds: 14, criticalWounds: 1, initiative: 7, speed: 'normal', resolve: 1, warpThreshold: null,
+        skills: { awareness: 50, discipline: 60, 'intuition.human': 50, 'linguistics.high_gothic': 50, lore: 50, 'lore.theology': 60, presence: 50, 'presence.leadership': 60, rapport: 50 },
+        traits: [
+            { label: 'Vraie foi', labelEn: 'True Faith', summary: 'Dispose d\'1 point de Destin.' },
+            { label: 'Hymne de guerre', labelEn: 'War Hymn', summary: 'Action : Test de Présence (Commandement) ; en cas de réussite, un allié de la faction Ecclésiarchie qui l\'entend fera une seconde attaque de mêlée lors de sa prochaine attaque de mêlée.' },
+        ],
+        attacks: [
+            { label: 'Pistolet automatique', labelEn: 'Autopistol', skill: 'ranged.pistol', value: 30, damage: '5 + DR', range: 'medium', traits: 'Proche, Bruyante' },
+            { label: 'Épée tronçonneuse', labelEn: 'Chainsword', skill: 'melee.one_handed', value: 30, damage: '6 + écart de DR', range: null, traits: 'Bruyante, Déchirante (2)' },
+        ],
+        powers: [], possessions: 'Robe de prêtre du Ministorum, icône sacrée, porte-voix, rosarius, 50 solars.', faction: 'adeptus_ministorum', source: 'core', page: 332 },
+    { key: 'battle_sister', label: 'Sœur de bataille', labelEn: 'Battle Sister', size: 'medium', type: 'Humain (Ecclésiarchie)', role: 'elite',
+        chars: { ws: 50, bs: 50, str: 60, tgh: 50, ag: 30, int: 25, per: 40, wil: 50, fel: 25 },
+        armour: 10, wounds: 19, criticalWounds: 1, initiative: 7, speed: 'normal', resolve: 3, warpThreshold: null,
+        skills: { athletics: 70, awareness: 50, discipline: 60, 'discipline.fear': 70, 'discipline.psychic': 70, fortitude: 60, lore: 30, 'lore.theology': 40, medicae: 30, 'medicae.human': 40, melee: 60, presence: 40, ranged: 60, 'ranged.long_gun': 70, reflexes: 40 },
+        traits: [
+            { label: 'Contrer la sorcière', labelEn: 'Deny the Witch', summary: 'Réaction quand un psyker à Portée moyenne manifeste un pouvoir : Test de Force Mentale de même Difficulté que le pouvoir ; en cas de réussite, ses DR sont soustraits à ceux du psyker, ce qui peut faire échouer le pouvoir.' },
+            { label: 'Vraie foi', labelEn: 'True Faith', summary: 'Dispose d\'1 point de Destin.' },
+        ],
+        attacks: [
+            { label: 'Bolter', labelEn: 'Boltgun', skill: 'ranged.long_gun', value: 70, damage: '8 + DR', range: 'long', traits: 'Bruyante, Perforante (4), Deux mains' },
+            { label: 'Pistolet bolter', labelEn: 'Bolt Pistol', skill: 'ranged.pistol', value: 60, damage: '8 + DR', range: 'short', traits: 'Proche, Bruyante, Perforante (4)' },
+            { label: 'Grenade frag', labelEn: 'Frag Grenade', skill: 'ranged.thrown', value: 50, damage: '0', range: 'medium', traits: 'Explosion 6, Bruyante, Instable' },
+            { label: 'Grenade krak', labelEn: 'Krak Grenade', skill: 'ranged.thrown', value: 50, damage: '12', range: 'medium', traits: 'Bruyante, Perforante (4), Dispersion, Instable' },
+        ],
+        powers: [], possessions: 'Armure énergétique Sororitas, icône sacrée.', faction: 'adeptus_ministorum', source: 'core', page: 332 },
+
+    // ─── Inquisition (core p.333-335) ───
+    { key: 'acolyte', label: 'Acolyte', labelEn: 'Acolyte', size: 'medium', type: 'Humain (Inquisition)', role: 'elite',
+        chars: { ws: 30, bs: 30, str: 30, tgh: 40, ag: 30, int: 40, per: 40, wil: 50, fel: 40 },
+        armour: 2, wounds: 16, criticalWounds: 0, initiative: 7, speed: 'normal', resolve: 2, warpThreshold: null,
+        skills: { awareness: 50, discipline: 60, fortitude: 50, intuition: 50, 'intuition.human': 60, linguistics: 50, logic: 50, 'logic.investigation': 60, lore: 50, 'melee.one_handed': 40, presence: 60, 'presence.intimidation': 70, ranged: 40, 'ranged.pistol': 50, rapport: 50, 'rapport.deception': 60, 'rapport.inquiry': 60, reflexes: 40, stealth: 40 },
+        traits: [
+            { label: 'Ordo', labelEn: 'Ordo', summary: 'Membre d\'un Ordo : voir les bonus d\'Ordo (NPC_RULES.ordoBonuses).' },
+            { label: 'Chercheur de vérité', labelEn: 'Truthfinder', summary: 'Avantage au premier Test d\'Intuition (Humains) qu\'il fait sur un individu (« Intuition (People) » dans le livre).' },
+        ],
+        attacks: [
+            { label: 'Pistolet automatique à balles silencieux', labelEn: 'Silenced Stub Automatic', skill: 'ranged.pistol', value: 40, damage: '6 + DR', range: 'medium', traits: 'Proche' },
+            { label: 'Matraque à choc', labelEn: 'Shock Maul', skill: 'melee.one_handed', value: 40, damage: '5 + écart de DR', range: null, traits: 'Bruyante, Inflige (Hébété)' },
+            { label: 'Grenade fumigène', labelEn: 'Smoke Grenade', skill: 'ranged.thrown', value: 30, damage: '0', range: 'medium', traits: 'Bruyante, Explosion, Instable ; la Zone devient très obscurcie pendant 3 Rounds' },
+        ],
+        powers: [], possessions: 'Combinaison blindée sous des vêtements discrets, chrono, sangsue de communication, ardoise de données, kit de déguisement, magnoculaires, menottes, photo-viseurs, recycleur d\'air, micro-vox, 100 solars.', faction: 'inquisition', source: 'core', page: 334 },
+    { key: 'death_cult_assassin', label: 'Assassin du Culte de la Mort', labelEn: 'Death Cult Assassin', size: 'medium', type: 'Humain (Inquisition)', role: 'elite',
+        chars: { ws: 45, bs: 30, str: 40, tgh: 40, ag: 50, int: 25, per: 35, wil: 50, fel: 25 },
+        armour: 2, wounds: 17, criticalWounds: 1, initiative: 8, speed: 'normal', resolve: 3, warpThreshold: null,
+        skills: { athletics: 60, awareness: 50, dexterity: 60, discipline: 60, fortitude: 50, 'lore.theology': 40, melee: 50, 'melee.one_handed': 60, ranged: 40, 'ranged.long_gun': 50, reflexes: 60, stealth: 60 },
+        traits: [
+            { label: 'Assoiffé de sang', labelEn: 'Bloodthirsty', summary: 'Quand il inflige une Blessure, Avantage à son prochain Test d\'attaque.' },
+            { label: 'Martyre', labelEn: 'Martyrdom', summary: 'Quand il subit une ou plusieurs Blessures, perd l\'état Effrayé ; ses alliés Effrayés à Portée courte qui le voient font aussitôt, en Action gratuite, un Test de Discipline (Peur) avec Avantage pour ne plus l\'être.' },
+        ],
+        attacks: [
+            { label: 'Lame énergétique du Culte de la Mort', labelEn: 'Death Cult Power Blade', skill: 'melee.one_handed', value: 65, damage: '8 + écart de DR', range: null, traits: 'Perforante (4)' },
+            { label: 'Fusil de précision', labelEn: 'Sniper Rifle', skill: 'ranged.long_gun', value: 45, damage: '8 + DR', range: 'extreme', traits: 'Bruyante, Deux mains' },
+            { label: 'Couteau', labelEn: 'Knife', skill: 'melee.one_handed', value: 65, damage: '4 + écart de DR', range: null, traits: 'Discrète, Lancer (Courte)' },
+        ],
+        powers: [], possessions: 'Combinaison blindée, icône sacrée.', faction: 'inquisition', source: 'core', page: 334 },
+    { key: 'interrogator', label: 'Interrogateur', labelEn: 'Interrogator', size: 'medium', type: 'Humain (Inquisition)', role: 'leader',
+        chars: { ws: 50, bs: 30, str: 30, tgh: 40, ag: 40, int: 50, per: 50, wil: 50, fel: 40 },
+        armour: 3, wounds: 16, criticalWounds: 4, initiative: 9, speed: 'normal', resolve: 3, warpThreshold: null,
+        skills: { awareness: 60, dexterity: 50, discipline: 60, fortitude: 50, intuition: 60, 'logic.investigation': 60, lore: 60, medicae: 60, melee: 60, presence: 60, 'presence.interrogation': 70, ranged: 40, rapport: 50 },
+        traits: [
+            { label: 'Contrer la sorcière', labelEn: 'Deny the Witch', summary: 'Réaction quand un psyker à Portée moyenne manifeste un pouvoir : Test de Force Mentale de même Difficulté que le pouvoir ; en cas de réussite, ses DR sont soustraits à ceux du psyker, ce qui peut faire échouer le pouvoir.' },
+            { label: 'Extraire la vérité', labelEn: 'Extract Truth', summary: 'Quand il inflige une Blessure en mêlée : Test opposé Présence (Interrogatoire) contre Robustesse (Douleur) ; s\'il gagne, la Supériorité du groupe baisse de 1.' },
+            { label: 'Maître-chasseur', labelEn: 'Hunter-controller', summary: 'Action : ordonne à un allié impérial de faire immédiatement une Action.' },
+            { label: 'Ordo', labelEn: 'Ordo', summary: 'Membre d\'un Ordo : voir les bonus d\'Ordo (NPC_RULES.ordoBonuses, p.334).' },
+        ],
+        attacks: [
+            { label: 'Pistolet à aiguilles', labelEn: 'Needle Pistol', skill: 'ranged.pistol', value: 40, damage: '4 + DR', range: 'medium', traits: 'Proche, Inflige (Empoisonné), Discrète' },
+            { label: 'Couteau énergétique', labelEn: 'Power Knife', skill: 'melee.one_handed', value: 60, damage: '5 + écart de DR', range: null, traits: 'Perforante (40), Discrète, Lancer (Courte)' },
+            { label: 'Grenade suffocante', labelEn: 'Choke Grenade', skill: 'ranged.thrown', value: 40, damage: '0', range: 'medium', traits: 'Instable, Inflige (Hébété)' },
+        ],
+        powers: [], possessions: 'Combinaison blindée sous des vêtements sombres, cape en maille, outils de chirurgien, chrono, ardoise de données, kit d\'excruciateur, icône sacrée, menottes, photo-viseurs, respirateur, hurleur (Screamer), brouilleur de signal, micro-vox, 300 solars.', faction: 'inquisition', source: 'core', page: 335 },
+
+    // ─── Navis Imperialis et Libres-Marchands (core p.336-338) ───
+    { key: 'voidsman', label: 'Homme du vide', labelEn: 'Voidsman', size: 'medium', type: 'Humain (Navis Imperialis)', role: 'troop',
+        chars: { ws: 25, bs: 30, str: 30, tgh: 30, ag: 40, int: 30, per: 40, wil: 30, fel: 25 },
+        armour: 2, wounds: 12, criticalWounds: 0, initiative: 8, speed: 'normal', resolve: 1, warpThreshold: null,
+        skills: { athletics: 40, navigation: 40, piloting: 50, ranged: 40, 'tech.engineering': 40 },
+        traits: [
+            { label: 'Partie du vaisseau', labelEn: 'Part of the Ship', summary: 'Défend son vaisseau jusqu\'à la mort : Avantage aux Tests de Discipline et +1 Détermination à bord.' },
+            { label: 'Pied du vide', labelEn: 'Void Legs', summary: 'Aucun Désavantage dû aux effets propres au vide (roulis du vaisseau, apesanteur).' },
+        ],
+        attacks: [
+            { label: 'Pistolet laser', labelEn: 'Laspistol', skill: 'ranged.pistol', value: 40, damage: '5 + DR', range: 'medium', traits: 'Proche, Bruyante, Fiable' },
+        ],
+        powers: [], possessions: 'Uniforme de cuir épais, combinaison de vide.', faction: 'imperial_navy', source: 'core', page: 337 },
+    { key: 'armsman', label: 'Homme d\'armes', labelEn: 'Armsman', size: 'medium', type: 'Humain (Navis Imperialis)', role: 'troop',
+        chars: { ws: 25, bs: 40, str: 25, tgh: 30, ag: 30, int: 30, per: 40, wil: 40, fel: 30 },
+        armour: 3, wounds: 12, criticalWounds: 0, initiative: 7, speed: 'normal', resolve: 2, warpThreshold: null,
+        skills: { athletics: 30, 'awareness.sight': 50, discipline: 50, 'intuition.human': 50, navigation: 40, piloting: 50, presence: 50, ranged: 50 },
+        traits: [
+            { label: 'Maîtres des espaces confinés', labelEn: 'Masters of Close Confines', summary: 'Lui et les hommes du vide alliés de sa Zone gagnent +1 DR à toutes les attaques à distance contre une cible à Portée « Close » (sic, Contact ou Courte).' },
+            { label: 'Partie du vaisseau', labelEn: 'Part of the Ship', summary: 'Défend son vaisseau jusqu\'à la mort : Avantage aux Tests de Discipline et +1 Détermination à bord.' },
+            { label: 'Pied du vide', labelEn: 'Void Legs', summary: 'Aucun Désavantage dû aux effets propres au vide (roulis du vaisseau, apesanteur).' },
+        ],
+        attacks: [
+            { label: 'Fusil de combat', labelEn: 'Combat Shotgun', skill: 'ranged.long_gun', value: 50, damage: '6 + DR', range: 'medium', traits: 'Dispersion, Inflige (À terre), Bruyante, Deux mains' },
+            { label: 'Pistolet laser', labelEn: 'Laspistol', skill: 'ranged.pistol', value: 50, damage: '5 + DR', range: 'medium', traits: 'Proche, Bruyante, Fiable' },
+        ],
+        powers: [], possessions: 'Uniforme de cuir épais, découpeur laser, combinaison de vide.', faction: 'imperial_navy', source: 'core', page: 337 },
+    { key: 'merchant_trader', label: 'Marchand', labelEn: 'Merchant Trader', size: 'medium', type: 'Humain (Navis Imperialis)', role: 'elite',
+        chars: { ws: 30, bs: 30, str: 30, tgh: 30, ag: 50, int: 40, per: 50, wil: 30, fel: 50 },
+        armour: '1d10', wounds: 13, criticalWounds: 1, initiative: 10, speed: 'normal', resolve: 1, warpThreshold: null,
+        skills: { 'discipline.composure': 50, intuition: 60, linguistics: 50, 'logic.evaluation': 50, lore: 50, navigation: 50, presence: 60, piloting: 60, rapport: 60, 'rapport.haggle': 70 },
+        traits: [
+            { label: 'Langue d\'argent', labelEn: 'Argent Tongue', summary: 'Les Tests d\'Intuition qui le visent se font avec Désavantage.' },
+            { label: 'Négociant inébranlable', labelEn: 'Immovable Mercantile', summary: 'Détermination 3 pendant une négociation commerciale, et Avantage aux Tests de Discipline (Sang-froid).' },
+        ],
+        attacks: [
+            { label: 'Revolver à balles', labelEn: 'Stub Revolver', skill: 'ranged.pistol', value: 30, damage: '6 + DR', range: 'medium', traits: 'Proche, Bruyante, Fiable' },
+            { label: 'Épée monomoléculaire', labelEn: 'Mono Sword', skill: 'melee.one_handed', value: 30, damage: '5 + écart de DR', range: null, traits: 'Perforante (2)' },
+        ],
+        powers: [], possessions: 'Vêtements coûteux, chrono, bottes magnétiques, champ réfracteur, combinaison de vide, 500 solars.', faction: 'imperial_navy', source: 'core', page: 338 },
+    { key: 'voidship_captain', label: 'Capitaine de vaisseau', labelEn: 'Voidship Captain', size: 'medium', type: 'Humain (Navis Imperialis)', role: 'leader',
+        chars: { ws: 40, bs: 40, str: 30, tgh: 40, ag: 50, int: 50, per: 50, wil: 40, fel: 50 },
+        armour: '2 + 1d10', wounds: 15, criticalWounds: 4, initiative: 10, speed: 'normal', resolve: 3, warpThreshold: null,
+        skills: { awareness: 60, discipline: 50, 'discipline.composure': 60, 'discipline.fear': 60, intuition: 60, logic: 60, melee: 50, navigation: 60, 'navigation.stellar': 70, piloting: 60, 'piloting.voidship': 70, 'presence.leadership': 60, ranged: 50, 'ranged.pistol': 60 },
+        traits: [
+            { label: 'Maîtres des espaces confinés', labelEn: 'Masters of Close Confines', summary: 'Lui et les hommes du vide alliés de sa Zone gagnent +1 DR à toutes les attaques à distance contre une cible à Portée « Close » (le livre écrit « The Voidmaster »).' },
+            { label: 'Mon vaisseau, mes règles', labelEn: 'My Ship, My Rules', summary: 'Réaction : quand un allié de la Flotte impériale qui le voit ou l\'entend rate un Test, il peut le lui faire relancer.' },
+            { label: 'Partie du vaisseau', labelEn: 'Part of the Ship', summary: 'Défend son vaisseau jusqu\'à la mort : Avantage aux Tests de Discipline et +1 Détermination à bord.' },
+            { label: 'Pied du vide', labelEn: 'Void Legs', summary: 'Aucun Désavantage dû aux effets propres au vide (roulis du vaisseau, apesanteur).' },
+        ],
+        attacks: [
+            { label: 'Pistolet laser à haute énergie', labelEn: 'Hot Shot Laspistol', skill: 'ranged.pistol', value: 60, damage: '8 + DR', range: 'medium', traits: 'Proche, Bruyante, Perforante (2)' },
+            { label: 'Épée', labelEn: 'Sword', skill: 'melee.one_handed', value: 50, damage: '5 + écart de DR', range: null, traits: '' },
+        ],
+        powers: [], possessions: 'Uniforme de cuir épais doré, chrono, ardoise de données sur son vaisseau et son équipage, champ réfracteur, combinaison de vide, 300 solars.', faction: 'imperial_navy', source: 'core', page: 338 },
+
+    // ─── Citoyens et Infractionnistes (core p.339-342) ───
+    { key: 'imperial_citizen', label: 'Citoyen impérial', labelEn: 'Imperial Citizen', size: 'medium', type: 'Humain (Imperium)', role: 'troop',
+        chars: { ws: 30, bs: 30, str: 30, tgh: 30, ag: 30, int: 30, per: 30, wil: 30, fel: 30 },
+        armour: 1, wounds: 12, criticalWounds: 0, initiative: 6, speed: 'normal', resolve: 1, warpThreshold: null,
+        skills: { athletics: 40, dexterity: 40, lore: 35 },
+        traits: [],
+        attacks: [
+            { label: 'À mains nues', labelEn: 'Unarmed', skill: 'melee.brawling', value: 30, damage: '1', range: null, traits: 'Inefficace' },
+        ],
+        powers: [], possessions: 'Vêtements en lambeaux, icône sacrée, 1d10 solars.', faction: 'Imperium', source: 'core', page: 340 },
+    { key: 'dreg', label: 'Rebut', labelEn: 'Dreg', size: 'medium', type: 'Humain (Infractionniste)', role: 'troop',
+        chars: { ws: 40, bs: 30, str: 30, tgh: 40, ag: 30, int: 20, per: 30, wil: 20, fel: 20 },
+        armour: 1, wounds: 13, criticalWounds: 0, initiative: 6, speed: 'normal', resolve: 1, warpThreshold: null,
+        skills: { athletics: 40, awareness: 40, stealth: 40 },
+        traits: [
+            { label: 'Désespéré', labelEn: 'Desperate', summary: 'Avantage aux Tests de Dextérité (Escamotage) et autres Tests pour voler des solars ou un objet.' },
+            { label: 'Conditions sordides', labelEn: 'Dire Conditions', summary: 'Peut avoir une Mutation ou une Malignité tirée au hasard (p.222-223).' },
+        ],
+        attacks: [
+            { label: 'Revolver à balles', labelEn: 'Stub Revolver', skill: 'ranged.pistol', value: 30, damage: '6 + DR', range: 'medium', traits: 'Proche, Bruyante, Fiable' },
+            { label: 'Couteau', labelEn: 'Knife', skill: 'melee.one_handed', value: 40, damage: '3 + écart de DR', range: null, traits: 'Discrète, Lancer (Courte)' },
+        ],
+        powers: [], possessions: 'Vêtements en lambeaux, 1d5 solars.', faction: 'infractionist', source: 'core', page: 340 },
+    { key: 'ganger', label: 'Gangster', labelEn: 'Ganger', size: 'medium', type: 'Humain (Infractionniste)', role: 'troop',
+        chars: { ws: 35, bs: 35, str: 30, tgh: 40, ag: 40, int: 20, per: 30, wil: 20, fel: 20 },
+        armour: 2, wounds: 13, criticalWounds: 0, initiative: 7, speed: 'normal', resolve: 1, warpThreshold: null,
+        skills: { melee: 40, presence: 40, ranged: 40, stealth: 50 },
+        traits: [
+            { label: 'Embuscade', labelEn: 'Ambusher', summary: 'Peut tenter un Test de Discrétion pendant son Mouvement si sa Zone offre un Couvert.' },
+            { label: 'Chez soi', labelEn: 'Home Turf', summary: '+1 Détermination et Avantage aux Tests de Discipline sur le territoire de son gang.' },
+        ],
+        attacks: [
+            { label: 'Fusil automatique', labelEn: 'Autogun', skill: 'ranged.long_gun', value: 40, damage: '6 + DR', range: 'long', traits: 'Bruyante, Deux mains' },
+            { label: 'Pistolet automatique à balles', labelEn: 'Stub Automatic', skill: 'ranged.pistol', value: 40, damage: '6 + DR', range: 'medium', traits: 'Proche, Bruyante' },
+            { label: 'Couteau', labelEn: 'Knife', skill: 'melee.one_handed', value: 40, damage: '3 + écart de DR', range: null, traits: 'Discrète, Lancer (Courte)' },
+        ],
+        powers: [], possessions: 'Cuirs épais, couleurs du gang, bouchons filtrants, 1d10 solars.', faction: 'infractionist', source: 'core', page: 340 },
+    { key: 'smuggler', label: 'Contrebandier', labelEn: 'Smuggler', size: 'medium', type: 'Humain (Infractionniste)', role: 'elite',
+        chars: { ws: 35, bs: 35, str: 30, tgh: 40, ag: 50, int: 30, per: 50, wil: 20, fel: 50 },
+        armour: '1d10', wounds: 13, criticalWounds: 1, initiative: 10, speed: 'normal', resolve: 2, warpThreshold: null,
+        skills: { awareness: 60, 'discipline.composure': 30, linguistics: 40, 'logic.evaluation': 40, melee: 40, ranged: 40, rapport: 60, stealth: 60 },
+        traits: [
+            { label: 'Langue d\'argent', labelEn: 'Argent Tongue', summary: 'Les Tests d\'Intuition qui le visent se font avec Désavantage.' },
+            { label: 'Chez soi', labelEn: 'Home Turf', summary: '+1 Détermination en conversation.' },
+        ],
+        attacks: [
+            { label: 'Matraque à choc', labelEn: 'Shock Maul', skill: 'melee.one_handed', value: 40, damage: '5 + écart de DR', range: null, traits: 'Bruyante, Inflige (Hébété)' },
+            { label: 'Revolver à balles silencieux', labelEn: 'Silenced Stub Revolver', skill: 'ranged.pistol', value: 40, damage: '6 + DR', range: 'medium', traits: 'Proche, Fiable' },
+        ],
+        powers: [], possessions: 'Cuirs légers, auspex, chrono, kit de déguisement, multi-boussole, brouilleur de signal, champ réfracteur, micro-vox, 1d10 × 100 solars.', faction: 'infractionist', source: 'core', page: 341 },
+    { key: 'bounty_hunter', label: 'Chasseur de primes', labelEn: 'Bounty Hunter', size: 'medium', type: 'Humain (Infractionniste)', role: 'elite',
+        chars: { ws: 50, bs: 50, str: 40, tgh: 50, ag: 40, int: 30, per: 50, wil: 30, fel: 30 },
+        armour: 2, wounds: 17, criticalWounds: 1, initiative: 9, speed: 'normal', resolve: 3, warpThreshold: null,
+        skills: { athletics: 50, awareness: 60, 'intuition.human': 60, 'logic.investigation': 50, 'navigation.tracking': 50, presence: 40, 'rapport.inquiry': 50 },
+        traits: [
+            { label: 'Embuscade', labelEn: 'Ambusher', summary: 'Peut tenter un Test de Discrétion pendant son Mouvement si sa Zone offre un Couvert.' },
+            { label: 'Traque implacable', labelEn: 'Relentless Pursuit', summary: 'Après avoir infligé une Blessure à sa proie : Avantage aux Tests de Vigilance et de Navigation (Pistage) pour la retrouver jusqu\'à ce qu\'il dorme, et +1 DR à ses Tests d\'attaque contre elle.' },
+        ],
+        attacks: [
+            { label: 'Épée tronçonneuse', labelEn: 'Chainsword', skill: 'melee.one_handed', value: 50, damage: '7 + écart de DR', range: null, traits: 'Bruyante, Déchirante (2)' },
+            { label: 'Matraque à choc', labelEn: 'Shock Maul', skill: 'melee.one_handed', value: 50, damage: '6 + écart de DR', range: null, traits: 'Bruyante, Inflige (Hébété)' },
+            { label: 'Fusil automatique', labelEn: 'Autogun', skill: 'ranged.long_gun', value: 50, damage: '6 + DR', range: 'long', traits: 'Bruyante, Deux mains' },
+            { label: 'Lance-toile', labelEn: 'Webber', skill: 'ranged.long_gun', value: 50, damage: '0', range: 'medium', traits: 'Inflige (Entravé), Deux mains' },
+        ],
+        powers: [], possessions: 'Combinaison blindée, auspex, chrono, sangsue de communication, kit de déguisement, magnoculaires, menottes, passe-partout, photo-lentilles, recycleur d\'air, 100 solars.', faction: 'infractionist', source: 'core', page: 342 },
+    { key: 'gang_leader', label: 'Chef de gang', labelEn: 'Gang Leader', size: 'medium', type: 'Humain (Infractionniste)', role: 'leader',
+        chars: { ws: 50, bs: 50, str: 50, tgh: 50, ag: 50, int: 30, per: 30, wil: 40, fel: 40 },
+        armour: 2, wounds: 19, criticalWounds: 5, initiative: 8, speed: 'normal', resolve: 2, warpThreshold: null,
+        skills: { athletics: 60, awareness: 40, discipline: 50, intuition: 50, melee: 60, presence: 50, ranged: 60 },
+        traits: [
+            { label: 'Chez soi', labelEn: 'Home Turf', summary: '+1 Détermination et Avantage aux Tests de Discipline, Présence, Navigation et Discrétion sur le territoire de son gang.' },
+            { label: 'Seigneur infractionniste', labelEn: 'Infractionist Ruler', summary: 'S\'il n\'est pas Engagé, Action : Test de Présence ; en cas de réussite, autant de Gangsters qui l\'entendent que de DR font immédiatement une Action.' },
+            { label: 'Renforts infractionnistes (optionnel)', labelEn: 'Infractionist Reinforcements', summary: 'Embuscade préparée, repérable par un Test Ardu (−20) de Vigilance (Vue). Action : 1d5 + 2 Gangsters surgissent et attaquent aussitôt ; si l\'embuscade n\'a pas été repérée, la Supériorité du groupe baisse de 1.' },
+            { label: 'Piège de territoire (optionnel)', labelEn: 'Turf Trap', summary: 'Pièges repérables par un Test Ardu (−20) de Vigilance (Vue), chacun Élément d\'une Zone. Action : un piège explose comme une Bombe incendiaire et crée un Danger mineur ; le premier piège non repéré réduit la Supériorité du groupe de 1.' },
+        ],
+        attacks: [
+            { label: 'Arme lourde', labelEn: 'Great Weapon', skill: 'melee.two_handed', value: 60, damage: '9 + écart de DR', range: null, traits: 'Lourde (4), Deux mains' },
+            { label: 'Couteau', labelEn: 'Knife', skill: 'melee.one_handed', value: 60, damage: '5 + écart de DR', range: null, traits: 'Discrète, Lancer (Contact)' },
+            { label: 'Pistolet-canon', labelEn: 'Hand Cannon', skill: 'ranged.pistol', value: 60, damage: '8 + DR', range: 'medium', traits: 'Proche, Lourde (4), Bruyante, Perforante (2)' },
+            { label: 'Bombes incendiaires', labelEn: 'Fire Bombs', skill: 'ranged.thrown', value: 60, damage: '0', range: 'medium', traits: 'Explosion (3), Bruyante, Inflige (En feu), Instable' },
+        ],
+        powers: [], possessions: 'Cuirs épais, bouchons filtrants, couleurs du gang, porte-voix, recycleur d\'air, 300 solars.', faction: 'infractionist', source: 'core', page: 342 },
+
+    // ─── Hérétiques (core p.343-346) ───
+    { key: 'cultist', label: 'Cultiste', labelEn: 'Cultist', size: 'medium', type: 'Humain (Hérétique)', role: 'troop',
+        chars: { ws: 30, bs: 30, str: 30, tgh: 30, ag: 30, int: 30, per: 30, wil: 30, fel: 30 },
+        armour: 1, wounds: 12, criticalWounds: 0, initiative: 6, speed: 'normal', resolve: 1, warpThreshold: null,
+        skills: { 'linguistics.forbidden': 40, 'lore.forbidden': 40, melee: 40, presence: 40, ranged: 40, 'rapport.deception': 40, stealth: 40 },
+        traits: [
+            { label: 'La raison est pour les faibles', labelEn: 'Sanity is for the Weak', summary: 'Quand il rate un Test de Discipline, peut subir 1d10 dégâts ignorant l\'Armure pour le réussir automatiquement.' },
+            { label: 'Marque de sorcière', labelEn: 'Witch-mark', summary: 'Porte une marque hérétique (NPC_RULES.hereticalMarks, p.344).' },
+        ],
+        attacks: [
+            { label: 'Fusil automatique', labelEn: 'Autogun', skill: 'ranged.long_gun', value: 40, damage: '5 + DR', range: 'long', traits: 'Bruyante, Deux mains' },
+            { label: 'Pistolet automatique', labelEn: 'Autopistol', skill: 'ranged.pistol', value: 40, damage: '6 + DR', range: 'medium', traits: 'Proche, Bruyante' },
+            { label: 'Épée', labelEn: 'Sword', skill: 'melee.one_handed', value: 40, damage: '5 + écart de DR', range: null, traits: '' },
+            { label: 'Couteau', labelEn: 'Knife', skill: 'melee.one_handed', value: 40, damage: '3 + écart de DR', range: null, traits: 'Discrète, Lancer (Courte)' },
+        ],
+        powers: [], possessions: 'Robe de culte, kit de déguisement, écrits hérétiques, globe lumineux, icône impie, 20 solars.', faction: 'Hérétique', source: 'core', page: 344 },
+    { key: 'accursed_cultist', label: 'Cultiste maudit', labelEn: 'Accursed Cultist', size: 'medium', type: 'Mutant (Hérétique)', role: 'troop',
+        chars: { ws: 50, bs: 30, str: 30, tgh: 30, ag: 30, int: 30, per: 30, wil: 25, fel: 25 },
+        armour: 2, wounds: 11, criticalWounds: 0, initiative: 6, speed: 'normal', resolve: 1, warpThreshold: null,
+        skills: { awareness: 40, 'linguistics.forbidden': 40, 'lore.forbidden': 40, 'melee.brawling': 60, presence: 30, stealth: 40 },
+        traits: [
+            { label: 'Œil supplémentaire', labelEn: 'Extra Eye', summary: 'Œil au bout de son tentacule : en regardant par lui, il compte comme équipé de photo-viseurs (p.144).' },
+            { label: 'Tentacule fouetteur', labelEn: 'Lashing Tentacle', summary: 'Tentacule sur le Corps en plus de ses membres ; ses attaques à mains nues au tentacule gagnent Allonge et Inflige (Entravé).' },
+            { label: 'Griffes du Warp', labelEn: 'Warp Claws', summary: 'Ses attaques à mains nues perdent Inefficace et gagnent Déchirante (1).' },
+        ],
+        attacks: [
+            { label: 'Pistolet automatique', labelEn: 'Autopistol', skill: 'ranged.pistol', value: 30, damage: '5 + DR', range: 'medium', traits: 'Proche, Bruyante' },
+            { label: 'À mains nues (griffes du Warp)', labelEn: 'Unarmed (Warp Claws)', skill: 'melee.brawling', value: 60, damage: '3 + écart de DR', range: null, traits: 'Déchirante (1)' },
+            { label: 'À mains nues (tentacule et griffes du Warp)', labelEn: 'Unarmed (Lashing Tentacle with Warp Claws)', skill: 'melee.brawling', value: 60, damage: '3 + écart de DR', range: null, traits: 'Inflige (Entravé), Allonge, Déchirante (1)' },
+        ],
+        powers: [], possessions: 'Cuirs épais en lambeaux, icône impie, 1d10 solars.', faction: 'Hérétique', source: 'core', page: 344 },
+    { key: 'chaos_spawn', label: 'Enfant du Chaos', labelEn: 'Chaos Spawn', size: 'large', type: 'Démon (Hérétique)', role: 'elite',
+        chars: { ws: 50, bs: 10, str: 90, tgh: 90, ag: 20, int: 10, per: 10, wil: 10, fel: 10 },
+        armour: 2, wounds: 14, criticalWounds: 1, initiative: 3, speed: null, resolve: 1, warpThreshold: null,
+        skills: { awareness: 20, intuition: 20, reflexes: 30 },
+        traits: [
+            { label: 'Terrifiant', labelEn: 'Fearsome', summary: 'Qui le voit pour la première fois réussit un Test Ardu (−20) de Discipline (Peur) ou devient Effrayé ; si tous les personnages le sont, le groupe perd 1 Supériorité.' },
+            { label: 'Muté au-delà de la raison', labelEn: 'Mutated Beyond Reason', summary: 'Peut avoir n\'importe quel nombre de Mutations (p.222).' },
+            { label: 'Mouvement muté', labelEn: 'Mutated Movement', summary: 'Vitesse tirée au d10 au début de chacun de ses tours : 1-4 Lente, 5-7 Normale, 8-0 Rapide.' },
+            { label: 'Source de corruption', labelEn: 'Source of Corruption', summary: 'Le voir : Exposition mineure, Test Exigeant (+0) de Discipline (Psychique) contre 1 point de Corruption. Le toucher : Exposition modérée, Test Exigeant (+0) de Robustesse contre 2 points. Chaque DR réduit les points gagnés de 1.' },
+        ],
+        attacks: [
+            { label: 'Mutations hideuses', labelEn: 'Hideous Mutations', skill: 'melee.brawling', value: 50, damage: '9 + écart de DR', range: null, traits: 'Trait tiré au d10 à chaque attaque : 1-2 Griffe-rasoir, Perforante (5) ; 3-4 Pseudopodes, la cible est agrippée ; 5-6 Hémorragie toxique, Inflige (Empoisonné) ; 7-8 Gueule abjecte, Inflige (Hémorragie) ; 9-0 Tentacules, seconde attaque de Mutations hideuses' },
+        ],
+        powers: [], possessions: 'Aucune.', faction: 'Hérétique', source: 'core', page: 345 },
+    { key: 'rogue_psyker', label: 'Psyker renégat', labelEn: 'Rogue Psyker', size: 'medium', type: 'Humain (Hérétique)', role: 'elite',
+        chars: { ws: 25, bs: 25, str: 30, tgh: 30, ag: 40, int: 30, per: 40, wil: 50, fel: 30 },
+        armour: 1, wounds: 14, criticalWounds: 1, initiative: 8, speed: 'normal', resolve: 2, warpThreshold: 5,
+        skills: { awareness: 50, 'awareness.psyniscience': 60, fortitude: 40, intuition: 50, 'linguistics.forbidden': 40, 'lore.forbidden': 40, psychic_mastery: 60 },
+        traits: [
+            { label: 'Psyker maléfique', labelEn: 'Malefic Psyker', summary: 'Pouvoirs mineurs : Call Vermin, Dread Presence, Float, Ill Omen, Jinx, Nova, Overwhelm, Smite. Pouvoirs de discipline : Affliction, Bio-Lightning, Haemorrhage, Life Leech, Wither, Question the Warp, Scrying Gaze, Twist Fate, Gate of Infinity, Vortex of Doom, Compel, Dominate, Mental Interrogation, Psychic Shriek, Terrifying Visions.' },
+            { label: 'Source de corruption', labelEn: 'Source of Corruption', summary: 'Le toucher : Exposition mineure, Test Exigeant (+0) de Robustesse contre 1 point de Corruption ; chaque DR réduit les points gagnés de 1.' },
+            { label: 'Puissance débridée', labelEn: 'Unrestrained Power', summary: 'Peut prendre l\'Avantage à tout Test de Maîtrise psychique, mais double alors la Charge Warp gagnée.' },
+        ],
+        attacks: [
+            { label: 'Châtiment', labelEn: 'Smite', skill: 'psychic_mastery', value: 60, warpRating: null, damage: '11 + DR', range: 'medium', traits: 'Ignore l\'Armure' },
+            { label: 'Bâton du Chaos (bâton de force, focus psychique)', labelEn: 'Chaos Stave (Force Staff, Psy Focus)', skill: 'melee.two_handed', value: 25, damage: '5 + Charge Warp + écart de DR', range: null, traits: 'Défensive, Deux mains' },
+            { label: 'Pistolet laser', labelEn: 'Laspistol', skill: 'ranged.pistol', value: 25, damage: '5 + DR', range: 'medium', traits: 'Proche, Bruyante, Fiable' },
+        ],
+        powers: ['call_vermin', 'dread_presence', 'float', 'ill_omen', 'jinx', 'nova', 'overwhelm', 'smite', 'affliction', 'bio_lightning', 'haemorrhage', 'life_leech', 'wither', 'question_the_warp', 'scrying_gaze', 'twist_fate', 'gate_of_infinity', 'vortex_of_doom', 'compel', 'dominate', 'mental_interrogation', 'psychic_shriek', 'terrifying_visions'],
+        possessions: 'Cuirs légers en lambeaux, icône impie.', faction: 'Hérétique', source: 'core', page: 346 },
+    { key: 'cult_leader', label: 'Chef de culte', labelEn: 'Cult Leader', size: 'medium', type: 'Humain (Hérétique)', role: 'leader',
+        chars: { ws: 40, bs: 40, str: 40, tgh: 50, ag: 40, int: 40, per: 40, wil: 50, fel: 50 },
+        armour: 2, wounds: 19, criticalWounds: 5, initiative: 8, speed: 'normal', resolve: 3, warpThreshold: null,
+        skills: { awareness: 50, discipline: 60, 'discipline.fear': 70, fortitude: 60, intuition: 50, 'linguistics.forbidden': 50, 'lore.forbidden': 50, melee: 50, 'melee.one_handed': 60, presence: 60, 'presence.intimidation': 70, 'presence.leadership': 70, 'rapport.deception': 60, stealth: 50 },
+        traits: [
+            { label: 'Zèle fanatique', labelEn: 'Fanatical Zealotry', summary: 'Action : tous les Cultistes de sa Zone Chargent immédiatement avec +1 DR.' },
+            { label: 'Le prix de l\'échec', labelEn: 'The Price of Failure', summary: 'Si le groupe a 3 Supériorité ou plus en combat contre lui, il peut, en Action gratuite, implorer les dieux sombres : il se change aussitôt en Enfant du Chaos et joue son tour.' },
+            { label: 'La raison est pour les faibles', labelEn: 'Sanity is for the Weak', summary: 'Quand il rate un Test de Discipline, peut subir 1d10 dégâts ignorant l\'Armure pour le réussir automatiquement.' },
+            { label: 'Marque de sorcière', labelEn: 'Witch-mark', summary: 'Porte une marque hérétique (NPC_RULES.hereticalMarks, p.344).' },
+        ],
+        attacks: [
+            { label: 'Épée tronçonneuse', labelEn: 'Chainsword', skill: 'melee.one_handed', value: 60, damage: '7 + écart de DR', range: null, traits: 'Bruyante, Déchirante (2)' },
+            { label: 'Couteau', labelEn: 'Knife', skill: 'melee.one_handed', value: 60, damage: '4 + écart de DR', range: null, traits: 'Discrète, Lancer (Courte)' },
+            { label: 'Pistolet-canon', labelEn: 'Hand Cannon', skill: 'ranged.pistol', value: 40, damage: '8 + DR', range: 'medium', traits: 'Proche, Lourde (4), Bruyante, Perforante (2)' },
+        ],
+        powers: [], possessions: 'Cuirs épais en lambeaux, icône impie, étendard du culte, livre de savoir abominable.', faction: 'Hérétique', source: 'core', page: 346 },
+
+    // ─── Menaces xénos (core p.347-349) ───
+    { key: 'aeldari_ranger', label: 'Rôdeur aeldari', labelEn: 'Aeldari Ranger', size: 'medium', type: 'Aeldari (Asuryani)', role: 'elite',
+        chars: { ws: 30, bs: 50, str: 30, tgh: 30, ag: 50, int: 40, per: 40, wil: 50, fel: 20 },
+        armour: 3, wounds: 14, criticalWounds: 1, initiative: 9, speed: 'fast', resolve: 2, warpThreshold: null,
+        skills: { athletics: 40, awareness: 50, 'awareness.sight': 60, 'awareness.psyniscience': 60, fortitude: 40, intuition: 50, melee: 40, navigation: 50, 'navigation.surface': 60, ranged: 60, 'ranged.long_gun': 70, reflexes: 70, stealth: 70 },
+        traits: [
+            { label: 'Cape caméléoline', labelEn: 'Cameleoline Cloak', summary: 'Avantage aux Tests de Discrétion s\'il ne se déplace pas ce tour.' },
+            { label: 'Sensibilité psychique', labelEn: 'Psychic Sensitivity', summary: 'Peut utiliser Psyniscience ; Désavantage à tous les Tests pour résister aux Pouvoirs psychiques.' },
+            { label: 'Tireur d\'élite', labelEn: 'Sharpshooter', summary: 'Quand il utilise l\'Action Viser, +1 DR à son Test d\'attaque à distance.' },
+        ],
+        attacks: [
+            { label: 'Long fusil de rôdeur', labelEn: 'Ranger Long Rifle', skill: 'ranged.long_gun', value: 70, damage: '9 + DR', range: 'extreme', traits: 'Bruyante, Perforante (2), Deux mains' },
+            { label: 'Pistolet shuriken', labelEn: 'Shuriken Pistol', skill: 'ranged.pistol', value: 60, damage: '6 + DR', range: 'medium', traits: 'Proche, Perforante (4)' },
+        ],
+        powers: [], possessions: 'Armure maillée aeldari.', faction: 'Xénos', source: 'core', page: 348 },
+    { key: 'drukhari_kabalite_warrior', label: 'Guerrier kabalite drukhari', labelEn: 'Drukhari Kabalite Warrior', size: 'medium', type: 'Drukhari (Kabale)', role: 'elite',
+        chars: { ws: 50, bs: 40, str: 40, tgh: 30, ag: 40, int: 30, per: 40, wil: 40, fel: 20 },
+        armour: 3, wounds: 14, criticalWounds: 3, initiative: 8, speed: 'fast', resolve: 2, warpThreshold: null,
+        skills: { athletics: 50, 'fortitude.pain': 40, intuition: 50, melee: 60, 'melee.one_handed': 70, presence: 50, 'presence.interrogation': 60, ranged: 60, reflexes: 50, 'rapport.deception': 30 },
+        traits: [
+            { label: 'Artiste de la lame', labelEn: 'Blade Artist', summary: 'Ses attaques de mêlée à arme blanche gagnent Perforante (+1).' },
+            { label: 'Force de la douleur', labelEn: 'Power from Pain', summary: 'Quand il tue, jet d\'un d10 : tous les guerriers kabalites présents gagnent l\'effet jusqu\'à la fin de la rencontre (chaque effet une fois par rencontre). 1-2 Insensibles à la souffrance : Avantage aux Tests de Robustesse ; 3-4 Avides d\'écorcher : +1 DR en mêlée quand ils Chargent ; 5-6 Furie lacérante : Déchirante de leurs lames +2 ; 7-8 Manteau d\'agonie : +1 Armure ; 9-0 Enhardis par le sang : Avantage aux Tests de Discipline.' },
+        ],
+        attacks: [
+            { label: 'Fusil éclateur', labelEn: 'Splinter Rifle', skill: 'ranged.long_gun', value: 50, damage: '4 + DR', range: 'long', traits: 'Inflige (Empoisonné), Perforante (3), Deux mains' },
+            { label: 'Couteau', labelEn: 'Knife', skill: 'melee.one_handed', value: 50, damage: '4 + écart de DR', range: null, traits: 'Perforante (+1), Discrète, Lancer (Courte)' },
+        ],
+        powers: [], possessions: 'Armure kabalite, collection d\'horribles trophées.', faction: 'Xénos', source: 'core', page: 348 },
+    { key: 'kroot_mercenary', label: 'Mercenaire kroot', labelEn: 'Kroot Mercenary', size: 'medium', type: 'Kroot (Kroot)', role: 'elite',
+        chars: { ws: 40, bs: 40, str: 40, tgh: 30, ag: 40, int: 25, per: 40, wil: 35, fel: 20 },
+        armour: 1, wounds: 11, criticalWounds: 1, initiative: 8, speed: 'normal', resolve: 2, warpThreshold: null,
+        skills: { athletics: 50, awareness: 50, fortitude: 40, intuition: 50, linguistics: 40, melee: 50, 'navigation.surface': 40, ranged: 50, stealth: 50 },
+        traits: [
+            { label: 'Embuscade', labelEn: 'Ambusher', summary: 'Peut tenter un Test de Discrétion pendant son Mouvement si sa Zone offre un Couvert.' },
+            { label: 'Chasseur furtif', labelEn: 'Stealthy Hunter', summary: '+1 Armure grâce au Couvert.' },
+        ],
+        attacks: [
+            { label: 'Fusil kroot (tir)', labelEn: 'Kroot Rifle (Shooting)', skill: 'ranged.long_gun', value: 50, damage: '7 + DR', range: 'long', traits: 'Lourde (4), Bruyante, Deux mains' },
+            { label: 'Fusil kroot (lames)', labelEn: 'Kroot Rifle (Blades)', skill: 'melee.two_handed', value: 50, damage: '6 + écart de DR', range: null, traits: 'Deux mains' },
+        ],
+        powers: [], possessions: 'Cuirs en lambeaux, 20 solars.', faction: 'Xénos', source: 'core', page: 349 },
+    { key: 'purestrain_genestealer', label: 'Genestealer de sang pur', labelEn: 'Purestrain Genestealer', size: 'medium', type: 'Genestealer (Culte Genestealer)', role: 'elite',
+        chars: { ws: 60, bs: 10, str: 50, tgh: 60, ag: 60, int: 10, per: 30, wil: 30, fel: 10 },
+        armour: 2, wounds: 20, criticalWounds: 1, initiative: 10, speed: 'fast', resolve: 2, warpThreshold: null,
+        skills: { athletics: 60, awareness: 50, intuition: 50, melee: 70, reflexes: 70 },
+        traits: [
+            { label: 'Esprit de ruche', labelEn: 'Hive Mind', summary: '+1 Détermination lorsqu\'il est relié à l\'Esprit de ruche tyranide.' },
+        ],
+        attacks: [
+            { label: 'Griffes et serres', labelEn: 'Claws and Talons', skill: 'melee.brawling', value: 70, damage: '5 + écart de DR', range: null, traits: 'Perforante (2), Déchirante (2)' },
+        ],
+        powers: [], possessions: 'Aucune.', faction: 'Xénos', source: 'core', page: 349 },
+
+    // ─── Démons (core p.350-354) ───
+    { key: 'nurgling_swarm', label: 'Nuée de Nurglings', labelEn: 'Nurgling Swarm', size: 'small', type: 'Démon (Nurgle)', role: 'troop',
+        chars: { ws: 20, bs: 10, str: 10, tgh: 20, ag: 20, int: 10, per: 20, wil: 20, fel: 10 },
+        armour: '1d5', wounds: 7, criticalWounds: 0, initiative: 4, speed: 'normal', resolve: 1, warpThreshold: null,
+        skills: { melee: 30 },
+        traits: [
+            { label: 'Atrocement résistant', labelEn: 'Disgustingly Resilient', summary: 'Quand il devrait subir une ou plusieurs Blessures, Test Exigeant (+0) de Robustesse : en cas de réussite, les Blessures subies sont réduites des DR.' },
+            { label: 'Démon mineur', labelEn: 'Lesser Daemon', summary: 'Armure tirée à chaque attaque subie : 1d5.' },
+            { label: 'Fauteurs de troubles', labelEn: 'Mischief Makers', summary: 'Réaction : impose le Désavantage à un personnage avec lequel il est Engagé.' },
+            { label: 'Source de corruption', labelEn: 'Source of Corruption', summary: 'Le voir : Exposition mineure, Test Exigeant (+0) de Discipline (Psychique) contre 1 point de Corruption. Le toucher : Exposition modérée, Test Exigeant (+0) de Robustesse contre 2 points. Chaque DR réduit les points gagnés de 1.' },
+        ],
+        attacks: [
+            { label: 'Griffes et dents infectées', labelEn: 'Diseased Claws and Teeth', skill: 'melee.brawling', value: 30, damage: '1 + écart de DR', range: null, traits: 'Inflige (Empoisonné), Perforante (2)' },
+        ],
+        powers: [], possessions: 'Aucune.', faction: 'Démon', source: 'core', page: 351 },
+    { key: 'bloodletter', label: 'Sanguinaire', labelEn: 'Bloodletter', size: 'medium', type: 'Démon (Khorne)', role: 'elite',
+        chars: { ws: 70, bs: 10, str: 60, tgh: 50, ag: 40, int: 10, per: 40, wil: 40, fel: 10 },
+        armour: '2 + 1d5', wounds: 20, criticalWounds: 1, initiative: 8, speed: 'normal', resolve: 3, warpThreshold: null,
+        skills: { melee: 80 },
+        traits: [
+            { label: 'Démon mineur', labelEn: 'Lesser Daemon', summary: 'Armure tirée à chaque attaque subie : 1d5 + 2.' },
+            { label: 'Source de corruption', labelEn: 'Source of Corruption', summary: 'Le voir : Exposition mineure, Test Exigeant (+0) de Discipline (Psychique) contre 1 point de Corruption. Le toucher : Exposition modérée, Test Exigeant (+0) de Robustesse contre 2 points. Chaque DR réduit les points gagnés de 1.' },
+            { label: 'Férocité inarrêtable', labelEn: 'Unstoppable Ferocity', summary: 'S\'il Charge ou est Chargé : Avantage à ses Tests d\'attaque et +1 Force jusqu\'à ce qu\'il inflige une Blessure.' },
+        ],
+        attacks: [
+            { label: 'Lame infernale', labelEn: 'Hellblade', skill: 'melee.two_handed', value: 80, damage: '10 + écart de DR', range: null, traits: 'Perforante (3)' },
+        ],
+        powers: [], possessions: 'Aucune.', faction: 'Démon', source: 'core', page: 351 },
+    { key: 'plaguebearer', label: 'Portepeste', labelEn: 'Plaguebearer', size: 'medium', type: 'Démon (Nurgle)', role: 'elite',
+        chars: { ws: 30, bs: 10, str: 50, tgh: 70, ag: 10, int: 20, per: 20, wil: 40, fel: 20 },
+        armour: '3 + 1d5', wounds: 23, criticalWounds: 1, initiative: 3, speed: 'slow', resolve: 3, warpThreshold: null,
+        skills: { fortitude: 80, medicae: 30, melee: 40 },
+        traits: [
+            { label: 'Atrocement résistant', labelEn: 'Disgustingly Resilient', summary: 'Quand il devrait subir une ou plusieurs Blessures, Test Exigeant (+0) de Robustesse : en cas de réussite, les Blessures subies sont réduites des DR.' },
+            { label: 'Démon mineur', labelEn: 'Lesser Daemon', summary: 'Armure tirée à chaque attaque subie : 1d5 + 3.' },
+            { label: 'Source de corruption', labelEn: 'Source of Corruption', summary: 'Le voir : Exposition mineure, Test Exigeant (+0) de Discipline (Psychique) contre 1 point de Corruption. Le toucher : Exposition modérée, Test Exigeant (+0) de Robustesse contre 2 points. Chaque DR réduit les points gagnés de 1.' },
+        ],
+        attacks: [
+            { label: 'Épée de peste', labelEn: 'Plaguesword', skill: 'melee.one_handed', value: 40, damage: '8 + écart de DR', range: null, traits: 'Inflige (Empoisonné)' },
+        ],
+        powers: [], possessions: 'Aucune.', faction: 'Démon', source: 'core', page: 352 },
+    { key: 'daemonette', label: 'Démonette', labelEn: 'Daemonette', size: 'medium', type: 'Démon (Slaanesh)', role: 'elite',
+        chars: { ws: 40, bs: 10, str: 30, tgh: 30, ag: 60, int: 40, per: 60, wil: 40, fel: 60 },
+        armour: '1 + 1d5', wounds: 13, criticalWounds: 1, initiative: 16, speed: 'fast', resolve: 3, warpThreshold: null,
+        skills: { athletics: 40, awareness: 70, 'awareness.sight': 80, 'awareness.smell': 80, 'awareness.hearing': 80, 'awareness.taste': 80, 'awareness.touch': 80, fortitude: 40, 'fortitude.pain': 50, linguistics: 50, 'linguistics.forbidden': 60, melee: 50, 'melee.brawling': 60, presence: 70, rapport: 70, 'rapport.charm': 80, 'rapport.deception': 80, reflexes: 70 },
+        traits: [
+            { label: 'Démon mineur', labelEn: 'Lesser Daemon', summary: 'Armure tirée à chaque attaque subie : 1 + 1d5.' },
+            { label: 'Vivacité du vif-argent', labelEn: 'Quicksilver Swiftness', summary: 'Vitesse Rapide et +4 en Initiative (inclus).' },
+            { label: 'Source de corruption', labelEn: 'Source of Corruption', summary: 'Le voir : Exposition mineure, Test Exigeant (+0) de Discipline (Psychique) contre 1 point de Corruption. Le toucher : Exposition modérée, Test Exigeant (+0) de Robustesse contre 2 points. Chaque DR réduit les points gagnés de 1.' },
+        ],
+        attacks: [
+            { label: 'Griffes perçantes', labelEn: 'Piercing Claws', skill: 'melee.brawling', value: 60, damage: '4 + écart de DR', range: null, traits: 'Perforante (2)' },
+        ],
+        powers: [], possessions: 'Aucune.', faction: 'Démon', source: 'core', page: 352 },
+    { key: 'pink_horror', label: 'Horreur rose', labelEn: 'Pink Horror', size: 'medium', type: 'Démon (Tzeentch)', role: 'elite',
+        chars: { ws: 40, bs: 40, str: 30, tgh: 30, ag: 30, int: 70, per: 30, wil: 70, fel: 20 },
+        armour: '2 + 1d5', wounds: 16, criticalWounds: 1, initiative: 6, speed: 'normal', resolve: 3, warpThreshold: null,
+        skills: { awareness: 40, intuition: 40, linguistics: 80, lore: 80, psychic_mastery: 80, ranged: 50 },
+        traits: [
+            { label: 'Contrer la sorcière', labelEn: 'Deny the Witch', summary: 'Réaction quand un psyker à Portée moyenne manifeste un pouvoir : Test de Force Mentale de même Difficulté que le pouvoir ; en cas de réussite, ses DR sont soustraits à ceux du psyker, ce qui peut faire échouer le pouvoir.' },
+            { label: 'Forme éphémère', labelEn: 'Ephemeral Form', summary: 'Immunisée aux traits d\'arme Perforante et Déchirante.' },
+            { label: 'Démon mineur', labelEn: 'Lesser Daemon', summary: 'Armure tirée à chaque attaque subie : 1d5 + 2.' },
+            { label: 'Psyker', labelEn: 'Psyker', summary: 'Connaît le pouvoir Smite ; en tant que démon, n\'a pas de Seuil Warp.' },
+            { label: 'Source de corruption', labelEn: 'Source of Corruption', summary: 'Le voir : Exposition mineure, Test Exigeant (+0) de Discipline (Psychique) contre 1 point de Corruption. Le toucher : Exposition modérée, Test Exigeant (+0) de Robustesse contre 2 points. Chaque DR réduit les points gagnés de 1.' },
+            { label: 'Scission', labelEn: 'Split', summary: 'Quand elle devrait mourir, se scinde en 2 Horreurs bleues.' },
+        ],
+        attacks: [
+            { label: 'Flammes chatoyantes', labelEn: 'Coruscating Flames', skill: 'ranged.thrown', value: 50, damage: '6 + DR', range: 'medium', traits: 'Inflige (En feu)' },
+            { label: 'Griffes démoniaques', labelEn: 'Daemonic Claws', skill: 'melee.brawling', value: 40, damage: '3 + écart de DR', range: null, traits: '' },
+            { label: 'Châtiment', labelEn: 'Smite', skill: 'psychic_mastery', value: 80, warpRating: 3, damage: '12 + DR', range: 'medium', traits: 'Ignore l\'Armure' },
+        ],
+        powers: ['smite'], possessions: 'Aucune.', faction: 'Démon', source: 'core', page: 353 },
+    { key: 'blue_horror', label: 'Horreur bleue', labelEn: 'Blue Horror', size: 'medium', type: 'Démon (Tzeentch)', role: 'elite',
+        chars: { ws: 30, bs: 30, str: 20, tgh: 20, ag: 20, int: 50, per: 20, wil: 50, fel: 20 },
+        armour: '1 + 1d5', wounds: 12, criticalWounds: 0, initiative: 4, speed: 'normal', resolve: 2, warpThreshold: null,
+        skills: { awareness: 30, intuition: 30, linguistics: 60, lore: 60, psychic_mastery: 60, ranged: 40 },
+        traits: [
+            { label: 'Contrer la sorcière', labelEn: 'Deny the Witch', summary: 'Réaction quand un psyker à Portée moyenne manifeste un pouvoir : Test de Force Mentale de même Difficulté que le pouvoir ; en cas de réussite, ses DR sont soustraits à ceux du psyker, ce qui peut faire échouer le pouvoir.' },
+            { label: 'Forme éphémère', labelEn: 'Ephemeral Form', summary: 'Immunisée aux traits d\'arme Perforante et Déchirante.' },
+            { label: 'Démon mineur', labelEn: 'Lesser Daemon', summary: 'Armure tirée à chaque attaque subie : 1d5 + 1.' },
+            { label: 'Psyker', labelEn: 'Psyker', summary: 'Connaît le pouvoir Smite ; en tant que démon, n\'a pas de Seuil Warp.' },
+            { label: 'Source de corruption', labelEn: 'Source of Corruption', summary: 'Le voir : Exposition mineure, Test Exigeant (+0) de Discipline (Psychique) contre 1 point de Corruption. Le toucher : Exposition modérée, Test Exigeant (+0) de Robustesse contre 2 points. Chaque DR réduit les points gagnés de 1.' },
+            { label: 'Scission', labelEn: 'Split', summary: 'Quand elle devrait mourir, se scinde en 2 Horreurs soufrées.' },
+        ],
+        attacks: [
+            { label: 'Flammes chatoyantes', labelEn: 'Coruscating Flames', skill: 'ranged.thrown', value: 40, damage: '6 + DR', range: 'medium', traits: 'Inflige (En feu)' },
+            { label: 'Griffes démoniaques', labelEn: 'Daemonic Claws', skill: 'melee.brawling', value: 30, damage: '2 + écart de DR', range: null, traits: '' },
+            { label: 'Châtiment', labelEn: 'Smite', skill: 'psychic_mastery', value: 60, warpRating: 3, damage: '10 + DR', range: 'medium', traits: 'Ignore l\'Armure' },
+        ],
+        powers: ['smite'], possessions: 'Aucune.', faction: 'Démon', source: 'core', page: 354 },
+    { key: 'brimstone_horror', label: 'Horreur soufrée', labelEn: 'Brimstone Horror', size: 'small', type: 'Démon (Tzeentch)', role: 'elite',
+        chars: { ws: 20, bs: 20, str: 10, tgh: 10, ag: 10, int: 30, per: 10, wil: 30, fel: 10 },
+        armour: '1d5', wounds: 6, criticalWounds: 0, initiative: 2, speed: 'normal', resolve: 1, warpThreshold: null,
+        skills: { awareness: 20, intuition: 20, linguistics: 40, lore: 40, psychic_mastery: 40, ranged: 30 },
+        traits: [
+            { label: 'Contrer la sorcière', labelEn: 'Deny the Witch', summary: 'Réaction quand un psyker à Portée moyenne manifeste un pouvoir : Test de Force Mentale de même Difficulté que le pouvoir ; en cas de réussite, ses DR sont soustraits à ceux du psyker, ce qui peut faire échouer le pouvoir.' },
+            { label: 'Forme éphémère', labelEn: 'Ephemeral Form', summary: 'Immunisée aux traits d\'arme Perforante et Déchirante.' },
+            { label: 'Démon mineur', labelEn: 'Lesser Daemon', summary: 'Armure tirée à chaque attaque subie : 1d5.' },
+            { label: 'Psyker', labelEn: 'Psyker', summary: 'Connaît le pouvoir Smite ; en tant que démon, n\'a pas de Seuil Warp.' },
+            { label: 'Source de corruption', labelEn: 'Source of Corruption', summary: 'Le voir : Exposition mineure, Test Exigeant (+0) de Discipline (Psychique) contre 1 point de Corruption. Le toucher : Exposition modérée, Test Exigeant (+0) de Robustesse contre 2 points. Chaque DR réduit les points gagnés de 1.' },
+        ],
+        attacks: [
+            { label: 'Flammes chatoyantes', labelEn: 'Coruscating Flames', skill: 'ranged.thrown', value: 30, damage: '6 + DR', range: 'medium', traits: 'Inflige (En feu)' },
+            { label: 'Griffes démoniaques', labelEn: 'Daemonic Claws', skill: 'melee.brawling', value: 20, damage: '1 + écart de DR', range: null, traits: '' },
+            { label: 'Châtiment', labelEn: 'Smite', skill: 'psychic_mastery', value: 40, warpRating: 3, damage: '8 + DR', range: 'medium', traits: 'Ignore l\'Armure' },
+        ],
+        powers: ['smite'], possessions: 'Aucune.', faction: 'Démon', source: 'core', page: 354 },
+
+    // ═══ Inquisition Gamemaster's Guide : menaces du secteur (ch. VII, p.135-159) ═══
+    // `threat` : menace du chapitre VII à laquelle le profil est rattaché.
+    { key: 'poxwalker', label: 'Marcheur pesteux', labelEn: 'Poxwalker', size: 'medium', type: 'Chaos', role: 'troop',
+        chars: { ws: 25, bs: 25, str: 35, tgh: 40, ag: 25, int: 25, per: 20, wil: 20, fel: 45 },
+        armour: 0, wounds: 13, criticalWounds: 0, initiative: 4, speed: 'slow', resolve: 2, warpThreshold: null,
+        skills: { fortitude: 50, melee: 40 },
+        traits: [
+            { label: 'Malédiction de la vérole ambulante', labelEn: 'Curse of the Walking Pox', summary: 'Un personnage tué par les dégâts de ses attaques de mêlée revient après 1d100 minutes en Marcheur pesteux, avec des Blessures égales à sa Corruption.' },
+            { label: 'Source de corruption', labelEn: 'Source of Corruption', summary: 'Le voir : Exposition mineure, Test Exigeant (+0) de Discipline (Psychique) contre 1 point de Corruption. Le toucher : Exposition modérée, Test Exigeant (+0) de Robustesse (Endurance) contre 2 points. Chaque DR réduit les points gagnés de 1.' },
+        ],
+        attacks: [
+            { label: 'Armes improvisées', labelEn: 'Improvised Weapons', skill: 'melee.one_handed', value: 40, damage: '3 + écart de DR', range: null, traits: 'Inflige (Empoisonné)' },
+        ],
+        powers: [], possessions: 'Aucune.', faction: 'Hérétique', threat: 'Compagnie de la Faucille tordue (Company of the Twisted Sickle)', source: 'igmg', page: 137 },
+    { key: 'gaazrek_weavemaster', label: 'Gaazrek le Maître-Tisserand', labelEn: 'Gaazrek Weavemaster', size: 'medium', type: 'Démon', role: 'leader',
+        chars: { ws: 45, bs: 40, str: 30, tgh: 30, ag: 35, int: 75, per: 30, wil: 70, fel: 30 },
+        armour: '1d5 + 2', wounds: 16, criticalWounds: 3, initiative: 6, speed: 'normal', resolve: 4, warpThreshold: null,
+        skills: { awareness: 50, intuition: 40, linguistics: 80, lore: 90, melee: 50, psychic_mastery: 85, ranged: 50 },
+        traits: [
+            { label: 'Contrer la sorcière', labelEn: 'Deny the Witch', summary: 'Réaction quand un psyker à Portée moyenne manifeste un pouvoir : Test de Force Mentale de même Difficulté que le pouvoir ; en cas de réussite, ses DR sont soustraits à ceux du psyker, ce qui peut faire échouer le pouvoir.' },
+            { label: 'Forme éphémère', labelEn: 'Ephemeral Form', summary: 'Immunisé aux traits d\'arme Perforante et Déchirante.' },
+            { label: 'Énergie du changement', labelEn: 'Energy of Change', summary: 'Si ses Flammes chatoyantes infligent une Blessure critique, la cible fait aussitôt un Test Exigeant (+0) de Force Mentale ; en cas d\'échec, elle devient un Enfant du Chaos.' },
+            { label: 'Démon mineur', labelEn: 'Lesser Daemon', summary: 'Armure tirée à chaque attaque subie : 1d5 + 2.' },
+            { label: 'Psyker', labelEn: 'Psyker', summary: 'Connaît le pouvoir Smite ; en tant que démon, son Seuil Warp n\'a pas de limite.' },
+            { label: 'Source de corruption', labelEn: 'Source of Corruption', summary: 'Le voir : Exposition mineure, Test Exigeant (+0) de Discipline (Psychique) contre 1 point de Corruption. Le toucher : Exposition modérée, Test Exigeant (+0) de Robustesse contre 2 points. Chaque DR réduit les points gagnés de 1.' },
+        ],
+        attacks: [
+            { label: 'Flammes chatoyantes', labelEn: 'Coruscating Flames', skill: 'ranged.thrown', value: 50, damage: '6 + DR', range: 'medium', traits: 'Inflige (En feu)' },
+            { label: 'Griffes démoniaques', labelEn: 'Daemonic Claws', skill: 'melee.brawling', value: 50, damage: '3 + écart de DR', range: null, traits: '' },
+            { label: 'Châtiment', labelEn: 'Smite', skill: 'psychic_mastery', value: 85, warpRating: 2, damage: '9 + DR', range: 'medium', traits: 'Ignore l\'Armure' },
+        ],
+        powers: ['smite'], possessions: 'Aucune.', faction: 'Démon', threat: 'Gaazrek le Maître-Tisserand', source: 'igmg', page: 139 },
+    { key: 'mizrax_tallian', label: 'Mizrax Tallian, le Héraut du Sang', labelEn: 'Mizrax Tallian, the Herald of Blood', size: 'medium', type: 'Mortel (Khorne)', role: 'leader',
+        chars: { ws: 70, bs: 30, str: 80, tgh: 60, ag: 50, int: 50, per: 50, wil: 50, fel: 50 },
+        armour: 2, wounds: 25, criticalWounds: 6, initiative: 10, speed: 'normal', resolve: 3, warpThreshold: null,
+        skills: { athletics: 75, awareness: 65, dexterity: 65, discipline: 60, fortitude: 75, melee: 90, 'presence.intimidation': 75, reflexes: 65 },
+        traits: [
+            { label: 'Ferveur sanglante', labelEn: 'Blood Fervour', summary: 'Quand une Blessure critique est infligée à Portée longue de lui, il choisit une Zone à Portée longue : ses occupants font un Test Difficile (−10) de Discipline (Sang-froid) au début de leur prochain tour ; en cas d\'échec, BF +1 et immunité à Effrayé, mais ils doivent engager en mêlée l\'ennemi le plus proche.' },
+            { label: 'Favori de Khorne', labelEn: 'Favoured by Khorne', summary: 'Un Test Difficile (−10) de Vigilance (Psyniscience) à Portée de contact révèle les distorsions du réel autour de lui. S\'il est vaincu sans qu\'on lui ait rappelé ses honneurs passés, une faille s\'ouvre et libère 1d10 Sanguinaires (core p.351).' },
+        ],
+        attacks: [
+            { label: 'Hache tronçonneuse', labelEn: 'Chainaxe', skill: 'melee.one_handed', value: 75, damage: '11 + écart de DR', range: null, traits: 'Bruyante, Déchirante (3)' },
+        ],
+        powers: [], possessions: '200 solars.', faction: 'Hérétique', threat: 'Mizrax Tallian, le Héraut du Sang', source: 'igmg', page: 141 },
+    { key: 'mizrax_faithful', label: 'Fidèle de Mizrax', labelEn: 'Mizrax\'s Faithful', size: 'medium', type: 'Humain (Hérétique)', role: 'elite',
+        chars: { ws: 60, bs: 30, str: 60, tgh: 60, ag: 40, int: 30, per: 30, wil: 50, fel: 40 },
+        armour: 0, wounds: 24, criticalWounds: 1, initiative: 7, speed: 'normal', resolve: 3, warpThreshold: null,
+        skills: { athletics: 75, awareness: 35, dexterity: 45, discipline: 55, fortitude: 70, melee: 70, presence: 55, reflexes: 45 },
+        traits: [
+            { label: 'Marque de Khorne', labelEn: 'Mark of Khorne', summary: '+10 CC et Force ; les +10 en Force augmentent les Blessures de 1 (inclus).' },
+            { label: 'Assaut furieux', labelEn: 'Raging Onslaught', summary: 'Quand il subit une Blessure, Avantage à son prochain Test d\'attaque de mêlée.' },
+        ],
+        attacks: [
+            { label: 'Lame de gladiateur', labelEn: 'Gladiatorial Blade', skill: 'melee.one_handed', value: 70, damage: '8 + écart de DR', range: null, traits: 'Déchirante (1)' },
+        ],
+        powers: [], possessions: 'Aucune.', faction: 'Hérétique', threat: 'Mizrax Tallian, le Héraut du Sang', source: 'igmg', page: 141 },
+    { key: 'naritor_flesh_shaper', label: 'Nar\'itor, Façonneur de chair', labelEn: 'Nar\'itor, Flesh Shaper', size: 'medium', type: 'Kroot (Kroot)', role: 'leader',
+        chars: { ws: 50, bs: 40, str: 40, tgh: 50, ag: 60, int: 60, per: 60, wil: 60, fel: 60 },
+        armour: 2, wounds: 20, criticalWounds: 5, initiative: 12, speed: 'normal', resolve: 3, warpThreshold: null,
+        skills: { athletics: 50, awareness: 70, discipline: 70, fortitude: 60, intuition: 70, linguistics: 70, melee: 60, 'navigation.surface': 70, presence: 70, ranged: 50, rapport: 70, stealth: 70, tech: 65 },
+        traits: [
+            { label: 'Embuscade', labelEn: 'Ambusher', summary: 'Peut tenter un Test de Discrétion pendant son Mouvement si sa Zone offre un Couvert.' },
+            { label: 'Rites du festin', labelEn: 'Rites of Feasting', summary: 'Les Kroots à Portée longue gagnent +1 Détermination, ceux de sa Zone +1 Armure ; s\'il mène ses guerriers à dévorer un ennemi à terre, ils gagnent +1 Armure supplémentaire jusqu\'à la fin de la rencontre.' },
+            { label: 'Chasseur furtif', labelEn: 'Stealthy Hunter', summary: '+1 Armure grâce au Couvert.' },
+            { label: 'Lames jumelles', labelEn: 'Twin Blades', summary: 'Attaque avec ses deux lames rituelles sans Désavantage.' },
+            { label: 'Bande façonnée', labelEn: 'Shaped Warband', summary: 'Les membres de sa bande ont la modification Piquants hypersensibles (Hypersensitive Quills) : détectent les mouvements à Portée moyenne avec Avantage, ce qui peut révéler des créatures cachées.' },
+        ],
+        attacks: [
+            { label: 'Fusil à dispersion kroot', labelEn: 'Kroot Scattergun', skill: 'ranged.long_gun', value: 50, damage: '6 + DR', range: 'medium', traits: 'Inflige (À terre), Bruyante, Dispersion, Deux mains' },
+            { label: 'Lames rituelles jumelles', labelEn: 'Twin Ritual Blades', skill: 'melee.one_handed', value: 60, damage: '6 + écart de DR', range: null, traits: '' },
+        ],
+        powers: [], possessions: 'Outil polyvalent (Combi-tool), cuirs légers en lambeaux.', faction: 'Xénos', threat: 'Bande de Nar\'itor (Nar\'itor\'s Kinband)', source: 'igmg', page: 143 },
+    { key: 'the_murmurer', label: 'Le Murmureur', labelEn: 'The Murmurer', size: null, type: 'Humain (Hérétique)', role: 'leader',
+        chars: { ws: 10, bs: 10, str: 10, tgh: 10, ag: 10, int: 50, per: 35, wil: 60, fel: 40 },
+        transient: ['ws', 'bs', 'str', 'tgh', 'ag', 'armour', 'wounds', 'criticalWounds', 'initiative', 'speed'],
+        armour: 0, wounds: 9, criticalWounds: 1, initiative: 4, speed: 'normal', resolve: 5, warpThreshold: 6,
+        skills: { awareness: 45, 'awareness.psyniscience': 65, lore: 65, 'lore.macharian_sector': 85, presence: 70, 'presence.leadership': 75, psychic_mastery: 75, 'psychic_mastery.telepathy': 95 },
+        traits: [
+            { label: 'Télépathe puissant', labelEn: 'Powerful Telepath', summary: 'Pouvoirs : Beacon, Call Vermin, Cipher Seed, Compel, Dominate, Dread Presence, Erasure, Hallucinate, Mental Interrogation, Psychic Static, Soulsight, Telepathic Link.' },
+            { label: 'Marionnettiste', labelEn: 'Puppet Master', summary: 'Quand il domine une créature, il contrôle directement son corps, perçoit par ses sens et peut manifester ses pouvoirs à travers elle.' },
+            { label: 'Corps transitoire', labelEn: 'Transient Body', summary: 'Les valeurs marquées * dans le livre (CC, CT, F, E, Ag, Armure, Blessures, Blessures critiques, Initiative, Vitesse) dépendent du corps contrôlé ; les valeurs données sont les siennes.' },
+            { label: 'Puissance amplifiée', labelEn: 'Amplified Power', summary: 'Le Moteur d\'émanation étend sa psyniscience et ses pouvoirs à tout le secteur ; Avantage aux Tests de Manifestation.' },
+            { label: 'Seuil Warp', labelEn: 'Warp Threshold', summary: 'Seuil Warp 6 ; branché au Moteur d\'émanation, toute Charge Warp générée localement est dissipée automatiquement.' },
+        ],
+        attacks: [],
+        powers: ['beacon', 'call_vermin', 'cipher_seed', 'compel', 'dominate', 'dread_presence', 'erasure', 'hallucinate', 'mental_interrogation', 'psychic_static', 'soulsight', 'telepathic_link'],
+        possessions: null, faction: 'Hérétique', threat: 'Momas le Murmureur (Momas the Murmurer)', source: 'igmg', page: 145 },
+    { key: 'gantus_black_biophagus', label: 'Gantus Black, Biophagus', labelEn: 'Gantus Black, Biophagus', size: 'medium', type: 'Monstruosité (Culte Genestealer)', role: 'leader',
+        chars: { ws: 40, bs: 40, str: 40, tgh: 50, ag: 40, int: 70, per: 60, wil: 70, fel: 70 },
+        armour: 2, wounds: 21, criticalWounds: 5, initiative: 10, speed: 'normal', resolve: 4, warpThreshold: null,
+        skills: { awareness: 70, dexterity: 55, 'discipline.composure': 80, 'intuition.human': 70, 'logic.investigation': 80, 'medicae.forbidden': 80, 'medicae.human': 80, 'presence.leadership': 80, 'ranged.thrown': 50, 'rapport.deception': 80, 'stealth.hide': 50, tech: 80 },
+        traits: [
+            { label: 'Guerre biologique', labelEn: 'Biological Warfare', summary: 'Jusqu\'à deux autres personnages du Culte Genestealer qui l\'accompagnent gagnent l\'attaque Fioles chimiques.' },
+            { label: 'Science dévoyée', labelEn: 'Twisted Science', summary: 'Action : pique un allié du culte à Portée de contact avec son aiguillon injecteur, jet d\'un d10 (une fois par personnage et par rencontre). 1-2 Sens aiguisés : Avantage en Vigilance, Intuition et Réflexes ; 3-4 Masse régénérante : soigne BE Blessures au début de ses tours ; 5-6 Carrure massive : Blessures +BE, ajoute BF en DR aux Tests de Force et aux dégâts de mêlée ; 7-8 Chair carapacée : +2 Armure ; 9-0 Instincts de combat : Avantage en Discipline, Mêlée, Distance et Discrétion.' },
+        ],
+        attacks: [
+            { label: 'Pistolet automatique', labelEn: 'Autopistol', skill: 'ranged.pistol', value: 40, damage: '5 + DR', range: 'medium', traits: 'Proche, Bruyante' },
+            { label: 'Fioles chimiques', labelEn: 'Chemical Vials', skill: 'ranged.thrown', value: 50, damage: '0', range: null, traits: 'Explosion (1), Inflige (Empoisonné), Instable ; ignore l\'Armure ; la Zone touchée devient obscurcie et Danger mineur jusqu\'à la fin de son prochain tour' },
+            { label: 'Aiguillon injecteur', labelEn: 'Injector Goad', skill: 'melee.two_handed', value: 40, damage: '2 + écart de DR', range: null, traits: 'Défensive, Inflige (Empoisonné)' },
+        ],
+        powers: [], possessions: '300 solars, robe de culte, savoir interdit sur la biologie du Culte Genestealer, produits chimiques non identifiables.', faction: 'Xénos', threat: 'Le Chemin du Pèlerin (The Pilgrim\'s Path)', source: 'igmg', page: 147 },
+    { key: 'the_reaper', label: 'La Faucheuse', labelEn: 'The Reaper', size: 'medium', type: 'Démon (Nurgle)', role: 'leader',
+        chars: { ws: 50, bs: 10, str: 60, tgh: 70, ag: 10, int: 20, per: 20, wil: 40, fel: 20 },
+        armour: '3 + 1d5', wounds: 23, criticalWounds: 7, initiative: 3, speed: 'slow', resolve: 3, warpThreshold: null,
+        skills: { fortitude: 80, medicae: 30, melee: 60 },
+        traits: [
+            { label: 'Atrocement résistant', labelEn: 'Disgustingly Resilient', summary: 'Quand il devrait subir une ou plusieurs Blessures, Test Exigeant (+0) de Robustesse : en cas de réussite, les Blessures subies sont réduites des DR.' },
+            { label: 'Démon mineur', labelEn: 'Lesser Daemon', summary: 'Armure tirée à chaque attaque subie : 1d5 + 3.' },
+            { label: 'Source de corruption', labelEn: 'Source of Corruption', summary: 'Le voir : Exposition mineure, Test Exigeant (+0) de Discipline (Psychique) contre 1 point de Corruption. Le toucher : Exposition modérée, Test Exigeant (+0) de Robustesse contre 2 points. Chaque DR réduit les points gagnés de 1.' },
+        ],
+        attacks: [
+            { label: 'Faux de bataille pestilentielle', labelEn: 'Plague-ridden Battle Scythe', skill: 'melee.two_handed', value: 60, damage: '8 + écart de DR', range: null, traits: 'Défensive, Inflige (Empoisonné)' },
+        ],
+        powers: [], possessions: 'Aucune.', faction: 'Démon', threat: 'La Faucheuse (The Reaper)', source: 'igmg', page: 149 },
+    { key: 'hernkyn_yaegir', label: 'Yaegir hernkyn', labelEn: 'Hernkyn Yaegir', size: 'medium', type: 'Votann', role: 'elite',
+        chars: { ws: 40, bs: 40, str: 40, tgh: 55, ag: 35, int: 50, per: 30, wil: 40, fel: 50 },
+        armour: 3, wounds: 13, criticalWounds: 1, initiative: 7, speed: 'normal', resolve: 3, warpThreshold: null,
+        skills: { dexterity: 50, fortitude: 65, 'logic.evaluation': 60, navigation: 60, melee: 50, ranged: 50, tech: 60 },
+        traits: [
+            { label: 'Tireur hernkyn', labelEn: 'Hernkyn Crackshot', summary: 'Après une Action Viser ou Se cacher, la valeur Perforante de son arme augmente de 1 pour sa prochaine attaque (sans effet sur une arme sans Perforante).' },
+        ],
+        attacks: [
+            { label: 'Revolver bolter', labelEn: 'Bolt Revolver', skill: 'ranged.pistol', value: 45, damage: '9 + DR', range: 'short', traits: 'Proche, Perforante (4)' },
+            { label: 'Couteau plasma', labelEn: 'Plasma Knife', skill: 'melee.one_handed', value: 40, damage: '6 + écart de DR', range: null, traits: 'Perforante (3)' },
+        ],
+        powers: [], possessions: 'Icône ancestrale, outil polyvalent (Combi-tool), trench-coat, combinaison de vide.', faction: 'Xénos', threat: 'Kindred de la Tempête de feu de Tûk (Tûk\'s Firestorm Kindred)', source: 'igmg', page: 153 },
+    { key: 'valastra', label: 'Valastra du Murmure sans fin', labelEn: 'Valastra of the Endless Whisper', size: 'medium', type: 'Démon (Slaanesh)', role: 'leader',
+        chars: { ws: 50, bs: 10, str: 50, tgh: 60, ag: 70, int: 60, per: 50, wil: 60, fel: 70 },
+        armour: '1d5 + 2', wounds: 24, criticalWounds: 6, initiative: 12, speed: 'normal', resolve: 3, warpThreshold: null,
+        skills: { athletics: 70, awareness: 70, dexterity: 80, discipline: 70, 'fortitude.pain': 80, 'lore.forbidden': 70, 'presence.intimidation': 75, 'rapport.charm': 80, 'rapport.deception': 80 },
+        traits: [
+            { label: 'Appendices supplémentaires', labelEn: 'Extra Appendages', summary: 'À son tour, peut attaquer deux cibles à Portée de contact, l\'une à l\'épée à deux mains, l\'autre aux griffes dentelées.' },
+            { label: 'Démon mineur', labelEn: 'Lesser Daemon', summary: 'Armure tirée à chaque attaque subie : 1d5 + 2.' },
+            { label: 'Source de corruption', labelEn: 'Source of Corruption', summary: 'La voir : Exposition mineure, Test Exigeant (+0) de Discipline contre 1 point de Corruption. La toucher : Exposition modérée, Test Exigeant (+0) de Robustesse contre 2 points. Chaque DR réduit les points gagnés de 1.' },
+            { label: 'Tentation de l\'obsession', labelEn: 'Tempt with Obsession', summary: 'Les personnages corrompus par elle ont l\'Avantage aux Tests de Logique et de Savoir mais le Désavantage aux Tests de Discipline et de Présence, jusqu\'à ce qu\'ils se défassent de cette Corruption.' },
+        ],
+        attacks: [
+            { label: 'Épée à deux mains', labelEn: 'Greatsword', skill: 'melee.two_handed', value: 50, damage: '9 + écart de DR', range: null, traits: 'Lourde (4)' },
+            { label: 'Griffes dentelées', labelEn: 'Serrated Claws', skill: 'melee.brawling', value: 50, damage: '9 + écart de DR', range: null, traits: 'Déchirante (2)' },
+        ],
+        powers: [], possessions: 'Aucune.', faction: 'Démon', threat: 'Valastra du Murmure sans fin', source: 'igmg', page: 155 },
+    { key: 'mandrake', label: 'Mandrake', labelEn: 'Mandrake', size: 'medium', type: 'Drukhari (Kabale)', role: 'elite',
+        chars: { ws: 60, bs: 40, str: 50, tgh: 40, ag: 50, int: 30, per: 30, wil: 50, fel: 30 },
+        armour: 1, wounds: 18, criticalWounds: 1, initiative: 8, speed: 'fast', resolve: 3, warpThreshold: null,
+        skills: { athletics: 60, awareness: 50, 'melee.one_handed': 75, 'presence.intimidation': 60, stealth: 70 },
+        traits: [
+            { label: 'Artiste de la lame', labelEn: 'Blade Artist', summary: 'Ses attaques de mêlée à arme blanche gagnent Perforante (+1).' },
+            { label: 'Évanescence', labelEn: 'Fade Away', summary: 'Action : devient invisible dans une Zone aux traits d\'environnement Obscurité, Obscurci ou Mal éclairé, avec Avantage en Discrétion, jusqu\'à une Action autre qu\'un déplacement (attaque, interaction…).' },
+            { label: 'Créature d\'ombre', labelEn: 'Shadow Creature', summary: 'Subit toujours la moitié des dégâts, sauf ceux des capacités ou phénomènes psychiques.' },
+        ],
+        attacks: [
+            { label: 'Lame de lueur-acier', labelEn: 'Glimmersteel Blade', skill: 'melee.one_handed', value: 75, damage: '5 + écart de DR', range: null, traits: 'Inflige (Épuisé), Perforante (1)' },
+            { label: 'Trait funeste', labelEn: 'Baleblast', skill: 'ranged.pistol', value: 40, damage: '4', range: 'medium', traits: 'Perforante (1), Tir rapide (2)' },
+        ],
+        powers: [], possessions: 'Aucune.', faction: 'Xénos', threat: 'Varon Vipersong', source: 'igmg', page: 157 },
+    { key: 'varon_vipersong', label: 'Varon Vipersong', labelEn: 'Varon Vipersong', size: 'medium', type: 'Drukhari (Kabale)', role: 'elite',
+        chars: { ws: 50, bs: 50, str: 40, tgh: 40, ag: 40, int: 35, per: 35, wil: 40, fel: 50 },
+        armour: 5, wounds: 16, criticalWounds: 1, initiative: 7, speed: 'fast', resolve: 5, warpThreshold: null,
+        skills: { athletics: 50, 'fortitude.pain': 50, intuition: 40, 'melee.one_handed': 75, 'presence.leadership': 50, 'presence.interrogation': 50, 'ranged.pistol': 60, reflexes: 50, 'rapport.deception': 60 },
+        traits: [
+            { label: 'Artiste de la lame', labelEn: 'Blade Artist', summary: 'Ses attaques de mêlée à arme blanche gagnent Perforante (+1).' },
+            { label: 'Maître lame', labelEn: 'Blade Master', summary: 'Peut faire deux attaques avec ses épées de sybarite à son tour, sans Désavantage pour l\'usage de deux armes de mêlée ; à deux armes, elles gagnent Défensive.' },
+            { label: 'Pillard sadique', labelEn: 'Sadistic Raider', summary: 'Les Drukhari à Portée longue choisissent le résultat de leur trait Force de la douleur (Power from Pain) au lieu de le tirer ; Varon gagne aussi le bonus choisi.' },
+        ],
+        attacks: [
+            { label: 'Épées de sybarite', labelEn: 'Sybarite Swords', skill: 'melee.one_handed', value: 75, damage: '6 + écart de DR', range: null, traits: 'Perforante (1), Déchirante (2)' },
+            { label: 'Pistolet éclateur', labelEn: 'Blast Pistol', skill: 'ranged.pistol', value: 60, damage: '4', range: 'medium', traits: 'Explosion, Inflige (Hébété)' },
+        ],
+        powers: [], possessions: '300 solars, collection d\'horribles trophées, armure kabalite.', faction: 'Xénos', threat: 'Varon Vipersong', source: 'igmg', page: 157 },
+
+    // ═══ Inquisition Gamemaster's Guide : bestiaire (annexe 1, p.172-174) ═══
+    { key: 'acolyte_hybrid', label: 'Hybride acolyte', labelEn: 'Acolyte Hybrid', size: 'medium', type: 'Monstruosité (Culte Genestealer)', role: 'elite',
+        chars: { ws: 40, bs: 30, str: 50, tgh: 50, ag: 60, int: 30, per: 40, wil: 60, fel: 20 },
+        armour: 2, wounds: 21, criticalWounds: 1, initiative: 10, speed: 'normal', resolve: 3, warpThreshold: null,
+        skills: { 'athletics.climbing': 65, melee: 60, 'melee.brawling': 70, 'presence.intimidation': 70, 'ranged.pistol': 45, stealth: 60, 'stealth.hide': 75 },
+        traits: [
+            { label: 'Mutation genestealer', labelEn: 'Genestealer Mutation', summary: 'Relié à l\'Esprit-couvée genestealer : Avantage aux Tests de Discipline à Portée longue d\'un psyker genestealer.' },
+            { label: 'Main secourable', labelEn: 'Helping Hand', summary: 'Membre supplémentaire, avec lequel il peut manier et utiliser en combat une arme à une main de plus.' },
+        ],
+        attacks: [
+            { label: 'Pistolet automatique', labelEn: 'Autopistol', skill: 'ranged.pistol', value: 40, damage: '5 + DR', range: 'medium', traits: 'Proche, Bruyante' },
+            { label: 'Couteau', labelEn: 'Knife', skill: 'melee.one_handed', value: 60, damage: '4 + écart de DR', range: null, traits: 'Discrète, Lancer (Courte)' },
+            { label: 'Griffe lacérante', labelEn: 'Rending Claw', skill: 'melee.brawling', value: 70, damage: '4 + écart de DR', range: null, traits: 'Perforante (2), Déchirante (2)' },
+        ],
+        powers: [], possessions: 'Cape, icônes du culte, armure de fortune.', faction: 'Xénos', source: 'igmg', page: 172 },
+    { key: 'daemonhost', label: 'Démonhôte', labelEn: 'Daemonhost', size: 'medium', type: 'Humain (Chaos)', role: 'elite',
+        chars: { ws: 30, bs: 30, str: 30, tgh: 60, ag: 30, int: 60, per: 60, wil: 40, fel: 50 },
+        armour: '1 + 1d5', wounds: 18, criticalWounds: 5, initiative: 9, speed: 'slow', resolve: 3, warpThreshold: null,
+        skills: { 'awareness.psyniscience': 70, 'discipline.psychic': 50, 'fortitude.endurance': 70, 'linguistics.forbidden': 70, 'presence.intimidation': 55, 'psychic_mastery.telekinesis': 60 },
+        traits: [
+            { label: 'Conduit vers le Warp', labelEn: 'Conduit to the Warp', summary: 'À chaque Blessure critique subie, jet d\'1d100 sur la table des Phénomènes psychiques (core p.164) ; à sa mort, 1d100 sur la table des Périls du Warp (core p.165).' },
+            { label: 'Protections maléfiques', labelEn: 'Malefic Warding', summary: 'Blessures critiques supplémentaires égales à son BFM (incluses). Les alliés à Portée longue dont le vrai nom est inscrit sur ses protections ou sa chair gagnent +1d5 Armure.' },
+            { label: 'Source de corruption', labelEn: 'Source of Corruption', summary: 'Le voir : Exposition mineure, Test Exigeant (+0) de Discipline (Psychique) contre 1 point de Corruption. Le toucher : Exposition modérée, Test Exigeant (+0) de Robustesse contre 2 points. Chaque DR réduit les points gagnés de 1. Ceux qui l\'accompagnent font ces Tests au moins une fois par jour, à la première vue de la période.' },
+            { label: 'Sarcophage de chaînes', labelEn: 'Sarcophagus of Chains', summary: 'Enchaîné, il reste docile et transportable ; le libérer coûte une Action, il agit alors à sa guise et sa Détermination passe à 5.' },
+        ],
+        attacks: [
+            { label: 'Regard impie', labelEn: 'Unholy Gaze', skill: 'psychic_mastery.telekinesis', value: 60, damage: '3 + écart de DR', range: 'medium', traits: 'Inflige (Effrayé) ; peut être contré par Contrer la sorcière comme un pouvoir psychique' },
+            { label: 'Étreinte du Warp', labelEn: 'Warp Grasp', skill: 'psychic_mastery.telekinesis', value: 60, damage: '5 + écart de DR', range: 'immediate', traits: 'Inflige (À terre) ; peut être contrée par Contrer la sorcière comme un pouvoir psychique' },
+        ],
+        powers: [], possessions: 'Sarcophage de chaînes.', faction: 'Démon', source: 'igmg', page: 172 },
+    { key: 'disc_of_tzeentch', label: 'Disque de Tzeentch', labelEn: 'Disc of Tzeentch', size: 'medium', type: 'Démon', role: 'elite',
+        chars: { ws: 40, bs: 10, str: 30, tgh: 40, ag: 30, int: 40, per: 30, wil: 40, fel: 20 },
+        armour: '1d5 + 1', wounds: 14, criticalWounds: 1, initiative: 6, speed: 'fast', fly: true, resolve: 2, warpThreshold: null,
+        skills: { awareness: 40, 'melee.brawling': 50 },
+        traits: [
+            { label: 'Monture liée', labelEn: 'Bound Mount', summary: 'Peut voler et porter un cavalier ; les personnages liés à lui sont immunisés à sa Source de corruption tant qu\'ils ont au moins 2 points de Corruption.' },
+            { label: 'Démon mineur', labelEn: 'Lesser Daemon', summary: 'Armure tirée à chaque attaque subie : 1d5 + 1.' },
+            { label: 'Source de corruption', labelEn: 'Source of Corruption', summary: 'Le voir : Exposition mineure, Test Exigeant (+0) de Discipline (Psychique) contre 1 point de Corruption. Le toucher : Exposition modérée, Test Exigeant (+0) de Robustesse contre 2 points. Chaque DR réduit les points gagnés de 1.' },
+        ],
+        attacks: [
+            { label: 'Morsure de lamproie', labelEn: 'Lamprey Bite', skill: 'melee.brawling', value: 50, damage: '3 + écart de DR', range: null, traits: '' },
+        ],
+        powers: [], possessions: 'Aucune.', faction: 'Démon', source: 'igmg', page: 173 },
+    { key: 'kroot_carnivore', label: 'Carnivore kroot', labelEn: 'Kroot Carnivore', size: 'medium', type: 'Kroot (Kroot)', role: 'troop',
+        chars: { ws: 30, bs: 30, str: 40, tgh: 30, ag: 40, int: 30, per: 30, wil: 30, fel: 30 },
+        armour: 1, wounds: 12, criticalWounds: 0, initiative: 7, speed: 'normal', resolve: 2, warpThreshold: null,
+        skills: { athletics: 35, awareness: 35, melee: 45, ranged: 35, stealth: 45 },
+        traits: [
+            { label: 'Embuscade', labelEn: 'Ambusher', summary: 'Peut tenter un Test de Discrétion pendant son Mouvement si sa Zone offre un Couvert.' },
+        ],
+        attacks: [
+            { label: 'Fusil kroot (tir)', labelEn: 'Kroot Rifle (Shooting)', skill: 'ranged.long_gun', value: 35, damage: '7 + DR', range: 'long', traits: 'Lourde (4), Bruyante, Deux mains' },
+            { label: 'Fusil kroot (lames)', labelEn: 'Kroot Rifle (Blades)', skill: 'melee.two_handed', value: 45, damage: '6 + écart de DR', range: null, traits: 'Lourde (4), Deux mains' },
+        ],
+        powers: [], possessions: 'Cuirs légers en lambeaux.', faction: 'Xénos', source: 'igmg', page: 173 },
+    { key: 'kroot_hound', label: 'Chien kroot', labelEn: 'Kroot Hound', size: 'medium', type: 'Chien kroot (Kroot)', role: 'troop',
+        chars: { ws: 40, bs: 10, str: 30, tgh: 30, ag: 50, int: 30, per: 40, wil: 30, fel: 20 },
+        armour: 1, wounds: 12, criticalWounds: 0, initiative: 9, speed: 'fast', resolve: 2, warpThreshold: null,
+        skills: { athletics: 35, awareness: 50, melee: 45, stealth: 55 },
+        traits: [
+            { label: 'Embuscade', labelEn: 'Ambusher', summary: 'Peut tenter un Test de Discrétion pendant son Mouvement si sa Zone offre un Couvert.' },
+            { label: 'Bond en foulées', labelEn: 'Loping Pounce', summary: 'Pas de Désavantage aux Tests de Mêlée et de Réflexes pour se défendre après une Charge.' },
+        ],
+        attacks: [
+            { label: 'Crocs déchireurs', labelEn: 'Ripping Fangs', skill: 'melee.brawling', value: 45, damage: '4 + écart de DR', range: null, traits: '' },
+        ],
+        powers: [], possessions: 'Aucune.', faction: 'Xénos', source: 'igmg', page: 173 },
+    { key: 'wraithguard', label: 'Garde spectral', labelEn: 'Wraithguard', size: 'large', type: 'Aeldari (Construct)', role: 'elite',
+        chars: { ws: 50, bs: 60, str: 60, tgh: 60, ag: 40, int: 30, per: 40, wil: 30, fel: 10 },
+        armour: 5, wounds: 21, criticalWounds: 1, initiative: 8, speed: 'slow', resolve: 3, warpThreshold: null,
+        skills: { awareness: 55, discipline: 40, fortitude: 70, intuition: 50, 'reflexes.balance': 50, 'tech.aeldari': 50 },
+        traits: [
+            { label: 'Construct de guerre aeldari', labelEn: 'Aeldari War Construct', summary: 'Immunisé aux états Aveuglé, Épuisé, Effrayé et Empoisonné. Porte soit un Canon spectral soit une D-Faux, jamais les deux.' },
+        ],
+        attacks: [
+            { label: 'Canon spectral', labelEn: 'Wraithcannon', skill: 'ranged.long_gun', value: 60, damage: '19 + DR', range: 'long', traits: 'Lourde (4), Bruyante, Perforante (4), Tir rapide (4), Fiable, Deux mains' },
+            { label: 'D-Faux', labelEn: 'D-Scythe', skill: 'ranged.long_gun', value: 60, damage: '10 + DR', range: 'long', traits: 'Lourde (6), Perforante (6) ; ne blesse que les créatures dotées d\'une âme, sans bruit ni dégât visible ; ses victimes deviennent des coquilles sans vie et les membres touchés par ses Blessures critiques sont handicapés à jamais' },
+            { label: 'Poing d\'os spectral', labelEn: 'Wraithbone Fist', skill: 'melee.one_handed', value: 50, damage: '5 + écart de DR', range: null, traits: 'Inflige (À terre)' },
+        ],
+        powers: [], possessions: 'Pierres-esprits aeldari.', faction: 'Xénos', source: 'igmg', page: 174 },
+    { key: 'traitor_enforcer', label: 'Exécuteur renégat', labelEn: 'Traitor Enforcer', size: 'medium', type: 'Hérétique', role: 'leader',
+        chars: { ws: 35, bs: 35, str: 40, tgh: 40, ag: 30, int: 25, per: 40, wil: 30, fel: 20 },
+        armour: 4, wounds: 15, criticalWounds: 4, initiative: 7, speed: 'normal', resolve: 3, warpThreshold: null,
+        skills: { athletics: 50, awareness: 50, fortitude: 60, melee: 50, ranged: 50, 'ranged.long_gun': 60, reflexes: 40 },
+        traits: [
+            { label: 'Tir en rang', labelEn: 'Ranked Fire', summary: 'Action : ordonne aux Gardes renégats de sa Zone de tirer à leur prochain tour avec +1 DR.' },
+            { label: 'Vies sans valeur', labelEn: 'Worthless Lives', summary: 'Dans la même Zone qu\'un Exécuteur, les Gardes renégats désespérés ne fuient ni ne se rendent.' },
+        ],
+        attacks: [
+            { label: 'Fusil laser', labelEn: 'Lasgun', skill: 'ranged.long_gun', value: 60, damage: '6 + DR', range: 'long', traits: 'Rafale, Bruyante, Fiable, Deux mains' },
+            { label: 'Épée énergétique', labelEn: 'Power Sword', skill: 'melee.one_handed', value: 50, damage: '8 + écart de DR', range: null, traits: 'Perforante (4)' },
+        ],
+        powers: [], possessions: 'Armure pare-éclats de l\'Astra Militarum profanée, pelle de tranchée, équipement de survie dans un sac à dos, symbole des Dieux sombres, uniforme en lambeaux.', faction: 'Hérétique', source: 'igmg', page: 174 },
+    { key: 'traitor_guardsman', label: 'Garde renégat', labelEn: 'Traitor Guardsman', size: 'medium', type: 'Hérétique', role: 'troop',
+        chars: { ws: 30, bs: 30, str: 40, tgh: 40, ag: 30, int: 25, per: 30, wil: 25, fel: 20 },
+        armour: 4, wounds: 14, criticalWounds: 0, initiative: 6, speed: 'normal', resolve: 2, warpThreshold: null,
+        skills: { 'lore.forbidden': 30, melee: 40, ranged: 40 },
+        traits: [
+            { label: 'Pour le Chaos !', labelEn: 'For Chaos!', summary: 'Action : subit 1d5 dégâts ignorant l\'Armure et l\'état À terre pour donner l\'Avantage aux alliés de sa Zone à leur prochain Test d\'attaque.' },
+        ],
+        attacks: [
+            { label: 'Fusil laser', labelEn: 'Lasgun', skill: 'ranged.long_gun', value: 40, damage: '6 + DR', range: 'long', traits: 'Rafale, Bruyante, Fiable, Deux mains' },
+            { label: 'Couteau', labelEn: 'Knife', skill: 'melee.one_handed', value: 40, damage: '4 + écart de DR', range: null, traits: 'Discrète, Lancer (Courte)' },
+        ],
+        powers: [], possessions: 'Armure pare-éclats de l\'Astra Militarum profanée, pelle de tranchée, bribes d\'écrits hérétiques, équipement de survie dans un sac à dos, uniforme en lambeaux.', faction: 'Hérétique', source: 'igmg', page: 174 },
+
+    // ═══ Inquisition Player's Guide : bestiaire des familiers (ch. VI, p.111-115) ═══
+    // Familiers : `familiar: true`, `encounter` (ligne « Encounter » du profil, à la place de la Détermination :
+    // un familier a la Détermination de son maître), `instincts` (Instincts de familier : combat + préservation),
+    // `cost` en solars et `availability` (table « Familiars » p.111). Taille telle qu'écrite (tiny, small, average, medium).
+    { key: 'cherubim', label: 'Chérubin', labelEn: 'Cherubim', familiar: true, size: 'small', type: 'Construct, cyber-familier', role: 'troop',
+        chars: { ws: 20, bs: 20, str: 20, tgh: 20, ag: 30, int: 25, per: 35, wil: 15, fel: 15 },
+        armour: 2, wounds: 5, criticalWounds: 2, initiative: 6, speed: 'normal', fly: true, resolve: null, encounter: 4, warpThreshold: null,
+        skills: { athletics: 25, 'athletics.might': 30, awareness: 40, dexterity: 35, fortitude: 25, 'fortitude.endurance': 30, linguistics: 30, 'linguistics.lingua_technis': 35, logic: 30, medicae: 30, melee: 25, ranged: 25, reflexes: 35, tech: 30, 'tech.augmetics': 35 },
+        instincts: ['support', 'wary'],
+        traits: [
+            { label: 'Générateur de champ antigrav', labelEn: 'Anti-grav Field Generator', summary: 'Peut voler.' },
+            { label: 'Instincts de familier', labelEn: 'Familiar Instincts', summary: 'Soutien, Prudent (Support, Wary).' },
+            { label: 'Esprit machine', labelEn: 'Machine Mind', summary: 'Ne peut pas être Effrayé ; insensible à tout effet de coercition mentale.' },
+            { label: 'Cyber-familier naturel', labelEn: 'Natural Cyber-Familiar', summary: 'Endurance +5 (inclus), Endurance maximale +20, peut acheter des augmétiques de cyber-familier.' },
+        ],
+        attacks: [
+            { label: 'Arme de poing', labelEn: 'Hand Weapon', skill: 'melee.one_handed', value: 25, damage: '3 + DR', range: null, traits: '' },
+            { label: 'Pistolet automatique', labelEn: 'Autopistol', skill: 'ranged.pistol', value: 25, damage: '5 + DR', range: 'medium', traits: 'Proche, Bruyante, Tir rapide (3)' },
+        ],
+        powers: [], possessions: null, cost: 15000, availability: 'scarce', faction: null, source: 'ipg', page: 111 },
+    { key: 'cyber_mastiff', label: 'Cyber-molosse', labelEn: 'Cyber-Mastiff', familiar: true, size: 'small', type: 'Bête, cyber-familier', role: 'troop',
+        chars: { ws: 30, bs: 5, str: 30, tgh: 45, ag: 40, int: 10, per: 30, wil: 10, fel: 10 },
+        armour: 2, wounds: 9, criticalWounds: 4, initiative: 7, speed: 'normal', resolve: null, encounter: 7, warpThreshold: null,
+        skills: { athletics: 35, awareness: 35, 'awareness.smell': 40, fortitude: 50, melee: 35, stealth: 45, tech: 15, 'tech.augmetics': 20 },
+        instincts: ['stalker', 'brave'],
+        traits: [
+            { label: 'Jambes augmétiques', labelEn: 'Augmetic Legs', summary: '+1 DR aux Tests liés à la Force concernés.' },
+            { label: 'Instincts de familier', labelEn: 'Familiar Instincts', summary: 'Traqueur, Brave (Stalker, Brave).' },
+            { label: 'Traceur de phéromones', labelEn: 'Pheromone Tracer', summary: 'Avantage aux Tests d\'Intuition (Per) concernés ; Avantage et +2 DR aux Tests de Vigilance (Odorat) pour pister une cible précise.' },
+            { label: 'Quadrupède', labelEn: 'Quadrupedal', summary: 'Avantage en Athlétisme (Course) ; Vitesse Rapide en ligne droite.' },
+        ],
+        attacks: [
+            { label: 'Morsure', labelEn: 'Bite', skill: 'melee', value: 35, damage: '3 + écart de DR', range: null, traits: 'Inflige (Entravé)' },
+        ],
+        powers: [], possessions: null, cost: 10000, availability: 'rare', faction: null, source: 'ipg', page: 112 },
+    { key: 'gyrinx', label: 'Gyrinx', labelEn: 'Gyrinx', familiar: true, size: 'average', type: 'Bête, psyber-familier', role: 'troop',
+        chars: { ws: 20, bs: 10, str: 20, tgh: 20, ag: 30, int: 15, per: 30, wil: 30, fel: 20 },
+        armour: 0, wounds: 9, criticalWounds: 2, initiative: 6, speed: 'fast', resolve: null, encounter: 4, warpThreshold: null,
+        skills: { athletics: 25, 'athletics.climbing': 30, 'athletics.running': 30, awareness: 35, 'awareness.psyniscience': 40, dexterity: 35, discipline: 35, 'discipline.psychic': 40, intuition: 35, melee: 30, navigation: 20, 'navigation.warp': 25, presence: 35, psychic_mastery: 35, rapport: 25, 'rapport.charm': 30, reflexes: 35, 'reflexes.balance': 40, stealth: 35, 'stealth.move_silently': 40 },
+        instincts: ['stalker', 'wary'],
+        traits: [
+            { label: 'Instincts', labelEn: 'Instincts', summary: 'Traqueur, Prudent (Stalker, Wary).' },
+            { label: 'Psyber-familier naturel', labelEn: 'Natural Psyber-Familiar', summary: 'Force Mentale +5 (incluse), Force Mentale maximale +20, avantages de psyber-familier, peut acheter des talents de psyber-familier.' },
+        ],
+        attacks: [
+            { label: 'Morsure ou griffe', labelEn: 'Bite or Claw', skill: 'melee.brawling', value: 30, damage: '2 + écart de DR', range: null, traits: '' },
+        ],
+        powers: [], possessions: null, cost: 25000, availability: 'exotic', faction: null, source: 'ipg', page: 112 },
+    { key: 'jokaero', label: 'Jokaero', labelEn: 'Jokaero', familiar: true, size: 'average', type: 'Bête, familier', role: 'troop',
+        chars: { ws: 15, bs: 20, str: 20, tgh: 20, ag: 20, int: 40, per: 30, wil: 25, fel: 10 },
+        armour: 0, wounds: 8, criticalWounds: 2, initiative: 5, speed: 'normal', resolve: null, encounter: 4, warpThreshold: null,
+        skills: { athletics: 25, 'athletics.climbing': 30, awareness: 35, dexterity: 25, 'dexterity.defuse': 30, intuition: 35, logic: 45, 'logic.evaluation': 50, medicae: 45, ranged: 25, 'ranged.digi_weapons': 30, tech: 45, 'tech.augmetics': 50, 'tech.engineering': 50, 'tech.security': 50 },
+        instincts: ['support', 'wary'],
+        traits: [
+            { label: 'Instincts de familier', labelEn: 'Familiar Instincts', summary: 'Soutien, Prudent (Support, Wary).' },
+            { label: 'Ingénierie innée', labelEn: 'Innate Engineering', summary: 'Le groupe bénéficie de la Faveur Technicien jokaero (Jokaero Technician, PG p.34).' },
+        ],
+        attacks: [
+            { label: 'À mains nues', labelEn: 'Unarmed', skill: 'melee', value: 15, damage: '2 + DR', range: null, traits: 'Inefficace' },
+            { label: 'Digi-laser', labelEn: 'Digi-Laser', skill: 'ranged.digi_weapons', value: 30, damage: '5 + DR', range: 'medium', traits: 'Rafale, Proche, Bruyante, Fiable, Discrète' },
+        ],
+        powers: [], possessions: null, cost: 30000, availability: 'exotic', faction: null, source: 'ipg', page: 113 },
+    { key: 'multi_task_servitor', label: 'Serviteur polyvalent', labelEn: 'Multi-Task Servitor', familiar: true, size: 'medium', type: 'Construct, cyber-familier', role: 'troop',
+        chars: { ws: 25, bs: 25, str: 50, tgh: 50, ag: 20, int: 10, per: 10, wil: 10, fel: 10 },
+        armour: 2, wounds: 16, criticalWounds: 5, initiative: 3, speed: 'slow', resolve: null, encounter: 10, warpThreshold: null,
+        skills: { athletics: 55, 'athletics.might': 60, awareness: 15, dexterity: 30, 'fortitude.endurance': 55, linguistics: 15, 'linguistics.lingua_technis': 20, logic: 15, medicae: 15, melee: 30, ranged: 30, tech: 15, 'tech.augmetics': 20 },
+        instincts: ['melee', 'brave'],
+        traits: [
+            { label: 'Instincts', labelEn: 'Instincts', summary: 'Mêlée, Brave (Melee, Brave).' },
+            { label: 'Esprit machine', labelEn: 'Machine Mind', summary: 'Ne peut pas être Effrayé ; insensible à tout effet de coercition mentale.' },
+            { label: 'Cyber-familier naturel', labelEn: 'Natural Cyber-Familiar', summary: 'Endurance +5 (inclus), Endurance maximale +20, peut acheter des augmétiques de cyber-familier.' },
+        ],
+        attacks: [
+            { label: 'Servo-pince', labelEn: 'Servo-Claw', skill: 'melee.brawling', value: 30, damage: '7 + DR', range: null, traits: 'Perforante (2)' },
+        ],
+        powers: [], possessions: null, cost: 12000, availability: 'scarce', faction: null, source: 'ipg', page: 113 },
+    { key: 'multi_task_servo_skull', label: 'Crâne-serviteur polyvalent', labelEn: 'Multi-Task Servo-Skull', familiar: true, size: 'tiny', type: 'Construct, cyber-familier', role: 'troop',
+        chars: { ws: 15, bs: 25, str: 15, tgh: 15, ag: 45, int: 25, per: 30, wil: 15, fel: 15 },
+        armour: 1, wounds: 4, criticalWounds: 1, initiative: 7, speed: 'normal', fly: true, resolve: null, encounter: 2, warpThreshold: null,
+        skills: { awareness: 35, dexterity: 50, fortitude: 20, 'fortitude.endurance': 25, linguistics: 30, 'linguistics.lingua_technis': 35, logic: 30, melee: 20, ranged: 30, reflexes: 50, 'reflexes.dodge': 60, tech: 30 },
+        instincts: ['support', 'coward'],
+        traits: [
+            { label: 'Générateur de champ antigrav', labelEn: 'Anti-grav Field Generator', summary: 'Peut voler.' },
+            { label: 'Instincts de familier', labelEn: 'Familiar Instincts', summary: 'Soutien, Lâche (Support, Coward).' },
+            { label: 'Esprit machine', labelEn: 'Machine Mind', summary: 'Ne peut pas être Effrayé ; insensible à tout effet de coercition mentale.' },
+            { label: 'Cyber-familier naturel', labelEn: 'Natural Cyber-Familiar', summary: 'Endurance +5 (inclus), Endurance maximale +20, peut acheter des augmétiques de cyber-familier.' },
+        ],
+        attacks: [
+            { label: 'Coup de crâne', labelEn: 'Skull Bash', skill: 'melee.brawling', value: 20, damage: '1', range: null, traits: 'Inefficace' },
+        ],
+        powers: [], possessions: null, cost: 5000, availability: 'scarce', faction: null, source: 'ipg', page: 114 },
+    { key: 'psyber_eagle', label: 'Psyber-aigle', labelEn: 'Psyber-Eagle', familiar: true, size: 'small', type: 'Bête, psyber-familier', role: 'troop',
+        chars: { ws: 20, bs: 10, str: 20, tgh: 20, ag: 25, int: 25, per: 30, wil: 40, fel: 20 },
+        armour: 0, wounds: 8, criticalWounds: 2, initiative: 5, speed: 'normal', fly: true, resolve: null, encounter: 4, warpThreshold: null,
+        skills: { awareness: 40, discipline: 45, intuition: 35, navigation: 30, 'navigation.tracking': 35, psychic_mastery: 45, reflexes: 30, stealth: 30 },
+        instincts: ['support', 'wary'],
+        traits: [
+            { label: 'Instincts de familier', labelEn: 'Familiar Instincts', summary: 'Soutien, Prudent (Support, Wary).' },
+            { label: 'Rôdeur', labelEn: 'Skulker', summary: 'Quand il utilise Navigation (Pistage), il n\'a pas besoin de Tests de Discrétion pour rester inaperçu de l\'individu poursuivi.' },
+            { label: 'Tampon warp', labelEn: 'Warp Buffer', summary: 'Peut subir à la place de son maître les conséquences de ses jets de Périls du Warp.' },
+        ],
+        attacks: [
+            { label: 'Bec ou serres', labelEn: 'Beak or Claws', skill: 'melee', value: 20, damage: '2 + écart de DR', range: null, traits: '' },
+        ],
+        powers: [], possessions: null, cost: 10000, availability: 'scarce', faction: null, source: 'ipg', page: 114 },
+    { key: 'razorwing', label: 'Aile-rasoir', labelEn: 'Razorwing', familiar: true, size: 'average', type: 'Bête, familier', role: 'troop',
+        chars: { ws: 35, bs: 15, str: 20, tgh: 20, ag: 40, int: 10, per: 35, wil: 15, fel: 10 },
+        armour: 1, wounds: 7, criticalWounds: 2, initiative: 7, speed: null, fly: true, resolve: null, encounter: 4, warpThreshold: null,
+        skills: { athletics: 25, 'athletics.divebomb': 30, awareness: 40, 'awareness.sight': 45, melee: 40, 'melee.brawling': 45, navigation: 15, 'navigation.tracking': 20, presence: 20, 'presence.intimidation': 25, reflexes: 45, stealth: 45, 'stealth.move_silently': 50 },
+        instincts: ['melee', 'brave'],
+        traits: [
+            { label: 'Instincts de familier', labelEn: 'Familiar Instincts', summary: 'Mêlée, Brave (Melee, Brave).' },
+        ],
+        attacks: [
+            { label: 'Morsure ou griffe', labelEn: 'Bite or Claw', skill: 'melee.brawling', value: 45, damage: '3 + écart de DR', range: null, traits: 'Perforante (2), Inflige (Hémorragie)' },
+        ],
+        powers: [], possessions: null, cost: 25000, availability: 'rare', faction: null, source: 'ipg', page: 115 },
+    { key: 'wyvach', label: 'Wyvach', labelEn: 'Wyvach', familiar: true, size: 'average', type: 'Bête, psyber-familier', role: 'troop',
+        chars: { ws: 30, bs: 5, str: 30, tgh: 30, ag: 25, int: 15, per: 25, wil: 30, fel: 10 },
+        armour: 1, wounds: 12, criticalWounds: 3, initiative: 5, speed: 'normal', resolve: null, encounter: 6, warpThreshold: null,
+        skills: { athletics: 35, awareness: 30, 'awareness.taste': 35, 'awareness.psyniscience': 35, discipline: 35, 'discipline.psychic': 40, intuition: 30, melee: 35, 'melee.brawling': 40, navigation: 20, 'navigation.tracking': 25, 'navigation.warp': 25, presence: 15, 'presence.intimidation': 25, psychic_mastery: 35, reflexes: 35, stealth: 35, 'stealth.move_silently': 35 },
+        instincts: ['melee', 'brave'],
+        traits: [
+            { label: 'Instincts', labelEn: 'Instincts', summary: 'Mêlée, Brave (Melee, Brave).' },
+            { label: 'Psyber-familier naturel', labelEn: 'Natural Psyber-Familiar', summary: 'Force Mentale +5 (incluse), Force Mentale maximale +20, avantages de psyber-familier, peut acheter des talents de psyber-familier.' },
+        ],
+        attacks: [
+            { label: 'Morsure ou griffe', labelEn: 'Bite or Claw', skill: 'melee.brawling', value: 40, damage: '4 + écart de DR', range: null, traits: 'Perforante (2)' },
+        ],
+        powers: [], possessions: null, cost: 35000, availability: 'exotic', faction: null, source: 'ipg', page: 115 },
+];
