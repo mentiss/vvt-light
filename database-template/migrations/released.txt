@@ -33,3 +33,6 @@
 05112026_fabula_porte_bonheur.sql
 06112026_fabula_fiche_groupe.sql
 06112026_fabula_initiative_pj.sql
+06112026_cyberpunk_move_console.sql
+06112026_maledictum_superiorite_activable.sql
+07112026_cyberpunk_session_weather.sql
