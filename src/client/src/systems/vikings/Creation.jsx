@@ -25,6 +25,7 @@ import VkPanel from "./components/ui/VkPanel.jsx";
 import VkModal from "./components/ui/VkModal.jsx";
 import VkIcon from "./components/ui/VkIcon.jsx";
 import CopyAccessButton from "../../components/ui/CopyAccessButton.jsx";
+import { useVkLookOnRoot } from "./hooks/useVkLook.js";
 
 const TOTAL_CARAC_POINTS = 14;
 const TOTAL_SKILL_POINTS = 10;
@@ -91,6 +92,7 @@ const NavButtons = ({ onPrev, onNext, nextDisabled, nextLabel = 'Suivant →', p
 
 const Creation = ({ onCreated, onCancel, darkMode, onToggleDarkMode }) => {
     const { apiBase } = useSystem();
+    useVkLookOnRoot();   // habillage choisi (pierre peinte / bois et or) posé sur <html>
     const [created,  setCreated]  = useState(null);
     const [loading,  setLoading]  = useState(false);
     const [error,    setError]    = useState(null);

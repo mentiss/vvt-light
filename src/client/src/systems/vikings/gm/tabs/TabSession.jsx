@@ -19,56 +19,34 @@ import AvatarUploader from '../../../../components/AvatarUploader.jsx';
 import AudioSessionToggle from '../../../../components/audio/AudioSessionToggle.jsx';
 import BoardSessionToggle from '../../../../components/board/BoardSessionToggle.jsx';
 import CopyAccessButton from '../../../../components/ui/CopyAccessButton.jsx';
+import TableManagementButton from '../../../../components/gm/TableManagementButton.jsx';
 
 import SheetLayout     from '../../components/layout/SheetLayout.jsx';
 import DiceModal       from '../../components/modals/DiceModal.jsx';
 import EditModals      from '../../components/modals/EditModals.jsx';
 import GMSendItemModal from '../modals/GMSendItemModal.jsx';
-import TableActionsModal from '../modals/TableActionsModal.jsx';
+import { HallCard, ArcRecap } from '../components/Hall.jsx';
 import VkPanel         from '../../components/ui/VkPanel.jsx';
 import VkIcon          from '../../components/ui/VkIcon.jsx';
-import { BLESSURE_MAX, FATIGUE_MAX, withDerivedValues } from '../../config/rules.js';
+import { withDerivedValues } from '../../config/rules.js';
 import { formatFullName, pickEditableFields } from '../../config/utils.js';
 
 const resolve = (updater, prev) => (typeof updater === 'function' ? updater(prev) : updater);
 
-// ── Vignette d'un personnage dans la liste ───────────────────────────────────
+// Liste des personnages : la halle (gm/components/Hall.jsx, spec_vikings_pierre_peinte.md D-12)
 
-const CharacterTile = ({ sessionChar, full, selected, online, onSelect }) => (
-    <button type="button" onClick={onSelect} className={`vk-tile ${selected ? 'is-selected' : ''}`}>
-        <span className="relative shrink-0">
-            <span className="vk-avatar w-9 h-9 overflow-hidden">
-                {full?.avatar
-                    ? <img src={full.avatar} alt="" className="w-full h-full object-cover" />
-                    : ((full?.prenom ?? sessionChar.name)?.[0]?.toUpperCase() || '?')}
-            </span>
-            <span className={`vk-presence absolute -bottom-0.5 -right-0.5 ${online ? 'is-online' : ''}`} />
-        </span>
-        <span className="flex-1 min-w-0">
-            <span className="block font-bold truncate">{full ? formatFullName(full) : sessionChar.name}</span>
-            {full?.playerName && <span className="block text-xs text-muted truncate">{full.playerName}</span>}
-            {full && (
-                <span className="flex gap-1 mt-0.5 flex-wrap">
-                    <span className={`vk-tag ${full.tokensBlessure > 1 ? 'vk-tag-warn' : 'vk-tag-muted'}`}><VkIcon name="blood" />{full.tokensBlessure ?? 0}/{BLESSURE_MAX}</span>
-                    <span className={`vk-tag ${full.tokensFatigue > 1 ? 'vk-tag-warn' : 'vk-tag-muted'}`}><VkIcon name="moon" />{full.tokensFatigue ?? 0}/{FATIGUE_MAX}</span>
-                    <span className="vk-tag vk-tag-gold"><span className="vk-rune">ᛟ</span>{full.sagaActuelle ?? 0}</span>
-                </span>
-            )}
-        </span>
-    </button>
-);
-
-const Empty = ({ icon, title, children }) => (
+const Empty = ({ icon, title, children, action }) => (
     <VkPanel className="text-center">
         <VkIcon name={icon} className="vk-icon-lg text-primary mb-2" />
         <div className="vk-label text-xl text-primary mb-2">{title}</div>
-        <p className="text-muted">{children}</p>
+        {children && <p className="text-muted">{children}</p>}
+        {action && <div className="mt-3">{action}</div>}
     </VkPanel>
 );
 
 // ── Onglet ───────────────────────────────────────────────────────────────────
 
-const TabSession = ({ activeSession, onlineCharacters = [], characterUpdates }) => {
+const TabSession = ({ activeSession, onlineCharacters = [], characterUpdates, onSessionChange }) => {
     const { apiBase } = useSystem();
     const fetchWithAuth = useFetch();
 
@@ -83,7 +61,7 @@ const TabSession = ({ activeSession, onlineCharacters = [], characterUpdates }) 
     const [showSendItemModal, setShowSendItemModal] = useState(false);
     const [showAvatar,        setShowAvatar]        = useState(false);
     const [showEditModal,     setShowEditModal]     = useState(null);
-    const [showTableActions,  setShowTableActions]  = useState(false);
+    const [showArc,           setShowArc]           = useState(false);   // fin d'arc à la place de la fiche
     const [diceContext,       setDiceContext]       = useState(null);
 
     // Dernier état connu, lu par update() : deux mises à jour successives
@@ -208,10 +186,22 @@ const TabSession = ({ activeSession, onlineCharacters = [], characterUpdates }) 
 
     // ── États vides ───────────────────────────────────────────────────────
     if (!activeSession) {
-        return <Empty icon="people" title="Aucune table sélectionnée">Ouvrez le menu et gérez vos tables pour sélectionner une session active.</Empty>;
+        return (
+            <Empty icon="people" title="Aucune table sélectionnée"
+                   action={/* Appel à choisir une table (spec_ui_menu.md §12) */
+                       <TableManagementButton activeSessionId={null} onSelectTable={(session) => onSessionChange?.(session ?? null)}
+                                              icon={<VkIcon name="people" />} className="vk-btn vk-btn-primary" />} />
+        );
     }
     if (!activeSession.characters?.length) {
-        return <Empty icon="people" title="Aucun personnage dans cette table">Assignez des personnages à la table « {activeSession.name} » via la gestion des tables.</Empty>;
+        return (
+            <Empty icon="people" title="Aucun personnage dans cette table"
+                   action={/* Gestion des tables pour assigner des personnages (spec_ui_menu.md §12) */
+                       <TableManagementButton activeSessionId={activeSession.id} onSelectTable={(session) => onSessionChange?.(session ?? null)}
+                                              label="Gestion des tables" icon={<VkIcon name="people" />} className="vk-btn vk-btn-primary" />}>
+                Assignez des personnages à la table « {activeSession.name} ».
+            </Empty>
+        );
     }
 
     const sessionCharacters = activeSession.characters;
@@ -219,39 +209,41 @@ const TabSession = ({ activeSession, onlineCharacters = [], characterUpdates }) 
     return (
         <div className="flex flex-col md:flex-row gap-6">
 
-            {/* ── Liste des personnages ─────────────────────────────────────── */}
-            <aside className="vk-panel md:w-72 shrink-0 self-start w-full">
-                <div className="px-3 py-2 border-b border-default">
-                    <div className="vk-eyebrow">Personnages</div>
-                    <div className="vk-label text-primary">{activeSession.name}</div>
+            {/* ── La halle : personnages de la table en colonne ─────────────── */}
+            <aside className="vk-hall md:w-80 shrink-0 self-start w-full">
+                <div className="vk-hall-top">
+                    <div className="min-w-0">
+                        <div className="vk-eyebrow">La table · {sessionCharacters.filter(sc => onlineIds.has(sc.id)).length}/{sessionCharacters.length} en ligne</div>
+                        <div className="vk-label text-primary truncate">{activeSession.name}</div>
+                    </div>
+                    <button type="button" onClick={() => setShowArc(v => !v)} disabled={loading}
+                            className={`vk-btn vk-btn-sm ${showArc ? '' : 'vk-btn-primary'}`} title="Saga, points de compétence, repos">
+                        {showArc ? 'Retour à la fiche' : <><span className="vk-rune">ᛟ</span>Fin d'arc</>}
+                    </button>
                 </div>
                 {loading && <p className="p-3 text-sm text-muted italic">Chargement des fiches…</p>}
                 {!loading && sessionCharacters.map(sc => (
-                    <CharacterTile key={sc.id} sessionChar={sc} full={characters[sc.id]}
-                                   selected={selectedId === sc.id} online={onlineIds.has(sc.id)}
-                                   onSelect={() => setSelectedId(sc.id)} />
+                    <HallCard key={sc.id} sessionChar={sc} char={characters[sc.id]}
+                              selected={!showArc && selectedId === sc.id} online={onlineIds.has(sc.id)}
+                              onSelect={() => { setSelectedId(sc.id); setShowArc(false); }}
+                              onPatch={patchCharacter}
+                              onRoll={() => { setSelectedId(sc.id); setShowArc(false); setDiceContext({ type: 'carac', data: 'force' }); }} />
                 ))}
-                <div className="p-2 grid grid-cols-2 gap-2">
-                    <button type="button" onClick={() => setShowSendModal(true)} className="vk-btn vk-btn-sm"><VkIcon name="scroll" />Note</button>
-                    <button type="button" onClick={() => setShowSendItemModal(true)} className="vk-btn vk-btn-sm"><VkIcon name="pouch" />Objet</button>
-                    <button type="button" onClick={() => setShowTableActions(true)} disabled={loading}
-                            className="vk-btn vk-btn-primary vk-btn-sm col-span-2" title="Saga, fin d'arc, repos">
-                        <span className="vk-rune">ᛟ</span>Actions de table
-                    </button>
-                    {/* Musique de la table (brique audio, spec_audio.md §11.7) */}
-                    <AudioSessionToggle sessionId={activeSession.id} className="vk-btn vk-btn-sm col-span-2" />
-                    {/* Tableau partagé de la table (spec_tableau.md §10.8) */}
-                    <BoardSessionToggle sessionId={activeSession.id} className="vk-btn vk-btn-sm col-span-2" />
-                </div>
             </aside>
 
             {/* ── Fiche ─────────────────────────────────────────────────────── */}
             <div className="flex-1 min-w-0">
-                {!char ? (
-                    <Empty icon="portrait" title="Aucun personnage sélectionné">Sélectionnez un personnage dans la liste.</Empty>
-                ) : (
-                    <>
-                        <div className="flex items-center gap-2 flex-wrap justify-end mb-4">
+                {/* Barre d'outils : table (note, objet, musique, tableau) à gauche, personnage à droite (retour MJ) */}
+                <div className="flex items-center gap-2 flex-wrap mb-4">
+                    <button type="button" onClick={() => setShowSendModal(true)} className="vk-btn vk-btn-sm"><VkIcon name="scroll" />Note</button>
+                    <button type="button" onClick={() => setShowSendItemModal(true)} className="vk-btn vk-btn-sm"><VkIcon name="pouch" />Objet</button>
+                    {/* Musique de la table (brique audio, spec_audio.md §11.7) */}
+                    <AudioSessionToggle sessionId={activeSession.id} className="vk-btn vk-btn-sm" />
+                    {/* Tableau partagé de la table (spec_tableau.md §10.8) */}
+                    <BoardSessionToggle sessionId={activeSession.id} className="vk-btn vk-btn-sm" />
+                    <span className="flex-1" />
+                    {!showArc && char && (
+                        <>
                             <CopyAccessButton character={char} name={formatFullName(char)} icon={<VkIcon name="key" />} className="vtt-btn-sm" />
                             {editMode ? (
                                 <>
@@ -261,8 +253,16 @@ const TabSession = ({ activeSession, onlineCharacters = [], characterUpdates }) 
                             ) : (
                                 <button type="button" onClick={startEdit} className="vk-btn vk-btn-sm"><VkIcon name="quill" />Éditer</button>
                             )}
-                        </div>
-
+                        </>
+                    )}
+                </div>
+                {showArc ? (
+                    <ArcRecap characters={sessionCharacters.map(sc => characters[sc.id]).filter(Boolean)}
+                              onPatch={patchCharacter} onDone={() => setShowArc(false)} />
+                ) : !char ? (
+                    <Empty icon="portrait" title="Aucun personnage sélectionné">Sélectionnez un personnage dans la liste.</Empty>
+                ) : (
+                    <>
                         <SheetLayout
                             char={char}
                             editMode={editMode}
@@ -291,13 +291,6 @@ const TabSession = ({ activeSession, onlineCharacters = [], characterUpdates }) 
                     onSend={handleGMSendItem}
                     sessionCharacters={sessionCharacters}
                     preSelectedCharId={selectedId}
-                />
-            )}
-            {showTableActions && (
-                <TableActionsModal
-                    characters={sessionCharacters.map(sc => characters[sc.id]).filter(Boolean)}
-                    onApply={patchCharacter}
-                    onClose={() => setShowTableActions(false)}
                 />
             )}
             {showAvatar && char && (

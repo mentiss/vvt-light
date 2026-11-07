@@ -13,6 +13,8 @@
 
 /* Marque du slug (titre des pages d'accès) et polices Google */
 @import './Brand.css';
+/* Habillage « pierre peinte » (spec_vikings_pierre_peinte.md), sous html[data-vk-skin="pierre"] */
+@import './theme-pierre.css';
 
 /* ── Mode JOUR — bois et or ─────────────────────────────────────────── */
 :root {
@@ -56,6 +58,11 @@
     --vk-corner-l-tr: url('./assets/corner-light-tr.png');
     --vk-corner-l-bl: url('./assets/corner-light-bl.png');
     --vk-corner-l-br: url('./assets/corner-light-br.png');
+
+    /* Ruban-serpent de l'en-tête du personnage (lot 2) : cuir et or */
+    --vk-band:       #6b4423;
+    --vk-band-edge:  #231508;
+    --vk-band-text:  #f0d48a;
 }
 
 /* ── Mode NUIT — fer ([data-theme="dark"] posé par la plateforme sur <html>) ── */
@@ -85,6 +92,11 @@
     --vk-token-blessure: #bf616a;
     --vk-token-fatigue:  #81a1c1;
     --vk-warn:           #d08770;
+
+    /* Ruban-serpent : acier et or pâle */
+    --vk-band:       #2e3b4a;
+    --vk-band-edge:  #070a0d;
+    --vk-band-text:  #ebcb8b;
 }
 
 /* ── Base ───────────────────────────────────────────────────────────── */
@@ -572,6 +584,140 @@ html { scrollbar-color: color-mix(in srgb, var(--color-primary) 45%, transparent
 .vk-entry { border: 1px solid var(--vk-border-soft); background: var(--color-surface); }
 .vk-entry-meta { display: flex; justify-content: space-between; font-size: .72rem; color: var(--color-text-muted); padding: .3rem .7rem; background: var(--color-surface-alt); }
 .vk-toast { border: 1px solid var(--color-border); border-left: 3px solid var(--color-primary); background: var(--color-surface); box-shadow: 0 8px 24px rgba(0,0,0,.5); }
+
+/* ── Fiche : disposition de la planche pierre peinte, commune aux deux habillages ──
+   (spec_vikings_pierre_peinte.md lot 2). Ici le rendu bois et or ; la pierre peinte
+   surcharge dans theme-pierre.css. */
+.vk-stone { position: relative; padding: 46px 54px 34px; min-height: 180px; }
+.vk-serpent { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; pointer-events: none; }
+.vk-serpent-text { font-family: var(--vk-font-runic); }
+.vk-stone-inner { position: relative; display: flex; gap: 18px; align-items: center; flex-wrap: wrap; }
+.vk-stone-avatar { width: 80px; height: 80px; font-size: 2rem; }
+.vk-stone.is-trance .vk-stone-avatar { animation: vk-trance 1.2s ease-in-out infinite; }
+.vk-stone-runes { font-size: 1rem; letter-spacing: .18em; }
+.vk-stone-name { font-size: 1.9rem; line-height: 1.15; }
+@media (max-width: 640px) { .vk-stone { padding: 44px 34px 30px; } }
+
+/* Traits : épithètes sous le nom ; un clic ouvre la description */
+.vk-epithets { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; margin-top: 8px; }
+.vk-epithet { display: inline-flex; align-items: stretch; border: 1px solid var(--color-border); border-radius: 2px; }
+.vk-epithet > button:first-child {
+    display: inline-flex; gap: 6px; align-items: baseline; padding: 3px 11px; cursor: pointer;
+    font-family: var(--vk-font-label); font-size: .98rem; letter-spacing: .03em; color: var(--color-text); background: transparent;
+}
+.vk-epithet small { font-family: var(--vk-font-body); font-size: .8rem; letter-spacing: 0; color: var(--color-success); }
+.vk-epithet.is-open { border-color: var(--color-primary); }
+.vk-epithet.is-trance { background: var(--color-danger); border-color: var(--color-danger); animation: vk-trance 1.2s ease-in-out infinite; }
+.vk-epithet.is-trance > button, .vk-epithet.is-trance small { color: #fff; }
+.vk-epithet-remove { padding: 0 6px; color: var(--color-danger); background: transparent; cursor: pointer; border-left: 1px solid var(--vk-border-soft); }
+.vk-epithet-pop { margin-top: 10px; max-width: 42rem; padding: .7rem .9rem; border: 1px solid var(--color-primary); background: var(--color-surface); }
+@keyframes vk-trance { 0%, 100% { box-shadow: 0 0 0 0 rgba(200,40,20,0); } 50% { box-shadow: 0 0 0 5px rgba(200,40,20,.35), 0 0 20px rgba(200,40,20,.5); } }
+
+/* Titres de dalle (ruban en pierre peinte) et commandes à droite */
+.vk-band-title { margin: 0 0 .6rem; padding-right: 30px; font-family: var(--vk-font-label); font-weight: 400; font-size: 1.4rem; line-height: 1.2; letter-spacing: .03em; color: var(--color-primary); }
+.vk-slab-aside { position: absolute; top: 16px; right: 22px; z-index: 6; display: flex; gap: 6px; align-items: center; }
+
+/* Dalle État */
+.vk-vital { margin: 1.5rem 0 1.75rem; }
+.vk-vital-grid { display: grid; grid-template-columns: minmax(240px, auto) 1fr 1fr; gap: 12px 26px; align-items: end; }
+@media (max-width: 900px) { .vk-vital-grid { grid-template-columns: 1fr; } }
+.vk-vital-saga { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+.vk-vital-label { display: inline-flex; gap: .3rem; align-items: center; font-family: var(--vk-font-label); font-size: 1.05rem; letter-spacing: .03em; color: var(--color-primary); }
+.vk-vital-head { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; margin-bottom: 6px; }
+.vk-vital-trance { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin-top: 12px; padding-top: 8px; border-top: 1px dashed var(--vk-border-soft); }
+
+/* Grilles de la fiche */
+.vk-sheet-jets { display: grid; grid-template-columns: minmax(260px, 340px) 1fr; gap: 30px 22px; align-items: start; }
+.vk-sheet-gear { display: grid; grid-template-columns: repeat(3, 1fr); gap: 30px 22px; align-items: start; margin-top: 30px; }
+.vk-sheet-runes { margin-top: 30px; }
+@media (max-width: 1100px) { .vk-sheet-jets { grid-template-columns: 1fr; } .vk-sheet-gear { grid-template-columns: 1fr 1fr; } }
+@media (max-width: 700px)  { .vk-sheet-gear { grid-template-columns: 1fr; } }
+
+/* Compétences : lecture « seuil seul » */
+/* Dernière colonne de largeur fixe : les lignes restent alignées (le bouton Récupérer n'est pas sur toutes) */
+.vk-skill { display: grid; grid-template-columns: minmax(150px, 1.6fr) 100px 110px 44px 56px 92px; gap: 6px 14px; align-items: center; padding: 8px 2px; border-bottom: 1px solid var(--vk-border-soft); }
+.vk-skills.is-editing .vk-skill { grid-template-columns: minmax(150px, 1.6fr) 100px 110px 44px 56px 250px; }
+.vk-input.vk-input-short { width: 4.5rem; }
+.vk-skill:last-child { border-bottom: none; }
+.vk-skill-name { font-weight: 700; }
+.vk-skill-name small { font-weight: 400; color: var(--color-text-muted); }
+.vk-skill-carac { font-size: .8rem; color: var(--color-text-muted); white-space: nowrap; }
+.vk-skill-rule { display: flex; gap: 10px; align-items: center; }
+.vk-seuil {
+    display: inline-grid; place-items: center; width: 34px; height: 36px; padding-top: 3px; flex-shrink: 0;
+    clip-path: polygon(50% 0, 100% 38%, 50% 100%, 0 38%);
+    background: var(--color-primary); color: var(--vk-on-primary); font-weight: 700; font-size: .86rem;
+}
+.vk-boom { font-size: .8rem; font-weight: 700; white-space: nowrap; color: var(--color-primary); }
+.vk-pool { display: inline-flex; gap: 3px; }
+.vk-pool i { display: block; width: 12px; height: 14px; background: currentColor; opacity: .8; clip-path: polygon(50% 0, 100% 40%, 50% 100%, 0 40%); }
+.vk-pool i.is-lost { color: var(--color-danger); opacity: .3; }
+.vk-skill-end { display: flex; gap: 10px; align-items: center; justify-content: flex-end; }
+.vk-odds { min-width: 38px; text-align: right; font-size: .8rem; color: var(--color-text-muted); white-space: nowrap; }
+@media (max-width: 760px) {
+    .vk-skill, .vk-skills.is-editing .vk-skill { grid-template-columns: 1fr auto auto auto; }
+    .vk-skill-carac, .vk-pool { display: none; }
+}
+
+/* Bandeau d'état amarré dans l'en-tête de la fiche joueur */
+.vk-dock-slot { min-width: 0; opacity: 0; transform: translateY(-8px); pointer-events: none; transition: opacity .3s, transform .3s; }
+.vk-dock-slot.is-docked { opacity: 1; transform: none; pointer-events: auto; }
+@media (max-width: 760px) { .vk-dock-slot { display: none; } }
+.vk-dock { display: flex; align-items: center; gap: 16px; }
+.vk-dock-gauge { display: flex; align-items: center; gap: 6px; }
+.vk-dock-label { font-size: .75rem; color: var(--color-text-muted); white-space: nowrap; }
+.vk-dock-state { font-size: .78rem; color: var(--vk-warn); white-space: nowrap; }
+.vk-dock .vk-saga button { width: .8rem; height: .8rem; }
+.vk-dock .vk-tokens { flex-wrap: nowrap; gap: 2px; }
+.vk-dock .vk-tokens.has-tiers { padding-bottom: 0; }
+.vk-dock .vk-token { width: .9rem; height: .9rem; }
+.vk-dock .vk-token.is-tier::after { display: none; }
+@media (max-width: 1100px) { .vk-dock-label, .vk-dock-state { display: none; } }
+
+/* ── Plateau de jet (VkTray, lot 3) : tiroir en bas d'écran, repliable ──
+   La zone d'actions et les notifications remontent au-dessus (VkTray.jsx) ;
+   la page se rallonge de sa hauteur pour que la fin de la fiche reste accessible. */
+.vk-root { padding-bottom: var(--vk-tray-h, 0px); }
+.vk-tray {
+    position: fixed; right: 0; bottom: 0; z-index: 45;
+    background: var(--color-surface); border-top: 3px solid var(--color-primary);
+    box-shadow: 0 -8px 24px rgba(0,0,0,.4); transition: left .28s ease; animation: vk-tray-in .28s ease-out;
+}
+@keyframes vk-tray-in { from { transform: translateY(100%); } to { transform: none; } }
+.vk-tray-strip { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; min-height: 44px; padding: 6px 14px; }
+.vk-tray:not(.is-folded) .vk-tray-strip { border-bottom: 1px dashed var(--vk-border-soft); }
+.vk-tray-title { font-family: var(--vk-font-title); font-size: 1.1rem; color: var(--color-primary); }
+.vk-tray-body { max-height: 55vh; overflow-y: auto; padding: 12px 20px 16px; }
+.vk-tray-grid { display: grid; grid-template-columns: minmax(220px, 1fr) minmax(260px, 1.25fr) minmax(240px, 1fr); gap: 12px 28px; align-items: start; }
+.vk-tray-result { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 12px 28px; align-items: start; max-width: 1100px; }
+.vk-tray-actions { display: flex; flex-direction: column; gap: 8px; min-width: 10rem; }
+@media (max-width: 1000px) {
+    .vk-tray-grid, .vk-tray-result { grid-template-columns: 1fr; }
+    .vk-tray-actions { flex-direction: row; }
+    .vk-tray-actions > * { flex: 1; }
+}
+@media (prefers-reduced-motion: reduce) { .vk-tray { animation: none; transition: none; } }
+
+/* ── Halle du MJ (gm/components/Hall.jsx, lot 4) ────────────────────── */
+.vk-hall { display: flex; flex-direction: column; gap: 1rem; }
+/* overflow-x masqué : le repère de sélection et le léger décalage au survol ne créent plus d'ascenseur */
+@media (min-width: 768px) { .vk-hall { position: sticky; top: var(--vk-gm-head, 7.5rem); max-height: calc(100vh - var(--vk-gm-head, 7.5rem) - 1rem); overflow-y: auto; overflow-x: hidden; padding: 14px 14px 1rem 2px; } }
+.vk-hall-top { display: flex; justify-content: space-between; align-items: center; gap: .5rem; }
+.vk-hall-card { cursor: pointer; transition: transform .15s; }
+.vk-hall-card:hover { transform: translateX(2px); }
+.vk-hall-card.is-selected { box-shadow: var(--vk-panel-shadow), inset 3px 0 0 var(--color-primary); }
+.vk-hall-card .vk-band-title { font-size: 1.15rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.vk-hall-head { display: flex; gap: .6rem; align-items: center; margin-bottom: .4rem; }
+.vk-hall-head .vk-saga button { width: .8rem; height: .8rem; }
+.vk-hall-line { display: flex; justify-content: space-between; gap: .5rem; font-size: .8rem; margin: .45rem 0 .2rem; }
+.vk-hall-card .vk-tokens.has-tiers { padding-bottom: 0; }
+.vk-hall-card .vk-token { width: 1.1rem; height: 1.1rem; }
+.vk-hall-card .vk-token.is-tier::after { display: none; }
+.vk-hall-acts { display: flex; flex-wrap: wrap; gap: .35rem; margin-top: .6rem; }
+.vk-hall-tools { display: grid; grid-template-columns: 1fr 1fr; gap: .5rem; }
+.vk-arc-table { width: 100%; border-collapse: collapse; }
+.vk-arc-table th, .vk-arc-table td { text-align: left; padding: .55rem .6rem; border-bottom: 1px solid var(--vk-border-soft); vertical-align: middle; }
+.vk-arc-table th { font-family: var(--vk-font-label); font-weight: 400; font-size: 1rem; color: var(--color-primary); }
 
 /* ── Interface MJ ───────────────────────────────────────────────────── */
 .vk-tile { display: flex; align-items: center; gap: .6rem; width: 100%; padding: .55rem .7rem; text-align: left; cursor: pointer; border-left: 3px solid transparent; border-bottom: 1px solid var(--vk-border-soft); background: transparent; color: var(--color-text); }

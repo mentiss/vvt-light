@@ -1,10 +1,18 @@
 // src/client/src/systems/vikings/components/layout/IdentitySection.jsx
-// En-tête de la fiche : avatar, nom complet, informations, états (KO, malus).
-// En mode édition : champs d'identité.
+// ─────────────────────────────────────────────────────────────────────────────
+// En-tête du personnage (spec_vikings_pierre_peinte.md D-4, D-9 ; planche) :
+// pierre gravée encadrée du ruban-serpent, qui porte son nom en runes ; avatar,
+// nom, détails ; traits en épithètes sous le nom, un clic ouvre la description.
+// Berserk : « Entrer en transe » (compteur dans la dalle État, C-4).
+// Mode Édition : champs d'identité, épithètes retirables et ajout d'un trait.
+// L'état du personnage (malus, KO) est dans la dalle État, plus ici.
+// ─────────────────────────────────────────────────────────────────────────────
 
-import React from 'react';
+import React, { useState } from 'react';
 import { formatFullName } from '../../config/utils.js';
-import { BLESSURE_MAX, getBlessureMalus, getFatigueMalus, getFatigueState, isFatigueKO } from '../../config/rules.js';
+import { toRunes } from '../../config/runes.js';
+import { TRAITS } from '../../config/traits.js';
+import VkSerpent from '../ui/VkSerpent.jsx';
 import VkIcon from '../ui/VkIcon.jsx';
 
 const Field = ({ label, className = '', children }) => (
@@ -14,52 +22,94 @@ const Field = ({ label, className = '', children }) => (
     </label>
 );
 
-// États visibles d'un coup d'œil (rappelés aussi au moment du jet)
-export const StatusTags = ({ char }) => {
-    const blessureMalus = getBlessureMalus(char.tokensBlessure);
-    const fatigueMalus  = getFatigueMalus(char.tokensFatigue);
-    return (
-        <div className="flex flex-wrap gap-2">
-            {char.tokensBlessure >= BLESSURE_MAX
-                ? <span className="vk-tag vk-tag-danger">KO / Mourant</span>
-                : blessureMalus > 0 && <span className="vk-tag vk-tag-warn"><VkIcon name="blood" />Blessures : −{blessureMalus} dé{blessureMalus > 1 ? 's' : ''}</span>}
-            {isFatigueKO(char.tokensFatigue)
-                ? <span className="vk-tag vk-tag-danger">Inconscient (épuisement)</span>
-                : fatigueMalus > 0 && <span className="vk-tag vk-tag-warn"><VkIcon name="moon" />{getFatigueState(char.tokensFatigue)} : +{fatigueMalus} succès requis</span>}
-        </div>
-    );
-};
-
 const Avatar = ({ avatar, initial, onClick }) => (
     <button type="button" onClick={onClick} disabled={!onClick}
-            className="vk-avatar w-16 h-16 text-2xl shrink-0 overflow-hidden disabled:cursor-default"
+            className="vk-avatar vk-stone-avatar shrink-0 overflow-hidden disabled:cursor-default"
             title={onClick ? "Changer l'avatar" : undefined}>
         {avatar ? <img src={avatar} alt="" className="w-full h-full object-cover" /> : (initial || '?')}
     </button>
 );
 
-const IdentitySection = ({ char, editMode, set, onAvatarClick }) => {
+// Effets d'un trait, en clair
+export const effectsText = (effects = {}) => [
+    effects.actions && `+${effects.actions} action`,
+    effects.armure  && `+${effects.armure} armure`,
+    effects.seuil   && `+${effects.seuil} seuil`,
+    effects.runePoints && `livre de sort ${effects.runePoints}`,
+    effects.description,
+].filter(Boolean).join(' · ');
+
+// Effet court affiché sur l'épithète (le détail est dans la description)
+const shortEffect = (td) => {
+    const text = effectsText(td?.effects);
+    return text.length <= 26 ? text : '';
+};
+
+// Inscription du ruban : « Prénom fils / fille de Parent » en runes
+const inscriptionOf = (char) => toRunes([
+    char.prenom,
+    char.nom ? `${char.sexe === 'homme' ? 'fils' : 'fille'} de ${char.nom}` : '',
+].filter(Boolean).join(' '));
+
+const Epithets = ({ char, editMode, set, transe, onTranse, onOpenEditModal }) => {
+    const [open, setOpen] = useState(null);
+    const traits = char.traits ?? [];
+    const td = open && TRAITS.find(t => t.name === open);
+
+    return (
+        <>
+            <div className="vk-epithets">
+                {traits.map(trait => {
+                    const def = TRAITS.find(t => t.name === trait.name);
+                    const isTrance = trait.name === 'Berserk' && transe > 0;
+                    return (
+                        <span key={trait.name} className={`vk-epithet ${open === trait.name ? 'is-open' : ''} ${isTrance ? 'is-trance' : ''}`}>
+                            <button type="button" onClick={() => setOpen(o => (o === trait.name ? null : trait.name))}>
+                                {trait.name}
+                                {shortEffect(def) && <small>{shortEffect(def)}</small>}
+                            </button>
+                            {editMode && (
+                                <button type="button" className="vk-epithet-remove" title={`Retirer ${trait.name}`}
+                                        onClick={() => set('traits', traits.filter(t => t.name !== trait.name))}>
+                                    <VkIcon name="close" />
+                                </button>
+                            )}
+                        </span>
+                    );
+                })}
+                {editMode && (
+                    <button type="button" className="vk-btn vk-btn-sm" onClick={() => onOpenEditModal('addTrait')}>
+                        <VkIcon name="plus" />Ajouter un trait
+                    </button>
+                )}
+            </div>
+            {td && (
+                <div className="vk-epithet-pop">
+                    <div className="vk-label text-primary">{td.name}</div>
+                    {td.description && <p className="text-sm m-0">{td.description}</p>}
+                    {effectsText(td.effects) && <p className="text-sm text-success m-0 mt-1">{effectsText(td.effects)}</p>}
+                    {td.name === 'Berserk' && !transe && onTranse && (
+                        <button type="button" className="vk-btn vk-btn-primary vk-btn-sm mt-2"
+                                onClick={() => { onTranse(1); setOpen(null); }}>
+                            Entrer en transe
+                        </button>
+                    )}
+                </div>
+            )}
+        </>
+    );
+};
+
+/**
+ * @param {object}   props.char, props.editMode, props.set, props.onAvatarClick, props.onOpenEditModal
+ * @param {number}   [props.transe]   tour de transe berserk en cours (0 : aucune)
+ * @param {function} [props.onTranse] démarre la transe (tour 1)
+ */
+const IdentitySection = ({ char, editMode, set, onAvatarClick, onOpenEditModal, transe = 0, onTranse }) => {
     const num = (field, fallback) => (e) => set(field, parseInt(e.target.value) || fallback);
     const initial = char.prenom?.[0]?.toUpperCase();
 
-    if (editMode) {
-        return (
-            <div className="flex items-start gap-4 flex-wrap pr-6">
-                <Avatar avatar={char.avatar} initial={initial} onClick={onAvatarClick} />
-                <div className="flex-1 min-w-0 grid grid-cols-2 md:grid-cols-4 gap-3">
-                    <Field label="Prénom *"><input className="vk-input" value={char.prenom ?? ''} onChange={e => set('prenom', e.target.value)} /></Field>
-                    <Field label="Surnom"><input className="vk-input" value={char.surnom ?? ''} onChange={e => set('surnom', e.target.value)} placeholder="Le Brave" /></Field>
-                    <Field label="Nom du parent (fils / fille de)"><input className="vk-input" value={char.nom ?? ''} onChange={e => set('nom', e.target.value)} placeholder="Ragnar" /></Field>
-                    <Field label="Joueur"><input className="vk-input" value={char.playerName ?? ''} onChange={e => set('playerName', e.target.value)} /></Field>
-                    <Field label="Âge"><input className="vk-input vk-num" type="number" value={char.age ?? ''} onChange={num('age', 25)} /></Field>
-                    <Field label="Taille (cm)"><input className="vk-input vk-num" type="number" value={char.taille ?? ''} onChange={num('taille', undefined)} /></Field>
-                    <Field label="Poids (kg)"><input className="vk-input vk-num" type="number" value={char.poids ?? ''} onChange={num('poids', undefined)} /></Field>
-                    <Field label="Activité"><input className="vk-input" value={char.activite ?? ''} onChange={e => set('activite', e.target.value)} /></Field>
-                </div>
-            </div>
-        );
-    }
-
+    // La filiation est déjà dans le nom complet (formatFullName)
     const details = [
         `${char.sexe === 'homme' ? 'Homme' : 'Femme'}, ${char.age} ans`,
         char.taille ? `${char.taille} cm${char.poids ? `, ${char.poids} kg` : ''}` : null,
@@ -67,15 +117,34 @@ const IdentitySection = ({ char, editMode, set, onAvatarClick }) => {
     ].filter(Boolean).join(' · ');
 
     return (
-        <div className="flex items-center gap-4 flex-wrap pr-6">
-            <Avatar avatar={char.avatar} initial={initial} onClick={onAvatarClick} />
-            <div className="flex-1 min-w-0">
-                <div className="vk-title text-2xl">{formatFullName(char)}</div>
-                <div className="text-sm text-muted">
-                    {details}{char.playerName && <> · <em>joué par {char.playerName}</em></>}
+        <div className={`vk-stone ${transe ? 'is-trance' : ''}`}>
+            <VkSerpent inscription={inscriptionOf(char)} characterId={char.id} />
+            <div className="vk-stone-inner">
+                <Avatar avatar={char.avatar} initial={initial} onClick={onAvatarClick} />
+                <div className="flex-1 min-w-0">
+                    {editMode ? (
+                        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                            <Field label="Prénom *"><input className="vk-input" value={char.prenom ?? ''} onChange={e => set('prenom', e.target.value)} /></Field>
+                            <Field label="Surnom"><input className="vk-input" value={char.surnom ?? ''} onChange={e => set('surnom', e.target.value)} placeholder="Le Brave" /></Field>
+                            <Field label="Nom du parent (fils / fille de)"><input className="vk-input" value={char.nom ?? ''} onChange={e => set('nom', e.target.value)} placeholder="Ragnar" /></Field>
+                            <Field label="Joueur"><input className="vk-input" value={char.playerName ?? ''} onChange={e => set('playerName', e.target.value)} /></Field>
+                            <Field label="Âge"><input className="vk-input vk-num" type="number" value={char.age ?? ''} onChange={num('age', 25)} /></Field>
+                            <Field label="Taille (cm)"><input className="vk-input vk-num" type="number" value={char.taille ?? ''} onChange={num('taille', undefined)} /></Field>
+                            <Field label="Poids (kg)"><input className="vk-input vk-num" type="number" value={char.poids ?? ''} onChange={num('poids', undefined)} /></Field>
+                            <Field label="Activité"><input className="vk-input" value={char.activite ?? ''} onChange={e => set('activite', e.target.value)} /></Field>
+                        </div>
+                    ) : (
+                        <>
+                            <div className="vk-rune vk-stone-runes">{toRunes([char.prenom, char.surnom].filter(Boolean).join(' '))}</div>
+                            <div className="vk-title vk-stone-name">{formatFullName(char)}</div>
+                            <div className="text-sm text-muted">
+                                {details}{char.playerName && <> · <em>joué par {char.playerName}</em></>}
+                            </div>
+                        </>
+                    )}
+                    <Epithets char={char} editMode={editMode} set={set} transe={transe} onTranse={onTranse} onOpenEditModal={onOpenEditModal} />
                 </div>
             </div>
-            <StatusTags char={char} />
         </div>
     );
 };

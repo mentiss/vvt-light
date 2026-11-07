@@ -26,7 +26,8 @@ import { roll, RollError } from '../../../../tools/diceEngine.js';
 import vikingsConfig   from '../../config.jsx';
 import { useFetch }    from '../../../../hooks/useFetch.js';
 import { useSystem }   from '../../../../hooks/useSystem.js';
-import VkModal from '../ui/VkModal.jsx';
+import { emitVk, VK_TRIPLE } from '../../hooks/useVkLook.js';
+import VkTray  from '../ui/VkTray.jsx';   // plateau de jet (spec_vikings_pierre_peinte.md D-11), à la place d'une fenêtre
 import VkIcon  from '../ui/VkIcon.jsx';
 
 const SAGA_MODES = [
@@ -187,6 +188,7 @@ const DiceModal = ({ character, isBerserk, context, onClose, onUpdate, sessionId
             }
 
             setDiceResults(result);
+            if (tripleTen) emitVk(VK_TRIPLE, { id: character.id });   // faveur des dieux : présage, ciel, ruban
             context?.onRollComplete?.(result);
 
         } catch (err) {
@@ -215,13 +217,16 @@ const DiceModal = ({ character, isBerserk, context, onClose, onUpdate, sessionId
     // ── Rendu : résultats ────────────────────────────────────────────────────
     if (diceResults) {
         return (
-            <VkModal title={`Résultat — ${title}`} onClose={onClose}>
-                <DiceResults results={diceResults} character={character} />
-                <div className="flex gap-2 mt-4">
-                    <button type="button" className="vk-btn flex-1" onClick={() => { setDiceResults(null); setSagaMode(null); }}>Relancer</button>
-                    <button type="button" className="vk-btn vk-btn-primary flex-1" onClick={onClose}>Fermer</button>
+            <VkTray title={title} onClose={onClose}
+                    summary={<span className="vk-tag vk-tag-gold vk-num">{diceResults.successes} succès{diceResults.meta?.tripleTen ? ' · ᛊ' : ''}</span>}>
+                <div className="vk-tray-result">
+                    <DiceResults results={diceResults} character={character} />
+                    <div className="vk-tray-actions">
+                        <button type="button" className="vk-btn" onClick={() => { setDiceResults(null); setSagaMode(null); }}>Relancer</button>
+                        <button type="button" className="vk-btn vk-btn-primary" onClick={onClose}>Fermer</button>
+                    </div>
                 </div>
-            </VkModal>
+            </VkTray>
         );
     }
 
@@ -240,9 +245,19 @@ const DiceModal = ({ character, isBerserk, context, onClose, onUpdate, sessionId
     const traitTotal    = traitAutoBonus + condSum + (isBerserk ? 2 : 0);
 
     return (
-        <VkModal title={title} icon="die" onClose={onClose}>
+        <VkTray title={title} icon="die" onClose={onClose}>
             {error && <div className="vk-callout vk-callout-danger mb-3">{error}</div>}
 
+            {/* Trois colonnes du plateau : le jet · paramètres, malus et options · Saga et lancer */}
+            <div className="vk-tray-grid">
+            <div className="vk-tray-col">
+            {context?.weapon && (
+                <div className="vk-callout text-sm mb-2 flex gap-2 items-center">
+                    <VkIcon name="axe" />
+                    <span><strong>{context.weapon.name}</strong>{context.weapon.damage ? ` · dégâts ${context.weapon.damage}` : ''}
+                        {context.candidates?.length > 1 && !selectedSkill && rollType === 'skill' && <> · compétence à choisir</>}</span>
+                </div>
+            )}
             <div className="flex flex-wrap gap-1.5 mb-3">
                 <button type="button" className={`vk-pill ${rollType === 'carac' ? 'is-selected' : ''}`} onClick={() => setRollType('carac')}>Caractéristique</button>
                 <button type="button" className={`vk-pill ${rollType === 'skill' ? 'is-selected' : ''}`} onClick={() => setRollType('skill')}>Compétence</button>
@@ -259,8 +274,9 @@ const DiceModal = ({ character, isBerserk, context, onClose, onUpdate, sessionId
                 </div>
             ) : (
                 <div className="grid grid-cols-1 gap-1 mb-3 max-h-44 overflow-y-auto pr-1">
-                    {(character.skills || [])
-                        .filter(s => s.level > 0)
+                    {/* Attaque d'une arme sans lien direct : seulement les compétences possibles */}
+                    {(context?.candidates ?? character.skills ?? [])
+                        .filter(s => context?.candidates || s.level > 0)
                         .sort((a, b) => b.level - a.level)
                         .map(skill => {
                             const selected = selectedSkill?.name === skill.name && selectedSkill?.specialization === skill.specialization;
@@ -274,7 +290,9 @@ const DiceModal = ({ character, isBerserk, context, onClose, onUpdate, sessionId
                         })}
                 </div>
             )}
+            </div>
 
+            <div className="vk-tray-col">
             {/* Paramètres du jet, puis malus bien visibles */}
             <div className="vk-callout text-sm mb-2">
                 <strong>{pool}d10</strong> · explosion sur <strong>{formatExplosion(caracLevel)}</strong>
@@ -335,7 +353,9 @@ const DiceModal = ({ character, isBerserk, context, onClose, onUpdate, sessionId
                     </div>
                 </div>
             )}
+            </div>
 
+            <div className="vk-tray-col">
             <div className="vk-field-label">Mode Saga ({character.sagaActuelle} disponible{character.sagaActuelle > 1 ? 's' : ''})</div>
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-1.5 mb-2">
                 {SAGA_MODES.map(({ value, label }) => (
@@ -353,7 +373,9 @@ const DiceModal = ({ character, isBerserk, context, onClose, onUpdate, sessionId
                     className="vk-btn vk-btn-primary w-full mt-3 py-2.5">
                 <VkIcon name="die" />{rolling ? 'Les dés roulent…' : 'Lancer les dés'}
             </button>
-        </VkModal>
+            </div>
+            </div>
+        </VkTray>
     );
 };
 

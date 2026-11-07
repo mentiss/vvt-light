@@ -25,6 +25,51 @@ export const getSuccessThreshold = (level) => {
     return 4;
 };
 
+/**
+ * Chance d'obtenir au moins `need` succès (spec_vikings_pierre_peinte.md C-2) :
+ * `pool` dés, succès à `threshold`+, `boomFaces` faces qui explosent (relance en
+ * chaîne, toujours des succès puisque l'explosion est à 8+ et le seuil à 7 au plus).
+ * Par dé, la série génératrice du nombre de succès est (a + b·x) / (1 − c·x).
+ * @returns {number} entre 0 et 1
+ */
+export const getSuccessChance = (pool, threshold, boomFaces, need) => {
+    if (need <= 0) return 1;
+    if (pool <= 0) return 0;
+    const a = (threshold - 1) / 10, c = boomFaces / 10, b = (11 - threshold) / 10 - c;
+    const perDie = Array.from({ length: need }, (_, k) => (k === 0 ? a : a * c ** k + b * c ** (k - 1)));
+    let dist = [1];
+    for (let i = 0; i < pool; i++) {
+        const next = new Array(need).fill(0);
+        dist.forEach((p, x) => perDie.forEach((q, y) => { if (x + y < need) next[x + y] += p * q; }));
+        dist = next;
+    }
+    return Math.max(0, 1 - dist.reduce((s, p) => s + p, 0));
+};
+
+/**
+ * Compétence d'attaque d'une arme (retour MJ du 2026-11-07) : mêlée → Combat CàC (armé),
+ * distance → Combat distance, arme de jet → l'une ou l'autre. Lien direct s'il n'y a
+ * qu'une compétence possible, ou une seule dont la spécialisation nomme l'arme ;
+ * sinon le joueur choisit parmi `candidates`. Aucune compétence : `carac` (jet de
+ * caractéristique, l'équivalent d'un niveau 0, meilleure carac de la compétence).
+ * @returns {{ skill: object|null, candidates: object[], carac: string|null }}
+ */
+export const WEAPON_SKILL_MELEE  = 'Combat CàC (armé)';
+export const WEAPON_SKILL_RANGED = 'Combat distance';
+const fold = (s) => (s ?? '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().trim();
+export const getWeaponSkill = (character, weapon) => {
+    const type = weapon?.weaponType ?? '';
+    const names = /jet/i.test(type) ? [WEAPON_SKILL_MELEE, WEAPON_SKILL_RANGED]
+        : /distance/i.test(type) ? [WEAPON_SKILL_RANGED] : [WEAPON_SKILL_MELEE];
+    const candidates = (character.skills ?? []).filter(s => names.includes(s.name));
+    if (candidates.length === 1) return { skill: candidates[0], candidates, carac: null };
+    const weaponName = fold(weapon?.name);
+    const named = candidates.filter(s => s.specialization && (weaponName.includes(fold(s.specialization)) || fold(s.specialization).includes(weaponName)));
+    if (named.length === 1) return { skill: named[0], candidates, carac: null };
+    if (candidates.length > 1) return { skill: null, candidates, carac: null };
+    return { skill: null, candidates, carac: getBestCharacteristic(character, { name: names[0] }).name };
+};
+
 /** Meilleure des deux caractéristiques liées à la compétence (fixe l'explosion). */
 export const getBestCharacteristic = (character, skill) => {
     const comp = COMPETENCES.find(c => c.name === skill.name);

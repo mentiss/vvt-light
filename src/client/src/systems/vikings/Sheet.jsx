@@ -18,11 +18,17 @@ import { formatFullName, pickEditableFields } from './config/utils.js';
 import { withDerivedValues } from './config/rules.js';
 import vikingsConfig      from './config.jsx';
 import SheetLayout        from './components/layout/SheetLayout.jsx';
+import { VitalDock }      from './components/layout/SagaStateSection.jsx';
 import DiceModal          from './components/modals/DiceModal.jsx';
 import EditModals         from './components/modals/EditModals.jsx';
 import ExperienceModal    from './components/modals/ExperienceModal.jsx';
 import VkIcon             from './components/ui/VkIcon.jsx';
 import RuneTitle          from './components/ui/RuneTitle.jsx';
+import VkLookMenuItems    from './components/ui/VkLookMenuItems.jsx';
+import VkSky              from './components/ui/VkSky.jsx';
+import VkBody, { HURT_LEVELS } from './components/ui/VkBody.jsx';
+import { BLESSURE_MAX, isFatigueKO } from './config/rules.js';
+import { useVkLookOnRoot } from './hooks/useVkLook.js';
 import AvatarUploader     from '../../components/AvatarUploader.jsx';
 import JournalTab         from '../../components/tabs/JournalTab.jsx';
 import ToastNotifications from '../../components/layout/ToastNotifications.jsx';
@@ -61,6 +67,7 @@ const Sheet = ({
                }) => {
     const { slug }    = useSystem();
     const { activeGMSession, activeSessionName } = useSession();
+    useVkLookOnRoot();   // habillage choisi (pierre peinte / bois et or) posé sur <html>
 
     const [activeTab, setActiveTab] = useState(() => {
         const hash = window.location.hash.substring(1);
@@ -85,6 +92,19 @@ const Sheet = ({
         observer.observe(el);
         return () => observer.disconnect();
     }, []);
+
+    // Bandeau d'état amarré dans l'en-tête quand la dalle État passe sous lui (D-7)
+    const [docked, setDocked] = useState(false);
+    useEffect(() => {
+        const check = () => {
+            const vital = document.querySelector('[data-vk-vital]');
+            const head = stickyRef.current;
+            setDocked(!!vital && !!head && vital.getBoundingClientRect().bottom < head.getBoundingClientRect().bottom);
+        };
+        window.addEventListener('scroll', check, { passive: true });
+        check();
+        return () => window.removeEventListener('scroll', check);
+    }, [activeTab]);
 
     // ── Édition (buffer local) ───────────────────────────────────────────────
     const [editMode,     setEditMode]     = useState(false);
@@ -132,6 +152,11 @@ const Sheet = ({
 
     return (
         <div className="vk-root min-h-screen">
+            {/* Le vivant (pierre peinte) : ciel derrière la page, état du corps devant (lot 5) */}
+            <VkSky characterId={character.id}
+                   hurt={HURT_LEVELS[Math.min(BLESSURE_MAX, character.tokensBlessure ?? 0)] ?? 0}
+                   out={(character.tokensBlessure ?? 0) >= BLESSURE_MAX || isFatigueKO(character.tokensFatigue)} />
+            <VkBody blessures={character.tokensBlessure ?? 0} fatigue={character.tokensFatigue ?? 0} />
 
             {/* ── BANDEAU + ONGLETS (collants) ── */}
             <div className="sticky top-0 z-40" ref={stickyRef}>
@@ -141,6 +166,12 @@ const Sheet = ({
                         <RuneTitle className="text-3xl" />
                         {activeSessionName && <div className="vk-eyebrow truncate">Session : {activeSessionName}</div>}
                     </div>
+
+                    {activeTab === 'fiche' && (
+                        <div className={`vk-dock-slot ${docked ? 'is-docked' : ''}`} aria-hidden={!docked}>
+                            <VitalDock char={char} update={update} />
+                        </div>
+                    )}
 
                     <div className="flex items-center gap-2 shrink-0">
                         {/* Enveloppe : les classes .vk-* fixent display, hidden ne s'y applique pas */}
@@ -179,12 +210,14 @@ const Sheet = ({
                             <HamburgerMenuItemDiceConfig icon={<VkIcon name="horn" />} />
                             <HamburgerMenuItemGMInterface icon={<VkIcon name="helm" />} />
                             <HamburgerMenuSeparator />
+                            <VkLookMenuItems />
+                            <HamburgerMenuSeparator />
                             <HamburgerMenuItemLogout icon={<VkIcon name="door" />} />
                         </HamburgerMenu>
                     </div>
                 </header>
 
-                <div className="px-4 bg-surface flex items-center justify-between gap-3 flex-wrap">
+                <div className="vk-tabbar px-4 bg-surface flex items-center justify-between gap-3 flex-wrap">
                     <nav className="vk-tabs">
                         {TABS.map(tab => (
                             <button key={tab.id} type="button" onClick={() => changeTab(tab.id)}

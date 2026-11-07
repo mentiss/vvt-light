@@ -30,6 +30,21 @@ export const RUNES = [
     { symbol: "ᛞ", name: "Dagaz", letter: "D, Dj", literal: "Jour", esoteric: "Eveil, aube, percée, progrès, pureté" }
 ];
 
+// Translittération latin → futhark ancien, pour graver un nom (ruban-serpent de la
+// fiche, spec_vikings_pierre_peinte.md D-4). « th », « ð », « þ » → ᚦ ; « ng » → ᛜ ;
+// accents retirés ; mots séparés par ᛫ ; ce qui n'est pas une lettre est ignoré.
+const LATIN_TO_FUTHARK = {
+    a: 'ᚨ', b: 'ᛒ', c: 'ᚲ', d: 'ᛞ', e: 'ᛖ', f: 'ᚠ', g: 'ᚷ', h: 'ᚺ', i: 'ᛁ', j: 'ᛃ', k: 'ᚲ', l: 'ᛚ', m: 'ᛗ',
+    n: 'ᚾ', o: 'ᛟ', p: 'ᛈ', q: 'ᚲ', r: 'ᚱ', s: 'ᛊ', t: 'ᛏ', u: 'ᚢ', v: 'ᚹ', w: 'ᚹ', x: 'ᚲᛊ', y: 'ᛁ', z: 'ᛉ',
+};
+export const toRunes = (text) => (text ?? '').toLowerCase()
+    .replace(/th|ð|þ/g, 'ᚦ').replace(/ng/g, 'ᛜ')
+    .normalize('NFD').replace(/[̀-ͯ]/g, '')
+    .split(/[\s'’"-]+/)
+    .map(word => [...word].map(ch => LATIN_TO_FUTHARK[ch] ?? (ch === 'ᚦ' || ch === 'ᛜ' ? ch : '')).join(''))
+    .filter(Boolean)
+    .join(' ᛫ ');
+
 // Ce que permet chaque niveau de rune (spec_vikings.md §3.6).
 export const RUNE_LEVELS = [
     "Signe inconnu",

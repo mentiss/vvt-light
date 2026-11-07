@@ -161,6 +161,9 @@ const QtyAndLocation = ({ quantity, setQuantity, location, setLocation }) => (
 // ── Ajout : modale de catalogue générique (spec_ui_catalogue.md) ─────────────
 // Clic = ajout immédiat, quantité 1, dans l'emplacement de la colonne d'où la
 // modale a été ouverte ; la modale reste ouverte. Pas de prix (indicatif).
+const CATALOG_LAYOUT = ['filters', 'search'];
+const CATALOG_LABELS = { customTab: 'Objet libre', search: 'Rechercher un objet…', countOne: 'objet', countMany: 'objets', added: 'Objet ajouté' };
+
 const CATEGORY_FILTER = [{
     key:      'category',
     getValue: it => it.category,
@@ -201,13 +204,17 @@ const AddItemModal = ({ character, onClose, onUpdate, defaultLocation }) => {
             onAddCustom={fields => add({ ...itemFromFields(fields), customItem: true })}
             customDefaults={CUSTOM_DEFAULTS}
             renderCustomForm={renderCustomFields}
+            // Pas d'onglets : « Objet libre » en dernière pastille des filtres (comme Nimble, Maledictum, Dune)
+            tabsAs="pill"
+            layout={CATALOG_LAYOUT}
+            labels={CATALOG_LABELS}
             onClose={onClose}
         />
     );
 };
 
 // ── Modification (et suppression) ────────────────────────────────────────────
-const EditItemModal = ({ character, item, onClose, onUpdate }) => {
+export const EditItemModal = ({ character, item, onClose, onUpdate }) => {
     const [fields, setFields] = useState(fieldsFrom(item));
     const [quantity, setQuantity] = useState(item.quantity);
     const [location, setLocation] = useState(item.location);

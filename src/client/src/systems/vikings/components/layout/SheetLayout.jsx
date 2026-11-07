@@ -2,64 +2,70 @@
 // ─────────────────────────────────────────────────────────────────────────────
 // Corps de la fiche Vikings, partagé À L'IDENTIQUE entre la fiche joueur
 // (Sheet.jsx) et l'interface MJ (gm/tabs/TabSession.jsx).
-// Mise en page validée sur la planche (lot 4, L4-3) : cadre lourd pleine
-// largeur ; écran large 3 colonnes, puis l'inventaire, puis les runes.
+// Disposition de la planche « pierre peinte » (spec_vikings_pierre_peinte.md D-10),
+// commune aux deux habillages : en-tête du personnage (ruban-serpent, épithètes),
+// dalle État, Caractéristiques et Compétences, Combat · Équipement · Bourse et
+// bagages, Runes. Le cadre lourd (vk-sheet-frame) n'a pas de dalle en pierre peinte.
 //
 // Contrat props :
 //   char              — personnage affiché (buffer d'édition en mode édition)
 //   editMode          — bool
 //   set(field, value) — modification du buffer d'édition
 //   update(updater)   — action de jeu immédiate, updater = prev => next
-//   onRoll(ctx)       — ouvre la modale de jet ({ type: 'carac'|'skill', data })
+//   onRoll(ctx)       — ouvre le jet ({ type: 'carac'|'skill', data })
 //   onAvatarClick()   — ouvre l'upload d'avatar
 //   onOpenEditModal(type) — ouvre EditModals ('addSkill' | 'addTrait')
 // ─────────────────────────────────────────────────────────────────────────────
 
-import React from 'react';
+import React, { useEffect, useRef, useState } from 'react';
+import { emitVk, VK_SAGA_GAIN } from '../../hooks/useVkLook.js';
 import VkPanel          from '../ui/VkPanel.jsx';
 import IdentitySection  from './IdentitySection.jsx';
 import CaracsSection    from './CaracsSection.jsx';
 import SkillsSection    from './SkillsSection.jsx';
 import SagaStateSection from './SagaStateSection.jsx';
 import CombatSection    from './CombatSection.jsx';
-import TraitsSection    from './TraitsSection.jsx';
 import RunesSection     from './RunesSection.jsx';
-import InventorySection from './InventorySection.jsx';
+import { EquipmentSection, PurseSection } from './GearSections.jsx';
 
-const SheetLayout = ({ char, editMode, set, update, onRoll, onAvatarClick, onOpenEditModal }) => (
-    <VkPanel variant="heavy">
-        <IdentitySection char={char} editMode={editMode} set={set} onAvatarClick={onAvatarClick} />
+const SheetLayout = ({ char, editMode, set, update, onRoll, onAvatarClick, onOpenEditModal }) => {
+    // Transe berserk : compteur à l'écran (C-4), partagé entre l'épithète et la dalle État
+    const [transe, setTranse] = useState(0);
 
-        <div className="vk-sep" />
+    // Gain de SAGA du personnage affiché (MJ, triple 10, perle cliquée) : le vivant réagit
+    // (ciel, ruban, corbeau). Pas au changement de personnage.
+    const lastSaga = useRef({ id: null, saga: 0 });
+    useEffect(() => {
+        const saga = char.sagaActuelle ?? 0, last = lastSaga.current;
+        if (last.id === char.id && saga > last.saga) emitVk(VK_SAGA_GAIN, { id: char.id });
+        lastSaga.current = { id: char.id, saga };
+    }, [char.id, char.sagaActuelle]);
 
-        {/* Colonne de gauche : caractéristiques, Saga & état, combat ;
-            les traits seuls à droite (équilibre des hauteurs, retour MJ) */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 2xl:grid-cols-3 gap-6">
-            <div className="space-y-6">
-                <CaracsSection    char={char} editMode={editMode} set={set} onRoll={onRoll} />
-                <SagaStateSection char={char} editMode={editMode} set={set} update={update} />
-                <CombatSection    char={char} editMode={editMode} set={set} />
+    return (
+        <VkPanel variant="heavy" className="vk-sheet-frame">
+            <IdentitySection char={char} editMode={editMode} set={set} onAvatarClick={onAvatarClick}
+                             onOpenEditModal={onOpenEditModal} transe={transe} onTranse={setTranse} />
+
+            <SagaStateSection char={char} editMode={editMode} set={set} update={update}
+                              transe={transe} onTranseChange={setTranse} />
+
+            <div className="vk-sheet-jets">
+                <CaracsSection char={char} editMode={editMode} set={set} onRoll={onRoll} />
+                <SkillsSection char={char} editMode={editMode} set={set} update={update}
+                               onRoll={onRoll} onOpenEditModal={onOpenEditModal} />
             </div>
-            <SkillsSection char={char} editMode={editMode} set={set} update={update}
-                           onRoll={onRoll} onOpenEditModal={onOpenEditModal} />
-            <div className="lg:col-span-2 2xl:col-span-1">
-                <TraitsSection char={char} editMode={editMode} set={set} onOpenEditModal={onOpenEditModal} />
+
+            <div className="vk-sheet-gear">
+                <CombatSection char={char} editMode={editMode} set={set} />
+                {/* Inventaire : action de jeu, toujours active ; seuls les items sont
+                    reportés sur la fiche à jour (pas le buffer d'édition). */}
+                <EquipmentSection char={char} onRoll={onRoll} onItemsChange={(items) => update(prev => ({ ...prev, items }))} />
+                <PurseSection char={char} onItemsChange={(items) => update(prev => ({ ...prev, items }))} />
             </div>
-        </div>
 
-        <div className="vk-sep" />
-
-        {/* Inventaire : action de jeu, toujours active ; seuls les items sont
-            reportés sur la fiche à jour (pas le buffer d'édition). */}
-        <VkPanel>
-            <div className="vk-section-title">Inventaire</div>
-            <InventorySection character={char}
-                              onUpdate={(next) => update(prev => ({ ...prev, items: next.items }))} />
+            <RunesSection char={char} editMode={editMode} set={set} className="vk-sheet-runes" />
         </VkPanel>
-
-        {/* Runes en bas de la fiche (§8.1) */}
-        <RunesSection char={char} editMode={editMode} set={set} className="mt-6" />
-    </VkPanel>
-);
+    );
+};
 
 export default SheetLayout;

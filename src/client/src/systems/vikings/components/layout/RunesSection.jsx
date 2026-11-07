@@ -8,6 +8,7 @@ import { RUNES, RUNE_LEVELS } from '../../config/runes.js';
 import { getRunePoints } from '../../config/rules.js';
 import VkPanel from '../ui/VkPanel.jsx';
 import VkIcon from '../ui/VkIcon.jsx';
+import VkModal from '../ui/VkModal.jsx';
 
 const levelOf = (char, name) => char.runes?.find(r => r.name === name)?.level ?? 0;
 
@@ -32,11 +33,12 @@ const RunesSection = ({ char, editMode, set, className = '' }) => {
 
     return (
         <VkPanel className={className}>
-            <div className="vk-section-title">
-                Runes
-                <span className={`vk-font-body text-sm ${points.available < 0 ? 'text-danger' : 'text-muted'}`}>
-                    Livre de sort {points.spent}/{points.total} — {points.available} disponible{points.available > 1 ? 's' : ''}
-                </span>
+            {/* Pas de « points en trop » : une rune s'apprend aussi en jeu, sans trait dédié (retour MJ) */}
+            <h3 className="vk-band-title">Runes{points.total > 0 ? ` · livre de sort ${points.total}` : ''}</h3>
+            <div className="vk-slab-aside">
+                <button type="button" className="vk-btn vk-btn-sm" onClick={() => setShowFuthark(true)}>
+                    <span className="vk-rune">ᚠ</span>Futhark
+                </button>
             </div>
             <p className="text-sm text-muted italic mb-3">
                 La rune est une permission, jamais un bonus : le jet se fait sur une compétence pratique (Sculpteur, Chant, Ferronnerie…).
@@ -68,20 +70,17 @@ const RunesSection = ({ char, editMode, set, className = '' }) => {
                 </div>
             )}
 
-            <div className="vk-sep-line" />
-            <button type="button" onClick={() => setShowFuthark(v => !v)} className="text-sm text-primary hover:underline">
-                {showFuthark ? '▾' : '▸'} Futhark complet
-            </button>
             {showFuthark && (
-                <div className="grid grid-cols-2 md:grid-cols-4 xl:grid-cols-6 gap-2 mt-2">
+                <VkModal title="Futhark" icon="scroll" size="max-w-4xl" onClose={() => setShowFuthark(false)}>
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
                     {RUNES.map(r => {
                         const level = levelOf(char, r.name);
                         return (
-                            <div key={r.name} className={`vk-rune-card ${level ? '' : 'opacity-70'}`} title={`${r.literal} — ${r.esoteric}`}>
+                            <div key={r.name} className={`vk-rune-card ${level ? '' : 'opacity-70'}`}>
                                 <span className="vk-rune text-2xl w-6 text-center">{r.symbol}</span>
                                 <div className="flex-1 min-w-0 text-xs">
-                                    <div className="font-bold truncate">{r.name} ({r.letter})</div>
-                                    <div className="text-muted truncate">{r.literal}</div>
+                                    <div className="font-bold">{r.name} ({r.letter}){level > 0 && <span className="text-primary"> · niveau {level}</span>}</div>
+                                    <div className="text-muted">{r.literal} — {r.esoteric}</div>
                                 </div>
                                 {editMode && level === 0 && (
                                     <button type="button" className="vk-btn vk-btn-icon vk-btn-sm" onClick={() => changeLevel(r.name, 1)} title="Apprendre">
@@ -92,6 +91,7 @@ const RunesSection = ({ char, editMode, set, className = '' }) => {
                         );
                     })}
                 </div>
+                </VkModal>
             )}
         </VkPanel>
     );

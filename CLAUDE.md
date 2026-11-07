@@ -98,7 +98,7 @@ Tous sont des systèmes en usage réel, aucun n'est un brouillon :
 |---|---|---|
 | `fabula` | Fabula Ultima | Implémentation récente la plus complète : **référence à suivre** |
 | `zoneblanche` | Zone Blanche (2D20) | Récent |
-| `vikings` | Pure Vikings | Le plus ancien, refondu (spec, serveur, interface, graphisme) : slug moderne, seul le combat n'a pas été refait |
+| `vikings` | Pure Vikings | Le plus ancien, refondu deux fois : habillage « pierre peinte » ou « bois et or » au choix du joueur, ciels vivants, plateau de jet, halle du MJ (`spec_vikings_pierre_peinte.md`) ; restent l'assistant de création (ancienne disposition) et le combat |
 | `achtung` | Achtung! Cthulhu | |
 | `cyberpunk` | The Sprawl (PbtA) | |
 | `deltagreen` | Delta Green | |

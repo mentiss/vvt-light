@@ -26,7 +26,7 @@ import { RollError }   from '../../tools/diceEngine.js';
 // Données et règles du slug (systems/vikings/config/), réexportées pour l'extérieur
 export { CARACNAMES, COMPETENCES } from './config/competences.js';
 export { TRAITS }                  from './config/traits.js';
-export { RUNES }                   from './config/runes.js';
+export { RUNES, toRunes }          from './config/runes.js';
 export { ITEMS }                   from './config/equipment.js';
 export { NPC_TEMPLATES }           from './config/npcs.js';
 export * from './config/rules.js';

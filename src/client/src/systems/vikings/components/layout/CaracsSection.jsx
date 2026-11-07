@@ -10,10 +10,7 @@ import VkIcon from '../ui/VkIcon.jsx';
 
 const CaracsSection = ({ char, editMode, set, onRoll }) => (
     <VkPanel>
-        <div className="vk-section-title">
-            Caractéristiques
-            {!editMode && <span className="vk-eyebrow">clic = jet</span>}
-        </div>
+        <h3 className="vk-band-title">Caractéristiques</h3>
         <div className="grid grid-cols-3 gap-2">
             {Object.entries(CARACNAMES).map(([key, label]) => {
                 const lv = char[key] || 1;

@@ -30,6 +30,9 @@ import TabCombat           from './gm/tabs/TabCombat.jsx';
 import GMDiceModal         from './gm/modals/GMDiceModal.jsx';
 import { useCombat }       from './gm/useCombat.js';
 import VkIcon              from './components/ui/VkIcon.jsx';
+import VkLookMenuItems     from './components/ui/VkLookMenuItems.jsx';
+import VkSky               from './components/ui/VkSky.jsx';
+import { useVkLookOnRoot } from './hooks/useVkLook.js';
 import { REFERENCE_SECTIONS } from './config/reference.js';
 
 const TABS = [
@@ -44,6 +47,7 @@ const TABS = [
 const GMApp = ({ activeSession, onSessionChange, onlineCharacters, characterUpdates, darkMode, onToggleDarkMode }) => {
     const combat     = useCombat(onlineCharacters);
     const sessionId  = activeSession?.id ?? null;
+    useVkLookOnRoot();   // habillage choisi (pierre peinte / bois et or) posé sur <html>
 
     const [activeTab, setActiveTab] = useState(() => {
         const hash = window.location.hash.substring(1);
@@ -55,6 +59,8 @@ const GMApp = ({ activeSession, onSessionChange, onlineCharacters, characterUpda
 
     return (
         <div className="vk-root min-h-screen">
+            {/* Ciel vivant (pierre peinte) ; l'état du corps reste propre à la page joueur */}
+            <VkSky />
 
             {/* ── BANDEAU + ONGLETS (collants) ── */}
             <div className="sticky top-0 z-40">
@@ -81,13 +87,15 @@ const GMApp = ({ activeSession, onSessionChange, onlineCharacters, characterUpda
                             <HamburgerMenuItemFreeDice icon={<VkIcon name="dice" />} sessionId={sessionId} isGM />
                             <HamburgerMenuItemDiceConfig icon={<VkIcon name="horn" />} />
                             <HamburgerMenuSeparator />
+                            <VkLookMenuItems />
+                            <HamburgerMenuSeparator />
                             <HamburgerMenuItemHome icon={<VkIcon name="longhouse" />} />
                             <HamburgerMenuItemLogout icon={<VkIcon name="door" />} />
                         </HamburgerMenu>
                     </div>
                 </header>
 
-                <div className="px-4 bg-surface">
+                <div className="vk-tabbar px-4 bg-surface">
                     <nav className="vk-tabs">
                         {TABS.map(tab => (
                             <button key={tab.id} type="button" onClick={() => setActiveTab(tab.id)}
@@ -102,7 +110,8 @@ const GMApp = ({ activeSession, onSessionChange, onlineCharacters, characterUpda
             {/* ── CONTENU (toute la largeur) ── */}
             <main className="p-4 md:p-6">
                 {activeTab === 'session' && (
-                    <TabSession activeSession={activeSession} onlineCharacters={onlineCharacters} characterUpdates={characterUpdates} />
+                    <TabSession activeSession={activeSession} onlineCharacters={onlineCharacters} characterUpdates={characterUpdates}
+                                onSessionChange={onSessionChange} />
                 )}
                 {activeTab === 'combat' && <TabCombat {...combat} sessionId={sessionId} />}
                 {/* Tableau partagé (brique plateforme, spec_tableau.md §10.8) */}

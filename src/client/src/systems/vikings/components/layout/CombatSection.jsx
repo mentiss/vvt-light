@@ -36,7 +36,7 @@ const CombatSection = ({ char, editMode, set }) => {
 
     return (
         <VkPanel>
-            <div className="vk-section-title">Combat</div>
+            <h3 className="vk-band-title">Combat</h3>
 
             <div className="grid grid-cols-3 gap-2 mb-3">
                 <Value label="Armure"  value={v.armureTotale} sub={armureSub}

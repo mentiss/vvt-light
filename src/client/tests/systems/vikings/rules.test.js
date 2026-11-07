@@ -11,8 +11,76 @@ import {
     splitDiceWaves, isTripleTen,
     XP_COSTS, checkTraitConditions, formatTraitConditions, canSelectTrait,
     applyRollOutcome, gainSaga, getCombatValues, withDerivedValues, getPassivePostures,
+    getSuccessChance, toRunes, getWeaponSkill,
     TRAITS,
 } from '../../../src/systems/vikings/config.jsx';
+
+// Chance de réussite affichée sur la fiche et dans le plateau (spec_vikings_pierre_peinte.md C-2)
+describe('getSuccessChance', () => {
+    it('un dé, seuil 7+ : 4 faces sur 10', () => {
+        expect(getSuccessChance(1, 7, 1, 1)).toBeCloseTo(0.4, 10);
+    });
+    it('deux succès avec un seul dé : il faut un 10 qui explose, puis 7+', () => {
+        expect(getSuccessChance(1, 7, 1, 2)).toBeCloseTo(0.1 * 0.4, 10);
+    });
+    it('trois dés, seuil 7+ : 1 − 0,6³', () => {
+        expect(getSuccessChance(3, 7, 1, 1)).toBeCloseTo(1 - 0.6 ** 3, 10);
+    });
+    it('rien à obtenir : certain ; aucun dé : impossible', () => {
+        expect(getSuccessChance(3, 7, 1, 0)).toBe(1);
+        expect(getSuccessChance(0, 7, 1, 1)).toBe(0);
+    });
+    it('plus d’explosions = plus de chances au-delà du premier succès', () => {
+        expect(getSuccessChance(3, 5, 3, 3)).toBeGreaterThan(getSuccessChance(3, 5, 1, 3));
+    });
+});
+
+// Attaque depuis une arme équipée : quelle compétence (retour MJ du 2026-11-07)
+describe('getWeaponSkill', () => {
+    const cac = (spec, level = 2) => ({ name: 'Combat CàC (armé)', specialization: spec, level, currentPoints: level });
+    const dist = (spec) => ({ name: 'Combat distance', specialization: spec, level: 1, currentPoints: 1 });
+    const epee = { name: 'Épée', category: 'weapon', weaponType: '1 main' };
+    it('une seule compétence possible : lien direct', () => {
+        const c = { skills: [cac('Hache')] };
+        expect(getWeaponSkill(c, epee).skill).toBe(c.skills[0]);
+    });
+    it('plusieurs : celle dont la spécialisation nomme l’arme (accents ignorés)', () => {
+        const c = { skills: [cac('Hache'), cac('epee')] };
+        expect(getWeaponSkill(c, epee).skill).toBe(c.skills[1]);
+    });
+    it('plusieurs sans lien : choix du joueur parmi les candidates', () => {
+        const c = { skills: [cac('Hache'), cac('Lance')] };
+        const r = getWeaponSkill(c, epee);
+        expect(r.skill).toBeNull();
+        expect(r.candidates).toHaveLength(2);
+    });
+    it('arme à distance : Combat distance ; arme de jet : les deux', () => {
+        const c = { skills: [cac('Hache'), dist('Arc')] };
+        expect(getWeaponSkill(c, { name: 'Arc court', weaponType: 'Distance' }).skill).toBe(c.skills[1]);
+        expect(getWeaponSkill(c, { name: 'Javelot', weaponType: '1 main / Jet' }).candidates).toHaveLength(2);
+    });
+    it('aucune compétence : jet de la meilleure caractéristique de la compétence', () => {
+        const r = getWeaponSkill({ force: 3, agilite: 2, skills: [] }, epee);
+        expect(r.skill).toBeNull();
+        expect(r.carac).toBe('force');
+    });
+});
+
+// Inscription du ruban-serpent (spec_vikings_pierre_peinte.md D-4)
+describe('toRunes', () => {
+    it('translittère lettre à lettre en futhark ancien', () => {
+        expect(toRunes('Ragnhild')).toBe('ᚱᚨᚷᚾᚺᛁᛚᛞ');
+    });
+    it('« th » donne ᚦ, « ng » donne ᛜ, les accents tombent', () => {
+        expect(toRunes('Thorvald')).toBe('ᚦᛟᚱᚹᚨᛚᛞ');
+        expect(toRunes('Ingrid')).toBe('ᛁᛜᚱᛁᛞ');
+        expect(toRunes('Éirik')).toBe('ᛖᛁᚱᛁᚲ');
+    });
+    it('sépare les mots par ᛫ et ignore guillemets et apostrophes', () => {
+        expect(toRunes('Ulf fils d’Arne')).toBe('ᚢᛚᚠ ᛫ ᚠᛁᛚᛊ ᛫ ᛞ ᛫ ᚨᚱᚾᛖ');
+        expect(toRunes('"Le Brave"')).toBe('ᛚᛖ ᛫ ᛒᚱᚨᚹᛖ');
+    });
+});
 
 const trait = (name) => TRAITS.find(t => t.name === name);
 const perso = (over = {}) => ({
