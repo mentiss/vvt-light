@@ -12,17 +12,24 @@
 .maledictum-brand::before { content: ''; position: absolute; left: 50%; top: 12px; transform: translateX(-50%); width: 200px; height: 190px; border: 1px solid #C9A45C; border-bottom: 0; border-radius: 100px 100px 0 0 / 80px 80px 0 0; }
 .maledictum-brand::after { content: ''; position: absolute; left: 50%; top: 18px; transform: translateX(-50%); width: 186px; height: 184px; border: 1px solid rgba(201,164,92,.45); border-bottom: 0; border-radius: 93px 93px 0 0 / 74px 74px 0 0; }
 .maledictum-brand-aquila { width: 120px; height: 48px; margin: 0 auto -2px; color: #C9A45C; position: relative; z-index: 1; }
-.maledictum-brand-title { font-family: var(--im-font-title); font-size: 38px; line-height: .9; position: relative; z-index: 1; text-shadow: 0 2px 4px rgba(0,0,0,.7); }
+/* Police nommée ici : sur l'accueil, le theme.css du slug (--im-font-title) n'est pas chargé */
+.maledictum-brand-title { font-family: 'Bank Gothic Medium', 'Michroma', Georgia, serif; font-size: 38px; line-height: .9; position: relative; z-index: 1; text-shadow: 0 2px 4px rgba(0,0,0,.7); }
 .maledictum-brand-sub { font-family: 'Bank Gothic Light', 'Michroma', sans-serif; font-size: 11px; letter-spacing: .34em; text-transform: uppercase; color: #C9A45C; margin-top: 6px; position: relative; z-index: 1; }
 
 .maledictum-brand-aquila { background-color: currentColor; -webkit-mask: url('./assets/aquila.png') center / contain no-repeat; mask: url('./assets/aquila.png') center / contain no-repeat; }
 .maledictum-brand > div { position: relative; z-index: 1; }
-/* ── Titre (pages d'accès, bande fixe) : couleurs du thème ── */
-.maledictum-brand.is-title { height: auto; min-height: 0; display: inline-flex; align-items: center; gap: 10px; background: none; overflow: visible; color: var(--im-band-ink, var(--color-text, #EADFC6)); }
-.maledictum-brand.is-title > div { display: flex; align-items: center; gap: 10px; }
+/* ── Titre (pages d'accès, chargement, erreur, « Reprendre » de l'accueil, bande fixe) ──
+   Tailles en em : la marque suit la taille de texte de son conteneur (text-3xl, 0.85rem…). */
+/* Couleur du texte de la page (fond clair ou sombre) ; la bande fixe sombre repasse à son encre (theme.css) */
+.maledictum-brand.is-title { height: auto; min-height: 0; display: inline-flex; align-items: center; gap: .35em; background: none; overflow: visible; color: var(--color-text, #1F1810); }
+.maledictum-brand.is-title > div { display: flex; align-items: center; gap: .35em; }
 .maledictum-brand.is-title::before,.maledictum-brand.is-title::after { display: none; }
-.maledictum-brand.is-title .maledictum-brand-aquila { width: 70px; height: 28px; margin: 0; color: var(--im-metal, #C9A45C); }
-.maledictum-brand.is-title .maledictum-brand-title { font-size: 26px; line-height: 1; white-space: nowrap; }
+.maledictum-brand.is-title .maledictum-brand-aquila { width: 2.4em; height: 1em; margin: 0; flex-shrink: 0; color: var(--im-metal, #C9A45C); }
+.maledictum-brand.is-title .maledictum-brand-title { font-size: .87em; line-height: 1; white-space: nowrap; text-shadow: none; }
 .maledictum-brand.is-title .maledictum-brand-title br { display: none; }
 .maledictum-brand.is-title .maledictum-brand-sub { display: none; }
+/* « Reprendre » (11rem de large) : titre sur deux lignes, à gauche de l'encart */
 .vtt-resume-brand .maledictum-brand.is-title { color: var(--color-text); }
+.vtt-resume-brand .maledictum-brand.is-title .maledictum-brand-title { font-size: 1.05em; line-height: 1; text-align: left; }
+.vtt-resume-brand .maledictum-brand.is-title .maledictum-brand-title br { display: inline; }
+.vtt-resume-brand .maledictum-brand.is-title .maledictum-brand-aquila { width: 2.6em; height: 1.4em; }
