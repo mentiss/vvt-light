@@ -5,7 +5,7 @@ import { HamburgerMenuItemLogout } from '../../../components/ui/HamburgerMenuIte
 import ThemeToggle          from '../../../components/ui/ThemeToggle.jsx';
 import ToastNotifications   from '../../../components/layout/ToastNotifications.jsx';
 import DiceHistoryPage      from '../../../components/layout/DiceHistoryPage.jsx';
-import TableManagementModal from '../../../components/gm/modals/TableManagementModal.jsx';
+import TableManagementButton from '../../../components/gm/TableManagementButton.jsx';
 import FreeDiceModal        from '../../../components/modals/FreeDiceModal.jsx';
 import TabJournal           from '../../../components/gm/tabs/TabJournal.jsx';
 
@@ -29,7 +29,6 @@ const GMView = ({ activeSession, onSessionChange, onlineCharacters, darkMode, on
         const hash = window.location.hash.replace('#', '');
         return GM_TABS.some(t => t.id === hash) ? hash : 'session';
     });
-    const [showTableModal, setShowTableModal] = useState(false);
     const [showFreeDice,   setShowFreeDice]   = useState(false);
 
     const changeTab = (id) => {
@@ -61,9 +60,10 @@ const GMView = ({ activeSession, onSessionChange, onlineCharacters, darkMode, on
                         <button onClick={() => setShowFreeDice(true)} className="ns-btn-ghost">
                             ⬡ Dés
                         </button>
-                        <button onClick={() => setShowTableModal(true)} className="ns-btn-ghost">
-                            ⚙ Table
-                        </button>
+                        {/* Gestion des tables : brique de la plateforme (spec_ui_menu.md §12) */}
+                        <TableManagementButton activeSessionId={activeSession?.id ?? null}
+                                               onSelectTable={(session) => onSessionChange?.(session)}
+                                               label="⚙ Table" icon={null} className="ns-btn-ghost" />
                         <ThemeToggle darkMode={darkMode} onToggle={onToggleDarkMode} />
 
                         {/* Menu hamburger générique (spec_ui_menu.md) : mécanique seule, sans habillage
@@ -94,6 +94,7 @@ const GMView = ({ activeSession, onSessionChange, onlineCharacters, darkMode, on
                     <TabSession
                         activeSession={activeSession}
                         onlineCharacters={onlineCharacters}
+                        onSessionChange={onSessionChange}
                     />
                 )}
 
@@ -125,15 +126,6 @@ const GMView = ({ activeSession, onSessionChange, onlineCharacters, darkMode, on
                     sessionId={activeSession?.id ?? null}
                     isGM={true}
                     onClose={() => setShowFreeDice(false)}
-                />
-            )}
-
-            {showTableModal && (
-                <TableManagementModal
-                    isOpen={true}
-                    activeSessionId={activeSession?.id ?? null}
-                    onSelectTable={(session) => { onSessionChange?.(session); setShowTableModal(false); }}
-                    onClose={() => setShowTableModal(false)}
                 />
             )}
         </div>

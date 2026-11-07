@@ -72,7 +72,8 @@ const GMApp = ({ activeSession, onSessionChange, onlineCharacters, characterUpda
             <main className="vil-sheet-body">
                 {activeTab === 'session' && (
                     <TabSession activeSession={activeSession} onlineCharacters={onlineCharacters}
-                                characters={characters} order={order} loading={loading} patchCharacter={patchCharacter} />
+                                characters={characters} order={order} loading={loading} patchCharacter={patchCharacter}
+                                onSessionChange={onSessionChange} />
                 )}
                 {activeTab === 'journal' && <div className="vil-page"><TabJournal characterId={-1} /></div>}
                 {/* Tableau partagé (brique plateforme, spec_tableau.md §10.8) */}

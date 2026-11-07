@@ -12,6 +12,7 @@ import React, { useState } from 'react';
 import AudioSessionToggle from '../../../../components/audio/AudioSessionToggle.jsx';
 import BoardSessionToggle from '../../../../components/board/BoardSessionToggle.jsx';
 import CopyAccessButton from '../../../../components/ui/CopyAccessButton.jsx';
+import TableManagementButton from '../../../../components/gm/TableManagementButton.jsx';
 import VilGmTableRow from '../../components/layout/VilGmTableRow.jsx';
 import VilSheet from '../../components/layout/VilSheet.jsx';
 import VilEditForm from '../../components/layout/VilEditForm.jsx';
@@ -19,7 +20,7 @@ import { EditIcon } from '../../components/ui/VilUi.jsx';
 import { useVilActions } from '../../hooks/useVilActions.js';
 import { editDraft, editPatch } from '../../config/rules/character.js';
 
-const TabSession = ({ activeSession, onlineCharacters, characters, order, loading, patchCharacter }) => {
+const TabSession = ({ activeSession, onlineCharacters, characters, order, loading, patchCharacter, onSessionChange }) => {
     const [selectedId, setSelectedId] = useState(null);
     const [draft, setDraft] = useState(null);   // brouillon du mode Édition du Paria affiché
 
@@ -28,7 +29,13 @@ const TabSession = ({ activeSession, onlineCharacters, characters, order, loadin
     const act = useVilActions({ character: current ?? {}, sessionId: activeSession?.id ?? null, isPlayer: false,
         patch: (p) => patchCharacter(currentId, p) });
 
-    if (!activeSession) return <p className="vil-note p-6">Aucune table active : choisissez-en une dans le menu (gestion des tables).</p>;
+    if (!activeSession) return (
+        <div className="p-6 flex flex-col items-start gap-3">
+            <p className="vil-note">Aucune table active.</p>
+            {/* Appel à choisir une table (spec_ui_menu.md §12) */}
+            <TableManagementButton activeSessionId={null} onSelectTable={(session) => onSessionChange?.(session)} />
+        </div>
+    );
 
     const online = new Set((onlineCharacters ?? []).map(o => o.characterId));
     const select = (id) => { setSelectedId(id); setDraft(null); };

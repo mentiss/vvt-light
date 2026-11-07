@@ -8,7 +8,7 @@
 import React, { useState } from 'react';
 
 import ToastNotifications   from '../../../components/layout/ToastNotifications.jsx';
-import TableManagementModal from '../../../components/gm/modals/TableManagementModal.jsx';
+import TableManagementButton from '../../../components/gm/TableManagementButton.jsx';
 import TabJournal           from '../../../components/gm/tabs/TabJournal.jsx';
 import Board                from '../../../components/board/Board.jsx';
 import TabSession from "./tabs/TabSession.jsx";
@@ -34,7 +34,6 @@ const GMView = ({ activeSession, onSessionChange, onlineCharacters, darkMode, on
         const hash = window.location.hash.replace('#', '');
         return GM_TABS.some(t => t.id === hash) ? hash : 'session';
     });
-    const [showTableModal, setShowTableModal] = useState(false);
 
     const changeTab = (id) => {
         setActiveTab(id);
@@ -90,12 +89,14 @@ const GMView = ({ activeSession, onSessionChange, onlineCharacters, darkMode, on
                             <line x1="42" y1="13" x2="6"  y2="35" stroke="currentColor" strokeWidth="1.2" opacity="0.5" />
                         </svg>
                     </button>
-                    <button
-                        onClick={() => setShowTableModal(true)}
+                    {/* Gestion des tables : brique de la plateforme (spec_ui_menu.md §12) */}
+                    <TableManagementButton
+                        activeSessionId={activeSession?.id ?? null}
+                        onSelectTable={(session) => onSessionChange?.(session)}
+                        label="Table"
+                        icon={null}
                         className="text-xs font-mono border border-gray-700 hover:border-gray-500 text-gray-400 hover:text-white px-3 py-1 transition-colors"
-                    >
-                        Table
-                    </button>
+                    />
                     <button
                         onClick={onToggleDarkMode}
                         className="text-gray-400 hover:text-white text-xs font-mono px-2 py-1 border border-gray-700 hover:border-gray-500 transition-colors"
@@ -136,6 +137,7 @@ const GMView = ({ activeSession, onSessionChange, onlineCharacters, darkMode, on
                     <TabSession
                         activeSession={activeSession}
                         onlineCharacters={onlineCharacters}
+                        onSessionChange={onSessionChange}
                     />
                 )}
                 {activeTab === 'journal' && (
@@ -162,19 +164,9 @@ const GMView = ({ activeSession, onSessionChange, onlineCharacters, darkMode, on
                 )}
             </main>
 
-            {/* ── Modale gestion table ─────────────────────────────────────── */}
-            {showTableModal && (
-                <TableManagementModal
-                    isOpen
-                    activeSession={activeSession || null}
-                    onSelectTable={(session) => { onSessionChange?.(session); setShowTableModal(false); }}
-                    onClose={() => setShowTableModal(false)}
-                />
-            )}
-
             {showFreeDice && (
                 <FreeDiceModal
-                    sessionId={activeSession || null}
+                    sessionId={activeSession?.id ?? null}
                     isGM={true}
                     onClose={() => setShowFreeDice(false)}
                 />

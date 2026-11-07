@@ -131,7 +131,8 @@ const GMApp = ({ activeSession, onSessionChange, onlineCharacters, characterUpda
 
             <main>
                 {activeTab === 'session' && (
-                    <TabSession activeSession={activeSession} onlineCharacters={onlineCharacters} {...table} />
+                    <TabSession activeSession={activeSession} onlineCharacters={onlineCharacters} {...table}
+                                onSessionChange={onSessionChange} />
                 )}
                 {activeTab === 'maison' && <TabHouse activeSession={activeSession} />}
                 {activeTab === 'npc' && (

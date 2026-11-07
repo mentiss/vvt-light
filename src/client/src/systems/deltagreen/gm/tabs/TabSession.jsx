@@ -31,6 +31,7 @@ import GMSendModal               from '../../../../components/gm/modals/GMSendMo
 import AudioSessionToggle        from '../../../../components/audio/AudioSessionToggle.jsx';
 import BoardSessionToggle        from '../../../../components/board/BoardSessionToggle.jsx';
 import CopyAccessButton          from '../../../../components/ui/CopyAccessButton.jsx';
+import TableManagementButton     from '../../../../components/gm/TableManagementButton.jsx';
 
 // ── Constantes ────────────────────────────────────────────────────────────────
 
@@ -537,7 +538,7 @@ const GMAgentPanel = ({ char, isOnline, sessionId, onCharacterUpdate, onSendNote
 // TabSession — composant principal
 // ══════════════════════════════════════════════════════════════════════════════
 
-const TabSession = ({ activeSession, onlineCharacters }) => {
+const TabSession = ({ activeSession, onlineCharacters, onSessionChange }) => {
     const { apiBase }   = useSystem();
     const fetchWithAuth = useFetch();
     const socket        = useSocket();
@@ -640,8 +641,10 @@ const TabSession = ({ activeSession, onlineCharacters }) => {
 
     // ── Gardes ────────────────────────────────────────────────────────────────
     if (!activeSession) return (
-        <div className="flex items-center justify-center h-full w-full text-muted font-mono text-sm">
-            Aucune session active. Sélectionnez une table via le bouton « Table ».
+        <div className="flex flex-col items-center justify-center gap-3 h-full w-full text-muted font-mono text-sm">
+            Aucune table active.
+            {/* Appel à choisir une table (spec_ui_menu.md §12) */}
+            <TableManagementButton activeSessionId={null} onSelectTable={(session) => onSessionChange?.(session)} icon={null} />
         </div>
     );
 

@@ -14,6 +14,7 @@ import AudioSessionToggle from '../../../../components/audio/AudioSessionToggle.
 import BoardSessionToggle from '../../../../components/board/BoardSessionToggle.jsx';
 import GMSendModal from '../../../../components/gm/modals/GMSendModal.jsx';
 import CopyAccessButton from '../../../../components/ui/CopyAccessButton.jsx';
+import TableManagementButton from '../../../../components/gm/TableManagementButton.jsx';
 import { useFetch }  from '../../../../hooks/useFetch.js';
 import { useSystem } from '../../../../hooks/useSystem.js';
 import DuneIcon from '../../components/ui/DuneIcon.jsx';
@@ -22,14 +23,15 @@ import DuneSheetBody from '../../components/layout/DuneSheetBody.jsx';
 import DuneAssetCatalog from '../../components/modals/DuneAssetCatalog.jsx';
 import { characterFullName } from '../../config/traits.js';
 
-const EmptyTable = ({ text }) => (
+const EmptyTable = ({ text, action }) => (
     <div className="dn-empty">
         <DuneWorm />
         <p>{text}</p>
+        {action}
     </div>
 );
 
-const TabSession = ({ activeSession, onlineCharacters, characters, order, loading, patchCharacter, addRow }) => {
+const TabSession = ({ activeSession, onlineCharacters, characters, order, loading, patchCharacter, addRow, onSessionChange }) => {
     const { apiBase } = useSystem();
     const fetchWithAuth = useFetch();
     const [selectedId, setSelectedId] = useState(null);
@@ -37,7 +39,12 @@ const TabSession = ({ activeSession, onlineCharacters, characters, order, loadin
     const [noteOpen, setNoteOpen] = useState(false);
     const [assetOpen, setAssetOpen] = useState(false);
 
-    if (!activeSession) return <EmptyTable text={<>Aucune table active<br />Choisissez une table dans le menu</>} />;
+    if (!activeSession) return (
+        <EmptyTable text="Aucune table active"
+                    action={/* Appel à choisir une table (spec_ui_menu.md §12) */
+                        <TableManagementButton activeSessionId={null} onSelectTable={(session) => onSessionChange?.(session)}
+                                               icon={<DuneIcon name="orbit" />} />} />
+    );
 
     const currentId = characters[selectedId] ? selectedId : order[0];
     const current = characters[currentId];

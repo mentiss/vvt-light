@@ -16,13 +16,14 @@ import React, { useState } from 'react';
 import AudioSessionToggle from '../../../../components/audio/AudioSessionToggle.jsx';
 import BoardSessionToggle from '../../../../components/board/BoardSessionToggle.jsx';
 import GMSendModal from '../../../../components/gm/modals/GMSendModal.jsx';
+import TableManagementButton from '../../../../components/gm/TableManagementButton.jsx';
 
 import VdaSheet from '../../components/layout/VdaSheet.jsx';
 import VdaGmSheet from '../../components/layout/VdaGmSheet.jsx';
 import VdaGmTableRow from '../../components/layout/VdaGmTableRow.jsx';
 import VdaDiceModal from '../../components/modals/VdaDiceModal.jsx';
 
-const TabSession = ({ activeSession, onlineCharacters, characters, order, loading, patchCharacter, onGiveXp }) => {
+const TabSession = ({ activeSession, onlineCharacters, characters, order, loading, patchCharacter, onGiveXp, onSessionChange }) => {
     const [selectedId, setSelectedId] = useState(null);
     const [draft, setDraft] = useState(null);           // fiche en édition (Modifier) ou null
     const [rollSetup, setRollSetup] = useState(null);
@@ -32,7 +33,13 @@ const TabSession = ({ activeSession, onlineCharacters, characters, order, loadin
     const currentId = selectedId && characters[selectedId] ? selectedId : order[0] ?? null;
     const c = currentId ? characters[currentId] : null;
 
-    if (!activeSession) return <p className="vda-note p-6">Aucune table active : choisissez-en une dans le menu (gestion des tables).</p>;
+    if (!activeSession) return (
+        <div className="p-6 flex flex-col items-start gap-3">
+            <p className="vda-note">Aucune table active.</p>
+            {/* Appel à choisir une table (spec_ui_menu.md §12) */}
+            <TableManagementButton activeSessionId={null} onSelectTable={(session) => onSessionChange?.(session)} />
+        </div>
+    );
 
     const select = (id) => { setSelectedId(id); setDraft(null); };
     const patch = (p) => patchCharacter(currentId, p);

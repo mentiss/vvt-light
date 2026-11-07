@@ -21,7 +21,7 @@ import { useSocket }  from '../../../../context/SocketContext.jsx';
 import { useFetch }   from '../../../../hooks/useFetch.js';
 import { useSystem }  from '../../../../hooks/useSystem.js';
 
-import TableManagementModal from '../../../../components/gm/modals/TableManagementModal.jsx';
+import TableManagementButton from '../../../../components/gm/TableManagementButton.jsx';
 import GMSendModal          from '../../../../components/gm/modals/GMSendModal.jsx';
 import AudioSessionToggle   from '../../../../components/audio/AudioSessionToggle.jsx';
 import BoardSessionToggle   from '../../../../components/board/BoardSessionToggle.jsx';
@@ -142,7 +142,7 @@ const SidebarCharItem = ({ character, isOnline, isSelected, onClick }) => {
 // ── Sous-composant : barre d'actions GM ───────────────────────────────────────
 // Défini au niveau module.
 
-const GMActionBar = ({ char, editMode, onToggleEdit, onSendNote, onManageSessions }) => (
+const GMActionBar = ({ char, editMode, onToggleEdit, onSendNote, activeSessionId, onSelectTable }) => (
     <div className="ac-card flex items-center gap-2 flex-wrap">
         <button
             onClick={onToggleEdit}
@@ -161,13 +161,11 @@ const GMActionBar = ({ char, editMode, onToggleEdit, onSendNote, onManageSession
             </>
         )}
 
-        <button
-            onClick={onManageSessions}
-            className="ac-btn ac-btn-secondary"
-            style={{ marginLeft: 'auto' }}
-        >
-            ⛶ Sessions
-        </button>
+        {/* Gestion des tables : brique de la plateforme (spec_ui_menu.md §12) */}
+        <div className="ml-auto">
+            <TableManagementButton activeSessionId={activeSessionId} onSelectTable={onSelectTable}
+                                   label="⛶ Sessions" icon={null} className="ac-btn ac-btn-secondary" />
+        </div>
     </div>
 );
 
@@ -183,7 +181,6 @@ const TabSession = ({ activeSession, onSessionChange, onlineCharacters }) => {
     const [loading,       setLoading]       = useState(false);
     const [editMode,      setEditMode]      = useState(false);
     const [showSendModal, setShowSendModal] = useState(false);
-    const [showTable,     setShowTable]     = useState(false);
     const [resources,     setResources]     = useState({ momentum: 0, threat: 0, complications: 0 });
 
     const onlineIds = new Set((onlineCharacters ?? []).map(c => c.characterId));
@@ -333,8 +330,13 @@ const TabSession = ({ activeSession, onSessionChange, onlineCharacters }) => {
                 </div>
 
                 {!activeSession && (
-                    <div className="p-3 text-center ac-text-muted" style={{ fontSize: '0.78rem' }}>
-                        Aucune session active
+                    <div className="p-3 flex flex-col items-center gap-2">
+                        <div className="text-center ac-text-muted" style={{ fontSize: '0.78rem' }}>
+                            Aucune table active
+                        </div>
+                        {/* Appel à choisir une table (spec_ui_menu.md §12) */}
+                        <TableManagementButton activeSessionId={null} onSelectTable={(s) => onSessionChange?.(s)}
+                                               icon={null} className="ac-btn ac-btn-primary" />
                     </div>
                 )}
 
@@ -381,7 +383,8 @@ const TabSession = ({ activeSession, onSessionChange, onlineCharacters }) => {
                         editMode={editMode}
                         onToggleEdit={handleToggleEdit}
                         onSendNote={() => setShowSendModal(true)}
-                        onManageSessions={() => setShowTable(true)}
+                        activeSessionId={activeSession?.id ?? null}
+                        onSelectTable={(s) => onSessionChange?.(s)}
                     />
                 </div>
 
@@ -518,15 +521,6 @@ const TabSession = ({ activeSession, onSessionChange, onlineCharacters }) => {
             </div>
 
             {/* ── MODALES ──────────────────────────────────────────────────── */}
-            {showTable && (
-                <TableManagementModal
-                    isOpen
-                    onClose={() => setShowTable(false)}
-                    activeSessionId={activeSession?.id ?? null}
-                    onSelectTable={(s) => { onSessionChange?.(s); setShowTable(false); }}
-                />
-            )}
-
             {showSendModal && (
                 <GMSendModal
                     onClose={() => setShowSendModal(false)}

@@ -15,6 +15,7 @@ import React, { useState } from 'react';
 import AudioSessionToggle from '../../../../components/audio/AudioSessionToggle.jsx';
 import BoardSessionToggle from '../../../../components/board/BoardSessionToggle.jsx';
 import CopyAccessButton from '../../../../components/ui/CopyAccessButton.jsx';
+import TableManagementButton from '../../../../components/gm/TableManagementButton.jsx';
 import ConfirmModal from '../../../../components/modals/ConfirmModal.jsx';
 import MlSheet from '../../components/layout/MlSheet.jsx';
 import MlEditForm from '../../components/layout/MlEditForm.jsx';
@@ -68,7 +69,7 @@ const PictScreen = ({ c, index, patron, editing, tools, children }) => {
     );
 };
 
-const TabSession = ({ activeSession, onlineCharacters, patron, patronState, characters, order, loading, patchCharacter }) => {
+const TabSession = ({ activeSession, onlineCharacters, patron, patronState, characters, order, loading, patchCharacter, onSessionChange }) => {
     const [selectedId, setSelectedId] = useState(null);
     const [draft, setDraft] = useState(null);           // brouillon du mode Édition de l'acolyte affiché
     const [refill, setRefill] = useState(false);
@@ -76,7 +77,13 @@ const TabSession = ({ activeSession, onlineCharacters, patron, patronState, char
     const currentId = characters[selectedId] ? selectedId : order[0];
     const current = characters[currentId];
 
-    if (!activeSession) return <p className="im-empty im-tab-page">Aucune table active : choisissez-en une dans le menu (gestion des tables).</p>;
+    if (!activeSession) return (
+        <div className="im-tab-page flex flex-col items-start gap-3">
+            <p className="im-empty">Aucune table active.</p>
+            {/* Appel à choisir une table (spec_ui_menu.md §12) */}
+            <TableManagementButton activeSessionId={null} onSelectTable={(session) => onSessionChange?.(session)} />
+        </div>
+    );
 
     const online = new Set((onlineCharacters ?? []).map(o => o.characterId));
     const select = (id) => { setSelectedId(id); setDraft(null); };

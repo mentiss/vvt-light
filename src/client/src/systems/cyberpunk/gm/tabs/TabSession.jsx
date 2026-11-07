@@ -19,6 +19,7 @@ import { useSocket } from "../../../../context/SocketContext.jsx";
 import GMSendModal from "../../../../components/gm/modals/GMSendModal.jsx";
 import AudioSessionToggle from '../../../../components/audio/AudioSessionToggle.jsx';
 import BoardSessionToggle from '../../../../components/board/BoardSessionToggle.jsx';
+import TableManagementButton from '../../../../components/gm/TableManagementButton.jsx';
 import CpIcon from "../../components/ui/CpIcon.jsx";
 import GMCharacterView from '../GMCharacterView.jsx';
 
@@ -54,7 +55,7 @@ const AgentFeed = ({ c, isOnline, isActive, onSelect }) => (
     </button>
 );
 
-const TabSession = ({ activeSession, onlineCharacters }) => {
+const TabSession = ({ activeSession, onlineCharacters, onSessionChange }) => {
     const { apiBase }   = useSystem();
     const fetchWithAuth = useFetch();
     const socket        = useSocket();
@@ -168,7 +169,9 @@ const TabSession = ({ activeSession, onlineCharacters }) => {
             <div className="flex flex-col items-center justify-center py-16 gap-3 text-muted">
                 <CpIcon name="tables" className="w-12 h-12" />
                 <p className="text-sm">Aucune table sélectionnée.</p>
-                <p className="text-xs">Ouvrez le menu et gérez vos tables.</p>
+                {/* Appel à choisir une table (spec_ui_menu.md §12) */}
+                <TableManagementButton activeSessionId={null} onSelectTable={(session) => onSessionChange?.(session)}
+                                       icon={<CpIcon name="tables" />} />
             </div>
         );
     }

@@ -209,6 +209,7 @@ const GMView = ({ activeSession, onSessionChange, onlineCharacters, darkMode, on
                         <TabSession
                             activeSession={activeSession}
                             onlineCharacters={onlineCharacters}
+                            onSessionChange={onSessionChange}
                         />
                     )}
 

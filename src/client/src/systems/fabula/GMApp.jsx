@@ -80,7 +80,8 @@ const GMApp = ({ activeSession, onSessionChange, onlineCharacters, characterUpda
             {/* ── CONTENU ─────────────────────────────────────────────────── */}
             <main className="flex-1">
                 {activeTab === 'session' && (
-                    <TabSession activeSession={activeSession} onlineCharacters={onlineCharacters} characterUpdates={characterUpdates} />
+                    <TabSession activeSession={activeSession} onlineCharacters={onlineCharacters} characterUpdates={characterUpdates}
+                                onSessionChange={onSessionChange} />
                 )}
                 {/* Fiche de groupe de la table (spec_fabula.md §7) : le MJ voit et cache les cadrans */}
                 {activeTab === 'groupe' && (

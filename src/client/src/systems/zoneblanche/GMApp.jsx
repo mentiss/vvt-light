@@ -313,6 +313,7 @@ const GMApp = ({
                             characterUpdates={characterUpdates}
                             resources={resources}
                             onResourcesChange={setResources}
+                            onSessionChange={onSessionChange}
                         />
                     </>
                 )}

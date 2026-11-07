@@ -23,10 +23,11 @@ import {
 } from '../../../config.jsx';
 import SendItemModal from "../modals/SendItemModal.jsx";
 import CopyAccessButton from '../../../../../components/ui/CopyAccessButton.jsx';
+import TableManagementButton from '../../../../../components/gm/TableManagementButton.jsx';
 
 // ─────────────────────────────────────────────────────────────────────────────
 
-const TabSession = ({ activeSession, onlineCharacters }) => {
+const TabSession = ({ activeSession, onlineCharacters, onSessionChange }) => {
     const { apiBase }   = useSystem();
     const fetchWithAuth = useFetch();
     const socket        = useSocket();
@@ -99,9 +100,11 @@ const TabSession = ({ activeSession, onlineCharacters }) => {
 
     // ── Pas de session ────────────────────────────────────────────────────
     if (!activeSession) return (
-        <p className="text-center py-12 text-muted text-sm">
-            Aucune session active. Sélectionnez une table dans le menu.
-        </p>
+        <div className="flex flex-col items-center gap-3 py-12">
+            <p className="text-muted text-sm">Aucune table active.</p>
+            {/* Appel à choisir une table (spec_ui_menu.md §12) */}
+            <TableManagementButton activeSessionId={null} onSelectTable={(session) => onSessionChange?.(session)} icon="🗂️" />
+        </div>
     );
 
     if (loading && Object.keys(characters).length === 0) return (

@@ -95,7 +95,8 @@ const GMApp = ({ activeSession, onSessionChange, onlineCharacters, characterUpda
             <main className="vda-sheet-body">
                 {activeTab === 'session' && (
                     <TabSession activeSession={activeSession} onlineCharacters={onlineCharacters} characters={characters} order={order}
-                                loading={loading} patchCharacter={patchCharacter} onGiveXp={(id) => setTableAction({ kind: 'xp', preselect: [id] })} />
+                                loading={loading} patchCharacter={patchCharacter} onGiveXp={(id) => setTableAction({ kind: 'xp', preselect: [id] })}
+                                onSessionChange={onSessionChange} />
                 )}
                 {activeTab === 'coterie' && (
                     <div className="vda-page">

@@ -13,6 +13,7 @@ import { useSocket }   from '../../../../context/SocketContext.jsx';
 import { useFetch }    from '../../../../hooks/useFetch.js';
 import { useSystem }   from '../../../../hooks/useSystem.js';
 import GMSendModal     from '../../../../components/gm/modals/GMSendModal.jsx';
+import TableManagementButton from '../../../../components/gm/TableManagementButton.jsx';
 
 import {
     DOMAINES, computeMalusBlessure,
@@ -28,7 +29,7 @@ import ReserveCard from "../../components/layout/ReserveCard.jsx";
 import GroupReserveCard from '../../components/layout/GroupReserveCard.jsx';
 
 /* ══════════════════════════════════════════════════════════════════════════ */
-const TabSession = ({ activeSession, onlineCharacters }) => {
+const TabSession = ({ activeSession, onlineCharacters, onSessionChange }) => {
     const { apiBase }   = useSystem();
     const fetchWithAuth = useFetch();
     const socket        = useSocket();
@@ -174,9 +175,12 @@ const TabSession = ({ activeSession, onlineCharacters }) => {
     /* ── État vide ───────────────────────────────────────────────────────── */
     if (!activeSession) {
         return (
-            <p className="ns-gm-empty">
-                Aucune session active — gérez votre table via ⚙ Table.
-            </p>
+            <div className="ns-gm-empty flex-col gap-3">
+                Aucune table active.
+                {/* Appel à choisir une table (spec_ui_menu.md §12) */}
+                <TableManagementButton activeSessionId={null} onSelectTable={(session) => onSessionChange?.(session)}
+                                       label="⚙ Choisir une table" icon={null} className="ns-btn-primary" />
+            </div>
         );
     }
 

@@ -23,6 +23,7 @@ import GMSendModal    from '../../../../components/gm/modals/GMSendModal.jsx';
 import AudioSessionToggle from '../../../../components/audio/AudioSessionToggle.jsx';
 import BoardSessionToggle from '../../../../components/board/BoardSessionToggle.jsx';
 import CopyAccessButton   from '../../../../components/ui/CopyAccessButton.jsx';
+import TableManagementButton from '../../../../components/gm/TableManagementButton.jsx';
 
 import SheetLayout            from '../../components/layout/SheetLayout.jsx';
 import ZoneBlancheDiceModal   from '../../components/modals/ZoneBlancheDiceModal.jsx';
@@ -53,6 +54,7 @@ const TabSession = ({
                         characterUpdates,
                         resources,
                         onResourcesChange,
+                        onSessionChange,
                     }) => {
     const { apiBase } = useSystem();
     const fetchWithAuth = useFetch();
@@ -195,10 +197,9 @@ const TabSession = ({
     if (!activeSession) {
         return (
             <div className="zb-panel zb-grain rounded-sm p-8 text-center">
-                <div className="zb-eyebrow mb-2">Aucune table active</div>
-                <p className="text-sm text-muted">
-                    Ouvrez « Gestion des tables » dans le menu pour en activer une.
-                </p>
+                <div className="zb-eyebrow mb-3">Aucune table active</div>
+                {/* Appel à choisir une table (spec_ui_menu.md §12) */}
+                <TableManagementButton activeSessionId={null} onSelectTable={(session) => onSessionChange?.(session)} icon={null} />
             </div>
         );
     }

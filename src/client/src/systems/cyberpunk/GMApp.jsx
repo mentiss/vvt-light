@@ -180,6 +180,7 @@ const GMApp = ({ activeSession, onSessionChange, onlineCharacters, darkMode, onT
                     <TabSession
                         activeSession={activeSession}
                         onlineCharacters={onlineCharacters}
+                        onSessionChange={onSessionChange}
                     />
                 )}
 

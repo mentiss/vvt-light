@@ -22,6 +22,7 @@ import AudioSessionToggle from '../../../../components/audio/AudioSessionToggle.
 import BoardSessionToggle from '../../../../components/board/BoardSessionToggle.jsx';
 import AvatarUploader from '../../../../components/AvatarUploader.jsx';
 import CopyAccessButton from '../../../../components/ui/CopyAccessButton.jsx';
+import TableManagementButton from '../../../../components/gm/TableManagementButton.jsx';
 
 import { CLASSES, computeDerivedStats } from '../../config.jsx';
 import FicheGrid       from '../../components/layout/FicheGrid.jsx';
@@ -34,7 +35,7 @@ const classSummary = (classes) => (classes ?? [])
     .map(c => `${CLASSES[c.classKey]?.nom ?? c.classKey} ${c.niveau}`)
     .join(' / ') || '—';
 
-const TabSession = ({ activeSession, onlineCharacters, characterUpdates }) => {
+const TabSession = ({ activeSession, onlineCharacters, characterUpdates, onSessionChange }) => {
     const { apiBase }   = useSystem();
     const fetchWithAuth = useFetch();
 
@@ -210,7 +211,14 @@ const TabSession = ({ activeSession, onlineCharacters, characterUpdates }) => {
     const openDiceModal = (attr1 = 'dex', attr2 = 'int') => setDiceModalAttrs({ attr1, attr2 });
 
     if (!activeSession) {
-        return <p className="fu-win m-4 text-sm text-muted italic">Aucune session active — gérez votre table depuis le menu, « Gestion des tables ».</p>;
+        return (
+            <div className="fu-win m-4 flex flex-col items-start gap-3">
+                <p className="text-sm text-muted italic">Aucune table active.</p>
+                {/* Appel à choisir une table (spec_ui_menu.md §12) */}
+                <TableManagementButton activeSessionId={null} onSelectTable={(session) => onSessionChange?.(session)}
+                                       icon={<FuIcon name="gear" />} />
+            </div>
+        );
     }
 
     return (

@@ -2,7 +2,7 @@
 
 ## Statut
 
-**Proposée le 2026-10-23** (décisions D-1 à D-8 au §1 issues du diagnostic). Questions Q-1 à Q-4 tranchées par le MJ le 2026-10-23 (§11). **Lot pilote implémenté et validé le 2026-10-23** (commit fd7e26c). **Lot 2 implémenté le 2026-10-23**, en attente du contrôle visuel du MJ.
+**Proposée le 2026-10-23** (décisions D-1 à D-8 au §1 issues du diagnostic). Questions Q-1 à Q-4 tranchées par le MJ le 2026-10-23 (§11). **Lot pilote implémenté et validé le 2026-10-23** (commit fd7e26c). **Lot 2 implémenté le 2026-10-23**, en attente du contrôle visuel du MJ. **§12 (appel à choisir une table) proposé le 2026-11-07.**
 
 Brique de plateforme : concerne les menus joueur (`Sheet.jsx`) et MJ (`GMApp.jsx` / `gm/GMView.jsx`) des 9 slugs.
 
@@ -172,3 +172,50 @@ Pour chaque menu migré : surcouche `fixed inset-0` et états des modales de la 
 | Q-2 | Noctis (refonte à venir) est-il migré au lot 2 ? | **Oui pour la mécanique** (changer de personnage, déconnexion), en gardant son rendu `ns-header-menu-item` partagé avec `vtt-menu-item`, sans travail d'habillage. | Oui, mais aucun habillage. Cyberpunk, lui, est habillé : sans habillage au lot pilote pour contrôler le style par défaut, puis en style Cyberpunk au lot 2. |
 | Q-3 | À la migration, les slugs à emojis (Achtung, Cyberpunk, Delta Green, Dune, Fabula, Tecumah) gardent-ils leurs emojis ? | **Icônes par défaut de la plateforme**, sauf avis contraire du MJ slug par slug au moment de son lot. | Les slugs qui ont des emojis gardent ce qu'ils avaient (c'est leur habillage) ; sinon icône standard ou aucune. |
 | Q-4 | Les libellés actuels des slugs sont-ils gardés ? | **Libellés par défaut** du §5 partout, pour que les menus se lisent pareil d'un slug à l'autre ; `label` reste disponible. | Libellés par défaut sur les éléments plateforme / mutualisés. |
+
+---
+
+## 12. Appel à choisir une table (onglet Session vide)
+
+### 12.1 Décisions (diagnostic validé le 2026-11-07)
+
+| # | Sujet | Décision |
+|---|---|---|
+| T-1 | Besoin | Quand aucune table n'est active, l'onglet Session du MJ propose **un appel à l'action** qui ouvre directement la gestion des tables, sans passer par le menu. |
+| T-2 | Portée | **L'onglet Session seulement.** Les autres onglets qui dépendent d'une table (Patron, Maison, Ressources…) gardent leur message. |
+| T-3 | Brique | Un bouton de la plateforme, même modale et même contrat que `HamburgerMenuItemTableManagement` : pas de copie de la modale dans un slug. |
+| T-4 | Anciens slugs | Delta Green, Noctis et Achtung, qui montent leur propre `TableManagementModal`, passent par la brique ; leur bouton existant (en-tête, barre d'outils) ouvre la brique, sans changer leur disposition. |
+| T-5 | Ouverture automatique | **Non** : pas de modale imposée à l'arrivée ; on prépare une partie hors table (bestiaire, aide de jeu). |
+
+### 12.2 Brique `TableManagementButton` (`components/gm/TableManagementButton.jsx`)
+
+| Prop | Rôle | Défaut |
+|---|---|---|
+| `activeSessionId` | table active (`null` : aucune) | requis |
+| `onSelectTable` | `(session \| null)`, comme l'élément de menu | requis |
+| `label` | libellé | « Choisir une table » |
+| `icon` | absent : icône « tables » de la plateforme ; nœud : remplace ; `null` : aucune | — |
+| `className` | classes du bouton | `vtt-btn vtt-btn-primary` |
+
+- Ouvre `TableManagementModal` par `HostedModal` (§4), comme l'élément de menu. La modale se ferme déjà seule au choix d'une table.
+- Pas de texte d'état vide dans la brique : chaque slug garde son message et son conteneur, dans son habillage, et y pose le bouton.
+- Le message d'état vide ne renvoie plus au menu (« choisissez-en une dans le menu… ») : il dit seulement qu'aucune table n'est active.
+
+### 12.3 Par slug
+
+`onSelectTable` est le même que celui de l'élément de menu (`onSessionChange` de la page) : le `GMApp` (ou `GMView`) le passe au `TabSession` quand il ne l'a pas.
+
+| Slug | Où se pose le bouton | Ce qui part |
+|---|---|---|
+| fabula, vikings, zoneblanche, cyberpunk, tecumah, dune, nimble, vileborn, maledictum, woddavampire | sous le message d'état vide du `TabSession` (l'onglet Coterie de woddavampire garde son message, T-2) | renvoi au menu dans le texte |
+| achtung | sous « Aucune session active » de la barre latérale ; le bouton de la barre d'outils (`onManageSessions`) ouvre aussi la brique | `TableManagementModal` et son état dans `TabSession` |
+| deltagreen | sous le message d'état vide ; le bouton « Table » de l'en-tête devient la brique (`className` et libellé du slug) | `TableManagementModal` et son état dans `GMView` |
+| noctis | idem, bouton « ⚙ Table » de l'en-tête | idem |
+
+Habillage : le bouton prend le bouton principal du slug quand il en a un (`className`), sinon `.vtt-btn-primary` habillé par le `theme.css`.
+
+### 12.4 Vérifications
+
+- `npm run lint`, `npm test`, `npm run build` (depuis `src/client`).
+- Contrôle à l'écran sur chaque slug, MJ, en jour et en nuit : sans table active, le bouton ouvre la modale ; choisir ou créer une table la ferme et remplit l'onglet ; les boutons d'en-tête de Delta Green et Noctis, la barre d'outils d'Achtung marchent toujours.
+- Pas de test unitaire : aucune règle de calcul.

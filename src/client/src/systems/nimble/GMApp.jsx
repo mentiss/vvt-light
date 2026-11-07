@@ -68,7 +68,8 @@ const GMApp = ({ activeSession, onSessionChange, onlineCharacters, characterUpda
             <main className="nb-sheet-body">
                 {activeTab === 'session' && (
                     <TabSession activeSession={activeSession} onlineCharacters={onlineCharacters}
-                                characters={characters} order={order} loading={loading} patchCharacter={patchCharacter} />
+                                characters={characters} order={order} loading={loading} patchCharacter={patchCharacter}
+                                onSessionChange={onSessionChange} />
                 )}
                 {activeTab === 'rencontre' && <TabEncounter activeSession={activeSession} heroes={Math.max(1, order.length)} />}
                 {activeTab === 'journal' && <div className="nb-page"><TabJournal characterId={-1} /></div>}

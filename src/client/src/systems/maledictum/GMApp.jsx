@@ -78,7 +78,8 @@ const GMApp = ({ activeSession, onSessionChange, onlineCharacters, characterUpda
             <main className="im-sheet-body is-gm">
                 {activeTab === 'session' && (
                     <TabSession activeSession={activeSession} onlineCharacters={onlineCharacters} patron={patronState.patron} patronState={patronState}
-                                characters={characters} order={order} loading={loading} patchCharacter={patchCharacter} />
+                                characters={characters} order={order} loading={loading} patchCharacter={patchCharacter}
+                                onSessionChange={onSessionChange} />
                 )}
                 {activeTab === 'patron' && <TabPatron activeSession={activeSession} patronState={patronState} />}
                 {activeTab === 'rencontre' && <TabEncounter activeSession={activeSession} />}
