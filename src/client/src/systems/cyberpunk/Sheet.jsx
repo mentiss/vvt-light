@@ -307,7 +307,7 @@ const Sheet = ({
                     )}
 
                     {activeTab === 'reference' && (
-                        <ReferenceTab characterPlaybook={character?.playbook} />
+                        <ReferenceTab />
                     )}
                 </div>
 

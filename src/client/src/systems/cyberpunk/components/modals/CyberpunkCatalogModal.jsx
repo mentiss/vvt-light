@@ -7,10 +7,12 @@
 // (cyberware ou items), l'appelant l'enregistre (fiche ou TabSession MJ).
 // ─────────────────────────────────────────────────────────────────────────────
 
-import React from 'react';
+import React, { useState } from 'react';
 import CatalogModal from '../../../../components/modals/CatalogModal.jsx';
-import { CYBERWARE_ALL, ITEMS_ALL, ITEM_AND_CYBERWARE_CATEGORY_LABEL, TAG_VARIANT_CLASS } from '../../config.jsx';
+import Modal from '../../../../components/ui/Modal.jsx';
+import { CYBERWARE_ALL, ITEMS_ALL, ITEM_AND_CYBERWARE_CATEGORY_LABEL, TAG_VARIANT_CLASS, tagChoicesOf, chosenOptions } from '../../config.jsx';
 import { TagList } from '../layout/TagManager.jsx';
+import { TagChoices } from '../creation/CreationParts.jsx';
 
 const categoryLabel = (cat) => ITEM_AND_CYBERWARE_CATEGORY_LABEL[cat] ?? cat;
 
@@ -23,7 +25,7 @@ const KINDS = {
         title: 'Cyberware',
         items: CYBERWARE_ALL,
         keys:  keysOf(CYBERWARE_ALL),
-        toEntry: ({ name, description = '', tags }) => ({ name, option_text: '', notes: description, tags }),
+        toEntry: ({ name, description = '', tags, option = '' }) => ({ name, option_text: option, notes: description, tags }),
     },
     items: {
         title: 'Inventaire',
@@ -44,6 +46,25 @@ const GROUP_BY = { getValue: it => it.category, getLabel: categoryLabel };
 const CUSTOM_DEFAULTS = { name: '', description: '', tags: [] };
 
 const toTags = (tags) => tags.map(t => ({ tag_text: t.text, tag_variant: t.variant }));
+
+// Options imposées d'un élément (spec_cyberpunk.md §9.7) : choisies avant l'ajout,
+// comme à la création ; une variante ou un modèle remplit le champ « option »
+const ChoicesModal = ({ item, onConfirm, onCancel }) => {
+    const [value, setValue] = useState({});
+    const choices = tagChoicesOf(item);
+    const complete = choices.every(c => (value[c.label]?.length ?? 0) >= c.pick);
+    return (
+        <Modal title={item.name} size="sm" alert onClose={onCancel}
+               footer={<>
+                   <button type="button" className="vtt-btn" onClick={onCancel}>Annuler</button>
+                   <button type="button" className="vtt-btn vtt-btn-primary" disabled={!complete} onClick={() => onConfirm(value)}>Ajouter</button>
+               </>}>
+            <div className="flex flex-col gap-2">
+                <TagChoices choices={choices} value={value} onChange={(label, v) => setValue(prev => ({ ...prev, [label]: v }))} />
+            </div>
+        </Modal>
+    );
+};
 
 const renderItem = (item) => (
     <div className="flex flex-col gap-1">
@@ -94,7 +115,14 @@ const CustomForm = ({ value, onChange, kind }) => (
  */
 const CyberpunkCatalogModal = ({ kind, onAdd, onClose }) => {
     const { title, items, keys, toEntry } = KINDS[kind];
+    const [pending, setPending] = useState(null);   // élément à options, en attente de son choix
+    const add = (it, choices = {}) => {
+        const chosen = tagChoicesOf(it).flatMap(c => (choices[c.label] ?? []).map(text => c.from.find(f => f.text === text) ?? { text, variant: 'neutral' }));
+        onAdd(toEntry({ name: it.name, tags: toTags([...(it.tags ?? []), ...chosen]), option: chosenOptions(it, { choices }).join(', ') }));
+    };
     return (
+        <>
+        {pending && <ChoicesModal item={pending} onCancel={() => setPending(null)} onConfirm={(choices) => { add(pending, choices); setPending(null); }} />}
         <CatalogModal
             title={title}
             items={items}
@@ -102,12 +130,13 @@ const CyberpunkCatalogModal = ({ kind, onAdd, onClose }) => {
             getKey={it => keys.get(it)}
             filters={FILTERS[kind]}
             groupBy={GROUP_BY}
-            onAdd={it => onAdd(toEntry({ name: it.name, tags: toTags(it.tags ?? []) }))}
+            onAdd={it => (tagChoicesOf(it).length ? setPending(it) : add(it))}
             onAddCustom={draft => onAdd(toEntry({ ...draft, name: draft.name.trim() }))}
             customDefaults={CUSTOM_DEFAULTS}
             renderCustomForm={props => <CustomForm {...props} kind={kind} />}
             onClose={onClose}
         />
+        </>
     );
 };
 

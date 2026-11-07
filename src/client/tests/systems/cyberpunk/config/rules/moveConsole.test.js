@@ -1,11 +1,11 @@
-// tests/systems/cyberpunk/moveConsole.test.js
+// tests/systems/cyberpunk/config/rules/moveConsole.test.js
 // Console de manœuvres personnalisable (spec_cyberpunk.md §4, Q-12, Q-13) :
 // réglage de base tant que rien n'est posé, une manœuvre seulement sur la ligne
 // de sa stat, ordre choisi par le joueur.
 import { describe, it, expect } from 'vitest';
 import {
     consoleCandidates, resolveConsoleIds, groupConsole, canDropOn, placeInConsole, togglePinned, consoleRowOf,
-} from '../../../src/systems/cyberpunk/config.jsx';
+} from '../../../../../src/systems/cyberpunk/config.jsx';
 
 const LIBRARY = [
     { id: 1, type: 'official', playbook: null, name: 'Agir sous pression', stat: 'cran' },

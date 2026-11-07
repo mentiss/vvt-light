@@ -1,10 +1,37 @@
-import {STAT_LABELS, STATS} from "../../config.jsx";
+import {STAT_LABELS, STATS, moveTagRule, buildMoveTag, referenceList, consoleTarget} from "../../config.jsx";
 import {useFetch} from "../../../../hooks/useFetch.js";
 import React, {useEffect, useRef, useState} from "react";
 import useSystem from "../../../../hooks/useSystem.js";
 import Modal from "../../../../components/ui/Modal.jsx";
 import ConfirmModal from "../../../../components/modals/ConfirmModal.jsx";
 import ExpandableText from "../../../../components/ui/ExpandableText.jsx";
+import { ListChoice } from "../creation/CreationParts.jsx";
+
+// Choix du tag d'une manœuvre débloquée (liste de l'aide de jeu ou libellé libre)
+const MoveTagModal = ({ tagChoice, xpCost, onChange, onConfirm, onCancel }) => {
+    const { move, value } = tagChoice;
+    const rule = moveTagRule(move.playbook, move.name);
+    const tag = buildMoveTag(move.playbook, move.name, value);
+    return (
+        <Modal title={`Débloquer « ${move.name} » (${xpCost} XP)`} size="sm" alert onClose={onCancel}
+               footer={<>
+                   <button type="button" className="vtt-btn" onClick={onCancel}>Annuler</button>
+                   <button type="button" className="vtt-btn vtt-btn-primary" disabled={!tag} onClick={onConfirm}>Confirmer</button>
+               </>}>
+            <div className="flex flex-col gap-2">
+                <p className="text-sm text-muted">
+                    Cette manœuvre pose un tag narratif verrouillé {rule.on === 'console' ? 'sur ta console' : 'sur ton personnage'} (retrait en mode Édition seulement).
+                </p>
+                {rule.list && <ListChoice list={referenceList(rule.list, move.playbook)} value={value} onChange={onChange} />}
+                {rule.free && (
+                    <input className="cp-input" value={value} placeholder="À définir avec le MC" aria-label="Libellé du tag"
+                           onChange={e => onChange(e.target.value)} />
+                )}
+                {tag && <p className="text-sm">Tag : <b>{tag.tag_text}</b></p>}
+            </div>
+        </Modal>
+    );
+};
 
 // Ligne d'achat : la description se lit en entier (« Voir plus »),
 // seul le bouton de coût déclenche l'achat.
@@ -84,6 +111,7 @@ export const XPPanel = ({ character, onUpdate, onClose }) => {
     const [msg,        setMsg]        = useState(null);
     const [search,     setSearch]     = useState('');
     const [confirm,    setConfirm]    = useState(null); // { label, action } — confirmation avant dépense
+    const [tagChoice,  setTagChoice]  = useState(null); // { move, isMajor, value } — manœuvre qui pose un tag (§9.8)
     const [openGroups, setOpenGroups] = useState({});   // accordéon par playbook
 
     const xp               = character?.xp               ?? 0;
@@ -175,8 +203,30 @@ export const XPPanel = ({ character, onUpdate, onClose }) => {
         );
     };
 
+    const movePayload = (move, isMajor, moveTag) => ({
+        xp:               xp - XP_PER_ADV,
+        baseAdvancements: isMajor ? baseAdvancements : baseAdvancements + 1,
+        moveId:           move.id,
+        action:           'add',
+        ...(moveTag ? { moveTag } : {}),
+    });
+
+    // Manœuvre qui pose un tag verrouillé : son choix (liste ou libellé) avant la dépense
+    const confirmTagged = () => {
+        const { move, isMajor, value } = tagChoice;
+        const tag = buildMoveTag(move.playbook, move.name, value);
+        if (!tag) return;
+        const target = tag.on === 'console' ? consoleTarget(character) : { entityType: 'character', entityId: character.id };
+        setTagChoice(null);
+        executeAction({
+            payload: movePayload(move, isMajor, { tag_text: tag.tag_text, tag_variant: tag.tag_variant, ...target }),
+            successMsg: `✦ "${move.name}" débloqué !`,
+        });
+    };
+
     const spendOnMove = (move, isMajor = false) => {
         if (!canSpend) return;
+        if (moveTagRule(move.playbook, move.name)) { setTagChoice({ move, isMajor, value: '' }); return; }
         askConfirm(
             `Débloquer "${move.name}" pour ${XP_PER_ADV} XP`,
             {
@@ -385,6 +435,12 @@ export const XPPanel = ({ character, onUpdate, onClose }) => {
         </Modal>
 
         {/* ── Confirmation : rendue à côté de la modale (le panneau a un clip-path) ── */}
+        {tagChoice && (
+            <MoveTagModal tagChoice={tagChoice} xpCost={XP_PER_ADV}
+                          onChange={value => setTagChoice(c => ({ ...c, value }))}
+                          onConfirm={confirmTagged} onCancel={() => setTagChoice(null)} />
+        )}
+
         {confirm && (
             <ConfirmModal
                 title="Confirmer la dépense"

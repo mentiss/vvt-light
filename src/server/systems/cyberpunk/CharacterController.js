@@ -34,12 +34,12 @@ function _normalizeConsole(value) {
  * @param {object} db
  * @param {string} entityType
  * @param {number} entityId
- * @returns {Array<{id, tag_text, tag_variant}>}
+ * @returns {Array<{id, tag_text, tag_variant, locked}>} locked : booléen (tag posé par une manœuvre)
  */
 function _loadTags(db, entityType, entityId) {
     return db.prepare(
-        'SELECT id, tag_text, tag_variant FROM tags WHERE entity_type = ? AND entity_id = ? ORDER BY id'
-    ).all(entityType, entityId);
+        'SELECT id, tag_text, tag_variant, locked FROM tags WHERE entity_type = ? AND entity_id = ? ORDER BY id'
+    ).all(entityType, entityId).map(t => ({ ...t, locked: !!t.locked }));
 }
 
 /**
@@ -50,7 +50,9 @@ function _loadTags(db, entityType, entityId) {
  * @param {object} db
  * @param {string} entityType
  * @param {number} entityId
- * @param {Array<{id?, tag_text, tag_variant}>} tagsArray
+ * @param {Array<{id?, tag_text, tag_variant, locked?}>} tagsArray
+ *   locked : tag posé par une manœuvre, retirable en mode Édition seulement
+ *   (le verrou est appliqué par l'interface, spec_cyberpunk.md §9.8)
  */
 function _saveTags(db, entityType, entityId, tagsArray) {
     if (!Array.isArray(tagsArray)) return;
@@ -63,12 +65,14 @@ function _saveTags(db, entityType, entityId, tagsArray) {
         if (!incomingIds.includes(eid)) db.prepare('DELETE FROM tags WHERE id = ?').run(eid);
     }
     for (const t of incoming) {
+        // locked absent → le verrou en base est gardé (un tag réécrit sans ce champ ne se déverrouille pas)
+        const locked = t.locked === undefined ? null : (t.locked ? 1 : 0);
         const values = [t.tag_text ?? '', t.tag_variant ?? 'neutral'];
         updateOrInsert(db, t,
-            'UPDATE tags SET tag_text = ?, tag_variant = ? WHERE id = ? AND entity_type = ? AND entity_id = ?',
-            [...values, t.id, entityType, entityId],
-            'INSERT INTO tags (entity_type, entity_id, tag_text, tag_variant) VALUES (?, ?, ?, ?)',
-            [entityType, entityId, ...values]);
+            'UPDATE tags SET tag_text = ?, tag_variant = ?, locked = COALESCE(?, locked) WHERE id = ? AND entity_type = ? AND entity_id = ?',
+            [...values, locked, t.id, entityType, entityId],
+            'INSERT INTO tags (entity_type, entity_id, tag_text, tag_variant, locked) VALUES (?, ?, ?, ?, ?)',
+            [entityType, entityId, ...values, locked ?? 0]);
     }
 }
 

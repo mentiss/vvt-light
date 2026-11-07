@@ -1,4 +1,4 @@
-// src/client/src/systems/cyberpunk/moveConsole.js
+// src/client/src/systems/cyberpunk/config/rules/moveConsole.js
 // ─────────────────────────────────────────────────────────────────────────────
 // Console de manœuvres personnalisable (spec_cyberpunk.md §4) : fonctions pures.
 // La fiche porte `moveConsole` : liste ordonnée d'ids de manœuvres posées à côté

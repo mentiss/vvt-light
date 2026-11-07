@@ -25,9 +25,21 @@ import { MoveConsole } from './MoveConsole.jsx';
 import { ResourceStrip, ResourceCard } from './ResourceStrip.jsx';
 import CyberpunkCatalogModal from '../modals/CyberpunkCatalogModal.jsx';
 import CpIcon from '../ui/CpIcon.jsx';
+import { TagUnlockContext } from './TagManager.jsx';
 import {
     STATS, consoleCandidates, resolveConsoleIds, groupConsole, placeInConsole, togglePinned,
+    CHROME_BASE, CONSOLE_MEMORY_BASE, isMoveTag,
 } from '../../config.jsx';
+
+// Console du Netrunner : implant ou deck externe ; ses daemons sont des tags « +Daemon … »
+const isConsole = (entry) => entry?.name === 'Cyberconsole intégrée (Deck)' || entry?.name === 'Deck externe'
+    || (entry?.tags ?? []).some(t => t.tag_text === '+confiscable');
+const daemonCount = (entry) => (entry?.tags ?? []).filter(t => /^\+daemon\b/i.test(t.tag_text ?? '')).length;
+
+/** Mémoire de la console (Q-C27) : compte affiché, sans blocage. */
+const ConsoleMemory = ({ entry }) => (
+    <div className="cp-cr-rule">Mémoire : <b>{daemonCount(entry)}/{CONSOLE_MEMORY_BASE}</b> daemons (extensible : +slots mémoire)</div>
+);
 
 // Disposition retenue par ce navigateur (colonne des manœuvres repliée ou non)
 const LAYOUT_OPTIONS = {
@@ -94,15 +106,27 @@ export const SheetBody = ({ editor, allMoves, movesLoading, variant = 'player', 
         onChangeVariant: (i, v) => editor.updateTag('character', char.id, i, v),
     };
 
-    const toggleMoveAcquired = (move, isAcquired) => setEditableChar(prev => ({
-        ...prev,
-        moves: isAcquired
-            ? (prev.moves ?? []).filter(m => m.id !== move.id)
+    const toggleMoveAcquired = (move, isAcquired) => setEditableChar(prev => {
+        if (!isAcquired) {
             // Ajouter la manœuvre (sans coût XP : c'est l'édition libre)
-            : [...(prev.moves ?? []), { id: move.id, name: move.name, stat: move.stat, description: move.description, playbook: move.playbook, type: move.type, isApproved: true }],
-    }));
+            return { ...prev, moves: [...(prev.moves ?? []), { id: move.id, name: move.name, stat: move.stat, description: move.description, playbook: move.playbook, type: move.type, isApproved: true }] };
+        }
+        const next = { ...prev, moves: (prev.moves ?? []).filter(m => m.id !== move.id) };
+        const dropFirst = (tags = []) => {
+            const i = tags.findIndex(t => isMoveTag(move.playbook, move.name, t));
+            return i < 0 ? null : tags.filter((_, j) => j !== i);
+        };
+        const own = dropFirst(prev.tags);
+        if (own) return { ...next, tags: own };
+        for (const key of ['cyberware', 'items']) {
+            const idx = (prev[key] ?? []).findIndex(e => dropFirst(e.tags));
+            if (idx >= 0) return { ...next, [key]: prev[key].map((e, j) => (j === idx ? { ...e, tags: dropFirst(e.tags) } : e)) };
+        }
+        return next;
+    });
 
     return (
+        <TagUnlockContext.Provider value={editMode}>
         <div className="flex flex-col h-full">
             {!isGM && <ResourceStrip char={char} onPatch={editor.patchResource} tagHandlers={tagHandlers} />}
 
@@ -119,10 +143,11 @@ export const SheetBody = ({ editor, allMoves, movesLoading, variant = 'player', 
                             title="Chrome"
                             action={<button onClick={() => setBrowseModal('cyberware')} className="cp-icon-btn" title="Parcourir le cyberware"><CpIcon name="catalog" /></button>}
                         >
+                            <p className="cp-cr-rule">Socle : {CHROME_BASE}.</p>
                             {(char?.cyberware ?? []).length === 0 && !editMode && <p className="cp-empty">Aucun implant.</p>}
                             {(char?.cyberware ?? []).map((c, idx) => (
+                                <React.Fragment key={c.id ?? `new_${idx}`}>
                                 <CyberwareRow
-                                    key={c.id ?? `new_${idx}`}
                                     item={c}
                                     editMode={editMode}
                                     onChange={(updated) => setEditableChar({
@@ -137,6 +162,8 @@ export const SheetBody = ({ editor, allMoves, movesLoading, variant = 'player', 
                                     onAddTag={(text, v) => editor.addTag('cyberware', c.id, text, v)}
                                     onChangeTag={(tagIdx, v) => editor.updateTag('cyberware', c.id, tagIdx, v)}
                                 />
+                                {isConsole(c) && <ConsoleMemory entry={c} />}
+                                </React.Fragment>
                             ))}
                             {editMode && (
                                 <button
@@ -154,8 +181,8 @@ export const SheetBody = ({ editor, allMoves, movesLoading, variant = 'player', 
                         >
                             {(char?.items ?? []).length === 0 && !editMode && <p className="cp-empty">Inventaire vide.</p>}
                             {(char?.items ?? []).map((item, idx) => (
+                                <React.Fragment key={item.id ?? `new_${idx}`}>
                                 <ItemRow
-                                    key={item.id ?? `new_${idx}`}
                                     item={item}
                                     editMode={editMode}
                                     onChange={(updated) => commit({
@@ -167,6 +194,8 @@ export const SheetBody = ({ editor, allMoves, movesLoading, variant = 'player', 
                                     onAddTag={(text, v) => editor.addTag('item', item.id, text, v)}
                                     onChangeTag={(tagIdx, v) => editor.updateTag('item', item.id, tagIdx, v)}
                                 />
+                                {isConsole(item) && <ConsoleMemory entry={item} />}
+                                </React.Fragment>
                             ))}
                             {/* Ajout rapide — toujours visible */}
                             <QuickAddItem onAdd={(newItem) => commit({ ...base(), items: [...(base().items ?? []), newItem] })} />
@@ -361,5 +390,6 @@ export const SheetBody = ({ editor, allMoves, movesLoading, variant = 'player', 
                 />
             )}
         </div>
+        </TagUnlockContext.Provider>
     );
 };

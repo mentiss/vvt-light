@@ -42,7 +42,7 @@ router.patch('/:id/xp', authenticate, requireOwnerOrGM, (req, res) => {
     try {
         const db  = req.db;
         const cid = req.params.id;
-        const { xp, baseAdvancements, statKey, statDelta, moveId, action } = req.body;
+        const { xp, baseAdvancements, statKey, statDelta, moveId, action, moveTag } = req.body;
 
         // Mise à jour XP brut et compteur avancements
         if (xp !== undefined || baseAdvancements !== undefined) {
@@ -76,6 +76,20 @@ router.patch('/:id/xp', authenticate, requireOwnerOrGM, (req, res) => {
         if (moveId && action) {
             if (action === 'add') {
                 db.prepare('INSERT OR IGNORE INTO character_moves (character_id, move_id) VALUES (?, ?)').run(cid, moveId);
+                // Tag verrouillé posé par la manœuvre (spec_cyberpunk.md §9.8) : sur le
+                // personnage, ou sur sa console (implant ou objet de CE personnage)
+                if (moveTag?.tag_text?.trim()) {
+                    const owners = { character: null, cyberware: 'character_cyberware', item: 'character_items' };
+                    let entityType = owners[moveTag.entityType] !== undefined ? moveTag.entityType : 'character';
+                    let entityId = Number(cid);
+                    if (owners[entityType]) {
+                        const own = db.prepare(`SELECT id FROM ${owners[entityType]} WHERE id = ? AND character_id = ?`).get(moveTag.entityId, cid);
+                        if (own) entityId = own.id; else entityType = 'character';
+                    }
+                    const variant = ['positive', 'negative', 'neutral'].includes(moveTag.tag_variant) ? moveTag.tag_variant : 'neutral';
+                    db.prepare('INSERT INTO tags (entity_type, entity_id, tag_text, tag_variant, locked) VALUES (?, ?, ?, ?, 1)')
+                        .run(entityType, entityId, moveTag.tag_text.trim(), variant);
+                }
             } else if (action === 'remove') {
                 db.prepare('DELETE FROM character_moves WHERE character_id = ? AND move_id = ?').run(cid, moveId);
             }

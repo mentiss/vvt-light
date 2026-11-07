@@ -41,6 +41,7 @@ const PATHS = {
     motionOff: <><path d="M2 12c3-6 5-6 8 0s5 6 8 0" /><path d="M3 3l18 18" /></>,
     plus:      <><path d="M12 5v14M5 12h14" /></>,
     close:     <><path d="M6 6l12 12M18 6L6 18" /></>,
+    check:     <><path d="M4 12l5 5L20 6" /></>,
     // Sélecteur des horloges et menaces (gm/IconPicker.jsx)
     skull:     <><path d="M5 11a7 7 0 0 1 14 0v3l-2 1v4H7v-4l-2-1z" /><circle cx="9" cy="11" r="1.8" /><circle cx="15" cy="11" r="1.8" /><path d="M11 17v2M13 17v2" /></>,
     eye:       <><path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12z" /><circle cx="12" cy="12" r="3" /></>,

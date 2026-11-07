@@ -12,7 +12,7 @@
 // Fenêtre et menu passent par CpFloating (portail) : jamais rognés par un panneau.
 // ─────────────────────────────────────────────────────────────────────────────
 
-import React, { useMemo, useRef, useState } from 'react';
+import React, { createContext, useContext, useMemo, useRef, useState } from 'react';
 import { TAG_SUGGESTIONS_BY_TYPE } from '../../config.jsx';
 import CpFloating from '../ui/CpFloating.jsx';
 import CpIcon from '../ui/CpIcon.jsx';
@@ -28,12 +28,17 @@ const ENTITY_LABEL = { character: 'personnage', cyberware: 'implant', relation: 
 /** Ajoute le préfixe « + » s'il est demandé et pas déjà tapé. */
 const withPrefix = (text, prefix) => (prefix && !text.startsWith('+') ? `+${text}` : text);
 
+// Mode Édition de la fiche : seul moment où un tag verrouillé (posé par une manœuvre,
+// spec_cyberpunk.md §9.8) se modifie ou se retire. Fourni par SheetBody.
+export const TagUnlockContext = createContext(false);
+
 // ── Tag (lecture, ou bouton qui ouvre son menu) ──────────────────────────────
 export const Tag = ({ tag, onClick, active = false }) => {
-    const cls = `cp-tag ${VARIANT_CLASS[tag.tag_variant] ?? 'is-neutral'} ${onClick ? 'is-clickable' : ''} ${active ? 'is-active' : ''}`;
+    const cls = `cp-tag ${tag.locked ? 'is-locked' : VARIANT_CLASS[tag.tag_variant] ?? 'is-neutral'} ${onClick ? 'is-clickable' : ''} ${active ? 'is-active' : ''}`;
+    const label = <>{tag.locked && <CpIcon name="lock" size="sm" />}{tag.tag_text}</>;
     return onClick
-        ? <button type="button" className={cls} onClick={onClick} title="Changer le type ou retirer">{tag.tag_text}</button>
-        : <span className={cls}>{tag.tag_text}</span>;
+        ? <button type="button" className={cls} onClick={onClick} title="Changer le type ou retirer">{label}</button>
+        : <span className={cls} title={tag.locked ? 'Posé par une manœuvre : retrait en mode Édition' : undefined}>{label}</span>;
 };
 
 // ── Menu d'un tag : changer de type, retirer ─────────────────────────────────
@@ -124,6 +129,7 @@ export const TagList = ({ tags = [], entityType = 'character', onAdd, onRemove, 
     const [menu, setMenu] = useState(null);       // { index, anchor }
     const [adding, setAdding] = useState(null);   // élément d'ancrage du « + tag »
     const editable = !!(onRemove || onChangeVariant);
+    const unlocked = useContext(TagUnlockContext);
 
     return (
         <div className="cp-tags">
@@ -131,7 +137,7 @@ export const TagList = ({ tags = [], entityType = 'character', onAdd, onRemove, 
             {tags.map((tag, i) => (
                 <Tag
                     key={tag.id ?? `${tag.tag_text}-${i}`} tag={tag} active={menu?.index === i}
-                    onClick={editable ? (e) => setMenu({ index: i, anchor: e.currentTarget }) : undefined}
+                    onClick={editable && (!tag.locked || unlocked) ? (e) => setMenu({ index: i, anchor: e.currentTarget }) : undefined}
                 />
             ))}
             {onAdd && (

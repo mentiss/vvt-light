@@ -1,9 +1,9 @@
-// tests/systems/cyberpunk/rollBand.test.js
+// tests/systems/cyberpunk/config/rules/rollBand.test.js
 // Bande du résultat (spec_cyberpunk.md §5) : zones calées sur les seuils des
 // règles (§1.2 : 15+ plein, 10-14 partiel, 9- échec), repère au centre de la case
 // du total, borné aux extrémités.
 import { describe, it, expect } from 'vitest';
-import { BAND_ZONES, BAND_MIN, BAND_MAX, bandPosition } from '../../../src/systems/cyberpunk/config.jsx';
+import { BAND_ZONES, BAND_MIN, BAND_MAX, bandPosition } from '../../../../../src/systems/cyberpunk/config.jsx';
 
 describe('zones de la bande', () => {
     it('9- / 10-14 / 15+, sans trou ni chevauchement', () => {

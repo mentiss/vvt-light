@@ -1,4 +1,4 @@
-// src/client/src/systems/cyberpunk/rollBand.js
+// src/client/src/systems/cyberpunk/config/rules/rollBand.js
 // ─────────────────────────────────────────────────────────────────────────────
 // Bande du résultat 9- / 10-14 / 15+ (spec_cyberpunk.md §5) : fonctions pures.
 // Une case par total de 2 à 23 (2d10 + modificateurs usuels) : 8 cases d'échec,

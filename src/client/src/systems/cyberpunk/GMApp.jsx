@@ -214,7 +214,7 @@ const GMApp = ({ activeSession, onSessionChange, onlineCharacters, darkMode, onT
                 )}
 
                 {activeTab === 'reference' && (
-                    <ReferenceTab />
+                    <ReferenceTab isGM />
                 )}
             </main>
 
