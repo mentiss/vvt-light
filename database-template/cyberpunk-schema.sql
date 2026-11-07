@@ -45,6 +45,9 @@ CREATE TABLE IF NOT EXISTS characters (
                                           xp                INTEGER DEFAULT 0,
                                           base_advancements INTEGER DEFAULT 0,  -- débloque avancement majeur à 5
 
+    -- Console de manœuvres (spec_cyberpunk.md §4) : JSON, ids ordonnés ; NULL = manœuvres de base
+                                          move_console TEXT DEFAULT NULL,
+
     -- Narratif libre
                                           dark_secret  TEXT DEFAULT '',
                                           notes        TEXT DEFAULT '',
@@ -253,6 +256,14 @@ CREATE TABLE IF NOT EXISTS clocks (
                                       pinned      INTEGER DEFAULT 0,
                                       created_at  DATETIME DEFAULT CURRENT_TIMESTAMP,
                                       updated_at  DATETIME DEFAULT CURRENT_TIMESTAMP
+);
+
+-- ─── MÉTÉO DE LA TABLE (spec_cyberpunk.md §3.1) ──────────────────────────────
+-- Choisie par le MJ, suivie par les joueurs ; absente = 'auto'
+CREATE TABLE IF NOT EXISTS session_weather (
+    session_id INTEGER PRIMARY KEY REFERENCES game_sessions(id) ON DELETE CASCADE,
+    weather    TEXT    NOT NULL DEFAULT 'auto' CHECK(weather IN ('auto', 'rain', 'smog', 'clear')),
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
 );
 
 -- ─── THREATS ─────────────────────────────────────────────────────────────────

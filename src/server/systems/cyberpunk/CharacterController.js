@@ -19,7 +19,13 @@
 //   - CRUD sur tags (par entity_type + entity_id)
 // ─────────────────────────────────────────────────────────────────────────────
 
-const { updateOrInsert } = require('../../utils/characters');
+const { updateOrInsert, parseJson } = require('../../utils/characters');
+
+/** Console de manœuvres : tableau d'ids entiers, ou null (réglage de base). */
+function _normalizeConsole(value) {
+    if (!Array.isArray(value)) return null;
+    return value.map(Number).filter(Number.isInteger);
+}
 
 // ── Helpers tags ─────────────────────────────────────────────────────────────
 
@@ -154,6 +160,9 @@ function loadFullCharacter(db, id) {
         xp:               row.xp               ?? 0,
         baseAdvancements: row.base_advancements ?? 0,
 
+        // Console de manœuvres : ids posés à côté des stats ; null = manœuvres de base
+        moveConsole: _normalizeConsole(parseJson(row.move_console, null)),
+
         // Narratif
         darkSecret: row.dark_secret ?? '',
         notes:      row.notes       ?? '',
@@ -208,7 +217,7 @@ function saveFullCharacter(db, id, data) {
         playbook,
         cran, pro, chair, esprit, style, synth,
         cred, infoTokens, matosTokens, retenue,
-        xp, baseAdvancements,
+        xp, baseAdvancements, moveConsole,
         darkSecret, notes,
         tags: characterTags,
         directives, relations, cyberware, items, moves,
@@ -239,6 +248,7 @@ function saveFullCharacter(db, id, data) {
                 retenue           = COALESCE(?, retenue),
                 xp                = COALESCE(?, xp),
                 base_advancements = COALESCE(?, base_advancements),
+                move_console      = COALESCE(?, move_console),
                 dark_secret       = COALESCE(?, dark_secret),
                 notes             = COALESCE(?, notes),
                 access_code       = COALESCE(?, access_code),
@@ -253,6 +263,7 @@ function saveFullCharacter(db, id, data) {
             cred         ?? null, infoTokens  ?? null, matosTokens ?? null,
             retenue      ?? null,
             xp           ?? null, baseAdvancements ?? null,
+            Array.isArray(moveConsole) ? JSON.stringify(_normalizeConsole(moveConsole)) : null,
             darkSecret   ?? null, notes       ?? null,
             accessCode   ?? null,
             id

@@ -8,22 +8,14 @@ import React from "react";
  * @returns {React.JSX.Element}
  * @constructor
  */
+// Panneau du HUD (theme.css .cp-panel) : coins coupés et crochets d'angle portés
+// par le fond, le contenu peut déborder (listes de suggestions, menus).
 export const Card = ({ title, children, action }) => (
-    <div
-        className="rounded-xl flex flex-col gap-3 p-4"
-        style={{
-            background: 'var(--color-surface)',
-            border:     '1px solid var(--color-border)',
-        }}
-    >
-        <div className="flex items-center justify-between">
-            <h3
-                className="text-xs font-bold cp-font-ui uppercase tracking-widest"
-                style={{ color: 'var(--color-text-muted)' }}
-            >
-                {title}
-            </h3>
-            {action}
+    <div className="cp-panel flex flex-col gap-3">
+        <div className="cp-panel-head">
+            <h3 className="cp-panel-title">{title}</h3>
+            <span className="cp-panel-rule" />
+            {action && <div className="cp-panel-actions">{action}</div>}
         </div>
         {children}
     </div>

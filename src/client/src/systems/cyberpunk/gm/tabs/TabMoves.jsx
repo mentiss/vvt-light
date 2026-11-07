@@ -9,7 +9,7 @@
 //   - Panneau latéral droit pour créer ou éditer un move (push inline)
 //   - Actions par move : éditer (tous), approuver/rejeter (pending), supprimer (custom)
 //   - Confirmation de suppression via useConfirm
-//   - Callback onPendingCount → met à jour le badge de l'onglet dans GMView
+//   - Callback onPendingCount → met à jour le badge de l'onglet dans GMApp
 // ─────────────────────────────────────────────────────────────────────────────
 
 import React, { useCallback, useEffect, useMemo, useState } from 'react';

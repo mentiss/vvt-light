@@ -1,526 +1,224 @@
-// Ligne directive
-import {Tag, TagAdder} from "./TagManager.jsx";
-import {CYBERWARE_ALL, ITEM_AND_CYBERWARE_CATEGORY_LABEL, ITEMS_ALL} from "../../config.jsx";
-import {useState} from "react";
+// src/client/src/systems/cyberpunk/components/layout/Rows.jsx
+// ─────────────────────────────────────────────────────────────────────────────
+// Lignes de la fiche (spec_cyberpunk.md §4) : directive, relation, implant, objet,
+// ajout rapide d'objet. Partagées avec la vue MJ du personnage (TabSession).
+// Tags : TagList (ajout au bout de la liste, clic sur un tag = changer de type ou
+// retirer). onChangeTag(index, variant) facultatif.
+// ─────────────────────────────────────────────────────────────────────────────
 
-export const DirectiveRow = ({ directive, editMode, onChange, onRemove }) => (
-    <div
-        className="flex items-start gap-2 rounded-lg px-3 py-2"
-        style={{
-            background: directive.completed ? 'rgba(32,192,96,0.08)' : 'var(--color-surface-alt)',
-            border:     `1px solid ${directive.completed ? 'var(--color-success)' : 'var(--color-border)'}`,
-        }}
-    >
-        <div className="flex-1 flex flex-col gap-1">
-            {editMode ? (
-                <>
-                    <input
-                        type="text"
-                        value={directive.text ?? ''}
-                        onChange={e => onChange({ text: e.target.value })}
-                        placeholder="Directive…"
-                        className="flex-1 bg-transparent text-sm outline-none"
-                        style={{ color: 'var(--color-text)' }}
-                    />
-                    <input
-                        type="text"
-                        value={directive.blankValue ?? ''}
-                        onChange={e => onChange({ blankValue: e.target.value })}
-                        placeholder="Valeur / description…"
-                        className="flex-1 bg-transparent text-xs outline-none"
-                        style={{ color: 'var(--color-text-muted)' }}
-                    />
-                </>
-            ) : (
-                <span
-                    className="text-sm flex-1"
-                    style={{
-                        color:          directive.completed ? 'var(--color-success)' : 'var(--color-text)',
-                        textDecoration: directive.completed ? 'line-through' : 'none',
-                    }}
-                >
-                    {directive.text || '—'}
-                    {directive.blankValue && (
-                        <span className="ml-1 font-semibold" style={{ color: 'var(--color-primary)' }}>
-                            {directive.blankValue}
-                        </span>
-                    )}
-                </span>
-            )}
-        </div>
+import { useState } from "react";
+import { TagList } from "./TagManager.jsx";
+import { CYBERWARE_ALL, ITEM_AND_CYBERWARE_CATEGORY_LABEL, ITEMS_ALL } from "../../config.jsx";
+import CpIcon from "../ui/CpIcon.jsx";
 
-        {editMode && (
-            <button
-                onClick={onRemove}
-                title="Supprimer cette directive"
-                className="w-6 h-6 rounded flex items-center justify-center text-xs flex-shrink-0"
-                style={{
-                    color:      'var(--color-danger)',
-                    background: 'var(--color-surface)',
-                    border:     '1px solid var(--color-danger)',
-                    cursor:     'pointer',
-                }}
-            >
-                ✕
-            </button>
-        )}
-    </div>
+const RemoveButton = ({ onClick, title }) => (
+    <button type="button" onClick={onClick} title={title} className="cp-icon-btn is-danger">
+        <CpIcon name="close" size="sm" />
+    </button>
 );
 
-// Ligne relation avec score de lien et tags
-export const RelationRow = ({ relation, editMode, onChange, onRemove, onRemoveTag, onAddTag, onRoll, toggleTagAdder = true, }) => {
-    const score = relation.link_score ?? 1;
-    const scoreColor = score > 0
-        ? 'var(--color-success)'
-        : score < 0 ? 'var(--color-danger)' : 'var(--color-text-muted)';
-
+// Liste de suggestions d'un champ (implant, objet) : groupée par catégorie si demandé
+const SuggestList = ({ items, grouped = false, onPick, describe, above = false }) => {
+    const groups = grouped
+        ? Object.entries(items.reduce((acc, it) => { (acc[it.category] ??= []).push(it); return acc; }, {}))
+        : [[null, items]];
     return (
-        <div
-            className="rounded-lg p-3 flex flex-col gap-2"
-            style={{ background: 'var(--color-surface-alt)', border: '1px solid var(--color-border)' }}
-        >
-            <div className="flex items-center gap-2">
-                {/* Score de lien */}
-                <div
-                    className="font-mono font-bold text-sm w-8 text-center shrink-0"
-                    style={{ color: scoreColor }}
-                >
-                    {score > 0 ? `+${score}` : score}
-                </div>
-
-                {editMode ? (
-                    <>
-                        <input
-                            type="text"
-                            value={relation.name ?? ''}
-                            onChange={e => onChange({ name: e.target.value })}
-                            placeholder="Nom de la relation…"
-                            className="flex-1 bg-transparent text-sm font-semibold outline-none"
-                            style={{ color: 'var(--color-text)' }}
-                        />
-                        <input
-                            type="number"
-                            min="-3" max="3"
-                            value={score}
-                            onChange={e => onChange({ link_score: parseInt(e.target.value) || 0 })}
-                            className="w-12 text-center rounded px-1 py-0.5 text-xs font-mono"
-                            style={{
-                                background: 'var(--color-surface)',
-                                border:     '1px solid var(--color-border)',
-                                color:      scoreColor,
-                            }}
-                        />
-                        {/* ← Bouton supprimer ajouté */}
-                        <button
-                            onClick={onRemove}
-                            title="Supprimer cette relation"
-                            className="w-6 h-6 rounded flex items-center justify-center text-xs flex-shrink-0"
-                            style={{ color: 'var(--color-danger)', background: 'var(--color-surface)', border: '1px solid var(--color-danger)', cursor: 'pointer' }}
-                        >
-                            ✕
+        <div className={`cp-suggest cp-scroll ${above ? 'is-above' : ''}`}>
+            {groups.map(([cat, list]) => (
+                <div key={cat ?? 'all'}>
+                    {cat && <div className="cp-suggest-group">{ITEM_AND_CYBERWARE_CATEGORY_LABEL[cat] ?? cat}</div>}
+                    {list.map(it => (
+                        <button key={it.name} type="button" className="cp-suggest-item"
+                                onMouseDown={e => e.preventDefault()} onClick={() => onPick(it)}>
+                            <span className="cp-suggest-name">{it.name}</span>
+                            {describe(it) && <span className="cp-suggest-desc">{describe(it)}</span>}
                         </button>
-                    </>
-                ) : (
-                    <span className="font-semibold text-sm flex-1" style={{ color: 'var(--color-text)' }}>
-                        {relation.name || 'Relation'}
-                    </span>
-                )}
-                {!editMode && onRoll && (
-                    <button
-                        onClick={() => onRoll(score)}
-                        title="Aider ou Interférer"
-                        className="w-7 h-7 rounded flex items-center justify-center text-xs shrink-0 bg-surface border border-default text-primary cursor-pointer hover:text-accent hover:bg-surface-alt"
-                    >
-                        ⬡
-                    </button>
-                )}
-            </div>
-
-            {(editMode || relation.description) && (
-                editMode ? (
-                    <input
-                        type="text"
-                        value={relation.description ?? ''}
-                        onChange={e => onChange({ description: e.target.value })}
-                        placeholder="Description courte…"
-                        className="bg-transparent text-xs outline-none w-full"
-                        style={{ color: 'var(--color-text-muted)' }}
-                    />
-                ) : (
-                    <p className="text-xs" style={{ color: 'var(--color-text-muted)' }}>
-                        {relation.description}
-                    </p>
-                )
-            )}
-
-            {(relation.tags ?? []).length > 0 && (
-                <div className="flex flex-wrap gap-1">
-                    {(relation.tags ?? []).map((tag, i) => (
-                        <Tag key={i} tag={tag} editMode={editMode} onRemove={() => onRemoveTag(i)} alwaysRemovable={true} />
                     ))}
                 </div>
-            )}
-            {(editMode || toggleTagAdder) && <TagAdder onAdd={onAddTag} compact existingTags={relation.tags ?? []} entityType="relation" />}
+            ))}
         </div>
     );
 };
 
-// Ligne cyberware avec tags
-export const CyberwareRow = ({ item, editMode, onChange, onRemove, onRemoveTag, onAddTag, tagsEditable= false, removable= false, toggleTagAdder = false, }) => {
+// ── Directive ────────────────────────────────────────────────────────────────
+// onToggle facultatif (vue MJ) : la case devient cliquable (accomplie / en cours)
+export const DirectiveRow = ({ directive, editMode, onChange, onRemove, onToggle }) => (
+    <div className={`cp-dir ${directive.completed ? 'is-done' : ''}`}>
+        {onToggle && !editMode ? (
+            <button type="button" className={`cp-dir-box ${directive.completed ? 'is-on' : ''}`} onClick={onToggle}
+                    title={directive.completed ? 'Accomplie (cliquer pour annuler)' : 'Marquer accomplie'} />
+        ) : (
+            <span className={`cp-dir-box ${directive.completed ? 'is-on' : ''}`} title={directive.completed ? 'Accomplie' : 'En cours'} />
+        )}
+        <div className="flex-1 min-w-0 flex flex-col gap-1">
+            {editMode ? (
+                <>
+                    <input type="text" value={directive.text ?? ''} onChange={e => onChange({ text: e.target.value })}
+                           placeholder="Directive…" className="cp-input" />
+                    <input type="text" value={directive.blankValue ?? ''} onChange={e => onChange({ blankValue: e.target.value })}
+                           placeholder="Valeur / description…" className="cp-input is-sm" />
+                </>
+            ) : (
+                <span className="cp-dir-text">
+                    {directive.text || '—'}
+                    {directive.blankValue && <u>{directive.blankValue}</u>}
+                </span>
+            )}
+        </div>
+        {editMode && <RemoveButton onClick={onRemove} title="Supprimer cette directive" />}
+    </div>
+);
+
+// ── Relation : jauge de Lien de −3 à +3, clic = Aider ou Interférer ─────────
+const LinkGauge = ({ score }) => (
+    <span className="cp-link" aria-label={`Lien ${score > 0 ? '+' : ''}${score}`}>
+        {[-3, -2, -1].map(n => <i key={n} className={score <= n ? 'is-neg' : ''} />)}
+        <i className="is-zero" />
+        {[1, 2, 3].map(n => <i key={n} className={score >= n ? 'is-pos' : ''} />)}
+        <b className={score > 0 ? 'is-pos' : score < 0 ? 'is-neg' : ''}>{score > 0 ? `+${score}` : score}</b>
+    </span>
+);
+
+export const RelationRow = ({ relation, editMode, onChange, onRemove, onRemoveTag, onAddTag, onChangeTag, onRoll }) => {
+    const score = relation.link_score ?? 1;
+    return (
+        <div className="cp-line">
+            {editMode ? (
+                <div className="cp-line-top">
+                    <input type="text" value={relation.name ?? ''} onChange={e => onChange({ name: e.target.value })}
+                           placeholder="Nom de la relation…" className="cp-input flex-1" />
+                    <span className="cp-stepper">
+                        <button type="button" className="cp-step" onClick={() => onChange({ link_score: Math.max(-3, score - 1) })}>−</button>
+                        <LinkGauge score={score} />
+                        <button type="button" className="cp-step" onClick={() => onChange({ link_score: Math.min(3, score + 1) })}>+</button>
+                    </span>
+                    <RemoveButton onClick={onRemove} title="Supprimer cette relation" />
+                </div>
+            ) : (
+                <button type="button" className="cp-line-top cp-rel-roll" disabled={!onRoll}
+                        onClick={() => onRoll?.(score)} title={onRoll ? 'Aider ou Interférer (score de Lien)' : undefined}>
+                    <span className="cp-line-name">{relation.name || 'Relation'}</span>
+                    {onRoll && <CpIcon name="d10" size="sm" className="cp-rel-dice" />}
+                    <LinkGauge score={score} />
+                </button>
+            )}
+            {editMode ? (
+                <input type="text" value={relation.description ?? ''} onChange={e => onChange({ description: e.target.value })}
+                       placeholder="Description courte…" className="cp-input is-sm" />
+            ) : relation.description ? (
+                <p className="cp-line-desc">{relation.description}</p>
+            ) : null}
+            <TagList tags={relation.tags ?? []} entityType="relation"
+                     onAdd={onAddTag} onRemove={onRemoveTag} onChangeVariant={onChangeTag} />
+        </div>
+    );
+};
+
+// ── Implant ─────────────────────────────────────────────────────────────────
+export const CyberwareRow = ({ item, editMode, onChange, onRemove, onRemoveTag, onAddTag, onChangeTag, removable = false }) => {
     const [dropdownOpen, setDropdownOpen] = useState(false);
-
     const nameValue = item.name ?? '';
-
-    // Suggestions filtrées en temps réel
     const suggestions = dropdownOpen && nameValue.length > 0
-        ? CYBERWARE_ALL.filter(cw =>
-            cw.name.toLowerCase().includes(nameValue.toLowerCase())
-        )
+        ? CYBERWARE_ALL.filter(cw => cw.name.toLowerCase().includes(nameValue.toLowerCase()))
         : [];
-
-    // Placeholder dynamique du champ option_text selon le cyberware reconnu
-    const matchedCw      = CYBERWARE_ALL.find(cw => cw.name === nameValue);
-    const optionPlaceholder = matchedCw?.optionHint ?? 'Option choisie…';
+    const matchedCw = CYBERWARE_ALL.find(cw => cw.name === nameValue);
 
     const handleSelect = (cw) => {
-        onChange({
-            name: cw.name,
-            tags: cw.tags.map(t => ({ tag_text: t.text, tag_variant: t.variant })),
-        });
+        onChange({ name: cw.name, tags: cw.tags.map(t => ({ tag_text: t.text, tag_variant: t.variant })) });
         setDropdownOpen(false);
     };
 
     return (
-        <div
-            className="rounded-lg p-3 flex flex-col gap-2"
-            style={{
-                background: 'var(--color-surface-alt)',
-                border:     '1px solid var(--color-border)',
-            }}
-        >
-            <div className="flex items-start gap-2">
-                <span className="text-base shrink-0" style={{ color: 'var(--color-primary)' }}>⬡</span>
-
-                <div className="flex-1 min-w-0">
-                    {editMode ? (
-                        <div style={{ position: 'relative' }}>
-                            {/* Backdrop — ferme le dropdown au clic extérieur */}
-                            {dropdownOpen && suggestions.length > 0 && (
-                                <div
-                                    style={{ position: 'fixed', inset: 0, zIndex: 9 }}
-                                    onClick={() => setDropdownOpen(false)}
-                                />
-                            )}
-
-                            <input
-                                type="text"
-                                value={nameValue}
-                                onChange={e => {
-                                    onChange({ name: e.target.value });
-                                    setDropdownOpen(true);
-                                }}
-                                onFocus={() => setDropdownOpen(true)}
-                                onKeyDown={e => e.key === 'Escape' && setDropdownOpen(false)}
-                                placeholder="Nom de l'implant…"
-                                className="bg-transparent text-sm font-semibold outline-none w-full"
-                                style={{ color: 'var(--color-text)' }}
-                            />
-
-                            {/* Dropdown suggestions */}
-                            {dropdownOpen && suggestions.length > 0 && (
-                                <div
-                                    style={{
-                                        position:    'absolute',
-                                        top:         'calc(100% + 4px)',
-                                        left:        0,
-                                        right:       0,
-                                        zIndex:      10,
-                                        background:  'var(--color-surface)',
-                                        border:      '1px solid var(--color-border)',
-                                        borderRadius:'8px',
-                                        overflow:    'hidden',
-                                        boxShadow:   '0 4px 20px rgba(0,0,0,0.5)',
-                                        maxHeight:   '220px',
-                                        overflowY:   'auto',
-                                    }}
-                                >
-                                    {suggestions.map(cw => (
-                                        <button
-                                            key={cw.name}
-                                            onMouseDown={e => e.preventDefault()} // évite blur avant click
-                                            onClick={() => handleSelect(cw)}
-                                            className="w-full text-left px-3 py-2 flex flex-col gap-0.5 transition-colors"
-                                            style={{
-                                                background:   'transparent',
-                                                border:       'none',
-                                                borderBottom: '1px solid var(--color-border)',
-                                                cursor:       'pointer',
-                                            }}
-                                            onMouseEnter={e => e.currentTarget.style.background = 'var(--color-surface-alt)'}
-                                            onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
-                                        >
-                                            <span className="text-sm font-semibold" style={{ color: 'var(--color-text)' }}>
-                                                {cw.name}
-                                            </span>
-                                            {cw.optionHint && (
-                                                <span className="text-xs" style={{ color: 'var(--color-text-muted)' }}>
-                                                    {cw.optionHint}
-                                                </span>
-                                            )}
-                                        </button>
-                                    ))}
-                                </div>
-                            )}
-                        </div>
-                    ) : (
-                        <span className="font-semibold text-sm" style={{ color: 'var(--color-text)' }}>{item.name}</span>
-                    )}
-
-                    {/* Champ option_text */}
-                    {(editMode || item.option_text) && (
-                        editMode ? (
-                            <input
-                                type="text"
-                                value={item.option_text ?? ''}
-                                onChange={e => onChange({ option_text: e.target.value })}
-                                placeholder={optionPlaceholder}
-                                className="bg-transparent text-xs outline-none w-full mt-0.5"
-                                style={{ color: 'var(--color-text-muted)' }}
-                            />
-                        ) : (
-                            <p className="text-xs" style={{ color: 'var(--color-text-muted)' }}>{item.option_text}</p>
-                        )
-                    )}
-                </div>
-
-                {(editMode || removable) && (
-                    <button onClick={onRemove} className="text-xs shrink-0" style={{ color: 'var(--color-danger)', background: 'none', border: 'none', cursor: 'pointer' }}>
-                        ✕
-                    </button>
+        <div className="cp-line">
+            <div className="cp-line-top">
+                {editMode ? (
+                    <div className="relative flex-1 min-w-0">
+                        <input type="text" value={nameValue} placeholder="Nom de l'implant…" className="cp-input"
+                               onChange={e => { onChange({ name: e.target.value }); setDropdownOpen(true); }}
+                               onFocus={() => setDropdownOpen(true)} onBlur={() => setDropdownOpen(false)}
+                               onKeyDown={e => e.key === 'Escape' && setDropdownOpen(false)} />
+                        {suggestions.length > 0 && (
+                            <SuggestList items={suggestions} onPick={handleSelect} describe={cw => cw.optionHint} />
+                        )}
+                    </div>
+                ) : (
+                    <span className="cp-line-name">{item.name}</span>
                 )}
+                {!editMode && item.option_text && <span className="cp-line-opt">› {item.option_text}</span>}
+                {(editMode || removable) && <RemoveButton onClick={onRemove} title="Retirer l'implant" />}
             </div>
-
-            {/* Tags */}
-            {(item.tags ?? []).length > 0 && (
-                <div className="flex flex-wrap gap-1">
-                    {(item.tags ?? []).map((tag, i) => (
-                        <Tag key={i} tag={tag} editMode={editMode || tagsEditable} onRemove={() => onRemoveTag(i)} />
-                    ))}
-                </div>
+            {editMode && (
+                <input type="text" value={item.option_text ?? ''} onChange={e => onChange({ option_text: e.target.value })}
+                       placeholder={matchedCw?.optionHint ?? 'Option choisie…'} className="cp-input is-sm" />
             )}
-
-            {(editMode || toggleTagAdder) && <TagAdder onAdd={onAddTag} compact entityType="cyberware" />}
+            <TagList tags={item.tags ?? []} entityType="cyberware"
+                     onAdd={onAddTag} onRemove={onRemoveTag} onChangeVariant={onChangeTag} />
         </div>
     );
 };
 
-export const ItemRow = ({ item, editMode, onChange, onRemove, onRemoveTag, onAddTag, tagsEditable= false, removable= false, toggleTagAdder = false,}) => {
+// ── Objet ───────────────────────────────────────────────────────────────────
+export const ItemRow = ({ item, editMode, onChange, onRemove, onRemoveTag, onAddTag, onChangeTag, removable = false }) => {
     const [dropdownOpen, setDropdownOpen] = useState(false);
-
     const nameValue = item.name ?? '';
-
-    // Suggestions filtrées + groupées par catégorie
     const filtered = dropdownOpen && nameValue.length > 0
         ? ITEMS_ALL.filter(it => it.name.toLowerCase().includes(nameValue.toLowerCase()))
         : [];
 
-    const grouped = filtered.reduce((acc, it) => {
-        (acc[it.category] ??= []).push(it);
-        return acc;
-    }, {});
-
     const handleSelect = (it) => {
-        onChange({
-            name: it.name,
-            tags: it.tags.map(t => ({ tag_text: t.text, tag_variant: t.variant })),
-        });
+        onChange({ name: it.name, tags: it.tags.map(t => ({ tag_text: t.text, tag_variant: t.variant })) });
         setDropdownOpen(false);
     };
-
     const handleQuantity = (delta) => {
-        const current = item.quantity ?? 1;
-        const next    = current + delta;
+        const next = (item.quantity ?? 1) + delta;
         if (next < 1) { onRemove(); return; }
         onChange({ quantity: next });
     };
 
     return (
-        <div
-            className="rounded-lg p-3 flex flex-col gap-2"
-            style={{
-                background: 'var(--color-surface-alt)',
-                border:     '1px solid var(--color-border)',
-            }}
-        >
-            <div className="flex items-center gap-2">
-
-                {/* Nom — autocomplete en edit, texte en lecture */}
+        <div className="cp-line">
+            <div className="cp-line-top">
                 {editMode ? (
-                    <div style={{ position: 'relative', flex: 1, minWidth: 0 }}>
-                        {dropdownOpen && Object.keys(grouped).length > 0 && (
-                            <div
-                                style={{ position: 'fixed', inset: 0, zIndex: 9 }}
-                                onClick={() => setDropdownOpen(false)}
-                            />
-                        )}
-                        <input
-                            type="text"
-                            value={nameValue}
-                            onChange={e => { onChange({ name: e.target.value }); setDropdownOpen(true); }}
-                            onFocus={() => setDropdownOpen(true)}
-                            onKeyDown={e => e.key === 'Escape' && setDropdownOpen(false)}
-                            placeholder="Objet…"
-                            className="bg-transparent text-sm font-semibold outline-none w-full"
-                            style={{ color: 'var(--color-text)' }}
-                        />
-                        {dropdownOpen && Object.keys(grouped).length > 0 && (
-                            <div
-                                style={{
-                                    position:     'absolute',
-                                    top:          'calc(100% + 4px)',
-                                    left:         0,
-                                    right:        0,
-                                    zIndex:       10,
-                                    background:   'var(--color-surface)',
-                                    border:       '1px solid var(--color-border)',
-                                    borderRadius: '8px',
-                                    overflow:     'hidden',
-                                    boxShadow:    '0 4px 20px rgba(0,0,0,0.5)',
-                                    maxHeight:    '280px',
-                                    overflowY:    'auto',
-                                }}
-                            >
-                                {Object.entries(grouped).map(([cat, items]) => (
-                                    <div key={cat}>
-                                        {/* En-tête de catégorie */}
-                                        <div
-                                            className="px-3 py-1 text-[10px] cp-font-ui uppercase tracking-widest"
-                                            style={{
-                                                color:      'var(--color-text-muted)',
-                                                background: 'var(--color-surface-alt)',
-                                                borderBottom: '1px solid var(--color-border)',
-                                            }}
-                                        >
-                                            {ITEM_AND_CYBERWARE_CATEGORY_LABEL[cat] ?? cat}
-                                        </div>
-                                        {items.map(it => (
-                                            <button
-                                                key={it.name}
-                                                onMouseDown={e => e.preventDefault()}
-                                                onClick={() => handleSelect(it)}
-                                                className="w-full text-left px-3 py-2 flex flex-col gap-0.5 transition-colors"
-                                                style={{
-                                                    background:   'transparent',
-                                                    border:       'none',
-                                                    borderBottom: '1px solid var(--color-border)',
-                                                    cursor:       'pointer',
-                                                }}
-                                                onMouseEnter={e => e.currentTarget.style.background = 'var(--color-surface-alt)'}
-                                                onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
-                                            >
-                                                <span className="text-sm font-semibold" style={{ color: 'var(--color-text)' }}>
-                                                    {it.name}
-                                                </span>
-                                                {it.tags.length > 0 && (
-                                                    <span className="text-xs" style={{ color: 'var(--color-text-muted)' }}>
-                                                        {it.tags.map(t => t.text).join(' ')}
-                                                    </span>
-                                                )}
-                                            </button>
-                                        ))}
-                                    </div>
-                                ))}
-                            </div>
+                    <div className="relative flex-1 min-w-0">
+                        <input type="text" value={nameValue} placeholder="Objet…" className="cp-input"
+                               onChange={e => { onChange({ name: e.target.value }); setDropdownOpen(true); }}
+                               onFocus={() => setDropdownOpen(true)} onBlur={() => setDropdownOpen(false)}
+                               onKeyDown={e => e.key === 'Escape' && setDropdownOpen(false)} />
+                        {filtered.length > 0 && (
+                            <SuggestList items={filtered} grouped onPick={handleSelect} describe={it => it.tags.map(t => t.text).join(' ')} />
                         )}
                     </div>
                 ) : (
-                    <span className="flex-1 text-sm" style={{ color: 'var(--color-text)' }}>{item.name}</span>
+                    <span className="cp-line-name flex-1">{item.name}</span>
                 )}
-
-                {/* Contrôles quantité — toujours visibles */}
-                <div className="flex items-center gap-1 shrink-0">
-                    <button
-                        onClick={() => handleQuantity(-1)}
-                        className="w-5 h-5 rounded text-xs font-bold flex items-center justify-center"
-                        style={{
-                            background: 'var(--color-surface)',
-                            border:     '1px solid var(--color-border)',
-                            color:      'var(--color-text-muted)',
-                            cursor:     'pointer',
-                        }}
-                    >
-                        −
-                    </button>
-                    <span
-                        className="font-mono text-xs w-5 text-center"
-                        style={{ color: 'var(--color-text)' }}
-                    >
-                        {item.quantity ?? 1}
-                    </span>
-                    <button
-                        onClick={() => handleQuantity(+1)}
-                        className="w-5 h-5 rounded text-xs font-bold flex items-center justify-center"
-                        style={{
-                            background: 'var(--color-surface)',
-                            border:     '1px solid var(--color-border)',
-                            color:      'var(--color-text-muted)',
-                            cursor:     'pointer',
-                        }}
-                    >
-                        +
-                    </button>
-                </div>
-
-                {/* Suppression — edit mode seulement */}
-                {(editMode || removable) && (
-                    <button
-                        onClick={onRemove}
-                        className="text-xs flex-shrink-0"
-                        style={{ color: 'var(--color-danger)', background: 'none', border: 'none', cursor: 'pointer' }}
-                    >
-                        ✕
-                    </button>
-                )}
+                {/* Quantité : toujours modifiable (− à 1 retire l'objet) */}
+                <span className="cp-stepper">
+                    <button type="button" className="cp-step" onClick={() => handleQuantity(-1)} title="Retirer un">−</button>
+                    <b className="cp-qty">×{item.quantity ?? 1}</b>
+                    <button type="button" className="cp-step" onClick={() => handleQuantity(+1)} title="Ajouter un">+</button>
+                </span>
+                {(editMode || removable) && <RemoveButton onClick={onRemove} title="Retirer l'objet" />}
             </div>
-
-            {/* Tags */}
-            {(item.tags ?? []).length > 0 && (
-                <div className="flex flex-wrap gap-1">
-                    {(item.tags ?? []).map((tag, i) => (
-                        <Tag key={i} tag={tag} editMode={editMode || tagsEditable} onRemove={() => onRemoveTag(i)} />
-                    ))}
-                </div>
-            )}
-
-            {(editMode || toggleTagAdder) && <TagAdder onAdd={onAddTag} compact entityType="item" />}
+            {item.description && !editMode && <p className="cp-line-desc">{item.description}</p>}
+            <TagList tags={item.tags ?? []} entityType="item"
+                     onAdd={onAddTag} onRemove={onRemoveTag} onChangeVariant={onChangeTag} />
         </div>
     );
 };
 
+// ── Ajout rapide d'objet (catalogue ou saisie libre) ───────────────────────
 export const QuickAddItem = ({ onAdd }) => {
-    const [query,        setQuery]        = useState('');
+    const [query, setQuery] = useState('');
     const [dropdownOpen, setDropdownOpen] = useState(false);
-
     const filtered = dropdownOpen && query.length > 0
         ? ITEMS_ALL.filter(it => it.name.toLowerCase().includes(query.toLowerCase()))
         : [];
 
-    const grouped = filtered.reduce((acc, it) => {
-        (acc[it.category] ??= []).push(it);
-        return acc;
-    }, {});
-
     const handleSelect = (it) => {
-        onAdd({
-            name:        it.name,
-            quantity:    1,
-            description: '',
-            tags:        it.tags.map(t => ({ tag_text: t.text, tag_variant: t.variant })),
-        });
+        onAdd({ name: it.name, quantity: 1, description: '', tags: it.tags.map(t => ({ tag_text: t.text, tag_variant: t.variant })) });
         setQuery('');
         setDropdownOpen(false);
     };
-
     const handleCustom = () => {
         const trimmed = query.trim();
         if (!trimmed) return;
@@ -530,110 +228,25 @@ export const QuickAddItem = ({ onAdd }) => {
     };
 
     return (
-        <div style={{ position: 'relative' }}>
-            {dropdownOpen && (
-                <div
-                    style={{ position: 'fixed', inset: 0, zIndex: 9 }}
-                    onClick={() => setDropdownOpen(false)}
-                />
-            )}
-            <div
-                className="flex gap-2 items-center rounded-lg px-3 py-2"
-                style={{
-                    background: 'var(--color-surface-alt)',
-                    border:     '1px dashed var(--color-border)',
-                }}
-            >
-                <span style={{ color: 'var(--color-primary)', flexShrink: 0 }}>+</span>
-                <input
-                    type="text"
-                    value={query}
-                    onChange={e => { setQuery(e.target.value); setDropdownOpen(true); }}
-                    onFocus={() => setDropdownOpen(true)}
-                    onKeyDown={e => {
-                        if (e.key === 'Escape') { setDropdownOpen(false); setQuery(''); }
-                        if (e.key === 'Enter')  handleCustom();
-                    }}
-                    placeholder="Rechercher ou saisir un objet…"
-                    className="flex-1 bg-transparent text-sm outline-none"
-                    style={{ color: 'var(--color-text)' }}
-                />
+        <div className="relative">
+            <div className="cp-quickadd">
+                <CpIcon name="plus" size="sm" />
+                <input type="text" value={query} placeholder="Ajout rapide : rechercher ou saisir un objet…"
+                       onChange={e => { setQuery(e.target.value); setDropdownOpen(true); }}
+                       onFocus={() => setDropdownOpen(true)} onBlur={() => setDropdownOpen(false)}
+                       onKeyDown={e => {
+                           if (e.key === 'Escape') { setDropdownOpen(false); setQuery(''); }
+                           if (e.key === 'Enter') handleCustom();
+                       }} />
                 {query.trim() && (
-                    <button
-                        onMouseDown={e => e.preventDefault()}
-                        onClick={handleCustom}
-                        className="text-xs px-2 py-0.5 rounded flex-shrink-0"
-                        style={{
-                            background: 'var(--color-primary)',
-                            color:      'var(--color-bg)',
-                            border:     'none',
-                            cursor:     'pointer',
-                        }}
-                    >
+                    <button type="button" className="cp-btn is-primary is-sm" onMouseDown={e => e.preventDefault()} onClick={handleCustom}>
                         Ajouter
                     </button>
                 )}
             </div>
-
-            {dropdownOpen && Object.keys(grouped).length > 0 && (
-                <div
-                    style={{
-                        position:     'absolute',
-                        bottom:       'calc(100% + 4px)',
-                        left:         0,
-                        right:        0,
-                        zIndex:       10,
-                        background:   'var(--color-surface)',
-                        border:       '1px solid var(--color-border)',
-                        borderRadius: '8px',
-                        overflow:     'hidden',
-                        boxShadow:    '0 -4px 20px rgba(0,0,0,0.5)',
-                        maxHeight:    '280px',
-                        overflowY:    'auto',
-                    }}
-                >
-                    {Object.entries(grouped).map(([cat, items]) => (
-                        <div key={cat}>
-                            <div
-                                className="px-3 py-1 text-[10px] cp-font-ui uppercase tracking-widest"
-                                style={{
-                                    color:        'var(--color-text-muted)',
-                                    background:   'var(--color-surface-alt)',
-                                    borderBottom: '1px solid var(--color-border)',
-                                }}
-                            >
-                                {ITEM_AND_CYBERWARE_CATEGORY_LABEL[cat] ?? cat}
-                            </div>
-                            {items.map(it => (
-                                <button
-                                    key={it.name}
-                                    onMouseDown={e => e.preventDefault()}
-                                    onClick={() => handleSelect(it)}
-                                    className="w-full text-left px-3 py-2 flex flex-col gap-0.5"
-                                    style={{
-                                        background:   'transparent',
-                                        border:       'none',
-                                        borderBottom: '1px solid var(--color-border)',
-                                        cursor:       'pointer',
-                                    }}
-                                    onMouseEnter={e => e.currentTarget.style.background = 'var(--color-surface-alt)'}
-                                    onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
-                                >
-                                    <span className="text-sm font-semibold" style={{ color: 'var(--color-text)' }}>
-                                        {it.name}
-                                    </span>
-                                    {it.tags.length > 0 && (
-                                        <span className="text-xs" style={{ color: 'var(--color-text-muted)' }}>
-                                            {it.tags.map(t => t.text).join(' ')}
-                                        </span>
-                                    )}
-                                </button>
-                            ))}
-                        </div>
-                    ))}
-                </div>
+            {filtered.length > 0 && (
+                <SuggestList items={filtered} grouped above onPick={handleSelect} describe={it => it.tags.map(t => t.text).join(' ')} />
             )}
         </div>
     );
 };
-

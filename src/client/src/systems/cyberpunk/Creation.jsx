@@ -17,6 +17,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useSystem } from '../../hooks/useSystem.js';
 import CopyAccessButton from '../../components/ui/CopyAccessButton.jsx';
+import CpWorld from './components/ui/CpWorld.jsx';
 import './theme.css';
 
 import cyberpunkConfig, {
@@ -104,7 +105,7 @@ const StatDropCell = ({ statKey, value, onDrop, onReturn, isDragOver, onDragOver
                 className="rounded-xl flex flex-col items-center gap-1.5 py-3 px-2 transition-all"
                 style={{
                     background:  isDragOver && !occupied
-                        ? 'rgba(0,229,255,0.1)'
+                        ? 'color-mix(in srgb, var(--color-primary) 10%, transparent)'
                         : occupied ? c.bg : 'var(--color-surface-alt)',
                     border:      `1.5px ${isDragOver && !occupied ? 'dashed' : 'solid'} ${
                         isDragOver && !occupied
@@ -258,8 +259,7 @@ const Card = ({ children, glow = false }) => (
 
 const Label = ({ children }) => (
     <span
-        className="text-xs font-bold cp-font-ui uppercase tracking-widest block mb-1"
-        style={{ color: 'var(--color-text-muted)' }}
+        className="text-xs font-bold cp-font-ui uppercase tracking-widest block mb-1 text-muted"
     >
         {children}
     </span>
@@ -288,10 +288,10 @@ const Input = ({ value, onChange, placeholder, type = 'text', rows }) => {
 const Step1Playbook = ({ selected, onSelect, onNext }) => (
     <div className="flex flex-col gap-4">
         <div>
-            <h2 className="text-xl font-bold cp-font-ui" style={{ color: 'var(--color-primary)' }}>
+            <h2 className="text-xl font-bold cp-font-ui text-primary">
                 Choisis ton Playbook
             </h2>
-            <p className="text-sm mt-1" style={{ color: 'var(--color-text-muted)' }}>
+            <p className="text-sm mt-1 text-muted">
                 Le Playbook définit le rôle de ton personnage et les manœuvres à ta disposition.
             </p>
         </div>
@@ -303,7 +303,7 @@ const Step1Playbook = ({ selected, onSelect, onNext }) => (
                     onClick={() => onSelect(pb.id)}
                     className="text-left rounded-xl p-3 flex flex-col gap-1 transition-all"
                     style={{
-                        background: selected === pb.id ? 'rgba(0,229,255,0.08)' : 'var(--color-surface-alt)',
+                        background: selected === pb.id ? 'color-mix(in srgb, var(--color-primary) 8%, transparent)' : 'var(--color-surface-alt)',
                         border:     `1px solid ${selected === pb.id ? 'var(--color-primary)' : 'var(--color-border)'}`,
                         boxShadow:  selected === pb.id ? 'var(--cp-glow-cyan)' : 'none',
                         cursor:     'pointer',
@@ -315,10 +315,10 @@ const Step1Playbook = ({ selected, onSelect, onNext }) => (
                     >
                         {pb.label}
                     </span>
-                    <span className="text-xs" style={{ color: 'var(--color-text-muted)' }}>
+                    <span className="text-xs text-muted">
                         {pb.description}
                     </span>
-                    <span className="text-xs italic" style={{ color: 'var(--color-accent)' }}>
+                    <span className="text-xs italic text-accent">
                         {pb.statHint}
                     </span>
                 </button>
@@ -335,7 +335,7 @@ const Step1Playbook = ({ selected, onSelect, onNext }) => (
 
 const Step2Identite = ({ data, onChange, onPrev, onNext }) => (
     <div className="flex flex-col gap-4">
-        <h2 className="text-xl font-bold cp-font-ui" style={{ color: 'var(--color-primary)' }}>
+        <h2 className="text-xl font-bold cp-font-ui text-primary">
             Identité
         </h2>
 
@@ -389,10 +389,10 @@ const Step3Stats = ({ profile, stats, pool, onProfileSelect, onDrop, onReturn, o
     return (
         <div className="flex flex-col gap-5">
             <div>
-                <h2 className="text-xl font-bold cp-font-ui" style={{ color: 'var(--color-primary)' }}>
+                <h2 className="text-xl font-bold cp-font-ui text-primary">
                     Répartition des stats
                 </h2>
-                <p className="text-sm mt-1" style={{ color: 'var(--color-text-muted)' }}>
+                <p className="text-sm mt-1 text-muted">
                     Choisis un profil puis dépose chaque valeur sur la stat de ton choix.
                 </p>
             </div>
@@ -405,7 +405,7 @@ const Step3Stats = ({ profile, stats, pool, onProfileSelect, onDrop, onReturn, o
                         onClick={() => onProfileSelect(p.id)}
                         className="text-left rounded-xl p-3 flex flex-col gap-1 transition-all"
                         style={{
-                            background: profile === p.id ? 'rgba(0,229,255,0.08)' : 'var(--color-surface-alt)',
+                            background: profile === p.id ? 'color-mix(in srgb, var(--color-primary) 8%, transparent)' : 'var(--color-surface-alt)',
                             border:     `1.5px solid ${profile === p.id ? 'var(--color-primary)' : 'var(--color-border)'}`,
                             boxShadow:  profile === p.id ? 'var(--cp-glow-cyan)' : 'none',
                             cursor:     'pointer',
@@ -417,7 +417,7 @@ const Step3Stats = ({ profile, stats, pool, onProfileSelect, onDrop, onReturn, o
                         >
                             {p.label}
                         </span>
-                        <span className="font-mono text-xs" style={{ color: 'var(--color-accent)' }}>
+                        <span className="font-mono text-xs text-accent">
                             {p.description}
                         </span>
                     </button>
@@ -435,14 +435,13 @@ const Step3Stats = ({ profile, stats, pool, onProfileSelect, onDrop, onReturn, o
                         }}
                     >
                         <span
-                            className="text-xs cp-font-ui uppercase tracking-widest"
-                            style={{ color: 'var(--color-text-muted)' }}
+                            className="text-xs cp-font-ui uppercase tracking-widest text-muted"
                         >
                             Valeurs à placer {pool.length > 0 ? `(${pool.length} restante${pool.length > 1 ? 's' : ''})` : '— tout est placé ✓'}
                         </span>
                         <div className="flex flex-wrap gap-2 min-h-[36px]">
                             {pool.length === 0 ? (
-                                <span className="text-xs italic" style={{ color: 'var(--color-success)' }}>
+                                <span className="text-xs italic text-success">
                                     ✦ Toutes les valeurs sont placées
                                 </span>
                             ) : (
@@ -542,17 +541,17 @@ const Step4Moves = ({ playbook, selectedMoveIds, onToggleMove, onPrev, onNext })
     return (
         <div className="flex flex-col gap-4">
             <div>
-                <h2 className="text-xl font-bold cp-font-ui" style={{ color: 'var(--color-primary)' }}>
+                <h2 className="text-xl font-bold cp-font-ui text-primary">
                     Manœuvres
                 </h2>
-                <p className="text-sm mt-1" style={{ color: 'var(--color-text-muted)' }}>
-                    Choisis <strong style={{ color: 'var(--color-primary)' }}>2 manœuvres</strong> dans la liste de ton playbook.
+                <p className="text-sm mt-1 text-muted">
+                    Choisis <strong className="text-primary">2 manœuvres</strong> dans la liste de ton playbook.
                     Les manœuvres de base sont accessibles à tous — elles ne comptent pas dans les 2 picks.
                 </p>
             </div>
 
             {loading && (
-                <p className="text-center text-sm" style={{ color: 'var(--color-text-muted)' }}>
+                <p className="text-center text-sm text-muted">
                     Chargement…
                 </p>
             )}
@@ -573,7 +572,7 @@ const Step4Moves = ({ playbook, selectedMoveIds, onToggleMove, onPrev, onNext })
                                         className="text-left rounded-xl p-3 flex gap-3 items-start transition-all"
                                         style={{
                                             background: checked
-                                                ? 'rgba(0,229,255,0.08)'
+                                                ? 'color-mix(in srgb, var(--color-primary) 8%, transparent)'
                                                 : disabled ? 'transparent' : 'var(--color-surface-alt)',
                                             border:     `1px solid ${checked ? 'var(--color-primary)' : 'var(--color-border)'}`,
                                             boxShadow:  checked ? 'var(--cp-glow-cyan)' : 'none',
@@ -605,7 +604,7 @@ const Step4Moves = ({ playbook, selectedMoveIds, onToggleMove, onPrev, onNext })
                                                     </span>
                                                 )}
                                             </div>
-                                            <p className="text-xs mt-1 leading-relaxed" style={{ color: 'var(--color-text-muted)' }}>
+                                            <p className="text-xs mt-1 leading-relaxed text-muted">
                                                 {move.description}
                                             </p>
                                         </div>
@@ -618,8 +617,7 @@ const Step4Moves = ({ playbook, selectedMoveIds, onToggleMove, onPrev, onNext })
                     {/* Manœuvres de base — lecture seule */}
                     <details>
                         <summary
-                            className="text-xs cursor-pointer cp-font-ui uppercase tracking-wide mb-2"
-                            style={{ color: 'var(--color-text-muted)' }}
+                            className="text-xs cursor-pointer cp-font-ui uppercase tracking-wide mb-2 text-muted"
                         >
                             ▶ Manœuvres de base (accessibles à tous — {baseMoves.length})
                         </summary>
@@ -635,7 +633,7 @@ const Step4Moves = ({ playbook, selectedMoveIds, onToggleMove, onPrev, onNext })
                                     }}
                                 >
                                     <div className="flex items-center gap-2">
-                                        <span className="text-xs font-semibold" style={{ color: 'var(--color-text)' }}>{move.name}</span>
+                                        <span className="text-xs font-semibold text-default">{move.name}</span>
                                         {move.stat && (
                                             <span className={`cp-stat-badge ${STAT_BADGE_CLASS[move.stat] ?? ''}`}>
                                                 {STAT_LABELS[move.stat]}
@@ -669,11 +667,11 @@ const Step5Directives = ({ directives, onToggle, onBlankChange, onPrev, onNext }
     return (
         <div className="flex flex-col gap-4">
             <div>
-                <h2 className="text-xl font-bold cp-font-ui" style={{ color: 'var(--color-primary)' }}>
+                <h2 className="text-xl font-bold cp-font-ui text-primary">
                     Directives personnelles
                 </h2>
-                <p className="text-sm mt-1" style={{ color: 'var(--color-text-muted)' }}>
-                    Choisis <strong style={{ color: 'var(--color-primary)' }}>2 Directives</strong>.
+                <p className="text-sm mt-1 text-muted">
+                    Choisis <strong className="text-primary">2 Directives</strong>.
                     Ce sont tes moteurs de comportement — quand tu agis en accord avec elles, tu gagnes de l'expérience.
                 </p>
             </div>
@@ -698,7 +696,7 @@ const Step5Directives = ({ directives, onToggle, onBlankChange, onPrev, onNext }
                                 onClick={() => !disabled && onToggle(dir.id)}
                                 className="w-full text-left px-4 py-3 flex items-center gap-3"
                                 style={{
-                                    background: checked ? 'rgba(0,229,255,0.08)' : 'var(--color-surface-alt)',
+                                    background: checked ? 'color-mix(in srgb, var(--color-primary) 8%, transparent)' : 'var(--color-surface-alt)',
                                     cursor:     disabled ? 'not-allowed' : 'pointer',
                                     border:     'none',
                                 }}
@@ -720,7 +718,7 @@ const Step5Directives = ({ directives, onToggle, onBlankChange, onPrev, onNext }
                                     {dir.label}
                                 </span>
                                 {dir.hasBlank && checked && (
-                                    <span className="text-xs ml-1" style={{ color: 'var(--color-text-muted)' }}>
+                                    <span className="text-xs ml-1 text-muted">
                                         — {dir.blankHint}
                                     </span>
                                 )}
@@ -808,7 +806,7 @@ const Step6RelationsAndCyberware = ({
                 className="text-left rounded-lg px-3 py-2 flex items-start gap-3 transition-all w-full"
                 style={{
                     background: selected
-                        ? 'rgba(0,229,255,0.08)'
+                        ? 'color-mix(in srgb, var(--color-primary) 8%, transparent)'
                         : 'var(--color-surface-alt)',
                     border:    `1px solid ${selected ? 'var(--color-primary)' : 'var(--color-border)'}`,
                     boxShadow: selected ? 'var(--cp-glow-cyan)' : 'none',
@@ -824,18 +822,18 @@ const Step6RelationsAndCyberware = ({
                     >
                         {cw.name}
                         {pb?.mandatoryCyberware === cw.name && (
-                            <span className="ml-2 text-xs font-normal" style={{ color: 'var(--color-accent)' }}>
+                            <span className="ml-2 text-xs font-normal text-accent">
                                 obligatoire
                             </span>
                         )}
                     </span>
                     {cw.description && (
-                        <span className="text-xs leading-snug block mt-0.5" style={{ color: 'var(--color-text-muted)' }}>
+                        <span className="text-xs leading-snug block mt-0.5 text-muted">
                             {cw.description}
                         </span>
                     )}
                     {cw.optionHint && (
-                        <span className="text-xs italic block mt-0.5" style={{ color: 'var(--color-accent)' }}>
+                        <span className="text-xs italic block mt-0.5 text-accent">
                             {cw.optionHint}
                         </span>
                     )}
@@ -849,12 +847,12 @@ const Step6RelationsAndCyberware = ({
 
             {/* ── Relations ─────────────────────────────────────────────── */}
             <div>
-                <h2 className="text-xl font-bold cp-font-ui" style={{ color: 'var(--color-primary)' }}>
+                <h2 className="text-xl font-bold cp-font-ui text-primary">
                     Relations & Cyberware
                 </h2>
-                <p className="text-sm mt-1 mb-3" style={{ color: 'var(--color-text-muted)' }}>
-                    Définis <strong style={{ color: 'var(--color-primary)' }}>2 à 3 Relations</strong> importantes
-                    et choisis ton <strong style={{ color: 'var(--color-primary)' }}>cyberware</strong> de départ.
+                <p className="text-sm mt-1 mb-3 text-muted">
+                    Définis <strong className="text-primary">2 à 3 Relations</strong> importantes
+                    et choisis ton <strong className="text-primary">cyberware</strong> de départ.
                 </p>
 
                 <Label>Relations (2 minimum)</Label>
@@ -932,7 +930,7 @@ const Step6RelationsAndCyberware = ({
                 <div className="flex items-baseline gap-2">
                     <Label>Cyberware ({cyberware.length}/{maxPicks} slot{maxPicks > 1 ? 's' : ''})</Label>
                     {hasChromeMove && (
-                        <span className="text-xs" style={{ color: 'var(--color-success)' }}>
+                        <span className="text-xs text-success">
                             +1 slot via Chromé
                         </span>
                     )}
@@ -973,8 +971,7 @@ const Step6RelationsAndCyberware = ({
                         onChange={e => setCustomName(e.target.value)}
                         onKeyDown={e => e.key === 'Enter' && handleAddCustom()}
                         placeholder="Implant custom…"
-                        className="flex-1 bg-transparent text-sm outline-none"
-                        style={{ color: 'var(--color-text)' }}
+                        className="flex-1 bg-transparent text-sm outline-none text-default"
                     />
                     <button
                         onClick={handleAddCustom}
@@ -1003,7 +1000,7 @@ const Step6RelationsAndCyberware = ({
                                 key={name}
                                 className="flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-semibold"
                                 style={{
-                                    background: 'rgba(0,229,255,0.1)',
+                                    background: 'color-mix(in srgb, var(--color-primary) 10%, transparent)',
                                     border:     '1px solid var(--color-primary)',
                                     color:      'var(--color-primary)',
                                 }}
@@ -1051,15 +1048,15 @@ const Step7Finalisation = ({
             <div className="flex flex-col items-center gap-6 py-4 text-center">
                 <div style={{ fontSize: '3rem' }}>⬡</div>
                 <div>
-                    <h2 className="text-2xl font-bold cp-font-ui" style={{ color: 'var(--color-primary)' }}>
+                    <h2 className="text-2xl font-bold cp-font-ui text-primary">
                         {data.prenom} {data.nom}
                     </h2>
-                    <p className="text-sm mt-1" style={{ color: 'var(--color-text-muted)' }}>
+                    <p className="text-sm mt-1 text-muted">
                         {pb?.label} · {data.playerName}
                     </p>
                 </div>
 
-                <p className="text-sm" style={{ color: 'var(--color-text-muted)' }}>
+                <p className="text-sm text-muted">
                     Ton personnage a été créé. Note ton code d'accès — c'est le seul moyen de te reconnecter.
                 </p>
 
@@ -1071,7 +1068,7 @@ const Step7Finalisation = ({
                         boxShadow:  'var(--cp-glow-active)',
                     }}
                 >
-                    <span className="text-xs cp-font-ui uppercase tracking-widest" style={{ color: 'var(--color-text-muted)' }}>
+                    <span className="text-xs cp-font-ui uppercase tracking-widest text-muted">
                         Code d'accès
                     </span>
                     <span
@@ -1103,7 +1100,7 @@ const Step7Finalisation = ({
 
     return (
         <div className="flex flex-col gap-4">
-            <h2 className="text-xl font-bold cp-font-ui" style={{ color: 'var(--color-primary)' }}>
+            <h2 className="text-xl font-bold cp-font-ui text-primary">
                 Finalisation
             </h2>
 
@@ -1134,7 +1131,7 @@ const Step7Finalisation = ({
             <Card>
                 <div>
                     <Label>Dark Secret *(optionnel)*</Label>
-                    <p className="text-xs mb-2" style={{ color: 'var(--color-text-muted)' }}>
+                    <p className="text-xs mb-2 text-muted">
                         Un élément lourd du passé de ton personnage. Stable — il ne change pas en cours de campagne, il se révèle.
                     </p>
                     <textarea
@@ -1158,7 +1155,7 @@ const Step7Finalisation = ({
             </Card>
 
             {error && (
-                <p className="text-sm text-center" style={{ color: 'var(--color-danger)' }}>
+                <p className="text-sm text-center text-danger">
                     {error}
                 </p>
             )}
@@ -1178,10 +1175,10 @@ const Step7Finalisation = ({
 
 const RecapLine = ({ label, value }) => (
     <div className="flex gap-2">
-        <span className="flex-shrink-0 w-28 text-xs cp-font-ui uppercase tracking-wide" style={{ color: 'var(--color-text-muted)' }}>
+        <span className="flex-shrink-0 w-28 text-xs cp-font-ui uppercase tracking-wide text-muted">
             {label}
         </span>
-        <span style={{ color: 'var(--color-text)' }}>{value ?? '—'}</span>
+        <span className="text-default">{value ?? '—'}</span>
     </div>
 );
 
@@ -1331,21 +1328,20 @@ const Creation = ({ onToggleDarkMode, onCreated, onCancel }) => {
     // ── Render ────────────────────────────────────────────────────────────────
 
     return (
-        <div
-            className="min-h-screen flex items-start justify-center px-4 py-8"
-            style={{ background: 'var(--color-bg)', color: 'var(--color-text)' }}
-        >
+        <div className="cp-root flex items-start justify-center px-4 py-8">
+            {/* Ville et météo derrière l'interface (spec_cyberpunk.md §3.1) */}
+            <CpWorld />
             <div className="w-full max-w-2xl flex flex-col gap-0">
 
                 {/* ── Header ───────────────────────────────────────────── */}
                 <div className="text-center mb-6">
                     <div
                         className="text-4xl font-black cp-font-title text-accent tracking-widest"
-                        style={{ textShadow: '0 0 25px rgba(0,229,255,0.6)' }}
+                        style={{ textShadow: '0 0 25px color-mix(in srgb, var(--color-primary) 60%, transparent)' }}
                     >
                         CyberPunk
                     </div>
-                    <p className="text-xs mt-1 cp-font-ui uppercase tracking-widest" style={{ color: 'var(--color-text-muted)' }}>
+                    <p className="text-xs mt-1 cp-font-ui uppercase tracking-widest text-muted">
                         The Sprawl — Création de personnage
                     </p>
                 </div>

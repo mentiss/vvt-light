@@ -19,10 +19,24 @@ const router  = express.Router();
 const cs      = require('../utils/combatState');
 
 // ─── Helper broadcast ────────────────────────────────────────────────────────
+// L'état du combat est rangé par slug : il part dans les rooms des tables ouvertes
+// de CE slug (`<slug>_session_<id>`), jamais à tout le serveur (un io.emit
+// écrasait l'état du combat affiché dans les autres slugs).
+
+function slugRooms(io, slugName) {
+    const rooms = io.sockets?.adapter?.rooms;
+    if (!rooms) return [];
+    const prefix = `${slugName}_session_`;
+    return [...rooms.keys()].filter(room => room.startsWith(prefix));
+}
+
+function emitToSlug(io, slugName, event, data) {
+    if (!io) return;
+    for (const room of slugRooms(io, slugName)) io.to(room).emit(event, data);
+}
 
 function broadcast(req, event, data) {
-    const io = req.app.get('io');
-    if (io) io.emit(event, data);
+    emitToSlug(req.app.get('io'), slug(req), event, data);
 }
 
 // Raccourci : slug injecté par systemResolver
@@ -200,14 +214,11 @@ router.post('/trigger-defense', (req, res) => {
     const attack = state.pendingAttacks.find(a => a.id === attackId);
     if (!attack) return res.status(404).json({ error: 'Attack not found in queue' });
 
-    const io = req.app.get('io');
-    if (io) {
-        io.emit('combat-defense-opportunity', {
-            attackId,
-            attackData:        attack,
-            targetCombatantId: attack.targetId,
-        });
-    }
+    emitToSlug(req.app.get('io'), slug(req), 'combat-defense-opportunity', {
+        attackId,
+        attackData:        attack,
+        targetCombatantId: attack.targetId,
+    });
 
     res.json({ success: true });
 });

@@ -113,15 +113,12 @@ router.post('/roll', (req, res) => {
             created_at: new Date().toISOString()
         };
 
-        // Diffusion Socket.io dans la room de session
+        // Diffusion Socket.io dans la room de la table, et nulle part ailleurs.
+        // Sans table : pas de diffusion (un io.emit global atteignait toutes les
+        // pages de tous les slugs, dont les notifications de jets).
         const io = req.app.get('io');
-        if (io) {
-            const room = session_id
-                ? `${req.system.slug}_session_${session_id}`
-                : null;
-            room
-                ? io.to(room).emit('dice-roll', rollData)
-                : io.emit('dice-roll', rollData);
+        if (io && session_id) {
+            io.to(`${req.system.slug}_session_${session_id}`).emit('dice-roll', rollData);
         }
 
         res.status(201).json(rollData);

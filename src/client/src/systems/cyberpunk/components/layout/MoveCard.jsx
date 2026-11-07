@@ -1,33 +1,27 @@
-import {STAT_LABELS} from "../../config.jsx";
+// src/client/src/systems/cyberpunk/components/layout/MoveCard.jsx
+// ─────────────────────────────────────────────────────────────────────────────
+// Carte de manœuvre (colonne de la fiche, vue MJ). Spec règles §6.4 : description
+// coupée avec « Voir plus » (seul accès à une manœuvre passive) ; un clic sur une
+// manœuvre avec stat ouvre la fenêtre de jet ; « Voir plus » ne la déclenche pas.
+// Console (spec_cyberpunk.md §4), facultatif : onTogglePin (épingle = poser /
+// retirer de la console), onDragStart / onDragEnd (glisser vers la console).
+// ─────────────────────────────────────────────────────────────────────────────
+
+import { STAT_LABELS } from "../../config.jsx";
 import ExpandableText from "../../../../components/ui/ExpandableText.jsx";
+import CpIcon from "../ui/CpIcon.jsx";
 
-const STAT_BADGE_CLASS = {
-    cran:   'cp-stat-badge-cran',
-    pro:    'cp-stat-badge-pro',
-    chair:  'cp-stat-badge-chair',
-    esprit: 'cp-stat-badge-esprit',
-    style:  'cp-stat-badge-style',
-    synth:  'cp-stat-badge-synth',
-};
-
-export const MoveCard = ({ move, isUnlocked, onClick, showFull = false, isEditMode = false, isAcquired = false }) => {
-    const isClickable = (isUnlocked && move.stat) && !isEditMode;
-
-    const toggleStyle = isEditMode ? {
-        background: isAcquired ? 'rgba(0,229,255,0.1)' : 'var(--cp-move-hover)',
-        border:     `1px solid ${isAcquired ? 'var(--color-primary)' : 'var(--cp-move-border)'}`,
-        cursor:     'pointer',
-        opacity:    1,
-    } : {
-        background: isUnlocked ? 'var(--cp-move-hover)' : 'transparent',
-        border:     `1px solid ${isUnlocked ? 'var(--cp-move-border)' : 'transparent'}`,
-        cursor:     isClickable ? 'pointer' : 'default',
-        opacity:    isUnlocked ? 1 : 0.35,
-    };
+export const MoveCard = ({
+    move, isUnlocked, onClick, showFull = false, isEditMode = false, isAcquired = false, statValue = null,
+    pinned = false, onTogglePin, onDragStart, onDragEnd, rollable = true,
+}) => {
+    // rollable false (vue MJ : le MC ne lance pas les dés) : la carte n'ouvre pas de jet
+    const isClickable = rollable && (isUnlocked && move.stat) && !isEditMode;
+    const isInteractive = isClickable || isEditMode;
+    const canDrag = !!onDragStart && isUnlocked && !isEditMode;
+    const stat = move.stat ?? 'none';
 
     // div et non button : la description contient le lien « Voir plus » (bouton)
-    const isInteractive = isClickable || isEditMode;
-
     return (
         <div
             onClick={onClick}
@@ -37,53 +31,41 @@ export const MoveCard = ({ move, isUnlocked, onClick, showFull = false, isEditMo
                 if (e.target !== e.currentTarget) return;
                 if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onClick?.(); }
             } : undefined}
-            className={`
-                group w-full text-left rounded-lg px-3 py-2.5 
-                flex flex-col gap-1 transition-all
-                ${isClickable ? 'move-button cursor-pointer' : 'cursor-default'}
-            `}
-            style={toggleStyle}
+            draggable={canDrag || undefined}
+            onDragStart={canDrag ? (e) => { e.dataTransfer.effectAllowed = 'move'; e.dataTransfer.setData('text/plain', String(move.id)); onDragStart(move); } : undefined}
+            onDragEnd={canDrag ? onDragEnd : undefined}
+            className={[
+                'cp-move', `st-${stat}`,
+                isClickable ? 'is-rollable' : '',
+                isUnlocked || isEditMode ? '' : 'is-locked',
+                isEditMode && isAcquired ? 'is-acquired' : '',
+                pinned ? 'is-pinned' : '',
+                canDrag ? 'is-draggable' : '',
+            ].join(' ')}
         >
-            <div className="flex items-center gap-2">
+            <div className="cp-move-top">
                 {isEditMode && (
-                    <span
-                        className="w-3.5 h-3.5 rounded-sm flex-shrink-0 flex items-center justify-center text-[9px] font-bold"
-                        style={{
-                            background: isAcquired ? 'var(--color-primary)' : 'var(--color-surface-alt)',
-                            border:     `1px solid ${isAcquired ? 'var(--color-primary)' : 'var(--color-border)'}`,
-                            color:      'var(--color-bg)',
-                        }}
-                    >
-                        {isAcquired ? '✓' : ''}
-                    </span>
+                    <span className={`cp-move-check ${isAcquired ? 'is-on' : ''}`} aria-hidden="true">{isAcquired ? '✓' : ''}</span>
                 )}
-                <span
-                    className={`text-sm font-semibold leading-tight flex-1 ${isUnlocked || showFull ? 'text-default' : 'text-muted'} ${isClickable ? 'group-hover:text-primary move-title-glitch' : ''}`}
-                >
-                    {move.name}
-                </span>
-                {move.playbook && showFull && move.playbook !== '' && (
-                    <span className="text-xs cp-font-ui px-1.5 py-0.5 rounded flex-shrink-0" style={{
-                        background: 'rgba(255,170,0,0.12)',
-                        color: 'var(--cp-neon-amber)',
-                        border: '1px solid rgba(255,170,0,0.3)'
-                    }}>
-                        {move.playbook}
-                    </span>
+                <span className="cp-move-name">{move.name}</span>
+                {move.playbook && showFull && <span className="cp-move-pb">{move.playbook}</span>}
+                {move.stat && statValue !== null && (
+                    <span className="cp-move-roll">2d10{statValue >= 0 ? `+${statValue}` : `−${Math.abs(statValue)}`}</span>
                 )}
-                {move.stat && (
-                    <span className={`cp-stat-badge ${STAT_BADGE_CLASS[move.stat] ?? ''} flex-shrink-0`}>
-                        {STAT_LABELS[move.stat]}
-                    </span>
+                <span className={`cp-stat-badge st-${stat}`}>{move.stat ? (STAT_LABELS[move.stat] ?? move.stat) : 'Passive'}</span>
+                {onTogglePin && isUnlocked && !isEditMode && (
+                    <button type="button" className={`cp-pinbtn ${pinned ? 'is-on' : ''}`}
+                            title={pinned ? 'Retirer de la console' : 'Poser dans la console'}
+                            onClick={(e) => { e.stopPropagation(); onTogglePin(move); }}>
+                        <CpIcon name="pin" size="sm" />
+                    </button>
                 )}
-
             </div>
             {(isUnlocked || showFull || isEditMode) && (
-                <p className={`text-xs leading-relaxed text-muted ${isClickable ? 'group-hover:text-default' : ''}`}>
+                <p className="cp-move-desc">
                     <ExpandableText text={move.description} maxLength={160} />
                 </p>
             )}
         </div>
-    )
+    );
 };
-

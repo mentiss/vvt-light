@@ -6,6 +6,16 @@
 const express = require('express');
 const router = express.Router();
 const { authenticate, requireOwnerOrGM, requireGM } = require('../middlewares/auth');
+const { emitToCharacterSessions } = require('../utils/characters');
+
+// Diffusion d'une notification à un personnage : la room de la table indiquée, sinon
+// les rooms des tables du personnage ; jamais tout le serveur (un id de personnage
+// n'est unique que dans la base de son slug : un io.emit atteignait les autres slugs).
+function emitToCharacter(io, db, slug, sessionId, characterId, event, payload) {
+    if (!io) return;
+    if (sessionId) io.to(`${slug}_session_${sessionId}`).emit(event, payload);
+    else emitToCharacterSessions(io, db, slug, characterId, event, payload);
+}
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
 
@@ -61,12 +71,9 @@ router.post('/gm-send', authenticate, requireGM, (req, res) => {
         }
 
         const io = req.app.get('io');
-        if (io && createdEntries.length > 0) {
-            for (const entry of createdEntries) {
-                const payload = { characterId: entry.characterId, entry, toastAnimation };
-                const room = sessionId ? `${system}_session_${sessionId}` : null;
-                room ? io.to(room).emit('gm-message-received', payload) : io.emit('gm-message-received', payload);
-            }
+        for (const entry of createdEntries) {
+            emitToCharacter(io, db, system, sessionId, entry.characterId, 'gm-message-received',
+                { characterId: entry.characterId, entry, toastAnimation });
         }
 
         res.status(201).json({ sent: createdEntries.length, entries: createdEntries });
@@ -113,12 +120,8 @@ router.post('/gm-send-item', authenticate, requireGM, (req, res) => {
 
         const journalEntry = formatEntry(loadEntry(db, journalResult.lastInsertRowid));
 
-        const io = req.app.get('io');
-        if (io) {
-            const payload = { characterId: targetCharacterId, item: formattedItem, journalEntry, toastAnimation };
-            const room = sessionId ? `${system}_session_${sessionId}` : null;
-            room ? io.to(room).emit('gm-item-received', payload) : io.emit('gm-item-received', payload);
-        }
+        emitToCharacter(req.app.get('io'), db, system, sessionId, targetCharacterId, 'gm-item-received',
+            { characterId: targetCharacterId, item: formattedItem, journalEntry, toastAnimation });
 
         res.status(201).json({ item: formattedItem, journalEntry });
     } catch (error) {

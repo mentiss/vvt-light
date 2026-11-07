@@ -10,7 +10,7 @@
 import React from 'react';
 import CatalogModal from '../../../../components/modals/CatalogModal.jsx';
 import { CYBERWARE_ALL, ITEMS_ALL, ITEM_AND_CYBERWARE_CATEGORY_LABEL, TAG_VARIANT_CLASS } from '../../config.jsx';
-import { Tag, TagAdder } from '../layout/TagManager.jsx';
+import { TagList } from '../layout/TagManager.jsx';
 
 const categoryLabel = (cat) => ITEM_AND_CYBERWARE_CATEGORY_LABEL[cat] ?? cat;
 
@@ -53,7 +53,7 @@ const renderItem = (item) => (
         {item.tags?.length > 0 && (
             <div className="flex flex-wrap gap-1 mt-0.5">
                 {item.tags.map(t => (
-                    <span key={t.text} className={`cp-tag ${TAG_VARIANT_CLASS[t.variant] ?? 'cp-tag-neutral'}`}>{t.text}</span>
+                    <span key={t.text} className={`cp-tag ${TAG_VARIANT_CLASS[t.variant] ?? 'is-neutral'}`}>{t.text}</span>
                 ))}
             </div>
         )}
@@ -73,21 +73,15 @@ const CustomForm = ({ value, onChange, kind }) => (
         </label>
         <div>
             <span className="vtt-field-label">Tags</span>
-            {value.tags.length > 0 && (
-                <div className="flex flex-wrap gap-1 mb-2">
-                    {value.tags.map((t, i) => (
-                        <Tag key={`${t.tag_text}-${t.tag_variant}`} tag={t} alwaysRemovable
-                             onRemove={() => onChange({ tags: value.tags.filter((_, j) => j !== i) })} />
-                    ))}
-                </div>
-            )}
-            <TagAdder
+            <TagList
+                tags={value.tags}
                 entityType={kind === 'cyberware' ? 'cyberware' : 'item'}
-                existingTags={value.tags}
                 onAdd={(text, variant) => {
                     if (value.tags.some(t => t.tag_text === text)) return;
                     onChange({ tags: [...value.tags, { tag_text: text, tag_variant: variant }] });
                 }}
+                onRemove={(i) => onChange({ tags: value.tags.filter((_, j) => j !== i) })}
+                onChangeVariant={(i, v) => onChange({ tags: value.tags.map((t, j) => (j === i ? { ...t, tag_variant: v } : t)) })}
             />
         </div>
     </>

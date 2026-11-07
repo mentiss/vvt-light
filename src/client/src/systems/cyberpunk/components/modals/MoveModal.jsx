@@ -21,38 +21,16 @@ import { roll }       from '../../../../tools/diceEngine.js';
 import { useFetch }   from '../../../../hooks/useFetch.js';
 import { useSystem }  from '../../../../hooks/useSystem.js';
 import cyberpunkConfig, { STAT_LABELS } from '../../config.jsx';
+import CpIcon from '../ui/CpIcon.jsx';
+import { RollBand, D10Face, RollStamp } from '../ui/RollBand.jsx';
 
 // ── Constantes ────────────────────────────────────────────────────────────────
 
+// Ce qui se passe à la table selon le résultat (règles §1.2)
 const OUTCOME_CONFIG = {
-    success: {
-        label:  'Succès plein',
-        desc:   'Tu fais ce que tu voulais faire.',
-        cls:    'cp-outcome-success',
-        icon:   '✦',
-    },
-    partial: {
-        label:  'Succès partiel',
-        desc:   'Ça marche, mais le MC introduit une complication, un coût ou un choix difficile.',
-        cls:    'cp-outcome-partial',
-        icon:   '◈',
-    },
-    failure: {
-        label:  'Échec',
-        desc:   'Le MC agit librement.',
-        cls:    'cp-outcome-failure',
-        icon:   '✕',
-    },
-};
-
-const STAT_BADGE_CLASS = {
-    cran:   'cp-stat-badge-cran',
-    pro:    'cp-stat-badge-pro',
-    chair:  'cp-stat-badge-chair',
-    esprit: 'cp-stat-badge-esprit',
-    style:  'cp-stat-badge-style',
-    synth:  'cp-stat-badge-synth',
-    cred:   'cp-stat-badge-cred',
+    success: { desc: 'Tu fais ce que tu voulais faire.' },
+    partial: { desc: 'Ça marche, mais le MC introduit une complication, un coût ou un choix difficile.' },
+    failure: { desc: 'Le MC agit librement.' },
 };
 
 // ── Composant ─────────────────────────────────────────────────────────────────
@@ -132,15 +110,17 @@ const MoveModal = ({ mode, move, statKey, character, sessionId, onClose }) => {
         setError(null);
     };
 
-    // ── Render ────────────────────────────────────────────────────────────────
+    // ── Render (spec_cyberpunk.md §5 : formule, bande 9- / 10-14 / 15+, tampon) ──
 
     const outcomeConfig = result ? OUTCOME_CONFIG[result.outcome] : null;
+    const signed = (v) => (v > 0 ? `+${v}` : v < 0 ? `−${Math.abs(v)}` : '+0');
+    const canSynth = hasCyberware && activeStat && activeStat !== 'synth' && activeStat !== 'link';
 
     const footer = !result ? (
         <>
             <button type="button" onClick={onClose} className="vtt-btn">Annuler</button>
             <button type="button" onClick={handleRoll} disabled={rolling} className="vtt-btn vtt-btn-primary">
-                {rolling ? '…' : '⬡ Lancer'}
+                <CpIcon name="d10" /> {rolling ? 'Jet en cours…' : 'Lancer'}
             </button>
         </>
     ) : (
@@ -160,160 +140,71 @@ const MoveModal = ({ mode, move, statKey, character, sessionId, onClose }) => {
             }
             footer={footer}
         >
-                {/* ── Badge stat ─────────────────────────────────────────── */}
-                {effectiveStat && (
-                    <div className="flex items-center gap-2 mb-4">
-                        <span className={`cp-stat-badge ${STAT_BADGE_CLASS[effectiveStat] ?? ''}`}>
-                            {STAT_LABELS[effectiveStat] ?? effectiveStat}
-                            {effectiveValue !== 0 && (
-                                <span className="ml-1 opacity-70">
-                                    {effectiveValue > 0 ? `+${effectiveValue}` : effectiveValue}
-                                </span>
-                            )}
-                        </span>
-                        {useSynth && (activeStat !== 'synth' && activeStat !== 'link') && (
-                            <span className="text-xs text-muted">
-                                (substitution Synth)
-                            </span>
-                        )}
-                    </div>
-                )}
-
+            <div className="cp-roll">
                 {/* ── Description du move (le corps de la modale défile) ─── */}
                 {move?.description && !result && (
-                    <p className="text-sm text-muted mb-4 whitespace-pre-line">
-                        {move.description}
-                    </p>
+                    <p className="cp-roll-desc">{move.description}</p>
                 )}
 
-                {/* ── Corps : configuration ou résultat ──────────────────── */}
-                <div className="flex flex-col gap-4">
-
-                    {!result ? (
-                        <>
-                            {/* Switch Synth (pill, pas de case à cocher) */}
-                            {hasCyberware && activeStat && activeStat !== 'synth' && activeStat !== 'link' && (
-                                <div className="flex flex-col items-start gap-1.5">
-                                    <button
-                                        type="button"
-                                        onClick={() => setUseSynth(v => !v)}
-                                        aria-pressed={useSynth}
-                                        className={`vtt-pill ${useSynth ? 'is-selected' : ''}`}
-                                    >
-                                        Substitution Synth
-                                    </button>
-                                    <span className="text-xs text-muted">
-                                        Utiliser Synth ({character?.synth >= 0 ? '+' : ''}{character?.synth ?? 0}) au lieu de {STAT_LABELS[activeStat]}
+                {!result ? (
+                    <>
+                        {/* ── Formule : 2d10 + stat (+ Synth) + modificateur ── */}
+                        <div className="cp-formula">
+                            <span className="cp-term">2d10</span>
+                            {effectiveStat && (
+                                <>
+                                    <span className="cp-op">+</span>
+                                    <span className={`cp-term st-${effectiveStat}`}>
+                                        {STAT_LABELS[effectiveStat] ?? effectiveStat}
+                                        {useSynth && activeStat !== 'synth' && <small> (substitution)</small>}
+                                        <b>{signed(effectiveValue)}</b>
                                     </span>
-                                </div>
+                                </>
                             )}
-
-                            {/* Modificateur manuel */}
-                            <div className="flex flex-col gap-1.5">
-                                <span className="vtt-field-label">
-                                    Modificateur supplémentaire
-                                </span>
-                                <div className="flex items-center gap-2">
-                                    <button
-                                        type="button"
-                                        onClick={() => setModifier(m => m - 1)}
-                                        className="vtt-btn vtt-btn-icon font-bold text-lg"
-                                    >
-                                        −
-                                    </button>
-                                    <div
-                                        className={`flex-1 text-center font-mono font-bold text-lg ${modifier === 0 ? 'text-muted' : modifier > 0 ? 'text-success' : 'text-danger'}`}
-                                    >
-                                        {modifier > 0 ? `+${modifier}` : modifier}
-                                    </div>
-                                    <button
-                                        type="button"
-                                        onClick={() => setModifier(m => m + 1)}
-                                        className="vtt-btn vtt-btn-icon font-bold text-lg"
-                                    >
-                                        +
-                                    </button>
-                                </div>
-                                {/* Récap total */}
-                                <div
-                                    className="text-center text-xs"
-                                    style={{ color: 'var(--color-text-muted)' }}
-                                >
-                                    Total : 2d10
-                                    {effectiveStat && effectiveValue !== 0 && (
-                                        <span style={{ color: 'var(--color-primary)' }}>
-                                            {effectiveValue > 0 ? ` +${effectiveValue}` : ` ${effectiveValue}`} ({STAT_LABELS[effectiveStat]})
-                                        </span>
-                                    )}
-                                    {modifier !== 0 && (
-                                        <span style={{ color: modifier > 0 ? 'var(--color-success)' : 'var(--color-danger)' }}>
-                                            {modifier > 0 ? ` +${modifier}` : ` ${modifier}`}
-                                        </span>
-                                    )}
-                                    {totalModifier !== 0 && (
-                                        <span style={{ color: 'var(--color-text)' }}>
-                                            {' = '}2d10{totalModifier > 0 ? `+${totalModifier}` : totalModifier}
-                                        </span>
-                                    )}
-                                </div>
-                            </div>
-
-                            {/* Erreur */}
-                            {error && (
-                                <p className="vtt-callout vtt-callout-danger">
-                                    {error}
-                                </p>
-                            )}
-                        </>
-                    ) : (
-                        /* ── Résultat ────────────────────────────────────── */
-                        <div className="flex flex-col gap-3 items-center">
-                            {/* Dés */}
-                            <div className="flex items-center gap-3">
-                                {(result.diceVals ?? []).map((v, i) => (
-                                    <div
-                                        key={i}
-                                        className="w-12 h-12 rounded-lg flex items-center justify-center font-mono font-bold text-xl"
-                                        style={{
-                                            background: 'var(--color-surface-alt)',
-                                            border:     '2px solid var(--color-primary)',
-                                            color:      'var(--color-primary)',
-                                            boxShadow:  'var(--cp-glow-cyan)',
-                                        }}
-                                    >
-                                        {v}
-                                    </div>
-                                ))}
-                                {result.modifier !== 0 && (
-                                    <>
-                                        <span className="text-muted text-lg font-mono">
-                                            {result.modifier > 0 ? `+${result.modifier}` : result.modifier}
-                                        </span>
-                                    </>
-                                )}
-                            </div>
-
-                            {/* Total */}
-                            <div
-                                className="font-bold text-4xl font-mono cp-text-glow-cyan"
-                            >
-                                {result.total}
-                            </div>
-
-                            {/* Outcome */}
-                            <div
-                                className={`${outcomeConfig.cls} rounded-lg px-6 py-3 text-center w-full`}
-                            >
-                                <div className="font-bold text-lg cp-font-ui">
-                                    {outcomeConfig.icon} {outcomeConfig.label}
-                                </div>
-                                <div className="text-sm mt-1 opacity-80">
-                                    {outcomeConfig.desc}
-                                </div>
-                            </div>
+                            <span className="cp-op">+</span>
+                            <span className="cp-term">
+                                Mod.
+                                <button type="button" className="cp-step" onClick={() => setModifier(m => m - 1)} title="Malus">−</button>
+                                <b className={modifier > 0 ? 'is-pos' : modifier < 0 ? 'is-neg' : ''}>{signed(modifier)}</b>
+                                <button type="button" className="cp-step" onClick={() => setModifier(m => m + 1)} title="Bonus">+</button>
+                            </span>
+                            <span className="cp-op">=</span>
+                            <span className="cp-term is-total">2d10<b>{signed(totalModifier)}</b></span>
                         </div>
-                    )}
-                </div>
+
+                        {/* Substitution Synth (pill, pas de case à cocher) — règles §2.2 */}
+                        {canSynth && (
+                            <div className="flex items-center gap-2 flex-wrap">
+                                <button
+                                    type="button"
+                                    onClick={() => setUseSynth(v => !v)}
+                                    aria-pressed={useSynth}
+                                    className={`vtt-pill ${useSynth ? 'is-selected' : ''}`}
+                                >
+                                    Substitution Synth
+                                </button>
+                                <span className="text-xs text-muted">
+                                    Synth ({signed(character?.synth ?? 0)}) au lieu de {STAT_LABELS[activeStat]}, si un implant le justifie
+                                </span>
+                            </div>
+                        )}
+
+                        {error && <p className="vtt-callout vtt-callout-danger">{error}</p>}
+                    </>
+                ) : (
+                    /* ── Résultat ────────────────────────────────────── */
+                    <div className={`cp-roll-result z-${result.outcome}`}>
+                        <RollStamp outcome={result.outcome} />
+                        <div className="cp-roll-dice">
+                            {(result.diceVals ?? []).map((v, i) => <D10Face key={i} value={v} size="lg" />)}
+                            <span className="cp-roll-mod">{signed(result.modifier ?? 0)}</span>
+                            <span className="cp-roll-total">{result.total}</span>
+                        </div>
+                        <RollBand total={result.total} outcome={result.outcome} />
+                        <p className="cp-roll-outcome">{outcomeConfig?.desc}</p>
+                    </div>
+                )}
+            </div>
         </Modal>
     );
 };

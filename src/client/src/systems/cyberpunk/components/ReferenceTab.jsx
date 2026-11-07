@@ -7,6 +7,7 @@
 // ─────────────────────────────────────────────────────────────────────────────
 
 import React, { useState } from 'react';
+import { Card } from './layout/Card.jsx';
 
 // ── Données statiques ─────────────────────────────────────────────────────────
 
@@ -355,8 +356,8 @@ const RefList = ({ items }) => (
     <ul className="flex flex-col gap-1">
         {items.map((item, i) => (
             <li key={i} className="flex gap-2 text-sm">
-                <span className="cp-font-ui shrink-0" style={{ color: 'var(--color-primary)' }}>›</span>
-                <span style={{ color: 'var(--color-text-default)' }}>{item}</span>
+                <span className="cp-font-ui shrink-0 text-primary">›</span>
+                <span className="text-default">{item}</span>
             </li>
         ))}
     </ul>
@@ -370,8 +371,7 @@ const RefTable = ({ columns, rows }) => (
                 {columns.map((col, i) => (
                     <th
                         key={i}
-                        className="text-left py-1.5 pr-4 text-xs cp-font-ui uppercase tracking-widest"
-                        style={{ color: 'var(--color-text-muted)' }}
+                        className="text-left py-1.5 pr-4 text-xs cp-font-ui uppercase tracking-widest text-muted"
                     >
                         {col}
                     </th>
@@ -405,19 +405,14 @@ const RefTable = ({ columns, rows }) => (
     </div>
 );
 
+// Section dans un panneau du HUD : fond plein, le texte reste lisible devant la ville
 const RefSection = ({ section }) => (
-    <div className="flex flex-col gap-3">
-        <h3
-            className="text-xs cp-font-ui uppercase tracking-widest"
-            style={{ color: 'var(--color-primary)' }}
-        >
-            {section.title}
-        </h3>
+    <Card title={section.title}>
         {section.type === 'list'
             ? <RefList items={section.items} />
             : <RefTable columns={section.columns} rows={section.rows} />
         }
-    </div>
+    </Card>
 );
 
 // ── Composant principal ───────────────────────────────────────────────────────
@@ -435,10 +430,7 @@ const ReferenceTab = ({ characterPlaybook }) => {
         <div className="flex flex-col h-full overflow-hidden">
 
             {/* ── Pills de navigation ───────────────────────────────────── */}
-            <div
-                className="flex flex-wrap gap-1.5 p-3 shrink-0"
-                style={{ borderBottom: '1px solid var(--color-border)' }}
-            >
+            <div className="cp-ref-nav flex flex-wrap gap-1.5 p-3 shrink-0">
                 {PLAYBOOKS.map(pb => (
                     <button
                         key={pb}
@@ -459,7 +451,7 @@ const ReferenceTab = ({ characterPlaybook }) => {
             </div>
 
             {/* ── Contenu ───────────────────────────────────────────────── */}
-            <div className="flex-1 overflow-y-auto p-4 flex flex-col gap-6">
+            <div className="flex-1 overflow-y-auto cp-scroll p-4 flex flex-col gap-3">
                 {data?.sections.map((section, i) => (
                     <RefSection key={i} section={section} />
                 ))}

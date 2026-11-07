@@ -1,168 +1,154 @@
-// src/client/src/systems/cyberpunk/components/TagManager.jsx
-// Tag narratif + TagAdder avec suggestions contextuelles par entityType.
+// src/client/src/systems/cyberpunk/components/layout/TagManager.jsx
+// ─────────────────────────────────────────────────────────────────────────────
+// Tags narratifs (spec_cyberpunk.md §4.1) : positif, neutre, négatif.
+// Le type se lit au liseré ; le « + » fait partie du libellé (convention du jeu).
+//
+//   <TagList tags entityType onAdd onRemove onChangeVariant />
+//     liste + « + tag » au bout (fenêtre d'ajout) ; clic sur un tag = son menu
+//     (changer de type, retirer). Sans onAdd : pas d'ajout ; sans onRemove ni
+//     onChangeVariant : tags en lecture seule.
+//   <Tag tag />  un tag seul (lecture)
+//
+// Fenêtre et menu passent par CpFloating (portail) : jamais rognés par un panneau.
+// ─────────────────────────────────────────────────────────────────────────────
 
-import React, {useCallback, useEffect, useState} from 'react';
-import {TAG_SUGGESTIONS_BY_TYPE, TAG_VARIANT_CLASS} from "../../config.jsx";
-import {useParams} from "react-router-dom";
-import {useAuth} from "../../../../context/AuthContext.jsx";
-import {useSocket} from "../../../../context/SocketContext.jsx";
-import {useFetch} from "../../../../hooks/useFetch.js";
-import {useSession} from "../../../../context/SessionContext.jsx";
+import React, { useMemo, useRef, useState } from 'react';
+import { TAG_SUGGESTIONS_BY_TYPE } from '../../config.jsx';
+import CpFloating from '../ui/CpFloating.jsx';
+import CpIcon from '../ui/CpIcon.jsx';
 
-// ── Suggestions par entité ────────────────────────────────────────────────────
+const VARIANTS = [
+    { id: 'positive', label: 'Positif'  },
+    { id: 'neutral',  label: 'Neutre'   },
+    { id: 'negative', label: 'Négatif'  },
+];
+const VARIANT_CLASS = { positive: 'is-positive', negative: 'is-negative', neutral: 'is-neutral' };
+const ENTITY_LABEL = { character: 'personnage', cyberware: 'implant', relation: 'relation', item: 'objet' };
 
-// ── Tag ───────────────────────────────────────────────────────────────────────
+/** Ajoute le préfixe « + » s'il est demandé et pas déjà tapé. */
+const withPrefix = (text, prefix) => (prefix && !text.startsWith('+') ? `+${text}` : text);
 
-/**
- * @param {{ id, tag_text, tag_variant }} tag
- * @param {function}  onRemove
- * @param {boolean}   editMode
- * @param {boolean}   alwaysRemovable  — affiche le ✕ sans condition de editMode
- */
-export const Tag = ({ tag, onRemove, editMode, alwaysRemovable = false }) => {
+// ── Tag (lecture, ou bouton qui ouvre son menu) ──────────────────────────────
+export const Tag = ({ tag, onClick, active = false }) => {
+    const cls = `cp-tag ${VARIANT_CLASS[tag.tag_variant] ?? 'is-neutral'} ${onClick ? 'is-clickable' : ''} ${active ? 'is-active' : ''}`;
+    return onClick
+        ? <button type="button" className={cls} onClick={onClick} title="Changer le type ou retirer">{tag.tag_text}</button>
+        : <span className={cls}>{tag.tag_text}</span>;
+};
+
+// ── Menu d'un tag : changer de type, retirer ─────────────────────────────────
+const TagMenu = ({ anchor, tag, onChangeVariant, onRemove, onClose }) => (
+    <CpFloating anchor={anchor} onClose={onClose} className="cp-menu">
+        {onChangeVariant && VARIANTS.map(v => (
+            <button key={v.id} type="button" className={`cp-menu-item ${tag.tag_variant === v.id ? 'is-current' : ''}`}
+                    onClick={() => { onChangeVariant(v.id); onClose(); }}>
+                <i className={`cp-menu-swatch ${VARIANT_CLASS[v.id]}`} />{v.label}
+            </button>
+        ))}
+        {onChangeVariant && onRemove && <hr className="cp-menu-sep" />}
+        {onRemove && (
+            <button type="button" className="cp-menu-item is-danger" onClick={() => { onRemove(); onClose(); }}>
+                <CpIcon name="close" size="sm" />Retirer le tag
+            </button>
+        )}
+    </CpFloating>
+);
+
+// ── Fenêtre d'ajout ─────────────────────────────────────────────────────────
+const TagAddPopover = ({ anchor, entityType, existing, onAdd, onClose }) => {
+    const [text, setText] = useState('');
+    const [prefix, setPrefix] = useState(true);
+    const [variant, setVariant] = useState('neutral');
+    const inputRef = useRef(null);
+
+    const used = useMemo(() => new Set(existing.map(t => t.tag_text)), [existing]);
+    const suggestions = TAG_SUGGESTIONS_BY_TYPE[entityType] ?? TAG_SUGGESTIONS_BY_TYPE.character;
+    const query = text.trim().toLowerCase().replace(/^\+/, '');
+    const filtered = query ? suggestions.filter(s => s.text.toLowerCase().includes(query)) : suggestions;
+
+    const add = (label, v) => {
+        if (!label) return;
+        onAdd(label, v);
+        setText('');
+        inputRef.current?.focus();
+    };
+    const submit = () => add(withPrefix(text.trim(), prefix), variant);
+
     return (
-        <span className={`cp-tag ${TAG_VARIANT_CLASS[tag.tag_variant] ?? 'cp-tag-neutral'}`}>
-        {tag.tag_text}
-            {(editMode || alwaysRemovable) && (
-                <button
-                    type="button"
-                    onClick={() => onRemove()}
-                    className="ml-1 opacity-60 hover:opacity-100 text-xs leading-none"
-                    style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}
-                >
-                    ✕
-                </button>
-            )}
-    </span>
+        <CpFloating anchor={anchor} onClose={onClose} className="cp-pop">
+            <div className="cp-pop-head">
+                <CpIcon name="tag" size="sm" />Nouveau tag <span>· {ENTITY_LABEL[entityType] ?? 'personnage'}</span>
+            </div>
+            <div className="cp-pop-body">
+                <div className="cp-pop-field">
+                    <button type="button" className={`cp-prefix ${prefix ? 'is-on' : ''}`} onClick={() => setPrefix(p => !p)}
+                            title={prefix ? 'Préfixe « + » ajouté (cliquer pour le retirer)' : 'Sans préfixe « + » (cliquer pour l\'ajouter)'}>+</button>
+                    <input
+                        ref={inputRef} autoFocus value={text} placeholder="libellé du tag…"
+                        onChange={e => setText(e.target.value)}
+                        onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); submit(); } }}
+                    />
+                </div>
+                <div className="cp-seg cp-variant">
+                    {VARIANTS.map(v => (
+                        <button key={v.id} type="button" className={`${VARIANT_CLASS[v.id]} ${variant === v.id ? 'is-on' : ''}`}
+                                onClick={() => setVariant(v.id)}>{v.label}</button>
+                    ))}
+                </div>
+                <div className="cp-pop-sugg cp-scroll">
+                    {VARIANTS.map(v => {
+                        const items = filtered.filter(s => s.variant === v.id);
+                        return (
+                            <div key={v.id} className={`cp-pop-col ${VARIANT_CLASS[v.id]}`}>
+                                <h4>{v.label}s</h4>
+                                {items.length === 0 && <span className="cp-pop-none">—</span>}
+                                {items.map(s => (
+                                    <button key={s.text} type="button" disabled={used.has(s.text)}
+                                            onClick={() => add(s.text, s.variant)}>{s.text}</button>
+                                ))}
+                            </div>
+                        );
+                    })}
+                </div>
+                <div className="cp-pop-foot">
+                    <small>Entrée : ajouter · Échap : fermer</small>
+                    <button type="button" className="cp-btn is-primary is-sm" onClick={submit} disabled={!text.trim()}>Ajouter</button>
+                </div>
+            </div>
+        </CpFloating>
     );
 };
 
-// ── TagAdder ──────────────────────────────────────────────────────────────────
-
-/**
- * @param {function(text, variant)} onAdd
- * @param {'character'|'cyberware'|'relation'|'item'} entityType
- * @param {Array}   existingTags  — pour enrichir l'autocomplete
- * @param {boolean} compact
- */
-export const TagAdder = ({ onAdd, compact = false, existingTags = [], entityType = 'character' }) => {
-    const [text,         setText]         = useState('');
-    const [variant,      setVariant]      = useState('neutral');
-    const [showSuggest,  setShowSuggest]  = useState(false);
-
-    const baseSuggestions = TAG_SUGGESTIONS_BY_TYPE[entityType] ?? TAG_SUGGESTIONS_BY_TYPE.character;
-
-    // Autocomplete : union des tags de base + tags déjà utilisés sur le perso
-    const allSuggestions = React.useMemo(() => {
-        const fromExisting = existingTags.map(t => ({ text: t.tag_text, variant: t.tag_variant ?? 'neutral' }));
-        const merged = [...baseSuggestions];
-        for (const t of fromExisting) {
-            if (!merged.some(s => s.text === t.text)) merged.push(t);
-        }
-        return merged;
-    }, [existingTags]);
-
-    const filtered = text.trim()
-        ? allSuggestions.filter(s => s.text.toLowerCase().includes(text.toLowerCase()))
-        : allSuggestions;
-
-    const handleAdd = (overrideText, overrideVariant) => {
-        const t = overrideText ?? text.trim();
-        const v = overrideVariant ?? variant;
-        if (!t) return;
-        onAdd(t, v);
-        setText('');
-        setShowSuggest(false);
-    };
-
-    const variantColors = {
-        positive: 'var(--cp-tag-positive-text)',
-        negative: 'var(--cp-tag-negative-text)',
-        neutral:  'var(--cp-tag-neutral-text)',
-    };
+// ── Liste de tags d'une entité ──────────────────────────────────────────────
+export const TagList = ({ tags = [], entityType = 'character', onAdd, onRemove, onChangeVariant, emptyLabel = null }) => {
+    const [menu, setMenu] = useState(null);       // { index, anchor }
+    const [adding, setAdding] = useState(null);   // élément d'ancrage du « + tag »
+    const editable = !!(onRemove || onChangeVariant);
 
     return (
-        <div className="flex flex-col gap-1.5 relative">
-            <div className="flex items-center gap-1.5">
-                {/* Sélecteur variant */}
-                <div className="flex gap-1 shrink-0">
-                    {Object.entries({ positive: '✦', negative: '✕', neutral: '◈' }).map(([v, icon]) => (
-                        <button
-                            type="button"
-                            key={v}
-                            onClick={() => setVariant(v)}
-                            className="w-5 h-5 rounded text-xs flex items-center justify-center"
-                            style={{
-                                background: variant === v ? variantColors[v] : 'var(--color-surface)',
-                                color:      variant === v ? 'var(--color-bg)' : variantColors[v],
-                                border:     `1px solid ${variantColors[v]}`,
-                                cursor:     'pointer',
-                            }}
-                        >
-                            {icon}
-                        </button>
-                    ))}
-                </div>
-                <div className="relative flex-1">
-                    <input
-                        type="text"
-                        value={text}
-                        onChange={e => { setText(e.target.value); setShowSuggest(true); }}
-                        onFocus={() => setShowSuggest(true)}
-                        onBlur={() => setTimeout(() => setShowSuggest(false), 150)}
-                        onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); handleAdd(); } }}
-                        placeholder={compact ? 'Tag…' : 'Ajouter un tag…'}
-                        className="w-full rounded px-2 py-0.5 text-xs outline-none"
-                        style={{
-                            background: 'var(--color-surface)',
-                            border:     '1px solid var(--color-border)',
-                            color:      'var(--color-text)',
-                        }}
-                    />
-                    {/* Dropdown suggestions */}
-                    {showSuggest && filtered.length > 0 && (
-                        <div
-                            className="absolute left-0 right-0 top-full mt-1 rounded-lg overflow-hidden z-20 shadow-xl"
-                            style={{
-                                background: 'var(--color-surface)',
-                                border:     '1px solid var(--color-border)',
-                                maxHeight:  '140px',
-                                overflowY:  'auto',
-                            }}
-                        >
-                            {filtered.map((s, i) => (
-                                <button
-                                    type="button"
-                                    key={i}
-                                    onMouseDown={() => handleAdd(s.text, s.variant)}
-                                    className="w-full text-left px-3 py-1.5 text-xs flex items-center gap-2 hover:bg-surface-alt transition-colors"
-                                    style={{ color: 'var(--color-text)', cursor: 'pointer', border: 'none', background: 'none' }}
-                                >
-                                    <span
-                                        className="w-2 h-2 rounded-full flex-shrink-0"
-                                        style={{
-                                            background: s.variant === 'positive'
-                                                ? 'var(--cp-tag-positive-text)'
-                                                : s.variant === 'negative'
-                                                    ? 'var(--cp-tag-negative-text)'
-                                                    : 'var(--cp-tag-neutral-text)',
-                                        }}
-                                    />
-                                    {s.text}
-                                </button>
-                            ))}
-                        </div>
-                    )}
-                </div>
-                <button
-                    type="button"
-                    onMouseDown={() => handleAdd()}
-                    className="text-xs px-2 py-0.5 rounded flex-shrink-0"
-                    style={{ background: 'var(--color-primary)', color: 'var(--color-bg)', cursor: 'pointer' }}
-                >
-                    +
-                </button>
-            </div>
+        <div className="cp-tags">
+            {tags.length === 0 && emptyLabel && <span className="cp-tags-empty">{emptyLabel}</span>}
+            {tags.map((tag, i) => (
+                <Tag
+                    key={tag.id ?? `${tag.tag_text}-${i}`} tag={tag} active={menu?.index === i}
+                    onClick={editable ? (e) => setMenu({ index: i, anchor: e.currentTarget }) : undefined}
+                />
+            ))}
+            {onAdd && (
+                <button type="button" className="cp-tag-add" onClick={(e) => setAdding(e.currentTarget)}>+ tag</button>
+            )}
+            {menu && tags[menu.index] && (
+                <TagMenu
+                    anchor={menu.anchor} tag={tags[menu.index]}
+                    onChangeVariant={onChangeVariant ? (v) => onChangeVariant(menu.index, v) : null}
+                    onRemove={onRemove ? () => onRemove(menu.index) : null}
+                    onClose={() => setMenu(null)}
+                />
+            )}
+            {adding && (
+                <TagAddPopover anchor={adding} entityType={entityType} existing={tags}
+                               onAdd={onAdd} onClose={() => setAdding(null)} />
+            )}
         </div>
     );
 };

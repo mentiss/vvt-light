@@ -225,19 +225,19 @@ export const XPPanel = ({ character, onUpdate, onClose }) => {
                     )}
 
                     {!canSpend && (
-                        <p className="text-sm text-center py-2" style={{ color: 'var(--color-text-muted)' }}>
+                        <p className="text-sm text-center py-2 text-muted">
                             Il faut au moins {XP_PER_ADV} XP pour dépenser un avancement.
                         </p>
                     )}
 
                     {/* ── AVANCEMENTS DE BASE ──────────────────────────── */}
                     <section ref={baseRef} className="scroll-mt-2">
-                        <h4 className="text-xs font-bold cp-font-ui uppercase tracking-widest mb-3" style={{ color: 'var(--color-text-muted)' }}>
+                        <h4 className="text-xs font-bold cp-font-ui uppercase tracking-widest mb-3 text-muted">
                             Avancements de base — {XP_PER_ADV} XP
                         </h4>
 
                         {/* Stats +1 (max +2) */}
-                        <p className="text-xs mb-2" style={{ color: 'var(--color-text-muted)' }}>
+                        <p className="text-xs mb-2 text-muted">
                             +1 à une stat (max +2 sans avancement majeur)
                         </p>
                         <div className="cp-xp-stats mb-4">
@@ -288,7 +288,7 @@ export const XPPanel = ({ character, onUpdate, onClose }) => {
                             </>
                         )}
                         {playbookMovesAvailable.length === 0 && (
-                            <p className="text-xs italic mt-1" style={{ color: 'var(--color-text-muted)' }}>
+                            <p className="text-xs italic mt-1 text-muted">
                                 Tous les moves du playbook sont débloqués.
                             </p>
                         )}
@@ -303,7 +303,7 @@ export const XPPanel = ({ character, onUpdate, onClose }) => {
                             </h4>
 
                             {/* Stat +3 (uniquement disponible en majeur) */}
-                            <p className="text-xs mb-2" style={{ color: 'var(--color-text-muted)' }}>
+                            <p className="text-xs mb-2 text-muted">
                                 Passer une stat à +3 (maximum absolu — une seule stat peut atteindre +3)
                             </p>
                             <div className="cp-xp-stats mb-4">
@@ -342,7 +342,7 @@ export const XPPanel = ({ character, onUpdate, onClose }) => {
 
                             {/* Accordéon par playbook */}
                             {Object.keys(majorByPlaybook).length === 0 && (
-                                <p className="text-xs italic" style={{ color: 'var(--color-text-muted)' }}>
+                                <p className="text-xs italic text-muted">
                                     {search ? 'Aucun résultat.' : 'Tous les moves sont débloqués.'}
                                 </p>
                             )}

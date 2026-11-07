@@ -18,6 +18,11 @@
 import React from 'react';
 import DiceEntryHistory from "./components/layout/DiceEntryHistory.jsx";
 
+// Console de manœuvres personnalisable (spec_cyberpunk.md §4) : règles pures
+export * from './moveConsole.js';
+// Bande du résultat 9- / 10-14 / 15+ (spec_cyberpunk.md §5)
+export * from './rollBand.js';
+
 // ── Constantes ────────────────────────────────────────────────────────────────
 
 const SEUIL_SUCCES  = 15;
@@ -80,10 +85,11 @@ export const ITEM_AND_CYBERWARE_CATEGORY_LABEL = {
     technique:    'Interface Technique',
 };
 
+// Classes de type d'un tag (theme.css .cp-tag.is-*)
 export const TAG_VARIANT_CLASS = {
-    positive: 'cp-tag-positive',
-    negative: 'cp-tag-negative',
-    neutral:  'cp-tag-neutral',
+    positive: 'is-positive',
+    negative: 'is-negative',
+    neutral:  'is-neutral',
 };
 
 export const CYBERWARE_ALL = [

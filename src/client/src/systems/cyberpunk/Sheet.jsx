@@ -3,13 +3,13 @@
 // Fiche joueur Cyberpunk — The Sprawl (adaptation 2d10)
 //
 // Layout :
-//   Header  — identité + playbook + actions
-//   Onglets — Fiche | Journal | Historique
-//   Fiche   — colonne principale (stats hex + ressources + directives + relations
-//             + cyberware + inventaire) + colonne droite fixe (moves)
+//   Header  — marque, code d'accès, Édition, XP, menu
+//   Onglets — Fiche | Journal | Historique | Référence (la table en cours à droite)
+//   Fiche   — SheetBody, commun avec la vue MJ (spec_cyberpunk.md §4) ; état et
+//             écritures dans useSheetEditor. Ici : jets (MoveModal) et dépense d'XP.
 // ─────────────────────────────────────────────────────────────────────────────
 
-import React, { useState, useEffect, useCallback, useRef } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 
 // Composants génériques
 import ThemeToggle         from '../../components/ui/ThemeToggle.jsx';
@@ -17,7 +17,6 @@ import ToastNotifications  from '../../components/layout/ToastNotifications.jsx'
 import SessionPlayersBar   from '../../components/layout/SessionPlayersBar.jsx';
 import JournalTab          from '../../components/tabs/JournalTab.jsx';
 import DiceHistoryPage     from '../../components/layout/DiceHistoryPage.jsx';
-import AvatarUploader      from '../../components/AvatarUploader.jsx';
 import { HamburgerMenu, HamburgerMenuSeparator } from '../../components/ui/HamburgerMenu.jsx';
 import {
     HamburgerMenuItemCreateCharacter, HamburgerMenuItemSwitchCharacter, HamburgerMenuItemAccessCode,
@@ -31,26 +30,25 @@ import { useSocket }  from '../../context/SocketContext.jsx';
 import { useSystem }  from '../../hooks/useSystem.js';
 import { useFetch }   from '../../hooks/useFetch.js';
 import { useSession } from '../../context/SessionContext.jsx';
-import {Tag, TagAdder} from "./components/layout/TagManager.jsx";
-import {IdentityCard} from "./components/layout/IdentityCard.jsx";
-import {Card} from "./components/layout/Card.jsx";
-import {CyberwareRow, DirectiveRow, ItemRow, QuickAddItem, RelationRow} from "./components/layout/Rows.jsx";
-import {StatCard} from "./components/layout/StatCard.jsx";
+import { useTableWeather } from './hooks/useTableWeather.js';
 import {XPPanel} from "./components/modals/XPPanel.jsx";
-import {MoveCard} from "./components/layout/MoveCard.jsx";
-import {ResourceCounter} from "./components/layout/ResourceCounter.jsx";
+import {XPButton} from "./components/layout/ResourceStrip.jsx";
+import {SheetBody} from "./components/layout/SheetBody.jsx";
+import { useSheetEditor } from './hooks/useSheetEditor.js';
 import BoltFarm from "./components/ui/BoltFarm.jsx";
-import CyberpunkCatalogModal from "./components/modals/CyberpunkCatalogModal.jsx";
 import ReferenceTab from "./components/ReferenceTab.jsx";
+import CpWorld, { CpAnimationsMenuItem } from "./components/ui/CpWorld.jsx";
+import CpIcon from "./components/ui/CpIcon.jsx";
 
 // ── Onglets ───────────────────────────────────────────────────────────────────
 
 const TABS = [
-    { id: 'fiche',      label: '⬡ Fiche'      },
-    { id: 'journal',    label: '⧉ Journal'    },
-    { id: 'historique', label: '▤ Historique' },
-    { id: 'reference',  label: '◈ Référence'  },
+    { id: 'fiche',      label: 'Fiche',      icon: 'sheet'     },
+    { id: 'journal',    label: 'Journal',    icon: 'journal'   },
+    { id: 'historique', label: 'Historique', icon: 'history'   },
+    { id: 'reference',  label: 'Référence',  icon: 'reference' },
 ];
+
 
 const AccessKeyBadge = ({ code }) => {
     const [isClicking, setIsClicking] = React.useState(false);
@@ -104,32 +102,32 @@ const Sheet = ({
         const h = window.location.hash.replace('#', '');
         return TABS.some(t => t.id === h) ? h : 'fiche';
     });
-    const [editMode,       setEditMode]       = useState(false);
-    const [editableChar,           setEditableChar]   = useState(character);
-    const [showAvatar,     setShowAvatar]     = useState(false);
     const [showXPPanel,    setShowXPPanel]    = useState(false);
 
-    const [tagAdderToggleRelation, setTagAdderToggleRelation] = useState(false);
-    const [tagAdderToggleCyberware, setTagAdderToggleCyberware] = useState(false);
-    const [tagAdderToggleItems, setTagAdderToggleItems] = useState(false);
-    const [tagAdderToggleCharacter, setTagAdderToggleCharacter] = useState(false);
+    // État et écritures de la fiche, partagés avec la vue MJ (spec_cyberpunk.md §4)
+    const editor = useSheetEditor(character, onCharacterUpdate);
+    const { editMode, setEditMode, setEditableChar, char } = editor;
 
-    // Moves
-    const [movesTab,       setMovesTab]       = useState('playbook'); // 'base' | 'playbook'
+    // Météo choisie par le MJ pour la table (spec_cyberpunk.md §3.1)
+    const { weather: tableWeather } = useTableWeather(activeGMSession);
+
+    // Hauteur de l'en-tête et des onglets, mesurée (la barre de session se place dessous)
+    const tabsRef = useRef(null);
+    const [topHeight, setTopHeight] = useState(125);
+    useEffect(() => {
+        const el = tabsRef.current;
+        if (!el || typeof ResizeObserver === 'undefined') return undefined;
+        const measure = () => setTopHeight(Math.round(el.getBoundingClientRect().bottom));
+        const ro = new ResizeObserver(measure);
+        ro.observe(el);
+        ro.observe(document.body);   // l'observation donne aussi la première mesure
+        return () => ro.disconnect();
+    }, []);
+
+    // Bibliothèque des manœuvres, fenêtre de jet
     const [allMoves,       setAllMoves]       = useState([]);
     const [movesLoading,   setMovesLoading]   = useState(false);
     const [moveModal,      setMoveModal]      = useState(null); // { mode, move?, statKey? }
-    const [browseModal, setBrowseModal] = useState(null);
-
-    // Tags en édition
-    const [newTagText,    setNewTagText]    = useState('');
-    const [newTagVariant, setNewTagVariant] = useState('neutral');
-    const [tagTarget,     setTagTarget]     = useState({ type: 'character', id: character?.id });
-
-    // ── Sync character → editable ─────────────────────────────────────────────
-    useEffect(() => {
-        if (!editMode) setEditableChar(character);
-    }, [character, editMode]);
 
     // ── Chargement des moves ──────────────────────────────────────────────────
     useEffect(() => {
@@ -163,128 +161,17 @@ const Sheet = ({
         if (tab === 'journal') onJournalRead?.();
     };
 
-    const char = editMode ? editableChar : character;
-
-    const set = useCallback((field, value) => {
-        setEditableChar(prev => ({ ...prev, [field]: value }));
-    }, []);
-
-    const handleSave = useCallback(() => {
-        onCharacterUpdate(editableChar);
-        setEditMode(false);
-    }, [editableChar, onCharacterUpdate]);
-
-    const handleCancel = useCallback(() => {
-        setEditableChar(character);
-        setEditMode(false);
-    }, [character]);
-
-    // Mise à jour rapide d'une ressource (Cred, info, matos, retenue)
-    const patchResource = useCallback(async (field, newVal) => {
-        const map = { cred: 'cred', infoTokens: 'infoTokens', matosTokens: 'matosTokens', retenue: 'retenue' };
-        onCharacterUpdate({ ...character, [field]: newVal });
-    }, [character, onCharacterUpdate]);
-
-    // ── Moves filtrés ─────────────────────────────────────────────────────────
-    const charMoveIds          = new Set((char?.moves ?? []).map(m => m.id));
-    const hasAdvancementUnlocked= (char?.baseAdvancements ?? 0) >= 5;
-
-    // Hors édition : seulement les moves débloqués. En édition : tous.
-    const baseMovesAll         = allMoves.filter(m => m.playbook === null && m.type === 'official');
-
-    const playbookMovesAll     = allMoves.filter(m => m.playbook === char?.playbook);
-    const playbookMovesFiltered = editMode
-        ? playbookMovesAll
-        : playbookMovesAll.filter(m => charMoveIds.has(m.id));
-
-    const advancementMovesAll  = allMoves.filter(
-        m => m.type === 'official'
-            && m.playbook !== null
-            && m.playbook !== char?.playbook
-            && !charMoveIds.has(m.id)   // non débloqués uniquement
-    );
-
-    const advancementMovesFiltered = (char?.moves ?? [])
-        .filter(m => m.playbook !== null && m.playbook !== char?.playbook)
-        .map(acquiredMove => allMoves.find(m => m.id === acquiredMove.id) ?? acquiredMove);
-
-    const advancementMovesDisplay = editMode
-        ? advancementMovesAll
-        : advancementMovesFiltered;
-
-    const movesDisplay = movesTab === 'base'
-        ? baseMovesAll
-        : movesTab === 'playbook'
-            ? playbookMovesFiltered
-            : advancementMovesDisplay;
-
-    const showAdvancementTab = advancementMovesFiltered.length > 0 || (editMode && hasAdvancementUnlocked);
-
-    // ── Tags helpers ──────────────────────────────────────────────────────────
-    const addTag = useCallback((entityType, entityId, text, variant) => {
-        const current = editableChar;
-        const newTag = { tag_text: text, tag_variant: variant };
-        let next = current;
-        if (entityType === 'character') {
-            next = { ...current, tags: [...(current.tags ?? []), newTag] };
-        } else if (entityType === 'cyberware') {
-            next = { ...current, cyberware: current.cyberware.map(c =>
-                    c.id === entityId ? { ...c, tags: [...(c.tags ?? []), newTag] } : c
-                )};
-        } else if (entityType === 'relation') {
-            next = { ...current, relations: current.relations.map(r =>
-                    r.id === entityId ? { ...r, tags: [...(r.tags ?? []), newTag] } : r
-                )};
-        } else if (entityType === 'item') {
-            next = { ...current, items: current.items.map(i =>
-                    i.id === entityId ? { ...i, tags: [...(i.tags ?? []), newTag] } : i
-                )};
-        }
-        setEditableChar(next);
-        if (!editMode) onCharacterUpdate(next);
-    }, [editableChar, editMode, onCharacterUpdate]);
-
-    const removeTag = useCallback((entityType, entityId, tagId) => {
-        const current = editableChar;
-        let next = current;
-        if (entityType === 'character') {
-            next = { ...current, tags: (current.tags ?? []).filter((_, i) => i !== tagId) };
-        } else if (entityType === 'cyberware') {
-            next = { ...current, cyberware: current.cyberware.map(c =>
-                    c.id === entityId ? { ...c, tags: (c.tags ?? []).filter((_, i) => i !== tagId) } : c
-                )};
-        } else if (entityType === 'relation') {
-            next = { ...current, relations: current.relations.map(r =>
-                    r.id === entityId ? { ...r, tags: (r.tags ?? []).filter((_, i) => i !== tagId) } : r
-                )};
-        } else if (entityType === 'item') {
-            next = { ...current, items: current.items.map(i =>
-                    i.id === entityId ? { ...i, tags: (i.tags ?? []).filter((_, i2) => i2 !== tagId) } : i
-                )};
-        }
-        setEditableChar(next);
-        if (!editMode) onCharacterUpdate(next);
-    }, [editableChar, editMode, onCharacterUpdate]);
-
     // ── Render ────────────────────────────────────────────────────────────────
     return (
-        <div
-            className="min-h-screen flex flex-col"
-            style={{ background: 'var(--color-bg)', color: 'var(--color-text)' }}
-        >
+        <div className="cp-root flex flex-col h-screen">
+            {/* Ville et météo derrière l'interface (spec_cyberpunk.md §3.1) : celle de la table */}
+            <CpWorld weather={tableWeather} />
             <ToastNotifications
                 sessionId={activeGMSession}
             />
 
             {/* ── Header ───────────────────────────────────────────────── */}
-            <header
-                className="flex items-center justify-between px-2 py-1 sticky top-0 z-30"
-                style={{
-                    background:   'var(--color-surface)',
-                    borderBottom: '1px solid var(--color-border)',
-                    boxShadow:    '0 2px 12px rgba(0,0,0,0.4)',
-                }}
-            >
+            <header className="cp-bar flex items-center justify-between px-2 py-1 sticky top-0 z-30">
                 <div className="text-center ml-3 gap-0 min-w-0 group relative flex flex-col items-center">
 
                     <div  className="relative cp-brand-glitch cp-brand-pulse">
@@ -309,65 +196,46 @@ const Sheet = ({
 
                     {editMode ? (
                         <>
-                            <button
-                                onClick={handleCancel}
-                                className="px-3 py-1.5 rounded-lg text-sm font-semibold"
-                                style={{
-                                    background: 'var(--color-surface-alt)',
-                                    color:      'var(--color-text-muted)',
-                                    border:     '1px solid var(--color-border)',
-                                }}
-                            >
+                            <button onClick={editor.cancel} className="cp-btn is-ghost">
                                 Annuler
                             </button>
-                            <button
-                                onClick={handleSave}
-                                className="px-3 py-1.5 rounded-lg text-sm font-bold cp-font-ui uppercase"
-                                style={{
-                                    background: 'var(--color-primary)',
-                                    color:      'var(--color-bg)',
-                                    border:     'none',
-                                    boxShadow:  'var(--cp-glow-cyan)',
-                                }}
-                            >
+                            <button onClick={editor.save} className="cp-btn is-primary">
                                 Sauvegarder
                             </button>
                         </>
                     ) : (
-                        <button
-                            onClick={() => setEditMode(true)}
-                            className="px-3 py-1.5 rounded-lg text-sm font-semibold bg-surface-alt text-base border-1 border-base hover:cp-neon-glow-el hover:bg-surface hover:border-accent"
-                        >
-                            ✏️ Édition
+                        <button onClick={() => setEditMode(true)} className="cp-btn">
+                            <CpIcon name="edit" /> Édition
                         </button>
                     )}
 
-                    <button
-                        onClick={() => setShowXPPanel(true)}
-                        className="px-3 py-1.5 rounded-lg text-sm font-semibold bg-surface-alt text-base border-1 border-base hover:cp-neon-glow-el hover:bg-surface hover:border-accent"
-                        title="Dépenser de l'XP"
-                    >
-                        ✦ XP
-                    </button>
+                    {/* XP : barre jusqu'au prochain avancement, 5 avancements de base (spec §4) */}
+                    <XPButton
+                        xp={char?.xp ?? 0}
+                        baseAdvancements={char?.baseAdvancements ?? 0}
+                        onOpen={() => setShowXPPanel(true)}
+                        onChange={(v) => editor.patchResource('xp', v)}
+                    />
 
-                    {/* Hamburger générique (spec_ui_menu.md), habillé dans theme.css, emojis du slug */}
+                    {/* Hamburger générique (spec_ui_menu.md), habillé dans theme.css, icônes dessinées du slug */}
                     <HamburgerMenu>
-                        <HamburgerMenuItemCreateCharacter icon="✨" />
-                        <HamburgerMenuItemSwitchCharacter icon="👤" currentCharId={character?.id} />
+                        <HamburgerMenuItemCreateCharacter icon={<CpIcon name="newChar" />} />
+                        <HamburgerMenuItemSwitchCharacter icon={<CpIcon name="switch" />} currentCharId={character?.id} />
                         <HamburgerMenuSeparator />
-                        <HamburgerMenuItemAccessCode icon="🔑" character={character} onSuccess={onCharacterUpdate} />
+                        <HamburgerMenuItemAccessCode icon={<CpIcon name="key" />} character={character} onSuccess={onCharacterUpdate} />
                         <HamburgerMenuSeparator />
                         <HamburgerMenuItemFreeDice
-                            icon="⬡"
+                            icon={<CpIcon name="d10" />}
                             characterId={character.id}
                             characterName={character.prenom || character.nom || 'Anonyme'}
                             sessionId={activeGMSession}
                         />
-                        <HamburgerMenuItemDiceConfig icon="🎲" />
+                        <HamburgerMenuItemDiceConfig icon={<CpIcon name="gear" />} />
+                        <CpAnimationsMenuItem />
                         <HamburgerMenuSeparator />
-                        <HamburgerMenuItemGMInterface icon="🎭" />
+                        <HamburgerMenuItemGMInterface icon={<CpIcon name="mask" />} />
                         <HamburgerMenuSeparator />
-                        <HamburgerMenuItemLogout icon="🔒" />
+                        <HamburgerMenuItemLogout icon={<CpIcon name="logout" />} />
                     </HamburgerMenu>
 
                 </div>
@@ -375,606 +243,48 @@ const Sheet = ({
 
             </header>
 
-            {/* ── Onglets ───────────────────────────────────────────────── */}
-            <nav
-                className="flex border-b"
-                style={{ borderColor: 'var(--color-border)', background: 'var(--color-surface)' }}
-            >
+            {/* ── Onglets : à leur largeur, la table en cours à droite (spec §3.2) ── */}
+            <nav className="cp-tabs" ref={tabsRef}>
                 {TABS.map(tab => (
                     <button
                         key={tab.id}
                         onClick={() => changeTab(tab.id)}
-                        className={`group relative flex-1 py-3 text-sm font-semibold cp-font-ui uppercase tracking-wide transition-colors
-                         ${activeTab === tab.id ? 'text-primary' : 'text-muted'}
-                         bg-none border-none cursor-pointer
-                         `}
+                        className={`cp-tab ${activeTab === tab.id ? 'is-active' : ''}`}
                     >
-                        <span className={`transition-all duration-200 ${activeTab === tab.id ? '' : 'group-hover:text-default group-hover:cp-neon-glow'}`}>
-                            {tab.label}
-                        </span>
+                        <CpIcon name={tab.icon} size="sm" />
+                        {tab.label}
                         {tab.id === 'journal' && journalUnread > 0 && (
-                            <span
-                                className="absolute top-2 right-2 text-xs rounded-full w-4 h-4 flex items-center justify-center font-bold"
-                                style={{ background: 'var(--color-danger)', color: 'white' }}
-                            >
-                                {journalUnread}
-                            </span>
-                        )}
-                        {activeTab === tab.id && (
-                            <span
-                                className="absolute bottom-0 left-0 right-0 h-0.5"
-                                style={{ background: 'var(--color-primary)', boxShadow: 'var(--cp-glow-cyan)' }}
-                            />
+                            <span className="cp-tab-badge">{journalUnread}</span>
                         )}
                     </button>
                 ))}
+                {activeSessionName && (
+                    <div className="cp-tabs-aside">
+                        <span className="cp-tabs-session">Table : <b>{activeSessionName}</b></span>
+                    </div>
+                )}
             </nav>
 
             {/* ── Contenu ───────────────────────────────────────────────── */}
-            <main className="flex flex-1 ">
+            <main className="flex flex-1 min-h-0">
                 <SessionPlayersBar
                     character={character}
                     sessionId={activeGMSession}
                     sessionName={activeSessionName}
-                    headerHeight={125}
+                    headerHeight={topHeight}
                     noWidthWhenCollapsed={true}
                 />
-                <div className="flex-1 overflow-hidden">
-                    {/* ── FICHE ──────────────────────────────────────────────── */}
+                <div className="flex-1 min-w-0 overflow-hidden">
+                    {/* ── FICHE (spec_cyberpunk.md §4) : corps commun avec la vue MJ ── */}
                     {activeTab === 'fiche' && (
-                        <div className="flex h-full" style={{ maxHeight: 'calc(100vh - 112px)' }}>
-
-                            {/* Colonne principale — scrollable */}
-                            <div
-                                className="flex-1 overflow-y-auto cp-scroll p-4 flex flex-col gap-4"
-                            >
-                                <div className="grid grid-cols-2 gap-2">
-                                    <div className="flex flex-col gap-2">
-                                        {/* ── IDENTITY ───────────────────────────── */}
-                                        <IdentityCard
-                                            char={char}
-                                            editMode={editMode}
-                                            set={set}
-                                            showAvatar={showAvatar}
-                                            setShowAvatar={setShowAvatar}
-                                        />
-
-                                        {/* ── RESSOURCES ──────────────────────────── */}
-                                        <Card title="Ressources">
-                                            <div className="flex flex-wrap gap-2 justify-around">
-                                                <ResourceCounter
-                                                    label="Cred"
-                                                    value={char?.cred ?? 0}
-                                                    color="var(--cp-cred-color)"
-                                                    onChange={v => editMode ? set('cred', v) : patchResource('cred', v)}
-                                                    editMode={true}
-                                                />
-                                                <div className="w-0.5 h-full cp-divider-h" />
-                                                <ResourceCounter
-                                                    label="[info]"
-                                                    value={char?.infoTokens ?? 0}
-                                                    color="var(--cp-info-color)"
-                                                    onChange={v => editMode ? set('infoTokens', v) : patchResource('infoTokens', v)}
-                                                    editMode={true}
-                                                />
-                                                <ResourceCounter
-                                                    label="[matos]"
-                                                    value={char?.matosTokens ?? 0}
-                                                    color="var(--cp-matos-color)"
-                                                    onChange={v => editMode ? set('matosTokens', v) : patchResource('matosTokens', v)}
-                                                    editMode={true}
-                                                />
-                                                <ResourceCounter
-                                                    label="Retenue"
-                                                    value={char?.retenue ?? 0}
-                                                    color="var(--cp-retenue-color)"
-                                                    onChange={v => editMode ? set('retenue', v) : patchResource('retenue', v)}
-                                                    editMode={true}
-                                                />
-                                                <div className="w-0.5 h-full cp-divider-h" />
-                                                <ResourceCounter
-                                                    label="XP"
-                                                    value={char?.xp ?? 0}
-                                                    color="var(--cp-xp-color)"
-                                                    onChange={v => editMode ? set('xp', v) : patchResource('xp', v)}
-                                                    editMode={true}
-                                                    char={char}
-                                                    colorLabel={hasAdvancementUnlocked ? "var(--color-accent)" : "var(--color-text-muted)"}
-                                                />
-                                            </div>
-                                        </Card>
-
-                                        {/* ── TAGS PERSONNAGE ──────────────────────── */}
-                                        <Card
-                                            title="États narratifs"
-                                            action={
-                                                <button
-                                                    onClick={() => setTagAdderToggleCharacter(v => !v)}
-                                                    className={`text-xs px-2 py-0.5 rounded bg-none border-none cursor-pointer ${tagAdderToggleCharacter ? 'text-secondary' : 'text-primary'}`}
-                                                    title="Editer les tags"
-                                                >
-                                                    ⎚
-                                                </button>
-                                            }
-                                        >
-                                            {(char?.tags ?? []).length > 0 ? (
-                                                <div className="flex flex-wrap gap-2">
-                                                    {(char?.tags ?? []).map((tag, i) => (
-                                                        <Tag
-                                                            key={i}
-                                                            tag={tag}
-                                                            editMode={editMode}
-                                                            onRemove={() => removeTag('character', char.id, i)}
-                                                            alwaysRemovable={true}
-                                                        />
-                                                    ))}
-                                                </div>
-                                            ) : (
-                                                <p className="text-xs italic" style={{ color: 'var(--color-text-muted)' }}>Aucun état actif.</p>
-                                            )}
-                                            {tagAdderToggleCharacter && <TagAdder
-                                                existingTags={char?.tags ?? []}
-                                                onAdd={(text, variant) => {
-                                                    setEditableChar(prev => ({
-                                                        ...prev,
-                                                        tags: [...(prev.tags ?? []), { tag_text: text, tag_variant: variant }],
-                                                    }));
-                                                    // Sauvegarder immédiatement si on n'est pas en mode édition
-                                                    if (!editMode) {
-                                                        onCharacterUpdate({
-                                                            ...character,
-                                                            tags: [...(character?.tags ?? []), { tag_text: text, tag_variant: variant }],
-                                                        });
-                                                    }
-                                                }}
-                                                entityType="character"
-                                            />}
-                                        </Card>
-                                    </div>
-
-                                    {/* ── STATS HEX ───────────────────────────── */}
-                                    <StatCard
-                                        editMode={editMode}
-                                        char={char}
-                                        editableChar={editableChar}
-                                        setMoveModal={setMoveModal}
-                                        set={set}
-                                    />
-                                </div>
-
-                                <div className="grid grid-cols-2 gap-2">
-                                    {/* ── CYBERWARE ────────────────────────────── */}
-                                    <Card
-                                        title="Cyberware"
-                                        action={
-                                            <div className="flex items-center gap-0.5">
-                                                <button
-                                                    onClick={() => setTagAdderToggleCyberware(v => !v)}
-                                                    className={`text-xs px-2 py-0.5 rounded bg-none border-none cursor-pointer ${tagAdderToggleCyberware ? 'text-secondary' : 'text-primary'}`}
-                                                    title="Editer les tags"
-                                                >
-                                                    ⎚
-                                                </button>
-                                                <button
-                                                    onClick={() => setBrowseModal('cyberware')}
-                                                    className="text-xs px-2 py-0.5 rounded text-primary bg-none border-none cursor-pointer"
-                                                    title="Parcourir le cyberware"
-                                                >
-                                                    ⊞
-                                                </button>
-                                            </div>
-                                        }
-                                    >
-                                        {(char?.cyberware ?? []).length === 0 && !editMode && (
-                                            <p className="text-sm" style={{ color: 'var(--color-text-muted)' }}>Aucun implant.</p>
-                                        )}
-                                        {(editMode ? editableChar : char)?.cyberware?.map((c, idx) => (
-                                            <CyberwareRow
-                                                key={c.id ?? `new_${idx}`}
-                                                item={editMode ? (editableChar?.cyberware?.[idx] ?? c) : c}
-                                                editMode={editMode}
-                                                onChange={(updated) => {
-                                                    const base = editMode ? editableChar : char;
-                                                    const next = {
-                                                        ...base,
-                                                        cyberware: base.cyberware.map((x, i) =>
-                                                            (c.id ? x.id === c.id : i === idx)
-                                                                ? { ...x, ...updated }
-                                                                : x
-                                                        ),
-                                                    };
-                                                    setEditableChar(next);
-                                                }}
-                                                onRemove={() => {
-                                                    const base = editMode ? editableChar : char;
-                                                    const next = {
-                                                        ...base,
-                                                        cyberware: base.cyberware.filter((x, i) =>
-                                                            c.id ? x.id !== c.id : i !== idx
-                                                        ),
-                                                    };
-                                                    setEditableChar(next);
-                                                }}
-                                                onRemoveTag={(tagIdx) => removeTag('cyberware', c.id, tagIdx)}
-                                                onAddTag={(text, variant) => addTag('cyberware', c.id, text, variant)}
-                                                toggleTagAdder={tagAdderToggleCyberware}
-                                            />
-                                        ))}
-                                        {editMode && (
-                                            <button
-                                                onClick={() => setEditableChar(prev => ({
-                                                    ...prev,
-                                                    cyberware: [...(prev.cyberware ?? []), { name: '', option_text: '', notes: '', tags: [] }],
-                                                }))}
-                                                className="text-sm py-1.5 w-full rounded-lg"
-                                                style={{
-                                                    color:      'var(--color-primary)',
-                                                    background: 'var(--color-surface-alt)',
-                                                    border:     '1px dashed var(--color-border)',
-                                                }}
-                                            >
-                                                + Ajouter un implant
-                                            </button>
-                                        )}
-                                    </Card>
-
-                                    {/* ── INVENTAIRE ───────────────────────────── */}
-                                    <Card
-                                        title="Matos"
-                                        action={
-                                            <div className="flex items-center gap-0.5">
-                                                <button
-                                                    onClick={() => setTagAdderToggleItems(v => !v)}
-                                                    className={`text-xs px-2 py-0.5 rounded bg-none border-none cursor-pointer ${tagAdderToggleItems ? 'text-secondary' : 'text-primary'}`}
-                                                    title="Editer les tags"
-                                                >
-                                                    ⎚
-                                                </button>
-                                                <button
-                                                    onClick={() => setBrowseModal('items')}
-                                                    className="text-xs px-2 py-0.5 rounded text-primary bg-none border-none cursor-pointer"
-                                                    title="Parcourir l'inventaire"
-                                                >
-                                                    ⊞
-                                                </button>
-                                            </div>
-                                        }
-                                    >
-                                        {(char?.items ?? []).length === 0 && !editMode && (
-                                            <p className="text-sm" style={{ color: 'var(--color-text-muted)' }}>Inventaire vide.</p>
-                                        )}
-                                        {(char?.items ?? []).map((item, idx) => (
-                                            <ItemRow
-                                                key={item.id ?? `new_${idx}`}
-                                                item={editMode ? (editableChar?.items?.[idx] ?? item) : item}
-                                                editMode={editMode}
-                                                onChange={(updated) => {
-                                                    const base = editMode ? editableChar : char;
-                                                    const nextItems = base.items.map((x, i) =>
-                                                        (item.id ? x.id === item.id : i === idx)
-                                                            ? { ...x, ...updated }
-                                                            : x
-                                                    );
-                                                    const next = { ...base, items: nextItems };
-                                                    setEditableChar(next);
-                                                    if (!editMode) onCharacterUpdate(next);
-                                                }}
-                                                onRemove={() => {
-                                                    const base = editMode ? editableChar : char;
-                                                    const nextItems = base.items.filter((x, i) =>
-                                                        item.id ? x.id !== item.id : i !== idx
-                                                    );
-                                                    const next = { ...base, items: nextItems };
-                                                    setEditableChar(next);
-                                                    if (!editMode) onCharacterUpdate(next);
-                                                }}
-                                                onRemoveTag={(tagIdx) => removeTag('item', item.id, tagIdx)}
-                                                onAddTag={(text, variant) => addTag('item', item.id, text, variant)}
-                                                toggleTagAdder={tagAdderToggleItems}
-                                            />
-                                        ))}
-
-                                        {/* Bouton ajout — toujours visible */}
-                                        <QuickAddItem
-                                            onAdd={(newItem) => {
-                                                const base = editMode ? editableChar : char;
-                                                const next = { ...base, items: [...(base.items ?? []), newItem] };
-                                                setEditableChar(next);
-                                                if (!editMode) onCharacterUpdate(next);
-                                            }}
-                                        />
-                                    </Card>
-                                </div>
-                                <div className="grid grid-cols-2 gap-2">
-                                    {/* ── DIRECTIVES ───────────────────────────── */}
-                                    <Card title="Directives">
-                                        {/* Personnelles */}
-                                        <div className="flex flex-col gap-2">
-                                    <span className="text-xs cp-font-ui uppercase tracking-wide" style={{ color: 'var(--color-text-muted)' }}>
-                                        Personnelles
-                                    </span>
-                                            {(char?.directives ?? [])
-                                                .filter(d => d.type === 'personal')
-                                                .map((d, i) => (
-                                                    <DirectiveRow
-                                                        key={d.id ?? i}
-                                                        directive={d}
-                                                        editMode={editMode}
-                                                        onChange={(updated) => {
-                                                            setEditableChar(prev => ({
-                                                                ...prev,
-                                                                directives: prev.directives.map(x =>
-                                                                    (x.id ?? x) === (d.id ?? d) ? { ...x, ...updated } : x
-                                                                ),
-                                                            }));
-                                                        }}
-                                                        onRemove={() => setEditableChar(prev => ({
-                                                            ...prev,
-                                                            directives: prev.directives.filter(x =>
-                                                                (x._tempId ?? x.id) !== (d._tempId ?? d.id)
-                                                            ),
-                                                        }))}
-                                                    />
-                                                ))
-                                            }
-                                            {editMode && (
-                                                <button
-                                                    onClick={() => setEditableChar(prev => ({
-                                                        ...prev,
-                                                        directives: [...(prev.directives ?? []), {
-                                                            _tempId: `tmp_${Date.now()}_${Math.random()}`,
-                                                            type: 'personal', text: '', blankValue: '', completed: false,
-                                                        }],
-                                                    }))}
-                                                    className="text-xs py-1"
-                                                    style={{ color: 'var(--color-primary)', background: 'none', border: 'none', cursor: 'pointer' }}
-                                                >
-                                                    + Ajouter
-                                                </button>
-                                            )}
-                                        </div>
-
-                                        <div className="cp-divider" />
-
-                                        {/* Mission */}
-                                        <div className="flex flex-col gap-2">
-                                            <span className="text-xs cp-font-ui uppercase tracking-wide" style={{ color: 'var(--color-text-muted)' }}>
-                                                De Mission
-                                            </span>
-                                            {(char?.directives ?? [])
-                                                .filter(d => d.type === 'mission')
-                                                .map((d, i) => (
-                                                    <DirectiveRow
-                                                        key={d.id ?? i}
-                                                        directive={d}
-                                                        editMode={editMode}
-                                                        onChange={(updated) => {
-                                                            setEditableChar(prev => ({
-                                                                ...prev,
-                                                                directives: prev.directives.map(x =>
-                                                                    (x.id ?? x) === (d.id ?? d) ? { ...x, ...updated } : x
-                                                                ),
-                                                            }));
-                                                        }}
-                                                        onRemove={() => setEditableChar(prev => ({
-                                                            ...prev,
-                                                            directives: prev.directives.filter(x =>
-                                                                (x._tempId ?? x.id) !== (d._tempId ?? d.id)
-                                                            ),
-                                                        }))}
-                                                    />
-                                                ))
-                                            }
-                                            {editMode && (
-                                                <button
-                                                    onClick={() => setEditableChar(prev => ({
-                                                        ...prev,
-                                                        directives: [...(prev.directives ?? []), {
-                                                            _tempId: `tmp_${Date.now()}_${Math.random()}`,
-                                                            type: 'mission', text: '', blankValue: '', completed: false,
-                                                        }],
-                                                    }))}
-                                                    className="text-xs py-1"
-                                                    style={{ color: 'var(--color-primary)', background: 'none', border: 'none', cursor: 'pointer' }}
-                                                >
-                                                    + Ajouter
-                                                </button>
-                                            )}
-                                        </div>
-                                    </Card>
-
-                                    {/* ── RELATIONS ────────────────────────────── */}
-                                    <Card
-                                        title="Relations"
-                                        action={
-                                            <button
-                                                onClick={() => setTagAdderToggleRelation(v => !v)}
-                                                className={`text-xs px-2 py-0.5 rounded bg-none border-none cursor-pointer ${tagAdderToggleRelation ? 'text-secondary' : 'text-primary'}`}
-                                                title="Editer les tags"
-                                            >
-                                                ⎚
-                                            </button>
-                                        }
-                                    >
-                                        {(char?.relations ?? []).map((r) => {
-                                            const rKey = r._tempId ?? r.id;
-                                            return (
-                                            <RelationRow
-                                                key={rKey}
-                                                relation={r}
-                                                editMode={editMode}
-                                                onChange={(updated) => {
-                                                    setEditableChar(prev => ({
-                                                        ...prev,
-                                                        relations: prev.relations.map(x =>
-                                                            (x._tempId ?? x.id) === rKey ? { ...x, ...updated } : x
-                                                        ),
-                                                    }));
-                                                }}
-                                                onRemoveTag={(tagIdx) => removeTag('relation', r.id, tagIdx)}
-                                                onAddTag={(text, variant) => addTag('relation', r.id, text, variant)}
-                                                onRemove={() => setEditableChar(prev => ({
-                                                    ...prev,
-                                                    relations: prev.relations.filter(x => (x._tempId ?? x.id) !== rKey),
-                                                }))}
-                                                onRoll={(linkScore) => setMoveModal({
-                                                    mode: 'move',
-                                                    move: {
-                                                        name:        'Aider ou Interférer',
-                                                        description: 'Sur un succès en aide : +1 au jet. Sur un succès en interférence : -2 au jet. Tu t\'exposes aux mêmes conséquences.',
-                                                        stat:        'link',
-                                                        statValue:   linkScore,
-                                                    },
-                                                })}
-                                                toggleTagAdder={tagAdderToggleRelation}
-                                            />
-                                            );
-                                        })}
-                                        {editMode && (
-                                            <button
-                                                onClick={() => setEditableChar(prev => ({
-                                                    ...prev,
-                                                    relations: [...(prev.relations ?? []), {
-                                                        _tempId: `tmp_${Date.now()}_${Math.random()}`,
-                                                        name: '', description: '', link_score: 1, tags: [],
-                                                    }],
-                                                }))}
-                                                className="text-sm py-1.5 w-full rounded-lg"
-                                                style={{
-                                                    color:      'var(--color-primary)',
-                                                    background: 'var(--color-surface-alt)',
-                                                    border:     '1px dashed var(--color-border)',
-                                                }}
-                                            >
-                                                + Ajouter une relation
-                                            </button>
-                                        )}
-                                    </Card>
-                                </div>
-
-                                {/* ── NOTES ──────────────────────────────────
-                                <Card title="Notes">
-                                    {editMode ? (
-                                        <textarea
-                                            value={editableChar?.notes ?? ''}
-                                            onChange={e => set('notes', e.target.value)}
-                                            rows={4}
-                                            placeholder="Notes libres…"
-                                            className="w-full rounded-lg px-3 py-2 text-sm resize-none"
-                                            style={{
-                                                background: 'var(--color-surface-alt)',
-                                                border:     '1px solid var(--color-border)',
-                                                color:      'var(--color-text)',
-                                                outline:    'none',
-                                            }}
-                                        />
-                                    ) : (
-                                        <p className="text-sm whitespace-pre-wrap" style={{ color: 'var(--color-text-muted)' }}>
-                                            {char?.notes || 'Aucune note.'}
-                                        </p>
-                                    )}
-                                </Card>*/}
-                            </div>
-
-                            {/* ── Colonne droite — Moves ─────────────────────── */}
-                            <aside
-                                className="flex flex-col overflow-hidden flex-shrink-0"
-                                style={{
-                                    width:        '280px',
-                                    borderLeft:   '1px solid var(--color-border)',
-                                    background:   'var(--cp-move-bg)',
-                                }}
-                            >
-                                {/* Header moves */}
-                                <div
-                                    className="px-3 py-3 flex flex-col gap-2"
-                                    style={{ borderBottom: '1px solid var(--color-border)' }}
-                                >
-                                    <h2 className="text-xs font-bold cp-font-ui uppercase tracking-widest" style={{ color: 'var(--color-text-muted)' }}>
-                                        Manœuvres
-                                    </h2>
-                                    {/* Micro-onglets */}
-                                    <div
-                                        className="flex rounded-lg overflow-hidden"
-                                        style={{ background: 'var(--color-surface-alt)' }}
-                                    >
-                                        {[
-                                            { id: 'base',     label: 'De base' },
-                                            { id: 'playbook', label: char?.playbook ?? 'Playbook' },
-                                            ...(showAdvancementTab
-                                                    ? [{ id: 'advancement', label: '★ Avance.' }]
-                                                    : []
-                                            ),
-                                        ].map(t => (
-                                            <button
-                                                key={t.id}
-                                                onClick={() => setMovesTab(t.id)}
-                                                className="flex-1 py-1.5 text-xs font-semibold cp-font-ui uppercase tracking-wide transition-all relative"
-                                                style={{
-                                                    background: movesTab === t.id ? 'var(--color-primary)' : 'transparent',
-                                                    color:      movesTab === t.id ? 'var(--color-bg)' : 'var(--color-text-muted)',
-                                                    border:     'none',
-                                                    cursor:     'pointer',
-                                                    boxShadow:  movesTab === t.id ? 'var(--cp-glow-cyan)' : 'none',
-                                                }}
-                                            >
-                                                {t.label}
-                                            </button>
-                                        ))}
-                                    </div>
-                                </div>
-
-                                {/* Liste moves scrollable */}
-                                <div className="flex-1 overflow-y-auto cp-scroll p-2 flex flex-col gap-1">
-                                    {movesLoading && (
-                                        <p className="text-xs text-center py-4" style={{ color: 'var(--color-text-muted)' }}>
-                                            Chargement…
-                                        </p>
-                                    )}
-                                    {!movesLoading && movesDisplay.map(move => {
-                                        const isAcquired = charMoveIds.has(move.id);
-
-                                        const handleClick = () => {
-                                            if (editMode) {
-                                                if (isAcquired) {
-                                                    // Retirer le move
-                                                    setEditableChar(prev => ({
-                                                        ...prev,
-                                                        moves: (prev.moves ?? []).filter(m => m.id !== move.id),
-                                                    }));
-                                                } else {
-                                                    // Ajouter le move (sans coût XP — c'est l'édition libre)
-                                                    setEditableChar(prev => ({
-                                                        ...prev,
-                                                        moves: [...(prev.moves ?? []), { id: move.id, name: move.name, stat: move.stat, description: move.description, playbook: move.playbook, type: move.type, isApproved: true }],
-                                                    }));
-                                                }
-                                            } else if (move.stat) {
-                                                // Hors édition : ouvrir la MoveModal si le move a une stat
-                                                setMoveModal({ mode: 'move', move });
-                                            }
-                                        };
-
-                                        return (
-                                            <MoveCard
-                                                key={move.id}
-                                                move={move}
-                                                isUnlocked={isAcquired || move.playbook === null}
-                                                isAcquired={isAcquired}
-                                                isEditMode={editMode}
-                                                showFull={movesTab === 'advancement'}
-                                                onClick={handleClick}
-                                            />
-                                        );
-                                    })}
-                                    {!movesLoading && movesDisplay.length === 0 && (
-                                        <p className="text-xs text-center py-4" style={{ color: 'var(--color-text-muted)' }}>
-                                            Aucune manœuvre.
-                                        </p>
-                                    )}
-                                </div>
-                            </aside>
-                        </div>
+                        <SheetBody
+                            editor={editor}
+                            allMoves={allMoves}
+                            movesLoading={movesLoading}
+                            variant="player"
+                            onRollStat={(statKey) => setMoveModal({ mode: 'stat', statKey })}
+                            onRollMove={(move) => setMoveModal({ mode: 'move', move })}
+                        />
                     )}
 
                     {/* ── JOURNAL ────────────────────────────────────────────── */}
@@ -1022,28 +332,6 @@ const Sheet = ({
                         setShowXPPanel(false);
                     }}
                     onClose={() => setShowXPPanel(false)}
-                />
-            )}
-            {showAvatar     && (
-                <AvatarUploader
-                    currentAvatar={char.avatar}
-                    onAvatarChange={(newAvatar) => {
-                        setEditableChar(prev => ({ ...prev, avatar: newAvatar }));
-                    }}
-                    onClose={() => setShowAvatar(false)}
-                />
-            )}
-            {/* Catalogue cyberware / inventaire (browseModal = 'cyberware' | 'items', nom du champ du personnage) */}
-            {browseModal && (
-                <CyberpunkCatalogModal
-                    kind={browseModal}
-                    onAdd={(entry) => {
-                        const base = editMode ? editableChar : char;
-                        const next = { ...base, [browseModal]: [...(base[browseModal] ?? []), entry] };
-                        setEditableChar(next);
-                        if (!editMode) onCharacterUpdate(next);
-                    }}
-                    onClose={() => setBrowseModal(null)}
                 />
             )}
         </div>

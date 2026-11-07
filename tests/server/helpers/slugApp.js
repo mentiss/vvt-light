@@ -48,7 +48,12 @@ export async function startSlugApp(slug, routeName = 'characters', { shared = fa
     db.pragma('foreign_keys = ON');   // comme src/server/db/index.js
 
     const emits = [];
-    const io = { to: (room) => ({ emit: (event, payload) => emits.push({ room, event, payload }) }) };
+    // Rooms ouvertes (comme io.sockets.adapter.rooms) : un test y ajoute une room pour simuler une table connectée
+    const rooms = new Map();
+    const io = {
+        to: (room) => ({ emit: (event, payload) => emits.push({ room, event, payload }) }),
+        sockets: { adapter: { rooms } },
+    };
 
     // /characters : même pile que server.js (route du slug s'il en a une, puis route commune)
     const routers = routeName === 'characters'
@@ -93,5 +98,5 @@ export async function startSlugApp(slug, routeName = 'characters', { shared = fa
         });
     });
 
-    return { slug, config, db, emits, routes, request, close };
+    return { slug, config, db, emits, rooms, routes, request, close };
 }
