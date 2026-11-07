@@ -40,7 +40,7 @@ const MlRollModal = ({ c, asked, patron, sessionId, act, theme, onClose }) => {
     const [fateSl, setFateSl] = useState(0);
     const { launch, rolling, error, entry } = useMlRoll();
 
-    const superiority = Number(patron?.superiority) || 0;
+    const superiority = patron?.superiorityEnabled === false ? 0 : Number(patron?.superiority) || 0;   // désactivée à la table : rien
     const influence = Object.entries(c.influence ?? {}).filter(([, v]) => v !== 0);
     const target = Math.max(0, Number(asked.base ?? 0) + Number(difficulty));
     const burstTrait = (asked.item?.data?.traits ?? []).some(t => ['burst', 'rapid_fire'].includes(t?.key ?? t));
@@ -107,12 +107,12 @@ const MlRollModal = ({ c, asked, patron, sessionId, act, theme, onClose }) => {
                         </Pills>
                     </Field>
                     <Field label="Avantage / Désavantage">
-                        <Stepper value={edge} onChange={setEdge} min={-3} max={3} label={EDGE_LABEL(edge)} />
+                        <Stepper value={edge} onChange={setEdge} min={-3} max={3} label={signed(edge)} text={EDGE_LABEL(edge)} />
                     </Field>
                     {mode === 'attack' && (
                         <Field label={asked.ranged ? 'Défense de la cible' : 'Mêlée : attaque opposée'}>
                             <Toggle on={opposed} onChange={setOpposed}>{asked.ranged ? 'La cible esquive (Réflexes (Esquive))' : 'La cible se défend (test opposé)'}</Toggle>
-                            {opposed && <Stepper value={opposedSl} onChange={setOpposedSl} min={-10} max={10} label={`DR de la cible : ${signed(opposedSl)}`} />}
+                            {opposed && <Stepper value={opposedSl} onChange={setOpposedSl} min={-10} max={10} label={signed(opposedSl)} text="DR de la cible" />}
                             {burstTrait && asked.ranged && <Toggle on={burst} onChange={setBurst}>Rafale : +1 DR (1 munition)</Toggle>}
                             <small className="im-note">Dégâts de base {asked.damage} {opposed ? '+ écart de DR' : '+ DR'} ; double réussi : Critique.</small>
                         </Field>
@@ -133,7 +133,7 @@ const MlRollModal = ({ c, asked, patron, sessionId, act, theme, onClose }) => {
                                 ))}
                             </Pills>
                         )}
-                        <Stepper value={extraSl} onChange={setExtraSl} min={-6} max={6} label={`Autres DR (talents…) : ${signed(extraSl)}`} />
+                        <Stepper value={extraSl} onChange={setExtraSl} min={-6} max={6} label={signed(extraSl)} text="Autres DR (talents…)" />
                     </Field>
                 </div>
             )}

@@ -6,8 +6,10 @@ import { describe, it, expect } from 'vitest';
 import { SKILLS } from '../../../../../src/systems/maledictum/config/skills.js';
 import {
     INITIAL_CREATION, finalChars, creationAdvances, creationTalents, creationXp, creationTodo,
-    buildCharacterPayload, factionForRoll, startingSolars,
+    buildCharacterPayload, factionForRoll, startingSolars, startingChars,
 } from '../../../../../src/systems/maledictum/config/rules/creation.js';
+import { BOOK_SETUP } from '../../../../../src/systems/maledictum/config/setup.js';
+import { charsFromDice } from '../../../../../src/systems/maledictum/config/rules/dice.js';
 import { themeFor } from '../../../../../src/systems/maledictum/config/rules/themes.js';
 import * as A from '../../../../../src/systems/maledictum/config/rules/actions.js';
 
@@ -41,15 +43,44 @@ describe('cumul des bonus', () => {
 });
 
 describe('XP des tirages', () => {
-    it('dans l\'ordre +50, réarrangé +25, relancé 0 ; origine +25, faction +75, rôle par le Patron +50', () => {
-        expect(creationXp({ ...complete })).toBe(50);
-        expect(creationXp({ ...complete, order: [1, 0, 2, 3, 4, 5, 6, 7, 8] })).toBe(25);
-        expect(creationXp({ ...complete, rerolled: true })).toBe(0);
-        expect(creationXp({ ...complete, originRandom: true, factionRandom: true, roleRandom: true })).toBe(200);
+    it('livre : dans l\'ordre +50, réarrangé +25, relancé 0 ; origine +25, faction +75, rôle par le Patron +50', () => {
+        expect(creationXp({ ...complete }, BOOK_SETUP)).toBe(50);
+        expect(creationXp({ ...complete, order: [1, 0, 2, 3, 4, 5, 6, 7, 8] }, BOOK_SETUP)).toBe(25);
+        expect(creationXp({ ...complete, rerolled: true }, BOOK_SETUP)).toBe(0);
+        expect(creationXp({ ...complete, originRandom: true, factionRandom: true, roleRandom: true }, BOOK_SETUP)).toBe(200);
     });
-    it('table des factions du setup : les Ordos tirables (PG p.46)', () => {
-        expect(factionForRoll(60)).toBe('ordo_hereticus');
-        expect(factionForRoll(90)).toBe('ordo_xenos');
+    it('réglage du MJ : XP fixe pour tous, les tirages n\'ajoutent rien (spec §13.1)', () => {
+        const fixed = { ...BOOK_SETUP, creation: { randomDraws: true, xp: { fixed: 50 } } };
+        expect(creationXp({ ...complete, rerolled: true }, fixed)).toBe(50);
+        expect(creationXp({ ...complete, originRandom: true, factionRandom: true, roleRandom: true }, fixed)).toBe(50);
+    });
+    it('avec le Player\'s Guide : table de l\'Inquisition, Ordos tirables (PG p.46)', () => {
+        expect(factionForRoll(60, null, BOOK_SETUP)).toBe('ordo_hereticus');
+        expect(factionForRoll(90, null, BOOK_SETUP)).toBe('ordo_xenos');
+    });
+    it('sans le Player\'s Guide : table du livre selon l\'origine, l\'Inquisition à la place des Ordos (p.55)', () => {
+        const core = { ...BOOK_SETUP, books: { core: true, ipg: false, igmg: false } };
+        expect(factionForRoll(66, 'agri_world', core)).toBe('inquisition');
+        expect(factionForRoll(67, 'agri_world', core)).toBe('inquisition');
+        expect(factionForRoll(40, 'agri_world', core)).toBe('astra_militarum');
+        expect(factionForRoll(40, null, core)).toBeNull();
+    });
+});
+
+describe('caractéristiques selon le setup', () => {
+    it('achat : base du setup + points', () => {
+        const ws = { ...INITIAL_CREATION, charMethod: 'points' };
+        expect(startingChars(ws, BOOK_SETUP).ws).toBe(30);
+        expect(startingChars(ws, { ...BOOK_SETUP, chars: { base: 25, points: { total: 90, min: 4, max: 20 } } }).ws).toBe(35);
+    });
+    it('plafond d\'achat du setup', () => {
+        const ws = { ...INITIAL_CREATION, charMethod: 'points', points: { ...INITIAL_CREATION.points, ws: 20, bs: 0 } };
+        expect(creationTodo(ws, BOOK_SETUP).chars.join(' ')).toMatch(/entre 4 et 18/);
+        const setup = { ...BOOK_SETUP, chars: { base: 25, points: { total: 90, min: 0, max: 20 } } };
+        expect(creationTodo(ws, setup).chars).toEqual([]);
+    });
+    it('tirage : 2d10 + base', () => {
+        expect(charsFromDice([1, 2], ['ws'], 25)).toEqual({ ws: 28 });
     });
 });
 

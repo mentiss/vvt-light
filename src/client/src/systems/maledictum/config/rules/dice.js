@@ -194,8 +194,8 @@ export const overWarpThreshold = (charge, threshold) => Number(charge) > Number(
 
 // ── Génération des caractéristiques ─────────────────────────────────────────
 
-/** 2d10 + 20 par caractéristique, dans l'ordre (18 dés lancés d'un coup) */
-export const charsFromDice = (values, keys) => keys.reduce((acc, k, i) => {
-    acc[k] = 20 + Number(values[i * 2] ?? 0) + Number(values[i * 2 + 1] ?? 0);
+/** 2d10 + base (20 au livre, réglage du setup) par caractéristique, dans l'ordre (18 dés lancés d'un coup) */
+export const charsFromDice = (values, keys, base = 20) => keys.reduce((acc, k, i) => {
+    acc[k] = base + Number(values[i * 2] ?? 0) + Number(values[i * 2 + 1] ?? 0);
     return acc;
 }, {});

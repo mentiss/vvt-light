@@ -29,6 +29,7 @@ import {
 } from '../../config/rules/character.js';
 import { LOCATION_LABELS, signed } from '../../config/rules/dice.js';
 import { CATALOG, KIND_LABELS, itemFromEntry, customItem } from '../../config/rules/items.js';
+import { available } from '../../config/setup.js';
 import { TABLE_LABELS } from '../../config/rules/tables.js';
 import { powerCost, TALENT_COST, SKILL_MAX_ADVANCES } from '../../config/rules/xp.js';
 import * as A from '../../config/rules/actions.js';
@@ -342,12 +343,12 @@ const XpForm = ({ c, act, onClose }) => {
                         </div>
                     );
                 }))}
-                {tab === 'talents' && TALENTS.filter(t => match(`${t.label} ${t.labelEn}`)).map(t => (
+                {tab === 'talents' && available(TALENTS).filter(t => match(`${t.label} ${t.labelEn}`)).map(t => (
                     <Buy key={t.key} label={t.label} detail={[t.requirement?.text, owned.has(t.key) && !t.repeatable ? 'déjà pris' : null].filter(Boolean).join(' · ')}
                          offer={{ cost: TALENT_COST, ok: xpAvailable(c) >= TALENT_COST && (!owned.has(t.key) || !!t.repeatable) && !t.requirement?.creationOnly }}
                          onBuy={() => buy(A.addTalent, t.key)} />
                 ))}
-                {tab === 'powers' && (!d.psyker ? <p className="im-note">Il faut le talent Psyker.</p> : POWERS.filter(p => match(`${p.label} ${p.labelEn}`)).map(p => (
+                {tab === 'powers' && (!d.psyker ? <p className="im-note">Il faut le talent Psyker.</p> : available(POWERS).filter(p => match(`${p.label} ${p.labelEn}`)).map(p => (
                     <Buy key={p.key} label={`${p.label}${p.overt ? ' *' : ''}`} detail={`${DISCIPLINES[p.discipline]} · Indice ${p.warpRating}${(c.powers ?? []).includes(p.key) ? ' · connu' : ''}`}
                          offer={{ cost: powerCost(p), ok: !(c.powers ?? []).includes(p.key) && xpAvailable(c) >= powerCost(p) }} onBuy={() => buy(A.addPower, p)} />
                 )))}
@@ -360,7 +361,7 @@ const XpForm = ({ c, act, onClose }) => {
 // ── Aiguillage ───────────────────────────────────────────────────────────────
 
 const MlSheetModals = ({ asked, c, act, patron, sessionId, theme, onClose }) => {
-    const catalog = useMemo(() => CATALOG, []);
+    const catalog = useMemo(() => available(CATALOG), []);   // livres disponibles (config/setup.js)
     if (!asked) return null;
     const { kind, data = {} } = asked;
     switch (kind) {

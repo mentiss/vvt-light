@@ -80,7 +80,7 @@ const Sheet = ({ character, onCharacterUpdate, journalUnread, onJournalRead, dar
         </>
     ) : (
         <>
-            <span className="im-chip" title="Supériorité du groupe, réglée par le MJ"><Orn name="laurel" />Supériorité <b>{patron?.superiority ?? 0}</b></span>
+            {patron?.superiorityEnabled !== false && <span className="im-chip" title="Supériorité du groupe, réglée par le MJ"><Orn name="laurel" />Supériorité <b>{patron?.superiority ?? 0}</b></span>}
             <button type="button" className="im-icon-btn" onClick={() => setDraft({ ...character })} title="Mode Édition" aria-label="Mode Édition"><EditIcon /></button>
         </>
     ));

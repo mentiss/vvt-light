@@ -21,7 +21,7 @@ describe('maledictum : Patron de la table', () => {
 
     it('fiche par défaut tant que rien n\'est écrit ; hors table : refusé', async () => {
         const res = await api.request('GET', `/${sessionId}`, { token: playerToken(severine) });
-        expect(res.body).toMatchObject({ sessionId, data: {}, secret: {}, superiority: 0, subtlety: 10, subtletyEnabled: true });
+        expect(res.body).toMatchObject({ sessionId, data: {}, secret: {}, superiority: 0, superiorityEnabled: true, subtlety: 10, subtletyEnabled: true });
         expect((await api.request('GET', `/${sessionId}`, { token: playerToken(outsider) })).status).toBe(403);
     });
 
@@ -44,6 +44,13 @@ describe('maledictum : Patron de la table', () => {
         expect((await api.request('PUT', `/${sessionId}/superiority`, { token: gmToken(), body: { value: -3 } })).body.superiority).toBe(0);
         expect((await api.request('PUT', `/${sessionId}/superiority`, { token: gmToken(), body: { value: 'x' } })).status).toBe(400);
         expect((await api.request('PUT', `/${sessionId}`, { token: gmToken(), body: { subtlety: 0 } })).body.subtlety).toBe(1);
+    });
+
+    it('Supériorité désactivable par table, valeur conservée (§13.2)', async () => {
+        const off = await api.request('PUT', `/${sessionId}`, { token: gmToken(), body: { superiorityEnabled: false } });
+        expect(off.body).toMatchObject({ superiorityEnabled: false, subtlety: 1 });
+        const on = await api.request('PUT', `/${sessionId}`, { token: gmToken(), body: { superiorityEnabled: true } });
+        expect(on.body.superiorityEnabled).toBe(true);
     });
 
     it('table inconnue : 404', async () => {

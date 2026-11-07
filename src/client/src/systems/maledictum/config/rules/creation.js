@@ -5,22 +5,26 @@
 // tirages et leur XP, cumul des bonus (origine, faction ou Fonction, rôle),
 // « À faire » par onglet, fiche envoyée au serveur.
 //
-//   Caractéristiques : 2d10 + 20 dans l'ordre (+50 XP), réarrangées (+25 XP),
-//     relancées (0 XP) ; ou 90 points sur une base de 20 (4 à 18 chacune).
-//   Origine tirée : +25 XP ; faction tirée : +75 XP (table du PG p.46, Ordos compris) ;
-//   rôle laissé au Patron : +50 XP (PG p.55, décision D-1).
+//   Réglages du setup (config/setup.js, spec §13.1) : base des caractéristiques,
+//   achat de points, livres disponibles, tirages au hasard, XP de création.
+//   Livre : 2d10 + 20 dans l'ordre (+50 XP), réarrangées (+25 XP), relancées (0 XP) ;
+//     ou 90 points sur une base de 20 (4 à 18 chacune).
+//   Origine tirée : +25 XP ; faction tirée : +75 XP (table du PG p.46, Ordos compris ;
+//     sans le PG, table du livre p.55 selon l'origine, Inquisition à la place des Ordos) ;
+//   rôle laissé au Patron : +50 XP (PG p.55, décision D-1). Réglage { fixed: n } : n XP pour tous.
 //   La Fonction (Duty) remplace les Avantages de la faction (D-2).
 //   Création : 2 Avances au plus par compétence, 1 par spécialisation ; les
 //   prérequis des talents sont ignorés (livre p.48).
 // ─────────────────────────────────────────────────────────────────────────────
 
 import { ORIGINS, INQUISITION_ORIGINS } from '../origins.js';
-import { FACTIONS, INQUISITION_FACTION_TABLE } from '../factions.js';
+import { FACTIONS, FACTION_TABLE, INQUISITION_FACTION_TABLE } from '../factions.js';
 import { ROLES } from '../roles.js';
 import { POWERS } from '../powers.js';
 import { CHAR_KEYS } from './character.js';
 import { CREATION_SKILL_MAX, CREATION_SPEC_MAX } from './xp.js';
 import { itemsFromLabels } from './items.js';
+import { SETUP, available, hasBook } from '../setup.js';
 
 export const ALL_ORIGINS = [...ORIGINS, ...INQUISITION_ORIGINS];
 export const ORIGIN_BY_KEY = Object.fromEntries(ALL_ORIGINS.map(o => [o.key, o]));
@@ -28,10 +32,8 @@ export const FACTION_BY_KEY = Object.fromEntries(FACTIONS.map(f => [f.key, f]));
 export const ROLE_BY_KEY = Object.fromEntries(ROLES.map(r => [r.key, r]));
 
 export const XP_RANDOM = { charsInOrder: 50, charsRearranged: 25, origin: 25, faction: 75, role: 50 };
-export const POINTS_TOTAL = 90;
-export const POINTS_MIN = 4;
-export const POINTS_MAX = 18;
-export const CHAR_BASE = 20;
+/** Caractéristiques du setup : base (tirage et achat), achat de points */
+export const charRules = (setup = SETUP) => ({ base: setup.chars.base, ...setup.chars.points });
 export const FATE_START = 3;
 
 export const INITIAL_CREATION = {
@@ -65,16 +67,29 @@ export const originForRoll = (set, value) => {
     return list.find(o => value >= o.roll[0] && value <= o.roll[1])?.key ?? null;
 };
 
-/** Faction tirée : table propre au setup Inquisition (PG p.46, Ordos compris) */
-export const factionForRoll = (value) => pickRange(INQUISITION_FACTION_TABLE, value);
+const ORDOS = ['ordo_hereticus', 'ordo_malleus', 'ordo_xenos'];
+
+/**
+ * Faction tirée : avec le Player's Guide, sa table (p.46, Ordos compris) ; sans lui, la table du
+ * livre de base (p.55, colonne de l'origine), où les Ordos redeviennent l'Inquisition.
+ */
+export const factionForRoll = (value, originKey = null, setup = SETUP) => {
+    if (hasBook('ipg', setup)) return pickRange(INQUISITION_FACTION_TABLE, value);
+    const rows = FACTION_TABLE[originKey];
+    if (!rows) return null;
+    return pickRange(rows.map(([key, min, max]) => [ORDOS.includes(key) ? 'inquisition' : key, min, max]), value);
+};
+
+/** Le tirage de faction demande-t-il d'abord une origine du livre de base ? */
+export const factionRollNeedsOrigin = (setup = SETUP) => !hasBook('ipg', setup);
 
 // ── Caractéristiques ─────────────────────────────────────────────────────────
 
 export const pointsSpent = (points) => sum(points);
 
 /** Caractéristiques de départ avant les bonus (tirage ou points) */
-export const startingChars = (ws) => {
-    if (ws.charMethod === 'points') return Object.fromEntries(CHAR_KEYS.map(k => [k, CHAR_BASE + (Number(ws.points?.[k]) || 0)]));
+export const startingChars = (ws, setup = SETUP) => {
+    if (ws.charMethod === 'points') return Object.fromEntries(CHAR_KEYS.map(k => [k, setup.chars.base + (Number(ws.points?.[k]) || 0)]));
     if (!ws.rolled) return null;
     return Object.fromEntries(CHAR_KEYS.map((k, i) => [k, ws.rolled[ws.order ? ws.order[i] : i]]));
 };
@@ -153,9 +168,9 @@ export const creationTalents = (ws) => {
 export const isPsyker = (ws) => creationTalents(ws).includes('psyker');
 
 /** Pouvoirs : Châtiment (connu de tous les psykers), un mineur, un d'une discipline */
-export const powerChoices = () => ({
-    minor: POWERS.filter(p => p.discipline === 'minor' && p.key !== 'smite'),
-    discipline: POWERS.filter(p => p.discipline !== 'minor'),
+export const powerChoices = (setup = SETUP) => ({
+    minor: available(POWERS, setup).filter(p => p.discipline === 'minor' && p.key !== 'smite'),
+    discipline: available(POWERS, setup).filter(p => p.discipline !== 'minor'),
 });
 
 // ── Équipement et Solars ─────────────────────────────────────────────────────
@@ -206,7 +221,9 @@ export const startingInfluence = (ws) => {
 
 // ── XP de création ───────────────────────────────────────────────────────────
 
-export const creationXp = (ws) => {
+export const creationXp = (ws, setup = SETUP) => {
+    const rule = setup.creation.xp;
+    if (rule && typeof rule === 'object' && Number.isFinite(rule.fixed)) return rule.fixed;   // XP fixe du MJ
     let xp = 0;
     if (ws.charMethod === 'roll' && ws.rolled && !ws.rerolled) xp += ws.order ? XP_RANDOM.charsRearranged : XP_RANDOM.charsInOrder;
     if (ws.originRandom) xp += XP_RANDOM.origin;
@@ -217,13 +234,14 @@ export const creationXp = (ws) => {
 
 // ── À faire, par onglet ──────────────────────────────────────────────────────
 
-export const creationTodo = (ws) => {
+export const creationTodo = (ws, setup = SETUP) => {
     const todo = { chars: [], origin: [], faction: [], role: [], equipment: [], identity: [] };
+    const { total, min, max } = setup.chars.points;
     if (ws.charMethod === 'roll' && !ws.rolled) todo.chars.push('lancer les dés');
     if (ws.charMethod === 'points') {
         const spent = pointsSpent(ws.points);
-        if (spent !== POINTS_TOTAL) todo.chars.push(`répartir ${POINTS_TOTAL} points (${spent} placés)`);
-        if (CHAR_KEYS.some(k => ws.points[k] < POINTS_MIN || ws.points[k] > POINTS_MAX)) todo.chars.push(`entre ${POINTS_MIN} et ${POINTS_MAX} par caractéristique`);
+        if (spent !== total) todo.chars.push(`répartir ${total} points (${spent} placés)`);
+        if (CHAR_KEYS.some(k => ws.points[k] < min || ws.points[k] > max)) todo.chars.push(`entre ${min} et ${max} par caractéristique`);
     }
 
     const origin = ORIGIN_BY_KEY[ws.originKey];

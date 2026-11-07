@@ -43,10 +43,10 @@ function _ensureRow(db, sessionId) {
 
 function loadPatron(db, sessionId) {
     const r = db.prepare('SELECT * FROM patrons WHERE session_id = ?').get(sessionId);
-    if (!r) return { sessionId, data: {}, secret: {}, superiority: 0, subtlety: 10, subtletyEnabled: true, updatedAt: null };
+    if (!r) return { sessionId, data: {}, secret: {}, superiority: 0, superiorityEnabled: true, subtlety: 10, subtletyEnabled: true, updatedAt: null };
     return {
         sessionId, data: parseJson(r.data, {}), secret: parseJson(r.secret, {}),
-        superiority: r.superiority, subtlety: r.subtlety, subtletyEnabled: !!r.subtlety_enabled, updatedAt: r.updated_at,
+        superiority: r.superiority, superiorityEnabled: !!r.superiority_enabled, subtlety: r.subtlety, subtletyEnabled: !!r.subtlety_enabled, updatedAt: r.updated_at,
     };
 }
 
@@ -58,18 +58,20 @@ function savePatron(db, sessionId, body = {}) {
     const superiority = body.superiority === undefined ? null : clamp(int(body.superiority, 0), 0, SUPERIORITY_MAX);
     const subtlety = body.subtlety === undefined ? null : clamp(int(body.subtlety, 10), 1, 10);
     const enabled = body.subtletyEnabled === undefined ? null : (body.subtletyEnabled ? 1 : 0);
+    const supEnabled = body.superiorityEnabled === undefined ? null : (body.superiorityEnabled ? 1 : 0);
     db.prepare(`
         UPDATE patrons SET
             data = COALESCE(@data, data),
             secret = COALESCE(@secret, secret),
             superiority = COALESCE(@superiority, superiority),
+            superiority_enabled = COALESCE(@supEnabled, superiority_enabled),
             subtlety = COALESCE(@subtlety, subtlety),
             subtlety_enabled = COALESCE(@enabled, subtlety_enabled),
             updated_at = CURRENT_TIMESTAMP
         WHERE session_id = @sessionId
     `).run({
         sessionId, data: data ? JSON.stringify(data) : null, secret: secret ? JSON.stringify(secret) : null,
-        superiority, subtlety, enabled,
+        superiority, supEnabled, subtlety, enabled,
     });
     return loadPatron(db, sessionId);
 }

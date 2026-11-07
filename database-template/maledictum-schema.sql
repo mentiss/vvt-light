@@ -193,6 +193,7 @@ CREATE TABLE IF NOT EXISTS patrons (
     data               TEXT    DEFAULT '{}',
     secret             TEXT    DEFAULT '{}',
     superiority        INTEGER NOT NULL DEFAULT 0,
+    superiority_enabled INTEGER NOT NULL DEFAULT 1,
     subtlety           INTEGER NOT NULL DEFAULT 10,
     subtlety_enabled   INTEGER NOT NULL DEFAULT 1,
     updated_at         DATETIME DEFAULT CURRENT_TIMESTAMP

@@ -81,6 +81,16 @@ export const SessionProvider = ({ children }) => {
         };
     }, [socket, activeGMSession]);
 
+    // Reconnexion (serveur relancé, réseau coupé, veille) : le serveur a oublié la room ;
+    // on la rejoint, sinon plus aucune diffusion de la table n'arrive jusqu'au rechargement
+    // (même principe que useGMSession côté MJ).
+    useEffect(() => {
+        if (!socket || !activeGMSession) return;
+        const rejoin = () => socket.emit('join-session', { sessionId: activeGMSession, system: getSystemFromPath() });
+        socket.io.on('reconnect', rejoin);
+        return () => socket.io.off('reconnect', rejoin);
+    }, [socket, activeGMSession]);
+
     useEffect(() => {
         if (!activeGMSession) { setActiveSessionName(null); return; }
         const system = getSystemFromPath();

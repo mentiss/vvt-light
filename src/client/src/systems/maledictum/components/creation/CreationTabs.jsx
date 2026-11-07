@@ -3,7 +3,9 @@
 // Onglets de l'assistant de création (spec_maledictum.md §11.3) : Guide,
 // Caractéristiques, Origine, Faction, Rôle, Équipement, Identité ; colonne
 // d'aide contextuelle (HelpPanel). Règles : config/rules/creation.js ;
-// textes : config/creationHelp.js. Pas de <select> : des pills et des cartes.
+// textes : config/creationHelp.js ; réglages du setup : config/setup.js (livres
+// disponibles, base et achat des caractéristiques, tirages au hasard, XP).
+// Pas de <select> : des pills et des cartes.
 // Props des onglets : ws, setWs, help (setHelpTopic)
 // ─────────────────────────────────────────────────────────────────────────────
 
@@ -17,11 +19,13 @@ import { ROLES } from '../../config/roles.js';
 import { GUIDE, TAB_HELP } from '../../config/creationHelp.js';
 import { CHAR_KEYS, CHAR_SHORT } from '../../config/rules/character.js';
 import {
-    ORIGIN_BY_KEY, FACTION_BY_KEY, ROLE_BY_KEY, XP_RANDOM, POINTS_TOTAL, POINTS_MIN, POINTS_MAX, CHAR_BASE,
+    ORIGIN_BY_KEY, FACTION_BY_KEY, ROLE_BY_KEY, XP_RANDOM, charRules,
     startingChars, charBonuses, finalChars, pointsSpent, creationXp, isPsyker, powerChoices, equipmentLabels, startingSolars,
-    originForRoll, factionForRoll, factionAdvances,
+    originForRoll, factionForRoll, factionRollNeedsOrigin, factionAdvances,
 } from '../../config/rules/creation.js';
-import { Pill, Pills, Stepper, Toggle, Field } from '../ui/MlUi.jsx';
+import { itemFromLabel, KIND_LABELS } from '../../config/rules/items.js';
+import { SETUP, available, hasBook, isAvailable } from '../../config/setup.js';
+import { Pill, Pills, Stepper, Toggle, Field, Block } from '../ui/MlUi.jsx';
 
 const SKILL_BY_KEY = Object.fromEntries(SKILLS.map(s => [s.key, s]));
 const TALENT_BY_KEY = Object.fromEntries(TALENTS.map(t => [t.key, t]));
@@ -34,6 +38,17 @@ const advLabel = (key) => {
     return spec ? `${skill.label} (${spec.label})` : skill?.label ?? key;
 };
 const charList = (o) => Object.entries(o ?? {}).map(([k, v]) => `+${v} ${CHAR_SHORT[k]}`).join(', ');
+
+// Réglages du setup
+const RANDOM = SETUP.creation.randomDraws;
+const BOOK_XP = SETUP.creation.xp === 'book';
+const xpLabel = (n) => (BOOK_XP ? ` (+${n} XP)` : '');
+const ORIGINS_OK = available(ORIGINS);
+const INQ_ORIGINS_OK = hasBook('ipg') ? available(INQUISITION_ORIGINS) : [];
+const FACTIONS_OK = available(FACTIONS);
+const ROLES_OK = available(ROLES);
+const talentOk = (k) => isAvailable(TALENT_BY_KEY[k]);
+const specOf = (key) => { const [s, sp] = key.split('.'); return SKILL_BY_KEY[s]?.specs?.find(x => x.key === sp) ?? null; };
 
 const Card = ({ on, onClick, title, sub, children }) => (
     <button type="button" className={`im-card-pick${on ? ' is-selected' : ''}`} onClick={onClick}>
@@ -71,12 +86,30 @@ export const HelpPanel = ({ topic, onBack }) => {
     } else if (topic.kind === 'char') {
         const c = CHAR_BY_KEY[topic.key];
         title = c?.label; body = <p>{c?.summary}</p>;
+    } else if (topic.kind === 'skill') {
+        const [sk, sp] = topic.key.split('.');
+        const skill = SKILL_BY_KEY[sk];
+        const spec = sp ? specOf(topic.key) : null;
+        title = advLabel(topic.key);
+        body = <>{spec && <p>{spec.summary ?? 'Pas de description dans le livre.'}</p>}
+            <p className={spec ? 'im-note' : ''}>{skill?.summary}</p>
+            <p className="im-note">Caractéristique : {CHAR_SHORT[skill?.char] ?? '—'}{skill?.restricted ? ` · Restreinte : ${skill.restricted}` : ''}</p></>;
+    } else if (topic.kind === 'item') {
+        const it = itemFromLabel(topic.key);
+        const d = it?.data ?? {};
+        title = it?.name ?? topic.key;
+        body = it?.itemKey ? <>{d.summary && <p>{d.summary}</p>}
+            <p className="im-note">{[KIND_LABELS[it.kind], d.damage != null || d.damageBonus ? `Dégâts ${d.damage ?? 0}${d.damageBonus === 'sb' ? ' + BF' : ''}` : null,
+                d.armour != null ? `Armure ${d.armour}` : null, d.enc != null ? `Enc. ${d.enc}` : null].filter(Boolean).join(' · ')}</p></>
+            : <p className="im-note">Objet hors catalogue : ses effets se règlent avec le MJ.</p>;
     }
     return (
         <aside className="im-help">
-            <h4>{title}</h4>
-            {body}
-            {topic.kind !== 'tab' && <button type="button" className="vtt-btn vtt-btn-sm" onClick={onBack}>‹ Aide de l'onglet</button>}
+            <Block title="Aide">
+                <h4>{title}</h4>
+                {body}
+                {topic.kind !== 'tab' && <button type="button" className="vtt-btn vtt-btn-sm" onClick={onBack}>‹ Aide de l'onglet</button>}
+            </Block>
         </aside>
     );
 };
@@ -101,6 +134,7 @@ export const CharsTab = ({ ws, setWs, help, onRollChars, rolling }) => {
     const start = startingChars(ws);
     const bonus = charBonuses(ws);
     const final = finalChars(ws);
+    const R = charRules();
     const [swapFrom, setSwapFrom] = React.useState(null);
     const swap = (i) => {
         if (swapFrom === null) { setSwapFrom(i); return; }
@@ -112,15 +146,15 @@ export const CharsTab = ({ ws, setWs, help, onRollChars, rolling }) => {
     return (
         <div className="im-fields">
             <Pills>
-                <Pill on={ws.charMethod === 'roll'} onClick={() => set({ charMethod: 'roll' })}>Tirer 2d10 + 20</Pill>
-                <Pill on={ws.charMethod === 'points'} onClick={() => set({ charMethod: 'points' })}>Acheter avec {POINTS_TOTAL} points</Pill>
+                <Pill on={ws.charMethod === 'roll'} onClick={() => set({ charMethod: 'roll' })}>Tirer 2d10 + {R.base}</Pill>
+                <Pill on={ws.charMethod === 'points'} onClick={() => set({ charMethod: 'points' })}>Acheter avec {R.total} points</Pill>
             </Pills>
             {ws.charMethod === 'roll' && (
                 <Pills>
                     <button type="button" className="vtt-btn vtt-btn-primary" disabled={rolling} onClick={() => onRollChars(!!ws.rolled)}>
-                        {ws.rolled ? 'Relancer (0 XP)' : 'Lancer les dés'}
+                        {ws.rolled ? `Relancer${BOOK_XP ? ' (0 XP)' : ''}` : 'Lancer les dés'}
                     </button>
-                    {ws.rolled && <span className="im-note">{ws.rerolled ? 'Relancé : pas d\'XP.' : ws.order ? `Réarrangé : +${XP_RANDOM.charsRearranged} XP.` : `Dans l'ordre : +${XP_RANDOM.charsInOrder} XP.`} Cliquez deux valeurs pour les échanger.</span>}
+                    {ws.rolled && <span className="im-note">{BOOK_XP ? (ws.rerolled ? 'Relancé : pas d\'XP. ' : ws.order ? `Réarrangé : +${XP_RANDOM.charsRearranged} XP. ` : `Dans l'ordre : +${XP_RANDOM.charsInOrder} XP. `) : ''}Cliquez deux valeurs pour les échanger.</span>}
                 </Pills>
             )}
             <div className="im-chars im-chars-wizard">
@@ -129,13 +163,13 @@ export const CharsTab = ({ ws, setWs, help, onRollChars, rolling }) => {
                         <b>{CHAR_SHORT[k]}</b>
                         {ws.charMethod === 'roll'
                             ? <button type="button" className="im-char-val" disabled={!ws.rolled} onClick={() => swap(i)}>{start?.[k] ?? '—'}</button>
-                            : <Stepper value={ws.points[k]} min={POINTS_MIN} max={POINTS_MAX} label={CHAR_BASE + ws.points[k]}
+                            : <Stepper value={ws.points[k]} min={R.min} max={R.max} label={R.base + ws.points[k]}
                                        onChange={v => set({ points: { ...ws.points, [k]: v } })} />}
                         <small>{bonus[k] ? `+${bonus[k]} → ${final?.[k] ?? '—'}` : final?.[k] ?? ''}</small>
                     </div>
                 ))}
             </div>
-            {ws.charMethod === 'points' && <p className="im-note">{pointsSpent(ws.points)} / {POINTS_TOTAL} points ; entre {POINTS_MIN} et {POINTS_MAX} par caractéristique, sur une base de {CHAR_BASE}.</p>}
+            {ws.charMethod === 'points' && <p className="im-note">{pointsSpent(ws.points)} / {R.total} points ; entre {R.min} et {R.max} par caractéristique, sur une base de {R.base}.</p>}
         </div>
     );
 };
@@ -144,16 +178,20 @@ export const CharsTab = ({ ws, setWs, help, onRollChars, rolling }) => {
 
 export const OriginTab = ({ ws, setWs, help }) => {
     const set = (p) => setWs(prev => ({ ...prev, ...p }));
-    const list = ws.originSet === 'inquisition' ? INQUISITION_ORIGINS : ORIGINS;
+    const list = ws.originSet === 'inquisition' && INQ_ORIGINS_OK.length ? INQ_ORIGINS_OK : ORIGINS_OK;
     const origin = ORIGIN_BY_KEY[ws.originKey];
     const pick = (key, random = false) => { set({ originKey: key, originChoice: null, originSkill: null, originRandom: random }); help({ kind: 'origin', key }); };
     return (
         <div className="im-fields">
-            <Pills>
-                <Pill on={ws.originSet === 'core'} onClick={() => set({ originSet: 'core', originKey: null })}>Mondes du livre de base</Pill>
-                <Pill on={ws.originSet === 'inquisition'} onClick={() => set({ originSet: 'inquisition', originKey: null })}>Origines macharriennes (Inquisition)</Pill>
-                <button type="button" className="vtt-btn vtt-btn-sm" onClick={() => pick(originForRoll(ws.originSet, d100()), true)}>Laisser le destin décider (+{XP_RANDOM.origin} XP)</button>
-            </Pills>
+            {(INQ_ORIGINS_OK.length > 0 || RANDOM) && (
+                <Pills>
+                    {INQ_ORIGINS_OK.length > 0 && <>
+                        <Pill on={ws.originSet !== 'inquisition'} onClick={() => set({ originSet: 'core', originKey: null })}>Mondes du livre de base</Pill>
+                        <Pill on={ws.originSet === 'inquisition'} onClick={() => set({ originSet: 'inquisition', originKey: null })}>Origines macharriennes (Inquisition)</Pill>
+                    </>}
+                    {RANDOM && <button type="button" className="vtt-btn vtt-btn-sm" onClick={() => pick(originForRoll(INQ_ORIGINS_OK.length ? ws.originSet : 'core', d100()), true)}>Laisser le destin décider{xpLabel(XP_RANDOM.origin)}</button>}
+                </Pills>
+            )}
             <div className="im-card-grid">
                 {list.map(o => (
                     <Card key={o.key} on={ws.originKey === o.key} onClick={() => pick(o.key)} title={`${o.groupLabel ? `${o.groupLabel} : ` : ''}${o.label}`}
@@ -167,10 +205,10 @@ export const OriginTab = ({ ws, setWs, help }) => {
             )}
             {origin?.choiceSkills?.length > 0 && (
                 <Field label="Compétence (une Avance)">
-                    <Pills>{origin.choiceSkills.map(k => <Pill key={k} on={ws.originSkill === k} onClick={() => set({ originSkill: k })}>{advLabel(k)}</Pill>)}</Pills>
+                    <Pills>{origin.choiceSkills.map(k => <Pill key={k} on={ws.originSkill === k} onClick={() => { set({ originSkill: k }); help({ kind: 'skill', key: k }); }}>{advLabel(k)}</Pill>)}</Pills>
                 </Field>
             )}
-            {ws.originRandom && <p className="im-note">Tirée au hasard : +{XP_RANDOM.origin} XP (choisir une autre origine annule ce bonus).</p>}
+            {ws.originRandom && BOOK_XP && <p className="im-note">Tirée au hasard : +{XP_RANDOM.origin} XP (choisir une autre origine annule ce bonus).</p>}
         </div>
     );
 };
@@ -186,13 +224,17 @@ export const FactionTab = ({ ws, setWs, help }) => {
     const pick = (key, random = false) => { set({ factionKey: key, dutyKey: null, factionRandom: random, ...BENEFIT_RESET }); help({ kind: 'faction', key }); };
     const advances = ws.benefitAdvances ?? {};
     const spent = Object.values(advances).reduce((s, v) => s + v, 0);
+    const needsOrigin = factionRollNeedsOrigin();
     return (
         <div className="im-fields">
-            <Pills>
-                <button type="button" className="vtt-btn vtt-btn-sm" onClick={() => pick(factionForRoll(d100()), true)}>Laisser le destin décider (+{XP_RANDOM.faction} XP)</button>
-            </Pills>
+            {RANDOM && (
+                <Pills>
+                    <button type="button" className="vtt-btn vtt-btn-sm" disabled={needsOrigin && !ws.originKey} title={needsOrigin && !ws.originKey ? 'La table dépend de l\'origine : choisissez-la d\'abord' : undefined}
+                            onClick={() => pick(factionForRoll(d100(), ws.originKey), true)}>Laisser le destin décider{xpLabel(XP_RANDOM.faction)}</button>
+                </Pills>
+            )}
             <div className="im-card-grid">
-                {FACTIONS.map(f => <Card key={f.key} on={ws.factionKey === f.key} onClick={() => pick(f.key)} title={f.label} sub={f.source === 'ipg' ? 'Inquisition' : null} />)}
+                {FACTIONS_OK.map(f => <Card key={f.key} on={ws.factionKey === f.key} onClick={() => pick(f.key)} title={f.label} sub={f.source === 'ipg' ? 'Inquisition' : null} />)}
             </div>
             {faction && (
                 <>
@@ -213,7 +255,7 @@ export const FactionTab = ({ ws, setWs, help }) => {
                                 <div className="im-edit-skills">
                                     {(b.skills ?? []).map(k => (
                                         <div key={k} className="im-edit-skill">
-                                            <span>{advLabel(k)}</span>
+                                            <button type="button" className="im-help-link" onClick={() => help({ kind: 'skill', key: k })}>{advLabel(k)}</button>
                                             <Stepper value={advances[k] ?? 0} min={0} max={Math.min(2, (advances[k] ?? 0) + (b.advances ?? 5) - spent)}
                                                      onChange={v => set({ benefitAdvances: { ...advances, [k]: v } })} />
                                         </div>
@@ -222,19 +264,19 @@ export const FactionTab = ({ ws, setWs, help }) => {
                             </Field>
                             {b.talentChoice?.length > 0 && (
                                 <Field label="Talent">
-                                    <Pills>{b.talentChoice.flat().map(k => <Pill key={k} on={ws.benefitTalent === k} onClick={() => { set({ benefitTalent: k }); help({ kind: 'talent', key: k }); }}>{TALENT_BY_KEY[k]?.label ?? k}</Pill>)}</Pills>
+                                    <Pills>{b.talentChoice.flat().filter(talentOk).map(k => <Pill key={k} on={ws.benefitTalent === k} onClick={() => { set({ benefitTalent: k }); help({ kind: 'talent', key: k }); }}>{TALENT_BY_KEY[k]?.label ?? k}</Pill>)}</Pills>
                                 </Field>
                             )}
                             {(b.equipmentChoices ?? []).map((opts, i) => Array.isArray(opts) && (
                                 <Field key={i} label="Objet au choix">
-                                    <Pills>{opts.map(o => <Pill key={o} on={ws.benefitEquipment?.[i] === o} onClick={() => set({ benefitEquipment: { ...ws.benefitEquipment, [i]: o } })}>{o}</Pill>)}</Pills>
+                                    <Pills>{opts.map(o => <Pill key={o} on={ws.benefitEquipment?.[i] === o} onClick={() => { set({ benefitEquipment: { ...ws.benefitEquipment, [i]: o } }); help({ kind: 'item', key: o }); }}>{o}</Pill>)}</Pills>
                                 </Field>
                             ))}
                         </>
                     )}
                 </>
             )}
-            {ws.factionRandom && <p className="im-note">Tirée au hasard : +{XP_RANDOM.faction} XP.</p>}
+            {ws.factionRandom && BOOK_XP && <p className="im-note">Tirée au hasard : +{XP_RANDOM.faction} XP.</p>}
         </div>
     );
 };
@@ -275,16 +317,18 @@ export const RoleTab = ({ ws, setWs, help }) => {
     };
     return (
         <div className="im-fields">
-            <Pills>
-                <button type="button" className="vtt-btn vtt-btn-sm" onClick={() => pick(ROLES[Math.floor(Math.random() * ROLES.length)].key, true)}>Laisser le Patron choisir (+{XP_RANDOM.role} XP)</button>
-            </Pills>
+            {RANDOM && (
+                <Pills>
+                    <button type="button" className="vtt-btn vtt-btn-sm" onClick={() => pick(ROLES_OK[Math.floor(Math.random() * ROLES_OK.length)].key, true)}>Laisser le Patron choisir{xpLabel(XP_RANDOM.role)}</button>
+                </Pills>
+            )}
             <div className="im-card-grid">
-                {ROLES.map(r => <Card key={r.key} on={ws.roleKey === r.key} onClick={() => pick(r.key)} title={r.label} sub={r.source === 'ipg' ? 'Inquisition' : null} />)}
+                {ROLES_OK.map(r => <Card key={r.key} on={ws.roleKey === r.key} onClick={() => pick(r.key)} title={r.label} sub={r.source === 'ipg' ? 'Inquisition' : null} />)}
             </div>
             {role && (
                 <>
                     <Field label={`Talents : ${role.talents.pick} au choix (${(ws.roleTalents ?? []).length})`}>
-                        <Pills>{role.talents.from.map(k => (
+                        <Pills>{role.talents.from.filter(talentOk).map(k => (
                             <Pill key={k} on={ws.roleTalents.includes(k)} onClick={() => { set({ roleTalents: toggle(ws.roleTalents, k, role.talents.pick) }); help({ kind: 'talent', key: k }); }}>{TALENT_BY_KEY[k]?.label ?? k}</Pill>
                         ))}</Pills>
                     </Field>
@@ -292,7 +336,7 @@ export const RoleTab = ({ ws, setWs, help }) => {
                         <div className="im-edit-skills">
                             {role.skillAdvances.from.map(k => (
                                 <div key={k} className="im-edit-skill">
-                                    <span>{advLabel(k)}{fromFaction[k] ? <small> (faction {fromFaction[k]})</small> : null}</span>
+                                    <button type="button" className="im-help-link" onClick={() => help({ kind: 'skill', key: k })}>{advLabel(k)}{fromFaction[k] ? <small> (faction {fromFaction[k]})</small> : null}</button>
                                     <Stepper value={skills[k] ?? 0} min={0} max={Math.min(2 - (fromFaction[k] ?? 0), (skills[k] ?? 0) + role.skillAdvances.pick - spent)}
                                              onChange={v => set({ roleSkills: { ...skills, [k]: v } })} />
                                 </div>
@@ -301,7 +345,7 @@ export const RoleTab = ({ ws, setWs, help }) => {
                     </Field>
                     <Field label={`${role.specAdvances.pick} spécialisations différentes (${(ws.roleSpecs ?? []).length})`}>
                         <Pills>{specKeys.map(k => (
-                            <Pill key={k} on={ws.roleSpecs.includes(k)} onClick={() => set({ roleSpecs: toggle(ws.roleSpecs, k, role.specAdvances.pick) })}>{advLabel(k)}</Pill>
+                            <Pill key={k} on={ws.roleSpecs.includes(k)} onClick={() => { set({ roleSpecs: toggle(ws.roleSpecs, k, role.specAdvances.pick) }); help({ kind: 'skill', key: k }); }}>{advLabel(k)}</Pill>
                         ))}</Pills>
                     </Field>
                     {psyker && (
@@ -316,14 +360,14 @@ export const RoleTab = ({ ws, setWs, help }) => {
                     )}
                 </>
             )}
-            {ws.roleRandom && <p className="im-note">Choisi par le Patron : +{XP_RANDOM.role} XP.</p>}
+            {ws.roleRandom && BOOK_XP && <p className="im-note">Choisi par le Patron : +{XP_RANDOM.role} XP.</p>}
         </div>
     );
 };
 
 // ── Équipement ───────────────────────────────────────────────────────────────
 
-export const EquipmentTab = ({ ws, setWs }) => {
+export const EquipmentTab = ({ ws, setWs, help }) => {
     const set = (p) => setWs(prev => ({ ...prev, ...p }));
     const role = ROLE_BY_KEY[ws.roleKey];
     const choose = (i, value, many) => {
@@ -339,12 +383,12 @@ export const EquipmentTab = ({ ws, setWs }) => {
                 const cur = [].concat(ws.roleEquipment?.[i] ?? []);
                 return (
                     <Field key={i} label={many ? `Rôle : ${many} objets au choix` : 'Rôle : un objet au choix'}>
-                        <Pills>{list.map(o => <Pill key={o} on={cur.includes(o)} onClick={() => choose(i, o, many)}>{o}</Pill>)}</Pills>
+                        <Pills>{list.map(o => <Pill key={o} on={cur.includes(o)} onClick={() => { choose(i, o, many); help({ kind: 'item', key: o }); }}>{o}</Pill>)}</Pills>
                     </Field>
                 );
             })}
             <Field label="Équipement de départ">
-                <ul className="im-list">{equipmentLabels(ws).map((l, i) => <li key={`${l}-${i}`}>{l}</li>)}</ul>
+                <ul className="im-list">{equipmentLabels(ws).map((l, i) => <li key={`${l}-${i}`}><button type="button" className="im-help-link" onClick={() => help({ kind: 'item', key: l })}>{l}</button></li>)}</ul>
             </Field>
             <p className="im-note">{startingSolars(ws)} Solars de départ. Les achats (objets Courants, un seul Peu courant) se font depuis l'inventaire de la fiche.</p>
         </div>

@@ -136,9 +136,11 @@ const Creation = ({ darkMode, onToggleDarkMode }) => {
                     )}
                     <div className={`im-wizard-body${tab === 'guide' ? ' is-single' : ''}`}>
                         <div className="min-w-0">
-                            {tab === 'guide' && <GuideTab onStart={() => setTab('chars')} />}
-                            {tab === 'chars' && <CharsTab ws={ws} setWs={setWs} help={setHelpTopic} onRollChars={rollChars} rolling={rolling} />}
-                            {Current && <Current ws={ws} setWs={setWs} help={setHelpTopic} />}
+                            <Block title={STEPS.find(s => s.id === tab)?.label} className="im-wizard-step">
+                                {tab === 'guide' && <GuideTab onStart={() => setTab('chars')} />}
+                                {tab === 'chars' && <CharsTab ws={ws} setWs={setWs} help={setHelpTopic} onRollChars={rollChars} rolling={rolling} />}
+                                {Current && <Current ws={ws} setWs={setWs} help={setHelpTopic} />}
+                            </Block>
 
                             {tab === 'identity' && (
                                 <div className="im-fields mt-6">

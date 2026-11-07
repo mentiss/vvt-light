@@ -901,6 +901,17 @@ button.im-char { font: inherit; color: inherit; }
 .im-gm-sheet { background: var(--color-bg); background-image: var(--im-tex); color: var(--color-text); font-family: var(--im-font-body); }
 .im-patron-bar { display: flex; gap: 8px; align-items: center; justify-content: flex-end; margin-bottom: 6px; }
 .im-patron-bar .im-note { margin-right: auto; }
+/* Fiche Patron : deux colonnes, chacune empile ses blocs (pas de vide sous les petits blocs) */
+.im-patron-cols { display: grid; gap: 22px 18px; grid-template-columns: repeat(auto-fit, minmax(min(100%, 460px), 1fr)); align-items: start; padding-top: 14px; }
+.im-patron-col { display: grid; gap: 22px; align-content: start; min-width: 0; }
+.im-patron-infl { display: grid; gap: 22px 16px; grid-template-columns: repeat(auto-fit, minmax(min(100%, 300px), 1fr)); align-items: start; }
+.im-patron-infl .im-infl-edit { grid-template-columns: 1fr; }
+.im-superiority { display: grid; gap: 8px; justify-items: start; }
+/* Réglage − / + suivi de son libellé variable : le + ne bouge pas */
+.im-stepper-line { display: inline-flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.im-stepper-line .im-stepper span { min-width: 3.2em; }
+.im-stepper-text { font-size: 15px; }
+.im-stepper span { font-variant-numeric: tabular-nums; }
 .im-pick-list { display: grid; gap: 4px; max-height: 360px; overflow: auto; }
 .im-pick { text-align: left; padding: 5px 8px; border: 1px solid color-mix(in srgb, var(--im-metal) 40%, transparent); background: var(--color-bg); display: grid; gap: 1px; }
 .im-pick small { font-size: 12.5px; color: var(--color-text-muted); }
@@ -921,7 +932,14 @@ button.im-char { font: inherit; color: inherit; }
 .im-wizard-body { display: grid; grid-template-columns: minmax(0, 1fr) 320px; gap: 24px; align-items: start; }
 .im-wizard-body.is-single { grid-template-columns: 1fr; }
 @media (max-width: 900px) { .im-wizard-body { grid-template-columns: 1fr; } }
-.im-help { position: sticky; top: calc(var(--im-band-h, 0px) + 12px); border-left: 1px solid var(--im-metal); padding-left: 18px; display: grid; gap: 8px; }
+.im-help { position: sticky; top: calc(var(--im-band-h, 0px) + 22px); align-self: start; }
+.im-help .im-block { display: grid; gap: 8px; }
+/* Assistant : chaque étape et l'aide dans un bloc de fiche (place pour la banderole de titre) */
+.im-wizard-body { padding-top: 16px; }
+.im-wizard-step > .im-fields, .im-wizard-step > .im-guide { padding-top: 4px; }
+/* Libellé qui ouvre son aide (compétence, objet) : texte normal, souligné au survol */
+.im-help-link { text-align: left; color: inherit; font: inherit; border-bottom: 1px dotted transparent; cursor: help; }
+.im-help-link:hover { border-bottom-color: var(--im-metal); color: var(--im-main); }
 .im-help h4 { font-family: var(--im-font-title); font-size: 20px; color: var(--im-main); font-weight: 400; }
 .im-guide { display: grid; gap: 10px; max-width: none; }
 .im-guide h3 { font-family: var(--im-font-title); font-size: 26px; font-weight: 400; }

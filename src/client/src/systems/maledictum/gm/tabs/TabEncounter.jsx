@@ -14,6 +14,7 @@ import ConfirmModal from '../../../../components/modals/ConfirmModal.jsx';
 import { usePersistedState } from '../../../../hooks/usePersistedState.js';
 import { tableScope } from '../../../../tools/browserStorage.js';
 import { BESTIARY } from '../../config/bestiary.js';
+import { available } from '../../config/setup.js';
 import { PATRON_FACTIONS } from '../../config/patron.js';
 import { CHAR_KEYS, CHAR_SHORT } from '../../config/rules/character.js';
 import { useMlRoll } from '../../hooks/useMlRoll.js';
@@ -21,7 +22,8 @@ import { Block, Stepper, MinusIcon, PlusIcon, TrashIcon } from '../../components
 import { specName, RANGE_LABELS } from '../../components/layout/MlSections.jsx';
 
 const ENCOUNTER_OPTIONS = { defaults: { npcs: [] }, validate: (v) => Array.isArray(v?.npcs) };
-const BY_KEY = Object.fromEntries(BESTIARY.map(b => [b.key, b]));
+const BY_KEY = Object.fromEntries(BESTIARY.map(b => [b.key, b]));   // tous : un PNJ déjà ajouté reste lisible
+const BESTIARY_OK = available(BESTIARY);
 const ROLE_LABELS = { troop: 'Troupe', elite: 'Élite', leader: 'Meneur' };
 const CRIT_MAX = { troop: 0, elite: 1 };   // mort subite (livre p.317) ; Meneur : BE
 
@@ -80,7 +82,7 @@ const NpcCard = ({ n, onChange, onRemove, sessionId }) => {
             <div className="im-res-row">
                 <b>Blessures critiques</b><span className={dead ? 'is-danger' : ''}>{n.crits ?? 0} <small>/ {critMax(p)}{dead ? ' · hors de combat' : ''}</small></span>
             </div>
-            <Stepper value={n.crits ?? 0} onChange={v => onChange({ crits: v })} min={0} max={20} label={`${n.crits ?? 0} critique(s)`} />
+            <Stepper value={n.crits ?? 0} onChange={v => onChange({ crits: v })} min={0} max={20} editable text="critique(s)" />
             <div className="im-sub">Attaques</div>
             {(p.attacks ?? []).map((a, i) => (
                 <button key={i} type="button" className="im-power" disabled={rolling}
@@ -124,7 +126,7 @@ const TabEncounter = ({ activeSession }) => {
             </div>
             {catalogOpen && (
                 <CatalogModal title="Bestiaire" subtitle="Livre de base · Inquisition" labels={LABELS} layout={['filters', 'search']}
-                              items={BESTIARY} getKey={m => m.key} filters={FILTERS} groupBy={GROUP} searchFields={SEARCH}
+                              items={BESTIARY_OK} getKey={m => m.key} filters={FILTERS} groupBy={GROUP} searchFields={SEARCH}
                               renderItem={m => <NpcRow m={m} />} onAdd={add} onClose={() => setCatalogOpen(false)} />
             )}
             {clear && <ConfirmModal title="Vider la rencontre" message="Tous les PNJ quittent la rencontre." confirmText="Vider" danger

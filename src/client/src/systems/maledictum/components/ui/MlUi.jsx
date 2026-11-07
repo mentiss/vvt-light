@@ -42,9 +42,21 @@ export const Pill = ({ on, onClick, disabled, children, title }) => (
 
 export const Pills = ({ children, className = '' }) => <div className={`im-row ${className}`.trim()}>{children}</div>;
 
-/** − valeur + ; editable : la valeur se saisit aussi au clavier (unit écrite après) */
-export const Stepper = ({ value, onChange, min = -Infinity, max = Infinity, label, editable = false, unit }) => {
+/**
+ * − valeur + ; editable : la valeur se saisit aussi au clavier (unit écrite après).
+ * label : ce qu'affiche le milieu (court : un nombre) ; text : libellé variable écrit APRÈS le
+ * réglage, pour que le + ne bouge pas quand le texte change de longueur.
+ */
+export const Stepper = ({ value, onChange, min = -Infinity, max = Infinity, label, editable = false, unit, text }) => {
     const clamp = (v) => Math.min(max, Math.max(min, v));
+    if (text !== undefined) {
+        return (
+            <span className="im-stepper-line">
+                <Stepper value={value} onChange={onChange} min={min} max={max} label={label} editable={editable} unit={unit} />
+                <span className="im-stepper-text">{text}</span>
+            </span>
+        );
+    }
     return (
         <span className={`im-stepper${editable ? ' is-editable' : ''}`}>
             <button type="button" onClick={() => onChange(clamp(value - 1))} disabled={value <= min} aria-label="Moins">−</button>

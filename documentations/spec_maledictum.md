@@ -364,3 +364,83 @@ colonne est étroite, intitulés du bestiaire, double réglage des Blessures des
 pouvoirs de discipline rangés par discipline, onglet Équipement de l'assistant marqué fait trop tôt.
 Pas encore parcourus : assistant de bout en bout jusqu'à l'envoi, Journal, Aide de jeu, Tableau,
 les dix autres thèmes en situation.
+
+## 13. Retours du MJ (2026-11-06, après la v5.17.0)
+
+### 13.1 Réglages du setup
+
+Le MJ veut régler la création et le contenu disponible. Un fichier de réglages par setup,
+`config/setup.js` (un futur setup Rogue Trader aura le sien), lu par l'assistant et les catalogues :
+
+| Réglage | Valeur du livre | Valeur demandée |
+|---|---|---|
+| Base des caractéristiques (tirage 2d10 + base, achat base + points) | 20 | **25** |
+| Achat de points : total, minimum et maximum par caractéristique | 90, 4, 18 | 90, 4, **20** |
+| Livres disponibles | livre de base, Inquisition Player's Guide, Inquisition Gamemaster's Guide | **livre de base seul** |
+| Tirages au hasard de l'assistant | proposés, avec leur XP | proposés ou masqués (question) |
+| XP de création | celle des tirages (jusqu'à 200) | **50 XP fixes** |
+
+Ce que retire un livre indisponible (les personnages déjà créés gardent tout) :
+
+- **Player's Guide** : 20 origines macharriennes, les 3 Ordos, 4 rôles (Assassin, Cruciateur,
+  Explicateur, Traqueur), 22 talents, 20 pouvoirs, 94 objets, des Faveurs et Handicaps, la règle de
+  Subtilité. Sans les Ordos, il faut la faction **Inquisition du livre de base**, que je n'ai pas
+  transcrite (D-8 l'avait remplacée par les Ordos) : à transcrire, avec son thème (Ordo Hereticus par défaut).
+- **Gamemaster's Guide** : les 6 Inquisiteurs prêts à l'emploi, 20 profils du bestiaire, des Faveurs et Handicaps.
+
+| # | Question | Proposition (reco) | Réponse MJ |
+|---|---|---|---|
+| Q-14 | Où vivent ces réglages ? | **Fichier `config/setup.js`**, changé par toi puis release : rien en base, pas d'écran en plus, l'assistant (page publique) le lit directement. Alternative : réglages en base, modifiables par le MJ dans son interface (une table, une route, un écran) | Reco |
+| Q-15 | Les 50 XP : pour tous les personnages, ou seulement pour qui tire au hasard ? | **Pour tous**, à la fin de la création ; les tirages au hasard ne rapportent plus rien | Reco |
+| Q-16 | Les boutons « au hasard » de l'assistant | **Gardés** (sans XP), un réglage permet de les masquer | Réglage du setup (`creation.randomDraws`) |
+| Q-17 | Livres : un interrupteur par livre ou un seul pour « l'extension » ? | **Un par livre** (Player's Guide, Gamemaster's Guide) : ils couvrent des choses différentes | Oui |
+
+### 13.2 Supériorité
+
+| # | Question | Proposition (reco) | Réponse MJ |
+|---|---|---|---|
+| Q-18 | Désactiver la Supériorité | **Interrupteur par table** « Supériorité utilisée », comme la Subtilité ; désactivée, elle disparaît de la fiche joueur et de la fenêtre de jet. Demande une colonne `superiority_enabled` dans `patrons` (schéma et migration) | Oui |
+| Q-19 | La régler depuis l'onglet Session | **Oui** : l'interrupteur et le réglage − / + en tête de la colonne, sous la musique et le tableau | Oui (valeur 0-10 et interrupteur) |
+
+### 13.3 Corrections sans question
+
+- **Réglage − / + dont le libellé change** (Subtilité « 10 · Clandestin », Supériorité…) : le + bouge
+  quand le texte change de longueur. Libellé à largeur fixe, le + ne bouge plus.
+- **Assistant de création** : le contenu est posé directement sur le fond. Chaque étape passe dans des
+  blocs de fiche (banderole de titre, cadre), la colonne d'aide aussi, comme sur la fiche.
+- **Aides manquantes** : les 82 spécialisations n'ont aucune description, et la colonne d'aide ne
+  montre rien pour elles, ni pour les compétences, les objets à choisir et les origines macharriennes.
+  Descriptions des spécialisations à transcrire du livre de base (chapitre des compétences), les autres
+  textes existent déjà dans les catalogues.
+
+### 13.4 Fiche Patron du MJ
+
+Les blocs, de hauteurs très différentes, sont rangés en grille à trois colonnes : de grands vides
+sous les petits blocs. Proposition : deux colonnes. À gauche, les réglages de la table (Supériorité,
+Subtilité, Préréglages) puis l'Identité ; à droite, Faveurs, Handicaps, puis les deux Influences
+côte à côte.
+
+### 13.5 Fait (2026-11-06)
+
+- `config/setup.js` : livres (livre de base seul), base 25, achat 90 points de 4 à 20, tirages au hasard
+  proposés, 50 XP fixes ; `BOOK_SETUP` garde les valeurs du livre (tests, référence). L'aide de jeu
+  ouvre sur une section « Réglages de la table ».
+- Contenu filtré par livre : assistant (origines, factions, rôles, talents, pouvoirs), catalogues de la
+  fiche (objets, talents, pouvoirs), Patron (Faveurs, Handicaps, Inquisiteurs, Subtilité), bestiaire,
+  aide de jeu. Un PNJ ou un objet déjà présent reste lisible.
+- Faction **Inquisition** du livre de base transcrite (p.66-67 : Acolyte, Exorciste, Sage), thème
+  Ordo Hereticus. Sans le Player's Guide, la faction tirée au dé vient de la table p.55 (colonne de
+  l'origine), où les plages des Ordos redeviennent l'Inquisition ; le tirage demande donc l'origine d'abord.
+- Supériorité désactivable par table (migration `06112026_maledictum_superiorite_activable.sql`), réglée
+  depuis l'onglet Patron et l'onglet Session ; désactivée, absente de la fiche et de la fenêtre de jet.
+- Descriptions des 82 spécialisations (livre de base p.93-101, IPG p.62) ; aide de l'assistant pour les
+  compétences, spécialisations et objets (clic sur le libellé).
+- Assistant en blocs de fiche ; Patron en deux colonnes ; réglages − / + à libellé fixe.
+
+À relire :
+- Spécialisations : les cinq disciplines psychiques ont le texte de la p.160 (le chapitre des
+  compétences n'a qu'une phrase commune) ; « Déguisement » a le même texte sous Dextérité et sous
+  Discrétion ; termes choisis : « mondes férals », « gantelet énergétique », « Secteur Macharius »,
+  « Thoughtmark » laissé en VO.
+- Faction Inquisition : l'Exorciste et le Sage reçoivent tous deux un Auspex et aucune Fonction
+  l'Enregistreur picto du choix des Avantages, tel qu'imprimé.

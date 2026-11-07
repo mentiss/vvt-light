@@ -5,7 +5,10 @@
 // Attitude, Faveurs, Influence connue, notes) et partie secrète (Handicaps,
 // Influence réelle, notes du MJ) ; chargement d'un des six Inquisiteurs du GMG ;
 // Supériorité du groupe (visible de tous, enregistrée tout de suite) ; Subtilité
-// (règle optionnelle, secrète) avec ses paliers et leurs effets.
+// (règle optionnelle du Player's Guide, secrète) avec ses paliers et leurs effets.
+// Livres indisponibles (config/setup.js) : leurs Faveurs, Handicaps, Inquisiteurs
+// et la Subtilité disparaissent. Deux colonnes (spec §13.4) : réglages de la
+// table puis Identité ; Faveurs, Handicaps puis les deux Influences.
 // Props : activeSession, patronState (usePatron)
 // ─────────────────────────────────────────────────────────────────────────────
 
@@ -14,10 +17,16 @@ import {
     INQUISITORS, PHILOSOPHIES, DEMEANOURS, PAYMENT_GRADES, BOONS, LIABILITIES, PATRON_FACTIONS, SUBTLETY_LEVELS, SUBTLETY_RULES,
 } from '../../config/patron.js';
 import { Block, Pill, Pills, Stepper, Toggle, Field } from '../../components/ui/MlUi.jsx';
+import SuperiorityControl from '../../components/ui/SuperiorityControl.jsx';
 import { signed } from '../../config/rules/dice.js';
+import { available, hasBook } from '../../config/setup.js';
 
 const label = (list, key) => (list ?? []).find(x => x.key === key)?.label ?? key;
 const FACTION_KEYS = PATRON_FACTIONS.map(f => f.key);
+const BOONS_OK = available(BOONS);
+const LIABILITIES_OK = available(LIABILITIES);
+const INQUISITORS_OK = available(INQUISITORS);
+const SUBTLETY_OK = hasBook('ipg');   // règle du Player's Guide
 
 /** Fiche d'un Inquisiteur du GMG → { data, secret } */
 const fromInquisitor = (q) => {
@@ -59,7 +68,7 @@ const InfluenceEditor = ({ value, onChange }) => (
 );
 
 const TabPatron = ({ activeSession, patronState }) => {
-    const { patron, save, setSuperiority, error } = patronState;
+    const { patron, save, error } = patronState;
     const [edited, setDraft] = useState(null);   // null : la fiche enregistrée
     const [qBoon, setQBoon] = useState('');
     const [qLia, setQLia] = useState('');
@@ -87,58 +96,69 @@ const TabPatron = ({ activeSession, patronState }) => {
                 <button type="button" className="vtt-btn vtt-btn-sm" disabled={!dirty} onClick={() => setDraft(null)}>Annuler</button>
                 <button type="button" className="vtt-btn vtt-btn-sm vtt-btn-primary" disabled={!dirty} onClick={async () => { if (await save(draft)) setDraft(null); }}>Enregistrer le Patron</button>
             </div>
-            <div className="im-edit-grid">
-                <Block title="Supériorité du groupe">
-                    <p className="im-note">Visible de tous les joueurs : +DR sur un test par tour. Avant le combat, +3 au plus (Connaître l'ennemi, le terrain, les joueurs).</p>
-                    <Stepper value={patron.superiority} onChange={setSuperiority} min={0} max={10} label={`Supériorité ${patron.superiority}`} />
-                </Block>
+            <div className="im-patron-cols">
+                <div className="im-patron-col">
+                    <Block title="Supériorité du groupe">
+                        <SuperiorityControl patronState={patronState} />
+                    </Block>
 
-                <Block title="Subtilité (secrète)">
-                    <Toggle on={patron.subtletyEnabled} onChange={v => save({ subtletyEnabled: v })}>Règle de Subtilité utilisée à cette table</Toggle>
-                    {patron.subtletyEnabled && (
-                        <>
-                            <Stepper value={patron.subtlety} onChange={v => save({ subtlety: v })} min={1} max={10} label={`${patron.subtlety} · ${level?.label ?? ''}`} />
-                            {level && <p className="im-note"><b>{level.label}.</b> {level.summary}</p>}
-                            <p className="im-note">{SUBTLETY_RULES?.summary}</p>
-                        </>
+                    {SUBTLETY_OK && (
+                        <Block title="Subtilité (secrète)">
+                            <Toggle on={patron.subtletyEnabled} onChange={v => save({ subtletyEnabled: v })}>Règle de Subtilité utilisée à cette table</Toggle>
+                            {patron.subtletyEnabled && (
+                                <>
+                                    <Stepper value={patron.subtlety} onChange={v => save({ subtlety: v })} min={1} max={10} label={patron.subtlety} text={level?.label ?? ''} />
+                                    {level && <p className="im-note"><b>{level.label}.</b> {level.summary}</p>}
+                                    <p className="im-note">{SUBTLETY_RULES?.summary}</p>
+                                </>
+                            )}
+                        </Block>
                     )}
-                </Block>
 
-                <Block title="Préréglages">
-                    <p className="im-note">Les six Inquisiteurs du Gamemaster's Guide, prêts à l'emploi (remplace la fiche en cours, à enregistrer).</p>
-                    <Pills>{INQUISITORS.map(q => <Pill key={q.key} onClick={() => setDraft(fromInquisitor(q))}>{q.firstName} {q.lastName}</Pill>)}</Pills>
-                </Block>
+                    {INQUISITORS_OK.length > 0 && (
+                        <Block title="Préréglages">
+                            <p className="im-note">Les six Inquisiteurs du Gamemaster's Guide, prêts à l'emploi (remplace la fiche en cours, à enregistrer).</p>
+                            <Pills>{INQUISITORS_OK.map(q => <Pill key={q.key} onClick={() => setDraft(fromInquisitor(q))}>{q.firstName} {q.lastName}</Pill>)}</Pills>
+                        </Block>
+                    )}
 
-                <Block title="Identité (connue des joueurs)">
-                    <div className="im-fields">
-                        <label className="block"><span className="vtt-field-label">Titre</span><input className="vtt-input" value={d.title ?? ''} onChange={e => setData({ title: e.target.value })} /></label>
-                        <label className="block"><span className="vtt-field-label">Nom</span><input className="vtt-input" value={d.name ?? ''} onChange={e => setData({ name: e.target.value })} /></label>
+                    <Block title="Identité (connue des joueurs)">
+                        <div className="im-fields">
+                            <label className="block"><span className="vtt-field-label">Titre</span><input className="vtt-input" value={d.title ?? ''} onChange={e => setData({ title: e.target.value })} /></label>
+                            <label className="block"><span className="vtt-field-label">Nom</span><input className="vtt-input" value={d.name ?? ''} onChange={e => setData({ name: e.target.value })} /></label>
+                        </div>
+                        <Field label="Faction"><Pills>{PATRON_FACTIONS.map(f => <Pill key={f.key} on={d.ordo === f.key} onClick={() => setData({ ordo: f.key, ordoLabel: f.label })}>{f.label}</Pill>)}</Pills></Field>
+                        <Field label="Philosophie"><Pills>{PHILOSOPHIES.map(p => <Pill key={p.key} on={d.philosophy === p.key} onClick={() => setData({ philosophy: p.key, philosophyLabel: p.label })} title={p.summary}>{p.label} ({p.slant === 'puritan' ? 'P' : 'R'})</Pill>)}</Pills></Field>
+                        <Field label="Attitude"><Pills>{DEMEANOURS.map(p => <Pill key={p.key} on={d.demeanour === p.key} onClick={() => setData({ demeanour: p.key, demeanourLabel: p.label })} title={p.summary}>{p.label}</Pill>)}</Pills></Field>
+                        <Field label="Grade de solde"><Pills>{PAYMENT_GRADES.map(p => <Pill key={p.key} on={(d.paymentGrade ?? 'standard') === p.key} onClick={() => setData({ paymentGrade: p.key })}>{p.label} ({p.perDay} / jour)</Pill>)}</Pills></Field>
+                        <label className="block"><span className="vtt-field-label">Notes pour les joueurs</span><textarea className="vtt-input" rows={3} value={d.notes ?? ''} onChange={e => setData({ notes: e.target.value })} /></label>
+                    </Block>
+
+                    <Block title="Notes du MJ (secrètes)">
+                        <textarea className="vtt-input" rows={4} value={draft.secret.notes ?? ''} onChange={e => setSecret({ notes: e.target.value })} />
+                    </Block>
+                </div>
+
+                <div className="im-patron-col">
+                    <Block title={`Faveurs (${(d.boons ?? []).length})`}>
+                        <input className="vtt-input im-search" placeholder="Rechercher une Faveur…" value={qBoon} onChange={e => setQBoon(e.target.value)} />
+                        <Picker items={BOONS_OK} selected={d.boons ?? []} onToggle={k => toggleIn('data', 'boons', k)} query={qBoon} />
+                    </Block>
+
+                    <Block title={`Handicaps (secrets, ${(draft.secret.liabilities ?? []).length})`}>
+                        <input className="vtt-input im-search" placeholder="Rechercher un Handicap…" value={qLia} onChange={e => setQLia(e.target.value)} />
+                        <Picker items={LIABILITIES_OK} selected={draft.secret.liabilities ?? []} onToggle={k => toggleIn('secret', 'liabilities', k)} query={qLia} />
+                    </Block>
+
+                    <div className="im-patron-infl">
+                        <Block title="Influence connue des joueurs">
+                            <InfluenceEditor value={d.influence} onChange={v => setData({ influence: v })} />
+                        </Block>
+                        <Block title="Influence réelle (secrète)">
+                            <InfluenceEditor value={draft.secret.influence} onChange={v => setSecret({ influence: v })} />
+                        </Block>
                     </div>
-                    <Field label="Faction"><Pills>{PATRON_FACTIONS.map(f => <Pill key={f.key} on={d.ordo === f.key} onClick={() => setData({ ordo: f.key, ordoLabel: f.label })}>{f.label}</Pill>)}</Pills></Field>
-                    <Field label="Philosophie"><Pills>{PHILOSOPHIES.map(p => <Pill key={p.key} on={d.philosophy === p.key} onClick={() => setData({ philosophy: p.key, philosophyLabel: p.label })} title={p.summary}>{p.label} ({p.slant === 'puritan' ? 'P' : 'R'})</Pill>)}</Pills></Field>
-                    <Field label="Attitude"><Pills>{DEMEANOURS.map(p => <Pill key={p.key} on={d.demeanour === p.key} onClick={() => setData({ demeanour: p.key, demeanourLabel: p.label })} title={p.summary}>{p.label}</Pill>)}</Pills></Field>
-                    <Field label="Grade de solde"><Pills>{PAYMENT_GRADES.map(p => <Pill key={p.key} on={(d.paymentGrade ?? 'standard') === p.key} onClick={() => setData({ paymentGrade: p.key })}>{p.label} ({p.perDay} / jour)</Pill>)}</Pills></Field>
-                    <label className="block"><span className="vtt-field-label">Notes pour les joueurs</span><textarea className="vtt-input" rows={3} value={d.notes ?? ''} onChange={e => setData({ notes: e.target.value })} /></label>
-                </Block>
-
-                <Block title={`Faveurs (${(d.boons ?? []).length})`}>
-                    <input className="vtt-input im-search" placeholder="Rechercher une Faveur…" value={qBoon} onChange={e => setQBoon(e.target.value)} />
-                    <Picker items={BOONS} selected={d.boons ?? []} onToggle={k => toggleIn('data', 'boons', k)} query={qBoon} />
-                </Block>
-
-                <Block title={`Handicaps (secrets, ${(draft.secret.liabilities ?? []).length})`}>
-                    <input className="vtt-input im-search" placeholder="Rechercher un Handicap…" value={qLia} onChange={e => setQLia(e.target.value)} />
-                    <Picker items={LIABILITIES} selected={draft.secret.liabilities ?? []} onToggle={k => toggleIn('secret', 'liabilities', k)} query={qLia} />
-                </Block>
-
-                <Block title="Influence connue des joueurs">
-                    <InfluenceEditor value={d.influence} onChange={v => setData({ influence: v })} />
-                </Block>
-
-                <Block title="Influence réelle (secrète)">
-                    <InfluenceEditor value={draft.secret.influence} onChange={v => setSecret({ influence: v })} />
-                    <label className="block"><span className="vtt-field-label">Notes du MJ</span><textarea className="vtt-input" rows={4} value={draft.secret.notes ?? ''} onChange={e => setSecret({ notes: e.target.value })} /></label>
-                </Block>
+                </div>
             </div>
         </div>
     );

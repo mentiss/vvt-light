@@ -7,7 +7,8 @@
 // MJ, écran au thème de l'agent ; même assemblage que le joueur, jets à son nom),
 // copie des accès et mode Édition dans le bandeau de l'écran. Tout part en envoi partiel (patchCharacter), le joueur le
 // voit aussitôt.
-// Props : activeSession, onlineCharacters, patron, characters, order, loading, patchCharacter
+// Supériorité du groupe réglable ici aussi (spec §13.2).
+// Props : activeSession, onlineCharacters, patron, patronState, characters, order, loading, patchCharacter
 // ─────────────────────────────────────────────────────────────────────────────
 
 import React, { useState } from 'react';
@@ -17,6 +18,7 @@ import CopyAccessButton from '../../../../components/ui/CopyAccessButton.jsx';
 import ConfirmModal from '../../../../components/modals/ConfirmModal.jsx';
 import MlSheet from '../../components/layout/MlSheet.jsx';
 import MlEditForm from '../../components/layout/MlEditForm.jsx';
+import SuperiorityControl from '../../components/ui/SuperiorityControl.jsx';
 import { EditIcon, Orn } from '../../components/ui/MlUi.jsx';
 import { displayName, derived } from '../../config/rules/character.js';
 import { themeFor } from '../../config/rules/themes.js';
@@ -66,7 +68,7 @@ const PictScreen = ({ c, index, patron, editing, tools, children }) => {
     );
 };
 
-const TabSession = ({ activeSession, onlineCharacters, patron, characters, order, loading, patchCharacter }) => {
+const TabSession = ({ activeSession, onlineCharacters, patron, patronState, characters, order, loading, patchCharacter }) => {
     const [selectedId, setSelectedId] = useState(null);
     const [draft, setDraft] = useState(null);           // brouillon du mode Édition de l'acolyte affiché
     const [refill, setRefill] = useState(false);
@@ -86,6 +88,7 @@ const TabSession = ({ activeSession, onlineCharacters, patron, characters, order
                 <AudioSessionToggle sessionId={activeSession.id} className="vtt-btn vtt-btn-sm w-full" />
                 <BoardSessionToggle sessionId={activeSession.id} className="vtt-btn vtt-btn-sm w-full" />
                 {order.length > 0 && <button type="button" className="vtt-btn vtt-btn-sm w-full" onClick={() => setRefill(true)}>Début de séance (Destin)</button>}
+                {patronState && <SuperiorityControl patronState={patronState} compact />}
                 {loading && <p className="im-empty">Chargement…</p>}
                 {!loading && order.length === 0 && <p className="im-empty">Aucun acolyte à cette table.</p>}
                 {order.length > 0 && <div className="im-feed-label">Flux des agents</div>}

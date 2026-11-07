@@ -11,6 +11,7 @@ import MlHistoryEntry from './components/layout/MlHistoryEntry.jsx';
 import { resolveTest, resolveAttack, resolvePower, applySlBonus, slBand, charsFromDice } from './config/rules/dice.js';
 import { CHAR_KEYS } from './config/rules/character.js';
 import { lookupTable } from './config/rules/tables.js';
+import { SETUP } from './config/setup.js';
 
 // ══════════════════════════════════════════════════════════════════════════════
 // BLOC DÉS — contrat diceEngine v2
@@ -50,7 +51,7 @@ const dice = {
         const values = raw.groups[0]?.values ?? [];
 
         if (sd.type === 'chargen') {
-            return { ...base, values, chars: charsFromDice(values, CHAR_KEYS), successes: 0 };
+            return { ...base, values, chars: charsFromDice(values, CHAR_KEYS, SETUP.chars.base), successes: 0 };
         }
         if (sd.type === 'd10') {
             const value = values[0] ?? 0;

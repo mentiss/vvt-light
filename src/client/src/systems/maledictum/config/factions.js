@@ -1,5 +1,5 @@
 // Factions du setup Inquisition (Imperium Maledictum).
-// Sources : livre de base (CORE) p.56-73 (8 factions, « The Inquisition » p.66-67 exclue, décision D-8),
+// Sources : livre de base (CORE) p.56-73 (9 factions, dont « The Inquisition » p.66-67, présente pour jouer sans le Player's Guide),
 // table d100 « Faction » p.55 relue sur le PDF ; Inquisition Player's Guide (IPG) p.50-55 (les trois
 // Ordos Majoris) et table d100 p.46 relue sur le PDF.
 // Données seules : clés anglaises stables, libellés français, labelEn = nom VO.
@@ -44,6 +44,13 @@
 // - Xénolinguiste : 2 Avances en Rapport (Xeno-Cant), au-delà du plafond de création d'une Avance par
 //   spécialisation, prises telles qu'imprimées.
 // - Libellés d'objets provisoires, à aligner sur equipment.js et equipmentInquisition.js.
+// - Inquisition (CORE) : « Glow-globe » et « Auspex » rattachés aux entrées combinées du catalogue
+//   (Globe lumineux / Lampe-torche, Auspex / Scanner) ; « Armoured Bodyglove » repris sous le libellé
+//   du catalogue (Combinaison moulante blindée), alors que les Ordos écrivent « Combinaison blindée ».
+// - Inquisition (CORE) : Exorciste et Sage reçoivent tous deux un Auspex, aucune Fonction ne reçoit
+//   l'Enregistreur picto du choix des Avantages ; pris tels qu'imprimés.
+// - Inquisition (CORE) : faction et Ordos (IPG) coexistent dans FACTIONS ; FACTION_TABLE et
+//   INQUISITION_FACTION_TABLE ne tirent que les Ordos, la faction du livre se choisit seulement.
 
 export const FACTIONS = [
     {
@@ -316,6 +323,41 @@ export const FACTIONS = [
             },
         ],
         summary: 'Gangs, cartels et hors-la-loi des bas-fonds, qui vivent en marge des lois de l\'Imperium.',
+    },
+    {
+        key: 'inquisition', label: 'Inquisition', labelEn: 'The Inquisition', source: 'core', page: 66,
+        theme: 'hereticus',
+        benefits: {
+            fixed: { per: 5 }, choice: ['tgh', 'int', 'wil'],
+            skills: ['awareness', 'discipline', 'intuition', 'logic', 'lore', 'presence'], advances: 5,
+            influence: { inquisition: 1 }, talents: ['ever_vigilant'], talentChoice: null, solars: 400,
+            equipment: ['Pistolet laser', 'Combinaison moulante blindée', 'Globe lumineux / Lampe-torche', 'Menottes'],
+            equipmentChoices: [['Auspex / Scanner', 'Sangsue de communication', 'Enregistreur picto']],
+        },
+        duties: [
+            {
+                key: 'acolyte', label: 'Acolyte', labelEn: 'Acolyte',
+                chars: { per: 5, tgh: 5 }, advances: { awareness: 1, discipline: 1, intuition: 1, logic: 1, presence: 1 }, influence: { inquisition: 1 },
+                talents: ['ever_vigilant'], solars: 100,
+                equipment: ['Pistolet laser', 'Combinaison moulante blindée', 'Globe lumineux / Lampe-torche', 'Menottes', 'Sangsue de communication'],
+                equipmentChoices: [], theme: null,
+            },
+            {
+                key: 'exorcist', label: 'Exorciste', labelEn: 'Exorcist',
+                chars: { per: 5, wil: 5 }, advances: { awareness: 1, discipline: 1, intuition: 1, lore: 1, presence: 1 }, influence: { inquisition: 1 },
+                talents: ['ever_vigilant'], solars: 100,
+                equipment: ['Pistolet laser', 'Combinaison moulante blindée', 'Globe lumineux / Lampe-torche', 'Menottes', 'Auspex / Scanner'],
+                equipmentChoices: [], theme: null,
+            },
+            {
+                key: 'sage', label: 'Sage', labelEn: 'Sage',
+                chars: { per: 5, int: 5 }, advances: { intuition: 1, logic: 2, lore: 2 }, influence: { inquisition: 1 },
+                talents: ['ever_vigilant'], solars: 100,
+                equipment: ['Pistolet laser', 'Combinaison moulante blindée', 'Globe lumineux / Lampe-torche', 'Menottes', 'Auspex / Scanner'],
+                equipmentChoices: [], theme: null,
+            },
+        ],
+        summary: 'La main gauche de l\'Empereur : des Inquisiteurs autonomes et leurs suites, ultime rempart contre les menaces extérieures comme intérieures à l\'Imperium.',
     },
     {
         key: 'ordo_hereticus', label: 'Ordo Hereticus', labelEn: 'The Ordo Hereticus', source: 'ipg', page: 50,

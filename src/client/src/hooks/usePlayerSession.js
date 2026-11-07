@@ -62,7 +62,7 @@ export function usePlayerSession({ character, onCharacterUpdate, onCharacterRelo
     useEffect(() => {
         if (!socket || !character?.id) return;
 
-        socket.emit('character-loaded', {
+        const announce = () => socket.emit('character-loaded', {
             characterId: character.id,
             name: character.name
                 ?? character.nom
@@ -74,8 +74,12 @@ export function usePlayerSession({ character, onCharacterUpdate, onCharacterRelo
             slug,
             sessionId:   activeGMSession,
         });
+        announce();
+        // Reconnexion (serveur relancé, réseau coupé) : le serveur a oublié la présence
+        socket.io.on('reconnect', announce);
 
         return () => {
+            socket.io.off('reconnect', announce);
             socket.emit('character-left', character.id);
         };
     }, [socket, character?.id, activeGMSession]);
