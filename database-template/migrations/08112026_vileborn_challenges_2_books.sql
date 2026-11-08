@@ -1,8 +1,9 @@
 -- ═════════════════════════════════════════════════════════════════════════════
--- database-template/migrations/08112026_vileborn_challenges_books.sql
+-- database-template/migrations/08112026_vileborn_challenges_2_books.sql
 -- Vileborn : versement des défis du livre de base et de l'Apocrypha
 -- (spec_vileborn_defis.md, lot B), une seule fois : ensuite les fiches sont au MJ.
--- À jouer après 08112026_vileborn_challenges.sql.
+-- À jouer après 08112026_vileborn_challenges_1_tables.sql (numérotées : le tri
+-- de la release, par localeCompare, plaçait « _books » avant « .sql »).
 --
 -- systems: vileborn
 -- ═════════════════════════════════════════════════════════════════════════════

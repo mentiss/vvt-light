@@ -198,14 +198,14 @@ Les **actions d'une fiche sont en tête**, dans une barre au-dessus du nom (acc�
 ## II.7 État du lot A (2026-11-08)
 
 Codé, non commité :
-- **Serveur** : tables `challenges` et `session_challenges` (schéma + migration `08112026_vileborn_challenges.sql`, jouée sur la base de dev), Igritte et la Revenante du kit versées (transcrites du kit, règles communes des Déchus recopiées dans la Revenante) ; `ChallengeController.js`, routes `challenges.js` et `session-challenges.js` (MJ seul) ; 9 tests de contrat.
+- **Serveur** : tables `challenges` et `session_challenges` (schéma + migration `08112026_vileborn_challenges_1_tables.sql`, jouée sur la base de dev), Igritte et la Revenante du kit versées (transcrites du kit, règles communes des Déchus recopiées dans la Revenante) ; `ChallengeController.js`, routes `challenges.js` et `session-challenges.js` (MJ seul) ; 9 tests de contrat.
 - **Front** : onglet Défis (À la table, Bibliothèque, formulaire), choix du Paria d'une complication (état déjà coché → blessure), dé d'obscurité du défi par la modale existante (Public / Caché, moteur de dés de la plateforme, ligne de la table chez le MJ seulement), confirmations par `ConfirmModal` ; règles pures testées ; aide de jeu « Défis et nuisibles » réécrite d'après le livre (p. 212-215).
 - **Écart avec la planche** : le résultat du d12 s'affiche dans la modale du dé (qui porte Public / Caché), pas dans la fiche.
 - **Reste** : lot B.
 
 ## II.8 État du lot B (2026-11-08)
 
-Codé, non commité : 24 défis du livre de base et 10 de l'Apocrypha traduits (agents, sur le PDF : cases, déclencheurs, difficultés, appariement phrase / effet vérifiés), complications et règles communes de famille recopiées dans chaque fiche ; versés par le schéma et la migration `08112026_vileborn_challenges_books.sql` (jouée sur la base de dev) ; test de contrat du versement.
+Codé, non commité : 24 défis du livre de base et 10 de l'Apocrypha traduits (agents, sur le PDF : cases, déclencheurs, difficultés, appariement phrase / effet vérifiés), complications et règles communes de famille recopiées dans chaque fiche ; versés par le schéma et la migration `08112026_vileborn_challenges_2_books.sql` (jouée sur la base de dev) ; test de contrat du versement.
 - Familles *Hexed* et *Wildkin* traduites **Maudits** et **Sylvestres**.
 - **Famine** : le déclencheur sans numéro (« - » dans le livre ; « détruire un foyer déclenche toujours un effet ») est répété sur ses 4 cases.
 - **Noms à relire par le MJ** : Lié (*Bound*, proche de la règle « Liés » des Déchus), Ravisseur, Murmure, Défait, Mégère, Sang-Neuf / Sang-Noble / Sang-Ancien, Pourrisson, Rancune ancestrale, Henry des Crêtes ; « foyer » pour *locus*, « fer froid » pour *coldiron*, « verlume » gardé.

@@ -1,5 +1,5 @@
 -- ═════════════════════════════════════════════════════════════════════════════
--- database-template/migrations/08112026_vileborn_challenges.sql
+-- database-template/migrations/08112026_vileborn_challenges_1_tables.sql
 -- Vileborn : défis (spec_vileborn_defis.md §II.2)
 --
 --   • challenges : bibliothèque du MJ (fiches des livres versées une fois, puis
