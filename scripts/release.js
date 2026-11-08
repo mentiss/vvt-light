@@ -110,11 +110,22 @@ function writeVersion(version) {
 
 // ─── Migrations ──────────────────────────────────────────────────────────────
 
-/** "17102026_x.sql" → "20261017_x.sql" : clé de tri chronologique. */
+/** "17102026_x.sql" → "20261017_x" : clé de tri chronologique (extension retirée). */
 function migrationSortKey(filename) {
-    const match = filename.match(/^(\d{2})(\d{2})(\d{4})/);
-    return match ? `${match[3]}${match[2]}${match[1]}${filename.slice(8)}` : filename;
+    const name = filename.replace(/\.sql$/, '');
+    const match = name.match(/^(\d{2})(\d{2})(\d{4})/);
+    return match ? `${match[3]}${match[2]}${match[1]}${name.slice(8)}` : name;
 }
+
+/**
+ * Ordre des migrations : comparaison caractère par caractère, sans localeCompare
+ * (qui ignore la ponctuation et a joué « x_books.sql » avant « x.sql », v5.20.0).
+ * Le même jour, un nom préfixe d'un autre passe avant lui.
+ */
+const compareMigrations = (a, b) => {
+    const ka = migrationSortKey(a), kb = migrationSortKey(b);
+    return ka < kb ? -1 : ka > kb ? 1 : 0;
+};
 
 /** Lit « -- systems: a,b » (ou « all ») dans le bloc de commentaires d'en-tête. */
 function readSystems(filename) {
@@ -134,7 +145,7 @@ function collectNewMigrations() {
 
     const files = fs.readdirSync(MIGRATIONS_DIR)
         .filter(f => f.endsWith('.sql') && !released.has(f))
-        .sort((a, b) => migrationSortKey(a).localeCompare(migrationSortKey(b)));
+        .sort(compareMigrations);
 
     const errors     = [];
     const migrations = files.map(file => {

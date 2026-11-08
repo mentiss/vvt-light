@@ -86,7 +86,7 @@ Une **base de module** (base propre à un module de la plateforme, hors des base
 
 Une nouvelle migration sans cette ligne **bloque la release** (pas de valeur par défaut, pour ne jamais jouer sur toutes les bases une migration propre à un slug). Les migrations déjà parties n'ont pas à être modifiées.
 
-**Ordre** : date du nom de fichier (`DDMMYYYY`, relue en vraie date), puis ordre alphabétique pour une même date.
+**Ordre** : date du nom de fichier (`DDMMYYYY`, relue en vraie date), puis nom sans l'extension, comparé caractère par caractère pour une même date (un nom préfixe d'un autre passe avant : `x.sql` avant `x_suite.sql`). Pas de `localeCompare`, qui ignore la ponctuation et a fait échouer la première tentative de v5.20.0. Une migration par chantier reste la règle.
 
 **Exécution** : par le `migrate.js` existant (`scripts/migrate.js`), une migration à la fois, sur les slugs indiqués. Chaque migration tourne déjà dans une transaction par base.
 
