@@ -1,5 +1,7 @@
 # Refonte Vikings — Lot 3 : structure client et interface MJ
 
+> **Dépassé en partie** (note du 2026-11-08) : la refonte « pierre peinte » (`spec_vikings_pierre_peinte.md`) a remplacé `TableActionsModal` (§5.3) par le récapitulatif de fin d'arc de la halle du MJ. Pour l'état actuel, lire `spec_vikings_pierre_peinte.md`.
+
 ## Statut
 
 **Validée par le MJ le 2026-10-17** (L3-1 à L3-7, §1 et §12). **3a et 3b implémentés le 2026-10-17** (écarts en §14). La migration `17102026_vikings_combat_mods.sql` est à jouer sur chaque base avant d'utiliser le code de 3b.

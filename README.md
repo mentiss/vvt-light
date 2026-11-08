@@ -9,8 +9,10 @@
 - **Pas de bibliothèques superflues** — chaque dépendance doit se justifier.
 - **Clarté avant tout** — hooks personnalisés côté React, contrôleurs clairs côté Express.
 - **Multi-système par isolation** — une base de données SQLite par système, des routes montées dynamiquement.
-- **Rétro-compatibilité** — le système Vikings existant reste intact pendant l'évolution de la plateforme.
+- **Briques génériques** — la plateforme fournit la mécanique (menus, modales, historique des dés, tableau partagé, audio…), chaque système garde son contenu et sa disposition.
 - **Temps réel robuste** — rooms Socket.io isolées par système et par session.
+
+Les règles du code (grilles avec identifiants) sont dans `code-rules/`, le contexte pour les agents dans `CLAUDE.md` et `AGENTS.md`, les specs validées dans `documentations/`.
 
 ---
 
@@ -38,68 +40,36 @@
 ├── src/
 │   ├── server/                        # Backend Express
 │   │   ├── server.js                  # Point d'entrée, montage dynamique des routes
-│   │   ├── db/
-│   │   │   └── index.js               # Pool lazy de connexions SQLite (TTL 5 min)
-│   │   ├── systems/                   # Un dossier par système de jeu
-│   │   │   ├── Loader.js              # Auto-scan + registre des systèmes
-│   │   │   └── vikings/               # Système Pure Vikings
-│   │   │       ├── config.jsx          # { slug, label, dbPath, schemaPath }
-│   │   │       ├── characterController.js
-│   │   │       └── routes/
-│   │   │           ├── characters.js  # Routes spécifiques personnages
-│   │   │           └── combat.js      # Routes spécifiques combat
-│   │   ├── routes/                    # Routes partagées (tous systèmes)
-│   │   │   ├── sessions.js
-│   │   │   ├── journal.js
-│   │   │   └── dice.js
-│   │   ├── middleware/
-│   │   │   ├── systemResolver.js      # Injecte req.system + req.db
-│   │   │   ├── auth.js
-│   │   │   └── rateLimits.js
-│   │   └── utils/
-│   │       ├── characters.js          # generateAccessCode, generateAccessUrl
-│   │       ├── db.js                  # Compat descendante getDb() → vikings
-│   │       ├── jwt.js
-│   │       └── combatState.js         # État combat en mémoire (Vikings)
+│   │   ├── db/                        # Pool lazy de connexions SQLite (TTL 5 min), bases de module
+│   │   ├── middlewares/               # systemResolver (req.system, req.db), auth, rateLimits
+│   │   ├── routes/                    # Routes partagées : auth, characters (commune), sessions,
+│   │   │                              #   journal, dice, audio, board, combat, npc, npc-sets
+│   │   ├── socket/                    # Socket.io : index.js + platform/ (présence, sessions, audio, board)
+│   │   ├── systems/
+│   │   │   ├── Loader.js              # Découverte des systèmes (zéro registre central)
+│   │   │   └── <slug>/                # config.js, CharacterController.js, routes/, socket/
+│   │   └── utils/                     # characters (helpers de sauvegarde et de diffusion), jwt…
 │   │
-│   └── client/                        # Frontend React
-│       ├── index.html
-│       └── src/
-│           ├── main.jsx
-│           ├── AppRouter.jsx          # Routes React Router
-│           ├── context/
-│           │   ├── SystemsContext.jsx # Liste des systèmes chargés depuis /api/systems
-│           │   ├── SocketContext.jsx
-│           │   └── SessionContext.jsx
-│           ├── hooks/
-│           │   ├── useSystem.js       # { slug, label, apiBase }
-│           │   ├── usePlayerSession.js
-│           │   └── useFetch.js        # fetch authentifié avec refresh token
-│           ├── tools/
-│           │   └── diceEngine.js      # Orchestrateur générique de dés
-│           ├── systems/
-│           │   └── vikings/
-│           │       └── config.jsx      # Hooks système : beforeRoll, buildRollParams, afterRoll…
-│           └── components/
-│               ├── shared/            # Composants agnostiques au système
-│               │   ├── RichTextEditor.jsx
-│               │   ├── ToastNotifications.jsx
-│               │   ├── ThemeToggle.jsx
-│               │   ├── SessionPlayersBar.jsx
-│               │   └── …
-│               ├── tabs/
-│               │   └── JournalTab.jsx
-│               ├── modals/
-│               └── GMView/            # Interface Maître du Jeu
+│   └── client/                        # Frontend React (Vite)
+│       ├── src/
+│       │   ├── AppRouter.jsx
+│       │   ├── components/            # Briques de la plateforme (ui, layout, board, audio, gm…)
+│       │   ├── hooks/                 # useFetch, useGMSession, usePersistedState…
+│       │   ├── tools/                 # diceEngine, browserStorage…
+│       │   └── systems/<slug>/        # config.jsx, Sheet.jsx, GMApp.jsx, Creation.jsx
+│       └── tests/                     # Tests Vitest des fonctions pures (miroir de src/)
 │
+├── code-rules/                        # Grilles de règles du code (common, front, back)
 ├── database/                          # Bases SQLite (gitignored)
-│   └── pure-vikings.db
 ├── database-template/
-│   ├── schema.sql                     # Schéma de référence Vikings
-│   └── migrations/                    # Scripts de migration
-│       └── DDMMYYYY_add_quoi.sql
-├── package.json                       # Scripts racine
-└── README.md
+│   ├── base.sql                       # Tables partagées
+│   ├── <slug>-schema.sql              # Schéma de chaque système
+│   └── migrations/                    # DDMMYYYY_description.sql (en-tête -- systems:)
+├── documentations/                    # Specs validées (spec_*.md)
+├── scripts/                           # migrate.js, release.js, install.sh…
+├── tests/server/                      # Tests Vitest des routes (contrats, droits, schémas)
+├── CLAUDE.md, AGENTS.md               # Consignes pour les agents (Claude Code, Codex)
+└── package.json
 ```
 
 ---
@@ -202,21 +172,21 @@ Chaque système de jeu possède sa propre base SQLite. La connexion est ouverte 
 
 ### Ajouter une migration
 
+Toute modification de structure touche le schéma (pour les bases neuves) **et** une migration (pour les bases existantes).
+
 ```bash
 # Créer le fichier dans database-template/migrations/
-# Format : DDMMYYYY_add_quoi.sql
+# Format : DDMMYYYY_add_quoi.sql, avec l'en-tête « -- systems: <slug,...|all> »
 
-# Jouer la migration
-npm run migrate 27022025_add_quoi.sql
+# Jouer la migration sur un seul système (le -- est obligatoire)
+npm run migrate -- 27022025_add_quoi.sql --system=vikings
 ```
 
-### Tables partagées (présentes dans toutes les BDD)
+### Tables partagées (présentes dans toutes les BDD, `base.sql`)
 
-`characters`, `game_sessions`, `session_characters`, `dice_history`, `character_journal`
+`characters`, `game_sessions`, `session_characters`, `dice_history`, `character_journal`, `refresh_tokens`
 
-### Tables spécifiques (exemple Vikings)
-
-`character_skills`, `character_traits`, `character_runes`, `character_items`
+Les tables propres à un système sont dans son `database-template/<slug>-schema.sql`.
 
 ---
 
@@ -228,7 +198,7 @@ Toutes les routes sont préfixées par le slug du système : `/api/:system/…`
 |---------|------------------------------------------|------------------------------------|
 | GET     | `/api/systems`                           | Liste des systèmes disponibles     |
 | GET     | `/api/health`                            | Health check                       |
-| POST    | `/api/:system/auth/login`                | Authentification GM                |
+| POST    | `/api/:system/auth/login`                | Connexion (joueur ou MJ, adresse + code) |
 | GET     | `/api/:system/characters`                | Liste des personnages              |
 | GET     | `/api/:system/characters/:id`            | Fiche complète                     |
 | POST    | `/api/:system/characters`                | Créer un personnage                |
@@ -254,7 +224,7 @@ Les rooms sont isolées par système et session : `${system}_session_${sessionId
 | `character-left`        | Client → Serveur | Joueur déconnecté                        |
 | `join-session`          | Client → Serveur | Rejoindre une room de session            |
 | `gm-set-active-session` | GM → Serveur     | Activer une session côté GM              |
-| `character-update`      | Serveur → Client | Mise à jour temps réel d'un personnage   |
+| `character-full-update` | Serveur → Client | Fiche complète mise à jour (après une écriture HTTP) |
 | `gm-item-received`      | Serveur → Client | Item reçu du GM (rechargement perso)     |
 | `gm-message-received`   | Serveur → Client | Message/note envoyé par le GM            |
 
@@ -264,7 +234,7 @@ Les rooms sont isolées par système et session : `${system}_session_${sessionId
 
 ### Ajouter un nouveau système
 
-1. Créer `src/server/systems/:slug/config.jsx`
+1. Créer `src/server/systems/:slug/config.js`
 2. Créer `src/server/systems/:slug/CharacterController.js` (la route `/characters` est commune)
 3. Créer `database-template/:slug-schema.sql`
 4. Créer les composants frontend dans `src/client/src/systems/:slug/`
@@ -276,32 +246,22 @@ La commande `/new-slug` de Claude Code détaille la procédure.
 
 ### Systèmes actuels
 
-| Slug      | Nom           | BDD                        | Statut      |
-|-----------|---------------|----------------------------|-------------|
-| `vikings` | Pure Vikings  | `database/pure-vikings.db` | ✅ Actif    |
-| `noctis`  | Noctis Solis  | `database/noctis.db`       | 🔜 À venir  |
-| `tecumah` | Tecumah       | `database/tecumah.db`      | 🔜 À venir  |
+`fabula` (Fabula Ultima), `zoneblanche` (Zone Blanche), `vikings` (Pure Vikings), `achtung` (Achtung! Cthulhu), `cyberpunk` (The Sprawl), `deltagreen` (Delta Green), `dune` (Dune), `noctis` (Noctis Solis, masqué de l'accueil), `tecumah` (Tecumah Gulch), `woddavampire` (Vampire : l'Âge des Ténèbres), `vileborn` (Vileborn), `nimble` (Nimble), `maledictum` (Imperium Maledictum). Le détail de chacun est dans le tableau des slugs de `CLAUDE.md` et dans `documentations/spec_<slug>.md`.
 
 ---
 
-## 🎲 Moteur de Dés (Vikings)
+## 🎲 Moteur de Dés
 
-- **Pool** : 3d10 (modifié par blessures/fatigue)
-- **Explosion** : selon niveau de caractéristique (seuil 8, 9 ou 10)
-- **Succès** : selon niveau de compétence (seuil 4+, 5+, 6+, 7+)
-- **Jets SAGA** : Héroïque (4 succès), Épique (5 succès), Assurance
-- **Animation 3D** : `@3d-dice/dice-box-threejs` (désactivable)
-
-Le moteur (`diceEngine.js`) est générique. Chaque système déclare ses propres hooks `beforeRoll`, `buildRollParams`, `afterRoll`, `buildAnimationSequence` dans son fichier de config frontend.
+Le moteur (`src/client/src/tools/diceEngine.js`) est générique. Chaque système déclare ses hooks (`buildNotation`, `beforeRoll`, `afterRoll`, `buildAnimationSequence`, `renderHistoryEntry`) dans son `config.jsx` ; l'animation est en 3D (`@3d-dice/dice-box-threejs`) ou en 2D selon le système. Spec : `documentations/spec_diceengine_v2.md`.
 
 ---
 
 ## 🔐 Sécurité
 
-- **GM/Joueurs** : routes et vues strictement séparées. L'interface GM requiert un JWT valide.
-- **Auth** : JWT access token (courte durée) + refresh token en cookie httpOnly.
-- **Sockets** : les événements GM sont vérifiés côté serveur avant diffusion.
-- **Rate limiting** : middleware `rateLimits.js` sur les routes sensibles.
+- **Mesure du projet** : une app pour jouer entre amis, pas un produit grand public. Les actions MJ sont protégées côté serveur (`requireGM`), un joueur n'écrit que sa fiche (`requireOwnerOrGM`), toute écriture exige une connexion ; la visibilité des informations MJ est filtrée côté client, c'est voulu (`code-rules/back.md`).
+- **Auth** : connexion par adresse et code d'accès du personnage ; JWT access token (courte durée) + refresh token en cookie httpOnly, par système et par rôle.
+- **Sockets** : une room par table, partagée par le MJ et les joueurs ; les écritures passent par HTTP.
+- **Limitation** : 5 échecs de connexion en 15 minutes bloquent le personnage (`rateLimits.js`).
 
 ---
 
@@ -310,8 +270,12 @@ Le moteur (`diceEngine.js`) est générique. Chaque système déclare ses propre
 | Commande                       | Description                              |
 |--------------------------------|------------------------------------------|
 | `npm run dev`                  | Lance backend + frontend en développement |
+| `npm run build`                | Build du front dans `src/client/dist/`   |
 | `npm start`                    | Lance le serveur en production           |
-| `npm run migrate <fichier.sql>`| Joue une migration sur la BDD            |
+| `npm test`                     | Tests serveur (contrats des routes, droits, schémas) |
+| `npm run migrate -- <fichier.sql> [--system=<slug>]` | Joue une migration sur les BDD |
+| `npm run release`              | Mise en production (`documentations/spec_release.md`) |
+| `cd src/client && npm run lint` / `npm test` | Lint et tests du front |
 
 ---
 

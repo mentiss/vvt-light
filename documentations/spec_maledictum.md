@@ -1,6 +1,9 @@
 # Spec — Imperium Maledictum (slug provisoire `maledictum`, setup Inquisition)
 
-> Statut : **phase 1, cadrage** (2026-11-06). Aucun code. Les questions sont dans les tableaux, colonne
+> Statut au 2026-11-08 : **implémenté et en prod** (lots 1 à 4, v5.17.0 et suivantes) ; l'état réel est en §9 à §13.
+> Les lignes suivantes datent du cadrage (phase 1, 2026-11-06).
+>
+> Les questions sont dans les tableaux, colonne
 > « Réponse MJ » : réponds directement dans le fichier. Un « oui » valide la reco.
 > Règles : en autonomie, comme Nimble. Les choix de règles que je fais seul sont listés en §6
 > (« Décisions proposées ») : je les applique sauf objection. Les vraies questions sont en §7.

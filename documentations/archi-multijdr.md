@@ -1,5 +1,7 @@
 # Architecture Multi-JDR — Document de Référence
 
+> **Document historique, dépassé** (note du 2026-11-08). Il retrace la refacto multi-système d'origine ; plusieurs points ont changé depuis (plus d'indirection `GMView`, route `/characters` commune, briques de la plateforme). Référence actuelle : `CLAUDE.md`, `src/client/CLAUDE.md`, `src/server/CLAUDE.md` et les grilles de `code-rules/`.
+
 > Ce document consigne toutes les décisions d'architecture prises pour rendre l'application VTT multi-système.
 > **À fournir en contexte au début de chaque nouvelle conversation sur ce sujet.**
 > Dernière mise à jour : Phase 1 refacto préparatoire complète.

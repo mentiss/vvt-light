@@ -1,6 +1,8 @@
 # Dependencies
 node_modules/
-package-lock.json
+# Lock de la racine versionné (dépendances du serveur installées par npm ci sur
+# le VPS) ; celui du client reste local, le front est buildé sur le poste.
+src/client/package-lock.json
 yarn.lock
 
 # Database
@@ -36,6 +38,17 @@ _download/
 
 # Assets de dés générés (copy-dice-assets.js après npm install client)
 src/client/public/dice-assets/
+# Fichiers de travail locaux (jamais commités) : planches graphiques, leurs
+# images, les originaux générés, les polices téléchargées. Les assets utilisés
+# par l'app vivent dans src/client/src/systems/<slug>/assets/. Les anciennes
+# planches déjà suivies le restent.
+documentations/*/planche_*.html
+documentations/*/images/
+documentations/*/originaux/
+src/client/public/fonts/downloads/
+# Audit de code local (décrit des défauts)
+documentations/audit_code_*.md
+
 # Mise en production (scripts/release.js)
 deploy.config.json
 release-tmp/

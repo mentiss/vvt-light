@@ -93,11 +93,19 @@ function bumpVersion(version, bump) {
     return `${major}.${minor}.${patch + 1}`;
 }
 
-/** Remplace la version dans package.json sans toucher au reste du fichier. */
+/**
+ * Remplace la version dans package.json, et dans package-lock.json (versionné) :
+ * sa version de tête et celle du paquet racine (packages[""]), les deux premières
+ * occurrences. Le reste des fichiers n'est pas touché.
+ */
 function writeVersion(version) {
-    const file    = path.join(ROOT, 'package.json');
-    const content = fs.readFileSync(file, 'utf8');
-    fs.writeFileSync(file, content.replace(/("version"\s*:\s*")[^"]*(")/, `$1${version}$2`));
+    for (const [name, count] of [['package.json', 1], ['package-lock.json', 2]]) {
+        const file = path.join(ROOT, name);
+        let left = count;
+        const content = fs.readFileSync(file, 'utf8')
+            .replace(/("version"\s*:\s*")[^"]*(")/g, (match, open, close) => (left-- > 0 ? `${open}${version}${close}` : match));
+        fs.writeFileSync(file, content);
+    }
 }
 
 // ─── Migrations ──────────────────────────────────────────────────────────────
@@ -287,7 +295,7 @@ async function release(config) {
         fs.writeFileSync(RELEASED_FILE, current + prefix + migrations.map(m => m.file).join(eol) + eol);
     }
     const message = opts.messageFile ? fs.readFileSync(opts.messageFile, 'utf8') : `Release v${version}`;
-    const paths   = ['package.json', 'database-template/migrations/released.txt'];
+    const paths   = ['package.json', 'package-lock.json', 'database-template/migrations/released.txt'];
     try {
         git(['add', '--', ...paths]);
         git(['commit', '-m', message, '--', ...paths]);

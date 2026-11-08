@@ -470,7 +470,7 @@ Pas de table `session_resources` pour ce slug.
 **`characters`**
 ```
 id, name, alias, profession, employer, nationality, gender, age, birth_date,
-education, physical_description, avatar_url,
+education, physical_description, avatar,
 str, con, dex, int, pow, cha,
 hp_max, hp_current, wp_max, wp_current, san_max, san_current,
 adapted_violence (bool), adapted_helplessness (bool),

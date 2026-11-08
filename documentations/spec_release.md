@@ -43,7 +43,7 @@ Déroulé sur le poste de dev, arrêt au premier échec :
 2. **Migrations** : détection des nouvelles migrations (§4), contrôle de leur en-tête `-- systems:`.
 3. **Fichiers non commités** : si des fichiers modifiés ou non suivis font partie de ce qui part, leur liste s'affiche avec « Continuer ? (o/N) ».
 4. **Récapitulatif** : version, migrations et bases visées, puis confirmation.
-5. **Version** : incrément dans `package.json`, build final avec cette version.
+5. **Version** : incrément dans `package.json` et dans `package-lock.json` (versionné depuis le 2026-11-08 : version de tête et paquet racine), build final avec cette version. Les deux fichiers partent dans le commit de release.
 6. **Archive** : création de `vtt-X.Y.Z.tar.gz`.
 7. **Envoi et installation** : une seule connexion SSH (donc une seule saisie de passphrase si la clé en a une et qu'aucun agent SSH ne tourne). L'archive est transmise puis son `install.sh` est exécuté. Sa sortie s'affiche en direct.
 8. **Après succès** : mise à jour de la liste des migrations parties, commit de la release et tag `vX.Y.Z`.
