@@ -1,6 +1,10 @@
 # CLAUDE.md
 
-Guide pour Claude Code sur ce dépôt. Les règles spécifiques au front et au back sont dans `src/client/CLAUDE.md` et `src/server/CLAUDE.md` (chargés automatiquement quand tu travailles dans ces dossiers).
+Guide pour Claude Code sur ce dépôt. Le contexte propre au front et au back est dans `src/client/CLAUDE.md` et `src/server/CLAUDE.md` (chargés automatiquement quand tu travailles dans ces dossiers).
+
+**Les règles du code sont dans `code-rules/`** (grilles avec identifiants, partagées avec le relecteur Codex via `AGENTS.md`) : `common.md` ci-dessous, `front.md` et `back.md` importés par les `CLAUDE.md` des dossiers. Pour `database-template/` (schémas, migrations), lis `code-rules/back.md`. Spec : `documentations/spec_grilles_relecture.md`.
+
+@code-rules/common.md
 
 ## Projet
 
@@ -14,17 +18,17 @@ Chaque ticket suit trois phases. Ne passe jamais à la suivante sans validation 
 
 1. **Brainstorming / diagnostic** : analyse, questions sur les cas d'usage, implications DB et sockets. **Aucun code.**
 2. **Spécification** : structure de données (schéma SQLite), événements socket, impact UI. Avantages et inconvénients exposés factuellement avant toute décision. Une spec fonctionnelle reste fonctionnelle (le quoi, pas le comment).
-3. **Implémentation** : code modulaire et commenté, liste des fichiers touchés.
+3. **Implémentation** : code modulaire et commenté, liste des fichiers touchés. Une fois lint, tests et build verts, **relecture croisée par Codex** (`/relecture`, `documentations/spec_relecture.md`) avant de rendre la main : corrections appliquées, suggestions présentées à l'utilisateur.
 
 La phase 1 commence toujours par la lecture de la spec existante dans `documentations/` (voir plus bas).
 
 Principes :
 - **Patchs chirurgicaux** sur les fichiers existants, jamais de réécriture complète non demandée. Ne touche pas aux lignes sans rapport avec la demande.
-- **Préserve les fins de ligne CRLF** des fichiers existants.
 - **Lis la source avant d'écrire.** N'invente jamais un contrat de props, une signature ou un chemin : vérifie dans le code réel, surtout pour les composants génériques (voir `src/client/CLAUDE.md`).
 - **Pas de sur-ingénierie** : pas de découpage de fichiers inutile, pas de fabriques quand un objet suffit, pas de validations socket factices, pas de bibliothèque superflue.
 - **Sécurité GM/joueurs, à la mesure du projet** : c'est une app pour jouer entre amis, pas un produit grand public. Les **actions** réservées au MJ (écritures, suppressions, envois) sont protégées côté serveur (`requireGM`). La **visibilité** des informations MJ peut être filtrée côté client : c'est un choix assumé, pas une faille. Ne propose pas de durcissement de sécurité non demandé.
 - Si une demande est ambiguë, pose la question plutôt que de décider seul, en donnant une recommandation argumentée.
+- **Doc à jour dans le même chantier** : un changement de contrat, de structure ou de liste (slug ajouté, signature changée, dette résorbée) met à jour le `CLAUDE.md`, la grille de `code-rules/` ou la spec qui le décrit.
 
 ## Langues
 
@@ -86,7 +90,7 @@ Fichiers d'un slug :
 
 Routes supplémentaires : tout `.js` de `routes/` (sauf `characters.js`, `combat.js`) est monté sur `/api/:slug/<fichier>`.
 Helpers de sauvegarde et de diffusion partagés (`syncSubTable`, `updateOrInsert`, `parseJson`, `broadcastCharacterUpdate`, `emitToCharacterSessions`) : `src/server/utils/characters.js`, jamais recopiés dans un slug.
-Handlers socket supplémentaires : tout `.js` de `socket/` exporte `function register(io, socket, db)`.
+Handlers socket supplémentaires : tout `.js` de `socket/` exporte `function register(io, socket)`.
 
 Pour créer un slug, utilise la commande `/new-slug`. Un slug ne peut pas s'appeler `platform` (portée réservée du stockage navigateur, refusée par le Loader).
 
@@ -107,7 +111,8 @@ Tous sont des systèmes en usage réel, aucun n'est un brouillon :
 | `tecumah` | Tecumah Gulch (D6) | |
 | `woddavampire` | Vampire : l'Âge des Ténèbres (V20 Dark Ages) | Organisation du code de référence (`config/rules/`, sections partagées joueur / MJ, hooks), aide de jeu en Markdown, coterie |
 | `vileborn` | Vileborn (kit d'initiation) | Création déduite des prétirés, fiche calquée sur la page 1 des prétirés, mode Édition partagé joueur / MJ |
-| `nimble` | Nimble 3.x (hack allégé de D&D 5e) | Le plus récent (`spec_nimble.md`) : catalogues transcrits et traduits (11 classes, sorts, bestiaire), critique explosif du dé primaire, montée de niveau guidée, onglet Rencontre côté MJ |
+| `maledictum` | Imperium Maledictum (Warhammer 40 000, setup Inquisition) | Le plus récent (`spec_maledictum.md`) : Patron du groupe, thème selon le rôle de faction du personnage, tables automatisées, aide de jeu |
+| `nimble` | Nimble 3.x (hack allégé de D&D 5e) | Créé en autonomie (`spec_nimble.md`) : catalogues transcrits et traduits (11 classes, sorts, bestiaire), critique explosif du dé primaire, montée de niveau guidée, onglet Rencontre côté MJ |
 
 ### Base de données
 

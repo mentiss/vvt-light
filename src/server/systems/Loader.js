@@ -20,7 +20,8 @@
 //   Ex : routes/session-resources.js → /api/dune/session-resources
 //
 // Handlers Socket.io slug-spécifiques :
-//   Tout fichier .js dans socket/ exporte une fonction register(io, socket, db).
+//   Tout fichier .js dans socket/ exporte une fonction register(io, socket).
+//   La base s'obtient dans le handler : getDbForSystem(getConfigForSystem(SLUG)).
 //   Chaque fichier est enregistré automatiquement à chaque nouvelle connexion socket.
 //   Ex : socket/session-resources.js → écoute 'dune:update-session-resources'
 //   Les événements écoutés sont préfixés par le slug : tous les handlers de tous
@@ -173,7 +174,7 @@ function getSystemExtraRoutes(slug) {
 
 /**
  * Scanne le dossier socket/ du slug et retourne toutes les fonctions register.
- * Chaque fichier doit exporter : function register(io, socket, db) { ... }
+ * Chaque fichier doit exporter : function register(io, socket) { ... }
  *
  * @param {string} slug
  * @returns {Array<Function>}  tableau de fonctions register

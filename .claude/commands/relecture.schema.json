@@ -1,0 +1,53 @@
+{
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["corrections", "suggestions", "unclearRules", "summary"],
+  "properties": {
+    "corrections": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["rule", "file", "line", "problem", "fix"],
+        "properties": {
+          "rule": { "type": "string", "description": "Identifiant de la règle enfreinte (C-…, F-…, B-…)" },
+          "file": { "type": "string", "description": "Chemin depuis la racine du dépôt" },
+          "line": { "type": "integer", "description": "Ligne concernée, 0 pour tout le fichier" },
+          "problem": { "type": "string" },
+          "fix": { "type": "string", "description": "Correctif attendu" }
+        }
+      }
+    },
+    "suggestions": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["category", "file", "line", "proposal", "argument"],
+        "properties": {
+          "category": {
+            "type": "string",
+            "enum": ["performance", "logique", "maintenabilité", "ergonomie", "sécurité", "préférence"]
+          },
+          "file": { "type": "string" },
+          "line": { "type": "integer" },
+          "proposal": { "type": "string" },
+          "argument": { "type": "string" }
+        }
+      }
+    },
+    "unclearRules": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["rule", "why"],
+        "properties": {
+          "rule": { "type": "string" },
+          "why": { "type": "string" }
+        }
+      }
+    },
+    "summary": { "type": "string" }
+  }
+}

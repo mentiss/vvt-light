@@ -1,18 +1,20 @@
 # CLAUDE.md — Frontend (src/client)
 
-Règles React / CSS. Complète le CLAUDE.md racine.
+Contexte React / CSS. Complète le CLAUDE.md racine. **Les règles du code front sont dans la grille ci-dessous** (identifiants `F-…`) ; ce fichier décrit comment le front fonctionne et les contrats à respecter.
+
+@../../code-rules/front.md
 
 ## Routing et chargement
 
 - Entrée : `src/main.jsx` → `AppRouter.jsx`.
 - `/:system` → `SystemLayout` (valide le slug auprès du backend) → `PlayerPage` / `GMPage` / `CreationPage`.
-- **Une page = un slug** : un `theme.css` chargé n'est jamais retiré. Tout lien qui change de slug (ou mène à l'accueil) est un `<a href>`, pas un `navigate()` / `<Link>`. Le garde-fou `useSlugGuard` (accueil, `SystemLayout`) recharge la page si ça arrive quand même.
+- **Une page = un slug** : un `theme.css` chargé n'est jamais retiré (d'où F-SLUG-LINK). Le garde-fou `useSlugGuard` (accueil, `SystemLayout`) recharge la page si un changement de slug arrive quand même.
 - `useSystem()` lit le param `:system` et le valide via `/api/systems` ; `getSystemFromPath()` est la version hors React.
 - `systems/:slug/config.jsx` exporte `default { slug, label, dice, combat, diceConfigDefault }`.
 
 ## Composants génériques : ne jamais deviner leurs contrats
 
-Avant d'écrire un composant qui reçoit des props de la plateforme, **ouvre la source** et reprends les noms et formes exacts des props. Concerne notamment : `PlayerPage`, `GMPage`, `CreationPage`, `diceEngine.js`, le système de toasts/notifications, `SessionPlayersBar`, `CharacterListModal`, `TabJournal`, `DiceHistoryPage`, `HamburgerMenu` et `HamburgerMenuItems`.
+Avant d'écrire un composant qui reçoit des props de la plateforme, **ouvre la source** et reprends les noms et formes exacts des props (F-CONTRACT). Concerne notamment : `PlayerPage`, `GMPage`, `CreationPage`, `diceEngine.js`, le système de toasts/notifications, `SessionPlayersBar`, `CharacterListModal`, `TabJournal`, `DiceHistoryPage`, `HamburgerMenu` et `HamburgerMenuItems`.
 
 - `DiceHistoryPage` (et non `DiceHistoryTab`) et `ToastNotifications` : prop `sessionId` seule. Le rendu d'un jet est déclaré **une fois** dans le `config.jsx` du slug (`dice.renderHistoryEntry`, `dice.renderAllRollTypes` si le slug rend aussi le jet libre) et lu par l'onglet, le panneau et les notifications. Import depuis `src/components/layout/DiceHistoryPage.jsx`.
 - Panneau d'historique : `components/layout/DiceHistoryPanel.jsx` (prop `sessionId`), brique que le slug monte s'il le veut, **à la racine** de sa fiche ou de son interface MJ (pas dans un onglet) ; son bouton va dans la zone d'actions.
@@ -20,8 +22,8 @@ Avant d'écrire un composant qui reçoit des props de la plateforme, **ouvre la 
 - Menus joueur et MJ : briques `components/ui/HamburgerMenu.jsx` et éléments `components/ui/HamburgerMenuItems.jsx` (contrats dans `documentations/spec_ui_menu.md`).
 - Tableau partagé (`documentations/spec_tableau.md` §10.8) : `BoardLayer` monté par `PlayerPage` / `GMPage` (bouton de la zone d'actions, bandeau, fenêtre flottante) ; le slug pose `BoardSessionToggle` (props `sessionId`, `label?`, `icon?`, `className?`) dans son `TabSession`, et s'il veut un onglet, `components/board/Board.jsx` (props `sessionId`, `role` `'gm'|'player'`, `compact?`) dans un conteneur `vtt-board-page`. Grille par défaut du slug facultative : `board: { grid: { value, unit } }` dans `config.jsx`. Les émissions socket du tableau (`board-drag`, `board-ping`) vivent dans `hooks/useBoardSlide.js`, jamais dans un slug.
 - Fenêtre flottante (déplaçable, redimensionnable, réductible, mémorisée) : `components/ui/FloatingPanel.jsx`, contrat dans `documentations/spec_ui_panneaux.md`. Elle est un conteneur de requêtes de taille : un menu ou une modale ouvert depuis son contenu passe par `HostedModal` (`components/ui/ModalHost.jsx`), sinon il est rogné.
-- Rendu des jets : même composant pour l'historique et les notifications, sans marge extérieure (voir « Jet libre » dans `documentations/spec_diceengine_v2.md`).
 - `SessionPlayersBar` vit aussi dans `src/components/layout/`.
+- `TabJournal` (`components/gm/tabs/TabJournal.jsx`) ne prend aucune prop : c'est le journal du MJ (`JournalTab` avec `characterId = -1`).
 - Aide de jeu (référence des règles) : `components/reference/ReferenceGuide.jsx` (props `sections`, `isGM`, `renderBlock?`, `placeholder?`), contenu en Markdown converti par `markdownToSections` (`tools/reference.js`), visibilité `gm` / `player`. Contrat dans `documentations/spec_ui_reference.md`.
 - Onglet courant gardé dans le hash de l'URL : `useHashTab(TABS, défaut)` (`hooks/useHashTab.js`).
 - Copie des accès d'un personnage (message Discord : jeu, nom, lien, code) : `components/ui/CopyAccessButton.jsx` (props `character`, `codeOnly?`, `name?`, `label?`, `icon?`, `className?`), habillé par `.vtt-btn`. Message complet dans le `TabSession` (le MJ le transmet) ; `codeOnly` sur l'écran de fin de création (le joueur colle le code seul pour se reconnecter).
@@ -29,53 +31,35 @@ Avant d'écrire un composant qui reçoit des props de la plateforme, **ouvre la 
 ## Moteur de dés (`src/tools/diceEngine.js`)
 
 Agnostique. Chaque `config.jsx` déclare les hooks :
-- `buildNotation(ctx)` → chaîne ou tableau de notations. **Appelé par le composant avant `roll()`**, pas dans le moteur.
+- `buildNotation(ctx)` → chaîne ou tableau de notations, **un type de dé par chaîne** (F-ROLL). Appelé par le composant avant `roll()`, pas dans le moteur.
 - `beforeRoll(ctx)` → ctx enrichi.
 - `afterRoll(raw, ctx)` → résultat interprété (succès, critiques…).
 - `buildAnimationSequence(raw, ctx, result)` → config d'animation.
 - `renderHistoryEntry(entry)` → élément React ou `null`.
 - Dés 2D (`spec_diceengine_v2.md` « Dés 2D et apparence ») : `dice.renderer: '2d'` dans `config.jsx` fait jouer `DiceOverlay2D` au lieu de la 3D (aiguillage dans `DiceAnimationOverlay`, 3D chargée à la demande). Apparence d'un dé = configuration au format de `diceConfigDefault.custom`, résolue champ par champ : `waves[n].colors[i]` > `groups[n].color` (objet) > `dice.byType` du slug > réglages du joueur (`tools/dice2d.js`). Brique `components/dice/Die2D.jsx` (props `type`, `value`, `config`) réutilisable par les rendus de jet ; habillage `.vtt-die2d*` à partir des variables `--die-*`, jamais de couleurs en dur.
-
-Règles :
-- **`roll()` renvoie directement le résultat de `afterRoll()`**, jamais l'objet brut. Le non-respect provoque des bugs persistants.
-- `raw.groups` correspond 1 pour 1 au tableau de notations : deux chaînes = deux groupes ; `"1d8+1d10"` = un groupe.
-- Les explosions créent des **vagues** d'animation à l'intérieur du groupe parent, jamais de nouveaux groupes.
+- `raw.groups` correspond 1 pour 1 au tableau de notations : deux chaînes = deux groupes. Le moteur ne lit que le premier terme de dés d'une chaîne (`"1d8+1d10"` ne remonte que le d8 dans `values`).
 
 ## Sockets côté client
 
-- **Les mises à jour de personnage passent par HTTP** (`onCharacterUpdate` → PUT, `patchImmediate` → PUT/PATCH direct). Les composants n'émettent pas de socket pour modifier une fiche ; ils écoutent.
-- Les emits d'infrastructure (`join-session`, `leave-session`, `character-loaded`, `character-left`, `gm-set-active-session`, `gm-clear-session`) vivent dans les hooks et contextes génériques (`useGMSession`, `usePlayerSession`, `SessionContext`). Ne les réémets pas depuis un slug.
-- **Dette connue, non prioritaire** : les ressources de session 2D20 / D6 (`<slug>:update-session-resources`, préfixé par le slug) sont émises par socket depuis des composants ou hooks de `dune`, `achtung`, `tecumah` (`useSessionResources` et `useDuneRoll` de dune, `TabResource`, `Sheet.jsx` d'achtung). Un événement émis vers le serveur par un slug porte toujours le préfixe du slug. Ne refactore pas ce code sans demande. Pour du nouveau code, ne propage pas ce pattern sans m'en parler.
-- L'écoute de `character-full-update` appartient à `useGMSession` / `GMPage` (générique), pas à un `TabSession` de slug. Un `TabSession` ne déclare que `session-resources-gm-update`.
-- Nettoie chaque listener au démontage (`socket.off` dans le cleanup de l'effet).
+- Les mises à jour de personnage passent par HTTP (`onCharacterUpdate` → PUT avec debounce, `patchImmediate` → PUT/PATCH direct sans debounce). Les composants écoutent.
+- Les emits d'infrastructure vivent dans `useGMSession`, `usePlayerSession`, `SessionContext`.
+- **Dette connue, non prioritaire** : les ressources de session 2D20 / D6 (`<slug>:update-session-resources`) sont émises par socket depuis `dune/hooks/useSessionResources.js`, `dune/hooks/useDuneRoll.js`, `achtung/Sheet.jsx`, `achtung/gm/tabs/TabSession.jsx`, `achtung/dice/AchtungDiceModal.jsx`, `tecumah/components/gm/tabs/TabResource.jsx`, `tecumah/components/modals/TecumahDiceModal.jsx`. Ne refactore pas ce code sans demande ; pour du nouveau code, ne propage pas ce pattern sans m'en parler.
+- L'écoute de `character-full-update` appartient à `useGMSession` / `GMPage`.
 
-## React : pièges connus
+## React
 
-- `fetchWithAuth` ne doit **jamais** apparaître dans un tableau de dépendances `useCallback`/`useEffect` (référence instable).
-- `React.lazy()` est appelé **hors du corps des composants** (pattern `lazyCache`), sinon boucle de remontage.
-- Les sous-composants sont définis **au niveau module**, jamais dans une fonction de rendu.
-- Logique réutilisable → hooks personnalisés.
-- Pas de clé React dérivée d'un index quand un identifiant stable existe.
-- `patchImmediate` déclenche un PUT direct sans debounce ; les autres modifications passent par le debounce.
-- Les actions de jeu (équiper, attaquer, lancer les dés, sentiments de liens…) restent **toujours actives**, quel que soit le mode édition. Seule l'édition de texte libre est soumise au mode édition.
-- Ne modélise pas dans l'app une mécanique gérée à la table.
+- `fetchWithAuth` (`hooks/useFetch.js`) est stable d'un rendu à l'autre : il peut figurer dans un tableau de dépendances.
+- Ne modélise pas dans l'app une mécanique gérée à la table ; n'automatise que le pénible.
 
 ## Stockage navigateur (`tools/browserStorage.js`)
 
-- **Jamais `localStorage` directement.** Dans React : `usePersistedState(scope, name, { defaults, version, validate })` (`hooks/usePersistedState.js`), qui met à jour tous les composants et les autres onglets ; ailleurs : `readStored` / `writeStored` / `removeStored`. Voir `documentations/spec_browser_storage.md`.
-- Clés `vtt:<portée>:<fonction>` par `storageKey(scope, name)` ; portées `PLATFORM_SCOPE` (`'platform'`), `<slug>`, `tableScope(slug, table)`. Un objet par fonction, pas une clé par réglage.
-- Options de `usePersistedState` stables (constantes du module).
-- Une ancienne clé à reprendre : règle ajoutée dans `tools/browserStorageMigration.js` (jouée au démarrage), pas de lecture de secours dans le composant.
+Tout passe par `usePersistedState` / `readStored` / `writeStored` (F-STORAGE). Portées : `PLATFORM_SCOPE` (`'platform'`), `<slug>`, `tableScope(slug, table)`. Spec : `documentations/spec_browser_storage.md`.
 
 ## CSS / style
 
-- Utilise **uniquement les classes générées par `generate-css-utils.js`** (tokens `primary`, `secondary`, `accent`, `danger`, `success`, `surface`, `surface-alt`, `default`, `muted` ; variantes `bg`/`text`/`border`/`ring`/`glow`/`placeholder`, états hover/focus/active/disabled/group-hover, opacités comme `bg-primary/10`).
-- `style=` est réservé aux valeurs réellement dynamiques ou en px fixes. S'il manque une classe, on l'ajoute dans `theme.css`, on ne contourne pas avec `style=`.
-- Tokens `xxx-default` (`bg-default`, `text-default`…). `xxx-base` est un alias legacy à ne pas utiliser.
-- Mode sombre via l'attribut **`data-theme`**, jamais une classe `.dark`. Il est posé sur `<html>` par la plateforme (`applyTheme`) : ne le repose pas sur la racine d'une page du slug. Variables jour sur `:root`, nuit sur `[data-theme="dark"]`.
-- `theme.css` est chargé au niveau page (`import.meta.glob` dans `PlayerPage`/`GMPage`), pas importé dans `Sheet.jsx`. Les `import './theme.css'` restés dans d'anciens slugs sont en trop mais sans effet : n'en ajoute pas dans un nouveau slug.
-- **Pas de `<select>` ni de `<input type="checkbox">`** : boutons « pill » stylés.
-- Tailwind v4 : `shrink-0` et non `flex-shrink-0`.
+- Classes générées par `generate-css-utils.js` (`generated-css-utils.css`) : variantes `bg`/`text`/`border`/`ring`/`glow`/`placeholder`, états hover/focus/active/disabled/group-hover, opacités comme `bg-primary/10`. S'il manque une classe, on l'ajoute dans `theme.css`.
+- Mode sombre : `data-theme` posé sur `<html>` par la plateforme (`applyTheme`).
+- `theme.css` est chargé au niveau page (`import.meta.glob` dans `PlayerPage`/`GMPage`). Les `import './theme.css'` restés dans d'anciens slugs sont en trop mais sans effet (exceptions du lint).
 
 ## Structure d'un slug côté front
 

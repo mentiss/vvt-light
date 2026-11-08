@@ -12,7 +12,7 @@
 
 import { useAuth } from '../context/AuthContext';
 import { getSystemFromPath } from './useSystem';
-import {useEffect, useRef} from "react";
+import {useCallback, useEffect, useRef} from "react";
 
 // Routes montées sans préfixe système dans server.js
 const GLOBAL_ROUTES = [
@@ -51,12 +51,18 @@ function buildHeaders(options, token) {
 export const useFetch = () => {
     const { accessToken, refreshAccessToken } = useAuth();
 
+    // Jeton et rafraîchissement lus par référence : fetchWithAuth reste la même
+    // fonction d'un rendu à l'autre et peut figurer dans des dépendances de hooks.
     const tokenRef = useRef(accessToken);
+    const refreshRef = useRef(refreshAccessToken);
     useEffect(() => {
         tokenRef.current = accessToken;
     }, [accessToken]);
+    useEffect(() => {
+        refreshRef.current = refreshAccessToken;
+    }, [refreshAccessToken]);
 
-    const fetchWithAuth = async (url, options = {}) => {
+    const fetchWithAuth = useCallback(async (url, options = {}) => {
         const finalUrl = toSystemUrl(url);
 
         // Premier essai avec le token courant
@@ -68,7 +74,7 @@ export const useFetch = () => {
         // Token expiré → refresh, puis retry avec le NOUVEAU token
         if (response.status === 401) {
             try {
-                const newToken = await refreshAccessToken(); // retourne le nouveau token directement
+                const newToken = await refreshRef.current(); // retourne le nouveau token directement
 
                 if (!newToken) {
                     // Refresh échoué (session expirée côté serveur) → on laisse remonter
@@ -89,7 +95,7 @@ export const useFetch = () => {
         }
 
         return response;
-    };
+    }, []);
 
     return fetchWithAuth;
 };
