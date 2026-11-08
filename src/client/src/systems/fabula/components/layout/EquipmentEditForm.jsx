@@ -1,7 +1,7 @@
 // src/client/src/systems/fabula/components/layout/EquipmentEditForm.jsx
 // ─────────────────────────────────────────────────────────────────────────────
 // Deux faces d'un item d'équipement, partagées par BackpackCard, ArmorCard,
-// WeaponsCard, AccessoryCard, EquipmentPanel et l'étape 4 du wizard :
+// WeaponsCard, AccessoryCard et l'étape 4 du wizard :
 //   - EquipmentEditForm (défaut)   : saisie libre enrichie, contextuelle au
 //     typeEmplacement — arme (catégorie, précision [attr+attr]+N, dégâts
 //     [VH+N] type, mains, portée), armure (DEF dé DEX + mod OU DEF fixe),
@@ -40,7 +40,7 @@ export const EMPLACEMENT_LABELS = {
 const MAINS_LABELS  = { 1: 'Une main', 2: 'Deux mains' };
 const PORTEE_LABELS = { cac: 'Corps à corps', distance: 'Distance' };
 
-/** Item vierge au contrat complet (BackpackCard, EquipmentPanel, wizard). */
+/** Item vierge au contrat complet (BackpackCard, wizard). */
 export const createEmptyItem = (typeEmplacement = 'arme') => ({
     typeEmplacement, equipmentKey: null, nomLibre: '', notesLibres: '', prix: 0,
     categorie: null, estMartial: false, qualite: '',

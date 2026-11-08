@@ -218,7 +218,7 @@ const GMView = ({ activeSession, onSessionChange, onlineCharacters, darkMode, on
                     )}
 
                     {activeTab === 'journal' && (
-                        <TabJournal characterId={-1} />
+                        <TabJournal />
                     )}
 
                     {activeTab === 'combat' && (

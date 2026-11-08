@@ -144,10 +144,7 @@ const GMView = ({ activeSession, onSessionChange, onlineCharacters, darkMode, on
                 )}
 
                 {activeTab === 'journal' && (
-                    <TabJournal
-                        characterId={-1}
-                        sessionId={activeSession?.id ?? null}
-                    />
+                    <TabJournal />
                 )}
 
                 {/* Tableau partagé (brique plateforme, spec_tableau.md §10.8) */}

@@ -12,7 +12,7 @@ Faire relire le code que Claude écrit par un autre modèle, d'un autre éditeur
 |---|---|---|
 | 1 | Déclenchement | Claude lance la relecture lui-même à la fin de chaque implémentation, une fois lint, tests et build verts, avant de dire « tu peux tester ». L'utilisateur peut aussi la lancer (`/relecture`). |
 | 2 | Périmètre | Les fichiers de code du chantier, en diff : `src/`, `database-template/`, `scripts/`, `tests/`, configurations (`package.json`, `eslint.config.js`, `vite.config.js`…). La spec du chantier est donnée en contexte (C-SPEC). Hors périmètre : doc, planches, images, et la dette des fichiers touchés hors des lignes modifiées. |
-| 3 | Modèle | `gpt-6-astra`, effort de raisonnement `high`. |
+| 3 | Modèle | `gpt-6-astra`, effort de raisonnement `medium` (`high` jusqu'au 2026-11-08 : trop coûteux en quota, il a épuisé celui de l'utilisateur en une journée). |
 | 4 | Correction contestée | Claude n'applique jamais en silence une correction qu'il juge fausse : elle est présentée comme « contestée », avec son argument, et la règle de la grille est précisée. |
 | 5 | Passes | Une seconde passe seulement si les corrections ont touché la logique ; deux passes au plus. |
 | 6 | Suivi | Journal `code-rules/relecture-log.md` ; un identifiant qui revient trois fois déclenche une proposition d'amélioration (règle ou façon de coder). |
@@ -24,7 +24,7 @@ Faire relire le code que Claude écrit par un autre modèle, d'un autre éditeur
 2. **Consigne.** Claude écrit la consigne de relecture dans un fichier du dossier temporaire de la session (§4) : fichiers, commande pour voir leur diff, spec du chantier, rappel des règles du jeu de la relecture.
 3. **Lancement** en arrière-plan, Codex en lecture seule :
    ```bash
-   codex exec -m gpt-6-astra -c model_reasoning_effort=high -s read-only --ephemeral \
+   codex exec -m gpt-6-astra -c model_reasoning_effort=medium -s read-only --ephemeral \
      -C <dépôt> --output-schema .claude/commands/relecture.schema.json \
      -o <temp>/relecture.json - < <temp>/consigne.md
    ```
@@ -93,6 +93,7 @@ Sous le tableau, un décompte par identifiant tenu à jour, pour voir les récur
 ## 8. Limites
 
 - Une relecture prend quelques minutes et consomme du quota Codex : une par chantier, pas par fichier.
+- **Quota épuisé = relecture sautée** (décision du 2026-11-08) : pas de forfait supplémentaire pour la relecture. Le chantier continue comme avant la relecture (compte rendu, commit) ; le journal note « non relu (quota) ». Rien n'est relancé plus tard.
 - Codex peut se tromper, dans les deux sens. Le lint et les tests restent le filet mécanique ; la relecture complète, elle ne remplace rien.
 - Codex ne voit pas la conversation : ce qui n'est ni dans les grilles, ni dans la spec, ni dans le code, il ne peut pas le savoir. Une décision prise en discussion et absente de la spec peut ressortir en suggestion.
 

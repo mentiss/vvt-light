@@ -23,7 +23,7 @@
 
 import { DiceRoll } from '@dice-roller/rpg-dice-roller';
 import { diceAnimBridge } from './diceAnimBridge.js';
-import useDiceConfig, {DICE_FALLBACK_CONFIG, diceStorageKey, getDiceScope} from "../hooks/useDiceConfig.js";
+import {DICE_FALLBACK_CONFIG, diceStorageKey, getDiceScope} from "../hooks/useDiceConfig.js";
 import { readStored } from './browserStorage.js';
 
 // ─── Erreur métier ────────────────────────────────────────────────────────────
@@ -131,7 +131,6 @@ function _executeGroups(notation) {
         const diceItems = rollItems.filter(_isDiceResult);
         const values    = diceItems.map(r => r.value);
         const total     = diceRoll.total;            // total lib (dés + modificateurs arith.)
-        //const waves     = _buildWaves(diceItems);
 
         return { notation: n, values, total, rollItems: diceItems };
     });
@@ -139,22 +138,10 @@ function _executeGroups(notation) {
     // allDice = concat de toutes les faces de dés de tous les groupes
     const allDice = groups.flatMap(g => g.values);
 
-    // Reconstruction correcte des explodés : on cherche dans les items rpg-dice-roller
-    const allRollItems = groups.flatMap(g => {
-        const dr = new DiceRoll(g.notation);
-        return dr.rolls[0]?.rolls ?? [];
-    });
-
-    // Flags globaux
+    // Flags globaux, lus sur les dés réellement tirés (rollItems de chaque groupe)
     const flags = {
-        exploded: allRollItems
-            .filter(r => _isDiceResult(r) && _isExploded(r))
-            .map(r => r.value),
+        exploded: groups.flatMap(g => g.rollItems).filter(_isExploded).map(r => r.value),
     };
-
-    flags.exploded = allRollItems
-        .filter(r => _isDiceResult(r) && _isExploded(r))
-        .map(r => r.value);
 
     return { groups, allDice, flags };
 }
@@ -190,35 +177,6 @@ async function _persistRoll(notation, ctx, result) {
 }
 
 // ─── Helpers privés ───────────────────────────────────────────────────────────
-
-/**
- * Construit les vagues à partir des RollResult rpg-dice-roller.
- * Vague 0 = dés initiaux (sans modificateur 'explode').
- * Vague N = explosions successives.
- *
- * rpg-dice-roller regroupe les explosions dans la même liste avec un modificateur.
- * On reconstitue les vagues en groupant par séquences continues d'explosions.
- */
-function _buildWaves(diceItems) {
-    if (!diceItems.length) return [];
-
-    const waves   = [];
-    let   current = [];
-
-    for (const item of diceItems) {
-        if (_isExploded(item) && current.length > 0) {
-            // Ce dé est une explosion d'un dé précédent → nouvelle vague
-            waves.push({ dice: current.map(r => r.value) });
-            current = [item];
-        } else {
-            current.push(item);
-        }
-    }
-
-    if (current.length) waves.push({ dice: current.map(r => r.value) });
-
-    return waves;
-}
 
 /**
  * Un RollResult est un "dé réel" si ce n'est pas un modificateur arithmétique.

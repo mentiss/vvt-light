@@ -6,7 +6,6 @@
 // ─────────────────────────────────────────────────────────────────────────────
 
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { useSocket }   from '../../../../context/SocketContext.jsx';
 import { useSystem }   from '../../../../hooks/useSystem.js';
 import { useFetch }    from '../../../../hooks/useFetch.js';
 import { GM_TAGS }     from '../../config.jsx';
@@ -541,7 +540,6 @@ const GMAgentPanel = ({ char, isOnline, sessionId, onCharacterUpdate, onSendNote
 const TabSession = ({ activeSession, onlineCharacters, onSessionChange }) => {
     const { apiBase }   = useSystem();
     const fetchWithAuth = useFetch();
-    const socket        = useSocket();
 
     const [characters,    setCharacters]    = useState({});
     const [loading,       setLoading]       = useState(false);
@@ -577,18 +575,6 @@ const TabSession = ({ activeSession, onlineCharacters, onSessionChange }) => {
             );
         }).finally(() => setLoading(false));
     }, [activeSession?.id, activeSession?.characters?.length]); // eslint-disable-line react-hooks/exhaustive-deps
-
-    // ── Socket ────────────────────────────────────────────────────────────────
-    useEffect(() => {
-        if (!socket) return;
-        const onUpdated = (data) => {
-            if (data?.id && characters[data.id]) {
-                setCharacters(prev => ({ ...prev, [data.id]: { ...prev[data.id], ...data } }));
-            }
-        };
-        socket.on('character:updated', onUpdated);
-        return () => socket.off('character:updated', onUpdated);
-    }, [socket, characters]);
 
     // ── Persistance ───────────────────────────────────────────────────────────
     const handleCharacterUpdate = useCallback(async (updatedChar) => {

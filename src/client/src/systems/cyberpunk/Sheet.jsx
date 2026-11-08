@@ -26,7 +26,6 @@ import {
 // Composants Cyberpunk
 import MoveModal           from './components/modals/MoveModal.jsx';
 
-import { useSocket }  from '../../context/SocketContext.jsx';
 import { useSystem }  from '../../hooks/useSystem.js';
 import { useFetch }   from '../../hooks/useFetch.js';
 import { useSession } from '../../context/SessionContext.jsx';
@@ -93,7 +92,6 @@ const Sheet = ({
                    onJournalRead,
                }) => {
     const { apiBase }   = useSystem();
-    const socket        = useSocket();
     const fetchWithAuth = useFetch();
     const { activeGMSession, activeSessionName } = useSession();
 
@@ -106,7 +104,7 @@ const Sheet = ({
 
     // État et écritures de la fiche, partagés avec la vue MJ (spec_cyberpunk.md §4)
     const editor = useSheetEditor(character, onCharacterUpdate);
-    const { editMode, setEditMode, setEditableChar, char } = editor;
+    const { editMode, setEditMode, char } = editor;
 
     // Météo choisie par le MJ pour la table (spec_cyberpunk.md §3.1)
     const { weather: tableWeather } = useTableWeather(activeGMSession);
@@ -139,20 +137,6 @@ const Sheet = ({
             .catch(() => setAllMoves([]))
             .finally(() => setMovesLoading(false));
     }, [apiBase]);
-
-    // ── Socket — mises à jour light ───────────────────────────────────────────
-    useEffect(() => {
-        if (!socket) return;
-        const handler = (data) => {
-            if (data.characterId === character?.id) {
-                // onCharacterHasUpdated : pas de PUT (évite la boucle)
-                // On met juste à jour l'état local
-                setEditableChar(prev => ({ ...prev, ...data.updates }));
-            }
-        };
-        socket.on('character-light-update', handler);
-        return () => socket.off('character-light-update', handler);
-    }, [socket, character?.id]);
 
     // ── Helpers ───────────────────────────────────────────────────────────────
     const changeTab = (tab) => {

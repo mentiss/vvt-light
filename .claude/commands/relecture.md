@@ -60,12 +60,14 @@ Réponds en français, au format JSON imposé. summary : deux ou trois phrases s
 Commande en **arrière-plan** (`run_in_background`), depuis la racine du dépôt, en ASCII seulement (la consigne passe par l'entrée standard : ses accents cassent une commande shell sous Windows) :
 
 ```bash
-codex exec -m gpt-6-astra -c model_reasoning_effort=high -s read-only --ephemeral \
+codex exec -m gpt-6-astra -c model_reasoning_effort=medium -s read-only --ephemeral \
   -C "<racine du dépôt>" --output-schema .claude/commands/relecture.schema.json \
   -o "<scratchpad>/relecture.json" - < "<scratchpad>/relecture-consigne.md"
 ```
 
-Attends la notification de fin ; ne relance pas pendant ce temps. En cas d'échec (quota, réseau), dis-le à l'utilisateur et propose de relancer ; ne simule jamais une relecture.
+Attends la notification de fin ; ne relance pas pendant ce temps. Ne simule jamais une relecture.
+
+**Quota Codex épuisé** (« usage limit ») : la relecture est **sautée**, pas reportée. Le chantier continue comme avant la relecture (compte rendu, commit si l'utilisateur l'a demandé) ; dis-le en une ligne et note « non relu (quota) » dans le journal. On ne relance pas le chantier plus tard. Autre échec (réseau, erreur de la CLI) : dis-le et propose de relancer.
 
 ## 4. Traiter le résultat
 

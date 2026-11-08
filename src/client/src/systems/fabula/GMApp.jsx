@@ -93,7 +93,7 @@ const GMApp = ({ activeSession, onSessionChange, onlineCharacters, characterUpda
                 {activeTab === 'journal' && (
                     <div className="p-4">
                         <div className="fu-win">
-                            <TabJournal characterId={-1} />
+                            <TabJournal />
                         </div>
                     </div>
                 )}

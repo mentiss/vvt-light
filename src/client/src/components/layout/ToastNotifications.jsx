@@ -3,7 +3,6 @@
 //
 // Props :
 //   sessionId        — filtre les jets sur la session active
-//   onViewHistory    — callback "Voir l'historique" (optionnel)
 //
 // Rendu d'un jet : celui du slug, déclaré une fois dans son config.jsx
 // (dice.renderHistoryEntry, dice.renderAllRollTypes), le même que l'historique
@@ -29,7 +28,6 @@ const PLATFORM_ROLL_TYPES = ['free_roll'];
 
 const ToastNotifications = ({
                                 sessionId          = null,
-                                onViewHistory      = null,
                             }) => {
     const [toasts, setToasts] = useState([]);
     const socket              = useSocket();
@@ -212,20 +210,6 @@ const ToastNotifications = ({
                                     </div>
                                 );
                             })()}
-
-                            {onViewHistory && (
-                                <button
-                                    onClick={onViewHistory}
-                                    className="w-full mt-2 py-1 rounded text-xs font-semibold"
-                                    style={{
-                                        background: 'var(--color-surface-alt)',
-                                        color:      'var(--color-text-muted)',
-                                        border:     '1px solid var(--color-border)',
-                                    }}
-                                >
-                                    Voir l'historique
-                                </button>
-                            )}
                         </ToastShell>
                     )}
                 </div>

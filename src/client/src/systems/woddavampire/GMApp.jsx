@@ -111,7 +111,7 @@ const GMApp = ({ activeSession, onSessionChange, onlineCharacters, characterUpda
                     </div>
                 )}
                 {activeTab === 'aide' && <div className="vda-page"><ReferenceGuide sections={REFERENCE_SECTIONS} isGM placeholder="Rechercher une règle (ex. diablerie, manœuvre, soleil)…" /></div>}
-                {activeTab === 'journal' && <div className="vda-page"><TabJournal characterId={-1} /></div>}
+                {activeTab === 'journal' && <div className="vda-page"><TabJournal /></div>}
                 {/* Tableau partagé (brique plateforme, spec_tableau.md §10.8) */}
                 {activeTab === 'tableau' && (
                     <div className="vtt-board-page">

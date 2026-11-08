@@ -83,7 +83,7 @@ const GMApp = ({ activeSession, onSessionChange, onlineCharacters, characterUpda
                 )}
                 {activeTab === 'patron' && <TabPatron activeSession={activeSession} patronState={patronState} />}
                 {activeTab === 'rencontre' && <TabEncounter activeSession={activeSession} />}
-                {activeTab === 'journal' && <div className="im-tab-page"><TabJournal characterId={-1} /></div>}
+                {activeTab === 'journal' && <div className="im-tab-page"><TabJournal /></div>}
                 {activeTab === 'historique' && <div className="im-tab-page"><DiceHistoryPage sessionId={sessionId} /></div>}
                 {activeTab === 'tableau' && (
                     <div className="vtt-board-page">

@@ -143,7 +143,7 @@ const GMView = ({ activeSession, onSessionChange, onlineCharacters, darkMode, on
                 {activeTab === 'journal' && (
                     <div className="flex-1 overflow-y-auto">
                         <div className="max-w-full mx-auto px-4 py-6">
-                            <TabJournal characterId={-1} />
+                            <TabJournal />
                         </div>
                     </div>
                 )}

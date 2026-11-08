@@ -3,7 +3,7 @@
  * Emplacement : src/client/src/hooks/useDiceConfig.js
  *
  * Hook de gestion de la configuration des dés 3D.
- * Persiste en localStorage, expose buildDiceBoxConfig() qui traduit
+ * Persiste dans le navigateur (tools/browserStorage.js), expose buildDiceBoxConfig() qui traduit
  * vers l'API exacte de @3d-dice/dice-box-threejs.
  */
 

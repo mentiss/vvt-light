@@ -24,7 +24,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 
 import { useSystem }  from '../../hooks/useSystem.js';
-import { useSocket }  from '../../context/SocketContext.jsx';
 import { useSession } from '../../context/SessionContext.jsx';
 import { useFetch } from '../../hooks/useFetch.js';
 
@@ -79,7 +78,6 @@ const Sheet = ({
                    onToggleDarkMode,
                }) => {
     const { apiBase }   = useSystem();
-    const socket        = useSocket();
     const fetchWithAuth = useFetch();
     const { activeGMSession, activeSessionName } = useSession();
 
@@ -106,24 +104,6 @@ const Sheet = ({
         // eslint-disable-next-line react-hooks/set-state-in-effect
         if (!editMode) setEditableChar(character);
     }, [character, editMode]);
-
-    // ── Socket — mises à jour temps réel ─────────────────────────────────────
-    useEffect(() => {
-        if (!socket) return;
-
-        // character:updated → reçu quand le GM modifie le personnage
-        // On met à jour l'état local SANS déclencher un PUT (onCharacterHasUpdated pattern)
-        const onUpdated = (data) => {
-            if (data?.id === character?.id) {
-                setEditableChar(prev => ({ ...prev, ...data }));
-                // Si pas en édition, le character prop sera mis à jour par PlayerPage
-                // via le même event — on ne fait rien de plus ici.
-            }
-        };
-
-        socket.on('character:updated', onUpdated);
-        return () => socket.off('character:updated', onUpdated);
-    }, [socket, character?.id]);
 
     // ── Navigation ────────────────────────────────────────────────────────────
 
