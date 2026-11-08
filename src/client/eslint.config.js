@@ -163,7 +163,7 @@ export default defineConfig([
       }],
       'vtt/F-THEME': ['error',
         // dark:bg-x, et aussi derrière une autre variante (md:dark:bg-x)
-        ...inStrings('/(^|[\\s:])dark:/', 'F-THEME : `dark:` suit le système, pas l\'app ; passer par les variables de [data-theme="dark"].'),
+        ...inStrings('/(^|[\\s:])dark:/', 'F-THEME : `dark:` ne suit pas le jour / nuit de l\'app (data-theme) ; passer par les variables de [data-theme="dark"].'),
         { selector: "JSXAttribute[name.name='data-theme']", message: 'F-THEME : data-theme est posé par la plateforme sur <html>, pas sur une page.' },
       ],
       'vtt/F-TOKENS': ['error', ...BASE_TOKENS, ...VIKING_CLASSES],
