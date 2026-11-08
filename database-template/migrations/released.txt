@@ -36,3 +36,6 @@
 06112026_cyberpunk_move_console.sql
 06112026_maledictum_superiorite_activable.sql
 07112026_cyberpunk_session_weather.sql
+07112026_board_hidden_groups.sql
+07112026_board_rotation.sql
+07112026_cyberpunk_creation.sql
