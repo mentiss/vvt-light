@@ -39,6 +39,17 @@ describe('auth : connexion', () => {
         expect(res.body.character.id).toBe(-1);
     });
 
+    it('une connexion purge les jetons de rafraîchissement expirés, garde les autres', async () => {
+        resetAttempts(charId);
+        // Même format que generateRefreshToken (toISOString)
+        const insert = api.db.prepare('INSERT INTO refresh_tokens (character_id, token, expires_at) VALUES (?, ?, ?)');
+        insert.run(charId, 'jeton-expire', new Date(Date.now() - 86400000).toISOString());
+        insert.run(charId, 'jeton-valide', new Date(Date.now() + 86400000).toISOString());
+        expect((await login({ characterUrl: GM_URL, code: GM_CODE })).status).toBe(200);
+        const tokens = api.db.prepare("SELECT token FROM refresh_tokens WHERE token LIKE 'jeton-%'").all().map(t => t.token);
+        expect(tokens).toEqual(['jeton-valide']);
+    });
+
     it('code faux : 401, compté comme tentative', async () => {
         resetAttempts(charId);
         const res = await login({ characterUrl: 'joueur-test', code: 'FAUX00' });

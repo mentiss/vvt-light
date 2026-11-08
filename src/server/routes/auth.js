@@ -12,6 +12,7 @@ const {
     generateRefreshToken,
     checkRefreshToken,
     deleteRefreshToken,
+    cleanExpiredTokens,
 } = require('../utils/jwt');
 const {
     getController,
@@ -45,6 +46,8 @@ router.post('/login', loginRateLimiter, (req, res) => {
 
         const isGM = char.id === -1;
         const accessToken  = generateJWT({ characterId: char.id, isGM });
+        // Chaque connexion purge les jetons de rafraîchissement expirés de la base du système
+        cleanExpiredTokens(db);
         const refreshToken = generateRefreshToken(char.id, db);
 
         // Cookie scopé par slug + rôle — pas de collision entre onglets
