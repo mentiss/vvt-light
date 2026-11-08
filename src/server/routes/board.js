@@ -5,7 +5,8 @@
 //
 // - Données dans la base du module (database/board.db, db/modules/board.js),
 //   jamais dans la base du slug. Tout contenu appartient à une table : slug + session_id.
-// - Diapositives d'une table, objets posés (image, icône, jeton, trait, rectangle),
+// - Diapositives d'une table, objets posés (image, icône, jeton, trait, rectangle ;
+//   lot B, §13 : ellipse, ligne, halo, texte ; rotation, duplication, ordre d'affichage),
 //   images déposées (BLOB, servies à part), brouillard par diapositive.
 // - Droits vérifiés à chaque écriture (§10.2) : le MJ fait tout, un joueur dessine
 //   ou déplace selon les réglages de la diapositive ; un objet verrouillé ne bouge
@@ -22,9 +23,14 @@ const { authenticate, requireGM } = require('../middlewares/auth');
 const { getDbForSystem } = require('../db');
 const { getModuleConfig } = require('../db/moduleConfig');
 
-const KINDS = ['image', 'icon', 'token', 'stroke', 'rect'];
-const PLAYER_DRAW_KINDS = ['stroke', 'rect'];      // ce qu'un joueur dessine et efface (P-4)
+const KINDS = ['image', 'icon', 'token', 'stroke', 'rect', 'ellipse', 'line', 'halo', 'text'];
+// ce qu'un joueur dessine et efface (P-4, §13.1, PB-6)
+const PLAYER_DRAW_KINDS = ['stroke', 'rect', 'ellipse', 'line', 'halo', 'text'];
 const PLAYER_MOVE_KINDS = ['token', 'icon'];       // ce qu'un joueur déplace (Q-10, Q-42)
+const ROTATABLE_KINDS = ['image', 'icon', 'text', 'rect', 'ellipse'];   // Q-52
+const POINT_KINDS = ['stroke', 'line'];            // tracés en coordonnées absolues : boîte calculée
+const FILTER_PRESETS = ['normal', 'night', 'dark', 'sepia', 'faded'];  // Q-49
+const MAX_TEXT_LENGTH = 500;
 const GRID_UNITS = ['m', 'ft'];
 const IMAGE_MIMES = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
 const MAX_IMAGE_BYTES = 5 * 1024 * 1024;           // garde-fou technique, pas un quota (Q-28)
@@ -68,6 +74,9 @@ const toItem = (row) => ({
     slideId: row.slide_id,
     kind: row.kind,
     x: row.x, y: row.y, w: row.w, h: row.h, z: row.z,
+    rotation: row.rotation ?? 0,
+    hidden: !!row.hidden,
+    groupId: row.group_id ?? null,
     locked: !!row.locked,
     data: parseJson(row.data, {}),
     author: row.author,
@@ -160,13 +169,38 @@ const canMove = (user, item) => user.isGM || (!!item.players_move && PLAYER_MOVE
 
 // ─── Validation des objets ──────────────────────────────────────────────────
 
+const isWidth = (value) => isNum(value) && value > 0 && value <= 100;
+const inRange = (value, min, max) => isNum(value) && value >= min && value <= max;
+
+/** Filtre d'image (Q-49) : préréglage et trois réglages, 1 = neutre ; null si invalide */
+function cleanFilter(filter) {
+    if (!filter || typeof filter !== 'object' || !FILTER_PRESETS.includes(filter.preset)) return null;
+    const { brightness, contrast, saturation } = filter;
+    if (![brightness, contrast, saturation].every(v => inRange(v, 0, 2))) return null;
+    return { preset: filter.preset, brightness, contrast, saturation };
+}
+
+/** Rectangle et ellipse : couleur, plein ou contour, épaisseur du contour */
+function cleanShape(data) {
+    if (!isText(data.color, 20) || (data.width !== undefined && !isWidth(data.width))) return null;
+    return { color: data.color, filled: data.filled !== false, ...(data.width !== undefined ? { width: data.width } : {}) };
+}
+
 /** Données propres au type, nettoyées ; null si invalides */
 function cleanData(kind, data) {
     if (!data || typeof data !== 'object' || Array.isArray(data)) return null;
     switch (kind) {
-        case 'image':
-            // Une image déposée passe par POST …/images ; ici, un lien externe seulement
-            return typeof data.url === 'string' && /^https?:\/\//.test(data.url) && data.url.length <= 2000 ? { url: data.url } : null;
+        case 'image': {
+            // Une image déposée passe par POST …/images (imageId) ; la création ici n'accepte
+            // qu'un lien externe (vérifié par la route). Le filtre est facultatif, null le retire.
+            let source = null;
+            if (Number.isInteger(data.imageId)) source = { imageId: data.imageId };
+            else if (typeof data.url === 'string' && /^https?:\/\//.test(data.url) && data.url.length <= 2000) source = { url: data.url };
+            if (!source) return null;
+            if (data.filter === undefined || data.filter === null) return source;
+            const filter = cleanFilter(data.filter);
+            return filter ? { ...source, filter } : null;
+        }
         case 'icon':
             return typeof data.icon === 'string' && ICON_ID.test(data.icon) && isText(data.color, 20)
                 ? { icon: data.icon, color: data.color } : null;
@@ -180,7 +214,19 @@ function cleanData(kind, data) {
             return { points, color: data.color, width: data.width };
         }
         case 'rect':
-            return isText(data.color, 20) ? { color: data.color, filled: data.filled !== false } : null;
+        case 'ellipse':
+            return cleanShape(data);
+        case 'line': {
+            const { points } = data;
+            if (!Array.isArray(points) || points.length !== 4 || !points.every(isNum)) return null;
+            if (!isText(data.color, 20) || !isWidth(data.width)) return null;
+            return { points, color: data.color, width: data.width, arrow: !!data.arrow };
+        }
+        case 'halo':
+            return isText(data.color, 20) ? { color: data.color } : null;
+        case 'text':
+            if (!isText(data.text, MAX_TEXT_LENGTH) || !isText(data.color, 20) || !inRange(data.size, 1, 2000)) return null;
+            return { text: data.text, color: data.color, size: data.size, background: !!data.background };
         default:
             return null;
     }
@@ -442,13 +488,15 @@ router.post('/sessions/:sid/slides/:id/duplicate', ...gm, handle('duplicate slid
         }
 
         const insertItem = ctx.db.prepare(`
-            INSERT INTO board_items (slide_id, kind, x, y, w, h, z, locked, data, author)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            INSERT INTO board_items (slide_id, kind, x, y, w, h, z, rotation, hidden, group_id, locked, data, author)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         `);
+        // Le groupe n'est qu'une étiquette, toujours lue avec la diapositive : elle se recopie telle quelle
         for (const item of ctx.db.prepare('SELECT * FROM board_items WHERE slide_id = ?').all(slide.id)) {
             const data = parseJson(item.data, {});
             if (data.imageId !== undefined) data.imageId = imageIds.get(data.imageId) ?? data.imageId;
-            insertItem.run(copyId, item.kind, item.x, item.y, item.w, item.h, item.z, item.locked, JSON.stringify(data), item.author);
+            insertItem.run(copyId, item.kind, item.x, item.y, item.w, item.h, item.z, item.rotation, item.hidden, item.group_id,
+                item.locked, JSON.stringify(data), item.author);
         }
     })();
     touch(ctx);
@@ -480,9 +528,11 @@ router.post('/sessions/:sid/slides/:id/items', authenticate, handle('create item
     if (!slide) return notFound('Slide');
     if (!KINDS.includes(body.kind)) return invalid('Invalid kind');
     if (!canCreate(req.user, slide, body.kind)) return forbidden();
+    // Une image déposée ne se pose que par son envoi (…/images) : pas d'imageId venu du client
+    if (body.kind === 'image' && body.data?.imageId !== undefined) return invalid('Invalid data');
     const data = cleanData(body.kind, body.data);
     if (!data) return invalid('Invalid data');
-    const geometry = body.kind === 'stroke' ? strokeBox(data.points) : cleanGeometry(body);
+    const geometry = POINT_KINDS.includes(body.kind) ? strokeBox(data.points) : cleanGeometry(body);
     if (!geometry) return invalid('Invalid geometry');
 
     const { lastInsertRowid } = ctx.db.prepare(`
@@ -495,44 +545,299 @@ router.post('/sessions/:sid/slides/:id/items', authenticate, handle('create item
     return { status: 201, body: item };
 }));
 
-router.patch('/sessions/:sid/items/:id', authenticate, handle('update item', (ctx, body, req) => {
-    const item = ownItem(ctx, req.params.id);
-    if (!item) return notFound('Item');
+/**
+ * Modification d'un objet vérifiée (§10.2, §13, §14) : colonnes à écrire, ou erreur.
+ * `carried` : morceau emmené par un joueur avec son groupe (PC-4) ; seule la position
+ * est alors permise, sans les droits de déplacement de l'objet lui-même.
+ * @returns {{ sets: string[], values: any[] } | { status: number, error: string }}
+ */
+function planPatch(user, item, body, { carried = false } = {}) {
     const sets = [];
     const values = [];
 
     // Verrou : le MJ seul, et c'est la seule modification permise sur un objet verrouillé
     if (body.locked !== undefined) {
-        if (!req.user.isGM) return forbidden();
+        if (!user.isGM) return forbidden();
         sets.push('locked = ?');
         values.push(body.locked ? 1 : 0);
     }
     const unlocking = body.locked === false;
+    const blocked = item.locked && !unlocking;
 
     const geometry = cleanGeometry(body);
     if (!geometry) return invalid('Invalid geometry');
+    if (carried && Object.keys(body).some(key => key !== 'x' && key !== 'y' && key !== 'id')) return forbidden();
+    let data = null;
     if (Object.keys(geometry).length > 0) {
-        if (item.locked && !unlocking) return lockedError();
-        if (!canMove(req.user, item)) return forbidden();
+        if (blocked) return lockedError();
+        if (!carried && !canMove(user, item)) return forbidden();
         for (const [key, value] of Object.entries(geometry)) { sets.push(`${key} = ?`); values.push(value); }
+        // Trait, ligne : points en coordonnées absolues, décalés avec la boîte
+        if (POINT_KINDS.includes(item.kind) && (geometry.x !== undefined || geometry.y !== undefined)) {
+            const dx = (geometry.x ?? item.x) - item.x, dy = (geometry.y ?? item.y) - item.y;
+            data = parseJson(item.data, {});
+            data.points = data.points.map((v, i) => Math.round((v + (i % 2 === 0 ? dx : dy)) * 10) / 10);
+        }
+    }
+
+    // Rotation (§13.2, PB-1) : géométrie, mêmes droits que le déplacement
+    if (body.rotation !== undefined) {
+        if (!isNum(body.rotation) || !ROTATABLE_KINDS.includes(item.kind)) return invalid('Invalid rotation');
+        if (blocked) return lockedError();
+        if (!canMove(user, item)) return forbidden();
+        sets.push('rotation = ?');
+        values.push(((body.rotation % 360) + 360) % 360);
+    }
+
+    // Caché aux joueurs (§14.3) : le MJ seul
+    if (body.hidden !== undefined) {
+        if (!user.isGM) return forbidden();
+        if (blocked) return lockedError();
+        sets.push('hidden = ?');
+        values.push(body.hidden ? 1 : 0);
+    }
+
+    // Premier plan / arrière-plan (PB-5) : vérifié ici, calculé par l'appelant
+    if (body.order !== undefined) {
+        if (!['front', 'back'].includes(body.order)) return invalid('Invalid order');
+        if (blocked) return lockedError();
+        if (!canMove(user, item)) return forbidden();
     }
 
     if (body.data !== undefined) {
-        if (item.locked && !unlocking) return lockedError();
-        if (!req.user.isGM) return forbidden();
-        const data = cleanData(item.kind, { ...parseJson(item.data, {}), ...body.data });
+        if (blocked) return lockedError();
+        if (!user.isGM) return forbidden();
+        data = cleanData(item.kind, { ...(data ?? parseJson(item.data, {})), ...body.data });
         if (!data) return invalid('Invalid data');
-        sets.push('data = ?');
-        values.push(JSON.stringify(data));
     }
+    if (data) { sets.push('data = ?'); values.push(JSON.stringify(data)); }
+    return { sets, values };
+}
 
-    if (sets.length === 0) return invalid('Nothing to update');
-    sets.push('updated_at = CURRENT_TIMESTAMP');
-    ctx.db.prepare(`UPDATE board_items SET ${sets.join(', ')} WHERE id = ?`).run(...values, item.id);
+/**
+ * Premier plan / arrière-plan de plusieurs objets, leur ordre entre eux gardé (dans une transaction).
+ * L'arrière-plan reste au-dessus des fonds verrouillés (PB-5).
+ * @returns {Map<number, number>} id → nouveau z, et les ids des autres objets décalés
+ */
+function reorder(ctx, slideId, items, order) {
+    const sorted = [...items].sort((a, b) => a.z - b.z || a.id - b.id);
+    const ids = sorted.map(i => i.id);
+    const z = new Map();
+    let shifted = [];
+    const marks = ids.map(() => '?').join(', ');
+    if (order === 'front') {
+        let next = nextZ(ctx, slideId);
+        for (const id of ids) z.set(id, next++);
+    } else {
+        const { target } = ctx.db.prepare(`
+            SELECT MIN(z) AS target FROM board_items
+            WHERE slide_id = ? AND id NOT IN (${marks}) AND NOT (kind = 'image' AND locked = 1)
+        `).get(slideId, ...ids);
+        if (target === null) return { z, shifted };
+        shifted = ctx.db.prepare(`SELECT id FROM board_items WHERE slide_id = ? AND id NOT IN (${marks}) AND z >= ?`)
+            .all(slideId, ...ids, target).map(r => r.id);
+        ctx.db.prepare(`UPDATE board_items SET z = z + ? WHERE slide_id = ? AND id NOT IN (${marks}) AND z >= ?`)
+            .run(ids.length, slideId, ...ids, target);
+        ids.forEach((id, index) => z.set(id, target + index));
+    }
+    return { z, shifted };
+}
+
+/** Écrit les colonnes prévues (et le z), puis la date de modification */
+function writeItem(ctx, id, plan, z) {
+    const sets = [...plan.sets, ...(z !== undefined ? ['z = ?'] : []), 'updated_at = CURRENT_TIMESTAMP'];
+    const values = [...plan.values, ...(z !== undefined ? [z] : [])];
+    ctx.db.prepare(`UPDATE board_items SET ${sets.join(', ')} WHERE id = ?`).run(...values, id);
+}
+
+/** Groupes réduits à un seul objet : ce n'est plus un groupe (§14.2). Renvoie les ids dégroupés */
+function dropLoneGroups(ctx, slideId) {
+    const lone = ctx.db.prepare(`
+        SELECT id FROM board_items WHERE slide_id = ? AND group_id IN (
+            SELECT group_id FROM board_items WHERE slide_id = ? AND group_id IS NOT NULL GROUP BY group_id HAVING COUNT(*) < 2
+        )
+    `).all(slideId, slideId).map(r => r.id);
+    if (lone.length > 0) {
+        ctx.db.prepare(`UPDATE board_items SET group_id = NULL WHERE id IN (${lone.map(() => '?').join(', ')})`).run(...lone);
+    }
+    return lone;
+}
+
+/** Objets de la diapositive désignés par `ids` (entiers, tous trouvés), ou null */
+function slideItems(ctx, slide, ids, max = 500) {
+    if (!Array.isArray(ids) || ids.length === 0 || ids.length > max || !ids.every(Number.isInteger)) return null;
+    const marks = ids.map(() => '?').join(', ');
+    const rows = ctx.db.prepare(`
+        SELECT i.*, s.players_draw, s.players_move FROM board_items i JOIN board_slides s ON s.id = i.slide_id
+        WHERE i.slide_id = ? AND i.id IN (${marks})
+    `).all(slide.id, ...ids);
+    return rows.length === new Set(ids).size ? rows : null;
+}
+
+router.patch('/sessions/:sid/items/:id', authenticate, handle('update item', (ctx, body, req) => {
+    const item = ownItem(ctx, req.params.id);
+    if (!item) return notFound('Item');
+    const plan = planPatch(req.user, item, body);
+    if (plan.error) return plan;
+    if (plan.sets.length === 0 && body.order === undefined) return invalid('Nothing to update');
+    let shifted = [];
+    ctx.db.transaction(() => {
+        let z;
+        if (body.order) {
+            const result = reorder(ctx, item.slide_id, [item], body.order);
+            shifted = result.shifted;
+            z = result.z.get(item.id);
+        }
+        writeItem(ctx, item.id, plan, z);
+    })();
+    if (shifted.length > 0) emitItems(ctx, item.slide_id, shifted.map(id => getItem(ctx, id)));
     touch(ctx, item.slide_id);
     const updated = getItem(ctx, item.id);
     emitItems(ctx, item.slide_id, [updated]);
     return updated;
+}));
+
+// Plusieurs objets en une écriture (§14.5) : tout ou rien, une seule diffusion.
+// { items: [{ id, x?, y?, hidden?, locked?, data? }], order? }
+router.patch('/sessions/:sid/slides/:id/items', authenticate, handle('update items', (ctx, body, req) => {
+    const slide = ownSlide(ctx, req.params.id);
+    if (!slide) return notFound('Slide');
+    if (!Array.isArray(body.items) || body.items.some(p => !p || typeof p !== 'object')) return invalid('Invalid items');
+    const rows = slideItems(ctx, slide, body.items.map(p => p.id));
+    if (!rows) return invalid('Invalid items');
+    const byId = new Map(rows.map(r => [r.id, r]));
+
+    // Joueur (PC-4) : les morceaux d'un groupe dont il déplace un morceau permis sont emmenés
+    const movedGroups = new Set(body.items
+        .filter(p => (p.x !== undefined || p.y !== undefined) && canMove(req.user, byId.get(p.id)) && byId.get(p.id).group_id !== null)
+        .map(p => byId.get(p.id).group_id));
+
+    const plans = [];
+    for (const patch of body.items) {
+        const item = byId.get(patch.id);
+        const carried = !req.user.isGM && item.group_id !== null && movedGroups.has(item.group_id) && !canMove(req.user, item);
+        const plan = planPatch(req.user, item, { ...patch, ...(body.order ? { order: body.order } : {}) }, { carried });
+        if (plan.error) return plan;
+        plans.push([item, plan]);
+    }
+    if (body.order !== undefined && !['front', 'back'].includes(body.order)) return invalid('Invalid order');
+
+    let shifted = [];
+    ctx.db.transaction(() => {
+        const zs = body.order ? reorder(ctx, slide.id, rows, body.order) : { z: new Map(), shifted: [] };
+        shifted = zs.shifted;
+        for (const [item, plan] of plans) {
+            if (plan.sets.length > 0 || zs.z.has(item.id)) writeItem(ctx, item.id, plan, zs.z.get(item.id));
+        }
+    })();
+    touch(ctx, slide.id);
+    const updated = rows.map(r => getItem(ctx, r.id));
+    emitItems(ctx, slide.id, [...shifted.map(id => getItem(ctx, id)), ...updated]);
+    return { items: updated };
+}));
+
+// Grouper (§14.2, MJ) : les objets et les groupes dont ils font déjà partie n'en font plus qu'un
+router.post('/sessions/:sid/slides/:id/group', ...gm, handle('group items', (ctx, body, req) => {
+    const slide = ownSlide(ctx, req.params.id);
+    if (!slide) return notFound('Slide');
+    const rows = slideItems(ctx, slide, body.ids);
+    if (!rows || rows.length < 2) return invalid('Invalid ids');
+    const groupId = Math.min(...rows.map(r => r.id));
+    const groups = [...new Set(rows.map(r => r.group_id).filter(g => g !== null))];
+    let ids = rows.map(r => r.id);
+    ctx.db.transaction(() => {
+        if (groups.length > 0) {
+            const marks = groups.map(() => '?').join(', ');
+            ids = [...new Set([...ids, ...ctx.db.prepare(`SELECT id FROM board_items WHERE slide_id = ? AND group_id IN (${marks})`)
+                .all(slide.id, ...groups).map(r => r.id)])];
+        }
+        const marks = ids.map(() => '?').join(', ');
+        ctx.db.prepare(`UPDATE board_items SET group_id = ?, updated_at = CURRENT_TIMESTAMP WHERE id IN (${marks})`).run(groupId, ...ids);
+    })();
+    touch(ctx, slide.id);
+    const items = ids.map(id => getItem(ctx, id));
+    emitItems(ctx, slide.id, items);
+    return { items };
+}));
+
+// Dégrouper (§14.2, MJ) : tous les groupes touchés par la sélection
+router.post('/sessions/:sid/slides/:id/ungroup', ...gm, handle('ungroup items', (ctx, body, req) => {
+    const slide = ownSlide(ctx, req.params.id);
+    if (!slide) return notFound('Slide');
+    const rows = slideItems(ctx, slide, body.ids);
+    if (!rows) return invalid('Invalid ids');
+    const groups = [...new Set(rows.map(r => r.group_id).filter(g => g !== null))];
+    if (groups.length === 0) return { items: [] };
+    const marks = groups.map(() => '?').join(', ');
+    const ids = ctx.db.prepare(`SELECT id FROM board_items WHERE slide_id = ? AND group_id IN (${marks})`).all(slide.id, ...groups).map(r => r.id);
+    ctx.db.prepare(`UPDATE board_items SET group_id = NULL, updated_at = CURRENT_TIMESTAMP WHERE slide_id = ? AND group_id IN (${marks})`)
+        .run(slide.id, ...groups);
+    touch(ctx, slide.id);
+    const items = ids.map(id => getItem(ctx, id));
+    emitItems(ctx, slide.id, items);
+    return { items };
+}));
+
+// Dupliquer une sélection (§13.2, §14.5, MJ) : copies décalées d'une case, au-dessus de tout,
+// dans leur ordre ; un groupe copié devient un nouveau groupe ; jetons des PJ ignorés (PB-4)
+router.post('/sessions/:sid/slides/:id/items/duplicate', ...gm, handle('duplicate items', (ctx, body, req) => {
+    const slide = ownSlide(ctx, req.params.id);
+    if (!slide) return notFound('Slide');
+    const rows = slideItems(ctx, slide, body.ids);
+    if (!rows) return invalid('Invalid ids');
+    const sources = rows
+        .filter(r => !(r.kind === 'token' && parseJson(r.data, {}).characterId !== undefined))
+        .sort((a, b) => a.z - b.z || a.id - b.id);
+    if (sources.length === 0) return { status: 409, error: 'PC token' };
+    const offset = slide.grid_enabled ? slide.grid_size : 20;
+    const insert = ctx.db.prepare(`
+        INSERT INTO board_items (slide_id, kind, x, y, w, h, z, rotation, hidden, data, author) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, -1)
+    `);
+    const copies = [];
+    ctx.db.transaction(() => {
+        let z = nextZ(ctx, slide.id);
+        const groupOf = new Map();   // groupe d'origine → ids des copies
+        for (const row of sources) {
+            const data = parseJson(row.data, {});
+            if (POINT_KINDS.includes(row.kind)) data.points = data.points.map(v => v + offset);
+            const id = Number(insert.run(slide.id, row.kind, row.x + offset, row.y + offset, row.w, row.h, z++,
+                row.rotation, row.hidden, JSON.stringify(data)).lastInsertRowid);
+            copies.push(id);
+            if (row.group_id !== null) groupOf.set(row.group_id, [...(groupOf.get(row.group_id) ?? []), id]);
+        }
+        const setGroup = ctx.db.prepare('UPDATE board_items SET group_id = ? WHERE id = ?');
+        for (const ids of groupOf.values()) {
+            if (ids.length < 2) continue;
+            const groupId = Math.min(...ids);
+            for (const id of ids) setGroup.run(groupId, id);
+        }
+    })();
+    touch(ctx, slide.id);
+    const items = copies.map(id => getItem(ctx, id));
+    emitItems(ctx, slide.id, items);
+    return { status: 201, body: { items } };
+}));
+
+// Supprimer une sélection (§14.5) : mêmes droits que l'effacement d'un objet ; le verrouillé
+// et ce qui n'est pas permis sont ignorés
+router.post('/sessions/:sid/slides/:id/items/remove', authenticate, handle('remove items', (ctx, body, req) => {
+    const slide = ownSlide(ctx, req.params.id);
+    if (!slide) return notFound('Slide');
+    const rows = slideItems(ctx, slide, body.ids);
+    if (!rows) return invalid('Invalid ids');
+    const removed = rows.filter(r => !r.locked && canDelete(req.user, r)).map(r => r.id);
+    let lone = [];
+    if (removed.length > 0) {
+        ctx.db.transaction(() => {
+            const marks = removed.map(() => '?').join(', ');
+            ctx.db.prepare(`DELETE FROM board_items WHERE id IN (${marks})`).run(...removed);
+            dropUnusedImages(ctx, slide.id);
+            lone = dropLoneGroups(ctx, slide.id);
+        })();
+        touch(ctx, slide.id);
+    }
+    emitItems(ctx, slide.id, lone.map(id => getItem(ctx, id)), removed);
+    return { removed };
 }));
 
 router.delete('/sessions/:sid/items/:id', authenticate, handle('delete item', (ctx, body, req) => {
@@ -540,13 +845,35 @@ router.delete('/sessions/:sid/items/:id', authenticate, handle('delete item', (c
     if (!item) return notFound('Item');
     if (item.locked) return lockedError();
     if (!canDelete(req.user, item)) return forbidden();
+    let lone = [];
     ctx.db.transaction(() => {
         ctx.db.prepare('DELETE FROM board_items WHERE id = ?').run(item.id);
         dropUnusedImages(ctx, item.slide_id);
+        lone = dropLoneGroups(ctx, item.slide_id);
     })();
     touch(ctx, item.slide_id);
-    emitItems(ctx, item.slide_id, [], [item.id]);
+    emitItems(ctx, item.slide_id, lone.map(id => getItem(ctx, id)), [item.id]);
     return { ok: true };
+}));
+
+// Dupliquer (§13.2, PB-3, PB-4) : copie décalée d'une case, au-dessus de tout ; une image
+// déposée est partagée (même imageId), jamais recopiée ; un jeton de PJ ne se duplique pas
+router.post('/sessions/:sid/items/:id/duplicate', ...gm, handle('duplicate item', (ctx, body, req) => {
+    const item = ownItem(ctx, req.params.id);
+    if (!item) return notFound('Item');
+    const data = parseJson(item.data, {});
+    if (item.kind === 'token' && data.characterId !== undefined) return { status: 409, error: 'PC token' };
+    const slide = ownSlide(ctx, item.slide_id);
+    const offset = slide.grid_enabled ? slide.grid_size : 20;
+    if (POINT_KINDS.includes(item.kind)) data.points = data.points.map(v => v + offset);
+    const { lastInsertRowid } = ctx.db.prepare(`
+        INSERT INTO board_items (slide_id, kind, x, y, w, h, z, rotation, data, author) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, -1)
+    `).run(item.slide_id, item.kind, item.x + offset, item.y + offset, item.w, item.h, nextZ(ctx, item.slide_id),
+        item.rotation, JSON.stringify(data));
+    touch(ctx, item.slide_id);
+    const copy = getItem(ctx, lastInsertRowid);
+    emitItems(ctx, item.slide_id, [copy]);
+    return { status: 201, body: copy };
 }));
 
 // Tout effacer, sauf ce qui est verrouillé
@@ -554,13 +881,15 @@ router.delete('/sessions/:sid/slides/:id/items', ...gm, handle('clear slide', (c
     const slide = ownSlide(ctx, req.params.id);
     if (!slide) return notFound('Slide');
     let removed = [];
+    let lone = [];
     ctx.db.transaction(() => {
         removed = ctx.db.prepare('SELECT id FROM board_items WHERE slide_id = ? AND locked = 0').all(slide.id).map(r => r.id);
         ctx.db.prepare('DELETE FROM board_items WHERE slide_id = ? AND locked = 0').run(slide.id);
         dropUnusedImages(ctx, slide.id);
+        lone = dropLoneGroups(ctx, slide.id);
     })();
     touch(ctx, slide.id);
-    emitItems(ctx, slide.id, [], removed);
+    emitItems(ctx, slide.id, lone.map(id => getItem(ctx, id)), removed);
     return { removed };
 }));
 
@@ -576,6 +905,8 @@ router.post('/sessions/:sid/slides/:id/pc-tokens', ...gm, handle('place pc token
     `).all(ctx.sessionId).map(r => r.id).filter(id => !placed.has(id));
 
     const size = slide.grid_enabled ? slide.grid_size : 60;
+    // Point de départ facultatif (« Ajouter ici », PC-7), sinon en haut à gauche
+    const origin = isNum(body.x) && isNum(body.y) ? { x: body.x, y: body.y } : { x: size, y: size };
     const insert = ctx.db.prepare(`
         INSERT INTO board_items (slide_id, kind, x, y, w, h, z, data, author) VALUES (?, 'token', ?, ?, ?, ?, ?, ?, -1)
     `);
@@ -583,7 +914,7 @@ router.post('/sessions/:sid/slides/:id/pc-tokens', ...gm, handle('place pc token
     ctx.db.transaction(() => {
         let z = nextZ(ctx, slide.id);
         missing.forEach((characterId, index) => {
-            ids.push(insert.run(slide.id, size * (1 + index * 1.25), size, size, size, z++, JSON.stringify({ characterId })).lastInsertRowid);
+            ids.push(insert.run(slide.id, origin.x + size * index * 1.25, origin.y, size, size, z++, JSON.stringify({ characterId })).lastInsertRowid);
         });
     })();
     if (ids.length === 0) return { items: [] };

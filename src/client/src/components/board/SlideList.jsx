@@ -1,7 +1,8 @@
 // src/client/src/components/board/SlideList.jsx
 // ─────────────────────────────────────────────────────────────────────────────
-// Diapositives de la table, côté MJ (documentations/spec_tableau.md §10.8) :
-// ordre par glisser-déposer, renommage (✎ ou double clic), « Montrer » aux joueurs,
+// Diapositives de la table, côté MJ (documentations/spec_tableau.md §10.8, §12.5) :
+// ordre par glisser-déposer (poignée ⠿, rail compris), renommage (✎ ou double clic),
+// œil « Montrer / Cacher aux joueurs » (l'activation du tableau est dans l'en-tête de la vue),
 // réglages (dessin et déplacement des joueurs), copie, suppression ; en tête,
 // poids des images, prolongation (P-5) et « À conserver » (Q-25).
 // Trois modes, comme la barre de session, mémorisés par slug (vtt:<slug>:board-slides) :
@@ -24,6 +25,7 @@ const ICONS = {
     hidden: 'M3 3l18 18M10.6 10.6a2 2 0 0 0 2.8 2.8M9.9 5.1A9.8 9.8 0 0 1 12 5c5 0 9 4.5 10 7a12.8 12.8 0 0 1-3.2 4.2M6.6 6.6C4.3 8 2.7 10.2 2 12c1 2.5 5 7 10 7a9.7 9.7 0 0 0 5.4-1.6',
     reopen: 'M9 5l7 7-7 7',
     rename: 'M4 20l4-1 11-11-3-3L5 16l-1 4zM14 6l3 3',
+    shown:  'M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12zM12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6z',
 };
 
 const Icon = ({ name }) => (
@@ -157,7 +159,7 @@ const SlideList = ({ board, selectedId, onSelect, confirm, slugGrid, tableGrid }
                 </div>
                 <ol className="vtt-board-slide-list">
                     {board.slides.map((slide, index) => (
-                        <li key={slide.id}>
+                        <li key={slide.id} {...dragProps(slide.id)} className="vtt-board-rail-item">
                             <button type="button" onClick={() => onSelect(slide.id)} title={slide.name}
                                     aria-label={`${slide.name}${board.shownSlideId === slide.id ? ' (montrée)' : ''}`}
                                     aria-current={slide.id === selectedId ? 'true' : undefined}
@@ -202,14 +204,17 @@ const SlideList = ({ board, selectedId, onSelect, confirm, slugGrid, tableGrid }
                             <div role="button" tabIndex={0} className="vtt-board-slide-select" onClick={() => onSelect(slide.id)}
                                  onKeyDown={e => { if (e.key === 'Enter' && e.target === e.currentTarget) onSelect(slide.id); }}
                                  aria-current={slide.id === selectedId ? 'true' : undefined}>
+                                <span className="vtt-board-slide-grip" aria-hidden="true" title="Glisser pour réordonner">⠿</span>
                                 {renaming
                                     ? <RenameField name={slide.name} onDone={name => rename(slide, name)} />
                                     : <span className="vtt-board-slide-name" onDoubleClick={() => setRenamingId(slide.id)}>{slide.name}</span>}
-                                {shown && <span className="vtt-board-badge">Montrée</span>}
                             </div>
                             <div className="vtt-board-slide-actions">
-                                <button type="button" className="vtt-pill" onClick={() => board.show(shown ? null : slide.id)}>
-                                    {shown ? 'Retirer' : 'Montrer'}
+                                {/* L'œil dit l'état : ouvert et en couleur = montrée ; barré = pas montrée */}
+                                <button type="button" className={`vtt-board-icon-btn${shown ? ' is-on' : ''}`} aria-pressed={shown}
+                                        onClick={() => board.show(shown ? null : slide.id)}
+                                        aria-label={shown ? 'Cacher aux joueurs' : 'Montrer aux joueurs'} title={shown ? 'Cacher aux joueurs' : 'Montrer aux joueurs'}>
+                                    <Icon name={shown ? 'shown' : 'hidden'} />
                                 </button>
                                 <button type="button" className="vtt-board-icon-btn" onClick={() => setRenamingId(slide.id)} aria-label="Renommer" title="Renommer"><Icon name="rename" /></button>
                                 <button type="button" className="vtt-board-icon-btn" onClick={() => duplicate(slide.id)} aria-label="Dupliquer" title="Dupliquer">⧉</button>

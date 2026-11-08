@@ -178,6 +178,174 @@ describe('Tableau : jetons des PJ (Q-36)', () => {
     });
 });
 
+describe('Tableau : objets du lot B (§13)', () => {
+    const post = (slideId, body, token = gm) => app.request('POST', `${tableUrl()}/slides/${slideId}/items`, { body, token });
+    const patch = (id, body, token = gm) => app.request('PATCH', `${tableUrl()}/items/${id}`, { body, token });
+
+    it('ellipse, ligne, halo et texte : données vérifiées, posés par un joueur si le dessin est ouvert (PB-6)', async () => {
+        const slide = await createSlide();
+        const line = { kind: 'line', data: { points: [10, 10, 50, 30], color: '#c0392b', width: 3, arrow: true } };
+        const text = { kind: 'text', x: 0, y: 0, w: 80, h: 24, data: { text: 'Porte', color: '#1f1d1a', size: 20 } };
+        expect((await post(slide.id, line, player)).status).toBe(403);
+
+        await setSlide(slide.id, { playersDraw: true });
+        const created = await post(slide.id, line, player);
+        expect(created.body).toMatchObject({ kind: 'line', x: 10, y: 10, w: 40, h: 20, data: { arrow: true } });
+        expect((await post(slide.id, text, player)).status).toBe(201);
+        expect((await post(slide.id, { kind: 'halo', x: 0, y: 0, w: 300, h: 300, data: { color: '#e2b93b' } }, player)).status).toBe(201);
+        expect((await post(slide.id, { kind: 'ellipse', x: 0, y: 0, w: 60, h: 40, data: { color: '#3a8f5c', filled: false, width: 4 } }, player)).body.data)
+            .toEqual({ color: '#3a8f5c', filled: false, width: 4 });
+
+        expect((await post(slide.id, { ...text, data: { ...text.data, text: 'x'.repeat(501) } })).status).toBe(400);
+        expect((await post(slide.id, { ...line, data: { ...line.data, points: [0, 0, 1] } })).status).toBe(400);
+        expect((await app.request('DELETE', `${tableUrl()}/items/${created.body.id}`, { token: player })).status).toBe(200);
+    });
+
+    it('déplacer une ligne décale ses points avec sa boîte', async () => {
+        const slide = await createSlide();
+        const line = (await post(slide.id, { kind: 'line', data: { points: [10, 10, 50, 30], color: '#c0392b', width: 3 } })).body;
+        const moved = await patch(line.id, { x: 110, y: 60 });
+        expect(moved.body).toMatchObject({ x: 110, y: 60, data: { points: [110, 60, 150, 80] } });
+    });
+
+    it('rotation : objets permis seulement, verrou respecté, angle ramené dans [0, 360[', async () => {
+        const slide = await createSlide();
+        const rect = (await post(slide.id, { kind: 'rect', x: 0, y: 0, w: 100, h: 50, data: { color: '#2f6db5' } })).body;
+        expect((await patch(rect.id, { rotation: -90 })).body.rotation).toBe(270);
+        const token = (await post(slide.id, { kind: 'token', x: 0, y: 0, w: 60, h: 60, data: { label: 'Garde', color: '#1f1d1a' } })).body;
+        expect((await patch(token.id, { rotation: 45 })).status).toBe(400);
+        await patch(rect.id, { locked: true });
+        expect((await patch(rect.id, { rotation: 10 })).status).toBe(409);
+    });
+
+    it('arrière-plan au-dessus des fonds verrouillés (PB-5), premier plan au-dessus de tout', async () => {
+        const slide = await createSlide();
+        const background = (await app.request('POST', `${tableUrl()}/slides/${slide.id}/images`, {
+            body: { dataUrl: PIXEL, width: 1, height: 1, background: true }, token: gm,
+        })).body;
+        const a = (await post(slide.id, { kind: 'rect', x: 0, y: 0, w: 10, h: 10, data: { color: '#2f6db5' } })).body;
+        const b = (await post(slide.id, { kind: 'rect', x: 0, y: 0, w: 10, h: 10, data: { color: '#c0392b' } })).body;
+
+        await patch(b.id, { order: 'back' });
+        const items = (await app.request('GET', `${tableUrl()}/slides/${slide.id}`, { token: gm })).body.items;
+        const z = Object.fromEntries(items.map(i => [i.id, i.z]));
+        expect(z[background.id]).toBeLessThan(z[b.id]);
+        expect(z[b.id]).toBeLessThan(z[a.id]);
+
+        expect((await patch(b.id, { order: 'front' })).body.z).toBeGreaterThan(z[a.id]);
+    });
+
+    it('filtre d\'image : gardé avec l\'image déposée, retiré par null ; imageId refusé à la création', async () => {
+        const slide = await createSlide();
+        const image = (await app.request('POST', `${tableUrl()}/slides/${slide.id}/images`, {
+            body: { dataUrl: PIXEL, width: 1, height: 1 }, token: gm,
+        })).body;
+        const filter = { preset: 'night', brightness: 0.6, contrast: 1.1, saturation: 0.7 };
+        const filtered = await patch(image.id, { data: { filter } });
+        expect(filtered.body.data).toEqual({ imageId: image.data.imageId, filter });
+        expect((await patch(image.id, { data: { filter: { ...filter, brightness: 5 } } })).status).toBe(400);
+        expect((await patch(image.id, { data: { filter: null } })).body.data).toEqual({ imageId: image.data.imageId });
+
+        expect((await post(slide.id, { kind: 'image', x: 0, y: 0, w: 1, h: 1, data: { imageId: image.data.imageId } })).status).toBe(400);
+    });
+
+    it('dupliquer : copie décalée qui partage l\'image, survit à la suppression de l\'original ; jeton de PJ refusé (PB-4)', async () => {
+        const slide = await createSlide();
+        await setSlide(slide.id, { gridEnabled: true, gridSize: 40 });
+        const image = (await app.request('POST', `${tableUrl()}/slides/${slide.id}/images`, {
+            body: { dataUrl: PIXEL, width: 1, height: 1 }, token: gm,
+        })).body;
+        expect((await app.request('POST', `${tableUrl()}/items/${image.id}/duplicate`, { token: player })).status).toBe(403);
+        const copy = await app.request('POST', `${tableUrl()}/items/${image.id}/duplicate`, { token: gm });
+        expect(copy.status).toBe(201);
+        expect(copy.body).toMatchObject({ x: image.x + 40, y: image.y + 40, data: { imageId: image.data.imageId } });
+        expect(copy.body.z).toBeGreaterThan(image.z);
+
+        await app.request('DELETE', `${tableUrl()}/items/${image.id}`, { token: gm });
+        expect((await app.request('GET', `${tableUrl()}/images/${image.data.imageId}`, { token: gm })).status).toBe(200);
+
+        const pc = (await app.request('POST', `${tableUrl()}/slides/${slide.id}/pc-tokens`, { token: gm })).body.items[0];
+        expect((await app.request('POST', `${tableUrl()}/items/${pc.id}/duplicate`, { token: gm })).status).toBe(409);
+    });
+});
+
+describe('Tableau : sélection, groupes, objets cachés (lot C, §14)', () => {
+    const post = (slideId, body, token = gm) => app.request('POST', `${tableUrl()}/slides/${slideId}/items`, { body, token });
+    const rect = (slideId, x = 0) => post(slideId, { kind: 'rect', x, y: 0, w: 10, h: 10, data: { color: '#2f6db5' } }).then(r => r.body);
+    const batch = (slideId, body, token = gm) => app.request('PATCH', `${tableUrl()}/slides/${slideId}/items`, { body, token });
+
+    it('écriture groupée tout ou rien : un objet verrouillé fait tout refuser', async () => {
+        const slide = await createSlide();
+        const a = await rect(slide.id), b = await rect(slide.id, 50);
+        await app.request('PATCH', `${tableUrl()}/items/${b.id}`, { body: { locked: true }, token: gm });
+        expect((await batch(slide.id, { items: [{ id: a.id, x: 5 }, { id: b.id, x: 55 }] })).status).toBe(409);
+        const items = (await app.request('GET', `${tableUrl()}/slides/${slide.id}`, { token: gm })).body.items;
+        expect(items.find(i => i.id === a.id).x).toBe(0);
+
+        const moved = await batch(slide.id, { items: [{ id: a.id, x: 5, hidden: true }] });
+        expect(moved.body.items[0]).toMatchObject({ x: 5, hidden: true });
+    });
+
+    it('cacher : le MJ seul', async () => {
+        const slide = await createSlide();
+        await setSlide(slide.id, { playersMove: true, playersDraw: true });
+        const token = (await post(slide.id, { kind: 'token', x: 0, y: 0, w: 60, h: 60, data: { label: 'Garde', color: '#1f1d1a' } })).body;
+        expect((await app.request('PATCH', `${tableUrl()}/items/${token.id}`, { body: { hidden: true }, token: player })).status).toBe(403);
+        expect((await app.request('PATCH', `${tableUrl()}/items/${token.id}`, { body: { hidden: true }, token: gm })).body.hidden).toBe(true);
+    });
+
+    it('grouper réunit les groupes, dégrouper les défait ; un groupe d\'un seul objet disparaît', async () => {
+        const slide = await createSlide();
+        const [a, b, c] = [await rect(slide.id), await rect(slide.id, 20), await rect(slide.id, 40)];
+        expect((await app.request('POST', `${tableUrl()}/slides/${slide.id}/group`, { body: { ids: [a.id] }, token: gm })).status).toBe(400);
+        await app.request('POST', `${tableUrl()}/slides/${slide.id}/group`, { body: { ids: [a.id, b.id] }, token: gm });
+        const merged = await app.request('POST', `${tableUrl()}/slides/${slide.id}/group`, { body: { ids: [b.id, c.id] }, token: gm });
+        expect(new Set(merged.body.items.map(i => i.groupId)).size).toBe(1);
+        expect(merged.body.items).toHaveLength(3);
+
+        const ungrouped = await app.request('POST', `${tableUrl()}/slides/${slide.id}/ungroup`, { body: { ids: [a.id] }, token: gm });
+        expect(ungrouped.body.items.every(i => i.groupId === null)).toBe(true);
+
+        await app.request('POST', `${tableUrl()}/slides/${slide.id}/group`, { body: { ids: [a.id, b.id] }, token: gm });
+        await app.request('DELETE', `${tableUrl()}/items/${b.id}`, { token: gm });
+        const items = (await app.request('GET', `${tableUrl()}/slides/${slide.id}`, { token: gm })).body.items;
+        expect(items.find(i => i.id === a.id).groupId).toBeNull();
+    });
+
+    it('un joueur qui glisse son jeton emmène son groupe (PC-4), pas un autre objet', async () => {
+        const slide = await createSlide();
+        await setSlide(slide.id, { playersMove: true });
+        const token = (await post(slide.id, { kind: 'token', x: 0, y: 0, w: 60, h: 60, data: { label: 'Bjorn', color: '#1f1d1a' } })).body;
+        const halo = (await post(slide.id, { kind: 'halo', x: -100, y: -100, w: 260, h: 260, data: { color: '#e2b93b' } })).body;
+        const other = await rect(slide.id, 300);
+        await app.request('POST', `${tableUrl()}/slides/${slide.id}/group`, { body: { ids: [token.id, halo.id] }, token: gm });
+
+        const moved = await batch(slide.id, { items: [{ id: token.id, x: 50, y: 0 }, { id: halo.id, x: -50, y: -100 }] }, player);
+        expect(moved.status).toBe(200);
+        expect((await batch(slide.id, { items: [{ id: token.id, x: 60, y: 0 }, { id: other.id, x: 310, y: 0 }] }, player)).status).toBe(403);
+        expect((await batch(slide.id, { items: [{ id: token.id, x: 60, y: 0 }, { id: halo.id, x: -40, y: -100, hidden: true }] }, player)).status).toBe(403);
+    });
+
+    it('dupliquer une sélection : nouveau groupe pour un groupe copié, jetons des PJ ignorés ; supprimer ignore le verrouillé', async () => {
+        const slide = await createSlide();
+        const a = await rect(slide.id), b = await rect(slide.id, 20);
+        await app.request('POST', `${tableUrl()}/slides/${slide.id}/group`, { body: { ids: [a.id, b.id] }, token: gm });
+        const pc = (await app.request('POST', `${tableUrl()}/slides/${slide.id}/pc-tokens`, { body: { x: 500, y: 500 }, token: gm })).body.items[0];
+        expect(pc).toMatchObject({ x: 500, y: 500 });
+
+        const copy = await app.request('POST', `${tableUrl()}/slides/${slide.id}/items/duplicate`, { body: { ids: [a.id, b.id, pc.id] }, token: gm });
+        expect(copy.status).toBe(201);
+        expect(copy.body.items).toHaveLength(2);
+        const [ca, cb] = copy.body.items;
+        expect(ca.groupId).toBe(cb.groupId);
+        expect(ca.groupId).not.toBe((await app.request('GET', `${tableUrl()}/slides/${slide.id}`, { token: gm })).body.items.find(i => i.id === a.id).groupId);
+
+        await app.request('PATCH', `${tableUrl()}/items/${ca.id}`, { body: { locked: true }, token: gm });
+        const removed = await app.request('POST', `${tableUrl()}/slides/${slide.id}/items/remove`, { body: { ids: [ca.id, cb.id] }, token: gm });
+        expect(removed.body.removed).toEqual([cb.id]);
+    });
+});
+
 describe('Tableau : purge et ménage (§10.6)', () => {
     const age = (sid, days) => boardDb.prepare(`
         UPDATE board_sessions SET last_used_at = datetime('now', ?) WHERE slug = ? AND session_id = ?

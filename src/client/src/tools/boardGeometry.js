@@ -22,6 +22,24 @@ export function zoomAt(view, factor, px, py) {
     return { x: anchor.x - px / scale, y: anchor.y - py / scale, scale };
 }
 
+/**
+ * Geste à deux doigts (spec_tableau.md §12.2) : l'écart des doigts zoome, le déplacement
+ * de leur milieu déplace la vue. Le point du tableau pris sous le milieu au départ reste
+ * sous le milieu courant.
+ * @param {object} view vue au début du geste
+ * @param {{px, py}} a0 premier doigt au départ
+ * @param {{px, py}} b0 second doigt au départ
+ * @param {{px, py}} a  premier doigt maintenant
+ * @param {{px, py}} b  second doigt maintenant
+ */
+export function pinchView(view, a0, b0, a, b) {
+    const startDistance = Math.hypot(b0.px - a0.px, b0.py - a0.py) || 1;
+    const scale = clamp(view.scale * Math.hypot(b.px - a.px, b.py - a.py) / startDistance, MIN_SCALE, MAX_SCALE);
+    const anchor = screenToBoard(view, (a0.px + b0.px) / 2, (a0.py + b0.py) / 2);
+    const mid = { px: (a.px + b.px) / 2, py: (a.py + b.py) / 2 };
+    return { x: anchor.x - mid.px / scale, y: anchor.y - mid.py / scale, scale };
+}
+
 /** Vue qui montre toute la boîte dans un cadre de width × height (marge de 5 %) */
 export function fitView(box, width, height) {
     if (!box || box.w <= 0 || box.h <= 0 || width <= 0 || height <= 0) return { x: 0, y: 0, scale: 1 };
@@ -53,6 +71,58 @@ export function itemsBox(items) {
 export const rectBetween = (a, b) => ({
     x: Math.min(a.x, b.x), y: Math.min(a.y, b.y), w: Math.abs(b.x - a.x), h: Math.abs(b.y - a.y),
 });
+
+/** Rectangle entre deux points, carré si `square` (Maj, §13.1) : le côté suit le plus grand écart */
+export function shapeBetween(a, b, square = false) {
+    if (!square) return rectBetween(a, b);
+    const side = Math.max(Math.abs(b.x - a.x), Math.abs(b.y - a.y));
+    return rectBetween(a, { x: a.x + Math.sign(b.x - a.x || 1) * side, y: a.y + Math.sign(b.y - a.y || 1) * side });
+}
+
+/** Angle arrondi au pas (degrés), ramené dans [0, 360[ */
+export const snapAngle = (degrees, step = 15) => (((Math.round(degrees / step) * step) % 360) + 360) % 360;
+
+/** Fin de ligne : `to`, ou orientée par pas de 15° depuis `from` à la même longueur (Maj) */
+export function lineEnd(from, to, snap = false) {
+    if (!snap) return to;
+    const length = Math.hypot(to.x - from.x, to.y - from.y);
+    const angle = snapAngle(Math.atan2(to.y - from.y, to.x - from.x) * 180 / Math.PI) * Math.PI / 180;
+    return { x: from.x + Math.cos(angle) * length, y: from.y + Math.sin(angle) * length };
+}
+
+/** Angle (degrés, sens horaire, 0 vers le haut) du point vu depuis le centre : poignée de rotation */
+export const angleFrom = (center, point) => (((Math.atan2(point.x - center.x, center.y - point.y) * 180 / Math.PI) % 360) + 360) % 360;
+
+/**
+ * Le point (x, y) est-il dans la boîte de l'objet, tournée de `rotation` degrés autour
+ * de son centre, à `radius` près ? (on ramène le point dans le repère de l'objet)
+ */
+export function hitsBox(item, x, y, radius = 0) {
+    const cx = item.x + item.w / 2, cy = item.y + item.h / 2;
+    const a = -(item.rotation ?? 0) * Math.PI / 180;
+    const dx = x - cx, dy = y - cy;
+    const lx = dx * Math.cos(a) - dy * Math.sin(a), ly = dx * Math.sin(a) + dy * Math.cos(a);
+    return Math.abs(lx) <= item.w / 2 + radius && Math.abs(ly) <= item.h / 2 + radius;
+}
+
+/**
+ * L'objet est-il entièrement dans le rectangle ? (rectangle de sélection, PC-3) : les quatre
+ * coins de sa boîte, tournée avec lui ; un tracé par ses points.
+ */
+export function itemInRect(item, rect) {
+    const inside = (x, y) => x >= rect.x && x <= rect.x + rect.w && y >= rect.y && y <= rect.y + rect.h;
+    if (Array.isArray(item.data?.points) && (item.kind === 'stroke' || item.kind === 'line')) {
+        const b = pointsBox(item.data.points);
+        return inside(b.x, b.y) && inside(b.x + b.w, b.y + b.h);
+    }
+    const cx = item.x + item.w / 2, cy = item.y + item.h / 2;
+    const a = (item.rotation ?? 0) * Math.PI / 180;
+    const cos = Math.cos(a), sin = Math.sin(a);
+    return [[-1, -1], [1, -1], [1, 1], [-1, 1]].every(([sx, sy]) => {
+        const dx = sx * item.w / 2, dy = sy * item.h / 2;
+        return inside(cx + dx * cos - dy * sin, cy + dx * sin + dy * cos);
+    });
+}
 
 /** Distance d'un point au segment [a, b] */
 function segmentDistance(px, py, ax, ay, bx, by) {

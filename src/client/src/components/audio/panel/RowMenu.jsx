@@ -12,24 +12,30 @@ import { IconButton } from './PanelIcons.jsx';
  * Menu attaché à un bouton : placé sous le bouton (au-dessus s'il manque de place),
  * premier élément focalisé, flèches pour parcourir, Échap ou clic extérieur pour
  * fermer, le focus revient au bouton.
+ * `anchor` peut aussi être un point de l'écran { x, y } (menu contextuel du tableau) :
+ * le menu s'ouvre alors à droite et sous le point, retourné s'il manque de place.
  */
 export const RowMenu = ({ anchor, onClose, children }) => {
     const ref = useRef(null);
     const [pos, setPos] = useState({ left: -9999, top: -9999 });
+    const isPoint = typeof anchor.getBoundingClientRect !== 'function';
 
     useLayoutEffect(() => {
         const menu = ref.current;
-        const r = anchor.getBoundingClientRect();
+        // Un point se lit comme un bouton de taille nulle, le menu partant de son bord gauche
+        const r = isPoint
+            ? { left: anchor.x, right: anchor.x + menu.offsetWidth, top: anchor.y, bottom: anchor.y }
+            : anchor.getBoundingClientRect();
         const { offsetWidth: w, offsetHeight: h } = menu;
         setPos({
             left: Math.max(8, Math.min(window.innerWidth - w - 8, r.right - w)),
             top: r.bottom + h + 8 > window.innerHeight ? Math.max(8, r.top - h - 4) : r.bottom + 4,
         });
         menu.querySelector('[role^="menuitem"]')?.focus();
-    }, [anchor]);
+    }, [anchor, isPoint]);
 
     useEffect(() => {
-        const close = () => { onClose(); anchor.focus(); };
+        const close = () => { onClose(); if (!isPoint) anchor.focus(); };
         const onKey = (e) => {
             if (e.key === 'Escape') { e.stopPropagation(); close(); }
             if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
@@ -39,14 +45,14 @@ export const RowMenu = ({ anchor, onClose, children }) => {
                 items[(i + (e.key === 'ArrowDown' ? 1 : -1) + items.length) % items.length]?.focus();
             }
         };
-        const onDown = (e) => { if (!ref.current.contains(e.target) && !anchor.contains(e.target)) onClose(); };
+        const onDown = (e) => { if (!ref.current.contains(e.target) && (isPoint || !anchor.contains(e.target))) onClose(); };
         document.addEventListener('keydown', onKey, true);
         document.addEventListener('pointerdown', onDown);
         return () => {
             document.removeEventListener('keydown', onKey, true);
             document.removeEventListener('pointerdown', onDown);
         };
-    }, [anchor, onClose]);
+    }, [anchor, onClose, isPoint]);
 
     return (
         <HostedModal>

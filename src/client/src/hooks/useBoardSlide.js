@@ -113,7 +113,12 @@ export function useBoardSlide(sessionId, slideId) {
         const onFog = (p) => { if (mine(p)) update(prev => ({ ...prev, fog: p.fog })); };
         const onDrag = (p) => {
             if (!mine(p)) return;
-            setDrags(prev => ({ ...prev, [p.itemId]: { x: p.x, y: p.y, w: p.w, h: p.h } }));
+            // Plusieurs objets d'un coup (sélection, groupe, §14.5), ou un seul
+            if (Array.isArray(p.items)) {
+                setDrags(prev => ({ ...prev, ...Object.fromEntries(p.items.map(i => [i.itemId, { x: i.x, y: i.y }])) }));
+                return;
+            }
+            setDrags(prev => ({ ...prev, [p.itemId]: { x: p.x, y: p.y, w: p.w, h: p.h, rotation: p.rotation } }));
         };
         const onPing = (p) => {
             if (!mine(p)) return;
@@ -141,8 +146,13 @@ export function useBoardSlide(sessionId, slideId) {
         return item;
     }, [request, slideId, update]);
 
+    /** Modifier un objet : géométrie, rotation, data (fusionnée, comme côté serveur), order 'front'|'back' */
     const patchItem = useCallback(async (id, patch) => {
-        update(prev => ({ ...prev, items: prev.items.map(i => (i.id === id ? { ...i, ...patch } : i)) }));
+        const { order: _order, ...visible } = patch;
+        update(prev => ({
+            ...prev,
+            items: prev.items.map(i => (i.id === id ? { ...i, ...visible, ...(patch.data ? { data: { ...i.data, ...patch.data } } : {}) } : i)),
+        }));
         const item = await request('PATCH', `/items/${id}`, patch);
         if (item) update(prev => ({ ...prev, items: merge(prev.items, [item]) }));
         else load();   // refusé : on revient à l'état du serveur
@@ -153,13 +163,51 @@ export function useBoardSlide(sessionId, slideId) {
         if (!(await request('DELETE', `/items/${id}`))) load();
     }, [request, update, load]);
 
+    /**
+     * Plusieurs objets en une écriture, tout ou rien (§14.5) : [{ id, x?, y?, hidden?, locked?, data? }],
+     * order 'front'|'back' facultatif ; appliqué tout de suite, rechargé si refusé
+     */
+    const patchItems = useCallback(async (patches, order) => {
+        const byId = new Map(patches.map(p => [p.id, p]));
+        update(prev => ({
+            ...prev,
+            items: prev.items.map(i => {
+                const p = byId.get(i.id);
+                return p ? { ...i, ...p, ...(p.data ? { data: { ...i.data, ...p.data } } : {}) } : i;
+            }),
+        }));
+        const data = await request('PATCH', `/slides/${slideId}/items`, { items: patches, ...(order ? { order } : {}) });
+        if (data) update(prev => ({ ...prev, items: merge(prev.items, data.items) }));
+        else load();
+    }, [request, slideId, update, load]);
+
+    /** Grouper / dégrouper (MJ, §14.2) */
+    const groupItems = useCallback(async (ids, grouped = true) => {
+        const data = await request('POST', `/slides/${slideId}/${grouped ? 'group' : 'ungroup'}`, { ids });
+        if (data) update(prev => ({ ...prev, items: merge(prev.items, data.items) }));
+    }, [request, slideId, update]);
+
+    /** Dupliquer une sélection (MJ, §13.2, §14.5) : les copies, ou [] */
+    const duplicateItems = useCallback(async (ids) => {
+        const data = await request('POST', `/slides/${slideId}/items/duplicate`, { ids });
+        if (data?.items) update(prev => ({ ...prev, items: merge(prev.items, data.items) }));
+        return data?.items ?? [];
+    }, [request, slideId, update]);
+
+    /** Supprimer une sélection (le verrouillé est ignoré par le serveur) */
+    const removeItems = useCallback(async (ids) => {
+        const data = await request('POST', `/slides/${slideId}/items/remove`, { ids });
+        if (data) update(prev => ({ ...prev, items: merge(prev.items, [], data.removed) }));
+    }, [request, slideId, update]);
+
     const clearItems = useCallback(async () => {
         const data = await request('DELETE', `/slides/${slideId}/items`);
         if (data) update(prev => ({ ...prev, items: merge(prev.items, [], data.removed) }));
     }, [request, slideId, update]);
 
-    const placePcTokens = useCallback(async () => {
-        const data = await request('POST', `/slides/${slideId}/pc-tokens`);
+    /** Jetons des PJ qui manquent, à partir du point donné (« Ajouter ici », PC-7) ou en haut à gauche */
+    const placePcTokens = useCallback(async (point) => {
+        const data = await request('POST', `/slides/${slideId}/pc-tokens`, point ? { x: point.x, y: point.y } : undefined);
         if (data?.items?.length) update(prev => ({ ...prev, items: merge(prev.items, data.items) }));
     }, [request, slideId, update]);
 
@@ -187,6 +235,14 @@ export function useBoardSlide(sessionId, slideId) {
         socket?.emit('board-drag', { system: getSystemFromPath(), sessionId, slideId, itemId, ...geometry });
     }, [socket, sessionId, slideId]);
 
+    /** Plusieurs objets déplacés d'un coup : [{ itemId, x, y }] en un seul message */
+    const emitDragMany = useCallback((items, force = false) => {
+        const now = Date.now();
+        if (!force && now - lastDragRef.current < DRAG_INTERVAL_MS) return;
+        lastDragRef.current = now;
+        socket?.emit('board-drag', { system: getSystemFromPath(), sessionId, slideId, items });
+    }, [socket, sessionId, slideId]);
+
     const ping = useCallback((x, y, color) => {
         socket?.emit('board-ping', { system: getSystemFromPath(), sessionId, slideId, x, y, color });
         const own = { id: `${Date.now()}-own`, x, y, color };
@@ -197,6 +253,7 @@ export function useBoardSlide(sessionId, slideId) {
     const current = state.slideId === slideId ? state : { slideId, loaded: false, items: [], fog: [] };
     return {
         ...current, drags, pings, characters,
-        addItem, patchItem, deleteItem, clearItems, placePcTokens, uploadImage, updateFog, emitDrag, ping,
+        addItem, patchItem, patchItems, deleteItem, groupItems, duplicateItems, removeItems, clearItems, placePcTokens,
+        uploadImage, updateFog, emitDrag, emitDragMany, ping,
     };
 }

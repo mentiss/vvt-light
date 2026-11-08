@@ -37,11 +37,23 @@ function register(io, socket) {
 
     socket.on('board-drag', (payload) => {
         const room = tableRoom(socket, payload);
-        if (!room || !Number.isInteger(payload.slideId) || !Number.isInteger(payload.itemId)) return;
+        if (!room || !Number.isInteger(payload.slideId)) return;
+        // Plusieurs objets d'un coup (sélection, groupe, §14.5) : { items: [{ itemId, x, y }] }
+        if (Array.isArray(payload.items)) {
+            if (payload.items.length > 500) return;
+            const items = payload.items.filter(i => i && Number.isInteger(i.itemId) && isNum(i.x) && isNum(i.y))
+                .map(({ itemId, x, y }) => ({ itemId, x, y }));
+            if (items.length !== payload.items.length) return;
+            const { system, sessionId, slideId } = payload;
+            socket.volatile.to(room).emit('board-drag', { system, sessionId, slideId, items });
+            return;
+        }
+        if (!Number.isInteger(payload.itemId)) return;
         if (!isNum(payload.x) || !isNum(payload.y)) return;
         if ((payload.w !== undefined && !isNum(payload.w)) || (payload.h !== undefined && !isNum(payload.h))) return;
-        const { system, sessionId, slideId, itemId, x, y, w, h } = payload;
-        socket.volatile.to(room).emit('board-drag', { system, sessionId, slideId, itemId, x, y, w, h });
+        if (payload.rotation !== undefined && !isNum(payload.rotation)) return;
+        const { system, sessionId, slideId, itemId, x, y, w, h, rotation } = payload;
+        socket.volatile.to(room).emit('board-drag', { system, sessionId, slideId, itemId, x, y, w, h, rotation });
     });
 }
 

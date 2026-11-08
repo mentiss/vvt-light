@@ -83,6 +83,9 @@ create table board_items
     w          REAL    not null default 0,
     h          REAL    not null default 0,
     z          INTEGER not null default 0,       -- ordre d'affichage
+    rotation   REAL    not null default 0,       -- degrés, sens horaire, autour du centre (§13.3)
+    hidden     INTEGER not null default 0,       -- caché aux joueurs (§14.3)
+    group_id   INTEGER,                          -- groupe simple (§14.2) : étiquette commune, null = seul
     locked     INTEGER not null default 0,       -- verrou du MJ
     data       TEXT    not null default '{}',    -- JSON propre au type (spec §10.1)
     author     INTEGER,                          -- characterId de l'auteur (-1 : MJ)

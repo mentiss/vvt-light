@@ -6,8 +6,10 @@
 // Palette fixe de la v1 (Q-34), couleur de ping d'un participant.
 // ─────────────────────────────────────────────────────────────────────────────
 
-export const PLAYER_DRAW_KINDS = ['stroke', 'rect'];
+export const PLAYER_DRAW_KINDS = ['stroke', 'rect', 'ellipse', 'line', 'halo', 'text'];   // §13.1, PB-6
 export const PLAYER_MOVE_KINDS = ['token', 'icon'];
+export const ROTATABLE_KINDS = ['image', 'icon', 'text', 'rect', 'ellipse'];              // Q-52
+export const POINT_KINDS = ['stroke', 'line'];   // tracés en coordonnées absolues (ni redimensionnés, ni tournés)
 
 /** Palette fixe : nom affiché, couleur */
 export const BOARD_PALETTE = [
@@ -38,3 +40,16 @@ export const canDelete = (isGM, slide, item) =>
 /** Peut-il déplacer cet objet ? */
 export const canMove = (isGM, slide, item) =>
     !item.locked && (isGM || (!!slide?.playersMove && PLAYER_MOVE_KINDS.includes(item.kind)));
+
+/** Peut-il tourner cet objet ? (PB-1 : mêmes droits que le déplacement) */
+export const canRotate = (isGM, slide, item) => ROTATABLE_KINDS.includes(item.kind) && canMove(isGM, slide, item);
+
+/** Objets qui ont une couleur à changer (PC-6) ; un jeton de PJ prend celle de son avatar */
+const COLOR_KINDS = ['stroke', 'line', 'rect', 'ellipse', 'halo', 'text', 'icon'];
+export const canRecolor = (item) => COLOR_KINDS.includes(item.kind) || (item.kind === 'token' && item.data?.characterId === undefined);
+
+/** L'objet est-il dessiné pour ce rôle ? (§14.3 : un objet caché n'existe pas pour le joueur) */
+export const isVisible = (isGM, item) => isGM || !item.hidden;
+
+/** L'objet se duplique-t-il ? (PB-4 : un PJ, un jeton) */
+export const canDuplicate = (item) => !(item.kind === 'token' && item.data?.characterId !== undefined);

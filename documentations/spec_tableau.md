@@ -1,7 +1,7 @@
 # Spec — Tableau partagé (visuels, croquis, jetons)
 
 > Version 0.3 — Phase 2 : spécification technique  
-> Statut : **Brainstorming terminé (§7, §9). Spécification technique validée (§10, points P-1 à P-12 tranchés le 2026-11-04). Implémentation sur feu vert du MJ**  
+> Statut : **v1 en prod (v5.15.0, v5.15.1), spec §7, §9, §10. Évolutions v2 : brainstorming §11 (Q-45 à Q-62 répondues, relances Q-51, Q-53, Q-56 au §11.4) ; lots A et B implémentés et essayés (§12, §13, non commités) ; lot C implémenté (§14, non commité, à essayer)**  
 > Dernière mise à jour : octobre 2026
 
 ---
@@ -616,3 +616,430 @@ Historique des lots 1 et 2 :
 | P-10 | Rectangle (Q-34, resté sans réponse sur ce point) : plein et légèrement transparent par défaut, contour en option | Oui | Oui |
 | P-11 | Annuler (Ctrl+Z) : hors v1 (Q-22 : pas obligatoire) | Hors v1 | Pour après, hors v1 |
 | P-12 | Règle : la mesure reste locale à celui qui mesure (pas diffusée aux autres) | Oui en v1 ; une mesure partagée passerait par le relais | Oui |
+
+---
+
+## 11. Évolutions (v2) — phase 1, brainstorming (2026-11-05)
+
+La v1 est en prod (v5.15.0, v5.15.1) et validée à la table avec un joueur. Le MJ a retenu **toutes** les idées ci-dessous (« j'aime tout »). Rien n'est codé : elles restent à préciser (§11.3), puis à découper en lots (§11.2).
+
+### 11.1 Idées retenues
+
+**Ergonomie** (idées du MJ en gras)
+- **Barre d'outils allégée** : barre contextuelle (palette et épaisseur visibles seulement avec un outil de dessin, brouillard seulement sur une diapositive avec brouillard) et menu « Ajouter ▾ » (image, fond, lien d'image, icône, jeton de PNJ, jetons des PJ).
+- **Distinguer sélection et main** : outil Sélection (flèche : sélectionner, déplacer, redimensionner) et outil Main (déplace la vue seulement, ne touche jamais un objet) ; déplacer la vue avec tous les outils (clic molette, espace maintenu, deux doigts).
+- **Réorganiser les diapositives** : le glisser-déposer existe en mode panneau ; poignée ⠿ visible, et glisser-déposer aussi dans le rail.
+- **Désactiver le tableau depuis le tableau** : bascule en tête de la liste des diapositives, en plus de l'élément de `TabSession`.
+- **Aide contextuelle** : un « ? » dans un coin du tableau, gestes et raccourcis selon le rôle.
+- Raccourcis clavier : V sélection, H main, P trait, R rectangle, E gomme, M règle, Suppr, Ctrl+D dupliquer, Échap.
+- Boutons de zoom dans un coin (+, −, recadrer).
+- Rappel « Les joueurs voient : … » côté MJ quand il édite une autre diapositive que celle montrée.
+- Miniatures dans la liste des diapositives.
+- Confirmation avant de montrer une diapositive dont le brouillard est réglé mais masqué.
+
+**Dessin et objets**
+- **Cercle / ellipse** (aussi zone d'effet avec la grille) ; ligne droite et flèche.
+- **Halo** : cercle à dégradé radial vers le transparent (torche, lueur).
+- **Filtres d'image** : luminosité, contraste, saturation, préréglage « nuit ».
+- **Premier plan / arrière-plan** (l'ordre d'affichage existe déjà).
+- Texte, étiquette.
+- Lien d'image collé (le serveur l'accepte déjà, seul le bouton manque).
+- Dupliquer un objet.
+- Rotation des images, icônes, textes et rectangles.
+
+**Objets avancés**
+- **Menu contextuel** au clic droit (sur tactile : barre de sélection, l'appui long reste le ping).
+- **Grouper** des éléments, précédé de **attacher** un objet à un autre (la torche suit le jeton), et d'une sélection multiple.
+- Objets cachés aux joueurs (préparation du MJ, révélés d'un clic).
+- Marqueurs d'état sur un jeton (anneau de couleur, pastille : à terre, blessé, invisible…), sans aucune règle.
+
+**Déjà notés en v1, rattachés ici**
+- Ctrl+Z limité à ses propres actions (P-11) ; tracé en direct (P-2) ; dépôt d'images par les joueurs (Q-37) ; traduction française de l'index d'icônes.
+
+**Écartés** (proposés puis laissés de côté) : vision dynamique (halo qui dévoile le brouillard), curseurs des joueurs visibles en permanence, export de la diapositive en PNG.
+
+### 11.2 Découpage proposé (à valider)
+
+1. **Lot A — ergonomie** : barre contextuelle et « Ajouter ▾ », sélection / main, déplacement de la vue universel, zoom en coin, raccourcis, aide « ? », poignée et rail réordonnables, désactiver depuis le tableau, « Les joueurs voient », confirmation avant de montrer.
+2. **Lot B — dessin et objets** : cercle / ellipse, ligne / flèche, halo, texte, lien d'image, filtres d'image, dupliquer, premier / arrière-plan, rotation.
+3. **Lot C — objets avancés** : menu contextuel (qui rassemble les actions des lots A et B), objets cachés, marqueurs d'état, attacher, sélection multiple et groupes. *(Retenu au §11.5 : sans marqueurs ni attache.)*
+4. **Lot D — reste** : Ctrl+Z, tracé en direct, miniatures, dépôt d'images par les joueurs.
+
+### 11.3 Questions
+
+| # | Question | Proposition | Réponse MJ                                                                                                                           |
+|---|---|---|--------------------------------------------------------------------------------------------------------------------------------------|
+| Q-45 | Ordre des lots (§11.2) : A, B, C, D ? | Oui : l'ergonomie d'abord (elle touche ce qui existe), puis les nouveaux objets, puis ce qui les combine | oui ok                                                                                                                               |
+| Q-46 | Cercle : ellipse libre (cercle parfait avec Maj), ou cercle seul ? Plein transparent par défaut et contour en option, comme le rectangle ? | Ellipse libre, Maj pour un cercle ; même rendu que le rectangle | oui classique dessin par ordinateur                                                                                                  |
+| Q-47 | Ligne et flèche : un seul outil « Ligne » avec une option pointe de flèche, ou deux outils ? | Un outil, option « flèche » dans la barre contextuelle | Hmm un seul je pense                                                                                                                 |
+| Q-48 | Halo : réglages ? | Couleur de la palette, taille par la poignée, centre à 60 % d'opacité vers le transparent ; ni intensité ni scintillement réglables | ok pour moi comme ta reco                                                                                                            |
+| Q-49 | Filtres d'image : curseurs libres, préréglages, ou les deux ? Réservés au MJ ? | Préréglages (Normal, Nuit, Sombre, Sépia, Délavé) et trois curseurs (luminosité, contraste, saturation) ; MJ seul | Ok                                                                                                                                   |
+| Q-50 | Texte : taille (poignée ou choix), couleur (palette), fond derrière le texte ? Les joueurs peuvent-ils écrire quand le dessin leur est ouvert ? | Taille par la poignée, palette, fond clair semi-transparent en option ; les joueurs écrivent si le dessin est ouvert | ok reco                                                                                                                              |
+| Q-51 | Dupliquer : qui, et où tombe la copie ? | MJ pour tout, joueur pour ses dessins si le dessin est ouvert ; copie décalée d'une case (ou de 20 unités sans grille) | Peut-être un outil uniquement côté MJ ça non ?                                                                                       |
+| Q-52 | Rotation : quels objets, et par pas ? | Images, icônes, textes, rectangles, ellipses ; poignée ronde au-dessus de la sélection, pas de 15° avec Maj ; jetons sans rotation | Ok reco                                                                                                                              |
+| Q-53 | Objets cachés : comment le MJ les voit-il, et que voit le joueur ? | Le MJ les voit à moitié transparents avec un liseré pointillé ; le joueur ne reçoit pas de différence visible, l'objet n'est pas dessiné chez lui | une pastille sinon ? enfin un badge ?                                                                                                |
+| Q-54 | Marqueurs d'état : liste fixe de pastilles, ou texte libre ? Qui les pose ? | Anneau de couleur (palette) + une pastille parmi une liste courte (à terre, blessé, inconscient, invisible, cible) ; le MJ, et le joueur sur le jeton de son personnage | A voir ça c'est pas le truc le plus utile je pense, limite je le conserve dans la todo en mode plus tard peut-être à discuter        |
+| Q-55 | Attacher : comment ? Que suit l'objet attaché ? | Menu « Attacher à… » puis clic sur la cible ; l'objet attaché suit les déplacements (pas le redimensionnement), « Détacher » dans le menu | Ok reco                                                                                                                              |
+| Q-56 | Groupes : faut-il un vrai groupe permanent, ou la sélection multiple (déplacer ensemble ce qu'on a sélectionné) suffit-elle, avec l'attache pour les cas permanents ? | Sélection multiple + attache ; groupe permanent seulement si le besoin reste après usage | si on a l'attache c'est quoi la vrai diff entre les deux ?                                                                           |
+| Q-57 | Menu contextuel : sur l'objet seulement, ou aussi dans le vide (ajouter ici, coller, recadrer) ? | Les deux : sur un objet ses actions, dans le vide « Ajouter ici ▸ », « Ping », « Recadrer » | Les deux oui                                                                                                                         |
+| Q-58 | Aide « ? » : où ? Toujours visible ou seulement au survol du tableau ? | En bas à gauche du tableau (la zone d'actions de la plateforme est en bas à droite de la page), toujours visible, discrète | Ok reco                                                                                                                              |
+| Q-59 | Miniatures : l'image de fond réduite (si la diapositive en a une), ou un vrai aperçu de toute la diapositive (traits et jetons compris) ? | L'image de fond réduite, sinon une icône neutre : un aperçu complet demanderait de redessiner chaque diapositive | C'est vraiment le dernier truc à faire, je pense que ça risque alourdir, à mettre dans la todo peut-être plus tard à voir à discuter |
+| Q-60 | Confirmation avant de montrer : seulement quand le brouillard est réglé mais masqué, ou à chaque fois ? | Seulement brouillard réglé mais masqué : une confirmation systématique deviendrait un réflexe qu'on ne lit plus | ok reco                                                                                                                              |
+| Q-61 | Désactiver depuis le tableau : avec confirmation (les joueurs perdent le tableau) ? | Sans confirmation : la réactivation est immédiate et rien n'est perdu | ok reco                                                                                                                              |
+| Q-62 | Ctrl+Z : combien d'actions, et lesquelles ? | Les 20 dernières de la personne, sur la diapositive affichée : poser, déplacer, redimensionner, effacer ; pas les réglages de diapositive | 20 ça fait pas beaucoup ? 10 je dirais pour commencer non ? Sinon ok reco                                                               |
+
+### 11.4 Relances (2026-11-07)
+
+Réponses à tes questions du §11.3, et ce que j'en retiens.
+
+| # | Ta remarque | Ma réponse | Proposition | Réponse MJ |
+|---|---|---|---|---|
+| Q-51 | Dupliquer : un outil côté MJ seulement ? | Oui, c'est plus simple : un trait de joueur se redessine en deux secondes, et ça évite un droit de plus à expliquer | Dupliquer réservé au MJ, copie décalée d'une case (20 unités sans grille) | |
+| Q-53 | Objet caché : une pastille, un badge ? | Oui, plus lisible qu'un liseré : on voit d'un coup d'œil ce qui est caché, même sur une image sombre | Chez le MJ : objet à moitié transparent **et** pastille « œil barré » dans son coin haut droit ; chez le joueur : rien (l'objet n'est pas dessiné) | |
+| Q-56 | Attache et groupe : quelle vraie différence ? | L'**attache** a un sens : l'enfant suit le parent, pas l'inverse (bouger le jeton emmène la torche ; bouger la torche ne bouge pas le jeton). Le **groupe** est symétrique : attraper n'importe quel morceau déplace tout (un décor fait de plusieurs images, une table et ses chaises). La **sélection multiple** fait la même chose que le groupe, mais pour un seul geste | Garder attache + sélection multiple ; le groupe permanent seulement si, à l'usage, tu re-sélectionnes souvent les mêmes morceaux | **Groupe simple, pas d'attache** (2026-11-07) : on règle la torche avant de grouper ; pour la changer, dégrouper, régler, regrouper. Pas de double-clic dans le groupe |
+
+Notés sans relance :
+- **Q-54** (marqueurs d'état) et **Q-59** (miniatures) : sortis de la v2, rangés dans la todo « plus tard, à discuter ».
+- **Q-62** : 10 actions annulables.
+- **Q-47** : un seul outil « Ligne », pointe de flèche en option.
+
+### 11.5 Découpage retenu
+
+Lots A, B, C, D dans cet ordre (Q-45), sans les marqueurs (lot C) ni les miniatures (lot D). Q-51 et Q-53 : propositions du MJ retenues (dupliquer réservé au MJ ; pastille « œil barré » sur l'objet caché). Q-56 : le lot C fait des **groupes simples** (un clic sur un morceau sélectionne et déplace tout le groupe ; Dégrouper / Grouper au menu contextuel) ; l'attache (Q-55) est abandonnée. Le lot A est spécifié au §12 ; les suivants le seront à leur tour, une fois le précédent essayé.
+
+---
+
+## 12. Lot A — ergonomie : spécification technique (phase 2, 2026-11-07)
+
+**Rien côté serveur** : ni schéma, ni migration, ni route, ni événement socket. Tout se passe dans `components/board/` et le style. Désactiver le tableau passe par l'action existante (`board.setEnabled`, `PUT /sessions/:sid`).
+
+### 12.1 Barre d'outils
+
+De gauche à droite :
+
+| Groupe | Contenu | Visible |
+|---|---|---|
+| Outils | Sélection, Main, Trait, Rectangle, Gomme, Règle | Toujours ; Trait / Rectangle / Gomme grisés si le dessin est fermé (comme aujourd'hui) ; Règle avec la grille |
+| Dessin (contextuel) | Palette, Fin / Épais | Seulement avec Trait ou Rectangle actif (Épaisseur : Trait seul) |
+| Brouillard | Dévoiler, Recouvrir, « Brouillard affiché » | MJ, diapositive avec brouillard |
+| Brouillard (contextuel) | Tout couvrir, Tout dévoiler | Seulement avec Dévoiler ou Recouvrir actif |
+| Ajouter ▾ (MJ) | Image…, Image en fond…, Lien d'image…, Icône…, Jeton de PNJ…, Jetons des PJ | MJ |
+| Fin | Tout effacer | MJ |
+
+- **« Ajouter ▾ »** : un bouton qui ouvre un menu (`vtt-menu`, rendu dans l'emplacement à modales comme `RowMenu` de l'audio, pour ne pas être rogné par la fenêtre flottante). Il remplace les cinq boutons actuels du MJ.
+- **Lien d'image** : petite fenêtre avec un champ d'adresse (`http(s)://…`), objet `image` `{ url }` posé en haut à gauche du contenu, comme le jeton de PNJ. Le serveur l'accepte déjà ; l'image est affichée à sa taille naturelle, réduite à 800 unités de large au plus. Avancé du lot B parce qu'il loge naturellement dans le menu (voir PA-2).
+- **Recadrer** quitte la barre pour les boutons de zoom (§12.3).
+
+### 12.2 Sélection et Main
+
+| Outil | Sur un objet | Dans le vide |
+|---|---|---|
+| **Sélection** (flèche, outil par défaut) | Clic : sélectionne (MJ, même verrouillé) ; glisser : déplace si permis | Clic : désélectionne ; glisser : déplace la vue (lot A), puis rectangle de sélection (lot C) |
+| **Main** | Déplace la vue, ne touche jamais l'objet | Déplace la vue |
+
+**Déplacer la vue avec tous les outils** :
+- **Clic molette** maintenu et glissé ;
+- **Espace** maintenu : curseur main, le glisser déplace la vue quel que soit l'outil, relâcher revient à l'outil ;
+- **Deux doigts** : le pincement zoome déjà ; le déplacement de leur milieu déplace désormais aussi la vue.
+
+Joueur : mêmes outils ; la Sélection ne sélectionne rien chez lui (pas d'action sur l'objet), elle déplace ce que la diapositive lui permet.
+
+### 12.3 Coins du tableau
+
+- **En haut à droite** : zoom **+**, **−**, **Recadrer**. Le zoom des boutons se fait autour du centre de la vue, par pas de ×1,25.
+- **En bas à gauche** : **?** (Q-58). Au clic, une bulle liste les gestes et raccourcis, **selon le rôle et ce que la diapositive permet** (un joueur sans dessin ne voit pas « P : trait »). Fermée par Échap, clic ailleurs ou le même bouton.
+
+Les deux restent dans le cadre du tableau (positionnés dans `vtt-board-stage`), discrets, avec le style des boutons d'outil (`vtt-board-tool`) : chaque slug les habille sans retouche.
+
+### 12.4 Raccourcis clavier
+
+| Touche | Action | Qui |
+|---|---|---|
+| V | Sélection | Tous |
+| H | Main | Tous |
+| P | Trait | Si dessin permis |
+| R | Rectangle | Si dessin permis |
+| E | Gomme | Si dessin permis |
+| M | Règle | Avec la grille |
+| Espace (maintenu) | Main temporaire | Tous |
+| Suppr / Retour arrière | Supprimer l'objet sélectionné (sauf verrouillé) | MJ |
+| Échap | Annule le geste en cours, sinon désélectionne | Tous |
+| + / − / 0 | Zoom avant, arrière, recadrer | Tous |
+
+- Actifs seulement **quand le pointeur est sur le tableau ou que le focus est dedans**, et **jamais dans un champ de saisie** : le MJ peut avoir deux tableaux montés (onglet et fenêtre flottante), et les lettres ne doivent pas gêner la saisie ailleurs (journal, notes).
+- Ctrl+D (dupliquer) et Ctrl+Z arrivent avec les lots B et D.
+- Chaque bouton d'outil rappelle son raccourci dans son infobulle (« Trait (P) »).
+
+### 12.5 Liste des diapositives
+
+- **Poignée ⠿** visible à gauche de chaque diapositive du panneau : c'est elle qu'on attrape (la ligne entière reste glissable, comme aujourd'hui).
+- **Rail** : glisser-déposer des numéros, avec le même `useDragOrder`.
+- **Désactiver depuis le tableau** (Q-61, sans confirmation) : une bascule « Tableau activé » en tête du panneau, une icône dans le rail. En fenêtre réduite (sans liste), la bascule va dans l'en-tête de la vue, à côté de « Montrer aux joueurs ». Tableau désactivé : l'avis actuel (« Tableau désactivé pour cette table… Activer ») reste.
+
+### 12.6 En-tête de la vue (MJ)
+
+- **« Les joueurs voient : <nom> »** quand le MJ édite une autre diapositive que celle montrée ; le nom est un lien qui l'ouvre. Rien quand c'est la même (le bouton « Ne plus montrer » le dit déjà). « Les joueurs ne voient rien » quand aucune n'est montrée.
+- **Confirmation avant de montrer** (Q-60), au bouton de la vue comme à celui de la liste, seulement si la diapositive a un brouillard **réglé mais masqué** : « Le brouillard de « <nom> » est masqué : les joueurs verront toute la carte. » — **Montrer quand même** / Annuler (confirmation générique `useConfirm`).
+
+### 12.7 Fichiers touchés
+
+| Fichier | Changement |
+|---|---|
+| `components/board/BoardToolbar.jsx` | Outils Sélection / Main, groupes contextuels, menu « Ajouter ▾ », fenêtre du lien d'image, raccourcis dans les infobulles ; recadrer retiré |
+| `components/board/BoardCanvas.jsx` | Outil `select` (l'actuel `hand`) et vraie `hand` ; clic molette, espace maintenu, déplacement à deux doigts ; zoom demandé de l'extérieur (boutons, touches) |
+| `components/board/Board.jsx` | Raccourcis clavier (sur le cadre du tableau), coins zoom et « ? », « Les joueurs voient », confirmation avant de montrer, bascule d'activation en fenêtre réduite |
+| `components/board/BoardHelp.jsx` | Nouveau : bouton « ? » et sa bulle, contenu selon le rôle et les droits |
+| `components/board/SlideList.jsx` | Poignée ⠿, rail réordonnable, bascule d'activation, confirmation avant de montrer |
+| `tools/boardGeometry.js` | Zoom et déplacement à deux doigts en une fonction pure (milieu et écart des doigts) |
+| `src/client/tests/tools/boardGeometry.test.js` | Cas du déplacement à deux doigts |
+| `index.css` | `vtt-board-corner`, `vtt-board-help*`, poignée ; menu en `vtt-menu` existant |
+| `systems/*/theme.css` | Seulement si l'essai montre un coin ou la bulle mal habillés dans un slug |
+| `spec_tableau.md` | État du lot |
+
+### 12.8 Points à valider
+
+| # | Point | Proposition | Réponse MJ                                                                     |
+|---|---|---|--------------------------------------------------------------------------------|
+| PA-1 | Outil par défaut à l'ouverture | Sélection, pour tout le monde (le comportement de l'actuelle « main ») | ok                                                                             |
+| PA-2 | Lien d'image avancé du lot B dans le menu « Ajouter ▾ » | Oui : le serveur l'accepte déjà, c'est une fenêtre à un champ | ok                                                                             |
+| PA-3 | Sélection, glisser dans le vide | Déplace la vue en lot A (comme aujourd'hui) ; deviendra le rectangle de sélection au lot C, la vue passant alors par la Main, l'espace, le clic molette ou deux doigts | oui ok                                                                         |
+| PA-4 | « Tout couvrir / Tout dévoiler » seulement avec un outil de brouillard actif | Oui : ils n'ont de sens qu'en travaillant le brouillard ; « Brouillard affiché » reste toujours visible | oui                                                                            |
+| PA-5 | « Tout effacer » hors du menu Ajouter, en bout de barre | Oui : une action destructrice ne se range pas sous « Ajouter » ; il rejoindra le menu contextuel « dans le vide » au lot C | oui                                                                            |
+| PA-6 | Zoom en haut à droite (pas en bas : la zone d'actions de la plateforme est en bas à droite de la page, et l'onglet MJ du tableau descend jusque-là) | Oui | Oui                                                                            |
+| PA-7 | Raccourcis seulement pointeur sur le tableau ou focus dedans, jamais dans un champ | Oui | ok                                                                             |
+| PA-8 | Glisser-déposer des diapositives au doigt (tablette) : le glisser natif du navigateur ne marche pas au toucher, aujourd'hui comme demain | Laisser ainsi en lot A (réordonner se fait au poste du MJ) ; à reprendre si tu prépares sur tablette | oui après la tablette c'est pas l'usage le plus courant pour l'app aujourd'hui |
+| PA-9 | Bascule d'activation en fenêtre réduite : dans l'en-tête de la vue | Oui : sans elle, le MJ en fenêtre réduite devrait repasser par l'onglet Session | oui                                                                            |
+| PA-10 | Rien côté serveur, pas de test serveur ; un test front sur le déplacement à deux doigts | Oui | euh, rien côté server concernant quoi ? Les tests ? → précisé : le lot A ne touche pas au serveur (ni base, ni route, ni socket), donc rien à y tester ; oui |
+
+**État au 2026-11-07** : lot A implémenté, non commité, à essayer en dev. Écarts et précisions par rapport au §12 :
+- « Tableau activé / désactivé » : une pastille dont le libellé suit l'état (comme « Brouillard affiché / masqué »), plutôt qu'une case cochée seule, ambiguë quand le tableau est désactivé.
+- **Retours du MJ après l'essai (2026-11-07)** :
+  - « Ajouter ▾ » juste après les outils (il était en bout de barre), suivi d'un bouton **« Jetons des PJ · n »** toujours visible (n = PJ de la table sans jeton sur la diapositive, grisé à 0), retiré du menu. « Tout effacer » reste seul en bout de barre.
+  - Activation à **un seul endroit** : la pastille de l'en-tête de la vue, dans tous les modes ; le bandeau « Tableau désactivé… Activer », la pastille de la liste et le bouton du rail sont retirés. Tableau désactivé, l'en-tête dit « Les joueurs ne voient pas le tableau ».
+  - Dans la liste, un **œil** remplace « Montrer / Retirer » : ouvert et en couleur = montrée, barré = pas montrée ; infobulles « Montrer aux joueurs » / « Cacher aux joueurs ». Le badge « Montrée » est retiré (le liseré reste). Le bouton de l'en-tête dit aussi « Cacher aux joueurs ».
+- Le menu « Ajouter ▾ » reprend le menu des lignes de l'audio (`components/audio/panel/RowMenu.jsx`) : déjà habillé par chaque slug, pas de copie.
+- Raccourcis inactifs aussi quand le focus est dans une fenêtre ou un menu (ils s'y effaceraient mal).
+- Clic molette et Main ne désélectionnent pas l'objet du MJ (seule la Sélection le fait).
+
+---
+
+## 13. Lot B — dessin et objets : spécification technique (phase 2, 2026-11-07)
+
+Reprend les réponses Q-46 à Q-52 (§11.3, §11.4). Le lien d'image est déjà fait (lot A). Contrairement au lot A, **le serveur change** : quatre nouveaux types d'objets, la rotation (une colonne, donc une migration), la duplication et l'ordre d'affichage.
+
+### 13.1 Nouveaux objets
+
+| Type | Outil (touche) | Geste | `data` | Qui le pose |
+|---|---|---|---|---|
+| `ellipse` | Ellipse (O) | Glisser d'un coin à l'autre ; Maj : cercle (Q-46) | `{ color, filled, width? }` | Comme le rectangle : MJ, joueur si dessin ouvert |
+| `line` | Ligne (L) | Glisser du départ à l'arrivée ; Maj : pas de 15° | `{ points: [x1, y1, x2, y2], color, width, arrow }` | Idem |
+| `halo` | Halo (G) | Clic : taille par défaut ; glisser depuis le centre : rayon | `{ color }`, `w = h` = diamètre | Idem (PB-6) |
+| `text` | Texte (T) | Clic : champ de saisie à l'endroit ; Entrée valide, Maj+Entrée va à la ligne, Échap annule | `{ text, color, size, background }` | Idem |
+
+- **Rectangle et ellipse** (Q-46, P-10) : pleins légèrement transparents par défaut ; **« Plein / Contour »** dans la barre contextuelle, le contour prenant l'épaisseur choisie (`width`). Aujourd'hui le contour n'a pas de bouton : il arrive ici. Maj donne aussi un carré au rectangle.
+- **Ligne** (Q-47) : un seul outil ; **« Flèche »** dans la barre contextuelle (pointe à l'arrivée), avec la palette et l'épaisseur.
+- **Halo** (Q-48) : dégradé radial, couleur de la palette à 60 % d'opacité au centre, transparent au bord. Taille par défaut : 3 cases de rayon avec la grille, 150 unités sans. Dessiné sous les jetons et les icônes, au-dessus des images (il éclaire la carte, pas les pions).
+- **Texte** (Q-50) : taille par défaut lisible au zoom courant (environ 20 px à l'écran), puis par la poignée ; couleur de la palette ; **« Fond »** dans la barre contextuelle (fond clair semi-transparent). 500 caractères au plus. La police est celle du slug.
+- Barre contextuelle selon l'outil : palette pour tous ; épaisseur pour Trait, Ligne et le contour ; « Plein / Contour » pour Rectangle et Ellipse ; « Flèche » pour Ligne ; « Fond » pour Texte.
+
+### 13.2 Actions sur l'objet sélectionné (MJ)
+
+La barre de sélection actuelle (Verrouiller, Supprimer) s'enrichit :
+
+| Action | Objets | Comportement |
+|---|---|---|
+| **Dupliquer** (Ctrl+D) | Tous sauf les jetons des PJ | Copie décalée d'une case (20 unités sans grille), sélectionnée ; une image déposée n'est pas recopiée, les deux objets partagent la même image (Q-51 : MJ seul) |
+| **Premier plan** / **Arrière-plan** | Tous | Tout au-dessus ; ou tout en dessous, mais **au-dessus des fonds verrouillés** (sinon l'objet disparaîtrait sous l'image de fond) |
+| **Rotation** | Images, icônes, textes, rectangles, ellipses (Q-52) | Poignée ronde au-dessus de la sélection ; Maj : pas de 15° ; ni jetons, ni traits, ni lignes, ni halos |
+| **Filtres** | Images (Q-49) | Bouton « Filtres » : préréglages Normal, Nuit, Sombre, Sépia, Délavé, et trois curseurs (luminosité, contraste, saturation) ; aperçu immédiat chez le MJ, enregistré et diffusé au lâcher du curseur |
+| **Modifier le texte** | Textes | Double-clic avec la Sélection : le champ de saisie se rouvre |
+
+Le menu contextuel du lot C reprendra ces actions ; d'ici là, elles vivent dans la barre de sélection.
+
+### 13.3 Serveur
+
+**Base** (`board-schema.sql` et migration `database-template/migrations/DDMMYYYY_board_rotation.sql`, `-- systems: board`) :
+
+```sql
+alter table board_items add column rotation REAL not null default 0;   -- degrés, sens horaire, autour du centre
+```
+
+**Route** (`routes/board.js`) :
+- `KINDS` : + `ellipse`, `line`, `halo`, `text` ; `PLAYER_DRAW_KINDS` : + les quatre (posés et effacés par un joueur si le dessin est ouvert).
+- `cleanData` : les quatre nouveaux types (couleur, booléens, `text` ≤ 500 caractères, `size` et `width` bornés) ; `rect` garde `width` ; `image` garde `imageId` (aujourd'hui seule l'adresse passe, ce qui interdirait de modifier une image déposée) et `filter: { preset, brightness, contrast, saturation }` (bornés).
+- Une `line` calcule sa boîte depuis ses deux points, comme un trait.
+- `PATCH /items/:id` accepte `rotation` (droits du déplacement, verrou respecté) et `order: 'front' | 'back'`, calculé par le serveur (renumérote les `z` si besoin, dans une transaction).
+- `POST /sessions/:sid/items/:id/duplicate` (MJ) : copie la ligne avec le décalage, `z` au-dessus de tout ; refusée pour un jeton de PJ (un PJ, un jeton).
+- Le relais `board-drag` (`socket/platform/board.js`) transmet aussi `rotation`, pour la voir tourner en direct.
+
+### 13.4 Client
+
+| Fichier | Changement |
+|---|---|
+| `components/board/BoardCanvas.jsx` | Rendu des quatre types, de la rotation (`transform` autour du centre) et des filtres (`filter` CSS sur l'image) ; gestes des nouveaux outils, Maj ; poignée de rotation ; double-clic sur un texte |
+| `components/board/BoardTextInput.jsx` | Nouveau : champ de saisie posé sur le cadre à l'endroit du texte, mesure du texte (largeur, hauteur) à la validation |
+| `components/board/BoardToolbar.jsx` | Outils Ligne, Ellipse, Halo, Texte ; options contextuelles (Plein / Contour, Flèche, Fond) |
+| `components/board/BoardImageFilters.jsx` | Nouveau : préréglages et curseurs, dans une bulle comme l'aide |
+| `components/board/Board.jsx` | Barre de sélection enrichie, Ctrl+D |
+| `hooks/useBoardSlide.js` | `duplicateItem`, `reorderItem` ; rotation dans `emitDrag` |
+| `tools/boardGeometry.js` | Toucher un objet tourné, point d'une ligne à 15°, angle de la poignée de rotation |
+| `tools/boardRights.js` | `PLAYER_DRAW_KINDS` aligné sur le serveur ; ce qui tourne, ce qui se duplique |
+| `tools/boardFilters.js` | Nouveau, pur : préréglages → valeurs, valeurs → `filter` CSS |
+| `index.css` | Champ de texte, bulle des filtres, poignée de rotation |
+
+### 13.5 Tests
+
+- Serveur (`tests/server/routes/board.test.js`) : nouveaux types (données refusées, droits du joueur selon le dessin), rotation (verrou, droits), ordre (arrière-plan au-dessus des fonds verrouillés), duplication (image partagée qui survit à la suppression d'une copie, jeton de PJ refusé).
+- Front : `boardGeometry.test.js` (objet tourné touché ou non, angle à 15°), `boardFilters.test.js` (préréglages, bornes), `boardRights.test.js` (nouveaux types).
+
+### 13.6 Points à valider
+
+| # | Point | Proposition | Réponse MJ                                                                                                                                                                         |
+|---|---|---|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| PB-1 | Rotation : une **colonne** `rotation` (migration de `board.db`), ou un champ de `data` (pas de migration) ? | Colonne : c'est de la géométrie comme x, y, w, h ; elle passe par les mêmes droits (déplacement) et le même relais en direct. Un champ de `data` ne serait modifiable que par le MJ et mélangerait géométrie et apparence | ok pour la reco, je pense en effet qu'il faut différencier géométrie du reste                                                                                                      |
+| PB-2 | Touches des nouveaux outils : L ligne, O ellipse, G halo (*glow*), T texte | Oui (H est déjà la Main) | Ok                                                                                                                                                                                 |
+| PB-3 | Dupliquer : route serveur dédiée plutôt qu'une copie refaite par le navigateur | Oui : une image déposée ne peut pas être reposée par l'adresse d'un objet ; le serveur la partage sans la recopier | ok reco                                                                                                                                                                            |
+| PB-4 | Jeton de PJ non duplicable | Oui : un PJ, un jeton (le bouton « Jetons des PJ » compterait faux) | oui non duplicable                                                                                                                                                                 |
+| PB-5 | Arrière-plan : au-dessus des fonds verrouillés, pas tout en dessous | Oui | ok reco                                                                                                                                                                            |
+| PB-6 | Halo posé par les joueurs quand le dessin est ouvert ? | Oui : c'est un dessin comme un autre ; il s'efface à la gomme | oui                                                                                                                                                                                |
+| PB-7 | Texte d'un joueur : modifiable après coup ? | Non : il l'efface et le réécrit (le MJ seul modifie un objet, comme aujourd'hui pour les couleurs) | hmmm, oui ok                                                                                                                                                                       |
+| PB-8 | Halo : sous les jetons et icônes, au-dessus des images, quel que soit l'ordre de pose | Oui : sinon une torche posée après le jeton le voilerait | ok                                                                                                                                                                                 |
+| PB-9 | Filtres : enregistrés au lâcher du curseur (aperçu immédiat chez le MJ seulement) | Oui : pas de flot d'écritures pendant qu'il règle | ok                                                                                                                                                                                 |
+| PB-10 | Recolorer un objet déjà posé | Pas dans le lot B : il rejoindra le menu contextuel du lot C | ok                                                                                                                                                                                 |
+| PB-11 | Bouton « Masquer la liste » des diapositives : même œil barré que « pas montrée » | Le remplacer par une flèche « ‹ » | Non, c'est pas grave ça, on comprend clairement que c'est pas la même fonctionnalité. Et si tu fais ça, on fait quoi concernant le brouillard et les boutons qui y sont associés ? → gardé tel quel |
+
+**État au 2026-11-07 (soir)** : lot B implémenté, non commité, à essayer en dev après la migration `07112026_board_rotation.sql` sur la base de dev du tableau. Précisions :
+- Déplacer un trait ou une ligne décale désormais ses points côté serveur : jusqu'ici, un trait déplacé par le MJ gardait son dessin à l'ancienne place (sa boîte seule bougeait). Corrigé avec la ligne, qui partage ce mode de stockage.
+- Un objet tourné se redimensionne autour de son centre (un objet droit garde son coin haut gauche fixe).
+- Texte modifié jusqu'à le vider : il est effacé.
+- **Barre de sélection en surimpression** dans le coin haut gauche du cadre (filtres compris) : en apparaissant au-dessus du cadre, elle décalait la vue, si bien que le second clic d'un double-clic (modifier un texte) tombait à côté. Constaté à l'essai à l'écran.
+- Nouveaux fichiers : `BoardTextInput.jsx`, `BoardImageFilters.jsx`, `tools/boardFilters.js` (et son test) ; migration `07112026_board_rotation.sql`.
+- Essayé et validé par le MJ le 2026-11-07.
+
+---
+
+## 14. Lot C — objets avancés : spécification technique (phase 2, 2026-11-07)
+
+Reprend Q-53 (objets cachés, pastille), Q-56 (groupes simples, sans attache), Q-57 (menu contextuel sur un objet et dans le vide), PA-3 (le glisser dans le vide devient le rectangle de sélection), PA-5 (« Tout effacer » dans le menu du vide), PB-10 (recolorer). Les marqueurs d'état restent hors v2 (Q-54).
+
+### 14.1 Sélection multiple (MJ)
+
+| Geste | Effet |
+|---|---|
+| Glisser dans le vide avec la Sélection | Rectangle de sélection : sont pris les objets **entièrement** dedans (PC-3) |
+| Maj + clic | Ajoute l'objet à la sélection, ou l'en retire |
+| Ctrl+A | Tout sélectionner sur la diapositive |
+| Échap, clic dans le vide | Tout désélectionner |
+| Glisser un objet sélectionné | Déplace toute la sélection, en direct chez tous |
+
+- **La vue** ne se déplace plus en glissant dans le vide avec la Sélection : Main, espace maintenu, clic molette ou deux doigts (PA-3, comme convenu).
+- **Sur une sélection de plusieurs objets** : déplacer, dupliquer, premier plan / arrière-plan (l'ordre entre eux est gardé), couleur, cacher / montrer, verrouiller / déverrouiller, grouper, supprimer. Redimensionner, tourner, filtres et modifier un texte restent réservés à un objet seul.
+- La barre de sélection (coin haut gauche) indique « 3 objets » et propose les mêmes actions.
+
+### 14.2 Groupes simples (Q-56)
+
+- **Grouper** (deux objets ou plus sélectionnés) : un clic sur n'importe quel morceau sélectionne tout le groupe, et le glisser déplace tout le groupe.
+- **Dégrouper** : les morceaux redeviennent indépendants. Pour retoucher un morceau (la couleur de la torche), on dégroupe, on règle, on regroupe (choix du MJ, pas de double-clic dans le groupe).
+- Grouper des objets déjà groupés les réunit en un seul groupe ; dupliquer un groupe donne un nouveau groupe.
+- **Joueur** (PC-4) : s'il peut déplacer un morceau (son jeton, une icône, si la diapositive le permet), le glisser emmène tout le groupe, torche comprise. Il ne voit pas les groupes autrement.
+- Supprimer un morceau ne touche pas les autres ; un groupe réduit à un seul objet n'est plus un groupe.
+
+### 14.3 Objets cachés (Q-53)
+
+- **Cacher aux joueurs** / **Montrer aux joueurs** : action du menu et de la barre, sur un objet ou une sélection.
+- **MJ** : l'objet caché est à moitié transparent, avec une pastille « œil barré » dans son coin haut droit.
+- **Joueur** : l'objet n'est ni dessiné, ni touchable (gomme, déplacement, ping dessus sans effet particulier).
+- Un objet posé est visible par défaut. « Jetons des PJ » compte aussi les jetons cachés (ils sont posés).
+
+### 14.4 Menu contextuel (Q-57)
+
+Clic droit (ordinateur). Sur tablette, la barre de sélection en tient lieu ; l'appui long reste le ping.
+
+**Sur un objet** (MJ ; il entre dans la sélection s'il n'y était pas) :
+
+| Action | Remarque |
+|---|---|
+| Dupliquer (Ctrl+D) | Sauf jetons des PJ |
+| Premier plan / Arrière-plan | |
+| Couleur ▸ | Palette fixe ; trait, ligne, formes, halo, texte, icône, jeton de PNJ (PC-6) |
+| Filtres… | Image seule |
+| Modifier le texte | Texte seul |
+| Cacher aux joueurs / Montrer aux joueurs | |
+| Grouper / Dégrouper | Selon la sélection |
+| Verrouiller / Déverrouiller | |
+| Supprimer | Sauf verrouillé |
+
+**Dans le vide** :
+
+| Action | Qui |
+|---|---|
+| Ajouter ici ▸ : Image…, Lien d'image…, Icône…, Jeton de PNJ…, Texte, Jetons des PJ (PC-7) | MJ |
+| Ping ici | Tous |
+| Recadrer | Tous |
+| Tout effacer (sauf verrouillé) | MJ (PA-5) |
+
+**Joueur** (PC-5) : dans le vide, Ping ici et Recadrer ; sur un dessin, Effacer si le dessin est ouvert.
+
+Le menu reprend l'habillage des menus du slug (`vtt-menu`), placé au point du clic et rendu dans l'emplacement à modales (sinon rogné par la fenêtre flottante).
+
+### 14.5 Serveur
+
+**Base** (`board-schema.sql` et migration `database-template/migrations/07112026_board_hidden_groups.sql`, `-- systems: board`) :
+
+```sql
+alter table board_items add column hidden   INTEGER not null default 0;   -- caché aux joueurs (Q-53)
+alter table board_items add column group_id INTEGER;                      -- groupe simple (Q-56) ; null : seul
+```
+
+`group_id` reprend l'identifiant d'un des morceaux au moment de grouper : ce n'est qu'une étiquette commune, pas une clé vers une autre table.
+
+**Route** (`routes/board.js`) :
+- `PATCH /items/:id` accepte `hidden` (MJ seul, verrou respecté).
+- `PATCH /sessions/:sid/slides/:id/items` `{ items: [{ id, x?, y?, hidden?, locked?, data? }], order? }` (nouveau) : plusieurs objets en une écriture, **tout ou rien** (transaction), une seule diffusion. Mêmes droits que le `PATCH` d'un objet, sauf PC-4 : un joueur qui déplace un morceau qu'il peut déplacer emmène les autres morceaux de son groupe, et seulement eux.
+- `POST /sessions/:sid/slides/:id/group` `{ ids }` et `POST …/ungroup` `{ ids }` (MJ).
+- `POST /sessions/:sid/slides/:id/items/duplicate` `{ ids }` (MJ) : la duplication d'un objet devient un cas de celle-ci ; les groupes copiés reçoivent un nouveau `group_id`.
+- `POST /sessions/:sid/slides/:id/items/remove` `{ ids }` (nouveau, mêmes droits que l'effacement d'un objet ; le verrouillé est ignoré) : supprimer une sélection. « Tout effacer » reste tel quel.
+- Relais `board-drag` : accepte une liste `items: [{ itemId, x, y }]` pour un groupe ou une sélection, en un seul message.
+- Les objets cachés partent à tous les membres de la room, comme le reste : c'est le client du joueur qui ne les dessine pas (PC-2).
+
+### 14.6 Client
+
+| Fichier | Changement |
+|---|---|
+| `components/board/BoardCanvas.jsx` | Sélection multiple (rectangle, Maj+clic), déplacement d'une sélection ou d'un groupe, objets cachés (transparence et pastille chez le MJ, absents chez le joueur), clic droit |
+| `components/board/BoardContextMenu.jsx` | Nouveau : menu au point du clic, sur un objet ou dans le vide, selon le rôle |
+| `components/board/Board.jsx` | Sélection en liste d'identifiants, barre de sélection pour plusieurs objets (couleur, cacher, grouper), Ctrl+A ; actions partagées avec le menu |
+| `components/audio/panel/RowMenu.jsx` | Rien, ou un point d'ancrage au lieu d'un bouton si le menu contextuel le réutilise (à voir à l'écriture, sans changer son comportement pour l'audio) |
+| `hooks/useBoardSlide.js` | `patchItems`, `groupItems`, `ungroupItems`, `duplicateItems`, `removeItems` ; relais d'une liste |
+| `tools/boardGeometry.js` | Objets entièrement dans un rectangle (rotation comprise) |
+| `tools/boardSelection.js` | Nouveau, pur : sélection étendue au groupe, Maj+clic, ce que permet une sélection (une ou plusieurs, verrouillés, couleurs) |
+| `tools/boardRights.js` | Objet visible du rôle (caché), objet recolorable |
+| `index.css` | Rectangle de sélection, objet caché et sa pastille, menu au point du clic |
+
+### 14.7 Tests
+
+- Serveur : écriture groupée tout ou rien (un objet verrouillé ou interdit fait tout refuser), joueur qui emmène son groupe (PC-4) mais pas d'autres objets, cacher réservé au MJ, grouper / dégrouper, duplication d'un groupe (nouveau groupe), suppression d'une sélection (verrouillé ignoré).
+- Front : `boardSelection.test.js` (groupe étendu, Maj+clic, actions permises), `boardGeometry.test.js` (contenu dans un rectangle, objet tourné), `boardRights.test.js` (caché selon le rôle, recolorable).
+
+### 14.8 Points à valider
+
+| # | Point | Proposition | Réponse MJ                                                                                    |
+|---|---|---|-----------------------------------------------------------------------------------------------|
+| PC-1 | Caché et groupe : deux **colonnes** (migration), comme la rotation | Oui : ni de la géométrie ni de l'apparence, ce sont des états de l'objet, lus à chaque dessin et à chaque toucher | c'est vraiment une question ça ? ça me semble évident qu'il faut l'ajouter oui                |
+| PC-2 | Objets cachés : envoyés à tous, **pas dessinés** chez le joueur (un joueur curieux pourrait les lire dans les outils du navigateur) | Oui : c'est la règle de la plateforme (la visibilité des infos du MJ est filtrée côté client) et ça évite deux versions de chaque diffusion | osef donc oui                                                                                 |
+| PC-3 | Rectangle de sélection : objets **entièrement** dedans, ou **touchés** ? | Entièrement : on ne ramasse pas l'image de fond ou une grande zone par accident | entièrement    + multi sélection avec Maj/shift non ?                                         |
+| PC-4 | Joueur et groupe : glisser son jeton emmène tout le groupe (torche comprise, qu'il ne pourrait pas déplacer seule) | Oui : c'est le cas d'usage de la torche ; sinon il faudrait que le MJ suive chaque déplacement | oui                                                                                           |
+| PC-5 | Menu du joueur : Ping ici, Recadrer ; Effacer sur un dessin si le dessin est ouvert | Oui | oui + grouper quand multi sélection + premier plan/arrière plan  + ajouter ici avec sous menu |
+| PC-6 | Couleur : objets qui en ont une (trait, ligne, formes, halo, texte, icône, jeton de PNJ) ; ni image, ni jeton de PJ | Oui | oui                                                                                           |
+| PC-7 | « Ajouter ici ▸ » pose à l'endroit du clic (image, lien, icône, jeton de PNJ, texte, jetons des PJ) | Oui ; le menu « Ajouter ▾ » de la barre garde sa place en haut à gauche du contenu | oui enfin pour moi c'est avec le menu contextuel ça                                           |
+| PC-8 | Redimensionner, tourner, filtres, modifier un texte : un objet seul (pas une sélection ni un groupe) | Oui en v2 ; un groupe se règle dégroupé (Q-56) | oui                                                                                           |
+| PC-9 | Pas de copier / coller entre diapositives | Hors lot C : Dupliquer suffit sur une même diapositive ; à noter dans la todo si le besoin vient | bah à prévoir quand même ça → noté dans la todo (après la v2) |
+
+**État au 2026-11-07 (nuit)** : lot C implémenté, non commité, à essayer en dev après la migration `07112026_board_hidden_groups.sql`. Précisions et écarts :
+- PC-3 : Maj + rectangle **ajoute** à la sélection existante (Maj + clic l'était déjà).
+- Le joueur garde le glisser dans le vide pour déplacer la vue (il n'a pas de sélection) ; seul le MJ trace un rectangle de sélection.
+- « Jetons des PJ » accepte un point de départ (« Ajouter ici ») : la route des jetons des PJ prend `x, y` facultatifs.
+- Le menu générique (`RowMenu`) s'ouvre aussi à un point de l'écran ; rien ne change pour l'audio.
+- PC-5 : la réponse du MJ (« + grouper, premier plan / arrière-plan, ajouter ici ») est lue comme le contenu du menu du MJ, déjà prévu ; le menu du joueur reste Ping ici, Recadrer, Effacer (confirmé par le MJ le 2026-11-08, « pour l'instant »).
+- Essai à l'écran (2026-11-08) : rectangle de sélection, grouper et déplacer le groupe, cacher (transparence et pastille), menus sur un objet et dans le vide, « Ajouter ici ▸ Texte », couleur sur une sélection. Pastille d'un objet rond (halo, jeton) placée sur le cercle plutôt qu'au coin de sa boîte, loin de la lueur.
+- Nouveaux fichiers : `BoardContextMenu.jsx`, `tools/boardSelection.js` (et son test) ; migration `07112026_board_hidden_groups.sql`.
