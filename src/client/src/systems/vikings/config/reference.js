@@ -52,3 +52,16 @@ const ADAPT = { guide: guideSection, runes: runesSection };
 export const REFERENCE_SECTIONS = markdownToSections(
     Object.entries(MARKDOWN).map(([path, text]) => ({ name: path.split('/').pop(), text })),
 ).map(s => ADAPT[s.id]?.(s) ?? s);
+
+/**
+ * Paragraphes du Guide du joueur sous un intertitre (jusqu'au suivant) : textes repris
+ * par l'accueil de l'assistant de création (spec_vikings_pierre_peinte.md §9.4).
+ * @returns {string[]} Markdown simple (gras, italique)
+ */
+export const guideParagraphs = (heading) => {
+    const blocks = REFERENCE_SECTIONS.find(s => s.id === 'guide')?.blocks ?? [];
+    const start = blocks.findIndex(b => b.type === 'heading' && b.text === heading);
+    if (start < 0) return [];
+    const end = blocks.findIndex((b, i) => i > start && b.type === 'heading');
+    return blocks.slice(start + 1, end < 0 ? undefined : end).filter(b => b.type === 'text').map(b => b.text);
+};

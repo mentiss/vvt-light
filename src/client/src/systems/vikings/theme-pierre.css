@@ -499,6 +499,67 @@ html[data-vk-skin="pierre"] .vk-tray {
     box-shadow: 0 -8px 24px var(--vk-slab-lo);
 }
 
+/* ── Assistant de création (lot 6) : fanions verticaux, bâton d'entailles, tablettes ── */
+html[data-vk-skin="pierre"] .vk-cr-header { box-shadow: inset 0 -3px 0 var(--vk-band), 0 4px 10px rgba(0,0,0,.3); }
+html[data-vk-skin="pierre"] .vk-cr-step { border-left: 0; }
+html[data-vk-skin="pierre"] .vk-cr-step-num { transform: none; clip-path: polygon(50% 0, 100% 38%, 50% 100%, 0 38%); height: 24px; }
+html[data-vk-skin="pierre"] .vk-cr-step-num > span { transform: none; }
+html[data-vk-skin="pierre"] .vk-cr-step-label { font-weight: 700; font-size: 1rem; letter-spacing: .02em; }
+html[data-vk-skin="pierre"] .vk-cr-step-tag { color: #1c1006; background: var(--vk-amber); }
+html[data-vk-skin="pierre"] .vk-cr-step.is-todo .vk-cr-step-num { background: var(--vk-amber); color: #1c1006; }
+html[data-vk-skin="pierre"] .vk-cr-step-tag.is-invalid { background: var(--color-primary); color: var(--color-on-primary); }
+html[data-vk-skin="pierre"] .vk-cr-step.is-active { background: transparent; box-shadow: none; color: var(--vk-band-text); }
+html[data-vk-skin="pierre"] .vk-cr-step.is-active::before {   /* fanion peint, pointe à droite */
+    content: ""; position: absolute; inset: 0; z-index: -1; background: var(--vk-band);
+    clip-path: polygon(0 0, 100% 0, calc(100% - 14px) 50%, 100% 100%, 0 100%);
+    filter: drop-shadow(0 2px 0 var(--vk-band-edge)); animation: vk-pennant-x .35s ease-out; transform-origin: left;
+}
+@keyframes vk-pennant-x { from { transform: scaleX(.15); } to { transform: none; } }
+html[data-vk-skin="pierre"] .vk-cr-step.is-active :is(.vk-cr-step-label, .vk-cr-step-sum) { color: var(--vk-band-text); }
+html[data-vk-skin="pierre"] .vk-cr-step.is-active .vk-cr-step-sum { opacity: .8; }
+html[data-vk-skin="pierre"] .vk-cr-step.is-active .vk-cr-step-num { background: var(--vk-band-text); color: var(--vk-band); }
+html[data-vk-skin="pierre"] .vk-cr-budget-label, html[data-vk-skin="pierre"] .vk-cr-subtitle { font-family: var(--vk-font-title); font-size: 1.05rem; }
+html[data-vk-skin="pierre"] .vk-cr-stick { margin-top: 0; }
+html[data-vk-skin="pierre"] .vk-cr-stick .vk-token, html[data-vk-skin="pierre"] .vk-cr-stick .vk-token:hover { border: none; }
+html[data-vk-skin="pierre"] .vk-cr-stick .vk-token:hover::before { opacity: .18; }
+html[data-vk-skin="pierre"] .vk-cr-stick .vk-token.is-spent { background: transparent; }
+html[data-vk-skin="pierre"] .vk-cr-stick .vk-token.is-spent::before {
+    opacity: 1; width: 5px; height: 72%; box-shadow: 1px 0 0 var(--vk-notch-hi); animation: vk-carve .45s cubic-bezier(.2,.9,.3,1.3);
+}
+html[data-vk-skin="pierre"] .vk-cr-caracs .vk-stat.is-active { outline: 2px solid var(--color-primary); outline-offset: 2px; }
+html[data-vk-skin="pierre"] .vk-cr-pick { border-radius: 4px; border-bottom-color: var(--color-border); }
+html[data-vk-skin="pierre"] .vk-cr-pick-name { font-weight: 700; }
+html[data-vk-skin="pierre"] .vk-cr-skill { border-bottom-color: var(--color-border); }
+html[data-vk-skin="pierre"] :is(.vk-cr-trait, .vk-cr-combat > div, .vk-cr-mini-runes > span) {
+    border: 1px solid var(--vk-slab-edge); border-radius: 6px; background: var(--color-surface-alt);
+    box-shadow: inset 1px 1px 0 var(--vk-slab-hi), inset -1px -1px 0 var(--vk-slab-lo);
+}
+html[data-vk-skin="pierre"] .vk-cr-trait.is-selected { border-color: var(--color-primary); box-shadow: 0 0 0 1px var(--color-primary), inset 1px 1px 0 var(--vk-slab-hi); }
+html[data-vk-skin="pierre"] .vk-cr-trait.is-invalid { border-style: dashed; border-color: var(--color-primary); box-shadow: none; }
+html[data-vk-skin="pierre"] .vk-cr-trait-chosen { font-weight: 700; }
+html[data-vk-skin="pierre"] .vk-cr-trait-why { color: var(--color-primary); }
+html[data-vk-skin="pierre"] .vk-cr-epithet { font-weight: 700; font-size: .92rem; letter-spacing: .02em; }
+html[data-vk-skin="pierre"] .vk-cr-trait.is-selected .vk-cr-epithet { color: var(--color-on-primary); }
+html[data-vk-skin="pierre"] .vk-cr-trait.is-selected .vk-cr-epithet small { color: var(--color-on-primary); }
+html[data-vk-skin="pierre"] .vk-cr-epithet.is-invalid { border-color: var(--color-primary); color: var(--color-primary); }
+html[data-vk-skin="pierre"] .vk-cr-rune {
+    border: none; background: var(--color-surface-alt); border-radius: 30% 30% 10px 10px / 22% 22% 10px 10px;
+    box-shadow: inset 1px 1px 0 var(--vk-slab-hi), inset -1px -1px 0 var(--vk-slab-lo);
+}
+html[data-vk-skin="pierre"] .vk-cr-stone::before {
+    background: var(--vk-stone-tex), var(--vk-surface-solid);
+    box-shadow: inset 1px 1px 0 var(--vk-slab-hi), inset -1px -1px 0 var(--vk-slab-lo), 0 3px 6px var(--vk-slab-lo);
+}
+html[data-vk-skin="pierre"] .vk-cr-start .vk-vital-saga .vk-saga { margin-top: 4px; }
+html[data-vk-skin="pierre"] .vk-cr-kit-item {
+    border-color: var(--vk-slab-edge); border-radius: 6px; background: var(--color-surface-alt);
+    box-shadow: inset 1px 1px 0 var(--vk-slab-hi), inset -1px -1px 0 var(--vk-slab-lo);
+}
+html[data-vk-skin="pierre"] .vk-cr-kit-source, html[data-vk-skin="pierre"] .vk-cr-market-row, html[data-vk-skin="pierre"] .vk-cr-pack-item { border-bottom-color: var(--color-border); }
+html[data-vk-skin="pierre"] .vk-cr-kit-source-name { font-weight: 700; }
+html[data-vk-skin="pierre"] .vk-cr-path strong { font-weight: 700; }
+html[data-vk-skin="pierre"] .vk-cr-path li::before { color: var(--color-on-primary); }
+
 /* ═══ Le vivant (lot 5) ═══════════════════════════════════════════════════════ */
 /* Ciel derrière la page : la racine isole sa pile pour que le ciel (z −1) passe sous le contenu */
 html[data-vk-skin="pierre"] .vk-root { isolation: isolate; }

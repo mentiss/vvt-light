@@ -25,7 +25,8 @@ const tween = (dur, fn, done) => {
 };
 const bez = (p0, p1, p2, p3, k) => [0, 1].map(i => (1 - k) ** 3 * p0[i] + 3 * (1 - k) ** 2 * k * p1[i] + 3 * (1 - k) * k * k * p2[i] + k ** 3 * p3[i]);
 
-const VkRaven = ({ characterId, ko = false }) => {
+// once : une seule visite, sans retour (naissance du personnage, fin de l'assistant de création)
+const VkRaven = ({ characterId, ko = false, once = false }) => {
     const [look] = useVkLook();
     const live = livingOn(look);
     const ref = useRef(null);
@@ -84,15 +85,15 @@ const VkRaven = ({ characterId, ko = false }) => {
 
         el.onclick = (e) => { e.stopPropagation(); leave(); };
         const first = setTimeout(arrive, FIRST_VISIT_MS);
-        const every = setInterval(() => { if (Math.random() < VISIT_CHANCE) arrive(); }, VISIT_EVERY_MS);
+        const every = once ? null : setInterval(() => { if (Math.random() < VISIT_CHANCE) arrive(); }, VISIT_EVERY_MS);
         const onGain = (e) => { if (e.detail?.id == null || e.detail.id === characterId) setTimeout(arrive, 1600); };
-        window.addEventListener(VK_SAGA_GAIN, onGain);
+        if (!once) window.addEventListener(VK_SAGA_GAIN, onGain);
         return () => {
             clearTimeout(first); clearInterval(every); timers.forEach(clearTimeout); cancels.forEach(c => c());
             window.removeEventListener(VK_SAGA_GAIN, onGain);
             el.onclick = null; el.classList.remove('is-on', 'is-flying'); el.style.transform = '';
         };
-    }, [live, characterId]);
+    }, [live, characterId, once]);
 
     if (!live) return null;
     return (

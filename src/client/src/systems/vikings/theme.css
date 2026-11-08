@@ -719,6 +719,263 @@ html { scrollbar-color: color-mix(in srgb, var(--color-primary) 45%, transparent
 .vk-arc-table th, .vk-arc-table td { text-align: left; padding: .55rem .6rem; border-bottom: 1px solid var(--vk-border-soft); vertical-align: middle; }
 .vk-arc-table th { font-family: var(--vk-font-label); font-weight: 400; font-size: 1rem; color: var(--color-primary); }
 
+/* ── Assistant de création (Creation.jsx, lot 6) : disposition commune aux deux habillages ──
+   (spec_vikings_pierre_peinte.md §9, planche refonte_vikings/planche_creation.html).
+   Rail des étapes, étape en cours, pierre du personnage en direct ; ici le bois et or,
+   la pierre peinte surcharge dans theme-pierre.css. */
+.vk-cr-header { position: sticky; top: 0; z-index: 40; }
+.vk-cr-title { margin: 0; font-size: 1.6rem; line-height: 1.1; white-space: nowrap; }
+.vk-cr { display: grid; grid-template-columns: 236px minmax(0, 1fr) minmax(360px, 30%); gap: 0 26px; align-items: start; padding: 26px 18px 60px 0; }
+.vk-cr.is-final { grid-template-columns: 236px minmax(0, 1fr); }
+.vk-cr.is-born { grid-template-columns: minmax(0, 1fr); padding-left: 18px; }
+.vk-cr-main { min-width: 0; }
+
+/* Rail des étapes */
+.vk-cr-rail { position: sticky; top: 92px; display: flex; flex-direction: column; gap: 4px; }
+.vk-cr-step {
+    position: relative; isolation: isolate; display: grid; grid-template-columns: 26px 1fr; gap: 0 8px; align-items: start;
+    min-height: 52px; padding: 8px 22px 9px 14px; text-align: left; cursor: pointer; background: transparent; border: 0; color: var(--color-text);
+    border-left: 3px solid transparent;
+}
+.vk-cr-step-num {
+    display: grid; place-items: center; width: 22px; height: 22px; margin-top: 1px; transform: rotate(45deg) scale(.82);
+    background: var(--color-surface-alt); color: var(--color-text-muted); font: 700 .8rem var(--vk-font-body);
+}
+.vk-cr-step-num > span { transform: rotate(-45deg); }
+.vk-cr-step-label { font-family: var(--vk-font-label); font-size: 1.05rem; line-height: 1.2; letter-spacing: .03em; }
+.vk-cr-step-sum { grid-column: 2; margin-top: 1px; font-size: .8rem; line-height: 1.25; color: var(--color-text-muted); }
+.vk-cr-step:hover .vk-cr-step-label { color: var(--color-primary); }
+.vk-cr-step.is-done .vk-cr-step-num { background: var(--color-success); color: var(--color-surface); }
+.vk-cr-step.is-todo .vk-cr-step-num { background: var(--vk-warn); color: var(--color-surface); }
+.vk-cr-step.is-invalid .vk-cr-step-num { background: var(--color-danger); color: #fff; }
+.vk-cr-step.is-skipped { opacity: .55; }
+.vk-cr-step.is-skipped .vk-cr-step-sum { font-style: italic; }
+.vk-cr-step.is-active { border-left-color: var(--color-primary); background: var(--color-surface); box-shadow: inset 0 0 20px rgba(0,0,0,.3); }
+.vk-cr-step.is-active .vk-cr-step-label { color: var(--color-primary); }
+.vk-cr-step.is-active .vk-cr-step-num { background: var(--color-primary); color: var(--vk-on-primary); }
+.vk-cr-step-tag {
+    display: inline-block; margin-left: 6px; padding: 0 5px; border-radius: 2px; vertical-align: 2px;
+    font: 700 .68rem var(--vk-font-body); letter-spacing: 0; background: var(--vk-warn); color: var(--color-surface);
+}
+.vk-cr-step-tag.is-invalid { background: var(--color-danger); color: #fff; }
+
+/* Étape en cours */
+.vk-cr-step-slab { padding-top: 24px; }
+.vk-cr-lead { margin: 0 0 16px; max-width: 72ch; font-size: .95rem; color: var(--color-text-muted); }
+.vk-cr-rules { margin: -10px 0 18px; font-size: .86rem; color: var(--color-text-muted); }
+.vk-cr-nav { display: flex; justify-content: space-between; gap: 10px; flex-wrap: wrap; margin-top: 22px; }
+.vk-cr-subtitle { margin: 0 0 8px; font-family: var(--vk-font-label); font-weight: 400; font-size: 1.15rem; color: var(--color-primary); }
+
+/* Budget : bâton d'entailles */
+.vk-cr-budget { display: grid; grid-template-columns: auto 1fr auto; gap: 14px; align-items: center; margin: 0 0 22px; }
+.vk-cr-budget-label { font-family: var(--vk-font-label); font-size: 1.1rem; color: var(--color-primary); white-space: nowrap; }
+.vk-cr-budget-left { font-size: .9rem; white-space: nowrap; }
+.vk-cr-budget-left strong { font-size: 1.15rem; }
+.vk-cr-budget.is-full .vk-cr-budget-left { color: var(--color-success); }
+.vk-cr-stick { flex-wrap: nowrap; }
+.vk-cr-stick .vk-token { flex: 1; cursor: default; }
+.vk-cr-stick .vk-token:hover { transform: none; border-color: var(--color-border); }
+.vk-cr-stick .vk-token.is-spent { background: var(--color-primary); border-color: var(--color-primary); }
+
+/* Caractéristiques */
+.vk-cr-caracs { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
+.vk-cr-caracs .vk-stat { display: flex; flex-direction: column; align-items: center; gap: 3px; padding: 14px 10px 10px; }
+.vk-cr-caracs .vk-stepper { margin-top: 6px; }
+.vk-cr-carac-desc { min-height: 2.6em; font-size: .82rem; line-height: 1.3; color: var(--color-text-muted); }
+.vk-cr-usages { margin-top: 18px; min-height: 4.6em; font-size: .93rem; }
+
+/* Compétences */
+.vk-cr-two { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.25fr); gap: 26px; align-items: start; }
+.vk-cr-picklist { display: flex; flex-direction: column; max-height: 470px; overflow-y: auto; margin-top: 10px; padding-right: 6px; }
+.vk-cr-pick {
+    display: grid; grid-template-columns: 1fr auto; gap: 2px 10px; padding: 8px; text-align: left; cursor: pointer;
+    background: transparent; border: 0; border-bottom: 1px dashed var(--vk-border-soft); color: var(--color-text);
+}
+.vk-cr-pick:hover { background: color-mix(in srgb, var(--color-primary) 10%, transparent); }
+.vk-cr-pick-name { font-family: var(--vk-font-label); font-size: 1rem; letter-spacing: .02em; }
+.vk-cr-pick-plus { font-family: var(--vk-font-body); font-size: .78rem; letter-spacing: 0; white-space: nowrap; color: var(--color-primary); }
+.vk-cr-pick-caracs { font-size: .78rem; white-space: nowrap; color: var(--color-text-muted); }
+.vk-cr-pick-desc { grid-column: 1 / -1; font-size: .82rem; line-height: 1.3; color: var(--color-text-muted); }
+.vk-cr-skill { display: grid; grid-template-columns: minmax(0, 1fr) auto auto auto; gap: 4px 14px; align-items: center; padding: 9px 2px; border-bottom: 1px dashed var(--vk-border-soft); }
+.vk-cr-skill:last-child { border-bottom: none; }
+.vk-cr-skill.is-zero .vk-seuil { opacity: .45; }
+.vk-cr-skill-end { display: flex; gap: 6px; align-items: center; }
+.vk-cr-skill-desc { grid-column: 1 / -1; font-size: .8rem; line-height: 1.3; color: var(--color-text-muted); }
+
+/* Traits */
+.vk-cr-toolbar { display: flex; gap: 10px 16px; align-items: center; flex-wrap: wrap; }
+.vk-cr-toolbar .vk-input-icon { flex: 1 1 260px; max-width: 440px; }
+.vk-cr-traits { display: grid; grid-template-columns: repeat(auto-fill, minmax(290px, 1fr)); gap: 12px; margin-top: 14px; }
+.vk-cr-trait {
+    position: relative; display: flex; flex-direction: column; gap: 5px; padding: 10px 12px 11px; text-align: left; cursor: pointer;
+    border: 1px solid var(--vk-border-soft); background: color-mix(in srgb, var(--color-primary) 4%, transparent); color: var(--color-text);
+}
+.vk-cr-trait:hover:not(.is-unavailable) { border-color: var(--color-primary); }
+.vk-cr-trait.is-selected { border-color: var(--color-primary); box-shadow: 0 0 0 1px var(--color-primary); }
+.vk-cr-trait.is-unavailable { opacity: .5; cursor: not-allowed; }
+.vk-cr-trait.is-invalid { border-style: dashed; border-color: var(--color-danger); box-shadow: none; }
+.vk-cr-trait-chosen { position: absolute; top: 8px; right: 10px; font-family: var(--vk-font-label); font-size: .82rem; color: var(--color-primary); }
+.vk-cr-trait-desc { font-size: .86rem; line-height: 1.35; }
+.vk-cr-trait-effect { font-size: .82rem; color: var(--color-success); }
+.vk-cr-trait-meta { font-size: .8rem; color: var(--color-text-muted); }
+.vk-cr-trait-why { font-size: .8rem; font-weight: 700; color: var(--color-danger); }
+/* Épithète sans bouton (cartes de traits, pierre de la création) */
+.vk-cr-epithet {
+    align-self: flex-start; align-items: baseline; gap: 6px; padding: 3px 11px;
+    font-family: var(--vk-font-label); font-size: .98rem; letter-spacing: .03em; color: var(--color-text);
+}
+.vk-cr-trait.is-selected .vk-cr-epithet { background: var(--color-primary); border-color: var(--color-primary); color: var(--vk-on-primary); }
+.vk-cr-trait.is-selected .vk-cr-epithet small { color: var(--vk-on-primary); }
+.vk-cr-epithet.is-invalid { border-style: dashed; border-color: var(--color-danger); color: var(--color-danger); }
+
+/* Runes */
+.vk-cr-levels { display: flex; flex-wrap: wrap; gap: 6px 14px; margin: -8px 0 16px; font-size: .82rem; color: var(--color-text-muted); }
+.vk-cr-levels b { color: var(--color-primary); }
+.vk-cr-runes { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 12px; }
+.vk-cr-rune {
+    display: flex; flex-direction: column; align-items: center; gap: 3px; padding: 10px 6px; text-align: center;
+    border: 1px solid var(--vk-border-soft); background: color-mix(in srgb, var(--color-primary) 4%, transparent);
+}
+.vk-cr-rune-glyph { font-size: 2.1rem; color: var(--color-text-muted); transition: color .3s, text-shadow .3s; }
+.vk-cr-rune.is-known .vk-cr-rune-glyph { color: var(--color-primary); text-shadow: 0 0 10px color-mix(in srgb, var(--color-primary) 40%, transparent); }
+.vk-cr-rune-literal { font-size: .78rem; color: var(--color-text-muted); }
+.vk-cr-rune-esoteric { min-height: 2.5em; padding: 0 4px; font-size: .8rem; font-style: italic; line-height: 1.25; color: var(--color-text-muted); }
+.vk-cr-rune.is-known .vk-cr-rune-esoteric { color: var(--color-text); }
+.vk-cr-rune-level { min-height: 2.4em; font-size: .75rem; line-height: 1.2; color: var(--color-success); }
+
+/* Identité */
+.vk-cr-identity { display: grid; grid-template-columns: repeat(6, 1fr); gap: 16px 18px; }
+.vk-cr-identity .is-2 { grid-column: span 2; }
+.vk-cr-identity .is-3 { grid-column: span 3; }
+
+/* Pierre du personnage, en direct (colonne de droite) */
+.vk-cr-aside {
+    position: sticky; top: 70px; display: flex; flex-direction: column; gap: 26px;
+    max-height: calc(100vh - 80px); overflow-y: auto; overflow-x: hidden; padding: 22px 4px 20px; scrollbar-width: thin;
+}
+.vk-cr-aside > * { flex-shrink: 0; }
+.vk-cr-aside-head { display: none; justify-content: flex-end; padding: 0 6px; }   /* bouton Replier, tablette seulement */
+.vk-cr-stone::before {   /* tablette pleine dans le ruban : pas de ciel derrière le texte */
+    content: ""; position: absolute; inset: 16px 16px 8px; border-radius: 46px 46px 12px 12px;
+    background: var(--color-surface); box-shadow: inset 0 0 20px rgba(0,0,0,.25), 0 3px 6px rgba(0,0,0,.3);
+}
+.vk-cr-aside .vk-cr-stone { padding: 40px 38px 30px; min-height: 0; }
+.vk-cr-aside .vk-stone-avatar { width: 54px; height: 54px; font-size: 1.4rem; }
+.vk-cr-aside .vk-stone-name { font-size: 1.35rem; }
+.vk-cr-aside .vk-cr-epithet { font-size: .82rem; padding: 2px 8px; }
+.vk-cr-surname { font-size: .7em; }
+.vk-cr-unnamed { font-style: italic; color: var(--color-text-muted); }
+.vk-cr-mini-caracs { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 6px; }
+.vk-cr-mini-caracs .vk-stat { padding: 6px 2px 5px; }
+.vk-cr-mini-caracs .vk-stat .val { font-size: 1.3rem; }
+.vk-cr-mini-caracs .vk-stat .lbl { font-size: .66rem; letter-spacing: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+html[data-vk-skin] .vk-cr-mini-caracs .vk-stat .lbl { font-size: .66rem; }
+.vk-cr-final-grid .vk-cr-mini-caracs { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.vk-cr-start { display: grid; grid-template-columns: auto 1fr; gap: 12px; align-items: center; }
+.vk-cr-start .vk-vital-saga { flex-direction: column; align-items: flex-start; gap: 4px; }
+.vk-saga.is-static button { cursor: default; pointer-events: none; }
+.vk-cr-combat { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; text-align: center; }
+.vk-cr-combat > div { padding: 4px 2px; border: 1px solid var(--vk-border-soft); }
+.vk-cr-combat .val { font-family: var(--vk-font-title); font-size: 1.25rem; line-height: 1.1; color: var(--color-primary); }
+.vk-cr-combat .lbl { font-size: .74rem; color: var(--color-text-muted); }
+.vk-cr-mini-skill { display: grid; grid-template-columns: minmax(0, 1fr) auto auto; gap: 8px; align-items: center; padding: 4px 0; font-size: .88rem; border-bottom: 1px dashed var(--vk-border-soft); }
+.vk-cr-mini-skill:last-child { border-bottom: none; }
+.vk-cr-mini-skill .vk-seuil { width: 26px; height: 28px; font-size: .74rem; }
+.vk-cr-mini-skill-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 700; }
+.vk-cr-mini-skill-name small { font-weight: 400; color: var(--color-text-muted); }
+.vk-cr-mini-runes { display: flex; flex-wrap: wrap; gap: 6px; }
+.vk-cr-mini-runes > span { display: inline-flex; align-items: center; gap: 5px; padding: 2px 8px; font-size: .82rem; border: 1px solid var(--vk-border-soft); }
+.vk-cr-mini-runes .vk-rune { font-size: 1.1rem; }
+
+/* Finalisation */
+.vk-cr-missing { margin-top: 18px; font-size: .92rem; }
+.vk-cr-missing ul { margin: 6px 0 0; padding-left: 18px; list-style: disc; }
+.vk-cr-final-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 30px 20px; margin-top: 30px; }
+.vk-cr-code { display: grid; grid-template-columns: minmax(0, 260px) auto; justify-content: start; align-items: center; gap: 14px 22px; margin-top: 30px; }
+.vk-cr-create { padding: .55rem 1.4rem; font-size: 1.05rem; }
+
+/* Naissance */
+.vk-cr-birth { display: flex; flex-direction: column; align-items: center; gap: 26px; padding: 70px 0 20px; }
+.vk-cr-birth .vk-cr-stone { width: min(760px, 100%); }
+.vk-cr-born { font-size: 1.5rem; text-align: center; }
+.vk-cr-code-slab { min-width: 300px; padding-top: 30px; text-align: center; }
+.vk-cr-code-value { margin: 4px 0 10px; font-size: 2.6rem; letter-spacing: .16em; line-height: 1.1; }
+
+/* Avant de commencer (§9.4) : l'univers à gauche, le parcours à droite */
+.vk-cr-intro { display: grid; grid-template-columns: minmax(0, 1.5fr) minmax(280px, 1fr); gap: 30px; align-items: start; }
+.vk-cr-guide-text p { margin: 0 0 12px; max-width: 72ch; line-height: 1.55; }
+.vk-cr-path { margin: 0 0 18px; padding: 0; list-style: none; counter-reset: vk-path; display: flex; flex-direction: column; gap: 8px; }
+.vk-cr-path li { counter-increment: vk-path; display: grid; grid-template-columns: 26px 1fr; gap: 0 8px; font-size: .9rem; }
+.vk-cr-path li::before {
+    content: counter(vk-path); grid-row: span 2; display: grid; place-items: center; width: 22px; height: 24px;
+    clip-path: polygon(50% 0, 100% 38%, 50% 100%, 0 38%); background: var(--color-primary); color: var(--vk-on-primary); font: 700 .78rem var(--vk-font-body);
+}
+.vk-cr-path strong { font-family: var(--vk-font-label); font-weight: 400; letter-spacing: .03em; }
+.vk-cr-path span { color: var(--color-text-muted); }
+.vk-cr-advice { margin: 0 0 16px; font-size: .9rem; }
+.vk-cr-advice p { margin: 6px 0 0; }
+
+/* Équipement (§9.5) : kit du métier, kit des traits, marché, paquetage */
+.vk-cr-gear { display: flex; flex-direction: column; gap: 22px; }
+.vk-cr-kit-source { display: grid; grid-template-columns: 180px 1fr; gap: 8px 16px; align-items: start; padding: 8px 0; border-bottom: 1px dashed var(--vk-border-soft); }
+.vk-cr-kit-source:last-child { border-bottom: none; }
+.vk-cr-kit-source-name { padding-top: 4px; font-family: var(--vk-font-label); font-size: 1rem; letter-spacing: .02em; }
+.vk-cr-kit-items { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.vk-cr-kit-item {
+    display: inline-flex; align-items: center; gap: 6px; padding: 3px 6px 3px 11px; font-weight: 700; font-size: .92rem;
+    border: 1px solid var(--color-border); border-radius: 2px; background: color-mix(in srgb, var(--color-primary) 6%, transparent);
+}
+.vk-cr-kit-item small { font-weight: 400; font-size: .78rem; color: var(--color-text-muted); }
+.vk-cr-kit-item.is-removed { opacity: .45; text-decoration: line-through; }
+.vk-cr-kit-item.is-dup { opacity: .55; font-weight: 400; padding-right: 11px; }
+.vk-cr-kit-item.is-silver { color: var(--color-primary); padding-right: 11px; }
+.vk-cr-kit-x { display: inline-grid; place-items: center; width: 22px; height: 22px; border: 0; border-radius: 3px; background: transparent; color: var(--color-text-muted); cursor: pointer; }
+.vk-cr-kit-x:hover { color: var(--color-primary); background: color-mix(in srgb, var(--color-primary) 12%, transparent); }
+.vk-cr-kit-choice { display: inline-flex; flex-wrap: wrap; gap: 6px; align-items: center; font-size: .9rem; }
+.vk-cr-kit-named { display: inline-flex; flex-wrap: wrap; gap: 8px; align-items: center; font-size: .9rem; font-weight: 700; }
+.vk-cr-kit-named .vk-input, .vk-cr-kit-heirloom { width: 220px; }
+.vk-cr-market-purse { display: flex; flex-wrap: wrap; gap: 6px 14px; align-items: baseline; margin-bottom: 10px; }
+.vk-cr-market-purse strong { font-size: 1.2rem; color: var(--color-primary); }
+.vk-cr-market { max-height: 300px; overflow-y: auto; padding-right: 6px; }
+.vk-cr-market-row { display: grid; grid-template-columns: 1fr auto auto; gap: 12px; align-items: center; padding: 6px 4px; border-bottom: 1px dashed var(--vk-border-soft); }
+.vk-cr-bought { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-top: 12px; }
+.vk-cr-pack { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 18px; }
+.vk-cr-pack .vk-vital-label { display: flex; margin-bottom: 4px; }
+.vk-cr-pack-item { display: flex; flex-direction: column; padding: 5px 0; border-bottom: 1px dashed var(--vk-border-soft); font-size: .92rem; }
+.vk-cr-pack-item small { font-size: .8rem; }
+.vk-cr-pack-slab { margin-top: 10px; }
+.vk-cr-final-wide { grid-column: 1 / -1; }
+
+/* Tablette : la pierre passe sous l'étape, repliable ; téléphone : rail en bande */
+@media (max-width: 1250px) {
+    .vk-cr { grid-template-columns: 210px minmax(0, 1fr); }
+    .vk-cr-aside { grid-column: 2; position: static; max-height: none; overflow: visible; margin-top: 30px; }
+    .vk-cr-aside-head { display: flex; }
+    .vk-cr-aside.is-folded > :not(.vk-cr-aside-head) { display: none; }
+    .vk-cr-final-grid { grid-template-columns: 1fr 1fr; }
+    .vk-cr-intro { grid-template-columns: 1fr; }
+}
+@media (max-width: 900px) {
+    .vk-cr-two { grid-template-columns: 1fr; }
+    .vk-cr-identity { grid-template-columns: 1fr 1fr; }
+    .vk-cr-identity > * { grid-column: auto !important; }
+}
+@media (max-width: 760px) {
+    .vk-cr, .vk-cr.is-final { grid-template-columns: minmax(0, 1fr); padding: 14px 12px 60px; }
+    .vk-cr-rail { position: static; min-width: 0; flex-direction: row; overflow-x: auto; gap: 2px; padding-bottom: 6px; }
+    .vk-cr-step { flex: none; min-width: max-content; padding-right: 26px; }
+    .vk-cr-step-sum { display: none; }
+    .vk-cr-aside { grid-column: 1; }
+    .vk-cr-caracs { grid-template-columns: 1fr 1fr; }
+    .vk-cr-mini-caracs { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+    .vk-cr-kit-source, .vk-cr-pack { grid-template-columns: 1fr; }
+    .vk-cr-final-grid { grid-template-columns: 1fr; }
+    .vk-cr-budget { grid-template-columns: 1fr auto; }
+    .vk-cr-budget .vk-cr-stick { grid-column: 1 / -1; grid-row: 2; }
+    .vk-cr-runetitle { display: none; }
+    .vk-cr-title { font-size: 1.1rem; white-space: normal; }
+}
+
 /* ── Interface MJ ───────────────────────────────────────────────────── */
 .vk-tile { display: flex; align-items: center; gap: .6rem; width: 100%; padding: .55rem .7rem; text-align: left; cursor: pointer; border-left: 3px solid transparent; border-bottom: 1px solid var(--vk-border-soft); background: transparent; color: var(--color-text); }
 .vk-tile:hover { background: color-mix(in srgb, var(--color-primary) 6%, transparent); }

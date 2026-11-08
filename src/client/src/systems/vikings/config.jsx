@@ -30,6 +30,7 @@ export { RUNES, toRunes }          from './config/runes.js';
 export { ITEMS }                   from './config/equipment.js';
 export { NPC_TEMPLATES }           from './config/npcs.js';
 export * from './config/rules.js';
+export * from './config/creation.js';
 export * from './config/utils.js';
 import TokensDisplay   from './components/TokensDisplay.jsx';
 import PostureModal    from './components/modals/PostureModal.jsx';

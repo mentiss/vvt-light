@@ -11,7 +11,7 @@ fixe le périmètre et le découpage. Deux conditions du MJ :
 
 Le système de combat reste hors périmètre (spec_vikings.md §7) : il garde son fonctionnement, seules ses couleurs suivent l'habillage.
 
-**Avancement (2026-11-07)** : lots 1 à 5 implémentés, retours du MJ traités, commités. **Reste le lot 6 : l'assistant de création** (voir §9), à mener dans un nouveau contexte.
+**Avancement (2026-11-07)** : lots 1 à 5 implémentés, retours du MJ traités, commités. Lot 6 (assistant de création, §9) : planche validée, implémenté, en attente du test du MJ.
 
 Références : spec_vikings.md (règles, §10 direction graphique d'origine), spec_vikings_lot4_graphisme.md (thème actuel),
 planche `UIkit_complet.html` (référence du « bois et or »), planche `planche_pierre_peinte.html` (référence du nouveau style).
@@ -190,3 +190,184 @@ La planche validée est la spécification graphique : tout ce qu'elle montre s'a
 **Outils de vérification** : serveur de dev du MJ (Vite 5173, backend 3001) ; navigateur Edge sans interface piloté par CDP (port 9333) ; préférences dans le stockage du navigateur `vtt:vikings:look` (`{ skin: 'pierre'|'bois', night: 'aurore'|'foyer', odds, anim }`) et `vtt:vikings:theme` (`{ dark }`) ; code MJ de dev `GMCODE` ; pas de code joueur de dev connu (la page joueur n'a jamais été vérifiée à l'écran).
 
 **Restent non vérifiés des lots 1 à 5** : page joueur connectée (bandeau amarré, état du corps, aurore de sang, plateau à droite de la barre de session) ; écritures de la halle (Clore l'arc, +1 Saga, Repos, bâtons) ; un vrai jet et un vrai triple 10 ; le plateau à côté du panneau de combat ; le foyer ; le vol du corbeau en mouvement ; la fluidité sur tablette ; les survols des boutons.
+
+### 9.1 Diagnostic (2026-11-07)
+
+L'assistant porte déjà l'habillage (dalles, fanions, tablettes) mais garde la disposition d'avant la refonte : un grand panneau centré à largeur fixe, des onglets d'étapes non cliquables, un « Suivant » bloqué tant que le budget de l'étape n'est pas dépensé à l'unité, des cartes « stat » génériques au lieu des éléments de la fiche, et rien ne montre le personnage qui se forme avant la Finalisation. Les règles (§4 de spec_vikings.md) et l'ergonomie validée (§4.1 : ordre des étapes, identité à la fin, descriptions, recherches, usages des caractéristiques) ne bougent pas.
+
+Aucun impact base ni socket : la création envoie toujours le même personnage à la même route.
+
+### 9.2 Proposition
+
+**Disposition** (celle validée pour la création de cyberpunk, pleine largeur) :
+
+- **Poutre** en haut, comme la fiche : titre runique animé, « Naissance d'un Viking », bouton jour / nuit.
+- **Rail des étapes** à gauche, en fanions verticaux : coche, résumé en une ligne (« 14 / 14 · For 4, Agi 3… », « 3 traits »), retour libre à toute étape déjà ouverte. Runes grisée avec sa raison quand aucun trait ne donne de livre de sort.
+- **Étape en cours** au centre.
+- **Pierre du personnage** à droite, qui se remplit en direct : c'est l'en-tête de la fiche en réduit (ruban-serpent, épithètes des traits choisis), puis les caractéristiques en pierres levées, SAGA de départ en perles (1 + les « SAGA +N »), actions, seuil, armure, compétences en lecture « seuil seul », runes. Le nom se grave dans le ruban à l'étape Identité (avant : inscription neutre).
+- Tablette : la pierre passe sous l'étape, repliable.
+
+**Les étapes** (mêmes règles, mêmes éléments que la fiche) :
+
+| Étape | Proposition |
+|---|---|
+| Caractéristiques | Six pierres levées de la fiche, avec stepper, description courte dessous ; zone des usages en jeu conservée. Budget en entailles sur un bâton (même langage que les points de compétence). |
+| Compétences | Liste d'ajout dans l'étape, recherche conservée ; compétences choisies en lignes « seuil seul » (losange du seuil, explosion de la meilleure carac liée), stepper, retrait. Spécialisation demandée en fenêtre, comme aujourd'hui. |
+| Traits | Traits en épithètes gravées (même tablette que sur la fiche), effets et conditions dessous ; trait hors de portée grisé **avec sa raison** (comme le catalogue de la fiche) ; compteur 2 à 4. |
+| Runes | Futhark en grille (même rendu que la fenêtre Futhark de la fiche), stepper par rune, budget en entailles. |
+| Identité | Champs actuels ; le nom se grave en direct dans le ruban de la pierre. |
+| Finalisation | La pierre passe au centre en grand comme récapitulatif ; code d'accès personnalisé ; liste de ce qui manque s'il reste des étapes à finir. Après création : gravure du ruban, rune ᛊ, code d'accès et « Accéder à ma fiche ». |
+
+**Les deux habillages** : même disposition ; le bois et or garde son habillage, sans ciel ni corbeau (C-8).
+
+**Code** : `Creation.jsx` devient l'ossature (état, rail, pierre, envoi) ; les étapes vont dans `components/creation/` (un fichier par étape, l'actuel fait 543 lignes et la pierre en direct l'alourdirait). La pierre réutilise les éléments de la fiche là où leur contrat le permet (`VkSerpent`, pierres levées, épithètes) ; à vérifier pièce par pièce, sans toucher au rendu de la fiche.
+
+**Planche** : `documentations/refonte_vikings/planche_creation.html` (hors Git, v2 du 2026-11-07), à valider avant le code ; recos Q-L6-1 à 6 acceptées par le MJ le 2026-11-07. Retours v1 : descriptions des compétences en entier dans la liste d'ajout ; sens ésotérique de chaque rune affiché d'emblée sous son sens littéral (le joueur choisit sur le sens caché).
+
+**Implémentation (2026-11-07, planche validée par le MJ)** :
+- `Creation.jsx` : ossature (état, poutre avec le choix d'habillage, rail, étape, pierre en direct, envoi) ; étapes dans `components/creation/` (`StepCaracs`, `StepSkills` avec la fenêtre de spécialisation, `StepTraits`, `StepRunes`, `StepIdentity`, `StepFinal` et `Birth`), pièces partagées (`CreationParts` : stepper, bâton d'entailles, seuil et chance, navigation), `CreationRail`, `CreationStone` (en-tête de la fiche en lecture sur une tablette pleine), `CreationSummary` (colonne et récapitulatif).
+- Règles de l'assistant : `config/creation.js` (budgets, état d'un trait, étapes « à finir » / « à revoir » / sautée, ce qui manque, SAGA et valeurs de départ, recherche), testées dans `tests/systems/vikings/creation.test.js`.
+- Le ruban se regrave quand on cesse d'écrire le nom (700 ms) ; naissance : `VK_TRIPLE` (rune ᛊ, ciel, ruban), `VkRaven` avec `once` (une seule visite).
+- CSS : disposition commune dans `theme.css` (bloc « Assistant de création »), pierre peinte dans `theme-pierre.css`.
+- Vérifié à l'écran sur le serveur de dev (création simulée, rien d'écrit en base) : pierre peinte jour et aurore, bois et or, naissance avec le corbeau, tablette et téléphone.
+
+### 9.3 Questions
+
+| # | Question | Reco | Réponse |
+|---|---|---|---|
+| Q-L6-1 | Navigation : aujourd'hui chaque étape bloque « Suivant » tant que son budget n'est pas dépensé. Libérer comme cyberpunk (rail libre, repère « à finir », création possible une fois tout complet) ? Un trait devenu hors de portée parce qu'on a baissé une carac ensuite serait signalé en rouge sur la pierre et au rail. | Oui : on revient affiner ses caracs après avoir vu les conditions des traits, sans tout refaire | |
+| Q-L6-2 | Compétences et traits : liste dans l'étape (comme aujourd'hui) ou catalogue de la plateforme en fenêtre (comme la fiche) ? | Liste dans l'étape : l'étape entière sert à choisir, une fenêtre par-dessus n'apporte rien ; le rendu des lignes reprend celui du catalogue | |
+| Q-L6-3 | Ciel vivant derrière l'assistant (pierre peinte, animations actives), au repos seulement ? | Oui, au repos ; la vague de lumière part à la création du personnage | |
+| Q-L6-4 | Corbeau qui vient se poser sur la pierre à la naissance du personnage (écran après création) ? | Oui, une seule visite, pierre peinte seulement | |
+| Q-L6-5 | La création n'a pas de menu : ajouter le choix d'habillage (pierre peinte / bois et or) dans la poutre, à côté du jour / nuit ? Sinon un nouveau joueur ne peut pas choisir avant sa fiche. | Oui, un bouton dans la poutre | |
+| Q-L6-6 | Le titre « Naissance d'un Viking » : garder ? | Garder | |
+
+### 9.4 Après le premier test : écran d'accueil et équipement (2026-11-07, en discussion)
+
+**Constats.**
+- **Accueil** : l'assistant ouvre directement sur les caractéristiques, sans rien dire de l'univers ni du parcours. Le texte existe déjà, écrit par le MJ : le Guide du joueur de l'aide de jeu (`config/reference/01-guide.md` : « Le monde en l'an 810 », « Le point de départ », « Le pacte », « Un métier avant tout »). Sa section « Créer son personnage » ne colle pas à l'app (SAGA 1 à 3 avec le MJ là où l'app applique 1 + les traits, D-11 ; équipement et concept en étapes) : à ne pas reprendre telle quelle.
+- **Équipement** : absent de l'assistant par décision (§4 de spec_vikings.md : « inventaire libre + catalogue », 6 étapes). Le guide dit « selon votre statut social (thrall affranchi, karl libre ou noble), à définir avec le MJ », mais **aucune règle ne dit ce que donne chaque statut**. Techniquement, rien ne manque : les objets partent déjà avec la création (`items`), l'argent est un objet « Onces d'argent » de la bourse, et le catalogue a des prix en onces (`config/equipment.js`, consultation seulement aujourd'hui). Pas de migration, sauf pour garder le statut social sur la fiche.
+
+**Proposition.**
+- **Étape 0 « Avant de commencer »**, en tête du rail : l'univers en quelques paragraphes tirés du guide, le parcours des étapes de l'app, le conseil « Un métier avant tout », un bouton qui ouvre le guide complet dans une fenêtre, puis « Commencer ».
+- **Étape « Équipement »** entre Runes et Identité (l'ordre du guide), non bloquante comme les autres. Son contenu dépend des réponses ci-dessous.
+
+| # | Question | Reco | Réponse |
+|---|---|---|---|
+| Q-L6-7 | Un écran d'accueil « Avant de commencer » en étape 0 ? | Oui, avec des extraits du Guide du joueur (une seule source, déjà tenue par le MJ), sans texte nouveau ; le guide entier en fenêtre | |
+| Q-L6-8 | Le conseil « Un métier avant tout » : seulement à l'accueil, ou aussi en encadré dans l'étape Compétences, au moment du choix ? | Les deux : c'est à l'étape Compétences qu'il sert | |
+| Q-L6-9 | Une étape Équipement dans l'assistant ? | Oui, entre Runes et Identité | Oui |
+| Q-L6-10 | Ce qu'elle propose : (a) objets libres du catalogue, comme l'inventaire de la fiche, sans limite ; (b) statut social choisi, qui donne un argent de départ, puis achats au prix du catalogue ; (c) un paquetage fixe par statut. | (b) si le MJ donne l'argent de départ de chaque statut ; sinon (a), et le MJ ajuste à la table | Ni (a) ni (b) : un **kit selon les compétences de métier et les traits / backgrounds**, puis un peu d'argent (vraiment pas trop) et des achats libres. Ça se négocie ensuite avec le MJ. Voir §9.5 |
+| Q-L6-11 | Pour (b) ou (c) : argent de départ (ou paquetage) d'un thrall affranchi, d'un karl libre, d'un noble ? Les objets sans prix (« variable ») sont-ils achetables ? | À fixer par le MJ (aucune règle ne le dit) ; objets sans prix : non achetables à la création | Sans objet (pas de statut social) : voir §9.5 |
+| Q-L6-12 | Le statut social reste-t-il sur la fiche (nouvelle colonne, migration) ou ne sert-il qu'à la création ? | Seulement à la création : il fixe l'argent, le récit le porte ensuite | Sans objet |
+| Q-L6-13 | L'argent non dépensé : il reste dans la bourse ? | Oui, en onces d'argent | Voir §9.5 |
+
+
+Autres retours du MJ (2026-11-07) : la mention « Le personnage, en direct » au-dessus de la pierre est retirée (faite). L'écart du guide sur la SAGA de départ n'en est pas un : la création se fait avec le MJ, rien à changer.
+
+### 9.5 Étape Équipement : le kit de départ (2026-11-07, en discussion)
+
+**Demande du MJ.** Pas d'équipement libre (« éviter de laisser les gens prendre tout et n'importe quoi ») : un **kit** qui découle du personnage.
+1. Les **compétences de métier** donnent les outils du métier (des outils sont à ajouter au catalogue).
+2. Les **traits et backgrounds** complètent : Virtuose de l'arc donne un arc, Berserk une peau de bête et de quoi entrer en transe, Noble lignée de l'argent ou une épée…
+3. Puis **un peu d'argent**, « vraiment pas trop », et des **achats libres** au prix du catalogue.
+4. Ensuite, ça se négocie avec le MJ (il ajuste l'inventaire sur la fiche, comme aujourd'hui).
+
+**Proposition de fonctionnement.**
+- L'étape montre trois blocs : « Votre métier vous donne », « Vos traits vous donnent », « Le marché » (argent restant, catalogue avec les prix, achats). Le kit se recalcule si l'on revient changer une compétence ou un trait.
+- Quand une source propose un choix (« une épée ou 30 oz »), le joueur choisit dans le bloc.
+- Le kit est gratuit. Un objet du kit peut être retiré (sans remboursement). Un même objet donné par deux sources n'arrive qu'une fois.
+- Les achats se font avec l'argent de départ, au prix du catalogue ; un objet sans prix n'est pas achetable. L'argent non dépensé reste dans la bourse (objet « Once d'argent », déjà en place sur la fiche).
+- Rangement : armes et armures du kit équipées, le reste dans le sac.
+- Données dans la config du slug (`config/kits.js`) : compétence → objets, trait → objets ou choix, argent de départ et ses modificateurs. Outils nouveaux ajoutés au catalogue (`config/equipment.js`). Aucune migration : les objets partent déjà avec la création.
+
+**Kits, corrigés par le MJ le 2026-11-07** (✦ = objet à ajouter au catalogue, sans prix : à la création il ne vient que du kit, son prix se fixe à la table ; « MJ » = ligne décidée par le MJ ; les autres restent des propositions à corriger). Un objet de catalogue garde ses valeurs (dégâts, armure, prix).
+
+| Compétence | Kit | Correction MJ |
+|---|---|---|
+| Combat CàC (armé), Combat CàC (non armé), Combat distance | Rien : une compétence de combat ne donne pas d'arme | MJ |
+| Bûcheron | Hache de bûcheron ✦ : un outil, arme de fortune (1 main, 1 token au lieu de 2, For 2) | MJ (outil ≠ hache de combat ; arme de fortune, Q-L6-20) |
+| Charpentier, Charpentier marine | Outils de charpentier ✦ (herminette, tarière, ciseaux) | |
+| Sculpteur | Outils de sculpteur ✦ (couteaux et gouges) | |
+| Ferronnerie | Outils de forgeron ✦ (marteau, pinces) | |
+| Orfèvre | Outils d'orfèvre ✦ (petits marteaux, moules) | |
+| Potier | Outils de potier ✦ | |
+| Couture | Nécessaire de couture ✦ (aiguilles en os, fil, forces) | |
+| Mineur | Pic ✦ | |
+| Fermier | Faucille ✦ | |
+| Pêche | Filet et lignes ✦ | |
+| Traque/Chasse | Couteau, collets ✦ | |
+| Herboriste | Herbes médicinales ✦ (simples séchés, en cataplasme ou infusion) | |
+| Docteur | Herbes médicinales ✦, Bandes de lin ✦ | MJ (pas de « trousse de soins » à l'époque : herbes, tissu) |
+| Cuisine | Chaudron ✦ | |
+| Brasseur | Matériel de brasseur ✦, Corne à boire | |
+| Dressage | Longe et licol ✦ | |
+| Survie | Briquet et pierre à feu ✦, Provisions (semaine) | |
+| Escalade, Navigation | Corde (10m) | |
+| Raquette | Raquettes ✦ | |
+| Marchandage | Marchandises de troc ✦ (fourrures, perles, laine) | Balance écartée : anachronique en 810, voir plus bas |
+| Langue écrite | Outils de graveur ✦ (pour les runes gravées) | |
+| Divination | Runes de divination ✦ (osselets ou bâtonnets) | |
+| Jeu | Plateau de hnefatafl ✦ | |
+| Langue orale, Loi, Folklore, Connaissance Outgard, Ombre, Amis des animaux, Pillage, Danse, Intimidation, Chant, Larcin | Rien | |
+
+| Trait / background | Kit | Correction MJ |
+|---|---|---|
+| Virtuose de l'arc | Arc (et flèches ✦) | MJ |
+| Berserk | Peau de bête, Champignons de transe ✦ (et le nécessaire pour préparer la mixture) | MJ |
+| Noble lignée | Au choix : Épée, ou 20 oz d'argent (30, c'était trop) | MJ |
+| Foudre de guerre | Hache (la hache de combat à une main du catalogue) | MJ |
+| Aveugle | Bâton | MJ |
+| Campeur | Nécessaire de camping ✦ (couverture, peau de tente, briquet) | MJ |
+| Sous le regard d'Odin, de Thor, de Tyr, de Freyr, de Freyja, de Loki | Pendentif à l'effigie du dieu ✦ (Odin, marteau de Thor…) | MJ |
+| Bâtard reconnu | Bracelet d'argent ✦, offert par le père (anneau de bras, cadeau de rang) | MJ (« quelque chose ») ; objet proposé |
+| Dernier de la lignée | Arme de famille ✦ (une arme du catalogue, nommée par le joueur) | MJ (« quelque chose ») ; objet proposé |
+| Skald | Rien : un conteur, pas un barde | MJ |
+| Huskarl | Au choix : Bouclier en bois ou Casque ; et au choix une arme : Lance, Hache (de combat) ou Javelot (dons du seigneur) | MJ |
+| Duelliste | Bouclier en bois | |
+| Briseur de boucliers | Hache (de combat) | |
+| Volva | Bâton de völva ✦ | |
+| Godi | Anneau du temple ✦ (l'anneau sur lequel on prête serment) | |
+| Connaissance des runes | Outils de graveur ✦ | |
+| Leader né | Corne d'appel ✦ | |
+| Grand guérisseur | Herbes médicinales ✦, Bandes de lin ✦, Runes de guérison ✦ (gravées sur écorce, les *limrúnar* du Sigrdrífumál) | MJ (herbes, tissu, runes) |
+| Fin négociant | Marchandises de troc ✦, argent de départ doublé | |
+| Rameur fou | Rame | |
+| Marin | Corde (10m) | |
+| Maître des bêtes | L'animal fidèle (objet libre nommé par le joueur : chien, faucon…) | |
+| Tueur de monstre | Trophée de la créature ✦ (objet libre nommé) | |
+| Veuf/Veuve | Un objet du défunt ✦ (objet libre nommé) | |
+| Divorcé | La dot rendue : +10 oz d'argent | |
+| Lien avec les Landvættir | Offrandes ✦ (pain, bière, petits objets à déposer) | |
+| Orphelin aguerri | Couteau | |
+| Vaurien | Dés pipés ✦ | |
+| Borgne | Cache-œil ✦ | |
+| Ancien esclave, Dette de sang | Pas d'argent de départ | |
+| Banni | Rien | |
+| Les autres traits (Bons réflexes, Peau dure, Vue perçante, Tatouage, Taille imposante, Impistable, Grande concentration, Infatigable, Force de géant, Sanglant, Ambidextre, Langue de serpent, Sommeil léger, Boxeur, Sens de l'orientation, Troublé, Insaisissable, Sang de troll, Sang de glace, Marqué par les Nornes, Né sous mauvais augure, Rêveur prophétique, Survivant miraculeux, Porte-poisse, Jumeau/Jumelle, Enfant des nuits blanches, Enfant de l'hiver noir, Serment rompu) | Rien | |
+
+**Vérifications historiques (2026-11-07).**
+- *Balance* : les balances pliantes et leurs poids standardisés se répandent en Scandinavie dans la seconde moitié du 9ᵉ siècle ; à Kaupang (fondée vers 800), la première phase paie en marchandises (troc). En 810, la balance est anachronique : remplacée par des marchandises de troc.
+- *Soins* : pas de trousse ; des simples (l'achillée contre les saignements), du linge propre pour panser, et pour le guérisseur les runes : le Sigrdrífumál (poème de l'Edda, manuscrit du 13ᵉ siècle) veut que le *læknir* connaisse les « runes des branches », gravées sur l'écorce. Source littéraire, plus tardive que 810.
+- *Hache* : la « Hache » du catalogue (1 main, 2 tokens, For 2, 20 oz) figure dans la table des **armes** du vault : c'est la hache de combat. La hache de bûcheron est un **outil**, à ajouter à part (✦).
+
+| # | Question | Reco | Réponse |
+|---|---|---|---|
+| Q-L6-14 | Une compétence de métier donne son kit dès le niveau 1 ? | Oui : simple, et le conseil « un métier avant tout » s'en trouve récompensé | Oui |
+| Q-L6-15 | Les épées (36 oz et plus) dans le kit d'une compétence de combat ? | Non, réservées aux traits (Noble lignée, Dernier de la lignée) et aux achats : une épée dit le rang | Non : l'épée est très rare et très chère, et une compétence de combat ne donne aucune arme |
+| Q-L6-16 | Argent de départ ? | 10 oz : un couteau, ou une semaine de provisions et quelques babioles (Couteau 10, Provisions 2, Corde 6) ; modifié par les traits du tableau | Oui, quelque chose comme ça (10 oz) |
+| Q-L6-17 | Les objets ajoutés (✦) ont-ils un prix (achetables au marché) ? | Prix fixés par le MJ ; sans prix, ils ne viennent que du kit | À la création, ils ne viennent que du kit. Ils sont au catalogue, le prix se fixe à la table |
+| Q-L6-19 | La « Hache » du catalogue devient-elle « Hache de combat » (nom affiché ; les inventaires existants gardent leur nom) ? | Oui : on voit la différence avec la hache de bûcheron | Non : la « Hache » du catalogue reste la hache de combat ; c'est la nouvelle qui s'appelle « Hache de bûcheron » |
+| Q-L6-20 | Hache de bûcheron utilisée pour frapper : arme improvisée (valeurs moindres) ou simple objet ? | Simple objet ; le MJ arbitre à la table s'il s'en sert | Arme de fortune : un peu moins puissante qu'une vraie arme, mais elle peut servir d'arme si besoin |
+| Q-L6-18 | Écran d'accueil (Q-L6-7) et conseil « Un métier avant tout » dans l'étape Compétences (Q-L6-8) : on garde les recos ? | Oui | Oui |
+
+**Planche v3 (2026-11-07)** : `refonte_vikings/planche_creation.html`, validée par le MJ.
+
+**Réglages du MJ (2026-11-08)** : il a ajusté les kits et les montants directement dans `config/kits.js`, qui fait foi sur les tableaux ci-dessus (argent de départ 8 oz, Noble lignée : épée ou 12 oz, Divorcé : 5 oz).
+
+**Implémentation (2026-11-07)** :
+- Étapes 0 « Avant de commencer » (`StepIntro`, paragraphes du guide lus par `guideParagraphs` de `config/reference.js` ; aide de jeu complète en fenêtre) et 5 « Équipement » (`StepGear`) ; encadré « Un métier avant tout » dans les Compétences (`TradeAdvice`).
+- Kits : `config/kits.js` (tables ci-dessus) ; règles dans `config/creation.js` (`getCreationKit`, `getCreationInventory`, `CREATION_MARKET`), testées. Choix du joueur gardés à part (`gear` : retirés, choix, noms, achats).
+- Catalogue : outils et objets des kits ajoutés sans prix à `config/equipment.js` ; « Hache de bûcheron » arme de fortune (1 main, 1 token, For 2), rangée au sac.
+- À la création : armes et armures du kit équipées, le reste au sac, achats regroupés par quantité, argent restant en « Once d'argent » ; l'armure de départ compte les objets équipés. Aucune migration.
+- Vérifié à l'écran (pierre peinte, jour) : accueil, aide de jeu, Compétences, Équipement avec achat, récapitulatif. Non vérifié : largeur téléphone de l'étape Équipement (serveur de dev arrêté).
