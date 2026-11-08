@@ -4,67 +4,42 @@ visibility: gm
 
 # Défis et nuisibles
 
+Les fiches de défi (Igritte, la Revenante, les défis du livre et les vôtres) sont dans l'onglet **Défis** : bibliothèque, défis en cours de la table, piste, complications et dé d'obscurité.
+
 ## Le défi
 
 Un défi est une situation qui demande **plus d'une réussite** : frapper un adversaire est un test, le vaincre est un défi ; crocheter une serrure est un test, se faufiler dans une forteresse est un défi.
 
-Une fiche de défi donne :
-- une **difficulté par approche** ;
-- des **vulnérabilités** (−1 à la difficulté) et des **résistances** (+1) : la difficulté peut alors sortir de 4 à 7 ;
-- des **cases de réussite**, dont certaines déclenchent un **événement de défi** ;
-- des règles uniques, des complications et la table du dé d'obscurité.
-
 ## Raconter un défi
 
-- Déclenchez le défi en invitant les Parias à agir.
-- Jouez au **tour de rôle** : tous les Parias font un test avant de passer au tour suivant.
-- Cochez les réussites et servez-vous-en pour raconter l'évolution (3 cases sur 6 : « à mi-chemin »).
-- Si la narration s'enlise, relancez l'action et demandez un test.
-- Ne révoquez jamais l'effet d'une réussite ; développez à partir des complications.
-- Difficultés et complications proposées sont indicatives.
+- **Plongez les Parias dans l'action** : une courte mise en place, puis « Que faites-vous ? ».
+- **Jouez au tour de rôle** : les Parias agissent dans l'ordre qu'ils veulent, mais chacun agit à chaque tour.
+- **Gardez le rythme** : si l'histoire ralentit, introduisez un élément nouveau ou déclenchez un effet du défi, et demandez aux Parias de réagir.
+- **Mettez en valeur réussites et complications** : ne révoquez jamais une réussite. Servez-vous des complications, du dé d'obscurité et des suggestions du défi pour raconter ce que font menaces et adversaires.
+- **Laissez parler votre imagination** : la fiche donne une structure, inventez d'autres façons de décrire les conséquences.
+- **Servez-vous des règles spéciales** : elles rendent chaque défi unique.
 
-## Igritte (Masquegriffe)
+## La fiche de défi
 
-*« En garde ! Je n'aurai aucune pitié ! »* Elle manie l'épée avec froideur et, transformée, ne perd jamais le contrôle.
+- **Nom, type et description** : l'identité du défi, pour le raconter et l'intégrer à l'histoire.
+- **Piste de progression** : une série de cases numérotées, autant que de réussites nécessaires. Cochez-les dans l'ordre à chaque réussite : elles montrent où en sont les Parias (3 cases sur 6 : « à mi-chemin »).
+- **Difficultés** : un modificateur par approche, ajouté à la difficulté de base choisie comme d'habitude (un adversaire difficile à tromper : +1 en Subterfuge). La difficulté finale peut dépasser 7. Les défis du kit donnent aussi des **résistances** (+1) et des **vulnérabilités** (−1).
+- **Dé d'obscurité** : si le défi implique un nuisible, lancez le d12 à chaque test contre lui et racontez son effet en plus du reste.
+- **Déclencheurs** : certaines cases de la piste, en rouge, déclenchent un effet dès qu'on les coche.
+- **Règles spéciales** : en bas de la fiche, s'il y en a.
 
-| Force | Volonté | Influence | Raison | Précision | Subterfuge |
-|---|---|---|---|---|---|
-| 6 | 4 | 5 | 4 | 6 | 6 |
+## Connaître un nuisible
 
-- **Résistances** : coups bas, combat rapproché. **Vulnérabilité** : argentacier.
-- **Réussites** : 5 cases ; événement à la 3ᵉ.
-- **Événement** : à la 3ᵉ réussite, elle se transforme en hybride femme-panthère. Force et Précision deviennent très difficiles (7), et chaque test contre elle s'accompagne du dé d'obscurité.
-- **Règle unique** : on peut la tenir en respect jusqu'à la fin du défi, pas la tuer.
-- **Complications** : son épée ou ses griffes vous touchent (blessure) ; lueur meurtrière dans son regard (peur) ; elle vous pourchasse, vive comme un serpent (épuisement) ; le regard critique de la Mère Éclairée vous pèse (honte) ; l'Émissaire impérial applaudit avec amusement (colère).
-- **Dé d'obscurité** (après la transformation), complication sur 6+, ou :
+Les Parias ont été formés par l'Ordre du Crépuscule. S'ils demandent ce qu'ils savent d'un nuisible :
+- **Répondez** si c'est une chose qu'un Paria saurait raisonnablement de sa formation ;
+- ou **demandez un test de Raison** : normal (5) en général, plus difficile selon la question ou la rareté de la créature.
 
-| d12 | Effet |
-|---|---|
-| 7+ | Cri-grondement : tous réussissent un test de Volonté normal (5) ou cochent la peur |
-| 8+ | Projeté vers un compagnon : les deux cochent une blessure |
-| 11+ | Broyé entre ses mâchoires : une blessure, et un test difficile (6) pour se dégager avant de bouger |
+Un test qui découvre une faiblesse ou un renseignement utile peut compter dans la progression du défi : en règle générale, toute action utile pour le surmonter compte.
 
-## La Revenante (Déchu)
+## Enquêter sur un nuisible
 
-*« Vous allez payer pour ce que vous m'avez fait. »* Esprit vengeur d'une personne tuée injustement : on la renvoie en détruisant le corps ou en assouvissant sa vengeance.
-
-| Force | Volonté | Influence | Raison | Précision | Subterfuge |
-|---|---|---|---|---|---|
-| 6 | 7 | 6 | 5 | 6 | 6 |
-
-- **Résistances** : insensible à la douleur, cherche à se venger, déchaînée. **Vulnérabilités** : culpabilité, salpêtre.
-- **Réussites** : 6 cases ; événement à la 2ᵉ.
-- **Événement** : à la 2ᵉ réussite, elle devient intangible ; interagir physiquement est impossible, seuls les héritages qui ne passent pas par le contact matériel fonctionnent. Le salpêtre la rend de nouveau tangible.
-- **Règle unique** : si elle assouvit sa vengeance, elle disparaît aussitôt.
-- **Complications** : mains spectrales (blessure) ; souvenir d'un nœud coulant (peur) ; elle sape l'énergie vitale (épuisement) ; cri de désespoir (insécurité) ; elle se jette sur un habitant (colère).
-- **Dé d'obscurité** à chaque test contre elle, complication sur 6+, ou :
-
-| d12 | Effet |
-|---|---|
-| 6+ | Images du lynchage : insécurité, sauf test de Volonté normal (5) réussi |
-| 8+ | Un arbre vous cingle : une blessure, sauf test difficile (6) réussi |
-| 11+ | Revivre le lynchage : tout le monde reçoit une blessure, puis coche la peur sauf test de Volonté normal (5) réussi |
+Avant d'affronter un défi, les Parias en cherchent souvent les traces sans savoir à quoi ils ont affaire. Récompensez leur curiosité par des indices qui les aident à identifier le nuisible et à le surmonter.
 
 ## Les familles de nuisibles
 
-Vampires, polymorphes, déchus, fées et ombres : les créatures que l'obscurité a répandues sur Egas.
+Déchus, Fées, Polymorphes, Maudits, Ombres, Vampires et Sylvestres : les créatures que l'obscurité a répandues sur Egas. Chaque famille a ses règles communes et ses complications, recopiées dans les fiches de ses défis.

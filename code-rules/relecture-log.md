@@ -8,6 +8,8 @@ Une ligne par relecture croisée (`/relecture`, `documentations/spec_relecture.m
 | 2026-11-08 | Correctifs de l'audit (ticket 3), 2 passes | C-TEST ×2, B-LOG, C-SPEC | — | 6 / 7 (date vidable, jet de création Fabula hors historique, tests indépendants, remise à zéro du limiteur, clés étrangères manquantes, échec en transaction) ; B-AUTH-GM précisée |
 | 2026-11-08 | Purge des jetons de rafraîchissement expirés à la connexion | — | — | 0 / 0 |
 | 2026-11-08 | Nettoyage du code mort de l'audit | non relu (quota) | — | — |
+| 2026-11-08 | Vileborn : défis, lot A | non relu (quota) | — | — |
+| 2026-11-08 | Vileborn : défis, lot B (versement des fiches) | non relu (quota) | — | — |
 
 ## Décompte par identifiant
 

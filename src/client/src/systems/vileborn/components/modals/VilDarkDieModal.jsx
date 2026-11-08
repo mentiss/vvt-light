@@ -4,30 +4,37 @@
 // complication (faible 9+, moyenne 6+, puissante 3+, ou sans seuil quand la
 // fiche du nuisible dit quoi faire), Public (historisé, diffusé) ou Caché (seul
 // le MJ voit le résultat).
-// Props : sessionId, onClose
+// Depuis un défi (spec_vileborn_defis.md §II.4) : seuil prérempli par la fiche,
+// table du d12 affichée, ligne atteinte surlignée. Cette ligne reste chez le MJ :
+// l'historique et la notification ne montrent que le d12 et le seuil.
+// Props : sessionId, onClose, challenge? (fiche du défi)
 // ─────────────────────────────────────────────────────────────────────────────
 
 import React, { useState } from 'react';
 import Modal from '../../../../components/ui/Modal.jsx';
 import { ROLL_TYPES } from '../../config.jsx';
 import { DARK_INTENSITIES } from '../../config/rules/test.js';
+import { darkRow } from '../../config/rules/challenge.js';
 import { useVilRoll } from '../../hooks/useVilRoll.js';
-import { VilPill } from '../ui/VilUi.jsx';
+import { VilPill, VilLabel } from '../ui/VilUi.jsx';
 import VilHistoryEntry from '../layout/VilHistoryEntry.jsx';
 
-const VilDarkDieModal = ({ sessionId, onClose }) => {
+const VilDarkDieModal = ({ sessionId, onClose, challenge = null }) => {
     const { launch, rolling, error, entry } = useVilRoll();
-    const [threshold, setThreshold] = useState(6);
+    const [threshold, setThreshold] = useState(challenge ? (challenge.dark?.threshold ?? null) : 6);
     const [hidden, setHidden] = useState(false);
+    const value = entry?.roll_result?.value ?? null;
+    const hit = challenge && value !== null ? darkRow(challenge, value) : null;
 
     const roll = () => launch({
-        characterName: 'Obscurité', sessionId: sessionId ?? null, label: "Dé d'obscurité", rollType: ROLL_TYPES.dark,
+        characterName: 'Obscurité', sessionId: sessionId ?? null,
+        label: challenge ? `Dé d'obscurité · ${challenge.name}` : "Dé d'obscurité", rollType: ROLL_TYPES.dark,
         persistHistory: !hidden,   // caché : ni historisé ni diffusé
         systemData: { type: 'dark', threshold },
     });
 
     return (
-        <Modal onClose={onClose} title="Dé d'obscurité" size="sm"
+        <Modal onClose={onClose} title={challenge ? `Dé d'obscurité · ${challenge.name}` : "Dé d'obscurité"} size={challenge ? 'md' : 'sm'}
                footer={<>
                    <button type="button" className="vtt-btn" onClick={onClose}>Fermer</button>
                    <button type="button" className="vtt-btn vtt-btn-primary" disabled={rolling} onClick={roll}>{entry ? 'Relancer' : 'Lancer'} le d12</button>
@@ -49,6 +56,18 @@ const VilDarkDieModal = ({ sessionId, onClose }) => {
                         <VilPill on={hidden} onClick={() => setHidden(true)}>Caché</VilPill>
                     </div>
                 </div>
+                {challenge?.dark?.rows?.length > 0 && (
+                    <div>
+                        <VilLabel>Table du défi</VilLabel>
+                        <div className="vil-ch-rows">
+                            {challenge.dark.rows.map(r => (
+                                <div key={`${r.min}-${r.text}`} className={`vil-ch-row${hit === r ? ' is-hit' : ''}`}>
+                                    <span className="vil-ch-num">{r.min}+</span><span>{r.text}</span>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                )}
                 {error && <div className="vil-todo vil-red">{error}</div>}
                 {entry && <div className="vtt-history-entry"><VilHistoryEntry roll={entry} /></div>}
             </div>

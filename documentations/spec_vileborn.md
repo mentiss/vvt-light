@@ -9,6 +9,7 @@
 | Fichier | Contenu |
 |---|---|
 | `spec_vileborn.md` | Ce document : règles retenues, fiche, questions de cadrage |
+| `spec_vileborn_defis.md` | Défis côté MJ (2026-11-08) : bibliothèque en base, défis en cours, d'après le kit, le livre de base et l'Apocrypha |
 | `vileborn/transcription_kit_p04-47.md` | Transcription (agent) : contexte, test, états, blessures, mobiles, dé d'obscurité |
 | `vileborn/transcription_kit_p48-85.md` | Transcription (agent) : sombre héritage, dons, pulsion, défis (Igritte, Revenante), Rêverie, formation, liens, aperçu du livre complet |
 | `vileborn/transcription_fiches_pretires_aide.md` | Transcription (agent) : fiche vierge bloc par bloc, **7 prétirés** complets, aide de jeu « Obscurité » |
@@ -147,7 +148,7 @@ Le kit ne donne aucune règle de création. Décision du MJ : une **vraie créat
 | # | Question | Proposition (reco) | Réponse MJ                                                   |
 |---|---|---|--------------------------------------------------------------|
 | 24 | Vue des Parias de la table. | Une carte par Paria : approches, états, blessures, coches d'héritage et de dons, mobiles ; clic pour ouvrir sa fiche complète (sections partagées). Le MJ peut cocher états et blessures (complications). | oui comme dh'ab, comme sur n'importe quel slug               |
-| 25 | **Défis** (fiches d'Igritte, de la Revenante, et les tiens) : suivi dans l'app ? | Oui, en **lot 3** : catalogue de défis (Igritte et Revenante transcrits), défis actifs avec difficultés par approche, vulnérabilités / résistances, cases de réussite et d'événement, complications, table du d12. Le MJ coche les réussites. | **Non** : pas de suivi des défis dans l'app.                 |
+| 25 | **Défis** (fiches d'Igritte, de la Revenante, et les tiens) : suivi dans l'app ? | Oui, en **lot 3** : catalogue de défis (Igritte et Revenante transcrits), défis actifs avec difficultés par approche, vulnérabilités / résistances, cases de réussite et d'événement, complications, table du d12. Le MJ coche les réussites. | **Non** : pas de suivi des défis dans l'app. **Revu le 2026-11-08 : oui**, voir `spec_vileborn_defis.md`. |
 | 26 | Les joueurs voient-ils le défi en cours ? | Oui, en lecture : nom, piste de réussites et vulnérabilités découvertes ; difficultés, complications et table du d12 restent au MJ. | Non                                                          |
 | 27 | Combat : le kit n'a ni initiative ni dégâts (un combat est un défi au tour de rôle). | Pas de module de combat générique (bloc `combat` désactivé). | Il n'y a pas d'initiative et non pas de module combat ni pnj |
 | 28 | Aide de jeu (`ReferenceGuide`). | Joueurs : résumé des règles (test, états, blessures, héritage, Rêverie). MJ : en plus l'aide « Obscurité » (idées de complications par Paria), les fiches de défi et les nuisibles. | oui ok                                                       |
@@ -195,7 +196,7 @@ Le schéma SQLite fixé en phase 2 couvre dès le lot 1 les structures des lots 
 | Progression | Pas d'XP ; l'édition sert aux évolutions décidées à la table |
 | Portrait | Avatar au centre de la fiche, dans le U ; chaque joueur choisit son image |
 | Onglets | Fiche · Journal · Historique · Aide de jeu |
-| MJ | Vue des Parias comme sur les autres slugs ; ni défis, ni PNJ, ni combat, ni initiative |
+| MJ | Vue des Parias comme sur les autres slugs ; ni PNJ, ni combat, ni initiative. **Défis** : ajoutés le 2026-11-08 (`spec_vileborn_defis.md`) |
 | Aide de jeu | Joueurs : règles ; MJ : en plus l'aide « Obscurité » et les défis / nuisibles du kit en lecture |
 | Identité visuelle | Celle de la fiche papier, planche validée le 2026-11-04 ; police des titres **Marcellus SC** |
 ---

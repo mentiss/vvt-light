@@ -2,7 +2,8 @@
 // ─────────────────────────────────────────────────────────────────────────────
 // Interface MJ (l'Obscurité) — spec_vileborn.md §II.8 :
 //   - bande fixe comme la fiche joueur : marque, thème, menu ; onglets
-//     Session · Journal · Historique · Aide de jeu ; actions : dé d'obscurité, jet libre ;
+//     Session · Défis · Journal · Tableau · Historique · Aide de jeu ; actions : dé d'obscurité, jet libre ;
+//   - Défis : bibliothèque et défis en cours (gm/tabs/TabChallenges.jsx, spec_vileborn_defis.md) ;
 //   - Session : musique de la table, Parias et leur fiche, jouable et
 //     modifiable par le MJ (gm/tabs/TabSession.jsx) ;
 //   - Journal (TabJournal), Historique (DiceHistoryPage), panneau d'historique
@@ -33,10 +34,12 @@ import { D12Icon } from './components/ui/VilUi.jsx';
 import { useTableCharacters } from './hooks/useTableCharacters.js';
 import { useBoxSize } from './hooks/useBoxSize.js';
 import TabSession from './gm/tabs/TabSession.jsx';
+import TabChallenges from './gm/tabs/TabChallenges.jsx';
 import { REFERENCE_SECTIONS } from './config/reference.js';
 
 const TABS = [
     { id: 'session',    label: 'Session' },
+    { id: 'defis',      label: 'Défis' },
     { id: 'journal',    label: 'Journal' },
     { id: 'tableau', label: 'Tableau' },
     { id: 'historique', label: 'Historique' },
@@ -75,6 +78,10 @@ const GMApp = ({ activeSession, onSessionChange, onlineCharacters, characterUpda
                                 characters={characters} order={order} loading={loading} patchCharacter={patchCharacter}
                                 onSessionChange={onSessionChange} />
                 )}
+                {/* Défis : bibliothèque et défis en cours de la table (spec_vileborn_defis.md) */}
+                {activeTab === 'defis' && (
+                    <TabChallenges activeSession={activeSession} characters={characters} order={order} patchCharacter={patchCharacter} />
+                )}
                 {activeTab === 'journal' && <div className="vil-page"><TabJournal characterId={-1} /></div>}
                 {/* Tableau partagé (brique plateforme, spec_tableau.md §10.8) */}
                 {activeTab === 'tableau' && (
@@ -83,7 +90,7 @@ const GMApp = ({ activeSession, onSessionChange, onlineCharacters, characterUpda
                     </div>
                 )}
                 {activeTab === 'historique' && <div className="vil-page"><DiceHistoryPage sessionId={sessionId} /></div>}
-                {activeTab === 'aide' && <div className="vil-page"><ReferenceGuide sections={REFERENCE_SECTIONS} isGM placeholder="Rechercher une règle (ex. dé d'obscurité, Igritte, défi)…" /></div>}
+                {activeTab === 'aide' && <div className="vil-page"><ReferenceGuide sections={REFERENCE_SECTIONS} isGM placeholder="Rechercher une règle (ex. dé d'obscurité, défi, nuisible)…" /></div>}
             </main>
 
             {darkOpen && <VilDarkDieModal sessionId={sessionId} onClose={() => setDarkOpen(false)} />}

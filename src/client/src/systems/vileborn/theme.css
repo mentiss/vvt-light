@@ -497,3 +497,112 @@ button.vil-check:hover, button.vil-tick:hover { box-shadow: 0 0 0 3px color-mix(
 .vtt-board-token-text, .vtt-board-ruler text { font-family: var(--vil-font-label); }
 .vtt-board-banner { border-radius: 0; border: 1px solid var(--vil-ink); border-left: 3px solid var(--vil-blood); background: var(--vil-paper); font-family: var(--vil-font-body); }
 .vtt-board-banner strong { font-family: var(--vil-font-label); letter-spacing: .08em; text-transform: uppercase; color: var(--vil-blood); }
+
+/* ═════════════ Défis (spec_vileborn_defis.md, planche vileborn/planche_defis.html) ═════════════ */
+.vil-ch-views { display: flex; border: 1px solid var(--vil-ink); width: max-content; margin-bottom: 14px; }
+.vil-ch-views button { font-family: var(--vil-font-label); font-size: 13px; letter-spacing: .06em; text-transform: uppercase; padding: 6px 16px; color: var(--color-text); }
+.vil-ch-views button.is-on { background: var(--vil-blood); color: var(--vil-paper); }
+.vil-ch-views button:disabled { opacity: .4; cursor: not-allowed; }
+.vil-ch-views small { font-size: 11px; opacity: .8; margin-left: 6px; }
+
+.vil-ch-layout { display: grid; grid-template-columns: 260px minmax(0, 1fr); gap: 18px; align-items: start; }
+@media (max-width: 900px) { .vil-ch-layout { grid-template-columns: 1fr; } }
+.vil-ch-list { display: grid; gap: 8px; }
+.vil-ch-filters .vtt-pill { font-size: 12px; padding: 3px 9px; }
+.vil-ch-group { font-family: var(--vil-font-label); font-size: 11px; letter-spacing: .1em; text-transform: uppercase; color: var(--vil-blood); padding-top: 6px; }
+.vil-ch-item { display: grid; gap: 6px; width: 100%; text-align: left; padding: 8px 10px; border: 1px solid color-mix(in srgb, var(--color-border) 25%, transparent);
+    background: var(--vil-paper); color: var(--color-text); }
+.vil-ch-item:hover { border-color: color-mix(in srgb, var(--color-border) 60%, transparent); }
+.vil-ch-item.is-selected { border-color: var(--vil-blood); box-shadow: inset 3px 0 0 var(--vil-blood); }
+.vil-ch-item strong { font-family: var(--vil-font-title); font-weight: 400; font-size: 18px; }
+.vil-ch-item small { font-family: var(--vil-font-label); font-size: 11px; letter-spacing: .05em; text-transform: uppercase; color: var(--color-text-muted); }
+.vil-ch-mini { display: flex; flex-wrap: wrap; gap: 3px; }
+.vil-ch-mini i { width: 10px; height: 10px; border: 1px solid var(--vil-ink); }
+.vil-ch-mini i.is-trig { border-color: var(--vil-blood); }
+.vil-ch-mini i.is-on { background: var(--vil-blood); border-color: var(--vil-blood); }
+
+/* Fiche */
+.vil-ch-card { padding: 16px 22px 22px; border: 1px solid color-mix(in srgb, var(--color-border) 30%, transparent); display: grid; gap: 16px; min-width: 0; }
+.vil-ch-bar { display: flex; flex-wrap: wrap; gap: 6px; padding-bottom: 12px; border-bottom: 1px solid color-mix(in srgb, var(--color-border) 25%, transparent); }
+.vil-ch-bar .vil-ch-bar-end { margin-left: auto; }
+.vil-ch-head { display: flex; flex-wrap: wrap; gap: 12px 24px; align-items: flex-start; justify-content: space-between; }
+.vil-ch-kind { font-family: var(--vil-font-label); font-size: 12px; letter-spacing: .1em; text-transform: uppercase; color: var(--color-text-muted); margin-bottom: 4px; }
+.vil-ch-title { font-family: var(--vil-font-title); font-weight: 400; font-size: 34px; line-height: 1; color: var(--vil-blood); }
+.vil-ch-quote { font-style: italic; margin-top: 6px; }
+.vil-ch-desc { color: var(--color-text-muted); max-width: 70ch; }
+.vil-ch-block { display: grid; gap: 8px; align-content: start; min-width: 0; }
+.vil-ch-grid { display: grid; grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr); gap: 18px 26px; }
+@media (max-width: 1100px) { .vil-ch-grid { grid-template-columns: 1fr; } }
+
+/* Piste */
+.vil-ch-track { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+.vil-ch-box { width: 38px; height: 38px; border: 1.5px solid var(--vil-ink); display: grid; place-items: center; font-family: var(--vil-font-title); font-size: 17px;
+    background: var(--vil-paper); color: var(--color-text); }
+.vil-ch-box.is-trig { border: 2px solid var(--vil-blood); color: var(--vil-blood); }
+.vil-ch-box.is-on { background: var(--vil-blood); border-color: var(--vil-blood); color: var(--vil-paper); }
+button.vil-ch-box:hover { box-shadow: 0 0 0 2px color-mix(in srgb, var(--vil-sage) 70%, transparent); }
+.vil-ch-done { font-family: var(--vil-font-label); text-transform: uppercase; letter-spacing: .08em; font-size: 13px; color: var(--color-success); margin-left: 8px; }
+
+/* Déclencheur atteint */
+.vil-ch-alert { border: 1px solid var(--vil-blood); border-left-width: 4px; padding: 10px 14px; background: color-mix(in srgb, var(--vil-blood) 7%, var(--vil-paper)); display: flex; gap: 12px; align-items: flex-start; }
+.vil-ch-alert b { font-family: var(--vil-font-label); font-weight: 500; letter-spacing: .08em; text-transform: uppercase; font-size: 12px; color: var(--vil-blood); display: block; }
+.vil-ch-alert button { margin-left: auto; font-size: 20px; line-height: 1; color: var(--color-text-muted); }
+
+/* Difficultés */
+.vil-ch-diffs { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 6px; }
+@media (max-width: 640px) { .vil-ch-diffs { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+.vil-ch-diff { border: 1px solid color-mix(in srgb, var(--color-border) 35%, transparent); padding: 6px 4px; text-align: center; display: grid; gap: 2px; justify-items: center; background: var(--vil-paper); }
+.vil-ch-diff span { font-family: var(--vil-font-label); font-size: 11px; letter-spacing: .06em; text-transform: uppercase; }
+.vil-ch-diff strong { font-family: var(--vil-font-title); font-weight: 400; font-size: 28px; color: var(--vil-blood); line-height: 1; }
+.vil-ch-diff small { font-size: 13px; color: var(--color-text-muted); }
+.vil-ch-diff.is-adjusted { border-color: var(--vil-blood); }
+.vil-ch-adj { display: flex; justify-content: center; gap: 4px; align-items: center; font-size: 13px; }
+.vil-ch-adj button { width: 20px; height: 20px; border: 1px solid var(--vil-ink); line-height: 1; color: var(--color-text); }
+.vil-ch-adj button:disabled { opacity: .35; }
+.vil-ch-tags { display: flex; flex-wrap: wrap; gap: 6px 14px; font-size: 15px; }
+
+/* Listes : déclencheurs, complications, lignes du d12 */
+.vil-ch-rows { display: grid; gap: 4px; }
+.vil-ch-row { display: grid; grid-template-columns: 38px minmax(0, 1fr); gap: 10px; align-items: baseline; padding: 4px 0;
+    border-bottom: 1px dotted color-mix(in srgb, var(--color-border) 30%, transparent); }
+.vil-ch-row.is-text { grid-template-columns: minmax(0, 1fr) auto; }
+.vil-ch-row.is-hit { background: color-mix(in srgb, var(--vil-blood) 12%, transparent); }
+.vil-ch-num { font-family: var(--vil-font-title); color: var(--vil-blood); text-align: right; }
+.vil-ch-row.is-reached .vil-ch-num::after { content: ' ✓'; font-size: 12px; }
+.vil-ch-effect { font-family: var(--vil-font-label); font-size: 12px; letter-spacing: .05em; text-transform: uppercase; border: 1px solid var(--vil-ink);
+    padding: 2px 8px; white-space: nowrap; background: var(--vil-paper); color: var(--color-text); }
+button.vil-ch-effect:hover { background: var(--vil-blood); color: var(--vil-paper); border-color: var(--vil-blood); }
+.vil-ch-effect em { font-style: normal; color: var(--color-text-muted); text-transform: none; letter-spacing: 0; }
+button.vil-ch-effect:hover em { color: inherit; }
+.vil-ch-dark-head { display: flex; flex-wrap: wrap; gap: 8px 14px; align-items: center; }
+.vil-ch-fam summary { cursor: pointer; font-family: var(--vil-font-label); font-size: 12px; letter-spacing: .06em; text-transform: uppercase; color: var(--color-text-muted); }
+.vil-ch-fam p { margin-top: 6px; }
+
+/* Choix du Paria d'une complication */
+.vil-ch-pop { position: fixed; z-index: var(--vtt-z-floating, 46); border: 1px solid var(--vil-ink); padding: 10px; display: grid; gap: 6px; box-shadow: 0 8px 30px rgba(0, 0, 0, .25); }
+.vil-ch-pop-pc { display: flex; justify-content: space-between; gap: 8px; align-items: center; padding: 6px 8px; width: 100%; text-align: left;
+    border: 1px solid color-mix(in srgb, var(--color-border) 25%, transparent); background: var(--vil-paper); color: var(--color-text); }
+.vil-ch-pop-pc:hover { border-color: var(--vil-blood); }
+.vil-ch-pop-pc small { display: block; font-family: var(--vil-font-label); font-size: 11px; color: var(--color-text-muted); }
+.vil-ch-pop-pc small.vil-red { color: var(--vil-blood); }
+
+/* Catalogue de lancement (CatalogModal) */
+.vil-ch-cat strong { font-family: var(--vil-font-title); font-weight: 400; font-size: 18px; }
+.vil-ch-cat .vil-ch-mini { margin-top: 4px; }
+.vil-ch-cat p { font-size: 14px; color: var(--color-text-muted); margin-top: 4px; }
+
+/* Formulaire */
+.vil-ch-form { gap: 18px; }
+.vil-ch-form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 220px), 1fr)); gap: 12px 18px; }
+.vil-ch-field { display: grid; gap: 4px; align-content: start; }
+.vil-ch-line { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 8px; align-items: center; }
+.vil-ch-line.has-num { grid-template-columns: 64px minmax(0, 1fr) auto; }
+.vil-ch-line.has-name { grid-template-columns: minmax(120px, 180px) minmax(0, 1fr) auto; }
+.vil-ch-line.has-effect { grid-template-columns: minmax(0, 1fr) auto auto; }
+@media (max-width: 760px) { .vil-ch-line.has-effect { grid-template-columns: minmax(0, 1fr) auto; } .vil-ch-line.has-effect .vil-ch-effect-pills { grid-row: 2; } }
+.vil-ch-num-in { width: 64px; text-align: center; }
+.vil-ch-x { width: 28px; height: 28px; border: 1px solid color-mix(in srgb, var(--color-border) 40%, transparent); color: var(--color-text-muted); }
+.vil-ch-x:hover { color: var(--vil-blood); border-color: var(--vil-blood); }
+.vil-ch-add { justify-self: start; font-family: var(--vil-font-label); font-size: 12px; letter-spacing: .05em; text-transform: uppercase; color: var(--vil-blood); }
+.vil-ch-effect-pills { display: flex; flex-wrap: wrap; gap: 3px; }
+.vil-ch-effect-pills .vtt-pill { font-size: 11px; padding: 2px 7px; }
