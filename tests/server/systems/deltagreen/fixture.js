@@ -7,6 +7,7 @@ export default {
     create: {
         playerName:  'Joueur test',
         nom:         'Personnage test',
+        age:         34,   // l'envoi partiel doit le conserver (B-COALESCE)
         bonds:       [{ name: 'Lien test', score: 10, isDamaged: false, position: 0 }],
         motivations: [{ text: 'Motivation test', type: 'motivation', position: 0 }],
         skills:      [{ skillKey: 'alertness', specialty: null, score: 40, failedCheck: false }],

@@ -9,12 +9,13 @@
 
 const express = require('express');
 const {getCharNameExpr} = require("../utils/characters");
+const { authenticate } = require('../middlewares/auth');
 const router  = express.Router();
 
 // ─── POST /roll ──────────────────────────────────────────────────────────────
 // Enregistre un jet de dés et le diffuse via Socket.io.
 
-router.post('/roll', (req, res) => {
+router.post('/roll', authenticate, (req, res) => {
     try {
         const {
             // Identité
@@ -192,9 +193,10 @@ router.get('/history/:characterId', (req, res) => {
 });
 
 // ─── DELETE /history/:id ──────────────────────────────────────────────────────
-// Supprime un jet de l'historique.
+// Supprime un jet de l'historique. Toute personne connectée (joueur ou MJ) :
+// le bouton est proposé à chacun dans l'historique (DiceHistoryList).
 
-router.delete('/history/:id', (req, res) => {
+router.delete('/history/:id', authenticate, (req, res) => {
     try {
         req.db.prepare('DELETE FROM dice_history WHERE id = ?').run(req.params.id);
         res.json({ success: true });
@@ -207,7 +209,7 @@ router.delete('/history/:id', (req, res) => {
 // ─── DELETE /history/session/:sessionId ───────────────────────────────────────
 // Purge tout l'historique d'une session.
 
-router.delete('/history/session/:sessionId', (req, res) => {
+router.delete('/history/session/:sessionId', authenticate, (req, res) => {
     try {
         req.db.prepare('DELETE FROM dice_history WHERE session_id = ?').run(req.params.sessionId);
         res.json({ success: true });
@@ -218,9 +220,9 @@ router.delete('/history/session/:sessionId', (req, res) => {
 });
 
 // ─── DELETE /history ──────────────────────────────────────────────────────────
-// Purge tout l'historique (admin / GM).
+// Purge tout l'historique (« Tout effacer » sans table, toute personne connectée).
 
-router.delete('/history', (req, res) => {
+router.delete('/history', authenticate, (req, res) => {
     try {
         req.db.prepare('DELETE FROM dice_history').run();
         res.json({ success: true });

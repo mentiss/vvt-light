@@ -231,7 +231,7 @@ function saveFullCharacter(db, id, data) {
                 player_name       = COALESCE(@playerName, player_name),
                 nom               = COALESCE(@nom, nom),
                 prenom            = COALESCE(@prenom, prenom),
-                age               = @age,
+                age               = COALESCE(@age, age),
                 taille            = COALESCE(@taille, taille),
                 sexe              = COALESCE(@sexe, sexe),
                 description       = COALESCE(@description, description),

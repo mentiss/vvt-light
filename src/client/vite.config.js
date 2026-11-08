@@ -22,7 +22,7 @@ export default defineConfig({
         drop_console: true,
       },
     },
-    minifier: 'terser',
+    minify: 'terser',
   },
   server: {
     proxy: {

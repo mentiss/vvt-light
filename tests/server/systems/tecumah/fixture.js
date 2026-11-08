@@ -7,6 +7,7 @@ export default {
     create: {
         playerName:  'Joueur test',
         nom:         'Personnage test',
+        age:         34,   // l'envoi partiel doit le conserver (B-COALESCE)
         backgrounds: [{ type: 'allies', niveau: 1, notes: 'Note' }],
         items:       [{ name: 'Colt test', description: '', category: 'weapon', quantity: 1, location: 'inventory', damage: 4 }],
     },

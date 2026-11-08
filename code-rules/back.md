@@ -13,13 +13,13 @@ C'est une app pour jouer entre amis (une quinzaine de joueurs), pas un produit g
 
 ### Droits
 
-Routes publiques (sans `authenticate`) : `POST /characters` (création), `GET /characters` (liste), `GET /characters/by-code/:code`, `GET /characters/by-url/:url`, `POST /auth/login`, `POST /auth/refresh`. Le compte MJ est le personnage `id = -1`.
+Routes publiques (sans `authenticate`) : `POST /characters` (création), `GET /characters` (liste), `GET /characters/by-code/:code`, `GET /characters/by-url/:url`, `POST /auth/login`, `POST /auth/refresh`, `POST /auth/logout`. Le compte MJ est le personnage `id = -1`.
 
 | Id | Niveau | Règle | Pourquoi | Contrôle |
 |---|---|---|---|---|
-| B-AUTH-GM | Règle | Une action réservée au MJ (suppression de personnage, envoi d'objet ou de message, gestion des tables, purge…) a `authenticate, requireGM`. | Les actions MJ sont protégées côté serveur, c'est la limite de sécurité du projet. | relecture |
+| B-AUTH-GM | Règle | Une action réservée au MJ (suppression de personnage, envoi d'objet ou de message, gestion et suppression des tables…) a `authenticate, requireGM`. N'en fait pas partie la suppression de jets de l'historique, ouverte à tout utilisateur connecté (bouton « Tout effacer » proposé à chacun). | Les actions MJ sont protégées côté serveur, c'est la limite de sécurité du projet. | relecture |
 | B-AUTH-OWNER | Règle | Lire ou écrire un personnage (`GET`/`PUT`/`PATCH /:id`, avatar, journal…) passe par `authenticate, requireOwnerOrGM`. Le joueur édite librement sa propre fiche. | Un joueur ne touche pas la fiche d'un autre. | relecture |
-| B-AUTH-USER | Règle | Toute route d'écriture a au moins `authenticate`, sauf les routes publiques ci-dessus et ce qui porte un commentaire `relecture: B-AUTH-USER`. | Une écriture anonyme se fait d'un simple appel. | relecture |
+| B-AUTH-USER | Règle | Toute route d'écriture a au moins `authenticate` (sur la route ou par `router.use`), sauf les routes publiques ci-dessus. Une nouvelle route publique s'ajoute à la liste `PUBLIC` du test, avec sa raison. Combat, PNJ et noctis sont exclus du test jusqu'à leur refonte. | Une écriture anonyme se fait d'un simple appel. | test (`tests/server/routes/rights.test.js`) |
 | B-AUTH-CHECK | Règle | Un contrôle d'identité ou de droit ne saute jamais parce qu'un champ est absent : une entrée manquante est un refus. | `if (code && code !== attendu)` laisse passer qui n'envoie pas de code. | relecture |
 
 ### SQL et écritures
@@ -59,6 +59,6 @@ Routes publiques (sans `authenticate`) : `POST /characters` (création), `GET /c
 
 | Id | Niveau | Règle | Pourquoi | Contrôle |
 |---|---|---|---|---|
-| B-SCHEMA-SHARED | Règle | Un schéma de slug part de `database-template/base.sql` et ne redéfinit pas ses tables (`characters`, `game_sessions`, `session_characters`, `dice_history`, `character_journal`, `refresh_tokens`) ; `characters` a `login_attempts`, `last_attempt_at`, `last_accessed`, `avatar` (pas `avatar_url`) et la ligne MJ `id = -1`. | Une base neuve (réinstallation, tests) doit fonctionner comme une base migrée. | relecture |
-| B-FK | Règle | Une clé vers `characters` ou `game_sessions` déclare son `ON DELETE` (celui de `base.sql` pour les tables partagées) ; pas d'`INSERT OR REPLACE` sur une table parente. | Les clés étrangères sont actives : le remplacement supprime la ligne, donc ses enfants. | relecture |
+| B-SCHEMA-SHARED | Règle | Un schéma de slug part de `database-template/base.sql` et ne redéfinit pas ses tables (`characters`, `game_sessions`, `session_characters`, `dice_history`, `character_journal`, `refresh_tokens`) ; `characters` a `login_attempts`, `last_attempt_at`, `last_accessed`, `avatar` (pas `avatar_url`) et la ligne MJ `id = -1`. Colonnes en plus permises. | Une base neuve (réinstallation, tests) doit fonctionner comme une base migrée. | test (`tests/server/systems/schemas.test.js`) |
+| B-FK | Règle | Une clé vers `characters` ou `game_sessions` déclare son `ON DELETE` (celui de `base.sql` pour les tables partagées) ; pas d'`INSERT OR REPLACE` sur une table parente. Écart documenté : `dice_history.character_id` en `SET NULL` dans les bases en service de cyberpunk, dune et noctis (un personnage supprimé garde ses jets, anonymes), connu du test. | Les clés étrangères sont actives : le remplacement supprime la ligne, donc ses enfants. | test (`ON DELETE`) ; relecture (`INSERT OR REPLACE`) |
 | B-MIGRATION | Règle | Un changement de structure modifie le schéma (`base.sql` ou `<slug>-schema.sql`) **et** ajoute `database-template/migrations/DDMMYYYY_description.sql`. La migration déclare `-- systems: <slugs>` (ou `all`, ou le nom d'une base de module) et référence les lignes par sous-SELECT, jamais par id en dur. `migrations/released.txt` ne s'édite pas à la main. | Les bases neuves partent du schéma, les bases existantes de la migration : les deux doivent arriver au même état. | relecture |

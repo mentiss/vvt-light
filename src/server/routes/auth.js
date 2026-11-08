@@ -27,7 +27,12 @@ router.post('/login', loginRateLimiter, (req, res) => {
         const { code } = req.body;
         const char = req.targetCharacter; // fourni par loginRateLimiter
 
-        if (code && code.toUpperCase() !== char.access_code) {
+        // Code obligatoire (B-AUTH-CHECK) : sans lui, l'URL seule (celle du MJ comprise) donnait un jeton
+        if (typeof code !== 'string' || !code.trim()) {
+            return res.status(400).json({ error: 'Code required' });
+        }
+
+        if (code.trim().toUpperCase() !== char.access_code) {
             db.prepare(`
                 UPDATE characters
                 SET login_attempts = login_attempts + 1, last_attempt_at = CURRENT_TIMESTAMP

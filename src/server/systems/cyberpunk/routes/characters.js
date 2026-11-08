@@ -9,8 +9,20 @@ const express = require('express');
 const router  = express.Router();
 
 const { authenticate, requireOwnerOrGM, requireGM } = require('../../../middlewares/auth');
-const { emitToCharacterSessions } = require('../../../utils/characters');
+const { emitToCharacterSessions, broadcastCharacterUpdate } = require('../../../utils/characters');
 const { loadFullCharacter } = require('../CharacterController');
+
+const SLUG = 'cyberpunk';
+
+// Caractéristiques du jeu : seules colonnes qu'un avancement peut viser (B-SQL-PARAM)
+const STAT_COLUMNS = ['cran', 'pro', 'chair', 'esprit', 'style', 'synth'];
+
+/** Recharge la fiche, la diffuse aux tables du personnage et la renvoie. */
+function sendCharacter(req, res, id) {
+    const character = loadFullCharacter(req.db, id);
+    broadcastCharacterUpdate(req.app.get('io'), req.db, SLUG, Number(id), character);
+    res.json(character);
+}
 
 // ── PATCH /:id/resources — Mise à jour rapide des ressources (Cred, info, matos, retenue) ──
 
@@ -29,7 +41,7 @@ router.patch('/:id/resources', authenticate, requireOwnerOrGM, (req, res) => {
             cred ?? null, infoTokens ?? null, matosTokens ?? null, retenue ?? null,
             req.params.id
         );
-        res.json(loadFullCharacter(req.db, req.params.id));
+        sendCharacter(req, res, req.params.id);
     } catch (err) {
         console.error('[cyberpunk] PATCH /:id/resources:', err);
         res.status(500).json({ error: err.message });
@@ -44,58 +56,75 @@ router.patch('/:id/xp', authenticate, requireOwnerOrGM, (req, res) => {
         const cid = req.params.id;
         const { xp, baseAdvancements, statKey, statDelta, moveId, action, moveTag } = req.body;
 
-        // Mise à jour XP brut et compteur avancements
-        if (xp !== undefined || baseAdvancements !== undefined) {
-            db.prepare(`
-                UPDATE characters SET
-                    xp                = COALESCE(?, xp),
-                    base_advancements = COALESCE(?, base_advancements),
-                    updated_at        = CURRENT_TIMESTAMP
-                WHERE id = ?
-            `).run(xp ?? null, baseAdvancements ?? null, cid);
-        }
-
-        // Avancement stat : validation des plafonds
-        if (statKey && statDelta) {
+        // ── Validation de l'avancement de stat, avant toute écriture ──
+        // Dès qu'un des deux champs est fourni, la paire entière est validée
+        let statUpdate = null;
+        if (statKey != null || statDelta != null) {
+            if (!STAT_COLUMNS.includes(statKey)) {
+                return res.status(400).json({ error: `Caractéristique inconnue : ${statKey}` });
+            }
+            if (!Number.isInteger(statDelta) || statDelta === 0) {
+                return res.status(400).json({ error: 'statDelta doit être un entier non nul' });
+            }
             const char = db.prepare('SELECT * FROM characters WHERE id = ?').get(cid);
-            const currentVal = char[statKey] ?? 0;
-            const newVal     = currentVal + statDelta;
-            const maxStat    = (char.base_advancements ?? 0) >= 5 ? 3 : 2;
+            if (!char) return res.status(404).json({ error: 'Personnage introuvable' });
+            const newVal  = (char[statKey] ?? 0) + statDelta;
+            // Plafond calculé sur le compteur d'avancements après cet envoi
+            const advancements = baseAdvancements ?? char.base_advancements ?? 0;
+            const maxStat = advancements >= 5 ? 3 : 2;
 
             if (newVal > maxStat) {
-                return res.status(400).json({ error: `Stat plafonnée à +${maxStat} (${char.base_advancements < 5 ? '5 avancements requis pour +3' : 'maximum absolu'})` });
+                return res.status(400).json({ error: `Stat plafonnée à +${maxStat} (${advancements < 5 ? '5 avancements requis pour +3' : 'maximum absolu'})` });
             }
             if (newVal < -2) {
                 return res.status(400).json({ error: 'Stat minimum : -2' });
             }
-
-            db.prepare(`UPDATE characters SET ${statKey} = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?`).run(newVal, cid);
+            statUpdate = { column: statKey, value: newVal };
         }
 
-        // Avancement move : ajout ou retrait
-        if (moveId && action) {
-            if (action === 'add') {
-                db.prepare('INSERT OR IGNORE INTO character_moves (character_id, move_id) VALUES (?, ?)').run(cid, moveId);
-                // Tag verrouillé posé par la manœuvre (spec_cyberpunk.md §9.8) : sur le
-                // personnage, ou sur sa console (implant ou objet de CE personnage)
-                if (moveTag?.tag_text?.trim()) {
-                    const owners = { character: null, cyberware: 'character_cyberware', item: 'character_items' };
-                    let entityType = owners[moveTag.entityType] !== undefined ? moveTag.entityType : 'character';
-                    let entityId = Number(cid);
-                    if (owners[entityType]) {
-                        const own = db.prepare(`SELECT id FROM ${owners[entityType]} WHERE id = ? AND character_id = ?`).get(moveTag.entityId, cid);
-                        if (own) entityId = own.id; else entityType = 'character';
-                    }
-                    const variant = ['positive', 'negative', 'neutral'].includes(moveTag.tag_variant) ? moveTag.tag_variant : 'neutral';
-                    db.prepare('INSERT INTO tags (entity_type, entity_id, tag_text, tag_variant, locked) VALUES (?, ?, ?, ?, 1)')
-                        .run(entityType, entityId, moveTag.tag_text.trim(), variant);
-                }
-            } else if (action === 'remove') {
-                db.prepare('DELETE FROM character_moves WHERE character_id = ? AND move_id = ?').run(cid, moveId);
+        // ── Écritures, en une transaction (B-TX) ──
+        db.transaction(() => {
+            // Mise à jour XP brut et compteur avancements
+            if (xp !== undefined || baseAdvancements !== undefined) {
+                db.prepare(`
+                    UPDATE characters SET
+                        xp                = COALESCE(?, xp),
+                        base_advancements = COALESCE(?, base_advancements),
+                        updated_at        = CURRENT_TIMESTAMP
+                    WHERE id = ?
+                `).run(xp ?? null, baseAdvancements ?? null, cid);
             }
-        }
 
-        res.json(loadFullCharacter(db, cid));
+            // Avancement stat (colonne issue de STAT_COLUMNS)
+            if (statUpdate) {
+                db.prepare(`UPDATE characters SET ${statUpdate.column} = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?`).run(statUpdate.value, cid);
+            }
+
+            // Avancement move : ajout ou retrait
+            if (moveId && action) {
+                if (action === 'add') {
+                    db.prepare('INSERT OR IGNORE INTO character_moves (character_id, move_id) VALUES (?, ?)').run(cid, moveId);
+                    // Tag verrouillé posé par la manœuvre (spec_cyberpunk.md §9.8) : sur le
+                    // personnage, ou sur sa console (implant ou objet de CE personnage)
+                    if (moveTag?.tag_text?.trim()) {
+                        const owners = { character: null, cyberware: 'character_cyberware', item: 'character_items' };
+                        let entityType = owners[moveTag.entityType] !== undefined ? moveTag.entityType : 'character';
+                        let entityId = Number(cid);
+                        if (owners[entityType]) {
+                            const own = db.prepare(`SELECT id FROM ${owners[entityType]} WHERE id = ? AND character_id = ?`).get(moveTag.entityId, cid);
+                            if (own) entityId = own.id; else entityType = 'character';
+                        }
+                        const variant = ['positive', 'negative', 'neutral'].includes(moveTag.tag_variant) ? moveTag.tag_variant : 'neutral';
+                        db.prepare('INSERT INTO tags (entity_type, entity_id, tag_text, tag_variant, locked) VALUES (?, ?, ?, ?, 1)')
+                            .run(entityType, entityId, moveTag.tag_text.trim(), variant);
+                    }
+                } else if (action === 'remove') {
+                    db.prepare('DELETE FROM character_moves WHERE character_id = ? AND move_id = ?').run(cid, moveId);
+                }
+            }
+        })();
+
+        sendCharacter(req, res, cid);
     } catch (err) {
         console.error('[cyberpunk] PATCH /:id/xp:', err);
         res.status(500).json({ error: err.message });

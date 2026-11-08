@@ -10,6 +10,16 @@ const router  = express.Router();
 
 const { authenticate, requireOwnerOrGM } = require('../../../middlewares/auth');
 const { loadFullCharacter } = require('../CharacterController');
+const { broadcastCharacterUpdate } = require('../../../utils/characters');
+
+const SLUG = 'deltagreen';
+
+/** Diffuse la fiche rechargée aux tables du personnage (B-BROADCAST) et la renvoie. */
+function broadcastCharacter(req, id) {
+    const character = loadFullCharacter(req.db, id);
+    broadcastCharacterUpdate(req.app.get('io'), req.db, SLUG, Number(id), character);
+    return character;
+}
 
 // ── POST /:id/san-loss — Appliquer une perte de SAN ──────────────────────────
 // Déduit loss_applied de san_current, recalcule sr, insère dans le log.
@@ -60,6 +70,7 @@ router.post('/:id/san-loss', authenticate, requireOwnerOrGM, (req, res) => {
             );
 
             db.prepare('COMMIT').run();
+            broadcastCharacter(req, charId);
 
             // Date posée par la base (DEFAULT CURRENT_TIMESTAMP) : renvoyée pour
             // que l'historique l'affiche sans attendre un rechargement
@@ -135,7 +146,7 @@ router.post('/:id/evolve', authenticate, requireOwnerOrGM, (req, res) => {
 
             db.prepare('COMMIT').run();
 
-            res.json(loadFullCharacter(db, charId));
+            res.json(broadcastCharacter(req, charId));
         } catch (err) {
             db.prepare('ROLLBACK').run();
             throw err;

@@ -347,3 +347,9 @@ create index idx_session_characters_character_id
 create index idx_session_characters_session_id
     on session_characters (session_id);
 
+-- ── Compte MJ ────────────────────────────────────────────────────────────────
+-- id = -1, comme dans les autres schémas (jamais supprimable).
+
+INSERT OR IGNORE INTO characters (id, access_code, access_url, player_name, prenom, nom)
+VALUES (-1, 'GMCODE', 'this-is-MJ', 'GM', 'GM', 'GM');
+

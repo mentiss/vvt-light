@@ -26,6 +26,27 @@ describe('dice : diffusion d\'un jet', () => {
         ]);
     });
 
+    // Jet posé directement en base : chaque test de suppression a le sien
+    const insertRoll = () => api.db.prepare(
+        "INSERT INTO dice_history (session_id, character_id, notation, roll_result) VALUES (?, ?, '1d6', '{}')"
+    ).run(sessionId, charId).lastInsertRowid;
+
+    it('jet et suppressions sans jeton : refusés (B-AUTH-USER)', async () => {
+        const rollId = insertRoll();
+        expect((await api.request('POST', '/roll', { body: { ...ROLL, character_id: charId } })).status).toBe(401);
+        expect((await api.request('DELETE', `/history/${rollId}`)).status).toBe(401);
+        expect((await api.request('DELETE', `/history/session/${sessionId}`)).status).toBe(401);
+        expect((await api.request('DELETE', '/history')).status).toBe(401);
+        expect(api.db.prepare('SELECT id FROM dice_history WHERE id = ?').get(rollId)).toBeTruthy();
+    });
+
+    it('un joueur connecté supprime un jet', async () => {
+        const rollId = insertRoll();
+        const res = await api.request('DELETE', `/history/${rollId}`, { token: playerToken(charId) });
+        expect(res.status).toBe(200);
+        expect(api.db.prepare('SELECT id FROM dice_history WHERE id = ?').get(rollId)).toBeUndefined();
+    });
+
     it('jet sans table : enregistré, diffusé nulle part', async () => {
         const before = api.emits.length;
         const res = await api.request('POST', '/roll', { token: playerToken(charId), body: { ...ROLL, character_id: charId } });

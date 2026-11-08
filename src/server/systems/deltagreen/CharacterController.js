@@ -222,7 +222,7 @@ function saveFullCharacter(db, id, data) {
                 employer             = COALESCE(@employer,            employer),
                 nationality          = COALESCE(@nationality,         nationality),
                 sexe                 = COALESCE(@sexe,                sexe),
-                age                  = @age,
+                age                  = COALESCE(@age, age),
                 birth_date           = COALESCE(@birthDate,           birth_date),
                 education            = COALESCE(@education,           education),
                 physical_description = COALESCE(@physicalDescription, physical_description),

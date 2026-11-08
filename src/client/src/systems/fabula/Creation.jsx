@@ -380,6 +380,8 @@ const Creation = ({ darkMode, onToggleDarkMode }) => {
                 sessionId: null,
                 label: 'Économies de départ', rollType: 'fabula_economie',
                 systemData: { type: 'economie' },
+                // Création publique, sans jeton ni personnage : jet hors historique
+                persistHistory: false,
             };
             const notation = fabulaConfig.dice.buildNotation(ctx);
             const result = await roll(notation, ctx, fabulaConfig.dice);

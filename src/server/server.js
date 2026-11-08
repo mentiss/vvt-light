@@ -46,8 +46,11 @@ app.use(cors());
 app.use(bodyParser.json({ limit: '20mb' }));
 app.use(bodyParser.urlencoded({ extended: true, limit: '20mb' }));
 app.use(cookieParser());
+// Codes et adresses d'accès masqués dans le log (B-LOG) : /characters/by-code/*** …
+// Insensible à la casse, comme le routage d'Express (/BY-CODE/… atteint la même route)
+const maskAccessPath = (p) => p.replace(/\/(by-code|by-url)\/[^/]+/gi, '/$1/***');
 app.use((req, res, next) => {
-    console.log(`${new Date().toISOString()} - ${req.method} ${req.path}`);
+    console.log(`${new Date().toISOString()} - ${req.method} ${maskAccessPath(req.path)}`);
     next();
 });
 

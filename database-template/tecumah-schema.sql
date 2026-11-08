@@ -223,17 +223,20 @@ CREATE INDEX IF NOT EXISTS idx_dice_history_character_id ON dice_history(charact
 CREATE INDEX IF NOT EXISTS idx_dice_history_session_id   ON dice_history(session_id);
 CREATE INDEX IF NOT EXISTS idx_dice_history_created_at   ON dice_history(created_at DESC);
 
+-- Format de base.sql (la base en service a été migrée : 19032026_make_tecumah_journal_ok.sql)
 CREATE TABLE IF NOT EXISTS character_journal (
     id           INTEGER PRIMARY KEY AUTOINCREMENT,
     character_id INTEGER NOT NULL,
     session_id   INTEGER,
-    title        TEXT DEFAULT '',
-    content      TEXT DEFAULT '',
-    is_public    INTEGER DEFAULT 0,
+    type         TEXT NOT NULL DEFAULT 'note',  -- 'note', 'gm_message', 'gm_item', 'gm_image'
+    title        TEXT,
+    body         TEXT,
+    metadata     TEXT,
+    is_read      BOOLEAN DEFAULT 0,
     created_at   DATETIME DEFAULT CURRENT_TIMESTAMP,
     updated_at   DATETIME DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (character_id) REFERENCES characters(id) ON DELETE CASCADE,
-    FOREIGN KEY (session_id) REFERENCES game_sessions(id) ON DELETE CASCADE
+    FOREIGN KEY (session_id) REFERENCES game_sessions(id) ON DELETE SET NULL
 );
 
 CREATE INDEX IF NOT EXISTS idx_journal_character_id ON character_journal(character_id);

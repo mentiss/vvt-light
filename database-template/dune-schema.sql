@@ -130,6 +130,8 @@ CREATE TABLE IF NOT EXISTS game_sessions (
                                              name        TEXT NOT NULL,
                                              description TEXT DEFAULT '',
                                              is_active   INTEGER DEFAULT 0,
+                                             date        DATETIME,
+                                             notes       TEXT,
                                              created_at  DATETIME DEFAULT CURRENT_TIMESTAMP,
                                              updated_at  DATETIME DEFAULT CURRENT_TIMESTAMP
 );
@@ -194,15 +196,24 @@ CREATE INDEX IF NOT EXISTS idx_resources_session_id ON session_resources(session
 -- ============================================
 -- HISTORIQUE DES DÉS
 -- ============================================
+-- Colonnes de base.sql (route partagée /dice). character_id en SET NULL :
+-- écart documenté, celui des bases en service (code-rules/back.md, B-FK).
 
 CREATE TABLE IF NOT EXISTS dice_history (
                                             id              INTEGER PRIMARY KEY AUTOINCREMENT,
                                             session_id      INTEGER,
                                             character_id    INTEGER,
                                             roll_type       TEXT,
-                                            dice_notation   TEXT,
-                                            result          TEXT,
-                                            details         TEXT,
+                                            notation        TEXT,
+                                            roll_definition TEXT,
+                                            roll_result     TEXT,
+                                            roll_target     TEXT,
+                                            pool            INTEGER,
+                                            threshold       INTEGER,
+                                            results         TEXT,
+                                            successes       INTEGER,
+                                            saga_spent      INTEGER DEFAULT 0,
+                                            saga_recovered  INTEGER DEFAULT 0,
                                             created_at      DATETIME DEFAULT CURRENT_TIMESTAMP,
                                             FOREIGN KEY (session_id)   REFERENCES game_sessions(id) ON DELETE SET NULL,
                                             FOREIGN KEY (character_id) REFERENCES characters(id)    ON DELETE SET NULL

@@ -127,7 +127,7 @@ CREATE TABLE IF NOT EXISTS character_journal (
                                                  session_id   INTEGER          REFERENCES game_sessions(id) ON DELETE SET NULL,
                                                  type         TEXT    DEFAULT 'note',
                                                  title        TEXT    DEFAULT '',
-                                                 body         TEXT    NOT NULL DEFAULT '',
+                                                 body         TEXT    DEFAULT '',
                                                  metadata     TEXT    DEFAULT '{}',
                                                  is_read      INTEGER DEFAULT 0,
                                                  created_at   DATETIME DEFAULT CURRENT_TIMESTAMP,

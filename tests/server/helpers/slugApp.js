@@ -38,9 +38,11 @@ export const gmToken     = () => generateJWT({ characterId: -1, isGM: true });
  * Démarre l'app de test d'un slug sur un port libre.
  * @param {string} slug
  * @param {string} [routeName]  routeur de systems/:slug/routes (défaut : characters)
- * @param {{ shared?: boolean }} [options]  shared : route partagée de src/server/routes (ex. board)
+ * @param {{ shared?: boolean, router?: import('express').Router }} [options]
+ *   shared : route partagée de src/server/routes (ex. board) ;
+ *   router : routeur fourni tel quel (ex. routes/auth.js, monté hors du Loader)
  */
-export async function startSlugApp(slug, routeName = 'characters', { shared = false } = {}) {
+export async function startSlugApp(slug, routeName = 'characters', { shared = false, router = null } = {}) {
     listSlugs();
     const config = Loader.getSystem(slug);
     const db = new Database(':memory:');
@@ -56,7 +58,7 @@ export async function startSlugApp(slug, routeName = 'characters', { shared = fa
     };
 
     // /characters : même pile que server.js (route du slug s'il en a une, puis route commune)
-    const routers = routeName === 'characters'
+    const routers = router ? [router] : routeName === 'characters'
         ? Loader.getCharacterRouters(slug)
         : [shared ? Loader.getSharedRoute(routeName) : Loader.getSystemRoute(slug, routeName)];
     const app = express();

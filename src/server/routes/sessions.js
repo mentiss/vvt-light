@@ -151,12 +151,24 @@ router.put('/:id', authenticate, requireGM, (req, res) => {
         const { name, date, notes } = req.body;
         if (!req.db.prepare('SELECT id FROM game_sessions WHERE id = ?').get(req.params.id))
             return res.status(404).json({ error: 'Session not found' });
+        // Nom obligatoire : absent, il est gardé ; fourni vide, il est refusé
+        if (name !== undefined && !String(name ?? '').trim())
+            return res.status(400).json({ error: 'Session name is required' });
 
+        // Champs absents conservés (B-COALESCE) ; des notes vidées ('') s'enregistrent
         req.db.prepare(`
             UPDATE game_sessions
-            SET name = ?, date = ?, notes = ?, updated_at = CURRENT_TIMESTAMP
+            SET name  = COALESCE(?, name),
+                date  = COALESCE(?, date),
+                notes = COALESCE(?, notes),
+                updated_at = CURRENT_TIMESTAMP
             WHERE id = ?
-        `).run(name || null, date || null, notes || null, req.params.id);
+        `).run(
+            name !== undefined ? String(name).trim() : null,
+            date ?? null,
+            notes ?? null,
+            req.params.id
+        );
 
         res.json(loadSessionWithCharacters(req.db, req.params.id));
     } catch (error) {
