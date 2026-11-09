@@ -6,6 +6,7 @@
 import React, { useState } from 'react';
 import { useFetch }  from '../../../../../hooks/useFetch.js';
 import { useSystem } from '../../../../../hooks/useSystem.js';
+import Modal         from '../../../../../components/ui/Modal.jsx';
 
 const CATEGORIES = [
     { value: 'misc',          label: 'Objet'       },
@@ -51,21 +52,8 @@ const SendItemModal = ({ characterId, characterName, onClose }) => {
     };
 
     return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4"
-             onClick={e => { if (e.target === e.currentTarget) onClose(); }}>
-            <div className="w-full max-w-sm rounded-xl shadow-2xl overflow-hidden"
-                 style={{ background: 'var(--color-surface)', border: '2px solid var(--color-accent)' }}>
-
-                {/* Header */}
-                <div className="px-4 py-3 flex items-center justify-between"
-                     style={{ background: 'var(--color-surface-alt)', borderBottom: '1px solid var(--color-border)' }}>
-                    <span style={{ fontWeight: 700, color: 'var(--color-accent)', fontSize: '0.9rem' }}>
-                        🎁 Envoyer un item → {characterName}
-                    </span>
-                    <button onClick={onClose} style={{ color: 'var(--color-text-muted)', fontSize: '1.1rem' }}>✕</button>
-                </div>
-
-                <div className="p-4 flex flex-col gap-3">
+        <Modal title={`Envoyer un item → ${characterName}`} size="sm" onClose={onClose}>
+                <div className="flex flex-col gap-3">
                     {sent ? (
                         <div className="text-center py-4" style={{ color: 'var(--color-success)', fontWeight: 700 }}>
                             ✓ Item envoyé !
@@ -119,8 +107,7 @@ const SendItemModal = ({ characterId, characterName, onClose }) => {
                         </>
                     )}
                 </div>
-            </div>
-        </div>
+        </Modal>
     );
 };
 

@@ -10,6 +10,7 @@ Une ligne par relecture croisée (`/relecture`, `documentations/spec_relecture.m
 | 2026-11-08 | Nettoyage du code mort de l'audit | non relu (quota) | — | — |
 | 2026-11-08 | Vileborn : défis, lot A | non relu (quota) | — | — |
 | 2026-11-08 | Vileborn : défis, lot B (versement des fiches) | non relu (quota) | — | — |
+| 2026-11-08 | Modales des slugs vers `Modal` (`spec_ui_modales.md` §12) | — | — | 0 / 0 |
 
 ## Décompte par identifiant
 

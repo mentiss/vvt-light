@@ -11,6 +11,7 @@ import { roll }                         from '../../../../tools/diceEngine.js';
 import { useSystem }                    from '../../../../hooks/useSystem.js';
 import {useFetch}                         from '../../../../hooks/useFetch.js';
 import deltgreenConfig, { SKILL_BY_KEY } from '../../config.jsx';
+import Modal                            from '../../../../components/ui/Modal.jsx';
 
 const EvolveModal = ({ character, onSubmit, onClose }) => {
     const { apiBase }   = useSystem();
@@ -74,19 +75,30 @@ const EvolveModal = ({ character, onSubmit, onClose }) => {
 
     const totalEligible = failedSkills.length + failedLangs.length;
 
+    const footer = (
+        <>
+            {!done && totalEligible > 0 && (
+                <button onClick={handleRollAll} disabled={rolling}
+                        className="px-4 py-2 bg-success text-white text-xs font-mono uppercase tracking-wider disabled:opacity-40 hover:opacity-90">
+                    {rolling ? 'Lancer…' : 'Lancer les D4'}
+                </button>
+            )}
+            {done && (
+                <button onClick={() => onSubmit(results)}
+                        className="px-4 py-2 bg-success text-white text-xs font-mono uppercase tracking-wider hover:opacity-90">
+                    Appliquer
+                </button>
+            )}
+            <button onClick={onClose}
+                    className="px-4 py-2 border border-default text-muted text-xs font-mono uppercase tracking-wider hover:text-default">
+                Annuler
+            </button>
+        </>
+    );
+
     return (
-        <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4">
-            <div className="bg-default border border-default shadow-xl max-w-md w-full max-h-[90vh] flex flex-col"
-                 style={{ fontFamily: 'var(--dg-font-body)' }}>
-
-                <div className="dg-header px-4 py-3 flex items-center justify-between">
-                    <h2 className="text-sm font-black uppercase tracking-widest text-white">
-                        ÉVOLUTION POST-SESSION
-                    </h2>
-                    <button onClick={onClose} className="text-gray-400 hover:text-white">✕</button>
-                </div>
-
-                <div className="flex-1 overflow-y-auto p-4 space-y-3">
+        <Modal title="Évolution post-session" onClose={onClose} closeOnBackdrop={false} footer={footer}>
+                <div className="space-y-3">
                     {totalEligible === 0 ? (
                         <p className="text-sm text-muted font-mono italic">
                             Aucune compétence n'a de case d'échec cochée.
@@ -122,27 +134,7 @@ const EvolveModal = ({ character, onSubmit, onClose }) => {
                         </>
                     )}
                 </div>
-
-                <div className="border-t border-default p-3 flex gap-2 justify-end">
-                    {!done && totalEligible > 0 && (
-                        <button onClick={handleRollAll} disabled={rolling}
-                                className="px-4 py-2 bg-success text-white text-xs font-mono uppercase tracking-wider disabled:opacity-40 hover:opacity-90">
-                            {rolling ? 'Lancer…' : 'Lancer les D4'}
-                        </button>
-                    )}
-                    {done && (
-                        <button onClick={() => onSubmit(results)}
-                                className="px-4 py-2 bg-success text-white text-xs font-mono uppercase tracking-wider hover:opacity-90">
-                            Appliquer
-                        </button>
-                    )}
-                    <button onClick={onClose}
-                            className="px-4 py-2 border border-default text-muted text-xs font-mono uppercase tracking-wider hover:text-default">
-                        Annuler
-                    </button>
-                </div>
-            </div>
-        </div>
+        </Modal>
     );
 };
 

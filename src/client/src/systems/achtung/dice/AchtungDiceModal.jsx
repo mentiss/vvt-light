@@ -6,6 +6,7 @@ import { useSocket }        from '../../../context/SocketContext.jsx';
 import { useFetch }         from '../../../hooks/useFetch.js';
 import { useSystem }        from '../../../hooks/useSystem.js';
 import { useSession }       from '../../../context/SessionContext.jsx';
+import Modal                from '../../../components/ui/Modal.jsx';
 import achtungConfig, {
     ATTRIBUTES, SKILLS, getBonusDamage, EXTRA_DIE_COST, ATTR_LABEL, SALVO_LABELS, UNARMED_WEAPON,
 } from '../config.jsx';
@@ -456,24 +457,14 @@ const AchtungDiceModal = ({
 
     // ─────────────────────────────────────────────────────────────────────────
     return (
-        <div className="ac-modal-overlay" onClick={onClose}>
-            <div className="ac-modal" style={{ maxWidth: 460 }} onClick={e => e.stopPropagation()}>
-
-                {/* En-tête */}
-                <div className="flex items-center justify-between mb-4">
-                    <div>
-                        <div className="ac-modal-title mb-0">
-                            {step <= 3 ? '🎲 Jet de compétence' : step === 4 ? '⚄ Jet de dommages' : '⚄ Résultat dommages'}
-                        </div>
-                        {step <= 2 && target > 0 && (
-                            <div className="ac-text-muted" style={{ fontSize: '0.7rem' }}>
-                                Cible : {target} — {nbDice}d20
-                                {fortunePreRoll > 0 && ` (${fortunePreRoll} forcé${fortunePreRoll > 1 ? 's' : ''} à 1)`}
-                            </div>
-                        )}
-                    </div>
-                    <button onClick={onClose} className="ac-btn ac-btn-ghost">✕</button>
-                </div>
+        <Modal
+            title={step <= 3 ? 'Jet de compétence' : step === 4 ? 'Jet de dommages' : 'Résultat dommages'}
+            subtitle={step <= 2 && target > 0
+                ? `Cible : ${target} — ${nbDice}d20${fortunePreRoll > 0 ? ` (${fortunePreRoll} forcé${fortunePreRoll > 1 ? 's' : ''} à 1)` : ''}`
+                : undefined}
+            className="ac-dice-modal"
+            onClose={onClose}
+        >
 
                 {error && <div className="mb-3 px-3 py-2 rounded text-sm bg-danger" style={{ color: 'var(--ac-on-color)' }}>{error}</div>}
 
@@ -891,8 +882,7 @@ const AchtungDiceModal = ({
                         <button onClick={onClose} className="ac-btn ac-btn-primary w-full">Fermer</button>
                     </div>
                 )}
-            </div>
-        </div>
+        </Modal>
     );
 };
 

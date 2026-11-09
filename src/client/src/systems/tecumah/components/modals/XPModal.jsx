@@ -8,6 +8,7 @@ import {
     SKILLS, ATTRIBUTS, ATTRIBUT_LABELS, BACKGROUNDS_BY_ID,
     pipsToNotation, getCost,
 } from '../../config.jsx';
+import Modal from '../../../../components/ui/Modal.jsx';
 
 const TABS = [
     { id: 'skills',      label: 'Compétences' },
@@ -219,31 +220,45 @@ const XPModal = ({ character, onUpdate, onClose }) => {
         onClose();
     };
 
-    return (
-        <div
-            className="fixed inset-0 flex items-center justify-center z-50"
-            style={{ background: 'rgba(0,0,0,0.6)' }}
-            onClick={e => { if (e.target === e.currentTarget) onClose(); }}
-        >
-            <div
-                className="rounded-xl shadow-2xl w-full max-w-lg max-h-[85vh] flex flex-col"
-                style={{ background: 'var(--color-bg)', border: '2px solid var(--color-border)' }}
-            >
-                {/* Header */}
-                <div className="flex items-center justify-between px-5 py-4" style={{ borderBottom: '1px solid var(--color-border)' }}>
-                    <div>
-                        <h2 style={{ fontWeight: 700, color: 'var(--color-primary)', fontSize: '1.1rem' }}>
-                            Dépenser des PP
-                        </h2>
-                        <p style={{ fontSize: '0.8rem', color: 'var(--color-text-muted)' }}>
-                            PP disponibles : <strong style={{ color: 'var(--color-text)' }}>{pp}</strong>
-                        </p>
-                    </div>
-                    <button onClick={onClose} style={{ color: 'var(--color-text-muted)', fontSize: '1.2rem' }}>✕</button>
-                </div>
+    // Confirmation de l'achat choisi, dans le pied de la fenêtre
+    const footer = pending && (
+        <div className="w-full flex items-center justify-between gap-3">
+            <div>
+                <p style={{ fontWeight: 600, fontSize: '0.875rem', color: 'var(--color-text)' }}>
+                    {pending.label}
+                </p>
+                <p style={{ fontSize: '0.8rem', color: 'var(--color-text-muted)' }}>
+                    Coût : {pending.cost} PP (reste : {pp - pending.cost})
+                </p>
+            </div>
+            <div className="flex gap-2">
+                <button
+                    onClick={() => setPending(null)}
+                    className="px-3 py-2 rounded text-sm"
+                    style={{ background: 'var(--color-surface-alt)', color: 'var(--color-text-muted)' }}
+                >
+                    Annuler
+                </button>
+                <button
+                    onClick={confirm}
+                    disabled={!canAfford(pending.cost)}
+                    className="px-4 py-2 rounded text-sm"
+                    style={{
+                        background: canAfford(pending.cost) ? 'var(--color-accent)' : 'var(--color-border)',
+                        color:      canAfford(pending.cost) ? 'var(--color-bg)' : 'var(--color-text-muted)',
+                        fontWeight: 700,
+                    }}
+                >
+                    Confirmer
+                </button>
+            </div>
+        </div>
+    );
 
+    return (
+        <Modal title="Dépenser des PP" subtitle={`PP disponibles : ${pp}`} expandable onClose={onClose} footer={footer}>
                 {/* Tabs */}
-                <div className="flex border-b" style={{ borderColor: 'var(--color-border)' }}>
+                <div className="flex border-b mb-4" style={{ borderColor: 'var(--color-border)' }}>
                     {TABS.map(t => (
                         <button
                             key={t.id}
@@ -261,51 +276,10 @@ const XPModal = ({ character, onUpdate, onClose }) => {
                 </div>
 
                 {/* Contenu */}
-                <div className="overflow-y-auto flex-1 p-4">
-                    {tab === 'skills'      && <SkillsTab character={character} canAfford={canAfford} onSelect={setPending} />}
-                    {tab === 'attrs'       && <AttrsTab character={character} canAfford={canAfford} onSelect={setPending} />}
-                    {tab === 'backgrounds' && <BackgroundsTab character={character} canAfford={canAfford} onSelect={setPending} />}
-                </div>
-
-                {/* Confirmation */}
-                {pending && (
-                    <div
-                        className="px-5 py-4 flex items-center justify-between gap-3"
-                        style={{ borderTop: '1px solid var(--color-border)', background: 'var(--color-surface)' }}
-                    >
-                        <div>
-                            <p style={{ fontWeight: 600, fontSize: '0.875rem', color: 'var(--color-text)' }}>
-                                {pending.label}
-                            </p>
-                            <p style={{ fontSize: '0.8rem', color: 'var(--color-text-muted)' }}>
-                                Coût : {pending.cost} PP (reste : {pp - pending.cost})
-                            </p>
-                        </div>
-                        <div className="flex gap-2">
-                            <button
-                                onClick={() => setPending(null)}
-                                className="px-3 py-2 rounded text-sm"
-                                style={{ background: 'var(--color-surface-alt)', color: 'var(--color-text-muted)' }}
-                            >
-                                Annuler
-                            </button>
-                            <button
-                                onClick={confirm}
-                                disabled={!canAfford(pending.cost)}
-                                className="px-4 py-2 rounded text-sm"
-                                style={{
-                                    background: canAfford(pending.cost) ? 'var(--color-accent)' : 'var(--color-border)',
-                                    color:      canAfford(pending.cost) ? 'var(--color-bg)' : 'var(--color-text-muted)',
-                                    fontWeight: 700,
-                                }}
-                            >
-                                Confirmer
-                            </button>
-                        </div>
-                    </div>
-                )}
-            </div>
-        </div>
+                {tab === 'skills'      && <SkillsTab character={character} canAfford={canAfford} onSelect={setPending} />}
+                {tab === 'attrs'       && <AttrsTab character={character} canAfford={canAfford} onSelect={setPending} />}
+                {tab === 'backgrounds' && <BackgroundsTab character={character} canAfford={canAfford} onSelect={setPending} />}
+        </Modal>
     );
 };
 

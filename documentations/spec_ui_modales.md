@@ -211,3 +211,64 @@ Planche : `documentations/refonte_plateforme/UIkit_modales_slugs.html` (modale t
 | Achtung | Special Elite (`ac-font-title`), Oswald pour les petits libellés (`ac-label`), grain de `ac-card-alt`, rouge du tampon de la marque | Réquisition papier WWII : feuille ivoire le jour, papier carbone à encre claire la nuit (ajouté le 2026-10-25, la version unique jour et nuit était une erreur), double cadre imprimé, pli, texte tapé, boutons à l'encre (contour), options entourées, lignes de registre cochées, ligne « Visa » dans le pied |
 | Delta Green | Bandeau `dg-header`, `dg-field-input`, `dg-section-label`, `dg-stamp` (bouton de danger, étiquettes) | Agrafe et tampon « Confidentiel » en filigrane, double filet de pied, pastilles en cases ☐ / ☒, ligne choisie au surligneur, fenêtres qui suivent la dégradation de la fiche (paliers 3 et 4) |
 | Dune | DuneRise, or impérial, épice, poussière, ocre, `dune-label` (retour du MJ : la première version, calquée sur `dune-card`, était trop ronde et sans univers) | Arrakis : fenêtre monolithique à angles vifs, double filet d'or, grain de sable, horizon au crépuscule et soleil sous l'en-tête, capitales très espacées, boutons et pastilles à pans coupés, champs soulignés d'or |
+
+---
+
+## 12. Fin de la migration des modales des slugs (H-7) — diagnostic du 2026-11-08
+
+### 12.1 Inventaire
+
+Restent en fenêtre maison (fond `fixed` et panneau codés dans le slug) **11 modales dans 4 slugs** :
+
+| Slug | Modale | Lignes | Fond actuel | Habillage `vtt-modal` du slug |
+|---|---|---|---|---|
+| Achtung | `dice/AchtungDiceModal.jsx` (jet de compétence puis dommages) | 898 | `ac-modal-overlay` / `ac-modal` | oui |
+| Achtung | `gm/modals/GMDiceModal.jsx` | 303 | idem | oui |
+| Zone Blanche | `components/modals/ZoneBlancheDiceModal.jsx` | 578 | `zb-modal-backdrop` / `zb-modal` | oui |
+| Zone Blanche | `components/modals/ZoneBlancheGMDiceModal.jsx` | 351 | idem | oui |
+| Delta Green | `components/modals/DiceModal.jsx` | 307 | Tailwind `fixed inset-0 bg-black/60` | oui |
+| Delta Green | `components/modals/SanModal.jsx` | 257 | idem | oui |
+| Delta Green | `components/modals/EvolveModal.jsx` | 148 | idem | oui |
+| Tecumah | `components/modals/TecumahDiceModal.jsx` (3 étapes, fermeture bloquée à l'étape 3) | 548 | Tailwind + `style=` | **non** (exclu de l'habillage, H-1) |
+| Tecumah | `components/modals/XPModal.jsx` | 311 | idem | non |
+| Tecumah | `components/gm/modals/GMDiceModal.jsx` | 254 | idem | non |
+| Tecumah | `components/gm/modals/SendItemModal.jsx` | 139 | idem | non |
+
+Déjà sur les briques : Dune (jets, catalogues, confirmations), Fabula (jet, catalogue, création), Vikings (`VkModal` enveloppe `Modal` dans `HostedModal`), Cyberpunk, et tous les slugs récents. Le **plateau de jet de Vikings** (`VkTray`) n'est pas une modale : choix validé de la refonte (D-11), hors chantier. Noctis attend sa refonte (hors chantier). Aucune confirmation native (`confirm()`) ne reste dans ces slugs.
+
+CSS devenu mort après migration : `.ac-modal-overlay`, `.ac-modal`, `.ac-modal-title` (Achtung), `.zb-modal-*` (Zone Blanche, sauf ce que `.vtt-modal-*` regroupe avec eux, H-5), `.vk-modal-backdrop`, `.vk-modal-header` (Vikings, déjà sans usage).
+
+### 12.2 Principe
+
+Pour chaque modale : le fond, le panneau, l'en-tête (titre, sous-titre, fermeture) et le pied passent par `Modal` ; le **contenu et la logique du jet ne changent pas** (props, étapes, appels au moteur de dés, émissions existantes). Les classes du slug restent dans le corps. Les sélecteurs CSS morts sont retirés ; si `.vtt-modal-*` était regroupé avec eux, le regroupement est gardé sur `.vtt-modal-*` seul.
+
+### 12.3 Questions (toutes les recos validées par le MJ le 2026-11-08)
+
+| # | Question | Reco | Réponse |
+|---|---|---|---|
+| MS-1 | Tecumah n'habille pas `Modal` (exclu en octobre). Ses 4 fenêtres prennent donc le style par défaut de la plateforme (sobre, à ses couleurs). On l'accepte, ou on ajoute un habillage léger dans son `theme.css` ? | **Style par défaut** : le chantier est une migration, pas un habillage ; Tecumah reste hors habillage comme décidé. | OK |
+| MS-2 | Clic sur le fond : aujourd'hui il ferme toutes ces fenêtres, sauf le jet Tecumah à l'étape du résultat. On garde ce comportement ? | **Oui, à l'identique** (`closeOnBackdrop` réglé pour reproduire le comportement actuel, étape 3 de Tecumah comprise). | OK |
+| MS-3 | Les boutons d'action (Lancer, Valider, Annuler) passent-ils dans le pied de `Modal`, toujours visible quand le corps défile ? | **Oui** quand ils sont déjà en bas de la fenêtre ; sinon ils restent où ils sont. | OK |
+| MS-4 | Emojis des titres (🎲, ⚄ dans Achtung, éventuellement ailleurs) : M-4 les exclut des modales génériques. On les retire des titres ? | **Oui**, titres sans emoji ; le contenu du corps n'est pas touché. | OK |
+| MS-5 | Tailles : correspondance avec la plus proche de `Modal` (460 px → `md`, `max-w-2xl` → `lg`…). | **Oui**, sans fenêtre agrandissable sauf si le contenu défile beaucoup (XP Tecumah : `expandable`). | OK |
+| MS-6 | Découpage : un seul lot (4 slugs, un seul commit « Général »), vérification à l'écran de chaque fenêtre par le pilote CDP, jour et nuit. | **Un lot**, ordre Delta Green → Zone Blanche → Achtung → Tecumah (du plus simple au plus lourd). | OK |
+
+### 12.4 Implémentation (2026-11-08)
+
+Les 11 fenêtres passent par `Modal` ; contenu, étapes et appels au moteur de dés inchangés.
+
+| Fichier | Taille | Clic sur le fond | Notes |
+|---|---|---|---|
+| `deltagreen/.../DiceModal.jsx` | `sm` | ne ferme pas | titre = libellé du jet |
+| `deltagreen/.../SanModal.jsx` | `lg` | ne ferme pas | actions dans le pied |
+| `deltagreen/.../EvolveModal.jsx` | `md` | ne ferme pas | actions dans le pied |
+| `zoneblanche/.../ZoneBlancheDiceModal.jsx` | `lg` | ferme | pastille REC en icône, grain (`zb-grain`), actions dans le pied |
+| `zoneblanche/.../ZoneBlancheGMDiceModal.jsx` | `lg` | ferme | jet privé : sous-titre « Privé » (remplace le badge) |
+| `achtung/dice/AchtungDiceModal.jsx` | `md` | ferme | cible en sous-titre ; règles du contenu portées par `ac-dice-modal` |
+| `achtung/gm/modals/GMDiceModal.jsx` | `sm` | ferme | |
+| `tecumah/.../TecumahDiceModal.jsx` | `lg` | ferme, sauf à l'étape 3 | titre selon l'étape (les titres internes sont retirés) |
+| `tecumah/.../XPModal.jsx` | `md`, agrandissable | ferme | PP disponibles en sous-titre, confirmation dans le pied |
+| `tecumah/.../GMDiceModal.jsx` | `sm` | ferme, sauf pendant le jet | |
+| `tecumah/.../SendItemModal.jsx` | `sm` | ferme | |
+
+Écart à MS-2 : les fenêtres de Delta Green ne se fermaient pas au clic sur le fond ; le comportement est gardé à l'identique. CSS retiré : `.ac-modal-overlay`, `.ac-modal`, `.ac-modal-title` (règles du contenu renommées en `.ac-dice-modal …`), `.zb-modal-*`, `.zb-modal-lg`, `.zb-private-badge`, `.vk-modal-backdrop`, `.vk-modal-header` (thème bois et or et pierre peinte). Lint : `TecumahDiceModal.jsx` sort des exceptions F-SHRINK.

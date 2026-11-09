@@ -76,7 +76,6 @@ const LEGACY = {
     'src/systems/tecumah/components/InventoryTab.jsx',
     'src/systems/tecumah/components/gm/GMView.jsx',
     'src/systems/tecumah/components/gm/tabs/TabSession.jsx',
-    'src/systems/tecumah/components/modals/TecumahDiceModal.jsx',
   ],
   'F-THEME-IMPORT': [
     'src/systems/achtung/Creation.jsx',

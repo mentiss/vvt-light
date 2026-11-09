@@ -9,6 +9,7 @@ import {roll, RollError} from "../../../../../tools/diceEngine.js";
 import tecumahConfig, {DIFFICULTY_LEVELS} from "../../../config.jsx";
 import {useFetch} from "../../../../../hooks/useFetch.js";
 import useSystem from "../../../../../hooks/useSystem.js";
+import Modal from '../../../../../components/ui/Modal.jsx';
 
 // Hooks GM inline — pool direct, Wild Die activé, pas de ressource dépensée
 const GM_HOOKS = {
@@ -75,22 +76,9 @@ const GMDiceModal = ({ onClose, sessionId = null }) => {
     }, [rolling, pool, bonusDice, bonusResultat, difficulte, public_, poolFinal, apiBase, fetchWithAuth, sessionId]);
 
     return (
-        <div
-            className="fixed inset-0 flex items-center justify-center z-50"
-            style={{ background: 'rgba(0,0,0,0.6)' }}
-            onClick={e => { if (e.target === e.currentTarget && !rolling) onClose(); }}
-        >
-            <div
-                className="rounded-xl shadow-2xl w-full max-w-sm"
-                style={{ background: 'var(--color-bg)', border: '2px solid var(--color-border)' }}
-            >
-                <div className="px-5 py-4 border-b flex items-center justify-between" style={{ borderColor: 'var(--color-border)' }}>
-                    <h2 style={{ fontWeight: 700, color: 'var(--color-primary)' }}>🎲 Jet MJ</h2>
-                    <button onClick={onClose} style={{ color: 'var(--color-text-muted)', fontSize: '1.2rem' }}>✕</button>
-                </div>
-
+        <Modal title="Jet MJ" size="sm" closeOnBackdrop={!rolling} onClose={onClose}>
                 {!result ? (
-                    <div className="p-5 flex flex-col gap-4">
+                    <div className="flex flex-col gap-4">
                         {/* Pool */}
                         <Row label="Pool de dés">
                             <SpinBox value={pool} min={1} onChange={setPool} />
@@ -162,7 +150,7 @@ const GMDiceModal = ({ onClose, sessionId = null }) => {
                         </button>
                     </div>
                 ) : (
-                    <div className="p-5 flex flex-col gap-4">
+                    <div className="flex flex-col gap-4">
                         {/* Résultat — même affichage que TecumahDiceModal StepResult */}
                         {result.isComplication && (
                             <div className="text-center rounded-lg px-3 py-2" style={{ background: 'rgba(139,0,0,0.15)', border: '1px solid var(--color-danger)' }}>
@@ -217,8 +205,7 @@ const GMDiceModal = ({ onClose, sessionId = null }) => {
                         </div>
                     </div>
                 )}
-            </div>
-        </div>
+        </Modal>
     );
 };
 

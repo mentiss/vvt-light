@@ -431,11 +431,6 @@ textarea.vk-input, textarea.vtt-input { resize: vertical; min-height: 4.5rem; }
 }
 .vk-banner .vk-rune { color: var(--vk-on-primary); font-size: 1.3rem; }
 
-/* ── Modale ─────────────────────────────────────────────────────────── */
-.vk-modal-backdrop { background: rgba(0,0,0,.65); backdrop-filter: blur(2px); }
-/* En-tête : le bouton de fermeture reste à l'écart des coins ornés */
-.vk-modal-header { display: flex; align-items: center; justify-content: space-between; gap: .75rem; padding: 0 30px .6rem 6px; margin-bottom: .8rem; border-bottom: 1px solid var(--vk-border-soft); }
-.vk-light > .vk-modal-header { padding-right: 16px; }
 
 /* ── Modales génériques (components/ui/Modal.jsx, spec_ui_modales.md) ─
    Cadre à coins légers du kit : coins du haut sur le panneau, coins du bas

@@ -19,6 +19,7 @@ import { roll, RollError } from '../../../../tools/diceEngine.js';
 import { useSystem }       from '../../../../hooks/useSystem.js';
 import { useFetch }        from '../../../../hooks/useFetch.js';
 import deltgreenConfig     from '../../config.jsx';
+import Modal               from '../../../../components/ui/Modal.jsx';
 
 // Borne le score effectif entre 1 et 99
 const clampScore = (score) => Math.min(99, Math.max(1, score));
@@ -113,23 +114,7 @@ const DiceModal = ({ ctx, character, sessionId, onClose, onSkillFailed }) => {
 
     // ── Rendu ─────────────────────────────────────────────────────────────────
     return (
-        <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4">
-            <div
-                className="bg-default border border-default shadow-xl max-w-sm w-full"
-                style={{ fontFamily: 'var(--dg-font-body)' }}
-                onClick={e => e.stopPropagation()}
-            >
-                {/* En-tête */}
-                <div className="dg-header px-4 py-3 flex items-center justify-between">
-                    <h2 className="text-sm font-black uppercase tracking-widest text-white truncate">
-                        {ctx.rollLabel ?? 'Jet de dés'}
-                    </h2>
-                    <button
-                        onClick={onClose}
-                        className="text-gray-400 hover:text-white shrink-0 ml-2"
-                    >✕</button>
-                </div>
-
+        <Modal title={ctx.rollLabel ?? 'Jet de dés'} size="sm" onClose={onClose} closeOnBackdrop={false}>
                 {/* ── Étape 1 : modificateur (D100 uniquement) ─────────────── */}
                 {step === 'prepare' && (
                     <div className="p-6 space-y-5">
@@ -300,8 +285,7 @@ const DiceModal = ({ ctx, character, sessionId, onClose, onSkillFailed }) => {
                         </div>
                     </div>
                 )}
-            </div>
-        </div>
+        </Modal>
     );
 };
 

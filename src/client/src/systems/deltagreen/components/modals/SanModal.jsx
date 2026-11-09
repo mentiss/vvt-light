@@ -13,6 +13,7 @@ import { roll, RollError }              from '../../../../tools/diceEngine.js';
 import { useSystem }                    from '../../../../hooks/useSystem.js';
 import {useFetch}                         from '../../../../hooks/useFetch.js';
 import deltgreenConfig, { SAN_SITUATIONS, SAN_CATEGORIES } from '../../config.jsx';
+import Modal                            from '../../../../components/ui/Modal.jsx';
 
 const STEPS = { SELECT: 'select', ROLLING_D100: 'rolling_d100', RESULT: 'result', ROLLING_LOSS: 'rolling_loss', DONE: 'done' };
 
@@ -111,20 +112,48 @@ const SanModal = ({ character, sessionId, onApply, onClose }) => {
     }, [d100Result, situation, character, sessionId, onApply]);
 
     // ─────────────────────────────────────────────────────────────────────────
+    const footer = (
+        <>
+            {step === STEPS.SELECT && (
+                <button
+                    onClick={handleRollD100}
+                    disabled={!situation}
+                    className="px-4 py-2 bg-danger text-white text-xs font-mono uppercase tracking-wider disabled:opacity-40 hover:opacity-90"
+                >
+                    Lancer D100
+                </button>
+            )}
+
+            {step === STEPS.RESULT && (
+                <button
+                    onClick={handleRollLoss}
+                    className="px-4 py-2 bg-danger text-white text-xs font-mono uppercase tracking-wider hover:opacity-90"
+                >
+                    Appliquer la perte
+                </button>
+            )}
+
+            {(step === STEPS.ROLLING_D100 || step === STEPS.ROLLING_LOSS) && (
+                <span className="text-xs text-muted font-mono animate-pulse py-2">Lancer en cours…</span>
+            )}
+
+            {step === STEPS.DONE && (
+                <button onClick={onClose}
+                        className="px-4 py-2 bg-surface border border-default text-xs font-mono uppercase tracking-wider hover:border-accent">
+                    Fermer
+                </button>
+            )}
+
+            <button onClick={onClose}
+                    className="px-4 py-2 border border-default text-muted text-xs font-mono uppercase tracking-wider hover:text-default">
+                Annuler
+            </button>
+        </>
+    );
+
     return (
-        <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4">
-            <div className="bg-default border border-default shadow-xl max-w-lg w-full max-h-[90vh] flex flex-col"
-                 style={{ fontFamily: 'var(--dg-font-body)' }}>
-
-                {/* En-tête */}
-                <div className="dg-header px-4 py-3 flex items-center justify-between">
-                    <h2 className="text-sm font-black uppercase tracking-widest text-white">
-                        JET DE SANTÉ MENTALE
-                    </h2>
-                    <button onClick={onClose} className="text-gray-400 hover:text-white">✕</button>
-                </div>
-
-                <div className="flex-1 overflow-y-auto p-4 space-y-4">
+        <Modal title="Jet de santé mentale" size="lg" onClose={onClose} closeOnBackdrop={false} footer={footer}>
+                <div className="space-y-4">
 
                     {/* SAN actuelle */}
                     <div className="flex items-center gap-4 border border-default p-3 bg-surface">
@@ -212,46 +241,7 @@ const SanModal = ({ character, sessionId, onApply, onClose }) => {
 
                     {error && <p className="text-danger text-xs font-mono">{error}</p>}
                 </div>
-
-                {/* Pied — actions */}
-                <div className="border-t border-default p-3 flex gap-2 justify-end">
-                    {step === STEPS.SELECT && (
-                        <button
-                            onClick={handleRollD100}
-                            disabled={!situation}
-                            className="px-4 py-2 bg-danger text-white text-xs font-mono uppercase tracking-wider disabled:opacity-40 hover:opacity-90"
-                        >
-                            Lancer D100
-                        </button>
-                    )}
-
-                    {step === STEPS.RESULT && (
-                        <button
-                            onClick={handleRollLoss}
-                            className="px-4 py-2 bg-danger text-white text-xs font-mono uppercase tracking-wider hover:opacity-90"
-                        >
-                            Appliquer la perte
-                        </button>
-                    )}
-
-                    {(step === STEPS.ROLLING_D100 || step === STEPS.ROLLING_LOSS) && (
-                        <span className="text-xs text-muted font-mono animate-pulse py-2">Lancer en cours…</span>
-                    )}
-
-                    {step === STEPS.DONE && (
-                        <button onClick={onClose}
-                                className="px-4 py-2 bg-surface border border-default text-xs font-mono uppercase tracking-wider hover:border-accent">
-                            Fermer
-                        </button>
-                    )}
-
-                    <button onClick={onClose}
-                            className="px-4 py-2 border border-default text-muted text-xs font-mono uppercase tracking-wider hover:text-default">
-                        Annuler
-                    </button>
-                </div>
-            </div>
-        </div>
+        </Modal>
     );
 };
 

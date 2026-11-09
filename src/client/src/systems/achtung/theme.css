@@ -1151,40 +1151,16 @@ body::before {
    MODALE DE DÉS (suite)
 ═══════════════════════════════════════════════════════════════════════════ */
 
-.ac-modal-overlay {
-    position:        fixed;
-    inset:           0;
-    background:      rgba(0,0,0,0.75);
-    z-index:         50;
-    display:         flex;
-    align-items:     center;
-    justify-content: center;
-    padding:         1rem;
-}
-
-.ac-modal {
-    background:    var(--ac-surface);
-    border:        2px solid var(--ac-primary);
-    border-top:    5px solid var(--ac-primary);
-    border-radius: var(--ac-radius-lg);
-    padding:       1.25rem;
-    min-width:     320px;
-    max-width:     480px;
-    width:         100%;
-    max-height:    90vh;
-    overflow-y:    auto;
-    box-shadow:    0 8px 32px rgba(0,0,0,0.45);
-}
-
-/* Dans la modale, selected-primary utilise le doré comme selected pour cohérence */
-.ac-modal .ac-select-btn.selected-primary {
+/* Fenêtres de jet (Modal de la plateforme, className ac-dice-modal) :
+   selected-primary utilise le doré comme selected pour cohérence */
+.ac-dice-modal .ac-select-btn.selected-primary {
     background:   var(--ac-secondary);
     border-color: var(--ac-secondary);
     color:        var(--ac-bg);
 }
-.ac-modal .ac-select-btn.selected-primary .ac-label,
-.ac-modal .ac-select-btn.selected-primary .ac-attr-value,
-.ac-modal .ac-select-btn.selected-primary .ac-attr-bonus {
+.ac-dice-modal .ac-select-btn.selected-primary .ac-label,
+.ac-dice-modal .ac-select-btn.selected-primary .ac-attr-value,
+.ac-dice-modal .ac-select-btn.selected-primary .ac-attr-bonus {
     color: var(--ac-bg);
 }
 
@@ -1192,26 +1168,16 @@ body::before {
    Couvre notamment la carte arme (étape 4 jet de dommages) : nom, focus,
    dégâts, salvo, portée — tous héritaient sinon leur couleur d'origine
    (ac-text-muted, text-secondary) peu lisible sur le nouveau fond sable. */
-.ac-modal .ac-select-btn.selected,
-.ac-modal .ac-select-btn.selected .ac-font-title,
-.ac-modal .ac-select-btn.selected .ac-text-muted,
-.ac-modal .ac-select-btn.selected .text-secondary {
+.ac-dice-modal .ac-select-btn.selected,
+.ac-dice-modal .ac-select-btn.selected .ac-font-title,
+.ac-dice-modal .ac-select-btn.selected .ac-text-muted,
+.ac-dice-modal .ac-select-btn.selected .text-secondary {
     color: var(--ac-bg);
 }
 
 /* Dans la modale, la grille d'attributs passe en 3 colonnes pour ne pas déborder */
-.ac-modal .ac-attr-grid {
+.ac-dice-modal .ac-attr-grid {
     grid-template-columns: repeat(3, 1fr);
-}
-
-/* Titre de modale */
-.ac-modal-title {
-    font-family:    var(--ac-font-heading);
-    font-size:      0.9rem;
-    font-weight:    700;
-    letter-spacing: 0.06em;
-    text-transform: uppercase;
-    color:          var(--ac-text);
 }
 
 /* Dés d20 */

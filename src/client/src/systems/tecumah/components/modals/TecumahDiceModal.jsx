@@ -18,8 +18,12 @@ import tecumahConfig, {
     pipsToNotation, pipsToPool, pipsResidual, getBlessureMalus, BLESSURE_LABELS,
 } from '../../config.jsx';
 import DieFace from "../DieFace.jsx";
+import Modal   from '../../../../components/ui/Modal.jsx';
 
 const MAX_PP = 3;
+
+// Titre de la fenêtre selon l'étape
+const STEP_TITLES = { 1: 'Jet de dés', 2: 'Modificateurs', 3: 'Résultat' };
 
 // ─────────────────────────────────────────────────────────────────────────────
 
@@ -134,17 +138,10 @@ const TecumahDiceModal = ({
 
     // ─────────────────────────────────────────────────────────────────────────
     return (
-        <div
-            className="fixed inset-0 flex items-center justify-center z-50"
-            style={{ background: 'rgba(0,0,0,0.6)' }}
-            onClick={e => { if (e.target === e.currentTarget && step !== 3) onClose(); }}
-        >
-            <div
-                className="rounded-xl shadow-2xl w-full max-w-2xl flex flex-col"
-                style={{ background: 'var(--color-bg)', border: '2px solid var(--color-border)', maxHeight: '90vh' }}
-            >
+        // Au résultat (étape 3), le clic sur le fond ne ferme pas (spec_ui_modales.md MS-2)
+        <Modal title={STEP_TITLES[step]} size="lg" closeOnBackdrop={step !== 3} onClose={onClose}>
                 {/* Indicateur étape */}
-                <div className="flex justify-center gap-2 pt-4 px-5">
+                <div className="flex justify-center gap-2 pb-4">
                     {[1, 2, 3].map(s => (
                         <div key={s} style={{
                             width: 8, height: 8, borderRadius: '50%',
@@ -153,7 +150,7 @@ const TecumahDiceModal = ({
                     ))}
                 </div>
 
-                <div className="overflow-y-auto flex-1">
+                <div>
                     {step === 1 && (
                         <Step1
                             character={character}
@@ -195,16 +192,14 @@ const TecumahDiceModal = ({
                         <Step3 result={result} onClose={onClose} />
                     )}
                 </div>
-            </div>
-        </div>
+        </Modal>
     );
 };
 
 // ─── Étape 1 — Sélection ─────────────────────────────────────────────────────
 
 const Step1 = ({ character, attrKey, compKey, onAttrKey, onCompKey, poolLabel, onClose, onNext }) => (
-    <div className="flex flex-col gap-4 p-5">
-        <h2 style={{ fontWeight: 700, color: 'var(--color-primary)', fontSize: '1.1rem' }}>Jet de dés</h2>
+    <div className="flex flex-col gap-4">
 
         {/* Attributs + compétences — même structure que la fiche */}
         <div>
@@ -294,8 +289,7 @@ const Step2 = ({
                    onDifficulte, onBonusDice, onBonusResultat, onDepense, onPpCount,
                    rolling, onBack, onRoll,
                }) => (
-    <div className="flex flex-col gap-4 p-5">
-        <h2 style={{ fontWeight: 700, color: 'var(--color-primary)', fontSize: '1.1rem' }}>Modificateurs</h2>
+    <div className="flex flex-col gap-4">
 
         {/* Malus blessure */}
         {blessureMalus > 0 && (
@@ -445,8 +439,7 @@ const Step3 = ({ result, onClose }) => {
     } = result;
 
     return (
-        <div className="flex flex-col gap-4 p-5">
-            <h2 style={{ fontWeight: 700, color: 'var(--color-primary)', fontSize: '1.1rem' }}>Résultat</h2>
+        <div className="flex flex-col gap-4">
 
             {isComplication && (
                 <div className="rounded-lg px-3 py-2 text-center" style={{ background: 'rgba(139,0,0,0.15)', border: '1px solid var(--color-danger)' }}>
@@ -522,7 +515,7 @@ const SpinInput = ({ value, onChange, signed = false }) => (
     <div className="flex items-center gap-2 mt-1">
         <button
             onClick={() => onChange(value - 1)}
-            className="w-8 h-8 rounded flex items-center justify-center flex-shrink-0"
+            className="w-8 h-8 rounded flex items-center justify-center shrink-0"
             style={{ background: 'var(--color-surface-alt)', border: '1px solid var(--color-border)', color: 'var(--color-text)' }}
         >−</button>
         <input
@@ -534,7 +527,7 @@ const SpinInput = ({ value, onChange, signed = false }) => (
         />
         <button
             onClick={() => onChange(value + 1)}
-            className="w-8 h-8 rounded flex items-center justify-center flex-shrink-0"
+            className="w-8 h-8 rounded flex items-center justify-center shrink-0"
             style={{ background: 'var(--color-surface-alt)', border: '1px solid var(--color-border)', color: 'var(--color-text)' }}
         >+</button>
         <span style={{ fontSize: '0.8rem', color: value > 0 ? 'var(--color-success)' : (value === 0) ? 'var(--color-secondary)' : 'var(--color-danger)', minWidth: 28 }}>

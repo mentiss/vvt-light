@@ -21,6 +21,7 @@ import React, { useState, useCallback } from 'react';
 import { roll, RollError } from '../../../../tools/diceEngine.js';
 import { useFetch }        from '../../../../hooks/useFetch.js';
 import { useSystem }       from '../../../../hooks/useSystem.js';
+import Modal               from '../../../../components/ui/Modal.jsx';
 import zoneblancheConfig, {
     MAX_DES_ACHETES, POOL_BASE, DIFFICULTE_MIN, DIFFICULTE_MAX,
     coutProchainDe, coutCumule,
@@ -149,22 +150,31 @@ const ZoneBlancheGMDiceModal = ({
         setAchatStress(0);
     };
 
+    const footer = !result ? (
+        <>
+            <button type="button" onClick={onClose} className="zb-btn-ghost px-5 py-2.5 rounded-sm zb-display">
+                Annuler
+            </button>
+            <button type="button" onClick={handleRoll} disabled={rolling}
+                    className="zb-btn-accent px-6 py-2.5 rounded-sm zb-display">
+                {rolling ? 'Lancement…' : `Lancer ${poolTotal}d20`}
+            </button>
+        </>
+    ) : (
+        <>
+            <button type="button" onClick={resetForNewRoll} className="zb-btn-ghost px-5 py-2.5 rounded-sm zb-display">
+                Nouveau jet
+            </button>
+            <button type="button" onClick={onClose} className="zb-btn-primary px-6 py-2.5 rounded-sm zb-display">
+                Fermer
+            </button>
+        </>
+    );
+
     return (
-        <div className="zb-modal-backdrop" onClick={onClose}>
-            <div className="zb-modal zb-grain" onClick={e => e.stopPropagation()}>
-
-                <div className="zb-modal-header">
-                    <div className="flex items-center gap-3">
-                        <span className="zb-rec-dot" />
-                        <span className="zb-display text-lg">
-                            {result ? 'Résultat — MJ' : 'Jet du MJ'}
-                        </span>
-                        {!public_ && <span className="zb-private-badge zb-mono">privé</span>}
-                    </div>
-                    <button type="button" onClick={onClose} className="zb-btn-ghost px-3 py-1 rounded-sm">✕</button>
-                </div>
-
-                <div className="zb-modal-body">
+        <Modal title={result ? 'Résultat — MJ' : 'Jet du MJ'} subtitle={public_ ? undefined : 'Privé'}
+               icon={<span className="zb-rec-dot" />} size="lg" className="zb-grain"
+               onClose={onClose} footer={footer}>
 
                     {/* ═══════════ SÉLECTION ═══════════ */}
                     {!result && (
@@ -320,32 +330,7 @@ const ZoneBlancheGMDiceModal = ({
                             {error && <div className="text-sm text-danger">{error}</div>}
                         </div>
                     )}
-                </div>
-
-                <div className="zb-modal-footer">
-                    {!result ? (
-                        <>
-                            <button type="button" onClick={onClose} className="zb-btn-ghost px-5 py-2.5 rounded-sm zb-display">
-                                Annuler
-                            </button>
-                            <button type="button" onClick={handleRoll} disabled={rolling}
-                                    className="zb-btn-accent px-6 py-2.5 rounded-sm zb-display">
-                                {rolling ? 'Lancement…' : `Lancer ${poolTotal}d20`}
-                            </button>
-                        </>
-                    ) : (
-                        <>
-                            <button type="button" onClick={resetForNewRoll} className="zb-btn-ghost px-5 py-2.5 rounded-sm zb-display">
-                                Nouveau jet
-                            </button>
-                            <button type="button" onClick={onClose} className="zb-btn-primary px-6 py-2.5 rounded-sm zb-display">
-                                Fermer
-                            </button>
-                        </>
-                    )}
-                </div>
-            </div>
-        </div>
+        </Modal>
     );
 };
 

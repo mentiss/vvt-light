@@ -356,9 +356,7 @@ html[data-vk-skin="pierre"] .vk-banner .vk-rune { color: #1c1006; }
 html[data-vk-skin="pierre"] .vk-calc tr.is-total td { color: var(--color-primary); }
 
 /* ── Fenêtres du slug (VkModal) et de la plateforme (spec_ui_modales.md) ── */
-html[data-vk-skin="pierre"] :is(.vk-modal-backdrop, .vtt-modal-backdrop) { background: rgba(10, 8, 6, .55); }
-html[data-vk-skin="pierre"] .vk-modal-backdrop .vk-heavy { --vk-slab-fill: var(--vk-surface-solid); }   /* opaque */
-html[data-vk-skin="pierre"] .vk-modal-header { padding-right: 6px; }
+html[data-vk-skin="pierre"] .vtt-modal-backdrop { background: rgba(10, 8, 6, .55); }
 /* Fenêtre : même dalle taillée que les cartes (svg .vk-slab-bg ajouté par watchModalSlabs), opaque */
 html[data-vk-skin="pierre"] .vtt-modal-panel {
     isolation: isolate; overflow: visible; border: none; border-radius: 0; background: transparent; box-shadow: none;

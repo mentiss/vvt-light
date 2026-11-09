@@ -18,6 +18,7 @@ import { roll, RollError } from '../../../../tools/diceEngine.js';
 import { useFetch }        from '../../../../hooks/useFetch.js';
 import { useSystem }       from '../../../../hooks/useSystem.js';
 import { countSuccesses } from '../../config.jsx';
+import Modal               from '../../../../components/ui/Modal.jsx';
 
 // ── Hooks dés GM — pas de validation de ressources ───────────────────────────
 // Le GM n'achète pas de dés via Momentum/Threat — pas de beforeRoll restrictif.
@@ -177,14 +178,7 @@ const GMDiceModal = ({ onClose, sessionId }) => {
 
     // ── Rendu ─────────────────────────────────────────────────────────────────
     return (
-        <div className="ac-modal-overlay" onClick={onClose}>
-            <div className="ac-modal" style={{ maxWidth: 380 }} onClick={e => e.stopPropagation()}>
-
-                {/* En-tête */}
-                <div className="flex items-center justify-between mb-4">
-                    <div className="ac-modal-title mb-0">🎲 Jet GM — {nbDice}d20</div>
-                    <button onClick={onClose} className="ac-btn ac-btn-ghost">✕</button>
-                </div>
+        <Modal title={`Jet GM — ${nbDice}d20`} size="sm" className="ac-dice-modal" onClose={onClose}>
 
                 {error && (
                     <div className="mb-3 px-3 py-2 rounded text-sm" style={{ background: 'var(--ac-danger)', color: 'var(--ac-on-color)' }}>
@@ -296,8 +290,7 @@ const GMDiceModal = ({ onClose, sessionId }) => {
                         </div>
                     </div>
                 )}
-            </div>
-        </div>
+        </Modal>
     );
 };
 
