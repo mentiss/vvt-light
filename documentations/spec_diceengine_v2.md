@@ -489,7 +489,7 @@ notre `buildBoxNotation` qui ne généraient que des notations mono-type.
 
 ### Marges : portées par la plateforme
 
-- La carte d'historique (`DiceHistoryList`, commune à l'onglet et au panneau) pose la marge intérieure via la classe habillable `vtt-history-entry` (`index.css`) ; la notification a la sienne (`ToastShell`).
+- La carte d'historique (`DiceHistoryList`, commune à l'onglet et au panneau) pose la marge intérieure via la classe habillable `vtt-history-entry` (`index.css`) ; la notification a la sienne (`ToastShell`). Les cadres sont habillables par le slug, sans style en ligne : carte `vtt-history-card`, son bandeau nom / date `vtt-history-card-meta`, notification `vtt-toast` (`is-accent` pour un message mis en avant).
 - Le rendu du slug (`dice.renderHistoryEntry`) **ne met aucune marge extérieure**. Seul un décor propre au slug garde un espacement interne au décor : bande teintée et filet gauche de Delta Green, bloc encadré `zb-history-entry` de Zone Blanche.
 
 ---

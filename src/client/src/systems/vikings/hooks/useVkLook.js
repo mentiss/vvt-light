@@ -14,7 +14,7 @@
 
 import { useEffect } from 'react';
 import { usePersistedState } from '../../../hooks/usePersistedState.js';
-import { watchModalSlabs } from '../components/ui/VkSlabBg.jsx';
+import { watchPlatformSlabs } from '../components/ui/VkSlabBg.jsx';
 
 export const SKINS  = ['pierre', 'bois'];
 export const NIGHTS = ['aurore', 'foyer'];
@@ -65,7 +65,7 @@ export const useVkLookOnRoot = () => {
             }
         };
     }, [look.skin, look.night, look.anim]);
-    // Pierre peinte : les fenêtres prennent la forme de dalle des cartes
-    useEffect(() => (look.skin === 'pierre' ? watchModalSlabs() : undefined), [look.skin]);
+    // Pierre peinte : fenêtres, cartes d'historique et notifications prennent la forme de dalle des cartes
+    useEffect(() => (look.skin === 'pierre' ? watchPlatformSlabs() : undefined), [look.skin]);
     return look;
 };

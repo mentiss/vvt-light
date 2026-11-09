@@ -576,9 +576,10 @@ html { scrollbar-color: color-mix(in srgb, var(--color-primary) 45%, transparent
 }
 
 /* ── Historique / notifications ─────────────────────────────────────── */
-.vk-entry { border: 1px solid var(--vk-border-soft); background: var(--color-surface); }
-.vk-entry-meta { display: flex; justify-content: space-between; font-size: .72rem; color: var(--color-text-muted); padding: .3rem .7rem; background: var(--color-surface-alt); }
-.vk-toast { border: 1px solid var(--color-border); border-left: 3px solid var(--color-primary); background: var(--color-surface); box-shadow: 0 8px 24px rgba(0,0,0,.5); }
+/* Cadres de la plateforme (DiceHistoryList, ToastNotifications) : apparence seule */
+.vtt-history-card { border-color: var(--vk-border-soft); }
+.vtt-toast { border: 1px solid var(--color-border); border-left: 3px solid var(--color-primary); border-radius: 0; box-shadow: 0 8px 24px rgba(0,0,0,.5); }
+.vtt-toast.is-accent { border-color: var(--color-accent); }
 
 /* ── Fiche : disposition de la planche pierre peinte, commune aux deux habillages ──
    (spec_vikings_pierre_peinte.md lot 2). Ici le rendu bois et or ; la pierre peinte
@@ -1053,7 +1054,7 @@ html[data-vk-skin] .vk-cr-mini-caracs .vk-stat .lbl { font-size: .66rem; }
 .vtt-board-token-text { font-family: var(--vk-font-title); font-weight: 400; }
 .vtt-board-ruler text { font-family: var(--vk-font-label); font-weight: 400; }
 
-/* Bandeau « Le MJ partage un visuel » : comme les notifications (vk-toast) */
+/* Bandeau « Le MJ partage un visuel » : comme les notifications (.vtt-toast) */
 .vtt-board-banner {
     border-radius: 0; border: 1px solid var(--color-border); border-left: 3px solid var(--color-primary);
     background: var(--color-surface); box-shadow: 0 8px 24px rgba(0,0,0,.5); font-family: var(--vk-font-body);

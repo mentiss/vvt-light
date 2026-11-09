@@ -357,7 +357,7 @@ html[data-vk-skin="pierre"] .vk-calc tr.is-total td { color: var(--color-primary
 
 /* ── Fenêtres du slug (VkModal) et de la plateforme (spec_ui_modales.md) ── */
 html[data-vk-skin="pierre"] .vtt-modal-backdrop { background: rgba(10, 8, 6, .55); }
-/* Fenêtre : même dalle taillée que les cartes (svg .vk-slab-bg ajouté par watchModalSlabs), opaque */
+/* Fenêtre : même dalle taillée que les cartes (svg .vk-slab-bg ajouté par watchPlatformSlabs), opaque */
 html[data-vk-skin="pierre"] .vtt-modal-panel {
     isolation: isolate; overflow: visible; border: none; border-radius: 0; background: transparent; box-shadow: none;
     --vk-slab-fill: var(--vk-surface-solid);
@@ -411,11 +411,21 @@ html[data-vk-skin="pierre"] :is(.vtt-session-bar-card-name, .vtt-session-bar-ini
 html[data-vk-skin="pierre"] .vtt-session-bar-card-image { border-radius: 50%; }
 
 /* ── Notifications, historique, zone d'actions ──────────────────────── */
-html[data-vk-skin="pierre"] .vk-toast {
-    border: 1px solid var(--color-primary); border-left-width: 4px; border-radius: 8px; background: var(--vk-surface-solid);
-    box-shadow: 0 4px 12px rgba(0,0,0,.35);
+/* Cartes d'historique et notifications : dalle taillée (svg .vk-slab-bg ajouté par
+   watchPlatformSlabs) ; la notification flotte sur la page, elle est opaque */
+html[data-vk-skin="pierre"] :is(.vtt-history-card, .vtt-toast) {
+    isolation: isolate; overflow: visible; border: none; border-radius: 0; background: transparent; box-shadow: none;
 }
-html[data-vk-skin="pierre"] .vk-entry { border-radius: 8px; overflow: hidden; background: var(--vk-surface-solid); }
+html[data-vk-skin="pierre"] :is(.vtt-history-card-meta, .vtt-history-card > .vtt-history-entry) { background: transparent; }
+html[data-vk-skin="pierre"] .vtt-history-card-meta {
+    font-family: var(--vk-font-label);
+    background: linear-gradient(90deg, transparent 0%, var(--vk-slab-edge) 12%, var(--vk-slab-edge) 88%, transparent 100%) bottom / 100% 1px no-repeat;
+}
+html[data-vk-skin="pierre"] .vtt-toast { --vk-slab-fill: var(--vk-surface-solid); }
+html[data-vk-skin="pierre"] .vtt-toast > .vk-slab-bg { filter: drop-shadow(0 6px 14px rgba(0,0,0,.4)); }
+html[data-vk-skin="pierre"] .vtt-toast.is-accent > .vk-slab-bg {
+    filter: drop-shadow(0 0 6px color-mix(in srgb, var(--color-primary) 60%, transparent)) drop-shadow(0 6px 14px rgba(0,0,0,.4));
+}
 html[data-vk-skin="pierre"] .vtt-action-btn {
     border-radius: 10px; border: 1px solid var(--vk-slab-edge);
     background: var(--vk-stone-tex), var(--vk-surface-solid); box-shadow: 0 2px 6px var(--vk-slab-lo);

@@ -184,11 +184,9 @@ const DiceHistoryList = ({ sessionId = null }) => {
                 </div>
             ) : (
                 rolls.map(roll => (
-                    <div key={roll.id} className="rounded-lg overflow-hidden group"
-                         style={{ border: '1px solid var(--color-border, #ccc)' }}>
+                    <div key={roll.id} className="vtt-history-card group">
                         {/* Méta */}
-                        <div className="px-3 py-1.5 flex items-center justify-between text-[10px]"
-                             style={{ background: 'var(--color-surface-alt, #f5f5f5)', color: 'var(--color-text-muted, #666)' }}>
+                        <div className="vtt-history-card-meta px-3 py-1.5 flex items-center justify-between text-[10px]">
                             <span>{roll.character_name ?? 'Anonyme'}</span>
                             <div className="flex items-center gap-2">
                                 <span title={fullRollDate(roll.created_at)}>{formatRollDate(roll.created_at, now)}</span>

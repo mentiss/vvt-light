@@ -165,7 +165,7 @@ La planche validée est la spécification graphique : tout ce qu'elle montre s'a
 - **Sac et réserve repliables**, fermés par défaut (Bourse et bagages reste courte).
 - **Catalogue d'objets sans onglets** : « Objet libre » en dernière pastille des filtres, puis la recherche (`tabsAs="pill"`, comme Nimble, Maledictum, Dune).
 - **Tablettes au lieu de capsules** (pierre peinte) : pastilles, étiquettes, segments à coins à peine arrondis et biseau, comme les épithètes ; choisie = tablette ocre.
-- **Fenêtres en dalle** (pierre peinte) : toutes les fenêtres, de la plateforme comprises, prennent la forme taillée des cartes (`watchModalSlabs` de `VkSlabBg.jsx`, lancé par `useVkLookOnRoot` : un fond de dalle est ajouté à chaque `.vtt-modal-panel` qui apparaît ; texture le jour, arête éclairée sous l'aurore).
+- **Fenêtres en dalle** (pierre peinte) : toutes les fenêtres, de la plateforme comprises, prennent la forme taillée des cartes (`watchPlatformSlabs` de `VkSlabBg.jsx`, lancé par `useVkLookOnRoot` : un fond de dalle est ajouté à chaque `.vtt-modal-panel` qui apparaît ; texture le jour, arête éclairée sous l'aurore). Même dalle pour les cartes de l'historique (`.vtt-history-card`, onglet et panneau) et les notifications (`.vtt-toast`, opaques), retour du 2026-11-09.
 
 
 ## 9. Lot 6 à venir : l'assistant de création (note de reprise, 2026-11-07)

@@ -52,7 +52,7 @@ Fichiers à créer (aucun fichier hors de ces dossiers ne doit être modifié, l
 
 **Frontend** (`src/client/src/systems/<slug>/`)
 - `config.jsx`, `Sheet.jsx`, `GMApp.jsx`, `Creation.jsx`
-- `theme.css` : tokens du slug et habillage des classes de la plateforme (`vtt-menu*`, `vtt-history-entry`, `vtt-action-btn`), repris de la planche validée
+- `theme.css` : tokens du slug et habillage des classes de la plateforme (`vtt-menu*`, `vtt-history-card`, `vtt-history-entry`, `vtt-toast`, `vtt-action-btn`), repris de la planche validée
 - `Brand.jsx` et `Brand.css` : marque du slug sur la carte de l'accueil et en titre des pages d'accès (`spec_plateforme_accueil.md` §5)
 
 **Polices téléchargées** (seule exception à la règle des dossiers) : un bloc `@font-face` par fichier dans `src/client/public/fonts/fonts.css` (`font-display: swap`), une fois que j'ai déposé les fichiers ; rappelle dans `Brand.css` ou `theme.css` d'où vient la police (« DuneRise : public/fonts/fonts.css (chargé partout) »). Une police Google se charge par `@import` dans `Brand.css` si elle sert à la marque, sinon dans `theme.css`.

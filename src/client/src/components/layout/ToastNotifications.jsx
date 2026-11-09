@@ -219,15 +219,10 @@ const ToastNotifications = ({
 };
 
 // ── Shell de toast — fond + bordure + bouton fermer ───────────────────────────
+// Cadre habillable par le slug : .vtt-toast (et .is-accent), styles dans index.css.
 
 const ToastShell = ({ children, onClose, accent }) => (
-    <div
-        className="rounded-lg shadow-xl p-3 min-w-64 max-w-sm relative"
-        style={{
-            background:   'var(--color-surface)',
-            border:       `2px solid ${accent ? 'var(--color-accent)' : 'var(--color-border)'}`,
-        }}
-    >
+    <div className={`vtt-toast p-3 min-w-64 max-w-sm relative ${accent ? 'is-accent' : ''}`}>
         <button
             onClick={onClose}
             style={{

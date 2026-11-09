@@ -57,11 +57,13 @@ const draw = (svg, id, seed) => {
       <path d="${inner}" fill="none" stroke="var(--vk-slab-hi)" stroke-width="1" transform="translate(.8 .8)"/>`;
 };
 
-// ── Fenêtres en dalle (pierre peinte, retour MJ du 2026-11-07) ───────────────
-// Les fenêtres de la plateforme (Modal, CatalogModal…) et celles du slug reçoivent
-// le même fond de dalle que les cartes : à chaque .vtt-modal-panel qui apparaît, un
-// <svg class="vk-slab-bg"> est ajouté en dernier enfant et redessiné à sa taille.
-// Hors pierre peinte, le thème le masque. Renvoie la fonction d'arrêt.
+// ── Cadres de la plateforme en dalle (pierre peinte, retour MJ du 2026-11-07) ─
+// Les fenêtres de la plateforme (Modal, CatalogModal…) et celles du slug, les cartes
+// de l'historique et les notifications reçoivent le même fond de dalle que les cartes :
+// à chaque cadre (SLAB_TARGETS) qui apparaît, un <svg class="vk-slab-bg"> est ajouté
+// en dernier enfant et redessiné à sa taille. Hors pierre peinte, le thème le masque.
+// Renvoie la fonction d'arrêt.
+const SLAB_TARGETS = '.vtt-modal-panel, .vtt-history-card, .vtt-toast';
 let slabCount = 0;
 const decoratePanel = (panel) => {
     if (panel.querySelector(':scope > .vk-slab-bg')) return;
@@ -70,17 +72,18 @@ const decoratePanel = (panel) => {
     svg.setAttribute('class', 'vk-slab-bg');
     svg.setAttribute('aria-hidden', 'true');
     panel.appendChild(svg);
-    const id = `vksm${++slabCount}`;
-    const observer = new ResizeObserver(() => draw(svg, id, 1000 + slabCount));
+    const seed = 1000 + (++slabCount);   // figée : le contour ne change pas quand d'autres dalles apparaissent
+    const id = `vksm${slabCount}`;
+    const observer = new ResizeObserver(() => draw(svg, id, seed));
     observer.observe(panel);
 };
-export const watchModalSlabs = () => {
-    document.querySelectorAll('.vtt-modal-panel').forEach(decoratePanel);
+export const watchPlatformSlabs = () => {
+    document.querySelectorAll(SLAB_TARGETS).forEach(decoratePanel);
     const mo = new MutationObserver(muts => {
         for (const m of muts) for (const n of m.addedNodes) {
             if (n.nodeType !== 1) continue;
-            if (n.matches?.('.vtt-modal-panel')) decoratePanel(n);
-            n.querySelectorAll?.('.vtt-modal-panel').forEach(decoratePanel);
+            if (n.matches?.(SLAB_TARGETS)) decoratePanel(n);
+            n.querySelectorAll?.(SLAB_TARGETS).forEach(decoratePanel);
         }
     });
     mo.observe(document.body, { childList: true, subtree: true });
