@@ -40,3 +40,4 @@
 07112026_board_rotation.sql
 07112026_cyberpunk_creation.sql
 08112026_vileborn_challenges.sql
+09112026_drop_old_npc.sql
