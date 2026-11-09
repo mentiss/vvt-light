@@ -1,8 +1,7 @@
 // tests/server/routes/notifications.test.js
 // Aucune diffusion à tout le serveur (CLAUDE.md serveur, spec_composition_table.md) :
 // un id de personnage ou de table n'est unique que dans la base de son slug.
-//   - journal : message et objet du MJ sans table indiquée → rooms des tables du personnage ;
-//   - combat : état du combat (rangé par slug) → rooms des tables ouvertes du slug seulement.
+//   - journal : message et objet du MJ sans table indiquée → rooms des tables du personnage.
 import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import { startSlugApp, gmToken } from '../helpers/slugApp.js';
 
@@ -33,26 +32,5 @@ describe('journal : notifications du MJ', () => {
         const sent = api.emits.slice(before);
         expect(sent.map(e => e.room).sort()).toEqual([`cyberpunk_session_${sessionA}`, `cyberpunk_session_${sessionB}`].sort());
         expect(sent.every(e => e.event === 'gm-message-received')).toBe(true);
-    });
-});
-
-describe('combat : état diffusé au seul slug', () => {
-    let api;
-
-    beforeAll(async () => {
-        api = await startSlugApp('tecumah', 'combat', { shared: true });
-        // Tables ouvertes : deux du slug, une d'un autre slug, et la room privée d'un socket
-        for (const room of ['tecumah_session_1', 'tecumah_session_2', 'vikings_session_1', 'aZ3sOcKeTiD']) api.rooms.set(room, new Set());
-    });
-    afterAll(() => api?.close());
-
-    it('rooms des tables du slug seulement', async () => {
-        const before = api.emits.length;
-        const res = await api.request('POST', '/start', { token: gmToken() });
-        expect(res.status).toBe(200);
-        const sent = api.emits.slice(before);
-        expect(sent.map(e => e.room).sort()).toEqual(['tecumah_session_1', 'tecumah_session_2']);
-        expect(sent.every(e => e.event === 'combat-update')).toBe(true);
-        await api.request('POST', '/end', { token: gmToken() });
     });
 });

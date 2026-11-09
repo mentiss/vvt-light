@@ -8,7 +8,6 @@
 //   activeSession, onSessionChange, onlineCharacters, characterUpdates,
 //   darkMode, onToggleDarkMode
 //
-// Le combat (hors périmètre de la refonte) est fourni tel quel par useCombat.
 // theme.css est chargé par GMPage (import.meta.glob), pas importé ici.
 // ─────────────────────────────────────────────────────────────────────────────
 
@@ -26,9 +25,7 @@ import {
 } from '../../components/ui/HamburgerMenuItems.jsx';
 
 import TabSession          from './gm/tabs/TabSession.jsx';
-import TabCombat           from './gm/tabs/TabCombat.jsx';
 import GMDiceModal         from './gm/modals/GMDiceModal.jsx';
-import { useCombat }       from './gm/useCombat.js';
 import VkIcon              from './components/ui/VkIcon.jsx';
 import VkLookMenuItems     from './components/ui/VkLookMenuItems.jsx';
 import VkSky               from './components/ui/VkSky.jsx';
@@ -37,7 +34,6 @@ import { REFERENCE_SECTIONS } from './config/reference.js';
 
 const TABS = [
     { id: 'session',    label: 'Session' },
-    { id: 'combat',     label: 'Combat' },
     { id: 'tableau',    label: 'Tableau' },
     { id: 'journal',    label: 'Journal' },
     { id: 'historique', label: 'Historique' },
@@ -45,7 +41,6 @@ const TABS = [
 ];
 
 const GMApp = ({ activeSession, onSessionChange, onlineCharacters, characterUpdates, darkMode, onToggleDarkMode }) => {
-    const combat     = useCombat(onlineCharacters);
     const sessionId  = activeSession?.id ?? null;
     useVkLookOnRoot();   // habillage choisi (pierre peinte / bois et or) posé sur <html>
 
@@ -113,7 +108,6 @@ const GMApp = ({ activeSession, onSessionChange, onlineCharacters, characterUpda
                     <TabSession activeSession={activeSession} onlineCharacters={onlineCharacters} characterUpdates={characterUpdates}
                                 onSessionChange={onSessionChange} />
                 )}
-                {activeTab === 'combat' && <TabCombat {...combat} sessionId={sessionId} />}
                 {/* Tableau partagé (brique plateforme, spec_tableau.md §10.8) */}
                 {activeTab === 'tableau' && (
                     <div className="vtt-board-page">

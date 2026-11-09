@@ -6,8 +6,7 @@
 //   - zone d'actions : remontée au-dessus du plateau par --vtt-actions-bottom ; un
 //     événement « resize » lui fait recalculer --vtt-actions-offset, d'où les
 //     notifications se placent au-dessus d'elle (ActionZone.jsx, sans la modifier) ;
-//   - panneau de combat (bas gauche, présent pendant un combat) et barre de session
-//     ouverte (fiche joueur, à gauche) : le plateau commence à leur droite.
+//   - barre de session ouverte (fiche joueur, à gauche) : le plateau commence à sa droite.
 // Échap ferme le plateau.
 //
 // <VkTray title icon onClose summary={<…/>}> … </VkTray>
@@ -16,9 +15,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import VkIcon from './VkIcon.jsx';
 
-// Panneau de combat de la plateforme (CombatPanel) : fixé en bas à gauche, rendu seulement en combat
-const COMBAT_PANEL = '.fixed.bottom-4.left-4.w-96';
-const GAP = 12;
 // Barre de session (SessionPlayersBar) : le panneau et sa liste fixée au défilement
 const SESSION_BAR = '.vtt-session-bar, .vtt-session-bar-list.is-fixed';
 
@@ -49,12 +45,10 @@ const VkTray = ({ title, icon = 'die', onClose, summary = null, children }) => {
         };
     }, []);
 
-    // Panneau de combat et barre de session (ouverte, à gauche) : le plateau se range à leur droite
+    // Barre de session (ouverte, à gauche) : le plateau se range à sa droite
     useEffect(() => {
         const measure = () => {
             let right = 0;
-            const panel = document.querySelector(COMBAT_PANEL);
-            if (panel) right = Math.max(right, panel.getBoundingClientRect().right + GAP);
             for (const el of document.querySelectorAll(SESSION_BAR)) {
                 const r = el.getBoundingClientRect();
                 if (r.width > 0 && r.left < 40 && r.bottom > window.innerHeight - 40) right = Math.max(right, r.right);

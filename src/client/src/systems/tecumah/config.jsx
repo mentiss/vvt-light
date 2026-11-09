@@ -5,18 +5,15 @@
 // Contient tout ce qui est propre au système :
 //   - Fonctions de calcul (pips, défense, blessure)
 //   - Données statiques (attributs, compétences, backgrounds, difficultés)
-//   - Hooks dés + bloc combat (sans référence à des modales)
+//   - Hooks dés (sans référence à des modales)
 //
 // ⚠️ N'importe AUCUNE modale.
 //    TecumahDiceModal → importe config (sens unique).
-//    combat.renderRollStep = null (injecté par TabCombat).
 // ─────────────────────────────────────────────────────────────────────────────
 
 import React from 'react';
 import { RollError }        from '../../tools/diceEngine.js';
-import HealthDisplay        from './components/HealthDisplay.jsx';
 import TecumahHistoryEntry  from './components/TecumahHistoryEntry.jsx';
-import TecumahNPCForm from "./components/gm/npc/TecumahNPCForm.jsx";
 
 export { getCost } from './xpCosts.js';
 
@@ -404,68 +401,6 @@ const tecumahConfig = {
 
         renderHistoryEntry: (entry) => <TecumahHistoryEntry entry={entry} />,
         renderAllRollTypes: true,   // le slug rend aussi le jet libre (onglet, panneau, notifications)
-
-        getNPCRollContext: (npc, attack, { apiBase, fetchFn, sessionId }) => ({
-            apiBase, fetchFn,
-            characterId:    null,
-            characterName:  npc.name,
-            sessionId,
-            rollType:       'tecumah_npc_attack',
-            label:          `${npc.name} — ${attack.name}`,
-            persistHistory: false,
-            systemData: { poolFinal: attack.pool, isNPC: true, bonusResultat: 0, difficulte: null },
-        }),
-    },
-
-    combat: {
-        // mode="badge" — label compact dans la liste des combattants
-        renderHealthDisplay: (combatant) => <HealthDisplay combatant={combatant} mode="badge" />,
-
-        canAct: ({ combatant }) => (combatant.healthData?.blessure_niveau ?? 0) < 4,
-
-        // null — injecté par TabCombat (joueur : TecumahDiceModal via import local)
-        renderRollStep: null,
-
-        calculateDamage: (_target, weapon) => weapon?.damage ?? 0,
-
-        renderTargetInfo: (combatant) => {
-            const niveau  = combatant.healthData?.blessure_niveau ?? 0;
-            const rf      = combatant.healthData?.resistance_fixe ?? '?';
-            const defense = combatant.healthData?.defense_naturelle ?? '?';
-            return `Défense: ${defense} | RF: ${rf} | ${BLESSURE_LABELS[niveau] ?? '?'}`;
-        },
-
-        renderNPCForm: (formData, onChange) => (
-            <TecumahNPCForm formData={formData} onChange={onChange} />
-        ),
-
-        buildNPCCombatStats: (fd) => ({
-            defense_naturelle: Number(fd.defense_naturelle ?? 10),
-            defense_active:    Number(fd.defense_active    ?? 0),
-            defense_totale:    Number(fd.defense_totale    ?? 0),
-            resistance_fixe:   Number(fd.resistance_fixe   ?? 6),
-            actionsMax:        Number(fd.actionsMax        ?? 1),
-            attaques:          fd.attaques ?? [],
-        }),
-
-        parseNPCCombatStats: (cs) => ({
-            defense_naturelle: cs.defense_naturelle ?? 10,
-            defense_active:    cs.defense_active    ?? 0,
-            defense_totale:    cs.defense_totale    ?? 0,
-            resistance_fixe:   cs.resistance_fixe   ?? 6,
-            actionsMax:        cs.actionsMax        ?? 1,
-            attaques:          cs.attaques          ?? [],
-        }),
-
-        buildNPCHealthData: (cs) => ({
-            blessure_niveau:   0,
-            defense_naturelle: cs.defense_naturelle ?? 10,
-            defense_active:    cs.defense_active    ?? 0,
-            defense_totale:    cs.defense_totale    ?? 0,
-            resistance_fixe:   cs.resistance_fixe   ?? 6,
-        }),
-
-        defenseOpportunity: null,
     },
 };
 

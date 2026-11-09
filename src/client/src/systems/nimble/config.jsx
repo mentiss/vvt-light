@@ -1,7 +1,7 @@
 // src/client/src/systems/nimble/config.jsx
 // ─────────────────────────────────────────────────────────────────────────────
-// Configuration front du slug Nimble : hooks de dés (contrat diceEngine v2) et
-// bloc combat. Règles de résolution : config/rules/dice.js (pur, testé).
+// Configuration front du slug Nimble : hooks de dés (contrat diceEngine v2).
+// Règles de résolution : config/rules/dice.js (pur, testé).
 // Spec : spec_nimble.md §5.
 // ⚠️ Module ES — importé uniquement par le frontend React.
 // ─────────────────────────────────────────────────────────────────────────────
@@ -110,22 +110,10 @@ const dice = {
     renderAllRollTypes: true,   // le slug rend aussi le jet libre (onglet, panneau, notifications)
 };
 
-// ══════════════════════════════════════════════════════════════════════════════
-// BLOC COMBAT — stub (spec_nimble.md D-5) : pas de traqueur d'initiative,
-// les héros jouent puis les monstres ; rencontre côté MJ (gm/tabs/TabEncounter).
-// ══════════════════════════════════════════════════════════════════════════════
-
-const combat = {
-    renderHealthDisplay: () => null,
-    actions:             [],
-    attack:              null,
-};
-
 const nimbleConfig = {
     slug:  'nimble',
     label: 'Nimble',
     dice,
-    combat,
 
     // Dés 3D : rouge héraldique, chiffres vélin, filet d'encre, tranche or (planche)
     diceConfigDefault: {

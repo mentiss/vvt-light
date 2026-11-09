@@ -665,10 +665,6 @@ html[data-vk-skin="pierre"][data-vk-anim="off"] :is(.vk-hearth, .vk-body-hurt, .
 html[data-vk-skin="pierre"] .vk-brand.is-title .vk-brand-title { font-family: var(--vk-font-title); color: var(--color-primary); text-shadow: none; }
 html[data-vk-skin="pierre"] .vk-brand.is-title .vk-brand-runes { color: var(--color-primary); }
 
-/* ── Combat (hors périmètre) : polices de l'habillage ───────────────── */
-html[data-vk-skin="pierre"] .font-viking { font-family: var(--vk-font-title); }
-html[data-vk-skin="pierre"] .font-vikingText { font-family: var(--vk-font-label); }
-
 @media (prefers-reduced-motion: reduce) {
     html[data-vk-skin="pierre"] .vk-tab.is-active::before,
     html[data-vk-skin="pierre"] :is(.vk-token.is-blessure, .vk-token.is-fatigue)::before { animation: none; }

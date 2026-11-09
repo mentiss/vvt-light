@@ -255,10 +255,3 @@ CREATE TABLE IF NOT EXISTS refresh_tokens (
 CREATE INDEX IF NOT EXISTS idx_refresh_tokens_token        ON refresh_tokens(token);
 CREATE INDEX IF NOT EXISTS idx_refresh_tokens_character_id ON refresh_tokens(character_id);
 CREATE INDEX IF NOT EXISTS idx_refresh_tokens_expires_at   ON refresh_tokens(expires_at);
-
-CREATE TABLE IF NOT EXISTS npc_templates (
-                                             id           INTEGER PRIMARY KEY AUTOINCREMENT,
-                                             name         TEXT NOT NULL,
-                                             combat_stats TEXT DEFAULT '{}',
-                                             created_at   DATETIME DEFAULT CURRENT_TIMESTAMP
-);

@@ -238,10 +238,6 @@ export const rerollHooks = {
     renderHistoryEntry: (entry) => <ZoneBlancheHistoryEntry entry={entry} />,
 };
 
-// ── Combat (stub — aucun système de combat dédié, tout est narratif) ────────
-
-export const combat = {};
-
 // ── diceConfigDefault (requis par convention plateforme) ─────────────────────
 // Structure imbriquée sous `custom` — vérifiée contre useDiceConfig.js.
 // material: valeurs valides = glass|metal|wood|plastic|none (cf. MATERIAL_OPTIONS).
@@ -276,6 +272,5 @@ export default {
     dice:       diceHooks,
     reroll:     rerollHooks,
     assistance: assistanceHooks,
-    combat,
     diceConfigDefault,
 };

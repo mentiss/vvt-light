@@ -43,7 +43,7 @@ Les règles du code (grilles avec identifiants) sont dans `code-rules/`, le cont
 │   │   ├── db/                        # Pool lazy de connexions SQLite (TTL 5 min), bases de module
 │   │   ├── middlewares/               # systemResolver (req.system, req.db), auth, rateLimits
 │   │   ├── routes/                    # Routes partagées : auth, characters (commune), sessions,
-│   │   │                              #   journal, dice, audio, board, combat, npc, npc-sets
+│   │   │                              #   journal, dice, audio, board
 │   │   ├── socket/                    # Socket.io : index.js + platform/ (présence, sessions, audio, board)
 │   │   ├── systems/
 │   │   │   ├── Loader.js              # Découverte des systèmes (zéro registre central)

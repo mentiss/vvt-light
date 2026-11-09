@@ -83,12 +83,12 @@ Fichiers d'un slug :
 - `src/server/systems/:slug/CharacterController.js` — `loadFullCharacter` / `saveFullCharacter` (obligatoire) ; la route `/characters` est commune (`src/server/routes/characters.js`, `documentations/spec_characters_route.md`)
 - `src/server/systems/:slug/routes/characters.js` — facultatif : routes personnage propres au slug (XP, objets…), montées avant la route commune
 - `database-template/:slug-schema.sql` — schéma SQLite (bâti sur `base.sql`)
-- `src/client/src/systems/:slug/config.jsx` — config front (hooks de dés, combat, `diceConfigDefault`)
+- `src/client/src/systems/:slug/config.jsx` — config front (hooks de dés, `diceConfigDefault`)
 - `src/client/src/systems/:slug/Sheet.jsx` — fiche joueur
 - `src/client/src/systems/:slug/GMApp.jsx` — interface MJ
 - `src/client/src/systems/:slug/Creation.jsx` — assistant de création
 
-Routes supplémentaires : tout `.js` de `routes/` (sauf `characters.js`, `combat.js`) est monté sur `/api/:slug/<fichier>`.
+Routes supplémentaires : tout `.js` de `routes/` (sauf `characters.js`) est monté sur `/api/:slug/<fichier>`.
 Helpers de sauvegarde et de diffusion partagés (`syncSubTable`, `updateOrInsert`, `parseJson`, `broadcastCharacterUpdate`, `emitToCharacterSessions`) : `src/server/utils/characters.js`, jamais recopiés dans un slug.
 Handlers socket supplémentaires : tout `.js` de `socket/` exporte `function register(io, socket)`.
 
@@ -102,7 +102,7 @@ Tous sont des systèmes en usage réel, aucun n'est un brouillon :
 |---|---|---|
 | `fabula` | Fabula Ultima | Implémentation récente la plus complète : **référence à suivre** |
 | `zoneblanche` | Zone Blanche (2D20) | Récent |
-| `vikings` | Pure Vikings | Le plus ancien, refondu deux fois : habillage « pierre peinte » ou « bois et or » au choix du joueur, ciels vivants, plateau de jet, halle du MJ, assistant de création en trois zones (`spec_vikings_pierre_peinte.md`) ; reste le combat |
+| `vikings` | Pure Vikings | Le plus ancien, refondu deux fois : habillage « pierre peinte » ou « bois et or » au choix du joueur, ciels vivants, plateau de jet, halle du MJ, assistant de création en trois zones (`spec_vikings_pierre_peinte.md`) |
 | `achtung` | Achtung! Cthulhu | |
 | `cyberpunk` | The Sprawl (PbtA) | |
 | `deltagreen` | Delta Green | |
@@ -137,7 +137,7 @@ Rooms Socket.io : `${slug}_session_${sessionId}`. L'état partagé (personnages 
 
 La documentation du projet et les **spécifications validées** vivent en Markdown dans `documentations/` :
 - specs de slugs : `spec_<slug>.md` (ex. `spec_deltagreen.md`, `spec_achtung_cthulhu.md`) ;
-- specs de briques plateforme : `spec_combat.md` (combat générique), `spec_diceengine_v2.md` (moteur de dés), `spec_ui_menu.md` (menus joueur et MJ) ;
+- specs de briques plateforme : `spec_pnj.md` (PNJ, refonte en cours), `spec_diceengine_v2.md` (moteur de dés), `spec_ui_menu.md` (menus joueur et MJ) ;
 - guides : `guide_new_slug_jdr.md` (réduit à un renvoi vers `/new-slug`).
 
 Règles :

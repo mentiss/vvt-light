@@ -2,7 +2,7 @@
 // Composant unique de gestion/affichage du niveau de blessure.
 //
 // mode="track" (défaut) — fiche joueur : 6 boutons cliquables
-// mode="badge"          — liste combat  : label compact coloré
+// mode="badge"          — label compact coloré
 //
 // Les couleurs viennent exclusivement des variables CSS --color-health-N
 // définies dans theme.css. Aucune couleur en dur ici.
@@ -53,12 +53,10 @@ const HealthBadge = ({ niveau = 0 }) => (
  *   niveau:   number,          // 0–5
  *   mode?:    'track'|'badge', // défaut : 'track'
  *   onChange?: (n: number) => void  // requis en mode track
- *   combatant?: object         // accepté en mode badge pour compatibilité combat
  * }} props
  */
-const HealthDisplay = ({ niveau, combatant, mode = 'track', onChange }) => {
-    // Compatibilité avec l'appel depuis config.combat.renderHealthDisplay(combatant)
-    const resolvedNiveau = niveau ?? combatant?.healthData?.blessure_niveau ?? 0;
+const HealthDisplay = ({ niveau, mode = 'track', onChange }) => {
+    const resolvedNiveau = niveau ?? 0;
 
     if (mode === 'badge') return <HealthBadge niveau={resolvedNiveau} />;
     return <HealthTrack niveau={resolvedNiveau} onChange={onChange} />;

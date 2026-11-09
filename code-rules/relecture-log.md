@@ -11,6 +11,7 @@ Une ligne par relecture croisée (`/relecture`, `documentations/spec_relecture.m
 | 2026-11-08 | Vileborn : défis, lot A | non relu (quota) | — | — |
 | 2026-11-08 | Vileborn : défis, lot B (versement des fiches) | non relu (quota) | — | — |
 | 2026-11-08 | Modales des slugs vers `Modal` (`spec_ui_modales.md` §12) | — | — | 0 / 0 |
+| 2026-11-09 | PNJ, lot 0 : suppression de l'ancien PNJ et du combat de la plateforme (`spec_pnj.md` §5) | — | — | ? / 1 (branches `isNPC` des dés Tecumah) |
 
 ## Décompte par identifiant
 

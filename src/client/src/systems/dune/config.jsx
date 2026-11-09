@@ -1,32 +1,20 @@
 // src/client/src/systems/dune/config.jsx
 // ─────────────────────────────────────────────────────────────────────────────
 // Configuration CLIENT du système Dune: Adventures in the Imperium.
-// Point d'entrée unique : métadonnées, hooks dés 2D20, bloc combat, PNJ, dés 3D.
+// Point d'entrée unique : métadonnées, hooks dés 2D20, dés 3D.
 // Module ES, importé uniquement par le frontend React.
 // ─────────────────────────────────────────────────────────────────────────────
 
 import DuneHistoryEntry from "./components/layout/DuneHistoryEntry.jsx";
-import DuneNPCForm from "./components/layout/DuneNPCForm.jsx";
-import DuneNPCSummary from "./components/layout/DuneNPCSummary.jsx";
-import DuneNPCDetail from "./components/layout/DuneNPCDetail.jsx";
 import {RollError} from "../../tools/diceEngine.js";
 import { BASE_DICE, MAX_DICE, resolveRoll } from './config/rules/roll.js';
-import { traitLabel } from './config/traits.js';
 import DuneIcon from './components/ui/DuneIcon.jsx';
-
-// ── Bloc combat : pas de combat dédié dans Dune (spec : les conflits se jouent en jets) ──
-const combat = {
-    renderHealthDisplay: () => null,
-    actions:             [],
-    attack:              null,
-};
 
 // ── Config système ─────────────────────────────────────────────────────────
 
 const duneConfig = {
     slug:  'dune',
     label: 'Dune: Adventures in the Imperium',
-    combat,
 
     // Dés 3D : épice, chiffres sable, filet du pont (planche documentations/dune/planche_dune.html)
     diceConfigDefault: {
@@ -135,49 +123,6 @@ const duneConfig = {
         // Délègue au composant Dune-spécifique.
         renderHistoryEntry: (entry) => <DuneHistoryEntry roll={entry} />,
         renderAllRollTypes: true,   // le slug rend aussi le jet libre (onglet, panneau, notifications)
-    },
-    npc : {
-        renderNPCForm: (slugForm, onChange) =>
-            <DuneNPCForm slugForm={slugForm} onChange={onChange} />,
-
-        renderNPCSummary: (npc) =>
-            <DuneNPCSummary npc={npc} />,
-
-        renderNPCDetail: (npc, openDiceModal) =>
-            <DuneNPCDetail npc={npc} openDiceModal={openDiceModal} />,
-
-        buildNPCData: (slugForm) => ({
-            combat_stats: {},
-            system_data: {
-                competences: slugForm.competences,
-                principes:   slugForm.principes,
-            },
-        }),
-
-        parseNPCData: (npc) => ({
-            competences: npc.system_data?.competences,
-            principes:   npc.system_data?.principes,
-        }),
-
-        getQuickRolls: (npc) => {
-            const competences = npc.system_data?.competences ?? [];
-            const principes   = npc.system_data?.principes   ?? [];
-
-            const meilleurPrincipe = principes.reduce(
-                (best, p) => p.rang > best ? p.rang : best, 0
-            );
-
-            return competences.map(comp => ({
-                label: traitLabel(comp.key),
-                onRoll: (npcArg, openDiceModal) => {
-                    if (!openDiceModal) return;
-                    openDiceModal({
-                        rang:  (comp.rang ?? 4) + meilleurPrincipe,
-                        label: `${npcArg.name} — ${traitLabel(comp.key)}`,
-                    });
-                },
-            }));
-        },
     },
 };
 

@@ -1,17 +1,14 @@
 // src/client/src/systems/tecumah/gm/GMView.jsx
 // Shell principal de l'interface GM Tecumah.
-// Onglets : Session · Ressources · Journal · Combat
+// Onglets : Session · Ressources · Journal · Tableau · Historique
 // Bouton dés flottant accessible depuis tous les onglets.
 
-import React, {useEffect, useState} from 'react';
-import useSystem from "../../../../hooks/useSystem.js";
+import React, {useState} from 'react';
 import TecumahDiceModal from "../modals/TecumahDiceModal.jsx";
-import tecumahConfig from "../../config.jsx";
 import TabSession from "./tabs/TabSession.jsx";
 import TabResource from "./tabs/TabResource.jsx";
 import TabJournal from "../../../../components/gm/tabs/TabJournal.jsx";
 import Board      from '../../../../components/board/Board.jsx';
-import CombatPanel from "../../../../components/combat/CombatPanel.jsx";
 import DiceHistoryPage from "../../../../components/layout/DiceHistoryPage.jsx";
 import ToastNotifications from "../../../../components/layout/ToastNotifications.jsx";
 import GMDiceModal from "./modals/GMDiceModal.jsx";
@@ -19,29 +16,16 @@ import { HamburgerMenu, HamburgerMenuSeparator } from "../../../../components/ui
 import {
     HamburgerMenuItemTableManagement, HamburgerMenuItemDiceConfig, HamburgerMenuItemLogout,
 } from "../../../../components/ui/HamburgerMenuItems.jsx";
-import {useSocket} from "../../../../context/SocketContext.jsx";
-import {useFetch} from "../../../../hooks/useFetch.js";
-import TabCombat from "./tabs/TabCombat.jsx";
 
 const GM_TABS = [
     { id: 'session',    label: '📜 Session'    },
     { id: 'ressources', label: '⚡ Ressources'  },
     { id: 'journal',    label: '📓 Journal'     },
     { id: 'tableau', label: '🗺️ Tableau' },
-    { id: 'combat',     label: '⚔️ Combat'      },
     { id: 'historique', label: '🎲 Historique'  },
 ];
 
 const GMView = ({ activeSession, onSessionChange, onlineCharacters, darkMode, onToggleDarkMode }) => {
-    const { apiBase } = useSystem();
-    const socket        = useSocket();
-    const fetchWithAuth = useFetch();
-
-    const [combatState,         setCombatState]         = useState({ active: false, round: 0, currentTurnIndex: -1, combatants: [] });
-    const [showNPCModal,        setShowNPCModal]        = useState(false);
-    const [attackingNPC,        setAttackingNPC]        = useState(null);
-    const [showEndCombatConfirm,setShowEndCombatConfirm]= useState(false);
-    const [draggedIndex,        setDraggedIndex]        = useState(null);
 
     const [activeTab,         setActiveTab]         = useState(() => {
         const hash = window.location.hash.replace('#', '');
@@ -52,78 +36,6 @@ const GMView = ({ activeSession, onSessionChange, onlineCharacters, darkMode, on
     const changeTab = (id) => {
         setActiveTab(id);
         window.location.hash = id;
-    };
-
-    useEffect(() => {
-        fetchWithAuth(`${apiBase}/combat`)
-            .then(r => r.ok ? r.json() : null)
-            .then(d => { if (d) setCombatState(d); })
-            .catch(() => {});
-    }, [apiBase]);
-
-    useEffect(() => {
-        if (!socket) return;
-        const fn = (state) => setCombatState(state);
-        socket.on('combat-update', fn);
-        return () => socket.off('combat-update', fn);
-    }, [socket]);
-
-    const startCombat  = () => fetchWithAuth(`${apiBase}/combat/start`,    { method: 'POST' }).then(r => r.json()).then(setCombatState).catch(console.error);
-    const endCombat    = () => fetchWithAuth(`${apiBase}/combat/end`,      { method: 'POST' }).then(r => r.json()).then(d => { setCombatState(d); setShowEndCombatConfirm(false); }).catch(console.error);
-    const nextTurn     = () => fetchWithAuth(`${apiBase}/combat/next-turn`, { method: 'POST' }).then(r => r.json()).then(setCombatState).catch(console.error);
-
-    const addCombatant    = (data) => fetchWithAuth(`${apiBase}/combat/combatant`,     { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ combatant: data }) }).then(r => r.json()).then(setCombatState).catch(console.error);
-    const removeCombatant = (id)   => fetchWithAuth(`${apiBase}/combat/combatant/${id}`, { method: 'DELETE' }).then(r => r.json()).then(setCombatState).catch(console.error);
-    const updateCombatant = (id, updates) => fetchWithAuth(`${apiBase}/combat/combatant/${id}`, { method: 'PUT', body: JSON.stringify({ updates }) }).catch(console.error);
-
-    const addPlayerToCombat = async (onlineChar) => {
-        const res      = await fetchWithAuth(`${apiBase}/characters/${onlineChar.characterId}`);
-        const fullChar = await res.json();
-        const initiative = Math.floor(Math.random() * 6) + 1 + Math.floor((fullChar.agilite ?? 3) / 3) + Math.floor((fullChar.perception ?? 3) / 3);
-        await addCombatant({
-            type: 'player', characterId: fullChar.id,
-            name: `${fullChar.prenom ?? ''} ${fullChar.nom ?? ''}`.trim() || onlineChar.name,
-            actionsMax: 1, initiative,
-            healthData: {
-                blessure_niveau:   fullChar.blessure_niveau   ?? 0,
-                defense_naturelle: fullChar.defense_naturelle ?? 9,
-                resistance_fixe:   fullChar.vigueur           ?? 3,
-            },
-        });
-    };
-
-    const handleValidateAttack = async (attackId, modifiedAttack) => {
-        const attack = modifiedAttack ?? combatState.pendingAttacks?.find(a => a.id === attackId);
-        if (!attack) return;
-        const target       = combatState.combatants.find(c => c.id === attack.targetId);
-        const finalDamage  = tecumahConfig.combat?.onBeforeDamage?.({ target, damage: attack.damage, weapon: attack.weapon, rollResult: attack.rollResult }) ?? attack.damage;
-        const newHealthData = target ? { ...target.healthData } : null;
-        if (tecumahConfig.combat?.onDamage) await tecumahConfig.combat.onDamage({ target, damage: finalDamage, newHealthData, fetchWithAuth, apiBase });
-        await fetchWithAuth(`${apiBase}/combat/validate-attack`, { method: 'POST', body: JSON.stringify({ attackId, targetId: target?.id, newHealthData }) });
-    };
-
-    const handleRejectAttack    = (attackId) => fetchWithAuth(`${apiBase}/combat/reject-attack`, { method: 'POST', body: JSON.stringify({ attackId }) });
-    const handleNPCAttack       = (npc) => setAttackingNPC(npc);
-    const handleNPCAttackSubmitted = async (attackData) => {
-        await fetchWithAuth(`${apiBase}/combat/submit-attack`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ attack: attackData }) });
-        const npc = combatState.combatants.find(c => c.id === attackData.attackerId);
-        if (npc?.actionsRemaining > 0) await updateCombatant(npc.id, { actionsRemaining: npc.actionsRemaining - 1 });
-        setAttackingNPC(null);
-    };
-
-    const handleDragStart = (index) => setDraggedIndex(index);
-    const handleDragOver  = (e, index) => {
-        e.preventDefault();
-        if (draggedIndex === null || draggedIndex === index) return;
-        const list = [...combatState.combatants];
-        const item = list.splice(draggedIndex, 1)[0];
-        list.splice(index, 0, item);
-        setCombatState(s => ({ ...s, combatants: list }));
-        setDraggedIndex(index);
-    };
-    const handleDragEnd = () => {
-        if (draggedIndex !== null) fetchWithAuth(`${apiBase}/combat/reorder`, { method: 'POST', body: JSON.stringify({ combatants: combatState.combatants }) });
-        setDraggedIndex(null);
     };
 
     return (
@@ -219,37 +131,6 @@ const GMView = ({ activeSession, onSessionChange, onlineCharacters, darkMode, on
 
                     {activeTab === 'journal' && (
                         <TabJournal />
-                    )}
-
-                    {activeTab === 'combat' && (
-                        <TabCombat
-                            combatState={combatState}
-                            onlineCharacters={onlineCharacters}
-                            sessionId={activeSession?.id ?? null}
-                            combatConfig={tecumahConfig.combat}
-                            pendingAttacks={combatState.pendingAttacks ?? []}
-                            onStartCombat={startCombat}
-                            onNextTurn={nextTurn}
-                            onAddCombatant={addCombatant}
-                            onUpdateCombatant={updateCombatant}
-                            onRemoveCombatant={removeCombatant}
-                            onAddPlayerToCombat={addPlayerToCombat}
-                            onValidateAttack={handleValidateAttack}
-                            onRejectAttack={handleRejectAttack}
-                            onNPCAttack={handleNPCAttack}
-                            attackingNPC={attackingNPC}
-                            onNPCAttackSubmitted={handleNPCAttackSubmitted}
-                            onCloseNPCAttack={() => setAttackingNPC(null)}
-                            onDragStart={handleDragStart}
-                            onDragOver={handleDragOver}
-                            onDragEnd={handleDragEnd}
-                            showNPCModal={showNPCModal}
-                            onShowNPCModal={() => setShowNPCModal(true)}
-                            onCloseNPCModal={() => setShowNPCModal(false)}
-                            showEndCombatConfirm={showEndCombatConfirm}
-                            onShowEndCombatConfirm={() => setShowEndCombatConfirm(true)}
-                            onCloseEndCombatConfirm={() => { setShowEndCombatConfirm(false); endCombat(); }}
-                        />
                     )}
 
                     {/* Tableau partagé (brique plateforme, spec_tableau.md §10.8) */}

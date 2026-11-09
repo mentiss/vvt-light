@@ -244,9 +244,6 @@ const noctisConfig = {
         sounds:           false,
         animationEnabled: true,
     },
-
-    // Pas de combat géré en v1
-    combat: null,
 };
 
 export default noctisConfig;

@@ -2,7 +2,7 @@
 // ─────────────────────────────────────────────────────────────────────────────
 // Configuration front du slug Vampire : l'Âge des Ténèbres.
 // Réexporte les catalogues (config/*) et porte les hooks de dés (contrat
-// diceEngine v2) et le bloc combat. Spec : spec_woddavampire.md partie II.
+// diceEngine v2). Spec : spec_woddavampire.md partie II.
 // ⚠️ Module ES — importé uniquement par le frontend React.
 // ─────────────────────────────────────────────────────────────────────────────
 
@@ -91,21 +91,10 @@ const dice = {
     renderAllRollTypes: true,   // le slug rend aussi le jet libre (onglet, panneau, notifications)
 };
 
-// ══════════════════════════════════════════════════════════════════════════════
-// BLOC COMBAT — minimal au lot 1 (spec §II.1) ; le combat générique est à rediscuter
-// ══════════════════════════════════════════════════════════════════════════════
-
-const combat = {
-    renderHealthDisplay: () => null,
-    actions:             [],
-    attack:              null,
-};
-
 const woddavampireConfig = {
     slug:  'woddavampire',
     label: "Vampire : l'Âge des Ténèbres",
     dice,
-    combat,
 
     // Dés 3D : sang sombre, chiffres vélin, filet or (planche validée)
     diceConfigDefault: {

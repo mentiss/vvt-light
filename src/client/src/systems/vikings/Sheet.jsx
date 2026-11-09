@@ -16,7 +16,6 @@
 import React, { useState, useCallback, useEffect, useRef } from 'react';
 import { formatFullName, pickEditableFields } from './config/utils.js';
 import { withDerivedValues } from './config/rules.js';
-import vikingsConfig      from './config.jsx';
 import SheetLayout        from './components/layout/SheetLayout.jsx';
 import { VitalDock }      from './components/layout/SagaStateSection.jsx';
 import DiceModal          from './components/modals/DiceModal.jsx';
@@ -34,7 +33,6 @@ import JournalTab         from '../../components/tabs/JournalTab.jsx';
 import ToastNotifications from '../../components/layout/ToastNotifications.jsx';
 import DiceHistoryPage    from '../../components/layout/DiceHistoryPage.jsx';
 import SessionPlayersBar  from '../../components/layout/SessionPlayersBar.jsx';
-import CombatPanel        from '../../components/combat/CombatPanel.jsx';
 import ReferenceGuide     from '../../components/reference/ReferenceGuide.jsx';
 import { HamburgerMenu, HamburgerMenuSeparator } from '../../components/ui/HamburgerMenu.jsx';
 import {
@@ -252,22 +250,15 @@ const Sheet = ({
 
                 <main className="flex-1 min-w-0 p-4 md:p-6">
                     {activeTab === 'fiche' && (
-                        <>
-                            <SheetLayout
-                                char={char}
-                                editMode={editMode}
-                                set={set}
-                                update={update}
-                                onRoll={setDiceContext}
-                                onAvatarClick={() => setShowAvatar(true)}
-                                onOpenEditModal={setShowEditModal}
-                            />
-                            <CombatPanel
-                                character={character}
-                                combatConfig={vikingsConfig.combat}
-                                sessionId={activeGMSession ?? null}
-                            />
-                        </>
+                        <SheetLayout
+                            char={char}
+                            editMode={editMode}
+                            set={set}
+                            update={update}
+                            onRoll={setDiceContext}
+                            onAvatarClick={() => setShowAvatar(true)}
+                            onOpenEditModal={setShowEditModal}
+                        />
                     )}
 
                     {activeTab === 'journal' && <JournalTab characterId={character.id} onRead={onJournalRead} />}

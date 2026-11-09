@@ -116,19 +116,6 @@ CREATE TABLE IF NOT EXISTS character_items (
 
 CREATE INDEX IF NOT EXISTS idx_items_character ON character_items(character_id);
 
--- Utilisée par la route partagée npc (stats opaques pour la route générique)
-CREATE TABLE IF NOT EXISTS npc_templates (
-                                             id            INTEGER  PRIMARY KEY AUTOINCREMENT,
-                                             name          TEXT     NOT NULL,
-                                             description   TEXT,
-                                             combat_stats  TEXT     NOT NULL DEFAULT '{}',
-                                             system_data   TEXT     DEFAULT '{}',
-                                             created_at    DATETIME DEFAULT CURRENT_TIMESTAMP,
-                                             updated_at    DATETIME DEFAULT CURRENT_TIMESTAMP
-);
-
-CREATE INDEX IF NOT EXISTS idx_npc_templates_name ON npc_templates(name);
-
 -- ═════════════════════════════════════════════════════════════════════════════
 -- Tables transversales (base.sql — verbatim)
 -- ═════════════════════════════════════════════════════════════════════════════

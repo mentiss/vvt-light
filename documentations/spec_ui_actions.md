@@ -20,8 +20,6 @@ Deux briques de la plateforme, liées :
 |---|---|---|---|
 | Musique : réglages du son, panneau MJ | `components/audio/AudioPlayerWidget.jsx`, monté par `AudioLayer` (PlayerPage / GMPage) | bas droite, plan 100 | habillés par chaque `theme.css` (`vtt-audio-toggle`) |
 | Notifications (jets, messages du MJ) | `components/layout/ToastNotifications.jsx`, monté par chaque slug | bas droite, 4 rem du bas, plan 50 | le volet des réglages du son passe devant elles |
-| File de validation des attaques | `components/gm/pj/AttackValidationQueue.jsx` (onglet Combat MJ de Vikings et Tecumah) | bas droite, 24 rem de large | ancien combat, classes `viking-*` |
-| Panneau de combat | `components/combat/CombatPanel.jsx` (fiche Vikings, MJ Tecumah) | bas gauche | ancien combat |
 | Historique (ex-bouton 📜 de Dune MJ), Jet MJ (Zone Blanche) | retirés le 2026-11-01 | — | la zone d'actions est la place prévue pour ce genre d'accès |
 
 ### 2.2 Historique des jets
@@ -62,7 +60,7 @@ Tranchées par le MJ en §4 :
 
 - **Zone d'actions** : la plateforme seule y met des boutons en v1 (A-1). Joueur : réglages du son si la musique est active, historique ; MJ : réglages du son, panneau de la musique, historique (A-2). Boutons en ligne, repliables en un bouton unique (mini-menu) qui déplie la liste vers le haut, avec icône et libellé (A-3) ; replié ou non au choix de chacun, mémorisé par slug, et replié d'office sur petit écran (< 640 px) (A-4). Classes génériques `vtt-actions`, `vtt-action-btn` ; les blocs d'habillage des 8 `theme.css` sont renommés, même rendu (A-5).
 - **Notifications** : placées par la plateforme au-dessus de la zone ; un volet ouvert reste devant elles (A-6).
-- **Ancien combat** (Vikings, Tecumah) : hors périmètre (A-7).
+- **Ancien combat** (Vikings, Tecumah) : hors périmètre (A-7), puis supprimé le 2026-11-09 (`spec_pnj.md` §5).
 - **Panneau d'historique** : une `FloatingPanel` ancrée à droite, haute, déplaçable, réductible, mémorisée par slug, sans fond bloquant (B-1) ; joueurs et MJ (B-3) ; accès du menu MJ de Cyberpunk et de l'onglet Ressources de Dune retirés (B-5) ; pas de raccourci clavier en v1 (B-6).
 - **Ordre** : zone d'actions (musique dedans), puis panneau d'historique, puis retrait des accès des slugs ; ensuite le lot 2 de l'audio (C-1).
 

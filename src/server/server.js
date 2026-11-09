@@ -84,9 +84,6 @@ for (const [slug] of getAllSystems()) {
     // ── Routes partagées (toujours montées) ──────────────────────────────────
     app.use(`${prefix}/auth`,       resolver, authRouter);
     app.use(`${prefix}/characters`, resolver, ...getCharacterRouters(slug));
-    app.use(`${prefix}/combat`,     resolver, getSharedRoute('combat'));
-    app.use(`${prefix}/npc`,        resolver, getSharedRoute('npc'));
-    app.use(`${prefix}/npc-sets`,   resolver, getSharedRoute('npc-sets'));
     app.use(`${prefix}/sessions`,   resolver, getSharedRoute('sessions'));
     app.use(`${prefix}/journal`,    resolver, getSharedRoute('journal'));
     app.use(`${prefix}/dice`,       resolver, getSharedRoute('dice'));
@@ -94,7 +91,7 @@ for (const [slug] of getAllSystems()) {
     app.use(`${prefix}/board`,      resolver, getSharedRoute('board'));
 
     // ── Routes extra slug-spécifiques (auto-scan de systems/:slug/routes/) ───
-    // Tout fichier .js autre que characters.js / combat.js est monté ici.
+    // Tout fichier .js autre que characters.js est monté ici.
     // Ex : dune/routes/session-resources.js → /api/dune/session-resources
     const extraRoutes = getSystemExtraRoutes(slug);
     for (const { name, router } of extraRoutes) {
@@ -104,7 +101,7 @@ for (const [slug] of getAllSystems()) {
     const extraNames = extraRoutes.length
         ? `,${extraRoutes.map(r => r.name).join(',')}`
         : '';
-    console.log(`🗺️  Routes mounted for [${slug}]: ${prefix}/{auth,characters,combat,sessions,journal,dice,audio,board${extraNames}}`);
+    console.log(`🗺️  Routes mounted for [${slug}]: ${prefix}/{auth,characters,sessions,journal,dice,audio,board${extraNames}}`);
 }
 
 // hidden : slug absent de la page d'accueil, toujours accessible par son adresse

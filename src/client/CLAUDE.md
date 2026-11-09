@@ -10,7 +10,7 @@ Contexte React / CSS. Complète le CLAUDE.md racine. **Les règles du code front
 - `/:system` → `SystemLayout` (valide le slug auprès du backend) → `PlayerPage` / `GMPage` / `CreationPage`.
 - **Une page = un slug** : un `theme.css` chargé n'est jamais retiré (d'où F-SLUG-LINK). Le garde-fou `useSlugGuard` (accueil, `SystemLayout`) recharge la page si un changement de slug arrive quand même.
 - `useSystem()` lit le param `:system` et le valide via `/api/systems` ; `getSystemFromPath()` est la version hors React.
-- `systems/:slug/config.jsx` exporte `default { slug, label, dice, combat, diceConfigDefault }`.
+- `systems/:slug/config.jsx` exporte `default { slug, label, dice, diceConfigDefault }`.
 
 ## Composants génériques : ne jamais deviner leurs contrats
 

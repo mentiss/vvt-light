@@ -2,8 +2,8 @@
 // Droits des routes (code-rules/back.md, B-AUTH-USER) : toute route d'écriture
 // (POST, PUT, PATCH, DELETE) des routeurs partagés et des slugs porte
 // `authenticate`, sur la route ou par router.use. Exceptions : les routes
-// publiques de la grille, et les chantiers en attente de refonte (combat, PNJ,
-// noctis), auxquels la règle s'appliquera à leur refonte.
+// publiques de la grille, et le slug noctis, en attente de refonte, auquel la
+// règle s'appliquera à sa refonte.
 // Spec : documentations/spec_correctifs_audit.md §11.
 import { describe, it, expect } from 'vitest';
 import { createRequire } from 'node:module';
@@ -21,8 +21,7 @@ const PUBLIC = new Set([
     'characters POST /',
 ]);
 
-// Refonte en attente : combat et PNJ de la plateforme, slug noctis
-const PENDING_SHARED = ['combat', 'npc', 'npc-sets'];
+// Refonte en attente : slug noctis
 const PENDING_SLUGS = ['noctis'];
 
 /** Routes d'écriture d'un routeur sans authenticate, au format « label MÉTHODE /chemin ». */
@@ -64,8 +63,7 @@ describe('droits des routes', () => {
         expect(offenders).toEqual([]);
     });
 
-    it('les routeurs en attente de refonte existent toujours (sinon, retirer l\'exception)', () => {
-        for (const r of PENDING_SHARED) expect(() => Loader.getSharedRoute(r)).not.toThrow();
+    it('les slugs en attente de refonte existent toujours (sinon, retirer l\'exception)', () => {
         for (const s of PENDING_SLUGS) expect(listSlugs()).toContain(s);
     });
 });

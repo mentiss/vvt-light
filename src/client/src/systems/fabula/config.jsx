@@ -164,21 +164,10 @@ const dice = {
     renderAllRollTypes: true,   // le slug rend aussi le jet libre (onglet, panneau, notifications)
 };
 
-// ══════════════════════════════════════════════════════════════════════════════
-// BLOC COMBAT — stub minimal (pas d'automatisation prévue en V1)
-// ══════════════════════════════════════════════════════════════════════════════
-
-const combat = {
-    renderHealthDisplay: () => null,
-    actions:              [],
-    attack:               null,
-};
-
 const fabulaConfig = {
     slug:  'fabula',
     label: 'Fabula Ultima',
     dice,
-    combat,
 
     // Zone d'actions : icônes au trait du slug (FuIcon)
     actionIcons: {

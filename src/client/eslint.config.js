@@ -30,45 +30,14 @@ const VIKING_CLASSES = inStrings('/\\bviking-/',
 // ── Dette : fichiers existants en écart, par règle ───────────────────────────
 // On retire un fichier quand on le touche et qu'on le met d'aplomb. Le but est
 // une liste vide, pas une campagne de rattrapage. Chaque liste couvre la dette
-// réelle de sa règle, pas plus (combat et PNJ de la plateforme : refonte en attente).
+// réelle de sa règle, pas plus.
 const LEGACY = {
   'F-THEME': [
-    'src/components/combat/CombatPanel.jsx',
-    'src/components/combat/CombatantList.jsx',
-    'src/components/combat/CombatantRow.jsx',
-    'src/components/combat/TargetSelectionModal.jsx',
-    'src/components/gm/OnlinePlayersPanel.jsx',
-    'src/components/gm/RulesReference.jsx',
-    'src/components/gm/npc/NPCAttackModal.jsx',
-    'src/components/gm/npc/NPCModal.jsx',
-    'src/components/gm/pj/AttackValidationQueue.jsx',
-    'src/components/gm/pj/CombatantCard.jsx',
-    'src/components/gm/pj/CombatantControls.jsx',
     'src/systems/noctis/Creation.jsx',
     'src/systems/noctis/Sheet.jsx',
     'src/systems/noctis/gm/GMView.jsx',
-    'src/systems/vikings/config.jsx',
-    'src/systems/vikings/gm/tabs/TabCombat.jsx',
-  ],
-  'F-TOKENS': [
-    'src/components/combat/CombatPanel.jsx',
-    'src/components/combat/CombatantList.jsx',
-    'src/components/combat/CombatantRow.jsx',
-    'src/components/combat/TargetSelectionModal.jsx',
-    'src/components/gm/OnlinePlayersPanel.jsx',
-    'src/components/gm/RulesReference.jsx',
-    'src/components/gm/npc/NPCAttackModal.jsx',
-    'src/components/gm/npc/NPCCard.jsx',
-    'src/components/gm/npc/NPCModal.jsx',
-    'src/components/gm/npc/NPCSetCard.jsx',
-    'src/components/gm/pj/AttackValidationQueue.jsx',
-    'src/components/gm/pj/CombatantCard.jsx',
-    'src/components/gm/pj/CombatantControls.jsx',
-    'src/components/gm/tabs/TabNPC.jsx',
   ],
   'F-SHRINK': [
-    'src/components/gm/npc/NPCModal.jsx',
-    'src/components/gm/pj/CombatantCard.jsx',
     'src/systems/deltagreen/components/layout/BondSection.jsx',
     'src/systems/deltagreen/components/layout/MotivationsSection.jsx',
     'src/systems/tecumah/Creation.jsx',

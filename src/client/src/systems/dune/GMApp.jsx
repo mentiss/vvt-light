@@ -2,11 +2,11 @@
 // ─────────────────────────────────────────────────────────────────────────────
 // Interface MJ Dune (spec_dune.md §6.4), contenu directement ici (sans GMView, C-15) :
 //   - bande fixe partagée avec la fiche joueur (DuneBand) : onglets
-//     Table · Maison · PNJ · Journal · Historique ; Impulsion, Menace et Complications
+//     Table · Maison · Journal · Tableau · Historique ; Impulsion, Menace et Complications
 //     toujours visibles et réglables ; jet du meneur ; thème et menu ;
 //   - Table : personnages de la table et la même fiche que le joueur (gm/tabs/TabSession) ;
 //   - Maison : nom et description (gm/tabs/TabHouse) ;
-//   - PNJ, Journal, Historique et panneau d'historique : briques de la plateforme.
+//   - Journal, Tableau, Historique et panneau d'historique : briques de la plateforme.
 //
 // Contrat props (GMPage) : activeSession, onSessionChange, onlineCharacters,
 // characterUpdates, darkMode, onToggleDarkMode
@@ -17,7 +17,6 @@ import React, { useState } from 'react';
 import ToastNotifications from '../../components/layout/ToastNotifications.jsx';
 import DiceHistoryPage    from '../../components/layout/DiceHistoryPage.jsx';
 import DiceHistoryPanel   from '../../components/layout/DiceHistoryPanel.jsx';
-import TabNPC             from '../../components/gm/tabs/TabNPC.jsx';
 import TabJournal         from '../../components/gm/tabs/TabJournal.jsx';
 import Board              from '../../components/board/Board.jsx';
 import { HamburgerMenu, HamburgerMenuSeparator } from '../../components/ui/HamburgerMenu.jsx';
@@ -34,12 +33,10 @@ import TabHouse   from './gm/tabs/TabHouse.jsx';
 import { useTableCharacters }  from './hooks/useTableCharacters.js';
 import { useSessionResources } from './hooks/useSessionResources.js';
 import { IMPULSION_MAX } from './config/rules/roll.js';
-import duneConfig from './config.jsx';
 
 const GM_TABS = [
     { id: 'session',    label: 'Table' },
     { id: 'maison',     label: 'Maison' },
-    { id: 'npc',        label: 'PNJ' },
     { id: 'journal',    label: 'Journal' },
     { id: 'tableau', label: 'Tableau' },
     { id: 'historique', label: 'Historique' },
@@ -64,13 +61,12 @@ const BandResource = ({ cls, icon, label, value, onChange, max = Infinity }) => 
 );
 
 const GMApp = ({ activeSession, onSessionChange, onlineCharacters, characterUpdates, darkMode, onToggleDarkMode }) => {
-    // Hash « #onglet » ou « #onglet-donnée » (PNJ ouvert) : sans tiret, l'ancien
+    // Hash « #onglet » (un ancien « #onglet-donnée » reste lu) : sans tiret, l'ancien
     // découpage rendait une chaîne vide et ramenait toujours sur Session (C-6).
     const [activeTab, setActiveTab] = useState(() => {
         const [tab] = readHash();
         return GM_TABS.some(t => t.id === tab) ? tab : 'session';
     });
-    const [currentData, setCurrentData] = useState(() => readHash()[1]);
     const [bandHeight, setBandHeight] = useState(0);
     const [diceOpen, setDiceOpen] = useState(false);
 
@@ -78,14 +74,9 @@ const GMApp = ({ activeSession, onSessionChange, onlineCharacters, characterUpda
     const table = useTableCharacters(activeSession, characterUpdates);
     const { resources, updateResource } = useSessionResources(sessionId, true);
 
-    const changeTab = (id, data = null) => {
+    const changeTab = (id) => {
         setActiveTab(id);
-        if (data) {
-            setCurrentData(data);
-            window.location.hash = `${id}-${data}`;
-        } else {
-            window.location.hash = id;
-        }
+        window.location.hash = id;
     };
 
     const actions = (
@@ -135,12 +126,6 @@ const GMApp = ({ activeSession, onSessionChange, onlineCharacters, characterUpda
                                 onSessionChange={onSessionChange} />
                 )}
                 {activeTab === 'maison' && <TabHouse activeSession={activeSession} />}
-                {activeTab === 'npc' && (
-                    <div className="p-6">
-                        <TabNPC npc={duneConfig.npc} sessionId={sessionId} GMDiceModal={DuneGMRollModal}
-                                currentData={currentData} onChangeCurrentData={(ref) => changeTab(activeTab, ref)} />
-                    </div>
-                )}
                 {activeTab === 'journal' && <div className="p-6"><TabJournal /></div>}
                 {/* Tableau partagé (brique plateforme, spec_tableau.md §10.8) */}
                 {activeTab === 'tableau' && (

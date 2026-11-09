@@ -19,7 +19,7 @@ Routes publiques (sans `authenticate`) : `POST /characters` (création), `GET /c
 |---|---|---|---|---|
 | B-AUTH-GM | Règle | Une action réservée au MJ (suppression de personnage, envoi d'objet ou de message, gestion et suppression des tables…) a `authenticate, requireGM`. N'en fait pas partie la suppression de jets de l'historique, ouverte à tout utilisateur connecté (bouton « Tout effacer » proposé à chacun). | Les actions MJ sont protégées côté serveur, c'est la limite de sécurité du projet. | relecture |
 | B-AUTH-OWNER | Règle | Lire ou écrire un personnage (`GET`/`PUT`/`PATCH /:id`, avatar, journal…) passe par `authenticate, requireOwnerOrGM`. Le joueur édite librement sa propre fiche. | Un joueur ne touche pas la fiche d'un autre. | relecture |
-| B-AUTH-USER | Règle | Toute route d'écriture a au moins `authenticate` (sur la route ou par `router.use`), sauf les routes publiques ci-dessus. Une nouvelle route publique s'ajoute à la liste `PUBLIC` du test, avec sa raison. Combat, PNJ et noctis sont exclus du test jusqu'à leur refonte. | Une écriture anonyme se fait d'un simple appel. | test (`tests/server/routes/rights.test.js`) |
+| B-AUTH-USER | Règle | Toute route d'écriture a au moins `authenticate` (sur la route ou par `router.use`), sauf les routes publiques ci-dessus. Une nouvelle route publique s'ajoute à la liste `PUBLIC` du test, avec sa raison. Noctis est exclu du test jusqu'à sa refonte. | Une écriture anonyme se fait d'un simple appel. | test (`tests/server/routes/rights.test.js`) |
 | B-AUTH-CHECK | Règle | Un contrôle d'identité ou de droit ne saute jamais parce qu'un champ est absent : une entrée manquante est un refus. | `if (code && code !== attendu)` laisse passer qui n'envoie pas de code. | relecture |
 
 ### SQL et écritures

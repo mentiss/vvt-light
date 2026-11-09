@@ -10,12 +10,12 @@
 //   CharacterController.js → { loadFullCharacter, saveFullCharacter } (spec_characters_route.md §4)
 //
 // Routes génériques montées automatiquement (pas besoin de les déclarer) :
-//   characters, sessions, journal, dice, combat, npc
+//   characters, sessions, journal, dice, audio, board
 //   routes/characters.js du slug (facultatif) : monté avant la route commune
 //   /characters, il ajoute ses routes propres ou remplace une route commune.
 //
 // Routes extra slug-spécifiques :
-//   Tout fichier .js dans routes/ qui n'est PAS characters.js ni combat.js
+//   Tout fichier .js dans routes/ qui n'est PAS characters.js
 //   est monté automatiquement sous /api/:slug/<nom_fichier_sans_extension>.
 //   Ex : routes/session-resources.js → /api/dune/session-resources
 //
@@ -37,9 +37,6 @@ const SHARED_ROUTES = {
     sessions:   path.join(__dirname, '../routes/sessions.js'),
     journal:    path.join(__dirname, '../routes/journal.js'),
     dice:       path.join(__dirname, '../routes/dice.js'),
-    combat:     path.join(__dirname, '../routes/combat.js'),
-    npc:        path.join(__dirname, '../routes/npc.js'),
-    'npc-sets': path.join(__dirname, '../routes/npc-sets.js'),
     audio:      path.join(__dirname, '../routes/audio.js'),
     board:      path.join(__dirname, '../routes/board.js'),
 };
@@ -54,7 +51,7 @@ const CHARACTERS_ROUTE = path.join(__dirname, '../routes/characters.js');
 const RESERVED_SLUGS = ['platform'];
 
 // Routes slug-spécifiques exclues du scan extra (gérées explicitement)
-const EXCLUDED_FROM_EXTRA_SCAN = new Set(['characters.js', 'combat.js']);
+const EXCLUDED_FROM_EXTRA_SCAN = new Set(['characters.js']);
 
 // Cache des systèmes chargés : slug → systemConfig
 const _registry = new Map();
@@ -111,7 +108,7 @@ function getAllSystems() {
 /**
  * Retourne le router Express d'une route spécifique au système.
  * @param {string} slug
- * @param {'characters'|'combat'} routeName
+ * @param {string} routeName  nom du fichier de routes/ du slug
  * @returns {import('express').Router}
  */
 function getSystemRoute(slug, routeName) {
@@ -142,7 +139,7 @@ function getCharacterController(slug) {
 
 /**
  * Retourne le router Express d'une route générique partagée.
- * @param {'sessions'|'journal'|'dice'|'npc'|'combat'|'npc-sets'} routeName
+ * @param {'sessions'|'journal'|'dice'|'audio'|'board'} routeName
  * @returns {import('express').Router}
  */
 function getSharedRoute(routeName) {
@@ -153,7 +150,7 @@ function getSharedRoute(routeName) {
 
 /**
  * Scanne le dossier routes/ du slug et retourne toutes les routes extra.
- * Sont exclues : characters.js et combat.js (gérées explicitement par server.js).
+ * Est exclu : characters.js (monté explicitement par server.js).
  *
  * @param {string} slug
  * @returns {Array<{ name: string, router: import('express').Router }>}

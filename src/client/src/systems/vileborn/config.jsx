@@ -2,7 +2,7 @@
 // ─────────────────────────────────────────────────────────────────────────────
 // Configuration front du slug Vileborn.
 // Réexporte les catalogues (config/*) et porte les hooks de dés (contrat
-// diceEngine v2) et le bloc combat. Spec : spec_vileborn.md partie II (§II.4).
+// diceEngine v2). Spec : spec_vileborn.md partie II (§II.4).
 // ⚠️ Module ES — importé uniquement par le frontend React.
 // ─────────────────────────────────────────────────────────────────────────────
 
@@ -79,21 +79,10 @@ const dice = {
     renderAllRollTypes: true,   // le slug rend aussi le jet libre (onglet, panneau, notifications)
 };
 
-// ══════════════════════════════════════════════════════════════════════════════
-// BLOC COMBAT — aucun combat dans Vileborn (Q27) : bloc vide
-// ══════════════════════════════════════════════════════════════════════════════
-
-const combat = {
-    renderHealthDisplay: () => null,
-    actions:             [],
-    attack:              null,
-};
-
 const vilebornConfig = {
     slug:  'vileborn',
     label: 'Vileborn',
     dice,
-    combat,
 
     // Dés 3D : rouge sang, chiffres papier, filet encre (planche validée)
     diceConfigDefault: {

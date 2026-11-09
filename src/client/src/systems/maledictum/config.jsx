@@ -1,7 +1,7 @@
 // src/client/src/systems/maledictum/config.jsx
 // ─────────────────────────────────────────────────────────────────────────────
 // Configuration front du slug Imperium Maledictum : hooks de dés (contrat
-// diceEngine v2) et bloc combat. Règles de résolution : config/rules/dice.js
+// diceEngine v2). Règles de résolution : config/rules/dice.js
 // (pur, testé). Spec : spec_maledictum.md §10.
 // ⚠️ Module ES — importé uniquement par le frontend React.
 // ─────────────────────────────────────────────────────────────────────────────
@@ -102,22 +102,10 @@ const dice = {
     renderAllRollTypes: true,   // le slug rend aussi le jet libre (onglet, panneau, notifications)
 };
 
-// ══════════════════════════════════════════════════════════════════════════════
-// BLOC COMBAT — stub (spec_maledictum.md D-21) : l'Initiative est statique
-// (BPer + BAg, sur la fiche) ; rencontre et PNJ côté MJ (gm/tabs/TabEncounter).
-// ══════════════════════════════════════════════════════════════════════════════
-
-const combat = {
-    renderHealthDisplay: () => null,
-    actions:             [],
-    attack:              null,
-};
-
 const maledictumConfig = {
     slug:  'maledictum',
     label: 'Imperium Maledictum : Inquisition',
     dice,
-    combat,
 
     // Dés 3D : cire rouge et or terni (thème de l'Ordo Hereticus, planche validée)
     diceConfigDefault: {
