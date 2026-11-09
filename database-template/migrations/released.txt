@@ -41,3 +41,7 @@
 07112026_cyberpunk_creation.sql
 08112026_vileborn_challenges.sql
 09112026_drop_old_npc.sql
+09112026_1_dice_history_label_raw.sql
+09112026_2_vikings_dice_history.sql
+09112026_3_dice_history_drop_legacy.sql
+09112026_4_dice_history_notation_nullable.sql
