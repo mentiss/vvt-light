@@ -20,11 +20,11 @@ import { useSocket } from '../../context/SocketContext.jsx';
 import { useAuth }   from '../../context/AuthContext.jsx';
 import {stripHtml, firstImageSrc} from "../shared/RichTextEditor.jsx";
 import useSlugConfig from '../../hooks/useSlugConfig.js';
+import { PLATFORM_ROLL_TYPES } from '../../tools/diceHistory.js';
+import GenericRollEntry from './GenericRollEntry.jsx';
 
 const TOAST_DICE_TTL    = 5000;
 const TOAST_MESSAGE_TTL = 8000;
-
-const PLATFORM_ROLL_TYPES = ['free_roll'];
 
 const ToastNotifications = ({
                                 sessionId          = null,
@@ -168,7 +168,7 @@ const ToastNotifications = ({
                                         {toast.character_name}
                                     </p>
                                     <p style={{ fontSize: '0.72rem', color: 'var(--color-text-muted)' }}>
-                                        {toast.label ?? toast.roll_target ?? toast.roll_type ?? 'Jet'}
+                                        {toast.label ?? toast.roll_type ?? 'Jet'}
                                     </p>
                                 </div>
                             </div>
@@ -178,37 +178,14 @@ const ToastNotifications = ({
                                 // Types plateforme → rendu générique, sauf opt-in slug
                                 const isPlatformType = PLATFORM_ROLL_TYPES.includes(toast.roll_type);
 
+                                // roll_result et raw_result arrivent en objets (route /dice/roll)
                                 if (renderDiceToast && (!isPlatformType || renderAllRollTypes)) {
-                                    // Désérialiser roll_result si nécessaire
-                                    let result = toast.roll_result;
-                                    if (typeof result === 'string') {
-                                        try { result = JSON.parse(result); } catch { result = null; }
-                                    }
-                                    const custom = renderDiceToast({ ...toast, roll_result: result });
+                                    const custom = renderDiceToast(toast);
                                     if (custom) return custom;
                                 }
 
-                                // Fallback générique — succès si disponible, sinon total
-                                return (
-                                    <div>
-                                        {toast.successes != null ? (
-                                            <p style={{
-                                                fontWeight: 700, fontSize: '1.1rem',
-                                                color: toast.successes >= 3 ? 'var(--color-success)'
-                                                    : toast.successes > 0  ? 'var(--color-accent)'
-                                                        : 'var(--color-danger)',
-                                            }}>
-                                                {toast.successes} succès
-                                            </p>
-                                        ) : toast.roll_result?.total != null ? (
-                                            <p style={{ fontWeight: 700, fontSize: '1.1rem', color: 'var(--color-text)' }}>
-                                                = {typeof toast.roll_result === 'string'
-                                                ? JSON.parse(toast.roll_result)?.total
-                                                : toast.roll_result?.total}
-                                            </p>
-                                        ) : null}
-                                    </div>
-                                );
+                                // Rendu de secours commun (libellé déjà dans l'en-tête)
+                                return <GenericRollEntry roll={toast} showLabel={false} />;
                             })()}
                         </ToastShell>
                     )}

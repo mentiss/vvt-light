@@ -198,20 +198,11 @@ CREATE TABLE IF NOT EXISTS dice_history (
     -- ── Colonnes génériques (tous systèmes) ─────────────────────────────
     -- Notation rpg-dice-roller jouée ex: "3d10!>=9>=7", "2d6+2", "1d%<=65"
                                             notation TEXT,
-    -- Contexte complet du jet (JSON RollContext) — ce qui était demandé
-                                            roll_definition TEXT,
     -- Résultat enrichi (JSON RollResult) — ce qui s'est passé
                                             roll_result TEXT,
-
-    -- ── Colonnes legacy Vikings (conservées pour rétrocompatibilité) ────
-                                            roll_type TEXT,                 -- 'carac', 'skill', 'saga_heroic', etc.
-                                            roll_target TEXT,               -- Nom carac ou compétence
-                                            pool INTEGER,
-                                            threshold INTEGER,
-                                            results TEXT,                   -- JSON array des résultats bruts
-                                            successes INTEGER,
-                                            saga_spent INTEGER DEFAULT 0,
-                                            saga_recovered INTEGER DEFAULT 0,
+                                            label       TEXT,
+                                            raw_result  TEXT,
+                                            roll_type TEXT,
 
                                             created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
 

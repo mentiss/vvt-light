@@ -11,6 +11,7 @@
 
 import { useSystem } from '../../../hooks/useSystem.js';
 import { useFetch } from '../../../hooks/useFetch.js';
+import { recordHistoryEntry } from '../../../tools/diceHistory.js';
 import { ROLL_TYPES } from '../config.jsx';
 import {
     displayName, sufferState, healState, addWound, spendAspiration, spendDuty, setGiftChecked, giftInfo,
@@ -24,16 +25,13 @@ export const useVilActions = ({ character: c, sessionId, patch, isPlayer = true 
     const { launch } = useVilRoll();
     const name = displayName(c);
 
-    // Ligne d'événement (Rêverie, Pulsion) : enregistrée comme un jet sans dé, diffusée à la table
+    // Ligne d'événement (Rêverie, Pulsion) : entrée d'historique sans dé ni notation, diffusée à la table
     const postEvent = (label, text) => {
         if (!isPlayer || !sessionId) return;
-        fetchWithAuth(`${apiBase}/dice/roll`, {
-            method: 'POST', headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                session_id: sessionId, character_id: c.id, character_name: name, roll_type: ROLL_TYPES.event,
-                notation: '—', roll_result: JSON.stringify({ type: 'event', label, text }), successes: 0, pool: 0,
-            }),
-        }).catch(err => console.error('[vileborn] événement :', err));
+        recordHistoryEntry(fetchWithAuth, apiBase, {
+            sessionId, characterId: c.id, characterName: name, rollType: ROLL_TYPES.event,
+            label, result: { type: 'event', label, text },
+        });
     };
 
     return {

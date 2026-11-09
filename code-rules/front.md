@@ -39,6 +39,7 @@ Le contrôle `lint` désigne une règle ESLint nommée par l'identifiant (`vtt/F
 | Id | Niveau | Règle | Pourquoi | Contrôle |
 |---|---|---|---|---|
 | F-ROLL | Règle | `roll()` renvoie le résultat d'`afterRoll()`, jamais l'objet brut. `buildNotation` est appelé par le composant avant `roll()`, pas par le moteur. **Un seul type de dé par notation** : plusieurs types forment un tableau de notations, un groupe chacune (`["1d8", "1d10"]`, pas `"1d8+1d10"`). Une explosion crée une vague dans son groupe, jamais un nouveau groupe. | Le moteur ne lit que le premier terme d'une notation ; un objet brut renvoyé a causé des bugs persistants. | relecture |
+| F-HISTORY | Règle | Une entrée d'historique passe par le moteur (`roll()` avec `ctx.rollType` et `ctx.label`) ou, sans dé, par `recordHistoryEntry` (`tools/diceHistory.js`) : jamais de `POST /dice/roll` à la main. Le slug n'écrit pas la notation, ne prend pas un type de `PLATFORM_ROLL_TYPES` et range ce que son rendu lit dans `roll_result`. | Un seul constructeur de l'entrée ; `notation` et `raw_result` restent fiables pour la plateforme (`spec_diceengine_v2.md`, H-1 à H-4). | relecture |
 | F-ROLL-RENDER | Règle | Le rendu d'un jet est déclaré une fois dans le `config.jsx` du slug (`dice.renderHistoryEntry`, et `dice.renderAllRollTypes` s'il rend aussi le jet libre) ; le même rendu sert l'historique et les notifications, sans marge extérieure. | Un jet s'affiche pareil partout ; la marge est portée par la plateforme. | relecture |
 
 ### Pages, briques et contrats

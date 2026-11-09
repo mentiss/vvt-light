@@ -48,7 +48,8 @@ export const parseFreeRoll = (entry) => {
 
     const modifier = result.modifier ?? parsedModifier;
     const total    = result.total ?? sum(groups.map(g => g.subtotal)) + modifier;
-    const label    = result.label || entry.roll_target || DEFAULT_LABEL;
+    // Libellé de l'entrée (colonne label), sinon celui du résultat (anciens jets)
+    const label    = entry.label || result.label || DEFAULT_LABEL;
 
     return { label, total, modifier, groups };
 };

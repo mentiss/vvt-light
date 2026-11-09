@@ -13,6 +13,7 @@
 import { useCallback } from 'react';
 import { useFetch } from '../../../hooks/useFetch.js';
 import { useSystem } from '../../../hooks/useSystem.js';
+import { recordHistoryEntry } from '../../../tools/diceHistory.js';
 import { FRAGMENT_ELEMENTS } from '../config/groupItems.js';
 
 const characterName = (c) => [c?.prenom, c?.nom].filter(Boolean).join(' ') || 'Personnage';
@@ -34,23 +35,15 @@ export const useGroupItemUse = ({ character, sessionId, onQuickUpdate }) => {
             element: elementLabel,
             label: `Utilise : ${item.nom}${elementLabel ? ` (${elementLabel.toLowerCase()})` : ''}`,
         };
-        try {
-            await fetchWithAuth(`${apiBase}/dice/roll`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    session_id: sessionId ?? null,
-                    character_id: character.id,
-                    character_name: characterName(character),
-                    roll_type: 'fabula_objet',
-                    notation: 'objet',
-                    roll_result: JSON.stringify(result),
-                    successes: null,
-                }),
-            });
-        } catch (err) {
-            console.warn('[fabula] objet utilisé, trace non enregistrée :', err);
-        }
+        // Entrée sans dé : pas de notation (spec_diceengine_v2.md, H-2)
+        await recordHistoryEntry(fetchWithAuth, apiBase, {
+            sessionId,
+            characterId:   character.id,
+            characterName: characterName(character),
+            rollType:      'fabula_objet',
+            label:         result.label,
+            result,
+        });
         return true;
         // fetchWithAuth volontairement hors dépendances (référence instable)
         // eslint-disable-next-line react-hooks/exhaustive-deps

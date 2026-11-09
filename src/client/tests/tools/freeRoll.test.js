@@ -37,6 +37,12 @@ describe('parseFreeRoll', () => {
         expect(parsed.groups.map(g => g.notation)).toEqual(['1d6', '1d4']);
     });
 
+    it('libellé : celui de l\'entrée (colonne label) avant celui du résultat', () => {
+        const groups = [{ notation: '1d6', values: [4], total: 4 }];
+        expect(parseFreeRoll(entry({ groups, label: 'Ancien' }, { label: 'Crochetage' })).label).toBe('Crochetage');
+        expect(parseFreeRoll(entry({ groups, label: 'Ancien' })).label).toBe('Ancien');
+    });
+
     it('ignore les autres types de jet et les résultats illisibles', () => {
         expect(parseFreeRoll({ roll_type: 'vikings_skill', roll_result: { groups: [] } })).toBeNull();
         expect(parseFreeRoll(entry('pas du json'))).toBeNull();

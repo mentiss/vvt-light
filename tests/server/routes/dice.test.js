@@ -5,7 +5,11 @@
 import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import { startSlugApp, playerToken } from '../helpers/slugApp.js';
 
-const ROLL = { notation: '2d10', roll_result: { total: 12, outcome: 'partial' }, character_name: 'Ines' };
+const ROLL = {
+    roll_type: 'cyberpunk_move', label: 'Agir sous pression', notation: '2d10',
+    raw_result: { groups: [{ notation: '2d10', total: 12, dice: [{ value: 5, modifiers: [] }, { value: 7, modifiers: [] }] }] },
+    roll_result: { total: 12, outcome: 'partial' }, character_name: 'Ines',
+};
 
 describe('dice : diffusion d\'un jet', () => {
     let api, sessionId, charId;
@@ -26,9 +30,33 @@ describe('dice : diffusion d\'un jet', () => {
         ]);
     });
 
+    // Contrat de l'entrée (spec_diceengine_v2.md, « Passe générique : contrat »)
+    it('type, libellé et résultat du slug sont obligatoires', async () => {
+        for (const field of ['roll_type', 'label', 'roll_result']) {
+            const body = { ...ROLL, character_id: charId, [field]: undefined };
+            const res = await api.request('POST', '/roll', { token: playerToken(charId), body });
+            expect(res.status, field).toBe(400);
+        }
+    });
+
+    it('entrée enregistrée, rendue et relue avec libellé, notation et brut', async () => {
+        const res = await api.request('POST', '/roll', { token: playerToken(charId), body: { ...ROLL, character_id: charId } });
+        expect(res.status).toBe(201);
+        expect(res.body).toMatchObject({ roll_type: 'cyberpunk_move', label: 'Agir sous pression', notation: '2d10', raw_result: ROLL.raw_result, roll_result: ROLL.roll_result });
+        const history = await api.request('GET', `/history/${charId}`, { token: playerToken(charId) });
+        expect(history.body.find(r => r.id === res.body.id)).toMatchObject({ label: 'Agir sous pression', raw_result: ROLL.raw_result, roll_result: ROLL.roll_result });
+    });
+
+    it('entrée sans dé : ni notation ni brut, acceptée (notation nullable)', async () => {
+        const body = { roll_type: 'cyberpunk_event', label: 'Événement', roll_result: { text: 'Sans dé' }, character_id: charId };
+        const res = await api.request('POST', '/roll', { token: playerToken(charId), body });
+        expect(res.status).toBe(201);
+        expect(res.body).toMatchObject({ notation: null, raw_result: null });
+    });
+
     // Jet posé directement en base : chaque test de suppression a le sien
     const insertRoll = () => api.db.prepare(
-        "INSERT INTO dice_history (session_id, character_id, notation, roll_result) VALUES (?, ?, '1d6', '{}')"
+        "INSERT INTO dice_history (session_id, character_id, roll_type, label, notation, roll_result) VALUES (?, ?, 'test', 'Test', '1d6', '{}')"
     ).run(sessionId, charId).lastInsertRowid;
 
     it('jet et suppressions sans jeton : refusés (B-AUTH-USER)', async () => {

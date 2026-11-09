@@ -99,15 +99,15 @@ await roll(notation, ctx, hooks)
     characterId:    number | null,  // null = jet GM anonyme
     sessionId:      number | null,  // null = hors session
     characterName:  string | null,
-    rollType:       string,         // identifiant libre slug ex: 'vikings_skill', 'dune_2d20'
+    rollType:       string,         // obligatoire si enregistré : identifiant libre du slug
+                                    // ex: 'vikings_skill', 'dune_2d20' ; jamais 'free_roll' (plateforme)
+    label:          string,         // obligatoire si enregistré : libellé lisible (colonne label),
+                                    // aussi libellé par défaut de l'animation
     persistHistory: boolean,        // défaut : true — voir section dédiée Étape 5
 
     // ── Données système opaques ───────────────────────────────────────────
     // Le moteur ne lit jamais ce champ — transmis tel quel aux hooks
     systemData: { /* libre */ },
-
-    // ── Affichage ─────────────────────────────────────────────────────────
-    label: string,
 }
 ```
 
@@ -333,15 +333,18 @@ const result = await roll(notation, ctx, hooks);
 
 ### Payload `POST ${ctx.apiBase}/dice/roll`
 
+Construit par `recordHistoryEntry` (`tools/diceHistory.js`), contrat complet dans « Passe générique : contrat » plus bas (2026-11-09) :
+
 ```js
 {
     session_id:     ctx.sessionId,
     character_id:   ctx.characterId,
-    character_name: ctx.characterName,
-    roll_type:      ctx.rollType,
-    notation:       notation,           // string ou JSON.stringify(array)
-    roll_result:    JSON.stringify(result),
-    successes:      result.successes ?? null,
+    character_name: ctx.characterName,  // diffusé, pas enregistré
+    roll_type:      ctx.rollType,       // obligatoire
+    label:          ctx.label,          // obligatoire
+    notation:       notation,           // string ou JSON.stringify(array), moteur seul
+    raw_result:     buildRawResult(raw.groups), // brut de la bibliothèque, moteur seul
+    roll_result:    result,             // résultat du slug (afterRoll)
 }
 ```
 
@@ -533,3 +536,156 @@ Force, gravité, lumière et sons ne servent qu'à la 3D : masqués quand le slu
 ### 3D d'ici la modification de la bibliothèque
 
 La bibliothèque n'applique qu'un jeu de couleurs par lancer : la 3D garde une configuration pour tout le lancer, celle du joueur, sinon celle du slug, sinon celle de la plateforme. Colorer chaque dé en 3D est au backlog (modifier la bibliothèque, `patch-package`).
+
+---
+
+## Passe générique : historique des jets sans héritage Vikings *(phase 1, 2026-11-09)*
+
+Décidée avec le MJ le 2026-11-09 : retirer du moteur, de la route `/dice/roll` et des composants communs ce qui n'est pas générique, migrer les données, mettre les slugs en conformité. Tout passe par `roll_result` (décisions H-1 à H-4 ci-dessous).
+
+### Diagnostic (code et bases locales, 2026-11-09)
+
+**Base** : `dice_history` (`base.sql`, recopiée dans les 14 `<slug>-schema.sql`) a 7 colonnes héritées de Vikings : `roll_target`, `pool`, `threshold`, `results`, `successes`, `saga_spent`, `saga_recovered`.
+
+**Données locales** (lecture seule) :
+
+| Slug | Jets | Sans `roll_result` | Anciennes colonnes remplies | `roll_definition` |
+|---|---|---|---|---|
+| vikings | 166 | **109** | 149 | 0 |
+| dune | 36 | 0 | 0 | 2 |
+| les 11 autres | 431 | 0 | 0 | 0 |
+
+- Seul Vikings a des données hors de `roll_result` : 109 jets d'avant le 2026-03-05 n'existent que dans les anciennes colonnes (types `carac`, `combat`, `skill`). `VikingsHistoryEntry` les affiche en « Jet (ancien format) », sans dés.
+- `roll_definition` n'est écrit par **personne** aujourd'hui : les 2 lignes de Dune viennent d'un ancien code. Seul `DuneHistoryEntry` le mentionne (commentaire).
+- Chaque slug a sa propre forme de `roll_result` (ex. `successes` / `succes`, `detail` / `details`, `results` / `values` / `allDice`) : c'est le rendu du slug qui la lit.
+- **Base de prod non vérifiée.**
+
+**Écrivains** :
+- Moteur (`diceEngine.js`, `_persistRoll`) : envoie encore `successes` et `pool` en plus de `roll_result`.
+- Fabula : `FabulaDiceModal` (porte-bonheur) et `useGroupItemUse` (objet utilisé) postent `/dice/roll` en direct, avec `successes`.
+- Vileborn : `useVilActions` (`postEvent`, Rêverie / Pulsion) poste en direct, avec `successes: 0, pool: 0` et `notation: '—'`.
+- Ces trois envois sont des **événements sans dé** inscrits dans l'historique.
+
+**Route** (`routes/dice.js`) : accepte deux formats (« générique » et « legacy Vikings »), écrit et rediffuse les 7 colonnes, parse `results` à la lecture.
+
+**Lecteurs à corriger** :
+- `ToastNotifications` : en-tête (`toast.roll_target`) et rendu de secours (`toast.successes`).
+- `DiceHistoryList` (rendu de secours) : `result.results`, `result.succes` (lus dans `roll_result`, donc hors colonnes, mais propres à un slug).
+- `tools/freeRoll.js` : `entry.roll_target` en libellé de secours.
+- `ZoneBlancheHistoryEntry` : `entry.roll_target`, toujours vide depuis mars.
+- `VikingsHistoryEntry` : branche « ancien format », à supprimer après la migration.
+
+**Hors de la passe mais liés** (backlog) : une notation à plusieurs types de dés (« 1d10+2d12 ») ne remonte que le premier groupe (`diceRoll.rolls[0]`, règle F-ROLL écrite en conséquence) ; une seule couleur par lancer en 3D.
+
+**Lecteurs de `notation`** : seulement en libellé de secours, quand le slug n'en a pas mis dans `roll_result` (Delta Green, Dune, Fabula, Zone Blanche, rendu de secours `DiceHistoryList`). Aucun rendu n'en tire les dés ni les règles.
+
+**Lecteurs de `roll_type`** : partout. La plateforme y reconnaît ses propres types (`PLATFORM_ROLL_TYPES`, jet libre `free_roll`) ; les rendus d'Achtung, Delta Green, Fabula, Maledictum, Nimble, Vileborn, Vampire et Zone Blanche choisissent leur affichage d'après lui.
+
+### Décisions du MJ (2026-11-09)
+
+Une ligne d'historique sert le rendu par `roll_result`, et par lui seul. `roll_definition` n'a pas lieu d'être : la notation dit déjà ce qui a été lancé.
+
+| # | Règle |
+|---|---|
+| H-1 | **`roll_result` est l'espace du slug.** Il y range tout ce que son rendu doit savoir, dans la forme qu'il veut, qu'il s'agisse d'un jet ou d'autre chose (événement, objet utilisé…). |
+| H-2 | **`notation` est exactement ce que le moteur passe à la bibliothèque de dés** : la chaîne (`2d20`, `3d10!>=10>=4`), ou le tableau de chaînes enregistré en JSON (`["1d8","1d10"]`). Elle est écrite par le moteur, jamais par le slug. Une entrée sans dé n'en a pas (`NULL`) : plus de `porte-bonheur`, `objet` ni `—`. |
+| H-3 | **Colonnes de `dice_history`** : les essentiels (`id`, `character_id`, `session_id`, `created_at`), `roll_type`, `label`, `notation`, `roll_result`. Supprimées : `roll_definition`, `roll_target`, `pool`, `threshold`, `results`, `successes`, `saga_spent`, `saga_recovered`. |
+| H-4 | **`label` (nouvelle colonne) est le libellé lisible de l'entrée** (« Combat CàC (armé) », « Rêverie »). Le slug le donne, la plateforme l'écrit : `ctx.label` pour un jet (le moteur l'écrit), paramètre du helper pour une entrée sans dé (DE-3). Obligatoire pour une nouvelle entrée, comme `roll_type`. La plateforme le lit pour l'en-tête des notifications et le rendu de secours, à la place de la recherche actuelle (`toast.label` jamais présent, `roll_target` vide : l'en-tête affiche aujourd'hui `roll_type` brut, ex. « vikings_skill »). Le slug reste libre d'avoir son propre libellé dans `roll_result` (H-1) : aucune clé n'y est imposée. |
+
+Le partage qui en découle : la plateforme range ce qu'elle doit connaître (qui, quand, `roll_type`, `label`, `notation`), le slug range le reste dans `roll_result`.
+
+DE-1 et DE-2 (contenu et remplissage de `roll_definition`) sont sans objet.
+
+### Questions
+
+| # | Question | Options | Reco | Réponse                                                                              |
+|---|---|---|---|--------------------------------------------------------------------------------------|
+| DE-1 | ~~Que contient `roll_definition` ?~~ | | | Sans objet : colonne supprimée (H-3)                                                 |
+| DE-2 | ~~Qui remplit `roll_definition` dans les jets existants ?~~ | | | Sans objet (H-3)                                                                     |
+| DE-3 | Les entrées sans dé (porte-bonheur et objet de Fabula, Rêverie / Pulsion de Vileborn) postent `/dice/roll` en direct | a) un petit helper de la plateforme (`tools/`) qui écrit une entrée d'historique, utilisé aussi par `_persistRoll` ; b) les faire passer par `roll()` sans dé ; c) les laisser poster en direct, juste nettoyées | **a** : un seul endroit construit le payload, `roll()` reste un lanceur de dés | oui reco                                                                             |
+| DE-4 | Règle de `roll_type` : obligatoire (la route refuse une entrée sans lui) ; type de la plateforme sans préfixe (`free_roll`), type d'un slug préfixé `<slug>_`. Le moteur ne met plus `generic` par défaut : un jet sans `ctx.rollType` n'est pas enregistré et le signale en console. | oui / non | **oui** : c'est l'aiguillage de tous les rendus, un jet sans type est un jet que personne ne sait afficher. Les 47 lignes `generic` existantes restent telles quelles : Delta Green 30 (toutes du 2026-04-17, appels corrigés depuis), Noctis 17 (attend sa refonte) | ok, voir question format ci-après                                                    |
+| DE-10 | Garder aussi le résultat brut de la bibliothèque (valeurs par groupe et par vague, explosions), écrit par le moteur dans une colonne à lui, à côté de `notation` | a) oui ; b) non, pas tant que rien ne le lit | **b** : chaque slug range déjà ses dés dans `roll_result` (`allDice`, `values`, `results`…) et aucun lecteur n'attend ce brut ; une colonne ajoutée plus tard ne coûte qu'une migration, seuls les jets d'avant n'en auraient pas. À reprendre si un rendu commun de la plateforme (secours, statistiques) voit le jour | oui on garde le résultat brut                                                        |
+| DE-11 | `label` des entrées existantes (la colonne est nouvelle) | a) migration : recopier `roll_result.label` quand il existe (10 slugs sur 13 l'ont dans leurs données), sinon laisser `NULL` ; l'affichage retombe alors sur `roll_type` ; b) a + un libellé déduit de `roll_type` par slug, écrit dans la migration | **a** : on reprend ce qui a été saisi, sans inventer ; les entrées sans libellé sont anciennes et le rendu du slug porte de toute façon son titre | oui                                                                                  |
+| DE-5 | Migration Vikings : les 109 jets sans `roll_result` | a) reconstruire `roll_result` (`allDice`, `successes`, `detail` avec `pool`, `threshold`, `rollTarget`, `meta` avec `resourceSpent` / `resourceGained`) ; seuils d'explosion laissés vides et `notation` laissée `NULL` (le seuil d'explosion n'a jamais été enregistré, la notation exacte ne se reconstruit pas) ; b) les supprimer | **a** : c'est l'historique de la table | oui reco, on reconstruit                                                             |
+| DE-6 | Anciens types Vikings `carac`, `combat`, `skill` (sans préfixe, 149 lignes) | a) les renommer en `vikings_carac`, `vikings_combat`, `vikings_skill` dans la migration ; b) les laisser | **a** : avec la règle DE-4, c'est un `UPDATE` sans risque (`VikingsHistoryEntry` ne lit pas `roll_type`) et la base devient conforme | oui, à voir pour le format si c'est pas plutôt slug:type ?                           |
+| DE-7 | Notation à plusieurs types de dés (« 1d10+2d12 ») | dans la passe / hors passe | **hors passe** : sans `roll_definition`, plus de lien avec l'historique ; F-ROLL interdit déjà ce cas, il reste au backlog | ok                                                                                   |
+| DE-8 | Couleur par dé en 3D (modifier la bibliothèque) | dans la passe / hors passe | **hors passe** : sujet d'animation, sans lien avec l'historique | ok                                                                                   |
+| DE-9 | Base de prod : je compte en lecture seule les jets par slug sur le VPS (même requête qu'en local) avant la spec | oui / non | **oui** : la migration Vikings et la suppression des colonnes doivent tenir sur les vraies données | non, les bases en dév sont toutes ou presque déjà des copies de la PROD donc inutile |
+
+**Format de `roll_type` (DE-4 et DE-6, tranché le 2026-11-09)** : option c. Chaque slug a sa base, deux slugs ne peuvent donc pas entrer en collision ; aucun préfixe n'est imposé. La seule contrainte : un slug ne prend pas un type réservé par la plateforme (`free_roll` aujourd'hui), exception connue des slugs. Les types existants restent tels quels (`dg_skill`, `vda_pool`, `carac`… compris) : DE-6 n'a plus lieu d'être. `roll_type` reste obligatoire.
+
+---
+
+## Passe générique : contrat *(phase 2, 2026-11-09 ; implémenté le 2026-11-09)*
+
+Écarts de l'implémentation : la migration 1 vide aussi les notations de remplissage des anciennes entrées sans dé (`porte-bonheur`, `objet`, `—`) ; les libellés de secours des rendus qui lisaient la notation (Delta Green, Dune, Fabula, Zone Blanche) lisent `label`. Le rendu de secours commun est `components/layout/GenericRollEntry.jsx`.
+
+### Table `dice_history`
+
+| Colonne | Écrite par | Contenu |
+|---|---|---|
+| `id`, `character_id`, `session_id`, `created_at` | route | inchangés |
+| `roll_type` | slug (`ctx.rollType`, ou paramètre du helper) | obligatoire ; libre, hors types réservés de la plateforme |
+| `label` | slug (`ctx.label`, ou paramètre du helper) | **nouvelle**, obligatoire : libellé lisible de l'entrée (H-4) |
+| `notation` | moteur seul | ce que le moteur passe à la bibliothèque : la chaîne, ou le tableau en JSON ; `NULL` sans dé (H-2) |
+| `raw_result` | moteur seul | **nouvelle** : résultat brut de la bibliothèque (ci-dessous) ; `NULL` sans dé |
+| `roll_result` | slug | forme libre (H-1) |
+
+Supprimées : `roll_definition`, `roll_target`, `pool`, `threshold`, `results`, `successes`, `saga_spent`, `saga_recovered`. `notation` perd partout son `NOT NULL` (encore présent dans les bases Cyberpunk et Noctis).
+
+**`raw_result`** (JSON) : un élément par notation, dans l'ordre du tableau passé au moteur.
+```json
+{ "groups": [
+    { "notation": "3d10!>=10>=4", "total": 3,
+      "dice": [ { "value": 10, "modifiers": ["explode", "target-success"] },
+                { "value": 4,  "modifiers": ["target-success"] },
+                { "value": 2,  "modifiers": [] } ] }
+] }
+```
+`total` et `modifiers` sont ceux de la bibliothèque, recopiés sans interprétation (`modifiers` passe d'un `Set` à un tableau). Le moteur ne lit que le premier terme de dés d'une notation (F-ROLL) : `raw_result` aussi.
+
+### Route `POST /api/:slug/dice/roll`
+
+- Corps : `roll_type`, `label`, `roll_result` (objet ou chaîne JSON) obligatoires ; `character_id`, `character_name`, `session_id`, `notation`, `raw_result` facultatifs. Un champ obligatoire manquant : **400**. Un ancien champ (`successes`, `pool`…) est ignoré.
+- `character_name` n'est pas enregistré : il sert à la diffusion, comme aujourd'hui.
+- Diffusion `dice-roll` à la room de la table (inchangé) et réponse 201 : `{ id, character_id, character_name, session_id, roll_type, label, notation, raw_result, roll_result, created_at }`, les deux JSON parsés.
+- `GET /history` et `GET /history/:characterId` renvoient les mêmes champs (`raw_result` et `roll_result` parsés). Les suppressions ne changent pas.
+
+### Côté client
+
+- **Helper `tools/diceHistory.js`** : `recordHistoryEntry(fetchFn, apiBase, { sessionId, characterId, characterName, rollType, label, result, notation?, raw? })`, seul constructeur du corps envoyé. Il exporte aussi `PLATFORM_ROLL_TYPES` (`['free_roll']`), aujourd'hui recopié dans `ToastNotifications` et `DiceHistoryList`.
+- **Moteur** : `_persistRoll` passe par le helper avec `ctx.rollType`, `ctx.label`, la notation et le brut. Plus de défaut `generic`, plus de `successes` ni de `pool`. Le contrat de `ctx` gagne deux champs obligatoires dès que le jet est enregistré : `rollType` et `label`. Un jet qui ne les a pas est refusé par la route ; le moteur le signale en console sans bloquer le jet (comme aujourd'hui pour un échec d'enregistrement).
+- **Entrées sans dé** (Fabula : porte-bonheur, objet utilisé ; Vileborn : Rêverie, Pulsion) : appel au helper, sans `notation` ni `raw`.
+- **Chaque appel à `roll()` des slugs** passe `rollType` et `label`. Inventaire et correction en phase 3, appel par appel.
+- **Rendu de secours commun** (`DiceHistoryList` et `ToastNotifications`, aujourd'hui deux versions) : un seul composant. Il affiche les dés de `raw_result` groupe par groupe et `roll_result.total` s'il est un nombre ; rien d'autre n'est lu dans `roll_result`.
+- **En-tête des notifications** : `label`, sinon `roll_type`, sinon « Jet ».
+- **Lecteurs corrigés** : `tools/freeRoll.js` (libellé : `label`, puis `roll_result.label`, puis « Jet libre » ; plus de `roll_target`), `ZoneBlancheHistoryEntry` (`label` au lieu de `roll_target`), `VikingsHistoryEntry` (branche « ancien format » supprimée ; « explosion … » masqué quand les seuils sont inconnus), commentaire de `DuneHistoryEntry` (`roll_definition`).
+
+### Migrations (ordre garanti par le nom)
+
+| Fichier | `systems` | Contenu |
+|---|---|---|
+| `<date>_1_dice_history_label_raw.sql` | `all` | ajoute `label` et `raw_result` ; `label` recopié de `roll_result.label` quand c'est un texte (DE-11) |
+| `<date>_2_vikings_dice_history.sql` | `vikings` | reconstruit les 109 jets sans `roll_result` (DE-5, ci-dessous) |
+| `<date>_3_dice_history_drop_legacy.sql` | `all` | supprime les 8 colonnes (`DROP COLUMN`, aucune n'est indexée) |
+| `<date>_4_dice_history_notation_nullable.sql` | `cyberpunk` | reconstruit la table sans le `NOT NULL` de `notation` (création, copie, échange), clés `ON DELETE SET NULL` gardées (écart B-FK documenté) et index recréés |
+
+Schémas : mêmes changements dans `base.sql` et les 14 copies `<slug>-schema.sql` (`NOT NULL` retiré de `cyberpunk-schema.sql`).
+
+**Reconstruction Vikings (DE-5)** : 109 jets du 2026-01-28 au 2026-03-05 (`carac` 63, `combat` 29, `skill` 17), tous avec dés, seuil et nombre de dés. Pour chacun :
+- `roll_result` = `{ allDice: results, successes, detail: { pool, threshold, rollTarget: roll_target, explosionThresholds: [] }, meta: { resourceSpent: saga_spent, resourceGained: saga_recovered } }` ;
+- `label` = `roll_target` (« Jet MJ », nom de la compétence…), ce qui avait été saisi ;
+- `notation` et `raw_result` restent `NULL` : les seuils d'explosion n'ont jamais été enregistrés, la notation exacte ne se reconstruit pas.
+- Les 40 jets récents qui ont déjà un `roll_result` ne sont pas touchés (leurs anciennes colonnes partent avec la migration 3).
+
+### Tests
+
+- `tests/server/routes/dice.test.js` : 400 sans `roll_type`, sans `label` ou sans `roll_result` ; une entrée sans `notation` est acceptée ; la réponse et la diffusion portent `label` et `raw_result`.
+- `tests/server/systems/schemas.test.js` : inchangé (il compare les tables partagées aux schémas).
+- Front : `tests/tools/freeRoll.test.js` mis à jour (libellé lu dans `label`) ; un test de la fonction pure qui construit `raw_result` à partir de la bibliothèque.
+
+### Question restante
+
+| # | Question | Options | Reco | Réponse |
+|---|---|---|---|---|
+| DE-12 | Noctis (hors périmètre jusqu'à sa refonte) n'envoie ni `rollType` ni `label` : avec la nouvelle route, ses jets ne seraient plus enregistrés | a) ajouter `rollType` et `label` à son appel à `roll()`, sans rien toucher d'autre ; b) laisser la route tolérer une entrée sans eux | **a** : deux champs dans un appel, pour qu'il continue de marcher ; ce n'est pas une correction de Noctis, et le contrat reste strict pour tous | Noctis hors périmètre : aucun code Noctis touché. Sa base suit les migrations `all` (même structure que les autres, son `NOT NULL` sur `notation` reste, sans gêne puisqu'il envoie toujours une notation). Conséquence assumée : ses jets sont refusés par la route (400) jusqu'à sa refonte |

@@ -219,15 +219,9 @@ CREATE TABLE IF NOT EXISTS dice_history (
                                             character_id    INTEGER REFERENCES characters(id)    ON DELETE SET NULL,
     session_id      INTEGER REFERENCES game_sessions(id) ON DELETE SET NULL,
     notation        TEXT,
-    roll_definition TEXT,
     roll_result     TEXT,
+    label           TEXT,
+    raw_result      TEXT,
     roll_type       TEXT,
-    roll_target     TEXT,
-    pool            INTEGER,
-    threshold       INTEGER,
-    results         TEXT,
-    successes       INTEGER,
-    saga_spent      INTEGER  DEFAULT 0,
-    saga_recovered  INTEGER  DEFAULT 0,
     created_at      DATETIME DEFAULT CURRENT_TIMESTAMP
     );

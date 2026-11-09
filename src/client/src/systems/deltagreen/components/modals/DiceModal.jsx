@@ -77,7 +77,7 @@ const DiceModal = ({ ctx, character, sessionId, onClose, onSkillFailed }) => {
                 characterId:   character.id,
                 characterName: character.nom ?? 'Agent',
                 sessionId,
-                label:         ctx.rollLabel ?? '',
+                label:         ctx.rollLabel || 'Jet',
                 rollType:      isD100
                     ? (ctx.skillId    ? 'dg_skill'
                         : ctx.languageId ? 'dg_language'

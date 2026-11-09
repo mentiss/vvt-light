@@ -58,7 +58,7 @@ const DiceEntryHistory = ({ roll }) => {
     const success     = result.success     ?? null;
     const critical    = result.critical    ?? false;
     const fumble      = result.fumble      ?? false;
-    const rollLabel   = result.rollLabel   ?? entry?.notation ?? '—';
+    const rollLabel   = result.rollLabel   ?? entry?.label ?? '—';
     const modifier    = result.modifier    ?? 0;
 
     // ── Couleurs et labels selon le résultat ──────────────────────────────────

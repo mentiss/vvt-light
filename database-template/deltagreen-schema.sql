@@ -279,16 +279,10 @@ create table dice_history
         references game_sessions
             on delete set null,
     notation        TEXT,
-    roll_definition TEXT,
     roll_result     TEXT,
+    label           TEXT,
+    raw_result      TEXT,
     roll_type       TEXT,
-    roll_target     TEXT,
-    pool            INTEGER,
-    threshold       INTEGER,
-    results         TEXT,
-    successes       INTEGER,
-    saga_spent      INTEGER  default 0,
-    saga_recovered  INTEGER  default 0,
     created_at      DATETIME default CURRENT_TIMESTAMP
 );
 

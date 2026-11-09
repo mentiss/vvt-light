@@ -1,8 +1,8 @@
 // src/client/src/systems/vikings/components/layout/VikingsHistoryEntry.jsx
 // Rendu d'un jet Vikings — DiceHistoryPage (renderHistoryEntry) et
 // ToastNotifications (renderDiceToast, avec renderAllRollTypes). Les données
-// viennent de roll_result (résultat d'afterRoll sérialisé). Les jets à l'ancien
-// format (avant la refonte, R-5) sont réduits à une ligne minimale.
+// viennent de roll_result (résultat d'afterRoll sérialisé). Les jets d'avant la
+// refonte ont été repris par migration (09112026_2_vikings_dice_history.sql).
 // Habillage : planche du lot 4 (section « Historique et notifications »).
 //
 // Props : entry — ligne d'historique brute. Rendu identique dans l'historique
@@ -69,15 +69,8 @@ const VikingsHistoryEntry = ({ entry }) => {
 
     const result = parseResult(entry);
 
-    // Ancien format (ou résultat illisible) : ligne minimale
-    if (!result?.detail || result.detail.threshold == null) {
-        if (!result) return null;   // rendu générique de la plateforme
-        return (
-            <div className="text-xs text-muted">
-                Jet (ancien format){result.successes != null ? ` — ${result.successes} succès` : ''}
-            </div>
-        );
-    }
+    // Résultat illisible : rendu de secours de la plateforme
+    if (!result?.detail || result.detail.threshold == null) return null;
 
     const { detail, meta = {}, successes, allDice = [] } = result;
     const mode = meta.keptGroup != null ? 'insurance'
@@ -113,7 +106,10 @@ const VikingsHistoryEntry = ({ entry }) => {
             )}
 
             <div className="text-xs text-muted">
-                Seuil {detail.threshold}+ · explosion {detail.explosionThresholds?.join(', ')} · {detail.pool}d10
+                Seuil {detail.threshold}+
+                {/* Jets d'avant le 2026-03-05, repris par migration : seuils d'explosion jamais enregistrés */}
+                {detail.explosionThresholds?.length > 0 && ` · explosion ${detail.explosionThresholds.join(', ')}`}
+                {' · '}{detail.pool}d10
                 {detail.autoSuccesses > 0 && ` · auto +${detail.autoSuccesses}`}
                 {meta.aimBonus > 0 && ` · visée +${meta.aimBonus}`}
                 {detail.traitBonus !== 0 && detail.traitBonus != null && ` · traits ${detail.traitBonus > 0 ? '+' : ''}${detail.traitBonus}`}

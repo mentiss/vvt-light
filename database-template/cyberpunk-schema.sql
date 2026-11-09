@@ -104,16 +104,10 @@ CREATE TABLE IF NOT EXISTS dice_history (
                                             session_id      INTEGER REFERENCES game_sessions(id) ON DELETE SET NULL,
                                             character_id    INTEGER REFERENCES characters(id)    ON DELETE SET NULL,
                                             roll_type       TEXT    DEFAULT NULL,
-                                            notation        TEXT    NOT NULL,
+                                            notation        TEXT,
                                             roll_result     TEXT    DEFAULT NULL,   -- JSON
-                                            roll_definition TEXT    DEFAULT NULL,
-                                            roll_target     TEXT    DEFAULT NULL,   -- JSON
-                                            pool            INTEGER DEFAULT NULL,
-                                            threshold       INTEGER DEFAULT NULL,
-                                            results         TEXT    DEFAULT NULL,   -- JSON des faces individuelles
-                                            successes       INTEGER DEFAULT NULL,
-                                            saga_spent      INTEGER DEFAULT 0,
-                                            saga_recovered  INTEGER DEFAULT 0,
+                                            label           TEXT,
+                                            raw_result      TEXT,
                                             created_at      DATETIME DEFAULT CURRENT_TIMESTAMP
 );
 

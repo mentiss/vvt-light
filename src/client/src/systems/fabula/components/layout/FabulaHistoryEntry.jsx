@@ -69,7 +69,7 @@ const FabulaHistoryEntry = ({ roll }) => {
         return null; // rendu générique
     }
 
-    const label = result.label || entry?.notation || 'Jet';
+    const label = result.label || entry?.label || 'Jet';
 
     // Objet de la fiche de groupe utilisé (spec_fabula.md §7, Q-7) : pas de dé, coût en PI
     if (result.type === 'objet') {

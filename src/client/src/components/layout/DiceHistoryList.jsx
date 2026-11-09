@@ -19,9 +19,8 @@ import { useSocket }  from '../../context/SocketContext.jsx';
 import ConfirmModal   from '../modals/ConfirmModal.jsx';
 import { HostedModal } from '../ui/ModalHost.jsx';
 import { formatRollDate, fullRollDate } from '../../tools/rollDate.js';
-
-// Types de jet gérés par la plateforme — rendu générique, sauf si le slug les prend
-const PLATFORM_ROLL_TYPES = ['free_roll'];
+import { PLATFORM_ROLL_TYPES } from '../../tools/diceHistory.js';
+import GenericRollEntry from './GenericRollEntry.jsx';
 
 /** Heure courante, rafraîchie chaque minute (dates relatives). */
 function useNow(intervalMs = 60000) {
@@ -32,40 +31,6 @@ function useNow(intervalMs = 60000) {
     }, [intervalMs]);
     return now;
 }
-
-/** Rendu générique : notation, dés à plat, succès s'il y en a. */
-const GenericRollEntry = ({ roll }) => {
-    const result    = roll.roll_result ?? {};
-    const allDice   = result.allDice ?? result.results ?? [];
-    const successes = result.successes ?? result.succes ?? null;
-    const notation  = roll.notation ?? '';
-
-    return (
-        <div className="space-y-1">
-            <div className="flex items-center justify-between">
-                <span className="text-xs font-semibold" style={{ color: 'var(--color-text, #111)' }}>
-                    {roll.roll_type ?? 'Jet'}
-                    {notation && <span className="ml-2 font-mono text-[10px]" style={{ color: 'var(--color-text-muted, #666)' }}>{notation}</span>}
-                </span>
-                {successes !== null && (
-                    <span className="text-xs font-bold" style={{ color: 'var(--color-accent, #996633)' }}>
-                        {successes} succès
-                    </span>
-                )}
-            </div>
-            {allDice.length > 0 && (
-                <div className="flex flex-wrap gap-1">
-                    {allDice.map((v, i) => (
-                        <span key={i} className="inline-flex items-center justify-center w-6 h-6 rounded text-[10px] font-bold border"
-                              style={{ background: 'var(--color-surface-alt, #f5f5f5)', borderColor: 'var(--color-border, #ccc)', color: 'var(--color-text, #111)' }}>
-                            {v}
-                        </span>
-                    ))}
-                </div>
-            )}
-        </div>
-    );
-};
 
 /**
  * @param {object} props

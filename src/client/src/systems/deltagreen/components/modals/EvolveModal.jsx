@@ -59,6 +59,8 @@ const EvolveModal = ({ character, onSubmit, onClose }) => {
                     characterId:   character.id,
                     characterName: character.nom ?? 'Agent',
                     sessionId:     null,
+                    label:         `Évolution — ${lang.name}`,
+                    rollType:      'dg_evolve',
                     systemData:    { diceType: 'd4', rollLabel: `Évolution — ${lang.name}` },
                 };
                 const result = await roll('1d4', ctx, deltgreenConfig.dice);

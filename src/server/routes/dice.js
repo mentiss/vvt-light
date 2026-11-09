@@ -1,11 +1,11 @@
-// src/server/routes/shared/dice.js
-// Route générique historique des jets de dés.
+// src/server/routes/dice.js
+// Route générique de l'historique des jets (et des entrées sans dé).
 // Partagée par tous les systèmes via systemResolver (req.db, req.system).
 //
-// Supporte deux formats de payload :
-//   - Format générique (nouveaux systèmes) : { notation, roll_definition, roll_result, ... }
-//   - Format legacy Vikings               : { pool, threshold, results, successes, ... }
-// Les deux peuvent coexister dans le même payload pour Vikings.
+// Contrat (spec_diceengine_v2.md, « Passe générique : contrat ») :
+//   - roll_type, label, roll_result : obligatoires (donnés par le slug)
+//   - notation, raw_result          : écrits par le moteur, absents sans dé
+//   - roll_result appartient au slug : la route ne lit rien dedans
 
 const express = require('express');
 const {getCharNameExpr} = require("../utils/characters");
@@ -18,100 +18,56 @@ const router  = express.Router();
 router.post('/roll', authenticate, (req, res) => {
     try {
         const {
-            // Identité
             character_id,
-            character_name,
+            character_name,     // diffusé, pas enregistré
             session_id,
-
-            // ── Format générique ──────────────────────────────────────────
-            notation,
-            roll_definition,   // JSON string ou objet
-            roll_result,       // JSON string ou objet
-
-            // ── Format legacy Vikings ─────────────────────────────────────
             roll_type,
-            roll_target,
-            pool,
-            threshold,
-            results,           // array des dés bruts
-            successes,
-            saga_spent    = 0,
-            saga_recovered = 0,
+            label,
+            notation,           // chaîne, ou tableau de notations en JSON
+            raw_result,         // objet ou chaîne JSON
+            roll_result,        // objet ou chaîne JSON
         } = req.body;
 
-        // Validation minimale : il faut au moins l'un des deux formats
-        const hasGenericFormat = notation && roll_result;
-        const hasLegacyFormat  = roll_type && results !== undefined && successes !== undefined;
-
-        if (!hasGenericFormat && !hasLegacyFormat) {
-            return res.status(400).json({
-                error: 'Payload invalide : fournir (notation + roll_result) ou (roll_type + results + successes)'
-            });
+        const missing = [['roll_type', roll_type], ['label', label], ['roll_result', roll_result]]
+            .filter(([, value]) => value == null || value === '')
+            .map(([name]) => name);
+        if (missing.length) {
+            return res.status(400).json({ error: `Entrée d'historique invalide : ${missing.join(', ')} manquant` });
         }
 
-        // Sérialiser les JSON si fournis comme objets
-        const rollDefinitionStr = roll_definition
-            ? (typeof roll_definition === 'string' ? roll_definition : JSON.stringify(roll_definition))
-            : null;
+        // JSON reçus en objet ou en chaîne : enregistrés en chaîne, diffusés en objet
+        let rollResult, rawResult;
+        try {
+            rollResult = _toObject(roll_result);
+            rawResult  = _toObject(raw_result);
+        } catch {
+            return res.status(400).json({ error: 'Entrée d\'historique invalide : JSON illisible' });
+        }
 
-        const rollResultStr = roll_result
-            ? (typeof roll_result === 'string' ? roll_result : JSON.stringify(roll_result))
-            : null;
-
-        const resultsStr = results
-            ? (typeof results === 'string' ? results : JSON.stringify(results))
-            : null;
-
-        // Insertion en base
-        const stmt = req.db.prepare(`
-            INSERT INTO dice_history (
-                character_id, session_id,
-                notation, roll_definition, roll_result,
-                roll_type, roll_target, pool, threshold, results,
-                successes, saga_spent, saga_recovered
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-        `);
-
-        const dbResult = stmt.run(
-            character_id   || null,
-            session_id     || null,
-            notation       || null,
-            rollDefinitionStr,
-            rollResultStr,
-            roll_type      || null,
-            roll_target    || null,
-            pool           ?? null,
-            threshold      ?? null,
-            resultsStr,
-            successes      ?? null,
-            saga_spent,
-            saga_recovered
+        const dbResult = req.db.prepare(`
+            INSERT INTO dice_history (character_id, session_id, roll_type, label, notation, raw_result, roll_result)
+            VALUES (?, ?, ?, ?, ?, ?, ?)
+        `).run(
+            character_id || null,
+            session_id   || null,
+            roll_type,
+            label,
+            notation     || null,
+            rawResult ? JSON.stringify(rawResult) : null,
+            JSON.stringify(rollResult)
         );
 
-        // Payload de diffusion Socket.io
-        // On restitue les JSON parsés pour les clients
         const rollData = {
             id:             dbResult.lastInsertRowid,
             character_id,
             character_name: character_name || 'Anonyme',
             session_id,
-
-            // Générique
-            notation:        notation    || null,
-            roll_definition: roll_definition ? (typeof roll_definition === 'string' ? JSON.parse(roll_definition) : roll_definition) : null,
-            roll_result:     roll_result     ? (typeof roll_result     === 'string' ? JSON.parse(roll_result)     : roll_result)     : null,
-
-            // Legacy
             roll_type,
-            roll_target,
-            pool,
-            threshold,
-            results: results ? (typeof results === 'string' ? JSON.parse(results) : results) : null,
-            successes,
-            saga_spent,
-            saga_recovered,
-
-            created_at: new Date().toISOString()
+            label,
+            notation:       notation || null,
+            raw_result:     rawResult,
+            roll_result:    rollResult,
+            created_at:     new Date().toISOString()
         };
 
         // Diffusion Socket.io dans la room de la table, et nulle part ailleurs.
@@ -234,18 +190,21 @@ router.delete('/history', authenticate, (req, res) => {
 
 // ─── Helpers privés ───────────────────────────────────────────────────────────
 
+/** Objet reçu tel quel, chaîne JSON parsée (lève si illisible), absent → null. */
+function _toObject(value) {
+    if (value == null || value === '') return null;
+    return typeof value === 'string' ? JSON.parse(value) : value;
+}
+
 /**
- * Parse les colonnes JSON d'une ligne dice_history retournée par SQLite.
- * Gère les deux formats (générique + legacy) sans erreur si JSON invalide.
+ * Parse les colonnes JSON d'une ligne dice_history retournée par SQLite,
+ * sans erreur si un JSON est invalide.
  */
 function _parseHistoryRow(row) {
     return {
         ...row,
-        // Générique
-        roll_definition: _safeJsonParse(row.roll_definition),
-        roll_result:     _safeJsonParse(row.roll_result),
-        // Legacy
-        results:         _safeJsonParse(row.results),
+        raw_result:  _safeJsonParse(row.raw_result),
+        roll_result: _safeJsonParse(row.roll_result),
     };
 }
 

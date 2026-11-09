@@ -12,7 +12,7 @@
 //   • Résultat : tampon Critique / Fumble, dégâts, compétences appliquées ;
 //     Nombre porte-bonheur (Entropiste) : une fois par scène, remplace un dé par
 //     le nombre, la valeur remplacée devient le nouveau nombre ; le jet corrigé
-//     est ajouté à l'historique (POST /dice/roll) et la fiche mise à jour.
+//     est ajouté à l'historique (recordHistoryEntry, sans notation) et la fiche mise à jour.
 //
 // Props : character, sessionId, onClose, initialAttr1, initialAttr2, initialLabel,
 //         weaponContext?, spellContext?, onCharacterPatch? (patch immédiat de la fiche),
@@ -22,6 +22,7 @@
 
 import React, { useState, useCallback, useMemo } from 'react';
 import { roll } from '../../../../tools/diceEngine.js';
+import { recordHistoryEntry } from '../../../../tools/diceHistory.js';
 import { useFetch }  from '../../../../hooks/useFetch.js';
 import { useSystem } from '../../../../hooks/useSystem.js';
 import Modal from '../../../../components/ui/Modal.jsx';
@@ -215,23 +216,15 @@ const FabulaDiceModal = ({
         setResult(corrected);
         setLucky({ value: next, used: true });
         onCharacterPatch?.({ porteBonheur: next, porteBonheurUtilise: true });
-        try {
-            await fetchWithAuth(`${apiBase}/dice/roll`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    session_id: sessionId ?? null,
-                    character_id: character.id,
-                    character_name: [character.prenom, character.nom].filter(Boolean).join(' ') || 'Personnage',
-                    roll_type: 'fabula_test',
-                    notation: 'porte-bonheur',
-                    roll_result: JSON.stringify(corrected),
-                    successes: corrected.successes,
-                }),
-            });
-        } catch (err) {
-            console.warn('[FabulaDiceModal] porte-bonheur non enregistré :', err);
-        }
+        // Jet corrigé, sans nouveau dé : entrée sans notation (spec_diceengine_v2.md, H-2)
+        await recordHistoryEntry(fetchWithAuth, apiBase, {
+            sessionId,
+            characterId:   character.id,
+            characterName: [character.prenom, character.nom].filter(Boolean).join(' ') || 'Personnage',
+            rollType:      'fabula_test',
+            label:         corrected.label || 'Porte-bonheur',
+            result:        corrected,
+        });
     };
     const resetLuck = (newSession) => {
         const next = { value: newSession ? 7 : lucky.value, used: false };

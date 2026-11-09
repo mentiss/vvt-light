@@ -22,7 +22,7 @@ const parseResult = (entry) => {
 const ZoneBlancheHistoryEntry = ({ entry }) => {
     const result = parseResult(entry);
     if (!result) {
-        return <div className="text-sm text-muted">{entry?.notation ?? 'Jet'}</div>;
+        return <div className="text-sm text-muted">{entry?.label ?? 'Jet'}</div>;
     }
 
     const rollType = entry?.roll_type ?? '';
@@ -65,7 +65,7 @@ const ZoneBlancheHistoryEntry = ({ entry }) => {
         <div className="zb-history-entry">
             <div className="flex items-center justify-between gap-3">
                 <span className="zb-display text-sm text-default truncate">
-                    {entry?.roll_target || result.label || 'Jet'}
+                    {entry?.label || result.label || 'Jet'}
                 </span>
                 {estAssistance ? (
                     <span className="zb-history-verdict zb-mono is-success">Assistance</span>

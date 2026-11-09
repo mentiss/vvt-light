@@ -1,7 +1,7 @@
 // src/client/src/systems/dune/components/layout/DuneHistoryEntry.jsx
 // Rendu d'une entrée d'historique Dune : onglet, panneau et notifications (même rendu,
-// sans marge extérieure). Reçoit un objet roll de dice_history (roll_result et
-// roll_definition parsés). Planche documentations/dune/planche_dune.html §6.
+// sans marge extérieure). Reçoit un objet roll de dice_history (roll_result parsé).
+// Planche documentations/dune/planche_dune.html §6.
 //
 // Jets d'avant la refonte : pas de roll_result.dice → dés reconstruits depuis results.
 
@@ -34,7 +34,7 @@ const legacyDice = (r) => {
 };
 
 /**
- * @param {object} props.roll - Entrée dice_history (roll_result et roll_definition déjà parsés)
+ * @param {object} props.roll - Entrée dice_history (roll_result déjà parsé)
  */
 const DuneHistoryEntry = ({ roll }) => {
     const free = parseFreeRoll(roll);
@@ -50,7 +50,7 @@ const DuneHistoryEntry = ({ roll }) => {
     return (
         <div>
             <div className="dn-hist-label">
-                {r.label ?? roll.notation}
+                {r.label ?? roll.label}
                 {r.rang != null && ` · seuil ${r.rang}`} · difficulté {difficulte}
                 {r.selectedSpecialization && r.hasSpec && ' · spécialisation'}
             </div>

@@ -38,6 +38,7 @@ Agnostique. Chaque `config.jsx` déclare les hooks :
 - `renderHistoryEntry(entry)` → élément React ou `null`.
 - Dés 2D (`spec_diceengine_v2.md` « Dés 2D et apparence ») : `dice.renderer: '2d'` dans `config.jsx` fait jouer `DiceOverlay2D` au lieu de la 3D (aiguillage dans `DiceAnimationOverlay`, 3D chargée à la demande). Apparence d'un dé = configuration au format de `diceConfigDefault.custom`, résolue champ par champ : `waves[n].colors[i]` > `groups[n].color` (objet) > `dice.byType` du slug > réglages du joueur (`tools/dice2d.js`). Brique `components/dice/Die2D.jsx` (props `type`, `value`, `config`) réutilisable par les rendus de jet ; habillage `.vtt-die2d*` à partir des variables `--die-*`, jamais de couleurs en dur.
 - `raw.groups` correspond 1 pour 1 au tableau de notations : deux chaînes = deux groupes. Le moteur ne lit que le premier terme de dés d'une chaîne (`"1d8+1d10"` ne remonte que le d8 dans `values`).
+- Historique (`spec_diceengine_v2.md`, « Passe générique ») : un jet enregistré exige `ctx.rollType` et `ctx.label` (sinon la route le refuse). Le moteur écrit lui-même `notation` et `raw_result` (brut de la bibliothèque) ; le slug range ce que son rendu lit dans `roll_result`, sans clé imposée. Une entrée sans dé passe par `recordHistoryEntry` (`tools/diceHistory.js`), jamais par un `POST /dice/roll` à la main. Rendu de secours commun : `components/layout/GenericRollEntry.jsx`. Types réservés : `PLATFORM_ROLL_TYPES` (`free_roll`).
 
 ## Sockets côté client
 

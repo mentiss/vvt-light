@@ -10,7 +10,8 @@
 //   3. hooks.afterRoll(raw, ctx)                      → result (interprétation slug)
 //   4. hooks.buildAnimationSequence(raw, ctx, result) → AnimationSequence | null
 //   5. diceAnimBridge.play(seq)                       → [await] animation
-//   6. POST apiBase/dice/roll                         → persist (si persistHistory !== false)
+//   6. recordHistoryEntry (tools/diceHistory.js)      → persist (si persistHistory !== false),
+//                                                       ctx.rollType et ctx.label obligatoires
 //   7. return result
 //
 // Principes :
@@ -25,6 +26,7 @@ import { DiceRoll } from '@dice-roller/rpg-dice-roller';
 import { diceAnimBridge } from './diceAnimBridge.js';
 import {DICE_FALLBACK_CONFIG, diceStorageKey, getDiceScope} from "../hooks/useDiceConfig.js";
 import { readStored } from './browserStorage.js';
+import { buildRawResult, recordHistoryEntry } from './diceHistory.js';
 
 // ─── Erreur métier ────────────────────────────────────────────────────────────
 
@@ -106,7 +108,7 @@ export async function roll(notation, ctx, hooks = {}) {
 
     // 5. Persist historique (défaut : true)
     if (enrichedCtx.persistHistory !== false) {
-        await _persistRoll(notation, enrichedCtx, result);
+        await _persistRoll(notation, enrichedCtx, raw, result);
     }
 
     return result;
@@ -148,32 +150,21 @@ function _executeGroups(notation) {
 
 // ─── Persist ──────────────────────────────────────────────────────────────────
 
-async function _persistRoll(notation, ctx, result) {
+// ctx.rollType et ctx.label sont donnés par le slug ; la notation (telle que passée
+// à la bibliothèque) et le brut sont écrits par le moteur seul. Non bloquant.
+async function _persistRoll(notation, ctx, raw, result) {
     if (!ctx.apiBase || !ctx.fetchFn) return;
 
-    const notationStr = Array.isArray(notation)
-        ? JSON.stringify(notation)
-        : notation;
-
-    try {
-        await ctx.fetchFn(`${ctx.apiBase}/dice/roll`, {
-            method:  'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                session_id:     ctx.sessionId   ?? null,
-                character_id:   ctx.characterId ?? null,
-                character_name: ctx.characterName ?? null,
-                roll_type:      ctx.rollType    ?? 'generic',
-                notation:       notationStr,
-                roll_result:    JSON.stringify(result),
-                successes:      result.successes ?? null,
-                pool:           result.detail?.pool          ?? ctx.systemData?.pool ?? null,
-            }),
-        });
-    } catch (err) {
-        // Persist non-bloquant — on log mais on ne fait pas planter le flow
-        console.warn('[diceEngine] persist failed:', err);
-    }
+    await recordHistoryEntry(ctx.fetchFn, ctx.apiBase, {
+        sessionId:     ctx.sessionId,
+        characterId:   ctx.characterId,
+        characterName: ctx.characterName,
+        rollType:      ctx.rollType,
+        label:         ctx.label,
+        notation,
+        raw:           buildRawResult(raw.groups),
+        result,
+    });
 }
 
 // ─── Helpers privés ───────────────────────────────────────────────────────────
