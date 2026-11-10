@@ -2,11 +2,11 @@
 // ─────────────────────────────────────────────────────────────────────────────
 // Interface MJ Dune (spec_dune.md §6.4), contenu directement ici (sans GMView, C-15) :
 //   - bande fixe partagée avec la fiche joueur (DuneBand) : onglets
-//     Table · Maison · Journal · Tableau · Historique ; Impulsion, Menace et Complications
+//     Table · Maison · PNJ · Journal · Tableau · Historique ; Impulsion, Menace et Complications
 //     toujours visibles et réglables ; jet du meneur ; thème et menu ;
 //   - Table : personnages de la table et la même fiche que le joueur (gm/tabs/TabSession) ;
 //   - Maison : nom et description (gm/tabs/TabHouse) ;
-//   - Journal, Tableau, Historique et panneau d'historique : briques de la plateforme.
+//   - PNJ, Journal, Tableau, Historique et panneau d'historique : briques de la plateforme.
 //
 // Contrat props (GMPage) : activeSession, onSessionChange, onlineCharacters,
 // characterUpdates, darkMode, onToggleDarkMode
@@ -19,6 +19,7 @@ import DiceHistoryPage    from '../../components/layout/DiceHistoryPage.jsx';
 import DiceHistoryPanel   from '../../components/layout/DiceHistoryPanel.jsx';
 import TabJournal         from '../../components/gm/tabs/TabJournal.jsx';
 import Board              from '../../components/board/Board.jsx';
+import TabNpcs            from '../../components/npc/TabNpcs.jsx';
 import { HamburgerMenu, HamburgerMenuSeparator } from '../../components/ui/HamburgerMenu.jsx';
 import {
     HamburgerMenuItemTableManagement, HamburgerMenuItemDiceConfig, HamburgerMenuItemPlayerView,
@@ -33,13 +34,15 @@ import TabHouse   from './gm/tabs/TabHouse.jsx';
 import { useTableCharacters }  from './hooks/useTableCharacters.js';
 import { useSessionResources } from './hooks/useSessionResources.js';
 import { IMPULSION_MAX } from './config/rules/roll.js';
+import duneConfig from './config.jsx';
 
 const GM_TABS = [
     { id: 'session',    label: 'Table' },
     { id: 'maison',     label: 'Maison' },
-    { id: 'journal',    label: 'Journal' },
+    { id: 'pnj',        label: 'PNJ' },
     { id: 'tableau', label: 'Tableau' },
     { id: 'historique', label: 'Historique' },
+    { id: 'journal',    label: 'Journal' },
 ];
 
 /** Découpe le hash « #onglet-donnée » en [onglet, donnée] (donnée : '' si absente). */
@@ -126,6 +129,8 @@ const GMApp = ({ activeSession, onSessionChange, onlineCharacters, characterUpda
                                 onSessionChange={onSessionChange} />
                 )}
                 {activeTab === 'maison' && <TabHouse activeSession={activeSession} />}
+                {/* PNJ : onglet assemblé de la plateforme (spec_pnj.md §6.5), partie système dans config.jsx */}
+                {activeTab === 'pnj' && <TabNpcs sessionId={sessionId} config={duneConfig.npc} />}
                 {activeTab === 'journal' && <div className="p-6"><TabJournal /></div>}
                 {/* Tableau partagé (brique plateforme, spec_tableau.md §10.8) */}
                 {activeTab === 'tableau' && (

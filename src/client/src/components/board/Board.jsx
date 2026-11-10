@@ -135,9 +135,11 @@ const SlideView = ({ sessionId, slide, isGM, board, compact, myId, confirm, tabl
         const h = width && height ? w * height / width : w * 0.75;
         content.addItem({ kind: 'image', x: at.x, y: at.y, w, h, data: { url } });
     };
-    const addNpcToken = ({ label, color: tokenColor }, point) => {
+    // Jeton de PNJ : libre (nom, couleur), ou PNJ de la table (npcId : son avatar ou son icône, spec_pnj.md P-21)
+    const addNpcToken = ({ label, color: tokenColor, npcId }, point) => {
         const at = point ?? nearContent();
-        content.addItem({ kind: 'token', x: at.x, y: at.y, w: NPC_TOKEN_SIZE, h: NPC_TOKEN_SIZE, data: { label, color: tokenColor } });
+        const data = npcId !== undefined ? { npcId, label, color: tokenColor } : { label, color: tokenColor };
+        content.addItem({ kind: 'token', x: at.x, y: at.y, w: NPC_TOKEN_SIZE, h: NPC_TOKEN_SIZE, data });
     };
     const addIcon = ({ icon, color: iconColor }, point) => {
         const at = point ?? nearContent();
@@ -212,6 +214,8 @@ const SlideView = ({ sessionId, slide, isGM, board, compact, myId, confirm, tabl
         pcMissing: Object.keys(content.characters ?? {}).filter(id =>
             !content.items.some(i => i.kind === 'token' && String(i.data?.characterId) === id)).length,
         onNpcToken: (token) => addNpcToken(token),
+        tableNpcs: Object.values(content.npcs ?? {}),
+        reloadNpcs: content.reloadNpcs,
         onIcon: () => setAdding({ kind: 'icon' }),
         onFogToggle: () => board.updateSlide(slide.id, { fogShown: !slide.fogShown }),
         onFogReset: (reset) => content.updateFog({ reset }),
@@ -311,7 +315,7 @@ const SlideView = ({ sessionId, slide, isGM, board, compact, myId, confirm, tabl
             <div className="vtt-board-stage">
                 <BoardCanvas ref={canvasRef} slide={slide} items={content.items} drags={content.drags} pings={content.pings}
                              selectedIds={selectedItems.map(i => i.id)} onSelect={select} onContextMenu={openMenu}
-                             characters={content.characters} getImage={getImage} getIcon={getIcon} isGM={isGM}
+                             characters={content.characters} npcs={content.npcs} getImage={getImage} getIcon={getIcon} isGM={isGM}
                              fog={content.fog} grid={grid} onFog={content.updateFog}
                              tool={tool} panOverride={spacePan} color={color} thickness={thickness} loaded={content.loaded}
                              options={options} filterPreview={filterPreview}
@@ -383,7 +387,8 @@ const SlideView = ({ sessionId, slide, isGM, board, compact, myId, confirm, tabl
                 <IconPicker onClose={() => setAdding(null)} onPick={icon => addIcon(icon, adding.point)} />
             )}
             {adding?.kind === 'npc' && (
-                <NpcTokenModal onClose={() => setAdding(null)} onCreate={token => addNpcToken(token, adding.point)} />
+                <NpcTokenModal onClose={() => setAdding(null)} onCreate={token => addNpcToken(token, adding.point)}
+                               tableNpcs={gmActions?.tableNpcs} onOpen={gmActions?.reloadNpcs} />
             )}
             {adding?.kind === 'link' && (
                 <ImageLinkModal onClose={() => setAdding(null)} onCreate={image => addImageUrl(image, adding.point)} />

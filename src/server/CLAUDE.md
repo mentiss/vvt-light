@@ -7,7 +7,7 @@ Contexte Express / SQLite / Socket.io. Complète le CLAUDE.md racine. **Les règ
 ## Structure
 
 - Entrée : `server.js`, qui monte toutes les routes dynamiquement via `Loader.js`.
-- Toutes les routes sont préfixées `/api/:slug/`. Routes partagées montées pour chaque système : sessions, journal, dice, audio, board (tableau partagé, base de module `board.db`, `documentations/spec_tableau.md` §10 ; testée par `tests/server/routes/board.test.js`, banc `startSlugApp(slug, 'board', { shared: true })`).
+- Toutes les routes sont préfixées `/api/:slug/`. Routes partagées montées pour chaque système : sessions, journal, dice, npcs (PNJ : bibliothèque et PNJ de la table, réservée au MJ, contrôleur `utils/npcs.js`, `documentations/spec_pnj.md` §6.3, testée par `tests/server/routes/npcs.test.js`), audio, board (tableau partagé, base de module `board.db`, `documentations/spec_tableau.md` §10 ; testée par `tests/server/routes/board.test.js`, banc `startSlugApp(slug, 'board', { shared: true })`).
 - Le middleware `systemResolver` injecte `req.system` (config du slug) et `req.db` (connexion SQLite).
 - Connexions DB : `db/index.js` (ouverture paresseuse, fermeture après 5 min d'inactivité, `PRAGMA foreign_keys = ON` à chaque connexion). `scripts/migrate.js` coupe les clés pendant une migration.
 - Bases de module (hors slugs, ex. audio) : une déclaration par base dans `db/modules/<nom>.js`, même forme qu'une config de slug ; `getModuleConfig(nom)` (`db/moduleConfig.js`) ne charge que celle demandée ; connexion par `getDbForSystem(getModuleConfig('audio'))`.

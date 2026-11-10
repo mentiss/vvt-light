@@ -10,7 +10,7 @@
 //   CharacterController.js → { loadFullCharacter, saveFullCharacter } (spec_characters_route.md §4)
 //
 // Routes génériques montées automatiquement (pas besoin de les déclarer) :
-//   characters, sessions, journal, dice, audio, board
+//   characters, sessions, journal, dice, npcs, audio, board
 //   routes/characters.js du slug (facultatif) : monté avant la route commune
 //   /characters, il ajoute ses routes propres ou remplace une route commune.
 //
@@ -37,6 +37,7 @@ const SHARED_ROUTES = {
     sessions:   path.join(__dirname, '../routes/sessions.js'),
     journal:    path.join(__dirname, '../routes/journal.js'),
     dice:       path.join(__dirname, '../routes/dice.js'),
+    npcs:       path.join(__dirname, '../routes/npcs.js'),
     audio:      path.join(__dirname, '../routes/audio.js'),
     board:      path.join(__dirname, '../routes/board.js'),
 };
@@ -139,7 +140,7 @@ function getCharacterController(slug) {
 
 /**
  * Retourne le router Express d'une route générique partagée.
- * @param {'sessions'|'journal'|'dice'|'audio'|'board'} routeName
+ * @param {'sessions'|'journal'|'dice'|'npcs'|'audio'|'board'} routeName
  * @returns {import('express').Router}
  */
 function getSharedRoute(routeName) {

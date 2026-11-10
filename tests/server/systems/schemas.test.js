@@ -16,7 +16,7 @@ const Database = require('better-sqlite3');
 const Loader   = require('../../../src/server/systems/Loader.js');
 const BASE_SQL = path.resolve(import.meta.dirname, '../../../database-template/base.sql');
 
-const SHARED = ['game_sessions', 'session_characters', 'dice_history', 'character_journal', 'refresh_tokens'];
+const SHARED = ['game_sessions', 'session_characters', 'dice_history', 'character_journal', 'refresh_tokens', 'npcs', 'session_npcs'];
 const REQUIRED_CHARACTER_COLUMNS = ['access_code', 'access_url', 'player_name', 'avatar', 'login_attempts', 'last_attempt_at', 'last_accessed'];
 
 // Écarts documentés (B-FK) : bases en service où supprimer un personnage garde ses jets, anonymes

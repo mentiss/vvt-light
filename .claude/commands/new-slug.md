@@ -13,7 +13,7 @@ Respecte la méthode en trois phases du CLAUDE.md racine. **N'écris aucun fichi
 2. Demande-moi ce que tu ne sais pas encore. Au-delà de trois ou quatre questions, écris-les dans la spec, en tableaux `| # | Question | Proposition (reco) | Réponse MJ |` : j'y réponds dans l'IDE. Questions de base :
     - mécanique de dés (pool, seuil, d20, 2D20, PbtA…), succès, critiques, explosions ;
     - contenu de la fiche (caractéristiques, compétences, ressources, équipement, liens…) ;
-    - besoins côté MJ (ressources de session, PNJ, combat) ;
+    - besoins côté MJ (ressources de session, PNJ, rounds et tours) ; PNJ : onglet de la plateforme (`components/npc/TabNpcs.jsx`), le slug ne fournit que son bloc `npc` dans `config.jsx` (`documentations/spec_pnj.md` §6.4, référence Dune) ; les tables `npcs` et `session_npcs` viennent de `base.sql`, à recopier dans le schéma ;
     - palette de couleurs et identité visuelle ;
     - les règles de référence (lore, livre de base) si je peux te les fournir : n'invente rien qui les contredise ; les tables qu'on ne trouve que dans un PDF se transcrivent (agent) puis se relisent avec moi.
 

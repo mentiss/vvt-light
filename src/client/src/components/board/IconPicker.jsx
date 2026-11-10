@@ -20,8 +20,9 @@ const PAGE = 120;
  * @param {object} props
  * @param {Function} props.onPick  ({ icon, color }) icône choisie
  * @param {Function} props.onClose
+ * @param {string}   [props.title]  titre de la fenêtre (avatar d'un PNJ : spec_pnj.md §6.5)
  */
-const IconPicker = ({ onPick, onClose }) => {
+const IconPicker = ({ onPick, onClose, title = 'Poser une icône' }) => {
     const index = useBoardIconIndex();
     const [query, setQuery] = useState('');
     const [group, setGroup] = useState(null);
@@ -33,7 +34,7 @@ const IconPicker = ({ onPick, onClose }) => {
 
     return (
         <HostedModal>
-            <Modal title="Poser une icône" size="lg" expandable onClose={onClose}
+            <Modal title={title} size="lg" expandable onClose={onClose}
                    subtitle={index ? `${results.length} icône${results.length > 1 ? 's' : ''} · recherche en anglais` : 'Chargement…'}>
                 <div className="vtt-board-picker">
                     <input className="vtt-input" type="search" value={query} autoFocus placeholder="horse, campfire, grenade, door…"

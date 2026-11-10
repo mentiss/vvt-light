@@ -7,7 +7,7 @@
 //   les droits et diffuse ;
 // - relais éphémère de la brique (P-1) : déplacement en direct (board-drag) et
 //   ping (board-ping), émis ici et seulement ici, jamais par le code d'un slug ;
-// - PJ de la table, pour l'avatar ou les initiales de leurs jetons.
+// - PJ et PNJ de la table, pour l'avatar (ou l'icône) ou les initiales de leurs jetons.
 // ─────────────────────────────────────────────────────────────────────────────
 
 import { useCallback, useEffect, useRef, useState } from 'react';
@@ -44,6 +44,8 @@ export function useBoardSlide(sessionId, slideId) {
     const [drags, setDrags] = useState({});        // itemId → { x, y, w?, h? } reçus en direct
     const [pings, setPings] = useState([]);
     const [characters, setCharacters] = useState({});
+    const [npcs, setNpcs] = useState({});             // PNJ de la table (spec_pnj.md P-21) : id → { name, avatar, icon }
+    const [npcsVersion, setNpcsVersion] = useState(0);
     const lastDragRef = useRef(0);
 
     const base = `/api/board/sessions/${sessionId}`;
@@ -92,6 +94,20 @@ export function useBoardSlide(sessionId, slideId) {
         });
         return () => { cancelled = true; };
     }, [sessionId, request, unknownCharacter]);
+
+    // ── PNJ de la table (jetons), rechargés si un jeton inconnu apparaît ou à la demande ─
+    // Clé des PNJ inconnus (pas un booléen) : un nouveau jeton recharge même si un ancien PNJ a quitté la table
+    const unknownNpc = state.items.filter(i => i.kind === 'token' && i.data.npcId !== undefined && !npcs[i.data.npcId])
+        .map(i => i.data.npcId).sort((a, b) => a - b).join(',');
+    useEffect(() => {
+        if (!sessionId) return undefined;
+        let cancelled = false;
+        request('GET', '/npcs').then(rows => {
+            if (rows && !cancelled) setNpcs(Object.fromEntries(rows.map(n => [n.id, n])));
+        });
+        return () => { cancelled = true; };
+    }, [sessionId, request, unknownNpc, npcsVersion]);
+    const reloadNpcs = useCallback(() => setNpcsVersion(v => v + 1), []);
 
     // ── Temps réel ──────────────────────────────────────────────────────────
     useEffect(() => {
@@ -252,7 +268,7 @@ export function useBoardSlide(sessionId, slideId) {
 
     const current = state.slideId === slideId ? state : { slideId, loaded: false, items: [], fog: [] };
     return {
-        ...current, drags, pings, characters,
+        ...current, drags, pings, characters, npcs, reloadNpcs,
         addItem, patchItem, patchItems, deleteItem, groupItems, duplicateItems, removeItems, clearItems, placePcTokens,
         uploadImage, updateFog, emitDrag, emitDragMany, ping,
     };

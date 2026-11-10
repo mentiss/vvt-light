@@ -1,20 +1,51 @@
 // src/client/src/systems/dune/config.jsx
 // ─────────────────────────────────────────────────────────────────────────────
 // Configuration CLIENT du système Dune: Adventures in the Imperium.
-// Point d'entrée unique : métadonnées, hooks dés 2D20, dés 3D.
+// Point d'entrée unique : métadonnées, hooks dés 2D20, dés 3D, PNJ.
 // Module ES, importé uniquement par le frontend React.
 // ─────────────────────────────────────────────────────────────────────────────
 
 import DuneHistoryEntry from "./components/layout/DuneHistoryEntry.jsx";
 import {RollError} from "../../tools/diceEngine.js";
 import { BASE_DICE, MAX_DICE, resolveRoll } from './config/rules/roll.js';
+import { bestSkill, defaultNpcData, initialNpcState, rankLabel } from './config/rules/npc.js';
+import { traitLabel } from './config/traits.js';
 import DuneIcon from './components/ui/DuneIcon.jsx';
+import DuneNpcSheet from './components/npc/DuneNpcSheet.jsx';
+import DuneNpcForm from './components/npc/DuneNpcForm.jsx';
+import DuneNpcRollWindow from './components/npc/DuneNpcRollWindow.jsx';
+import { duneNpcPick } from './components/npc/duneNpcPick.js';
 
 // ── Config système ─────────────────────────────────────────────────────────
 
 const duneConfig = {
     slug:  'dune',
     label: 'Dune: Adventures in the Imperium',
+
+    // PNJ : partie système de l'onglet PNJ de la plateforme (spec_pnj.md §6.4, §7)
+    npc: {
+        librarySide:  'left',
+        // Étiquettes mises en tête du filtre de la bibliothèque (celles des fiches des livres)
+        tagGroups: [
+            { label: 'Rang',    tags: ['Mineur', 'Notable', 'Majeur'] },
+            { label: 'Faction', tags: ['Atréides', 'Harkonnen', 'Corrino', 'Fremen', 'Bene Gesserit', 'Guilde spatiale', 'Bene Tleilax',
+                                       'CHOM', 'Imperium', 'Contrebandiers', "Maison d'Amaranth", 'Maison Wayku'] },
+            { label: 'Livre',   tags: ['Archétype', 'Harvesters of Dune', 'Agents of Dune'] },
+        ],
+        // Le rang est déjà dans le résumé de chaque ligne : filtrable, pas répété en étiquette
+        hiddenTags: ['Mineur', 'Notable', 'Majeur'],
+        defaults:     () => defaultNpcData(),
+        summary:      (npc) => {
+            const best = bestSkill(npc.systemData);
+            return [rankLabel(npc.systemData?.rank), best && `${traitLabel(best.key)} ${best.rang}`].filter(Boolean).join(' · ');
+        },
+        initialState: () => initialNpcState(),
+        isDown:       (instance) => !!instance.state?.defeated,
+        Form:         DuneNpcForm,
+        Sheet:        DuneNpcSheet,
+        pick:         duneNpcPick,
+        RollWindow:   DuneNpcRollWindow,
+    },
 
     // Dés 3D : épice, chiffres sable, filet du pont (planche documentations/dune/planche_dune.html)
     diceConfigDefault: {

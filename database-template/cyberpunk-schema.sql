@@ -489,3 +489,49 @@ INSERT INTO moves (type, playbook, name, stat, description) VALUES
     ('official', 'Assassin', 'Agir sans pression', 'pro', 'Quand tu as créé les conditions favorables avant d''agir — cible isolée, timing maîtrisé, terrain préparé. Lance 2d10+Pro au lieu de Cran. Les seuils et effets sont identiques au move de base Agir sous pression.'),
     ('official', 'Assassin', 'Furtivité', 'cran', 'Quand tu te déplaces, te positionnes ou te dissimules sans être détecté. 15+ : tu es exactement où tu veux être, personne ne sait que tu es là. 10-14 : tu y arrives mais le MC introduit une contrainte ou une complication. 9- : le MC agit.'),
     ('official', 'Assassin', 'Mise en place', 'pro', 'Quand tu prépares le terrain — matériel planqué, accès sécurisé, voie de repli. 15+ : 3 [matos]. 10-14 : 1 [matos]. 9- : le MC agit.');
+
+-- ── PNJ (documentations/spec_pnj.md §6.2) ─────────────────────────────────────
+-- npcs : bibliothèque du MJ (PNJ, monstres, animaux) ; system_data propre au slug.
+-- session_npcs : PNJ présents à une table, copie de la fiche (sheet) + état du slug.
+create table if not exists npcs
+(
+    id          INTEGER
+        primary key autoincrement,
+    prenom      TEXT,
+    nom         TEXT                 not null,
+    role        TEXT,
+    description TEXT,
+    gm_notes    TEXT,
+    tags        TEXT     default '[]' not null,
+    avatar      TEXT,
+    icon        TEXT,
+    source      TEXT,
+    page        INTEGER,
+    system_data TEXT     default '{}' not null,
+    created_at  DATETIME default CURRENT_TIMESTAMP,
+    updated_at  DATETIME default CURRENT_TIMESTAMP
+);
+
+create index if not exists idx_npcs_nom
+    on npcs (nom);
+
+create table if not exists session_npcs
+(
+    id         INTEGER
+        primary key autoincrement,
+    session_id INTEGER              not null
+        references game_sessions
+            on delete cascade,
+    npc_id     INTEGER
+        references npcs
+            on delete set null,
+    name       TEXT                 not null,
+    sheet      TEXT     default '{}' not null,
+    state      TEXT     default '{}' not null,
+    notes      TEXT,
+    sort_order INTEGER  default 0    not null,
+    created_at DATETIME default CURRENT_TIMESTAMP
+);
+
+create index if not exists idx_session_npcs_session_id
+    on session_npcs (session_id);

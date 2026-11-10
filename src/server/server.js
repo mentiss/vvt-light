@@ -87,6 +87,7 @@ for (const [slug] of getAllSystems()) {
     app.use(`${prefix}/sessions`,   resolver, getSharedRoute('sessions'));
     app.use(`${prefix}/journal`,    resolver, getSharedRoute('journal'));
     app.use(`${prefix}/dice`,       resolver, getSharedRoute('dice'));
+    app.use(`${prefix}/npcs`,       resolver, getSharedRoute('npcs'));
     app.use(`${prefix}/audio`,      resolver, getSharedRoute('audio'));
     app.use(`${prefix}/board`,      resolver, getSharedRoute('board'));
 
@@ -101,7 +102,7 @@ for (const [slug] of getAllSystems()) {
     const extraNames = extraRoutes.length
         ? `,${extraRoutes.map(r => r.name).join(',')}`
         : '';
-    console.log(`🗺️  Routes mounted for [${slug}]: ${prefix}/{auth,characters,sessions,journal,dice,audio,board${extraNames}}`);
+    console.log(`🗺️  Routes mounted for [${slug}]: ${prefix}/{auth,characters,sessions,journal,dice,npcs,audio,board${extraNames}}`);
 }
 
 // hidden : slug absent de la page d'accueil, toujours accessible par son adresse

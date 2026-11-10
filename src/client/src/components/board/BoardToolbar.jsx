@@ -11,8 +11,9 @@
 // Le zoom et le recadrage sont dans le coin du tableau (BoardCanvas).
 // ─────────────────────────────────────────────────────────────────────────────
 
-import React, { useRef, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import Modal from '../ui/Modal.jsx';
+import NpcAvatar from '../npc/NpcAvatar.jsx';
 import { HostedModal } from '../ui/ModalHost.jsx';
 import { RowMenu, MenuItem, MenuSeparator } from '../audio/panel/RowMenu.jsx';
 import { BOARD_PALETTE, canDraw } from '../../tools/boardRights.js';
@@ -55,14 +56,23 @@ const ToolButton = ({ icon, label, active = false, disabled = false, onClick }) 
     </button>
 );
 
-/** Jeton de PNJ : nom (initiales sur le jeton) et couleur */
-export const NpcTokenModal = ({ onClose, onCreate }) => {
+/**
+ * Jeton de PNJ : un PNJ de la table (son avatar ou son icône, spec_pnj.md P-21),
+ * ou un jeton libre, nom (initiales sur le jeton) et couleur.
+ * tableNpcs : [{ id, name, avatar, icon }] ; onOpen : recharge la liste à l'ouverture.
+ */
+export const NpcTokenModal = ({ onClose, onCreate, tableNpcs = [], onOpen = null }) => {
     const [label, setLabel] = useState('');
     const [color, setColor] = useState(BOARD_PALETTE[0].color);
+    useEffect(() => { onOpen?.(); }, [onOpen]);
     const submit = (e) => {
         e.preventDefault();
         if (!label.trim()) return;
         onCreate({ label: label.trim(), color });
+        onClose();
+    };
+    const pick = (npc) => {
+        onCreate({ npcId: npc.id, label: npc.name.slice(0, 40), color: npc.icon?.color ?? color });
         onClose();
     };
     return (
@@ -72,6 +82,19 @@ export const NpcTokenModal = ({ onClose, onCreate }) => {
                        <button type="button" className="vtt-btn" onClick={onClose}>Annuler</button>
                        <button type="submit" form="vtt-board-npc-form" className="vtt-btn vtt-btn-primary" disabled={!label.trim()}>Poser</button>
                    </>}>
+                {tableNpcs.length > 0 && (
+                    <div className="vtt-board-form vtt-board-npc-pick">
+                        <span className="vtt-field-label">PNJ de la table</span>
+                        <div className="vtt-board-pills">
+                            {tableNpcs.map(npc => (
+                                <button key={npc.id} type="button" className="vtt-pill" onClick={() => pick(npc)}>
+                                    <NpcAvatar npc={{ nom: npc.name, avatar: npc.avatar, icon: npc.icon }} />{npc.name}
+                                </button>
+                            ))}
+                        </div>
+                        <span className="vtt-field-label">Ou un jeton libre</span>
+                    </div>
+                )}
                 <form id="vtt-board-npc-form" onSubmit={submit} className="vtt-board-form">
                     <label className="vtt-field-label" htmlFor="vtt-board-npc-label">Nom</label>
                     <input id="vtt-board-npc-label" className="vtt-input" value={label} maxLength={40} autoFocus
@@ -271,7 +294,7 @@ const BoardToolbar = ({ isGM, slide, tool, onTool, color, onColor, thickness, on
                     <MenuItem onSelect={() => { closeAdd(); setNpcOpen(true); }}>Jeton de PNJ…</MenuItem>
                 </RowMenu>
             )}
-            {npcOpen && <NpcTokenModal onClose={() => setNpcOpen(false)} onCreate={gm.onNpcToken} />}
+            {npcOpen && <NpcTokenModal onClose={() => setNpcOpen(false)} onCreate={gm.onNpcToken} tableNpcs={gm.tableNpcs} onOpen={gm.reloadNpcs} />}
             {linkOpen && <ImageLinkModal onClose={() => setLinkOpen(false)} onCreate={gm.onImageUrl} />}
         </div>
     );

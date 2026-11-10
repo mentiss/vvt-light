@@ -178,6 +178,24 @@ describe('Tableau : jetons des PJ (Q-36)', () => {
     });
 });
 
+describe('Tableau : jetons des PNJ de la table (spec_pnj.md P-21)', () => {
+    it('PNJ de la table lisibles par un joueur (nom et avatar seulement) ; jeton gardant nom et couleur', async () => {
+        const sheet = { nom: 'Loup', avatar: null, icon: { icon: 'lorc/wolf-head', color: '#9a7a3a' }, gmNotes: 'Secret', systemData: { rank: 'minor' } };
+        const npcId = Number(app.db.prepare("INSERT INTO session_npcs (session_id, name, sheet) VALUES (?, 'Loup 2', ?)")
+            .run(sessionId, JSON.stringify(sheet)).lastInsertRowid);
+        const list = await app.request('GET', `${tableUrl()}/npcs`, { token: player });
+        expect(list.status).toBe(200);
+        expect(list.body).toEqual([{ id: npcId, name: 'Loup 2', avatar: null, icon: sheet.icon }]);
+
+        const slide = await createSlide();
+        const res = await app.request('POST', `${tableUrl()}/slides/${slide.id}/items`, {
+            body: { kind: 'token', x: 0, y: 0, w: 60, h: 60, data: { npcId, label: 'Loup 2', color: '#1f1d1a' } }, token: gm,
+        });
+        expect(res.status).toBe(201);
+        expect(res.body.data).toEqual({ npcId, label: 'Loup 2', color: '#1f1d1a' });
+    });
+});
+
 describe('Tableau : objets du lot B (§13)', () => {
     const post = (slideId, body, token = gm) => app.request('POST', `${tableUrl()}/slides/${slideId}/items`, { body, token });
     const patch = (id, body, token = gm) => app.request('PATCH', `${tableUrl()}/items/${id}`, { body, token });

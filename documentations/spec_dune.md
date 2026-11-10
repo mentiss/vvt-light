@@ -186,7 +186,7 @@ Bande fixe, onglets, sections de fiche, lignes lançables, jauges, boutons (plei
 
 ### 6.4 Interface MJ
 - Même bande fixe ; sous-header avec les ressources (Impulsions, Menace, Complications) toujours visibles et réglables.
-- Onglets : **Table** (personnages, musique), **Maison** (§6.6), **PNJ**, **Journal**, **Historique**, plus le panneau d'historique déjà en place. L'onglet « Ressources » disparaît : ses jauges vont dans la bande.
+- Onglets : **Table** (personnages, musique), **Maison** (§6.6), **PNJ** (onglet de la plateforme depuis le 2026-11-10 : rangs mineur / notable / majeur, jet composé compétence + principe, Menace des dés achetés ; `spec_pnj.md` §7), **Journal**, **Historique**, plus le panneau d'historique déjà en place. L'onglet « Ressources » disparaît : ses jauges vont dans la bande.
 - Onglet Table : bandeau des personnages (en ligne / hors ligne), puis **la même fiche que le joueur** (sections partagées, jouable, mode Édition), sans la bande du joueur (Q-2). Envoyer un atout ou une note reste en actions du MJ au-dessus de la fiche.
 - Fenêtre de jet MJ au même format que celle du joueur (réserve en tête, Menace dépensée, résultat sur place).
 

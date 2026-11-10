@@ -58,7 +58,7 @@ function arrowHead(x1, y1, x2, y2, width) {
 }
 
 /** Dessin d'un objet (sous-composant de module, pas défini dans le rendu) */
-const BoardItem = ({ item, geometry, getImage, getIcon, characters, filterPreview }) => {
+const BoardItem = ({ item, geometry, getImage, getIcon, characters, npcs = {}, filterPreview }) => {
     const { x, y, w, h } = geometry;
     const { data } = item;
     const rotation = geometry.rotation ?? item.rotation ?? 0;
@@ -74,20 +74,27 @@ const BoardItem = ({ item, geometry, getImage, getIcon, characters, filterPrevie
         }
         case 'token': {
             const character = data.characterId !== undefined ? characters[data.characterId] : null;
-            const name = character ? [character.prenom, character.nom].filter(Boolean).join(' ') : data.label;
+            // PNJ de la table (spec_pnj.md P-21) : son nom à la table, son avatar ou son icône ; libellé gardé s'il est parti
+            const npc = data.npcId !== undefined ? npcs[data.npcId] : null;
+            const name = character ? [character.prenom, character.nom].filter(Boolean).join(' ') : (npc?.name ?? data.label);
+            const avatar = character?.avatar ?? npc?.avatar ?? null;
+            const iconMarkup = !avatar && npc?.icon ? getIcon?.(npc.icon.icon) : null;
             const r = Math.min(w, h) / 2;
             const cx = x + w / 2, cy = y + h / 2;
             const clipId = `vtt-board-token-${item.id}`;
             return (
                 <g className="vtt-board-token">
                     <title>{name}</title>
-                    <circle cx={cx} cy={cy} r={r} fill={data.color ?? 'var(--color-primary)'} />
-                    {character?.avatar ? (
+                    <circle cx={cx} cy={cy} r={r} fill={iconMarkup ? 'var(--color-surface)' : (data.color ?? 'var(--color-primary)')} />
+                    {avatar ? (
                         <>
                             <clipPath id={clipId}><circle cx={cx} cy={cy} r={r} /></clipPath>
-                            <image href={character.avatar} x={x} y={y} width={w} height={h}
+                            <image href={avatar} x={x} y={y} width={w} height={h}
                                    preserveAspectRatio="xMidYMid slice" clipPath={`url(#${clipId})`} />
                         </>
+                    ) : iconMarkup ? (
+                        <svg x={cx - r * 0.65} y={cy - r * 0.65} width={r * 1.3} height={r * 1.3} viewBox="0 0 512 512"
+                             style={{ color: npc.icon.color }} dangerouslySetInnerHTML={{ __html: iconMarkup }} />
                     ) : (
                         <text x={cx} y={cy} dy="0.35em" textAnchor="middle" fontSize={r * 0.8} className="vtt-board-token-text">
                             {initials(name)}
@@ -186,6 +193,7 @@ function hitsItem(item, x, y, radius) {
  * @param {object} props.drags       positions reçues en direct (itemId → géométrie)
  * @param {object[]} props.pings
  * @param {object} props.characters  PJ de la table (id → { prenom, nom, avatar })
+ * @param {object} [props.npcs]      PNJ de la table (id → { name, avatar, icon }, spec_pnj.md P-21)
  * @param {Function} props.getImage  imageId → adresse locale ou null
  * @param {boolean} props.isGM
  * @param {string} props.tool        select, hand, pen, line, rect, ellipse, halo, text, eraser, ruler, fog-reveal, fog-cover
@@ -205,7 +213,7 @@ function hitsItem(item, x, y, radius) {
  * @param {Function} props.onFog     opération de brouillard (MJ)
  */
 const BoardCanvas = ({
-    ref, slide, items, loaded, drags, pings, characters, getImage, getIcon, isGM, tool, panOverride = false, color, thickness,
+    ref, slide, items, loaded, drags, pings, characters, npcs, getImage, getIcon, isGM, tool, panOverride = false, color, thickness,
     options, filterPreview = null, selectedIds, onSelect, onContextMenu, fog, grid, onFog, onAdd, onPatch, onPatchMany, onDelete,
     onDrag, onDragMany, onPing, onDropFiles,
 }) => {
@@ -675,7 +683,7 @@ const BoardCanvas = ({
              role="img" aria-label={`Tableau : ${slide.name}`}>
             {layered.map(item => {
                 const node = (
-                    <BoardItem key={item.id} item={item} geometry={geometryOf(item)} getImage={getImage} getIcon={getIcon} characters={characters}
+                    <BoardItem key={item.id} item={item} geometry={geometryOf(item)} getImage={getImage} getIcon={getIcon} characters={characters} npcs={npcs}
                                filterPreview={filterPreview?.id === item.id ? filterPreview.filter : null} />
                 );
                 // Caché aux joueurs (§14.3) : à moitié transparent chez le MJ

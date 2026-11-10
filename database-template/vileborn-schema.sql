@@ -347,3 +347,49 @@ INSERT INTO challenges (name, source, family, sheet)
 INSERT INTO challenges (name, source, family, sheet)
     SELECT 'Gabriel', 'apocrypha', 'other', '{"source":"apocrypha","page":111,"name":"Gabriel","family":"other","kind":"Défi","quote":"","description":"Gabriel est déterminé à accomplir sa mission : il combattra quiconque tentera de se dresser sur son chemin. Ceux qui ne font pas partie de la solution font partie du problème ; il peut toujours recommencer et chercher d''autres Parias.","track":12,"difficulty":{"force":2,"will":0,"influence":2,"reason":0,"precision":2,"subterfuge":2},"resistances":[],"vulnerabilities":[],"triggers":[{"box":2,"text":"Gabriel contre-attaque, vif comme un serpent. Le Paria qui vient d''agir coche une blessure."},{"box":4,"text":"Gabriel lance un dispositif qui libère une fumée blanchâtre. Tous les Parias doivent réussir un test de Subterfuge (6) ou cocher l''insécurité (Confusion)."},{"box":6,"text":"Gabriel vous plante dans la jambe une seringue de rêverie modifiée. Le Paria qui vient d''agir doit réussir un test de Force (6), sinon il ne peut plus utiliser ses dons jusqu''à la fin de la scène."},{"box":8,"text":"Gabriel vous presse d''une série de feintes. Le Paria qui vient d''agir coche l''épuisement et doit réussir un test de Précision (6) ou cocher une blessure."},{"box":10,"text":"Gabriel vous supplie d''être raisonnables : il croit en vous, pourquoi refusez-vous de l''écouter ? Tous les Parias doivent réussir un test de Raison (6) ou cocher la colère (Anger)."},{"box":11,"text":"Gabriel vous asperge d''une substance psychotrope. Tous les Parias doivent réussir un test de Subterfuge (7) ou cocher la colère (Anxiety), la peur et l''insécurité (Confusion)."},{"box":12,"text":"Dans un dernier souffle, Gabriel vous demande de sauver le destin d''Egas. Chaque Paria qui l''estime juste coche la honte pour avoir tué Gabriel."}],"complications":[],"dark":{"when":"none","fromBox":null,"threshold":null,"rows":[]},"rules":["Si les Parias ont suivi le conseil de Sophie pendant « Intrigue à Aurenbourg » (p. 101), ils peuvent s''en servir pour obtenir l''avantage sur un seul test. Ensuite, Gabriel ne se laisse plus prendre à la ruse."],"familyRules":[]}'
     WHERE NOT EXISTS (SELECT 1 FROM challenges WHERE name = 'Gabriel' AND source = 'apocrypha');
+
+-- ── PNJ (documentations/spec_pnj.md §6.2) ─────────────────────────────────────
+-- npcs : bibliothèque du MJ (PNJ, monstres, animaux) ; system_data propre au slug.
+-- session_npcs : PNJ présents à une table, copie de la fiche (sheet) + état du slug.
+create table if not exists npcs
+(
+    id          INTEGER
+        primary key autoincrement,
+    prenom      TEXT,
+    nom         TEXT                 not null,
+    role        TEXT,
+    description TEXT,
+    gm_notes    TEXT,
+    tags        TEXT     default '[]' not null,
+    avatar      TEXT,
+    icon        TEXT,
+    source      TEXT,
+    page        INTEGER,
+    system_data TEXT     default '{}' not null,
+    created_at  DATETIME default CURRENT_TIMESTAMP,
+    updated_at  DATETIME default CURRENT_TIMESTAMP
+);
+
+create index if not exists idx_npcs_nom
+    on npcs (nom);
+
+create table if not exists session_npcs
+(
+    id         INTEGER
+        primary key autoincrement,
+    session_id INTEGER              not null
+        references game_sessions
+            on delete cascade,
+    npc_id     INTEGER
+        references npcs
+            on delete set null,
+    name       TEXT                 not null,
+    sheet      TEXT     default '{}' not null,
+    state      TEXT     default '{}' not null,
+    notes      TEXT,
+    sort_order INTEGER  default 0    not null,
+    created_at DATETIME default CURRENT_TIMESTAMP
+);
+
+create index if not exists idx_session_npcs_session_id
+    on session_npcs (session_id);

@@ -204,9 +204,13 @@ function cleanData(kind, data) {
         case 'icon':
             return typeof data.icon === 'string' && ICON_ID.test(data.icon) && isText(data.color, 20)
                 ? { icon: data.icon, color: data.color } : null;
-        case 'token':
+        case 'token': {
             if (Number.isInteger(data.characterId)) return { characterId: data.characterId };
-            return isText(data.label, 40) && isText(data.color, 20) ? { label: data.label.trim(), color: data.color } : null;
+            if (!isText(data.label, 40) || !isText(data.color, 20)) return null;
+            // PNJ de la table (spec_pnj.md P-21) : son avatar ou son icône ; nom et couleur gardés s'il quitte la table
+            const token = { label: data.label.trim(), color: data.color };
+            return Number.isInteger(data.npcId) ? { npcId: data.npcId, ...token } : token;
+        }
         case 'stroke': {
             const { points } = data;
             if (!Array.isArray(points) || points.length < 4 || points.length % 2 !== 0 || points.length > MAX_STROKE_COORDS) return null;
@@ -402,6 +406,15 @@ router.get('/sessions/:sid/characters', authenticate, handle('load characters', 
         JOIN characters c ON c.id = sc.character_id
         WHERE sc.session_id = ? AND c.id != -1 ORDER BY c.prenom, c.nom
     `).all(ctx.sessionId)
+)));
+
+// PNJ de la table, pour leurs jetons (spec_pnj.md P-21) : nom et avatar seulement, jamais la fiche
+router.get('/sessions/:sid/npcs', authenticate, handle('load npcs', (ctx, body, req) => (
+    req.db.prepare('SELECT id, name, sheet FROM session_npcs WHERE session_id = ? ORDER BY sort_order, id').all(ctx.sessionId)
+        .map(row => {
+            const sheet = parseJson(row.sheet, {});
+            return { id: row.id, name: row.name, avatar: sheet.avatar ?? null, icon: sheet.icon ?? null };
+        })
 )));
 
 // ─── Diapositives ───────────────────────────────────────────────────────────
