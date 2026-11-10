@@ -265,6 +265,8 @@
 
 /* ── Zone d'actions : losanges de fer à liseré ✦ ── */
 .vtt-actions-bar { display: flex; gap: 34px; padding: 16px 18px; }
+/* Entre les losanges aussi : tournés, ils débordent de leur boîte (diagonale 54 px + liseré) et se touchaient à 0.5rem */
+.vtt-actions-bar .vtt-actions-buttons { gap: 34px; }
 .vtt-action-btn { width: 38px; height: 38px; display: grid; place-items: center; border: 1px solid var(--im-metal); background: var(--color-surface); color: var(--im-main); transform: rotate(45deg); box-shadow: 0 0 0 3px var(--color-bg), 0 0 0 4px color-mix(in srgb, var(--im-metal) 60%, transparent); }
 .vtt-action-btn { border-radius: 0; }   /* la plateforme les arrondit : losange de la planche */
 .vtt-action-btn svg { width: 19px; height: 19px; transform: rotate(-45deg); }
