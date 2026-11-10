@@ -17,7 +17,9 @@ Une ligne par relecture croisée (`/relecture`, `documentations/spec_relecture.m
 | 2026-11-10 | PNJ, lot 3 : Nimble + Maledictum (`spec_pnj.md` §8) | — | C-CRLF ×11 (fins de ligne lues dans l'index, normalisé en LF par `autocrlf`, au lieu de l'arbre de travail : fichiers gardés tels quels, slugs surtout en LF ; règle retirée le jour même) |
 | 2026-11-10 | PNJ, lot 4, sous-lots 4a à 4c : Vikings, VDA, Achtung (`spec_pnj.md` §10), 2 passes | C-SPEC ×4 (Troupe seule jamais vaincue, assistance comptée sans succès du chef, dégâts VDA sans `cannotBotch`, jet Vikings à 5 Blessures) | — | 0 / 0 |
 | 2026-11-10 | PNJ, lot 4, sous-lot 4d (Fabula) et retour du MJ sur Vikings (`spec_pnj.md` §10.2, §10.5), 2 passes | C-SPEC ×2 (Crise figée quand les PV changent, type de dégâts variable converti en physique) | — | 1 / 1 (malus de base repris depuis la bibliothèque, Vikings) |
-| 2026-11-10 | PNJ, lot 4 : attaque en un clic et historique des jets du MJ (Achtung), 2 passes | C-SPEC (bonus de dégâts d'un groupe absent du résultat enregistré) | — | 0 / 0 | 2 / 2 (résultat d'un jet caché affiché sur la fiche Maledictum, « PV par héros » remis à zéro quand un monstre Nimble n'est plus légendaire) |
+| 2026-11-10 | PNJ, lot 4 : attaque en un clic et historique des jets du MJ (Achtung), 2 passes | C-SPEC (bonus de dégâts d'un groupe absent du résultat enregistré) | — | 0 / 0 |
+| 2026-11-10 | Dune, Nimble, Maledictum sur la brique NpcItemList | — | — | 0 / 1 (ordre de tabulation et largeur du texte des talents de Dune : laissé tel quel, décision du MJ) |
+| 2026-11-10 | Bibliothèque PNJ : boutons sur la ligne du nom, avatar en haut | — | — | 0 / 0 | 2 / 2 (résultat d'un jet caché affiché sur la fiche Maledictum, « PV par héros » remis à zéro quand un monstre Nimble n'est plus légendaire) |
 
 ## Décompte par identifiant
 

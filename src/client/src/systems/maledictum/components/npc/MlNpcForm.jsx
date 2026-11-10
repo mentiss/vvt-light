@@ -9,6 +9,7 @@
 // ─────────────────────────────────────────────────────────────────────────────
 
 import React, { useState } from 'react';
+import NpcItemList from '../../../../components/npc/NpcItemList.jsx';
 import { CHAR_KEYS, CHAR_SHORT } from '../../config/rules/character.js';
 import { ROLE_LABELS } from '../../config/rules/npc.js';
 import { Field, Pill, Pills } from '../ui/MlUi.jsx';
@@ -16,41 +17,6 @@ import { specName, RANGE_LABELS } from '../layout/MlSections.jsx';
 
 const SPEEDS = { slow: 'Lente', normal: 'Normale', fast: 'Rapide' };
 const num = (v) => (v === '' ? null : Number(v) || 0);
-
-// Liste éditable : une ligne par entrée, champs courts puis texte
-const ItemList = ({ items, onChange, fields, newItem, addLabel }) => {
-    const set = (i, key, v) => onChange(items.map((x, j) => (j === i ? { ...x, [key]: v } : x)));
-    return (
-        <div className="im-npc-list">
-            {items.map((item, i) => (
-                // relecture: F-KEY — lignes sans identifiant stable, éditées en place
-                <div key={i} className="im-npc-list-row">
-                    <div className="im-npc-list-fields">
-                        {fields.filter(f => !f.multiline && !f.options).map(f => (
-                            <input key={f.key} className={`vtt-input${f.narrow ? ' is-num' : ''}`} type={f.type ?? 'text'} placeholder={f.placeholder}
-                                   aria-label={f.placeholder} value={item[f.key] ?? ''}
-                                   onChange={e => set(i, f.key, f.type === 'number' ? num(e.target.value) : e.target.value)} />
-                        ))}
-                        <button type="button" className="vtt-btn vtt-btn-sm vtt-btn-icon vtt-npc-icon-btn" aria-label="Retirer" title="Retirer"
-                                onClick={() => onChange(items.filter((_, j) => j !== i))}>✕</button>
-                    </div>
-                    {fields.filter(f => f.options).map(f => (
-                        <Pills key={f.key}>
-                            {Object.entries(f.options).map(([k, l]) => (
-                                <Pill key={k} on={item[f.key] === k} onClick={() => set(i, f.key, item[f.key] === k ? null : k)}>{l}</Pill>
-                            ))}
-                        </Pills>
-                    ))}
-                    {fields.filter(f => f.multiline).map(f => (
-                        <textarea key={f.key} className="vtt-input" rows={2} placeholder={f.placeholder} aria-label={f.placeholder} value={item[f.key] ?? ''}
-                                  onChange={e => set(i, f.key, e.target.value)} />
-                    ))}
-                </div>
-            ))}
-            <button type="button" className="vtt-btn vtt-btn-sm" onClick={() => onChange([...items, newItem()])}>{addLabel}</button>
-        </div>
-    );
-};
 
 const MlNpcForm = ({ value, onChange }) => {
     const p = value;
@@ -90,11 +56,11 @@ const MlNpcForm = ({ value, onChange }) => {
             </Field>
 
             <Field label="Compétences">
-                <ItemList items={skills} onChange={setSkills} addLabel="+ Compétence" newItem={() => ({ key: '', name: '', value: 40 })}
+                <NpcItemList items={skills} onChange={setSkills} addLabel="+ Compétence" newItem={() => ({ key: '', name: '', value: 40 })}
                           fields={[{ key: 'name', placeholder: 'Compétence (spécialisation)' }, { key: 'value', placeholder: 'Valeur', type: 'number', narrow: true }]} />
             </Field>
             <Field label="Attaques">
-                <ItemList items={p.attacks ?? []} onChange={attacks => set({ attacks })} addLabel="+ Attaque"
+                <NpcItemList items={p.attacks ?? []} onChange={attacks => set({ attacks })} addLabel="+ Attaque"
                           newItem={() => ({ label: '', value: 40, damage: '', range: null, traits: '' })}
                           fields={[{ key: 'label', placeholder: 'Nom' }, { key: 'value', placeholder: 'Valeur', type: 'number', narrow: true },
                                    { key: 'damage', placeholder: 'Dégâts (5 + DR)' },
@@ -102,7 +68,7 @@ const MlNpcForm = ({ value, onChange }) => {
                                    { key: 'traits', placeholder: 'Traits', multiline: true }]} />
             </Field>
             <Field label="Traits">
-                <ItemList items={p.traits ?? []} onChange={traits => set({ traits })} addLabel="+ Trait" newItem={() => ({ label: '', summary: '' })}
+                <NpcItemList items={p.traits ?? []} onChange={traits => set({ traits })} addLabel="+ Trait" newItem={() => ({ label: '', summary: '' })}
                           fields={[{ key: 'label', placeholder: 'Nom' }, { key: 'summary', placeholder: 'Effet', multiline: true }]} />
             </Field>
             <Field label="Possessions">

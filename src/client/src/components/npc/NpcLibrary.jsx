@@ -36,13 +36,16 @@ const NpcRow = ({ npc, summary, canAdd, onOpen, onEdit, onDelete, onAdd, hiddenT
              onClick={() => onOpen(npc)} onKeyDown={e => { if (e.key === 'Enter') onOpen(npc); }}
              onDragStart={e => { e.dataTransfer.setData(NPC_DRAG_TYPE, JSON.stringify({ id: npc.id, quantity })); e.dataTransfer.effectAllowed = 'copy'; setDragging(true); }}
              onDragEnd={() => setDragging(false)}>
-            <span className="vtt-npc-row-tools">
-                <button type="button" className="vtt-btn vtt-btn-sm vtt-btn-icon vtt-npc-icon-btn" title="Modifier la fiche" aria-label="Modifier la fiche" onClick={stop(() => onEdit(npc))}>✎</button>
-                <button type="button" className="vtt-btn vtt-btn-sm vtt-btn-icon vtt-npc-icon-btn" title="Supprimer la fiche" aria-label="Supprimer la fiche" onClick={stop(() => onDelete(npc))}><TrashIcon /></button>
-            </span>
             <NpcAvatar npc={npc} />
             <div className="vtt-npc-row-body">
-                <div className="vtt-npc-name">{npcName(npc)} {npc.role && <small>{npc.role}</small>}</div>
+                {/* Nom, puis Modifier / Supprimer à droite sur la même ligne */}
+                <div className="vtt-npc-row-head">
+                    <div className="vtt-npc-name">{npcName(npc)} {npc.role && <small>{npc.role}</small>}</div>
+                    <span className="vtt-npc-row-tools">
+                        <button type="button" className="vtt-btn vtt-btn-sm vtt-btn-icon vtt-npc-icon-btn" title="Modifier la fiche" aria-label="Modifier la fiche" onClick={stop(() => onEdit(npc))}>✎</button>
+                        <button type="button" className="vtt-btn vtt-btn-sm vtt-btn-icon vtt-npc-icon-btn" title="Supprimer la fiche" aria-label="Supprimer la fiche" onClick={stop(() => onDelete(npc))}><TrashIcon /></button>
+                    </span>
+                </div>
                 {summary && <div className="vtt-npc-summary">{summary(npc)}</div>}
                 {rowTags.length > 0 && <div className="vtt-npc-tags">{rowTags.map(t => <span key={t} className="vtt-tag">{t}</span>)}</div>}
             </div>

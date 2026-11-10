@@ -10,33 +10,13 @@
 
 import React from 'react';
 import { NpcPresetEditor } from '../../../../components/npc/NpcPresets.jsx';
+import NpcItemList from '../../../../components/npc/NpcItemList.jsx';
 import { COMPETENCES, PRINCIPES } from '../../config/traits.js';
 import { NPC_RANKS, applyRankTemplate, isMinor } from '../../config/rules/npc.js';
 
 const num = (v, min, max) => Math.max(min, Math.min(max, Number(v) || 0));
 const splitList = (text) => text.split(',').map(s => s.trim()).filter(Boolean);
 
-// Liste éditable de { name, text|quality }
-const ItemList = ({ items, onChange, fields, newItem, addLabel }) => (
-    <div className="dn-npc-list">
-        {items.map((item, i) => (
-            // relecture: F-KEY — lignes sans identifiant stable, éditées en place
-            <div key={i} className="dn-npc-list-row">
-                {fields.map(f => (f.multiline ? (
-                    <textarea key={f.key} className="vtt-input" rows={2} placeholder={f.placeholder} value={item[f.key] ?? ''}
-                              onChange={e => onChange(items.map((x, j) => (j === i ? { ...x, [f.key]: e.target.value } : x)))} />
-                ) : (
-                    <input key={f.key} className={`vtt-input${f.narrow ? ' dn-npc-num' : ''}`} type={f.type ?? 'text'} placeholder={f.placeholder}
-                           value={item[f.key] ?? ''}
-                           onChange={e => onChange(items.map((x, j) => (j === i ? { ...x, [f.key]: f.type === 'number' ? (e.target.value === '' ? null : Number(e.target.value)) : e.target.value } : x)))} />
-                )))}
-                <button type="button" className="vtt-btn vtt-btn-sm vtt-btn-icon vtt-npc-icon-btn" aria-label="Retirer" title="Retirer"
-                        onClick={() => onChange(items.filter((_, j) => j !== i))}>✕</button>
-            </div>
-        ))}
-        <button type="button" className="vtt-btn vtt-btn-sm" onClick={() => onChange([...items, newItem()])}>{addLabel}</button>
-    </div>
-);
 
 const DuneNpcForm = ({ value, onChange, isNew = false }) => {
     const sd = value;
@@ -126,12 +106,12 @@ const DuneNpcForm = ({ value, onChange, isNew = false }) => {
                    defaultValue={(sd.traits ?? []).join(', ')} onBlur={e => set({ traits: splitList(e.target.value) })} />
 
             <div className="dn-npc-sub">Talents</div>
-            <ItemList items={sd.talents ?? []} onChange={talents => set({ talents })} addLabel="+ Talent"
+            <NpcItemList items={sd.talents ?? []} onChange={talents => set({ talents })} addLabel="+ Talent"
                       newItem={() => ({ name: '', text: '' })}
                       fields={[{ key: 'name', placeholder: 'Nom du talent' }, { key: 'text', placeholder: 'Effet (en Menace pour un PNJ)', multiline: true }]} />
 
             <div className="dn-npc-sub">Atouts</div>
-            <ItemList items={sd.atouts ?? []} onChange={atouts => set({ atouts })} addLabel="+ Atout"
+            <NpcItemList items={sd.atouts ?? []} onChange={atouts => set({ atouts })} addLabel="+ Atout"
                       newItem={() => ({ name: '', quality: null })}
                       fields={[{ key: 'name', placeholder: 'Lasgun, Bouclier…' }, { key: 'quality', placeholder: 'Qualité', type: 'number', narrow: true }]} />
 

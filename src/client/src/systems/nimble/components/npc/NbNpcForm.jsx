@@ -8,36 +8,9 @@
 // ─────────────────────────────────────────────────────────────────────────────
 
 import React from 'react';
+import NpcItemList from '../../../../components/npc/NpcItemList.jsx';
 import { MONSTER_SIZES } from '../../config/bestiary.js';
 import { ARMOR_LABELS } from '../../config/rules/encounter.js';
-
-// Liste éditable : une ligne par entrée, champs simples puis texte
-const ItemList = ({ items, onChange, fields, newItem, addLabel }) => (
-    <div className="nb-npc-list">
-        {items.map((item, i) => (
-            // relecture: F-KEY — lignes sans identifiant stable, éditées en place
-            <div key={i} className="nb-npc-list-row">
-                <div className="nb-npc-list-fields">
-                    {fields.filter(f => !f.multiline).map(f => (f.toggle ? (
-                        <button key={f.key} type="button" className={`vtt-pill${item[f.key] ? ' is-selected' : ''}`}
-                                onClick={() => onChange(items.map((x, j) => (j === i ? { ...x, [f.key]: !x[f.key] } : x)))}>{f.label}</button>
-                    ) : (
-                        <input key={f.key} className={`nb-input${f.narrow ? ' is-num' : ''}`} type={f.type ?? 'text'} placeholder={f.placeholder}
-                               aria-label={f.placeholder} value={item[f.key] ?? ''}
-                               onChange={e => onChange(items.map((x, j) => (j === i ? { ...x, [f.key]: f.type === 'number' ? Number(e.target.value) || 0 : e.target.value } : x)))} />
-                    )))}
-                    <button type="button" className="vtt-btn vtt-btn-sm vtt-btn-icon vtt-npc-icon-btn" aria-label="Retirer" title="Retirer"
-                            onClick={() => onChange(items.filter((_, j) => j !== i))}>✕</button>
-                </div>
-                {fields.filter(f => f.multiline).map(f => (
-                    <textarea key={f.key} className="nb-input" rows={2} placeholder={f.placeholder} aria-label={f.placeholder} value={item[f.key] ?? ''}
-                              onChange={e => onChange(items.map((x, j) => (j === i ? { ...x, [f.key]: e.target.value } : x)))} />
-                ))}
-            </div>
-        ))}
-        <button type="button" className="vtt-btn vtt-btn-sm" onClick={() => onChange([...items, newItem()])}>{addLabel}</button>
-    </div>
-);
 
 const ARMORS = [{ v: null, l: 'Sans armure' }, { v: 'medium', l: ARMOR_LABELS.medium }, { v: 'heavy', l: ARMOR_LABELS.heavy }];
 
@@ -69,21 +42,21 @@ const NbNpcForm = ({ value, onChange }) => {
             </div>
 
             <span className="vtt-field-label">Attaques</span>
-            <ItemList items={m.attacks ?? []} onChange={attacks => set({ attacks })} addLabel="+ Attaque"
+            <NpcItemList items={m.attacks ?? []} onChange={attacks => set({ attacks })} addLabel="+ Attaque"
                       newItem={() => ({ name: '', dice: '1d6', bonus: 0, noCrit: !!m.minion, text: '' })}
                       fields={[{ key: 'name', placeholder: 'Nom' }, { key: 'dice', placeholder: 'Dés (1d8)', narrow: true },
-                               { key: 'bonus', placeholder: 'Bonus', type: 'number', narrow: true }, { key: 'noCrit', label: 'Sans critique', toggle: true },
+                               { key: 'bonus', placeholder: 'Bonus', type: 'number', narrow: true, emptyValue: 0 }, { key: 'noCrit', label: 'Sans critique', toggle: true },
                                { key: 'text', placeholder: 'Effet', multiline: true }]} />
 
             <span className="vtt-field-label">Capacités</span>
-            <ItemList items={m.abilities ?? []} onChange={abilities => set({ abilities })} addLabel="+ Capacité"
+            <NpcItemList items={m.abilities ?? []} onChange={abilities => set({ abilities })} addLabel="+ Capacité"
                       newItem={() => ({ name: '', text: '' })}
                       fields={[{ key: 'name', placeholder: 'Nom' }, { key: 'text', placeholder: 'Effet', multiline: true }]} />
 
             {(m.legendary || (m.sections ?? []).length > 0) && (
                 <>
                     <span className="vtt-field-label">Sections (légendaire : En sang, Baroud d'honneur…)</span>
-                    <ItemList items={m.sections ?? []} onChange={sections => set({ sections })} addLabel="+ Section"
+                    <NpcItemList items={m.sections ?? []} onChange={sections => set({ sections })} addLabel="+ Section"
                               newItem={() => ({ title: '', text: '' })}
                               fields={[{ key: 'title', placeholder: 'Titre' }, { key: 'text', placeholder: 'Texte', multiline: true }]} />
                 </>

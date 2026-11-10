@@ -3,8 +3,9 @@
 // Brique des formulaires PNJ des slugs (spec_pnj.md §6.5, §10) : liste éditable
 // d'entrées (attaques, compétences, traits…), une ligne par entrée, bouton de retrait,
 // bouton d'ajout. Champs décrits par le slug :
-//   { key, placeholder, type?: 'text'|'number', narrow?, multiline?, options?: { valeur: libellé }, list?: [suggestions] }
-//   - number : '' donne null ; options : pastilles (un clic sur la pastille choisie la retire) ;
+//   { key, placeholder, type?: 'text'|'number', narrow?, multiline?, options?: { valeur: libellé }, list?: [suggestions],
+//     toggle?: true + label (pastille oui / non dans la ligne), emptyValue? (nombre vidé : null par défaut) }
+//   - number : '' donne emptyValue (null par défaut) ; options : pastilles (un clic sur la pastille choisie la retire) ;
 //   - list : suggestions de saisie (datalist), la saisie reste libre.
 // <NpcItemList items onChange fields newItem addLabel />
 // Habillage : vtt-npc-items, vtt-npc-items-row, vtt-npc-items-fields.
@@ -25,12 +26,17 @@ const NpcItemList = ({ items = [], onChange, fields, newItem, addLabel = '+ Ajou
                 // relecture: F-KEY — lignes sans identifiant stable, éditées en place
                 <div key={i} className="vtt-npc-items-row">
                     <div className="vtt-npc-items-fields">
-                        {inline.map(f => (
+                        {inline.map(f => (f.toggle ? (
+                            <button key={f.key} type="button" className={`vtt-pill${item[f.key] ? ' is-selected' : ''}`}
+                                    onClick={() => set(i, f.key, !item[f.key])}>{f.label}</button>
+                        ) : (
                             <input key={f.key} className={`vtt-input${f.narrow ? ' is-narrow' : ''}`} type={f.type ?? 'text'}
                                    placeholder={f.placeholder} aria-label={f.placeholder} value={item[f.key] ?? ''}
                                    list={f.list ? `${listId}-${f.key}` : undefined}
-                                   onChange={e => set(i, f.key, f.type === 'number' ? (e.target.value === '' ? null : Number(e.target.value)) : e.target.value)} />
-                        ))}
+                                   onChange={e => set(i, f.key, f.type === 'number'
+                                       ? (e.target.value === '' ? (f.emptyValue ?? null) : Number(e.target.value) || 0)
+                                       : e.target.value)} />
+                        )))}
                         <button type="button" className="vtt-btn vtt-btn-sm vtt-btn-icon vtt-npc-icon-btn" aria-label="Retirer" title="Retirer"
                                 onClick={() => onChange(items.filter((_, j) => j !== i))}>✕</button>
                     </div>

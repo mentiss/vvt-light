@@ -1247,10 +1247,12 @@ select:disabled {
 
   /* Bibliothèque */
   .vtt-npc-list { display: flex; flex-direction: column; gap: 0.4rem; }
-  .vtt-npc-row { flex-wrap: wrap; gap: 0.6rem; padding: 0.5rem 0.6rem; cursor: pointer; }
+  .vtt-npc-row { flex-wrap: wrap; align-items: flex-start; gap: 0.6rem; padding: 0.5rem 0.6rem; cursor: pointer; }
   .vtt-npc-row[draggable="true"] { cursor: grab; }
   .vtt-npc-row.is-dragging { opacity: 0.5; }
-  .vtt-npc-row-tools { flex-basis: 100%; display: flex; gap: 0.25rem; }
+  .vtt-npc-row-head { display: flex; align-items: flex-start; gap: 0.5rem; }
+  .vtt-npc-row-head .vtt-npc-name { flex: 1; min-width: 0; }
+  .vtt-npc-row-tools { display: flex; gap: 0.25rem; flex-shrink: 0; }
   .vtt-npc-row-tools .vtt-btn { width: 1.5rem; height: 1.5rem; font-size: 0.75rem; }
   .vtt-npc-row-body { flex: 1 1 calc(100% - 3.5rem); min-width: 0; }
   .vtt-npc-name { font-weight: 700; overflow-wrap: anywhere; }

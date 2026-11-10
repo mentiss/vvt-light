@@ -924,11 +924,6 @@ button.im-char { font: inherit; color: inherit; }
 .im-npc-fold > summary { cursor: pointer; font-family: var(--im-font-label); font-size: 12.5px; letter-spacing: .08em; text-transform: uppercase; color: var(--color-text-muted); }
 .im-npc-char input { width: 100%; text-align: center; padding: 2px 0; }
 .im-npc-form-grid { display: grid; gap: 10px; grid-template-columns: repeat(auto-fit, minmax(min(100%, 120px), 1fr)); }
-.im-npc-list { display: grid; gap: 8px; justify-items: start; }
-.im-npc-list-row { display: grid; gap: 6px; width: 100%; }
-.im-npc-list-fields { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
-.im-npc-list-fields .vtt-input:not(.is-num) { flex: 1 1 160px; min-width: 0; }
-.im-npc-list-fields .vtt-input.is-num { width: 6.5em; }
 .im-npc-chars { display: grid; grid-template-columns: repeat(9, 1fr); gap: 3px; margin-bottom: 8px; }
 .im-npc-char { display: grid; text-align: center; padding: 3px 0; border: 1px solid color-mix(in srgb, var(--im-metal) 50%, transparent); background: var(--color-bg); font-family: var(--im-font-num); font-size: 15px; }
 .im-npc-char b { font-family: var(--im-font-label); font-size: 10px; font-weight: 400; color: var(--im-main); }

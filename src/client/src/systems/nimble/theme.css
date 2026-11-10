@@ -552,12 +552,8 @@ button.nb-pip:hover { box-shadow: 0 0 0 3px var(--nb-wash); }
 .vtt-npc-card.is-down { opacity: .5; }
 .vtt-npc-card-name, .vtt-npc-name, .vtt-npc-sheet-name { font-family: var(--nb-font-title); font-style: italic; font-weight: 800; }
 .vtt-npc-system .nb-monster-body { padding: 0; }
-/* Formulaire d'un monstre : listes d'attaques, capacités, sections */
-.nb-npc-list { display: grid; gap: 8px; justify-items: start; }
-.nb-npc-list-row { display: grid; gap: 6px; width: 100%; }
-.nb-npc-list-fields { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
-.nb-npc-list-fields .nb-input:not(.is-num) { flex: 1 1 160px; min-width: 0; }
-.nb-npc-list-fields .nb-input.is-num { width: 6.5em; }
+/* Formulaire d'un monstre : listes d'attaques, capacités, sections (brique NpcItemList) */
+.vtt-npc-items-fields .vtt-input.is-narrow { text-align: center; }
 .nb-monster-body { padding: 8px 10px 10px; display: grid; gap: 8px; }
 .nb-monster-hp { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
 .nb-monster-hp .nb-meter { flex: 1; min-width: 90px; height: 10px; }
