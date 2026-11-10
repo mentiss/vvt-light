@@ -25,6 +25,6 @@ Les spécifications validées sont dans `documentations/` (`spec_<slug>.md`, `sp
 
 - **Aucune commande Git qui modifie l'état** (`add`, `commit`, `stash`, `checkout`, `reset`, `restore`…). Lecture seule : `status`, `diff`, `log`, `show`.
 - Ne lis jamais `.env` et n'en affiche jamais le contenu ; ne lis pas les bases `*.db`.
-- Fins de ligne : les fichiers du dépôt sont en CRLF, préserve-les.
+- Fins de ligne : pas une remarque de relecture (C-CRLF retirée, `core.autocrlf=true` normalise l'index).
 - Interface en français, code (identifiants, fichiers, props) en anglais.
 - Réponds en français.

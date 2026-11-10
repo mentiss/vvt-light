@@ -1,6 +1,6 @@
 # PNJ de la plateforme : refonte
 
-Statut : phase 1 close (décisions au §4.1). Lot 0 fait (§5). Phase 2 (§6) et lot 1 (planche, version 5) validés le 2026-11-09. Lot 2 (plateforme + Dune) implémenté le 2026-11-10 (§7.3), relu par Codex ; à suivre : lot 3 (Maledictum, Nimble), lot 4 (autres slugs).
+Statut : phase 1 close (décisions au §4.1). Lot 0 fait (§5). Phase 2 (§6) et lot 1 (planche, version 5) validés le 2026-11-09. Lot 2 (plateforme + Dune) implémenté et commité le 2026-11-10 (§7.3). Lot 3 (Maledictum, Nimble) implémenté le 2026-11-10 (§8.2) ; à suivre : lot 4 (autres slugs).
 
 ## 1. Demande
 
@@ -371,3 +371,39 @@ Ensuite, presque partout, il reste des choix au moment de lancer (difficulté, d
 - **Noms traduits sans équivalent dans l'app** : « Palais mental » (Mind Palace), « Amortisseur ixien » (Ixian Damper), « Fléchette » (Flip-Dart).
 - **Noms repris de l'app** : Impérieux, Célérité, Ténacité, Examen hâtif, Agile, À pas de loup, Laser (lasgun), Dard, Pistolet à aiguilles.
 - Les faux contrebandiers d'*Agents of Dune* (principes tous à 4) ont été classés en mineurs.
+
+- Lot 2 commité le 2026-11-10 (`bdf832d`).
+
+## 8. Lot 3 : Maledictum et Nimble
+
+Déjà décidé : les bestiaires passent en base, une migration de données par slug (P-4, P-13) ; les onglets Rencontre basculent sur l'onglet PNJ de la plateforme et le stockage navigateur disparaît (P-5) ; Maledictum lance d'un clic (R-3). La partie système de chaque slug reprend ce que fait sa carte de rencontre actuelle : Maledictum (caractéristiques, attaques, compétences, traits en un clic, Blessures et Blessures critiques selon le rôle), Nimble (PV et armure, dégâts et soins, attaques, capacités, sections des légendaires).
+
+### 8.1 Questions
+
+| # | Question | Proposition | Réponse MJ |
+|---|---|---|---|
+| L3-1 | Les deux bestiaires servent **aussi à l'aide de jeu** (section « Bestiaire » réservée au MJ, construite depuis `bestiary.js`). Une fois versés en base, que devient cette section ? | **La retirer** : la bibliothèque devient le bestiaire du MJ (recherche, étiquettes, fiches complètes), et garder `bestiary.js` pour l'aide de jeu referait deux sources. Pour Nimble, le texte des familles (rencontres types, butin) n'est pas un profil : il passe en Markdown dans l'aide de jeu (section MJ « Familles de monstres »). || **Garder la section de l'aide de jeu**, même si elle fait doublon avec la bibliothèque : ce n'est pas bien grave (2026-11-10). Les fichiers `bestiary.js` restent donc, et servent aussi de source au versement en base. |
+| L3-2 | Nimble : les **sbires** se jouent en groupe (une carte, un nombre de sbires, tout dégât en tue un). Ajouter « 4 Sbires gobelins », c'est 4 cartes, ou une carte de 4 ? | **Une carte de 4**, comme aujourd'hui. Le slug dit qu'une fiche se joue en groupe ; la plateforme crée alors une seule carte, et la quantité devient le nombre de sbires. || Oui (validé dans l'ensemble, 2026-11-10) |
+| L3-3 | Nimble : les PV d'un **légendaire** dépendent du nombre de héros de la table. Calculés à l'ajout, comme aujourd'hui ? | **Oui** : l'interface MJ de Nimble passe le nombre de héros à l'onglet, qui le transmet au slug pour l'état initial. || Oui (2026-11-10) |
+| L3-4 | Nom de l'onglet : « Rencontre » (comme aujourd'hui) ou « PNJ » (comme Dune) ? | **« Rencontre »** : c'est le mot des deux jeux et celui que tes joueurs connaissent. || Oui (2026-11-10) |
+| L3-5 | Nimble : le **monstre libre** (onglet du catalogue actuel) ? | Il devient « Nouvelle fiche » de la bibliothèque, avec le formulaire de Nimble ; plus besoin d'un cas à part. || Oui (2026-11-10) |
+| L3-6 | Les rencontres en cours **gardées dans le navigateur** sont perdues à la bascule (P-5). | Accepté en P-5 ; je le rappelle seulement. Il suffit de rajouter les monstres à la table après la mise en prod. || Oui : pas de partie en cours (2026-11-10) |
+
+### 8.2 Lot 3 : implémentation (2026-11-10)
+
+**Plateforme**
+- `TabNpcs` : prop `context` (données de la table passées à `initialState(npc, { quantity, context })`) ; bloc `npc.isGroup(npc)` : une fiche qui se joue en groupe donne une seule carte, la quantité passe à l'état initial (L3-2).
+
+**Nimble**
+- Règles `config/rules/encounter.js` : `monsterState` (PV, PV par héros des légendaires, nombre de sbires), `monsterView`, `levelValue` (tri des niveaux) ; tests.
+- Partie système `components/npc/NbNpcSheet.jsx` (reprise de l'ancienne carte : PV, armure, dégâts et soins, sbires, attaques, capacités et sections) et `NbNpcForm.jsx` (L3-5) ; bloc `npc` : étiquettes Type / Famille / Niveau, sbires en groupe, PV des légendaires selon le nombre de héros de la table (L3-3).
+- Onglet « Rencontre » sur `TabNpcs` (L3-4) ; `gm/tabs/TabEncounter.jsx` et `NbMonsterCard.jsx` supprimés.
+- Versement : 91 monstres du GM's Guide (`10112026_npcs_nimble.sql`, `-- systems: nimble`, et schéma), étiquettes famille, Sbire, Légendaire, `Niv. X`.
+
+**Maledictum**
+- Règles `config/rules/npc.js` (mort subite selon le rôle, jet d'attaque d'un profil) ; tests.
+- Partie système `components/npc/MlNpcSheet.jsx` (caractéristiques, attaques et compétences en un clic, jets cachés suivant l'onglet, Blessures et Blessures critiques à la table, traits et possessions) et `MlNpcForm.jsx` ; bloc `npc` : étiquettes Rôle / Faction.
+- Onglet « Rencontre » sur `TabNpcs` ; `gm/tabs/TabEncounter.jsx` supprimé.
+- Versement : 50 profils du livre de base (`10112026_npcs_maledictum.sql`, `-- systems: maledictum`, et schéma), variantes complétées par leur profil de base.
+
+L'aide de jeu garde la section bestiaire des deux slugs (L3-1) : `bestiary.js` reste, source de l'aide de jeu et du versement.

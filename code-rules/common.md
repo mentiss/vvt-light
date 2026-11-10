@@ -21,7 +21,6 @@ Grilles par domaine : `code-rules/front.md` (`src/client`), `code-rules/back.md`
 
 | Id | Niveau | Règle | Pourquoi | Contrôle |
 |---|---|---|---|---|
-| C-CRLF | Règle | Un fichier existant garde ses fins de ligne (CRLF dans ce dépôt). Un nouveau fichier suit celles de son dossier. | Dev sous Windows : un fichier passé en LF ressort entier dans le diff et noie les vrais changements. | relecture |
 | C-SCOPE | Règle | Le diff ne touche que ce que demande le chantier : pas de réécriture complète non demandée, pas de lignes modifiées sans rapport. | Des fichiers sont aussi modifiés à la main ; un diff ciblé se relit et se reprend. | relecture |
 | C-SPEC | Règle | Le code respecte la spec validée du slug ou de la brique (`documentations/`) ; aucune règle de jeu absente de la spec n'est inventée. En cas d'écart technique (chemin, colonne, props), le code fait foi et l'écart se signale. | Les specs portent les choix validés avec le MJ. | relecture |
 | C-TEST | Règle | Toucher une règle de calcul ou un contrat de route ajoute ou met à jour son test. Front : fonctions pures seulement, dans `src/client/tests/` en miroir de `src/client/src/`, imports Vitest explicites. Serveur : contrat de route dans `tests/server/`. | Les tests suivent ce qu'on touche, sans campagne de rattrapage. | relecture |
@@ -30,4 +29,4 @@ Grilles par domaine : `code-rules/front.md` (`src/client`), `code-rules/back.md`
 | C-DEAD | Préférence | Pas de code mort laissé derrière soi : fichier ou export plus importé, bloc commenté, prop ignorée, écouteur d'un événement jamais émis. | Le code mort se relit, se maintient et trompe. | relecture |
 | C-SIZE | Préférence | Un fichier de logique (pas un catalogue de données) de plus de 800 lignes se signale, avec une proposition de découpage. | Au-delà, un fichier se relit mal et se patche mal. | relecture |
 
-Retirées à la validation (principes, pas des règles du code) : C-LANG, C-DOC, C-OVERENG.
+Retirées à la validation (principes, pas des règles du code) : C-LANG, C-DOC, C-OVERENG. Retirée le 2026-11-10 : C-CRLF (fins de ligne). Le dépôt est en `core.autocrlf=true` : l'index est normalisé en LF, un changement de fins de ligne ne ressort ni dans le diff ni dans le commit, et le dépôt est déjà mixte.

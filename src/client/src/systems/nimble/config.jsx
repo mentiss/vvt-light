@@ -8,6 +8,10 @@
 
 import { RollError } from '../../tools/diceEngine.js';
 import NbHistoryEntry from './components/layout/NbHistoryEntry.jsx';
+import NbNpcSheet from './components/npc/NbNpcSheet.jsx';
+import NbNpcForm from './components/npc/NbNpcForm.jsx';
+import { FAMILIES, MONSTERS } from './config/bestiary.js';
+import { ARMOR_LABELS, isDown, levelValue, monsterState, monsterView } from './config/rules/encounter.js';
 import {
     VICIOUS_POOL, clampEdge, dicePoolSize, pickDice, resolveMinions, resolveAttack, resolveD20, initiativeActions, resolveHitDice, sumDice,
 } from './config/rules/dice.js';
@@ -110,10 +114,37 @@ const dice = {
     renderAllRollTypes: true,   // le slug rend aussi le jet libre (onglet, panneau, notifications)
 };
 
+// Niveaux des monstres du bestiaire, dans l'ordre (les fractions avant 1), pour le filtre
+const LEVEL_TAGS = [...new Set(MONSTERS.filter(m => !m.minion).map(m => m.level))]
+    .sort((a, b) => levelValue(a) - levelValue(b)).map(l => `Niv. ${l}`);
+
 const nimbleConfig = {
     slug:  'nimble',
     label: 'Nimble',
     dice,
+
+    // Rencontre : onglet PNJ de la plateforme (spec_pnj.md §8), monstres du bestiaire versés en base
+    npc: {
+        librarySide:  'left',
+        tagGroups: [
+            { label: 'Type',    tags: ['Sbire', 'Légendaire'] },
+            { label: 'Famille', tags: FAMILIES.map(f => f.name) },
+            { label: 'Niveau',  tags: LEVEL_TAGS },
+        ],
+        hiddenTags:   ['Sbire', ...LEVEL_TAGS],   // déjà dits par le résumé de chaque ligne
+        defaults:     () => ({ level: '1', size: 'medium', minion: false, legendary: false, hp: 10, hpPerHero: false, armor: null,
+                               speed: null, saves: null, attacks: [], abilities: [], sections: [] }),
+        summary:      (npc) => {
+            const m = npc.systemData ?? {};
+            return [m.minion ? 'Sbires' : `Niv. ${m.level}`, !m.minion && `${m.hp} PV${m.hpPerHero ? ' par héros' : ''}`, ARMOR_LABELS[m.armor]]
+                .filter(Boolean).join(' · ');
+        },
+        isGroup:      (npc) => !!npc.systemData?.minion,
+        initialState: (npc, { quantity, context } = {}) => monsterState(npc.systemData ?? {}, { quantity, heroes: context?.heroes ?? 1 }),
+        isDown:       (instance) => isDown(monsterView(instance.sheet?.systemData ?? {}, instance.state, instance.name)),
+        Form:         NbNpcForm,
+        Sheet:        NbNpcSheet,
+    },
 
     // Dés 3D : rouge héraldique, chiffres vélin, filet d'encre, tranche or (planche)
     diceConfigDefault: {

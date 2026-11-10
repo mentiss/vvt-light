@@ -7,7 +7,8 @@
 //     action : jet libre ;
 //   - Session : musique, tableau partagé, acolytes de la table et leur fiche (gm/tabs/TabSession.jsx) ;
 //   - Patron : fiche de groupe, Supériorité, Subtilité (gm/tabs/TabPatron.jsx) ;
-//   - Rencontre : PNJ du bestiaire (gm/tabs/TabEncounter.jsx) ;
+//   - Rencontre : onglet PNJ de la plateforme (components/npc/TabNpcs.jsx) ; bestiaire en
+//     bibliothèque, Blessures, Blessures critiques, jets (partie système : components/npc/) ;
 //   - Journal (TabJournal), Historique (DiceHistoryPage), Tableau (Board),
 //     panneau d'historique (DiceHistoryPanel, zone d'actions) : briques de la plateforme.
 // Contenu directement ici, sans GMView.
@@ -39,7 +40,8 @@ import { useLivery } from './hooks/useLivery.js';
 import { themeForPatron } from './config/rules/themes.js';
 import TabSession from './gm/tabs/TabSession.jsx';
 import TabPatron from './gm/tabs/TabPatron.jsx';
-import TabEncounter from './gm/tabs/TabEncounter.jsx';
+import TabNpcs from '../../components/npc/TabNpcs.jsx';
+import maledictumConfig from './config.jsx';
 import { REFERENCE_SECTIONS } from './config/reference.js';
 
 const TABS = [
@@ -82,7 +84,7 @@ const GMApp = ({ activeSession, onSessionChange, onlineCharacters, characterUpda
                                 onSessionChange={onSessionChange} />
                 )}
                 {activeTab === 'patron' && <TabPatron activeSession={activeSession} patronState={patronState} />}
-                {activeTab === 'rencontre' && <TabEncounter activeSession={activeSession} />}
+                {activeTab === 'rencontre' && <TabNpcs sessionId={sessionId} config={maledictumConfig.npc} />}
                 {activeTab === 'journal' && <div className="im-tab-page"><TabJournal /></div>}
                 {activeTab === 'historique' && <div className="im-tab-page"><DiceHistoryPage sessionId={sessionId} /></div>}
                 {activeTab === 'tableau' && (

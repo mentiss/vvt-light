@@ -8,23 +8,33 @@
 export const ARMOR_REDUCTION = { medium: 10, heavy: 20 };
 export const ARMOR_LABELS = { medium: 'Armure moyenne', heavy: 'Armure lourde' };
 
-let seq = 0;
-
 /**
- * Monstre ajouté à la rencontre, depuis le bestiaire ou libre.
- * @param {object} m       entrée du bestiaire (format_catalogues.md §7)
- * @param {number} [count]  nombre de sbires (sbires seulement)
- * @param {number} [heroes] nombre de héros : multiplie les PV « par héros » (légendaires)
+ * PV d'un monstre selon le nombre de héros (légendaires : PV « par héros ») ; sbire : 0.
+ * @param {object} m       profil du monstre (format_catalogues.md §7, partie système d'un PNJ)
+ * @param {number} [heroes] nombre de héros de la table
  */
 export const monsterHp = (m, heroes = 1) => (m.minion ? 0 : Number(m.hp ?? 0) * (m.hpPerHero ? Math.max(1, heroes) : 1));
 
-export const monsterInstance = (m, count = 1, heroes = 1) => ({
-    id: `m-${Date.now()}-${seq++}`, key: m.key ?? null, name: m.name, vo: m.vo ?? '', level: m.level ?? '',
-    size: m.size ?? null, minion: !!m.minion, legendary: !!m.legendary, armor: m.armor ?? null,
-    hpMax: monsterHp(m, heroes), hp: monsterHp(m, heroes),
-    count: m.minion ? Math.max(1, count) : 1, alive: m.minion ? Math.max(1, count) : 1,
+/**
+ * État d'un monstre ajouté à la table (spec_pnj.md §8, L3-2, L3-3) : PV calculés pour la
+ * table, sbires en un seul groupe de `quantity`.
+ */
+export const monsterState = (m, { quantity = 1, heroes = 1 } = {}) => {
+    const count = m.minion ? Math.max(1, quantity) : 1;
+    const hp = monsterHp(m, heroes);
+    return { hpMax: hp, hp, count, alive: count };
+};
+
+/**
+ * Monstre tel que la carte le lit : profil + état à la table (ou plein, en bibliothèque).
+ * @param {object} m      profil du monstre
+ * @param {object|null} state
+ * @param {string} name   nom affiché
+ */
+export const monsterView = (m, state, name) => ({
+    name, level: m.level ?? '', size: m.size ?? null, minion: !!m.minion, legendary: !!m.legendary, armor: m.armor ?? null,
     attacks: m.attacks ?? [], abilities: m.abilities ?? [], sections: m.sections ?? [], speed: m.speed ?? null, saves: m.saves ?? null,
-    notes: m.notes ?? '',
+    ...(state ?? monsterState(m)),
 });
 
 /** Dégâts après armure (un critique l'ignore) */
@@ -44,5 +54,12 @@ export const damageMonster = (inst, amount, { crit = false } = {}) => {
 export const healMonster = (inst, amount) => (inst.minion
     ? { ...inst, alive: Math.min(inst.count, inst.alive + 1) }
     : { ...inst, hp: Math.min(inst.hpMax, inst.hp + Math.max(0, Number(amount))) });
+
+/** Valeur d'un niveau de monstre (« 1/3 », « 2 »…), pour trier ; un texte non chiffré passe en dernier */
+export const levelValue = (level) => {
+    const [a, b] = String(level ?? '').split('/').map(Number);
+    if (!Number.isFinite(a)) return Infinity;
+    return b ? a / b : a;
+};
 
 export const isDown = (inst) => (inst.minion ? inst.alive <= 0 : inst.hp <= 0);

@@ -14,6 +14,7 @@ Une ligne par relecture croisée (`/relecture`, `documentations/spec_relecture.m
 | 2026-11-09 | PNJ, lot 0 : suppression de l'ancien PNJ et du combat de la plateforme (`spec_pnj.md` §5) | — | — | ? / 1 (branches `isNPC` des dés Tecumah) |
 | 2026-11-09 | Historique des jets, passe générique (`spec_diceengine_v2.md`, « Passe générique ») | F-TOKENS | — | 0 / 0 |
 | 2026-11-10 | PNJ, lot 2 : plateforme + Dune (`spec_pnj.md` §6, §7), 2 passes | B-COALESCE ×2, C-SPEC | — | 6 / 6 (ordre des migrations, réponses tardives et échec du PATCH dans `useNpcs`, formulaire sans clé, responsive de l'onglet, rechargement des PNJ du tableau) |
+| 2026-11-10 | PNJ, lot 3 : Nimble + Maledictum (`spec_pnj.md` §8) | — | C-CRLF ×11 (fins de ligne lues dans l'index, normalisé en LF par `autocrlf`, au lieu de l'arbre de travail : fichiers gardés tels quels, slugs surtout en LF ; règle retirée le jour même) | 2 / 2 (résultat d'un jet caché affiché sur la fiche Maledictum, « PV par héros » remis à zéro quand un monstre Nimble n'est plus légendaire) |
 
 ## Décompte par identifiant
 

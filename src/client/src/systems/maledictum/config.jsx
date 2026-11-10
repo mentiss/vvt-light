@@ -11,7 +11,12 @@ import MlHistoryEntry from './components/layout/MlHistoryEntry.jsx';
 import { resolveTest, resolveAttack, resolvePower, applySlBonus, slBand, charsFromDice } from './config/rules/dice.js';
 import { CHAR_KEYS } from './config/rules/character.js';
 import { lookupTable } from './config/rules/tables.js';
-import { SETUP } from './config/setup.js';
+import { SETUP, available } from './config/setup.js';
+import { BESTIARY } from './config/bestiary.js';
+import { PATRON_FACTIONS } from './config/patron.js';
+import { ROLE_LABELS, initialNpcState, isOut } from './config/rules/npc.js';
+import MlNpcSheet from './components/npc/MlNpcSheet.jsx';
+import MlNpcForm from './components/npc/MlNpcForm.jsx';
 
 // ══════════════════════════════════════════════════════════════════════════════
 // BLOC DÉS — contrat diceEngine v2
@@ -102,10 +107,34 @@ const dice = {
     renderAllRollTypes: true,   // le slug rend aussi le jet libre (onglet, panneau, notifications)
 };
 
+// Factions du bestiaire, dans l'ordre du livre, pour le filtre des PNJ (étiquettes versées par 10112026_npcs_maledictum.sql)
+const FACTION_LABELS = Object.fromEntries(PATRON_FACTIONS.map(f => [f.key, f.label]));
+const NPC_FACTIONS = [...new Set(available(BESTIARY).map(b => FACTION_LABELS[b.faction] ?? b.faction).filter(Boolean))];
+
 const maledictumConfig = {
     slug:  'maledictum',
     label: 'Imperium Maledictum : Inquisition',
     dice,
+
+    // PNJ (spec_pnj.md §8) : onglet Rencontre de l'interface MJ, partie système components/npc/
+    npc: {
+        librarySide:  'left',
+        tagGroups: [
+            { label: 'Rôle',    tags: Object.values(ROLE_LABELS) },
+            { label: 'Faction', tags: NPC_FACTIONS },
+        ],
+        hiddenTags:   Object.values(ROLE_LABELS),   // déjà dit par le résumé de chaque ligne
+        defaults:     () => ({ role: 'troop', chars: {}, armour: 0, wounds: 10, initiative: null, speed: 'normal', resolve: null, warpThreshold: null,
+                               skills: {}, traits: [], attacks: [], powers: [], possessions: null }),
+        summary:      (npc) => {
+            const p = npc.systemData ?? {};
+            return [ROLE_LABELS[p.role], `${p.wounds ?? 0} Blessures`, `Armure ${p.armour ?? 0}`].filter(Boolean).join(' · ');
+        },
+        initialState: () => initialNpcState(),
+        isDown:       (instance) => isOut(instance.sheet?.systemData, instance.state),
+        Form:         MlNpcForm,
+        Sheet:        MlNpcSheet,
+    },
 
     // Dés 3D : cire rouge et or terni (thème de l'Ordo Hereticus, planche validée)
     diceConfigDefault: {

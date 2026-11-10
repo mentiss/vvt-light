@@ -4,7 +4,8 @@
 //   - bande fixe comme la fiche joueur : marque, thème, menu ; onglets
 //     Session · Rencontre · Journal · Historique · Tableau · Aide de jeu ; action : jet libre ;
 //   - Session : musique, tableau partagé, héros de la table et leur fiche (gm/tabs/TabSession.jsx) ;
-//   - Rencontre : monstres, PV, armure, sbires, attaques (gm/tabs/TabEncounter.jsx) ;
+//   - Rencontre : onglet PNJ de la plateforme (components/npc/TabNpcs.jsx) ; monstres de la
+//     bibliothèque, PV, armure, sbires, attaques (partie système : components/npc/) ;
 //   - Journal (TabJournal), Historique (DiceHistoryPage), Tableau (Board),
 //     panneau d'historique (DiceHistoryPanel, zone d'actions) : briques de la plateforme.
 // Contenu directement ici, sans GMView.
@@ -32,7 +33,8 @@ import { D20Icon } from './components/ui/NbUi.jsx';
 import { useTableCharacters } from './hooks/useTableCharacters.js';
 import { useBoxSize } from './hooks/useBoxSize.js';
 import TabSession from './gm/tabs/TabSession.jsx';
-import TabEncounter from './gm/tabs/TabEncounter.jsx';
+import TabNpcs from '../../components/npc/TabNpcs.jsx';
+import nimbleConfig from './config.jsx';
 import { REFERENCE_SECTIONS } from './config/reference.js';
 
 const TABS = [
@@ -71,7 +73,8 @@ const GMApp = ({ activeSession, onSessionChange, onlineCharacters, characterUpda
                                 characters={characters} order={order} loading={loading} patchCharacter={patchCharacter}
                                 onSessionChange={onSessionChange} />
                 )}
-                {activeTab === 'rencontre' && <TabEncounter activeSession={activeSession} heroes={Math.max(1, order.length)} />}
+                {/* Rencontre : onglet PNJ de la plateforme ; nombre de héros pour les PV des légendaires (spec_pnj.md §8, L3-3) */}
+                {activeTab === 'rencontre' && <TabNpcs sessionId={sessionId} config={nimbleConfig.npc} context={{ heroes: Math.max(1, order.length) }} />}
                 {activeTab === 'journal' && <div className="nb-page"><TabJournal /></div>}
                 {activeTab === 'historique' && <div className="nb-page"><DiceHistoryPage sessionId={sessionId} /></div>}
                 {activeTab === 'tableau' && (

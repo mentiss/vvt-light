@@ -5,7 +5,7 @@ import {
     INITIAL_CREATION, statsOf, suggestedAssign, backgroundAllowed, buildCharacterPayload, costInGold, isCreationComplete,
 } from '../../../../../src/systems/nimble/config/rules/creation.js';
 import { levelUpPlan, applyLevelUp } from '../../../../../src/systems/nimble/config/rules/levelUp.js';
-import { damageMonster, monsterInstance } from '../../../../../src/systems/nimble/config/rules/encounter.js';
+import { damageMonster, levelValue, monsterState, monsterView } from '../../../../../src/systems/nimble/config/rules/encounter.js';
 
 describe('Caractéristiques par tableau', () => {
     it('exemple du livre : le Tricheur en Min-max met +3 en DEX, +1 en INT', () => {
@@ -59,17 +59,22 @@ describe('Montée de niveau', () => {
     });
 });
 
-describe('Rencontre : armure des monstres et sbires', () => {
+describe('Rencontre : armure des monstres et sbires (PNJ à la table, spec_pnj.md §8)', () => {
     it('armure moyenne −10, ignorée par un critique', () => {
-        const m = monsterInstance({ name: 'Ogre', hp: 40, armor: 'medium' });
+        const m = monsterView({ hp: 40, armor: 'medium' }, null, 'Ogre');
         expect(damageMonster(m, 15).hp).toBe(35);
         expect(damageMonster(m, 15, { crit: true }).hp).toBe(25);
     });
-    it('sbire : tout dégât en tue un', () => {
-        const m = monsterInstance({ name: 'Gobelin', minion: true }, 5);
-        expect(damageMonster(m, 1).alive).toBe(4);
+    it('sbires : un seul groupe de la quantité ajoutée ; tout dégât en tue un', () => {
+        const state = monsterState({ minion: true }, { quantity: 5 });
+        expect(state).toMatchObject({ count: 5, alive: 5 });
+        expect(damageMonster(monsterView({ minion: true }, state, 'Gobelins'), 1).alive).toBe(4);
     });
-    it('légendaire : PV par héros', () => {
-        expect(monsterInstance({ name: 'Boss', hp: 20, hpPerHero: true }, 1, 4).hpMax).toBe(80);
+    it('légendaire : PV par héros de la table ; un monstre ordinaire ne fait jamais groupe', () => {
+        expect(monsterState({ hp: 20, hpPerHero: true }, { heroes: 4 }).hpMax).toBe(80);
+        expect(monsterState({ hp: 20 }, { quantity: 3 })).toMatchObject({ count: 1, hpMax: 20 });
+    });
+    it('niveaux triés : fractions avant 1, texte en dernier', () => {
+        expect(['2', '1', '1/2', '1/3', 'sbire'].sort((a, b) => levelValue(a) - levelValue(b))).toEqual(['1/3', '1/2', '1', '2', 'sbire']);
     });
 });

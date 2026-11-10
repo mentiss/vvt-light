@@ -170,7 +170,8 @@ systems/nimble/
   components/layout/ NbSheet (assemblage), NbSections (bandes, combat, capacités, sorts, inventaire…), NbHistoryEntry, NbGmTableRow, NbEditForm
   components/modals/ jet de test / sauvegarde, attaque, sort, dégâts et soins, repos, montée de niveau, détail d'une capacité, catalogues
   components/creation/ onglets de l'assistant, colonne d'aide
-  gm/tabs/         TabSession (musique, tableau, PJ), TabEncounter (rencontre)
+  gm/tabs/         TabSession (musique, tableau, PJ)
+  components/npc/  partie système des monstres (onglet Rencontre de la plateforme)
 ```
 
 ### 6.2 Fiche (un seul onglet)
@@ -222,10 +223,10 @@ Onglets : **Session · Rencontre · Journal · Historique · Tableau · Aide de 
   des PJ (`vtt-btn vtt-btn-sm w-full`), PJ de la table (portrait, présence, PV, Blessures), fiche du
   PJ choisi (même assemblage que le joueur, jets au nom du PJ), copie des accès, mode Édition ;
   boutons de table : « Fin de rencontre » et « Repos sûr » pour tous les PJ.
-- *Rencontre* : monstres ajoutés depuis le bestiaire (`CatalogModal`) ou libres ; par monstre :
+- *Rencontre* : onglet PNJ de la plateforme (`spec_pnj.md` §8) ; bestiaire versé en bibliothèque,
+  nouvelles fiches par le formulaire de Nimble ; par monstre à la table :
   PV restants (dégâts / soins, armure M −10 / H −20 sauf critique), sbires en groupe (nombre restant),
-  attaques en un clic (règles du dé primaire, sbires sans critique), jet secret possible. Gardée
-  dans le navigateur du MJ par table (`usePersistedState`, portée `tableScope`) : aucune base.
+  attaques en un clic (règles du dé primaire, sbires sans critique), jet secret possible. En base.
 - *Tableau* : `<Board sessionId role="gm" />` dans `vtt-board-page`.
 
 ### 6.5 Menus

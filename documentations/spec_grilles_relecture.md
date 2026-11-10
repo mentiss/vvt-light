@@ -50,7 +50,7 @@ Une règle qui fait débat (le relecteur hésite, ou une correction semble absur
 
 | Id | Niveau | Règle | Contrôle | Réponse                                                                          |
 |---|---|---|---|----------------------------------------------------------------------------------|
-| C-CRLF | Règle | Un fichier existant garde ses fins de ligne (CRLF) ; un nouveau fichier suit ceux de son dossier. | relecture |                                                                                  |
+| ~~C-CRLF~~ | Retirée (2026-11-10) | Un fichier existant garde ses fins de ligne (CRLF) ; un nouveau fichier suit ceux de son dossier. | — | `core.autocrlf=true` normalise l'index : pas d'effet sur le diff, 11 fausses corrections au lot 3 des PNJ |
 | ~~C-LANG~~ | Retirée | Texte visible par l'utilisateur en français ; identifiants, noms de fichiers et de props en anglais. | — | Pas lié au code donc non                                                         |
 | C-SCOPE | Règle | Le diff ne touche que ce que demande le ticket : pas de réécriture complète, pas de lignes modifiées sans rapport. | relecture |                                                                                  |
 | C-SPEC | Règle | Le code respecte la spec validée du slug ou de la brique (`documentations/`) ; aucune règle de jeu absente de la spec n'est inventée. | relecture |                                                                                  |

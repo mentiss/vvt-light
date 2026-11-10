@@ -7,7 +7,9 @@
 // table ; jets des PNJ publics ou cachés (réglage gardé par table).
 // Un slug qui veut une autre disposition assemble lui-même les briques de components/npc.
 //
-// <TabNpcs sessionId={number|null} config={slugConfig.npc} />
+// <TabNpcs sessionId={number|null} config={slugConfig.npc} context={…} />
+//   context : données de la table passées par l'interface MJ du slug (ex. nombre de héros
+//             pour Nimble), transmises à initialState
 //
 // Bloc `npc` du config.jsx du slug, tout facultatif (sans bloc : fiche commune seule) :
 //   librarySide  : 'left' (défaut) | 'right'
@@ -17,7 +19,8 @@
 //                  (déjà dites par le résumé, ex. le rang de Dune)
 //   defaults()   : partie système d'une nouvelle fiche
 //   summary(npc) : une ligne dans les listes
-//   initialState(npc) : état d'un PNJ ajouté à la table
+//   initialState(npc, { quantity, context }) : état d'un PNJ ajouté à la table
+//   isGroup(npc) : fiche jouée en groupe (une carte, quantity = taille du groupe)
 //   isDown(instance)  : carte grisée (vaincu, hors de combat)
 //   Form, Sheet, pick : voir NpcForm.jsx et NpcSystem.jsx
 //   RollWindow : ({ request, hiddenRolls, sessionId, onClose }) => fenêtre de jet du slug
@@ -50,7 +53,7 @@ const emptyNpc = (config) => ({
     avatar: null, icon: null, systemData: config.defaults?.() ?? {},
 });
 
-const TabNpcs = ({ sessionId = null, config = {} }) => {
+const TabNpcs = ({ sessionId = null, config = {}, context = null }) => {
     const { slug } = useSystem();
     const n = useNpcs(sessionId);
     const [libraryPrefs, setLibraryPrefs] = usePersistedState(slug, 'npc-library', LIBRARY_OPTIONS);
@@ -69,7 +72,12 @@ const TabNpcs = ({ sessionId = null, config = {} }) => {
     const RollWindow = config.RollWindow;
     const collapsed = libraryPrefs.collapsed && !editing;
 
-    const addToTable = (npc, quantity = 1) => n.addToTable(npc.id, quantity, config.initialState?.(npc) ?? {});
+    // Fiche jouée en groupe (config.isGroup, ex. sbires de Nimble) : une seule carte, la quantité va à l'état du slug
+    const addToTable = (npc, quantity = 1) => {
+        const group = !!config.isGroup?.(npc);
+        const state = config.initialState?.(npc, { quantity: group ? quantity : 1, context }) ?? {};
+        return n.addToTable(npc.id, group ? 1 : quantity, state);
+    };
     const openEdit = (npc) => { setReading(null); setEditing({ kind: 'edit', id: npc.id, draft: structuredClone(npc) }); };
     const duplicate = async (npc) => {
         const { id: _id, createdAt: _c, updatedAt: _u, ...rest } = npc;

@@ -317,7 +317,8 @@ Pas de migration : la base se crée depuis le schéma à la première ouverture.
   qui rend le Destin, agents en **vignettes de flux**, fiche de l'agent choisi dans un **pict-écran**
   (planche `maledictum/planche_pict_ecran.html`, validée le 2026-11-06) : cadre de bronze au thème
   du MJ (bandeau « Flux pict · Dossier d'agent », copie des accès et mode Édition), seul l'écran
-  au thème de l'agent. Rencontre : bestiaire, PNJ gardés dans le navigateur par table.
+  au thème de l'agent. Rencontre : onglet PNJ de la plateforme, bestiaire versé en
+  bibliothèque, PNJ à la table en base (`spec_pnj.md` §8).
 - Thème : `data-livery` posé sur la page (fiche : thème du personnage ; MJ : Ordo du Patron) et sur
   chaque fiche ou jet affiché ailleurs. Sigles et emblèmes passent par des variables (`--im-sigil`,
   `--im-emblem`) : un thème imbriqué (agent dans l'interface MJ) prend toujours les siens.
