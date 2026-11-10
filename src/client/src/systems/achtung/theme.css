@@ -1647,3 +1647,24 @@ button.vtt-list-item:hover { border-color: var(--ac-ink); background: rgba(var(-
 .vtt-board-token-text, .vtt-board-ruler text { font-family: var(--ac-font-heading); }
 .vtt-board-banner { border-radius: 2px; border: 1.5px solid var(--ac-ink); background: var(--ac-paper); color: var(--ac-ink); box-shadow: 2px 3px 0 rgba(var(--ac-ink-rgb), .25), 0 6px 14px rgba(0,0,0,.3); font-family: var(--ac-font-body); }
 .vtt-board-banner strong { font-family: var(--ac-font-heading); letter-spacing: .06em; text-transform: uppercase; color: var(--ac-ink-olive); }
+
+/* ── PNJ (onglet PNJ de la plateforme, spec_pnj.md §10.4) : dossiers tapés à la machine ── */
+.ac-npc-page { padding: 1rem; }
+.vtt-npc-card, .vtt-npc-zone { border-radius: 2px; }
+.vtt-npc-card.is-down { opacity: .5; filter: grayscale(.6); }
+.vtt-npc-card-name, .vtt-npc-name, .vtt-npc-sheet-name { font-family: var(--ac-font-heading); letter-spacing: .04em; }
+.vtt-npc-rollbar { border-radius: 2px; }
+.vtt-npc-rollbar.is-ready { border-color: var(--ac-ink-olive); }
+.ac-npc-body, .ac-npc-form { display: grid; gap: .55rem; }
+.ac-npc-muted { font-size: .85rem; color: var(--ac-muted); }
+.ac-npc-truths { font-style: italic; font-size: .9rem; }
+.ac-npc-pills { display: flex; flex-wrap: wrap; gap: .3rem; }
+.ac-npc-values { display: flex; flex-wrap: wrap; align-items: center; gap: .4rem 1.1rem; }
+.ac-npc-counter { display: inline-flex; align-items: center; gap: .35rem; }
+.ac-npc-num { font-family: var(--ac-font-title); min-width: 1.5rem; text-align: center; }
+.ac-npc-list { display: grid; gap: .25rem; font-size: .9rem; }
+.ac-npc-fold > summary { cursor: pointer; }
+.ac-npc-fold p { font-size: .9rem; margin-top: .3rem; }
+.ac-npc-field { display: grid; gap: .2rem; }
+.ac-npc-field .ac-input-num { width: 5rem; }
+.ac-npc-field.is-wide { width: 100%; }

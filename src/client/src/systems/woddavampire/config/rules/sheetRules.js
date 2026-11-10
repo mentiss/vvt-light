@@ -15,7 +15,7 @@ import { isSimpleCost, parseTrait } from './powerRoll.js';
 
 // ── Santé (§9.1, §9.2) ───────────────────────────────────────────────────────
 
-const BASE_LEVELS = [
+export const BASE_LEVELS = [
     { label: 'Contusionné', penalty: 0 },
     { label: 'Blessé', penalty: -1 },
     { label: 'Touché', penalty: -1 },

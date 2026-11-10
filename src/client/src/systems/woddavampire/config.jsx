@@ -10,6 +10,11 @@ import { RollError } from '../../tools/diceEngine.js';
 import VdaHistoryEntry from './components/layout/VdaHistoryEntry.jsx';
 import { resolvePool, clampDifficulty } from './config/rules/dicePool.js';
 import { CHRONICLE } from './config/chronicle.js';
+import { NATURES, npcDefaults, initialNpcState, isOut } from './config/rules/npc.js';
+import VdaNpcSheet from './components/npc/VdaNpcSheet.jsx';
+import VdaNpcForm from './components/npc/VdaNpcForm.jsx';
+import VdaNpcRollWindow from './components/npc/VdaNpcRollWindow.jsx';
+import { vdaNpcPick } from './components/npc/vdaNpcPick.js';
 
 export { CHRONICLE, CREATION_BUDGET, BONUS_COSTS } from './config/chronicle.js';
 export { CLANS, CLAN_ORDER, ORIGIN_CLAN_CHOICES } from './config/clans.js';
@@ -95,6 +100,27 @@ const woddavampireConfig = {
     slug:  'woddavampire',
     label: "Vampire : l'Âge des Ténèbres",
     dice,
+
+    // PNJ du Conteur (spec_pnj.md §10.3) : onglet PNJ de l'interface MJ, partie système components/npc/
+    npc: {
+        librarySide:  'left',
+        tagGroups:    [{ label: 'Nature', tags: Object.values(NATURES) }],
+        hiddenTags:   Object.values(NATURES),   // déjà dite par le résumé de chaque ligne
+        defaults:     npcDefaults,
+        summary:      (npc) => {
+            const sd = npc.systemData ?? {};
+            const nature = sd.nature ?? 'character';
+            if (nature === 'swarm') return `Nuée · ${sd.damage ?? 0} dés · santé ${sd.healthPoints ?? 0}`;
+            if (nature === 'spirit') return `Esprit · Essence ${sd.essence ?? 0}`;
+            return [NATURES[nature], `Volonté ${sd.willpower ?? 0}`].join(' · ');
+        },
+        initialState: (npc) => initialNpcState(npc.systemData),
+        isDown:       (instance) => isOut(instance.sheet?.systemData, instance.state),
+        Form:         VdaNpcForm,
+        Sheet:        VdaNpcSheet,
+        pick:         vdaNpcPick,
+        RollWindow:   VdaNpcRollWindow,
+    },
 
     // Dés 3D : sang sombre, chiffres vélin, filet or (planche validée)
     diceConfigDefault: {

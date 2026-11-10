@@ -12,6 +12,9 @@ import { RollError } from '../../tools/diceEngine.js';
 import FabulaHistoryEntry from './components/layout/FabulaHistoryEntry.jsx';
 import FuIcon from './components/ui/FuIcon.jsx';
 import { resolveFabulaTest } from './config/rolls.js';
+import { RANKS, SPECIES, npcDefaults, initialNpcState, isOut, rankLabel } from './config/npc.js';
+import FuNpcSheet from './components/npc/FuNpcSheet.jsx';
+import FuNpcForm from './components/npc/FuNpcForm.jsx';
 
 export { CLASSES, CLASS_ORDER } from './config/classes.js';
 export { SPELL_LISTS }          from './config/spells.js';
@@ -168,6 +171,22 @@ const fabulaConfig = {
     slug:  'fabula',
     label: 'Fabula Ultima',
     dice,
+
+    // PNJ (spec_pnj.md §10.5, §10.7) : onglet PNJ de l'interface MJ, partie système components/npc/
+    npc: {
+        librarySide:  'left',
+        tagGroups:    [{ label: 'Rang', tags: [...Object.values(RANKS), 'Méchant'] }, { label: 'Espèce', tags: SPECIES }],
+        hiddenTags:   [...Object.values(RANKS), ...SPECIES],   // déjà dits par le résumé de chaque ligne
+        defaults:     npcDefaults,
+        summary:      (npc) => {
+            const sd = npc.systemData ?? {};
+            return [`Niv. ${sd.level ?? '—'}`, sd.species, rankLabel(sd), `${sd.hp ?? 0} PV`].filter(Boolean).join(' · ');
+        },
+        initialState: (npc) => initialNpcState(npc.systemData),
+        isDown:       (instance) => isOut(instance.state),
+        Form:         FuNpcForm,
+        Sheet:        FuNpcSheet,
+    },
 
     // Zone d'actions : icônes au trait du slug (FuIcon)
     actionIcons: {

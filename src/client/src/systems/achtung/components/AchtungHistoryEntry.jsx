@@ -42,8 +42,8 @@ const AchtungHistoryEntry = ({ roll }) => {
     if (free) return <FreeRollEntry free={free} />;
 
     // Autres jets : seuls les jets Achtung sont interprétés, le reste retombe
-    // sur le rendu générique.
-    if (roll?.roll_type !== 'achtung_skill' && roll?.roll_type !== 'achtung_damage') return null;
+    // sur le rendu générique. Le jet du MJ (achtung_gm, PNJ compris) a la forme d'un jet de compétence.
+    if (!['achtung_skill', 'achtung_gm', 'achtung_damage'].includes(roll?.roll_type)) return null;
 
     // Les données peuvent être dans roll_result ou details selon le contexte
     const raw = roll?.roll_result ?? roll?.details;
@@ -140,7 +140,7 @@ const AchtungHistoryEntry = ({ roll }) => {
             {isDamage && (
                 <div className="flex gap-3 flex-wrap">
                     <span style={{ fontFamily: 'var(--ac-font-heading)', fontWeight: 700, fontSize: '0.72rem', color: 'var(--ac-accent)' }}>
-                        {details.stress ?? 0} stress
+                        {details.stress ?? 0} stress{details.bonusStress ? ` (dont +${details.bonusStress} groupe)` : ''}
                     </span>
                     {(details.effects ?? 0) > 0 && (
                         <span style={{ fontSize: '0.7rem', color: 'var(--ac-secondary)' }}>

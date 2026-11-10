@@ -32,6 +32,9 @@ export * from './config/rules.js';
 export * from './config/creation.js';
 export * from './config/utils.js';
 import VikingsHistoryEntry from './components/layout/VikingsHistoryEntry.jsx';
+import VkNpcSheet from './components/npc/VkNpcSheet.jsx';
+import VkNpcForm from './components/npc/VkNpcForm.jsx';
+import { npcDefaults, initialNpcState, isOut } from './config/npc.js';
 
 // ─── Métadonnées système ──────────────────────────────────────────────────────
 
@@ -378,6 +381,21 @@ const vikingsConfig = {
         // Rendu Vikings dans DiceHistoryPage (jets libres : rendu générique).
         renderHistoryEntry: (entry) => <VikingsHistoryEntry entry={entry} />,
         renderAllRollTypes: true,   // le slug rend aussi le jet libre (onglet, panneau, notifications)
+    },
+
+    // ─── PNJ (spec_pnj.md §10.2) : onglet PNJ de l'interface MJ, partie système components/npc/ ──
+    npc: {
+        librarySide:  'left',
+        defaults:     npcDefaults,
+        summary:      (npc) => {
+            const sd = npc.systemData ?? {};
+            const actions = sd.actions ?? 1;
+            return `Armure ${sd.armure ?? 0} · Seuil ${sd.seuil ?? 1} · ${actions} action${actions > 1 ? 's' : ''}`;
+        },
+        initialState: (npc) => initialNpcState(npc.systemData),
+        isDown:       (instance) => isOut(instance.sheet?.systemData, instance.state),
+        Form:         VkNpcForm,
+        Sheet:        VkNpcSheet,
     },
 };
 

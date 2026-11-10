@@ -1,6 +1,6 @@
 # PNJ de la plateforme : refonte
 
-Statut : phase 1 close (décisions au §4.1). Lot 0 fait (§5). Phase 2 (§6) et lot 1 (planche, version 5) validés le 2026-11-09. Lot 2 (plateforme + Dune) implémenté et commité le 2026-11-10 (§7.3). Lot 3 (Maledictum, Nimble) implémenté le 2026-11-10 (§8.2) ; à suivre : lot 4 (autres slugs).
+Statut : phase 1 close (décisions au §4.1). Lot 0 fait (§5). Phase 2 (§6) et lot 1 (planche, version 5) validés le 2026-11-09. Lot 2 (plateforme + Dune) implémenté et commité le 2026-11-10 (§7.3). Lot 3 (Maledictum, Nimble) implémenté et commité le 2026-11-10 (§8.2). Lot 4 (Vikings, VDA, Achtung, Fabula) : spécification validée et implémentée le 2026-11-10 (§10). Restent hors chantier : Cyberpunk, Delta Green, Tecumah, Zone Blanche ; second versement VDA (PNJ mortels du livre, p.382-395).
 
 ## 1. Demande
 
@@ -407,3 +407,141 @@ Déjà décidé : les bestiaires passent en base, une migration de données par 
 - Versement : 50 profils du livre de base (`10112026_npcs_maledictum.sql`, `-- systems: maledictum`, et schéma), variantes complétées par leur profil de base.
 
 L'aide de jeu garde la section bestiaire des deux slugs (L3-1) : `bestiary.js` reste, source de l'aide de jeu et du versement.
+
+- Lot 3 commité le 2026-11-10 (`e5ca432`).
+
+## 9. Lot 4 : les autres slugs (phase 1, diagnostic)
+
+Périmètre : Vikings, Vampire : l'Âge des Ténèbres (VDA), Achtung! Cthulhu ; Fabula à trancher (L4-1). **Sortent du lot** (2026-11-10) : Cyberpunk (ses Menaces de l'onglet Opération restent comme elles sont), **Delta Green, Tecumah et Zone Blanche** (pour l'instant ; leur état est gardé au §9.1 pour plus tard). Vileborn et Noctis restent hors chantier.
+
+Pour chaque slug, l'onglet assemblé de la plateforme (planche validée, §6.7) s'applique tel quel ; le slug fournit sa partie système (formulaire, fiche, étiquettes, état à la table) et branche sa fenêtre de jet MJ, comme Dune, Nimble et Maledictum.
+
+### 9.1 Ce qui existe
+
+| Slug | Onglets MJ | Jet du MJ | Ce qu'un PNJ porte selon les règles | Suivi à la table | Données de PNJ |
+|---|---|---|---|---|---|
+| vikings | Session, Tableau, Journal, Historique, Aide | `GMDiceModal` : réserve de d10, seuil, explosion, jet secret ; libellé « Jet MJ » figé | Comme un PJ : 6 caractéristiques (1-5), Armure, Seuil de combat, actions, compétences ; traits spéciaux réservés au MJ (Changeforme…) ; figurants d'équipage : Seuil 1, sans armure | Jetons de Blessure (0-5), Fatigue (0-10) | aucune |
+| woddavampire | Session, Coterie, Journal, Tableau, Historique, Aide | `VdaGmDiceModal` (libellé, dés, difficulté, spécialité, public / caché) par `useVdaRoll`, qui accepte déjà un nom | Comme un PJ (attributs, capacités, disciplines) ; goules, revenants, animaux, nuées, esprits (aide de jeu « Conteur ») ; spec M-7, M-10 (« PNJ hors périmètre tant que le système PNJ n'est pas fini ») | Niveaux de santé (4 seulement pour un figurant), sang, Volonté | aucune |
+| achtung | Session, Journal, Tableau, Historique (`gm/GMView.jsx`) | `GMDiceModal` : cible, difficulté, 2 à 5 d20, privé par défaut ; nom « GM » figé | Rien dans la spec ; le PJ a 6 attributs, 12 compétences (rang + focus), Stress, Armure, Courage | Stress, blessures | aucune |
+| deltagreen | Agents, Journal, Tableau, Historique (`gm/GMView.jsx`) | aucun du slug : jet libre de la plateforme ; la fenêtre de jet du slug exige un personnage | Rien dans la spec ; le PJ a FOR CON DEX INT POU CHA, PV, VOL, SAN, compétences en % | PV, VOL (SAN pour un humain) | aucune |
+| tecumah | Session, Ressources, Journal, Tableau, Historique (`components/gm/GMView.jsx`) | `GMDiceModal` : réserve de D6, bonus, difficulté ; nom « GM » figé | Spec §9.6 : « les PNJ n'ont pas de fiche complète » : défenses, résistance, actions, attaques (compétence, dégâts) | Niveaux de blessure | aucune ; restes de l'ancien PNJ (branches `isNPC` des dés, rendu « Jet NPC ») |
+| zoneblanche | Session, Journal, Tableau, Historique | `ZoneBlancheGMDiceModal`, pensée pour un PNJ : nom, objectif, difficulté, seuil de critique, d20 achetés en Stress | Rien : un PNJ ou une entité n'a qu'un objectif et un seuil de critique | aucun (conséquences narratives) | aucune |
+| fabula | Session, Groupe, Tableau, Journal, Historique, Aide | aucun du slug : jet libre ; la fenêtre du slug exige un personnage | Spec §6 : niveau, espèce, rang (Soldat, Élite, Champion), dés de DEX INT PUI VOL, PV, PM, DEF, DEF M., initiative, affinités (9 types), attaques, sorts et capacités ; vilains (Points Ultima) | PV, PM, états, horloges | aucune |
+
+Aucun livre transcrit ni catalogue de PNJ n'existe pour ces slugs : rien à verser sans transcription (L4-2).
+
+### 9.2 Questions
+
+| # | Question | Proposition | Réponse MJ                                                                                                                                          |
+|---|---|---|-----------------------------------------------------------------------------------------------------------------------------------------------------|
+| L4-1 | **Fabula** : dans le lot ou pas ? | **Oui, en dernier.** C'est le modèle de monstre le plus riche (rang, affinités, attaques, sorts) et le mieux décrit par sa spec : le livre se joue avec des adversaires chiffrés. La spec Fabula est celle du MJ de Fabula : les questions de sa partie lui seront posées. | Dans un premier temps, faut que ça utilise les règles du jeu de base en restant dans la marge des specs de l'app                                    |
+| L4-2 | **Données** : bibliothèques vides au départ, ou PNJ des livres versés comme pour Dune ? | **Vides au départ** : rien n'est transcrit, et une transcription se fait sur un livre fourni (comme Dune). Un versement pourra suivre, slug par slug, quand tu me donnes une source. | En fonction des sources, Viking vide pour l'instant, VdA on peut récup ce qui existe de base, Fabula depuis les sources, Achtung depusi les sources |
+| L4-3 | **Découpage** : un sous-lot par slug, ou tout d'un coup ? | **Deux sous-lots, un commit chacun** : 4a Vikings, VDA et Achtung (fiches de PJ allégées, jets par la fenêtre MJ du slug) ; 4b Fabula. Chaque sous-lot se vérifie et se relit seul. | des sous lots, un seul commit                                                                                                                       |
+| L4-4 | **Nom de l'onglet** : « PNJ » partout ? | **« PNJ »** partout (comme Dune). | oui                                                                                                                                                 |
+| L4-5 | **Fenêtre de jet** : un jet lancé depuis un PNJ ouvre la fenêtre MJ du slug **préremplie** (nom du PNJ en libellé, réserve ou cible calculée, jet caché repris de l'onglet) ? | **Oui** : la fenêtre gagne quelques props facultatives (nom, valeurs de départ, caché) ; ouverte depuis le menu, elle reste comme aujourd'hui. Fabula n'a pas de fenêtre MJ : elle est à définir avec le MJ de Fabula. | reco                                                                                                                                                |
+| L4-6 | **Jet composé** (choisir sur la fiche, puis lancer, comme Dune) : où ? | Vikings (caractéristique + compétence → réserve de d10), VDA (attribut + capacité → réserve), Achtung (attribut + compétence → cible, focus). | Vikings n'a pas de jet composé, une compétence dépends d'un attribut et définie l'explosivité, sinon c'est un jet d'attribut. Ok pour le reste      |
+| L4-7 | **Achtung** : rangs de PNJ du 2d20 (Troupe, Élite, Némésis : jets, Stress et blessures différents selon le rang) ? | **Oui, comme dans le livre**, si tu confirmes que vous les jouez ; sinon une fiche unique (attributs, compétences, Stress, Armure). La spec du slug n'en dit rien. | reco                                                                                                                                                |
+| L4-8 | ~~Zone Blanche : une fiche sans caractéristiques sert-elle ?~~ | Sans objet : Zone Blanche sort du lot. Ses PNJ et entités n'ont pas de fiche au sens du système de PNJ ; la fenêtre MJ (nom, objectif, difficulté) suffit. | Zone Blanche hors lot (2026-11-10)                                                                                                                  |
+| L4-9 | ~~Tecumah : restes de l'ancien PNJ (branches `isNPC` des dés, rendu « Jet NPC »)~~ | Sans objet : Tecumah sort du lot. Ces restes seront supprimés à son tour. | Tecumah hors lot (2026-11-10)                                                                                                                       |
+| L4-10 | **Achtung** passe encore par un `GMView.jsx` (écart à F-SLUG-STRUCT). On le fond dans `GMApp.jsx` en ajoutant l'onglet ? | **Oui**, puisqu'on touche ces fichiers : la grille demande de mettre d'aplomb ce qu'on touche. Patch limité au déplacement, rendu inchangé. | oui tant qu'à faire                                                                                                                                 |
+| L4-11 | **Vikings** : habillage des cartes PNJ dans les deux thèmes au choix du joueur (pierre peinte, bois et or) ? | **Oui, les deux** : le MJ voit le thème qu'il a choisi. | oui les deux et habillage de manière générale pour tous les slugs                                                                                   |
+| L4-12 | **Planche** : nouvelle planche pour les parties système ? | **Non** : la disposition de l'onglet est celle de la planche validée, et chaque partie système suit le modèle de Maledictum (bloc de valeurs, jets en un clic, compteurs à la table). Une planche seulement si tu veux voir Fabula ou Vikings avant le code. | non                                                                                                                                                 |
+
+### 9.3 Ce que les réponses décident (2026-11-10)
+
+- **Slugs** : Vikings, VDA, Achtung, puis Fabula (règles du livre de base, dans les limites de la spec de l'app : rien de la spec Fabula n'est contredit, rien n'est inventé).
+- **Données** : Vikings vide ; VDA versé depuis ce que l'app a déjà (profils de l'aide de jeu, chapitre Conteur) ; Achtung versé depuis le *Gamemaster Guide* (2d20) ; Fabula depuis le bestiaire du livre de base (FR).
+- **Sous-lots, un seul commit** pour tout le lot 4 ; onglet « PNJ » partout ; fenêtre MJ du slug préremplie ; habillage des cartes dans chaque slug (les deux thèmes de Vikings) ; `GMView.jsx` d'Achtung fondu dans `GMApp.jsx` ; pas de planche.
+- **Vikings n'a pas de jet composé** (L4-6) : une compétence dépend de ses caractéristiques et fixe l'explosion, sinon c'est un jet de caractéristique. Jet composé pour VDA et Achtung.
+- **Achtung** : rangs du livre (L4-7).
+
+## 10. Lot 4 : spécification (phase 2, à valider)
+
+### 10.1 Sous-lots
+
+| Sous-lot | Contenu | Versement |
+|---|---|---|
+| 4a | Vikings | aucun |
+| 4b | VDA | profils de l'aide de jeu (`config/reference/07-conteur.md`) : 22 animaux, 8 nuées, 3 démons d'exemple ; plus tard, les PNJ mortels chiffrés du livre de base (chapitre « Antagonists and Storyteller Characters », p.382-395, environ 25) |
+| 4c | Achtung, `GMView.jsx` fondu | profils du *Gamemaster Guide* (une centaine, traduits), `10112026_npcs_achtung.sql` |
+| 4d | Fabula | bestiaire du livre de base (une soixantaine), `…_npcs_fabula.sql` |
+
+Chaque sous-lot se vérifie à l'écran et se relit seul ; un commit à la fin du lot. Les versements sont des transcriptions comme celle de Dune : coquilles et choix de traduction listés pour relecture.
+
+### 10.2 Vikings
+
+- **Fiche** : 6 caractéristiques (1 à 5), Armure, Seuil de combat, actions, compétences (liste du slug : niveau 0 à 5, spécialisation), armes (nom, dégâts), traits (dont les traits réservés au MJ), étiquettes libres (« Figurant »…).
+- **À la table** (retour MJ du 2026-11-10, remplace S4-6) :
+  - **Blessure** jusqu'au maximum de tokens du PNJ, réglé sur la fiche (5 pour un humain, 8 pour un ours…) ; malus de dés du barème humain (spec §2.1) **par règle de trois** (token ramené sur 5, arrondi à l'inférieur), KO au maximum seulement. Ours à 8 : 1-3 sans malus, 4 → −1 dé, 5-6 → −2, 7 → −3, 8 → KO.
+  - **Pas de Fatigue** : un **Malus** en succès (valeur de base sur la fiche, recopiée à la table et ajustable) ; −1 = un succès de moins au résultat, 0 au minimum.
+- **Jets en un clic** : une caractéristique (3d10, seuil 7+, explosion de la caractéristique) ou une compétence (seuil de la compétence, explosion de la meilleure de ses deux caractéristiques), dés retirés par la Blessure ; la fenêtre MJ s'ouvre préremplie (réserve, seuil, explosion, malus, libellé « Nom · compétence », jet secret repris de l'onglet). Aucun jet une fois KO.
+- **Fenêtre MJ** (`GMDiceModal`) : props facultatives `name`, `label`, `initial` ({ pool, threshold, explosion, malus }), `secret` ; ouverte depuis le menu, inchangée sauf le réglage du malus (0 par défaut).
+
+### 10.3 VDA
+
+- **Nature** de la fiche, qui choisit les blocs affichés : personnage (mortel, goule, vampire), animal, nuée, esprit.
+  - Personnage et animal : Attributs (9, ou les 6 physiques et mentaux d'un animal), Capacités, Disciplines (nom, niveau), Volonté, sang, niveaux de santé (les 7 d'un personnage, ou la liste propre de l'animal : « OK, −1, −1, −2, −5, Neutralisé »), attaques (nom, dés, type C / L / A).
+  - Nuée : dégâts, santé, initiative. Esprit : Volonté, Rage, Gnose, Essence, Charmes.
+- **À la table** : santé (niveaux perdus), sang et Volonté dépensés, Essence d'un esprit.
+- **Jet composé** (comme Dune) : un Attribut + une Capacité choisis sur la fiche → réserve, puis la fenêtre du Conteur préremplie (libellé, dés, difficulté 6, caché repris de l'onglet). Les attaques lancent leur réserve de dégâts en un clic.
+- **Fenêtre MJ** (`VdaGmDiceModal`) : props facultatives `name`, `label`, `initial` ({ dice, difficulty, specialty }), `hidden`.
+
+### 10.4 Achtung
+
+- **Rang** (livre p.150-151) : Troupe (Trooper : vaincue à la 1re blessure, pas de réaction, Stress = moitié du plus haut de Force + Résilience ou Volonté + Résilience), Lieutenant (2 blessures, une réaction par round), Némésis ; Figurant (incidental : une qualité de Faible à Exceptionnel → attribut, compétence, cible). Barème indicatif dans le formulaire (totaux d'attributs et de compétences du livre).
+- **Fiche** : vérités, 6 attributs, 12 compétences (rang, focus), Stress maximum, Armure, Courage, attaques (nom, compétence, dégâts en dés de combat, qualités), capacités spéciales, dépenses de Menace propres.
+- **À la table** : Stress, blessures (vaincu selon le rang).
+- **Groupe de Troupes** (livre p.150) : jusqu'à 5 Troupes identiques agissent comme une seule ; le chef lance 2d20, chaque autre membre 1d20 d'assistance, +1 dégât par membre au-delà du premier. Ajoutées à la table, des Troupes forment **une carte de groupe** (comme les sbires de Nimble) qui suit les membres restants.
+- **Jet composé** : un attribut + une compétence → cible, focus (zone de critique égale au rang de la compétence) ; fenêtre MJ préremplie (cible, focus, 2d20, ou 2d20 + assistance pour un groupe, libellé, privé repris de l'onglet).
+- **Fenêtre MJ** (`GMDiceModal`) : props facultatives `name`, `label`, `initial` ({ target, difficulty, dice, skill, focus }), `secret` ; le critique avec focus passe par `countSuccesses`, qui le gère déjà.
+
+### 10.5 Fabula
+
+- **Fiche** (spec Fabula §6) : niveau, espèce, rang (Soldat, Élite, Champion N), dés de DEX, INT, PUI, VOL, PV, PM, DEF, DEF M., initiative, affinités (9 types : VU, neutre, RE, IM, AB), attaques de base (attributs, précision, dégâts et type), sorts et capacités (coût en PM), vilain (Points Ultima) ; PV et PM selon le rang.
+- **À la table** : PV (Crise à la moitié), PM, états (chacun baisse d'un cran le dé de l'attribut lié, comme pour un PJ), Points Ultima d'un vilain (F-5).
+- **Réponses du MJ (2026-11-10)** : F-1 fenêtre de jet du MJ (ouverte depuis un PNJ ou depuis le menu, « Jet du MJ ») ; F-2 Élite comme le livre (deux tours par round, PV doublés) ; F-3 N du Champion choisi par le MJ sur la fiche ; F-4 PV et PM tels qu'imprimés ; F-5 Points Ultima suivis à la table ; F-6 bestiaire versé.
+- **Implémentation** : `config/npc.js` (tours selon le rang, Crise, dés effectifs, Ultima), `components/npc/FuNpcSheet.jsx` et `FuNpcForm.jsx`, `components/modals/FuGmDiceModal.jsx` (même résultat que la fenêtre du joueur, `RollResult` exporté, maladresse sans Point Fabula), onglet PNJ. Versement : `10112026_npcs_fabula.sql`, 59 profils du livre de base (pages imprimées 315 à 353) ; tous des Soldats, sauf les exemples de boss (Angela, Élite et Méchante mineure ; squale épineux, Champion 3). À relire : un élémentaire de feu (Grenado) vulnérable à la terre, Initiatives qui ne suivent pas la formule, coquilles du livre gardées.
+- **Jets** : un test (deux dés d'attributs) ou une attaque en un clic ; la fenêtre de jet MJ, que Fabula n'a pas, est à définir avec le MJ de Fabula (questions à part, au début du sous-lot 4d).
+
+### 10.6 Questions
+
+| # | Question | Proposition | Réponse MJ |
+|---|---|---|---|
+| S4-1 | **Achtung** : groupe de Troupes en une carte (à l'ajout, la quantité donne la taille du groupe, jusqu'à 5) ? | **Oui**, comme les sbires de Nimble : c'est la règle du livre, et la carte suit les membres restants. || Oui (2026-11-10) |
+| S4-2 | **Achtung** : rang Figurant (une qualité, une cible) ? | **Oui** : quelques lignes, et c'est le PNJ le plus fréquent d'une scène. || Oui (2026-11-10) |
+| S4-3 | **VDA** : une « nature » (personnage, animal, nuée, esprit) qui choisit les blocs de la fiche ? | **Oui** : les profils de l'aide de jeu n'ont pas les mêmes valeurs ; une fiche unique laisserait la moitié des champs vides. || Oui (2026-11-10) |
+| S4-4 | **VDA** : « ce qui existe de base », ce sont bien les profils de l'aide de jeu (animaux, nuées, démons d'exemple) ? | **Oui**, transcrits et relus avec le livre ; le reste du livre (goules, revenants) n'a pas de profil chiffré dans l'app. || Oui (2026-11-10) |
+| S4-5 | **Achtung** : verser **tous** les profils du *Gamemaster Guide*, traduits en français ? | **Oui, tous** (Axe, Alliés, cultistes, créatures du Mythe), avec la source et la page ; noms et traductions listés pour relecture, comme pour Dune. || Oui (2026-11-10) |
+| S4-6 | **Vikings** : suivre la Fatigue d'un PNJ à la table, en plus des Blessures ? | **Oui** : deux compteurs, comme sur la fiche d'un PJ ; ce sont les deux états du jeu. || Oui (2026-11-10) |
+
+### 10.6 bis Implémentation des sous-lots 4a à 4c (2026-11-10)
+
+**Plateforme**
+- Brique `components/npc/NpcItemList.jsx` : liste éditable des formulaires de slug (texte, nombre, pastilles, texte long, suggestions). Dune, Nimble et Maledictum gardent leur copie : bascule à proposer à part.
+- `NpcSystem` : `pick.extra(npc, state)` et `pick.resolve(npc, sel, name, state)` reçoivent l'état du PNJ à la table (malus de blessure de VDA) ; Dune inchangé.
+
+**Vikings** : `config/npc.js` (jets, hors de combat), `components/npc/VkNpcSheet.jsx` et `VkNpcForm.jsx`, onglet PNJ ; `GMDiceModal` : props `name`, `label`, `initial`, `secret`. Pas de versement.
+
+**VDA** : `config/rules/npc.js` (santé à niveaux propres, réserve, natures), fiche, formulaire, `vdaNpcPick.js` et `VdaNpcRollWindow.jsx`, onglet PNJ ; `VdaGmDiceModal` : props `name`, `label`, `initial`, `hidden`. Versement : `10112026_npcs_woddavampire.sql`, 34 fiches de l'aide de jeu (livre p.396-403).
+
+**Achtung** : `GMView.jsx` fondu dans `GMApp.jsx` ; `config/npc.js` (rangs, Figurant, Stress du barème, groupe de Troupes), fiche, formulaire, `acNpcPick.js` et `AcNpcRollWindow.jsx`, onglet PNJ ; `GMDiceModal` : props `name`, `label`, `initial` (cible, focus, dés d'assistance), `secret`. Versement : `10112026_npcs_achtung.sql`, 130 profils du *Gamemaster Guide* (pages imprimées 161 à 263), traduits.
+
+À relire dans le versement d'Achtung (transcription) :
+- **Rangs du livre gardés même quand ils surprennent** : l'Officier de l'armée britannique est imprimé « Trooper NPC » ; le SS Sonderkommando « Nemesis NPC » ; le berger allemand, sans rang, est classé Troupe ; les formes monstrueuses de Nyarlathotep, sans en-tête, en Némésis.
+- **Camps** : le Soleil Noir et les Nachtwölfe sont en Axe (on pourrait les mettre en Autres) ; les animaux en Autres.
+- **Coquilles gardées** : règle de McMasters coupée, Mills Bomb « Throwing » au lieu de « Munition », Luger de la Norne sans salve, baïonnette « Piercing » sans valeur, Furies de Foley identiques aux forces d'élite américaines, Halja (trois valeurs d'Armure), Reine mi-go (« Threatening 3 » pour 5 Menace), Fearsome 3 avec un test de difficulté 1 (Grand Aquamage, Yog-Sothoth).
+- **Traductions sans équivalent dans l'app** : qualités Fléau (Bane) et Faim (Hunger) ; focus Attaque mentale, Tactique de terrain, Fouissement, Médecine de combat ; noms de sorts traduits librement.
+- Les notes complètes des trois parts sont dans le dossier de travail de la session.
+
+### 10.7 Questions pour le MJ de Fabula (sous-lot 4d)
+
+La spec Fabula (`specifications_fonctionnelles_fabula_ultima.md` §4.2, §6) décrit le PNJ ; ces points restent à trancher avec son MJ avant de coder la partie système.
+
+| # | Question | Proposition | Réponse MJ     |
+|---|---|---|----------------|
+| F-1 | **Jet du MJ pour un PNJ** : Fabula n'a pas de fenêtre de jet MJ (la fenêtre du joueur exige un personnage). | Une **fenêtre de jet MJ** du slug, sur les mêmes règles de dés que les joueurs (deux dés d'attributs, critique et maladresse) : test ou attaque préremplis depuis la fiche (attributs, bonus de précision, dégâts HR + N et type), ND facultatif, jet public ou caché. Ouverte aussi depuis le menu pour un jet libre du MJ. | ok             |
+| F-2 | **Élite** : la spec dit « 1 tour par manche, PV et PM doublés » (§6.1) et « 2 tours » (tableau des règles) ; le livre (p.295) dit **deux tours par round, PV doublés, une compétence de plus, Initiative +2** (les PM ne doublent que pour un Champion). Laquelle est la règle de ta table ? | **Le livre**, sauf règle maison voulue : c'est aussi ce que dit le tableau de la spec. Ça ne touche que l'affichage de la carte (tours par manche) : les valeurs de la fiche restent celles saisies (F-4). | livre          |
+| F-3 | **Champion (N)** : N choisi par le MJ pour chaque PNJ, ou toujours égal au nombre de PJ (tableau des règles) ? | **Choisi par le MJ sur la fiche** (le livre le fixe à la conception de la rencontre) ; l'onglet propose le nombre de PJ de la table par défaut à l'ajout. | au choix du MJ |
+| F-4 | **PV et PM** : saisis tels que le livre les imprime, ou recalculés par l'app selon le rang ? | **Saisis tels quels** : le bestiaire imprime les valeurs finales ; l'app ne recalcule rien. Le seuil de Crise (moitié des PV) s'affiche à la table. | reco tel quel  |
+| F-5 | **Méchants** : suivre les Points Ultima à la table (5, 10 ou 15 selon le méchant) ? | **Oui**, un compteur sur la carte ; les usages (fuite, relance, récupération) restent à la table, comme le dit la spec. | oui            |
+| F-6 | **Bestiaire** : verser les profils du livre de base (une soixantaine) ? | **Oui**, transcrits du livre français avec la page ; ensuite des fiches comme les autres, que le MJ modifie. | oui            |

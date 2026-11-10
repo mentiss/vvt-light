@@ -952,3 +952,28 @@ button.fu-die:disabled { cursor: default; }
     margin-bottom: .45rem; font-family: var(--fu-font-title); font-weight: 600; font-size: .82rem;
     letter-spacing: .12em; text-transform: uppercase; color: var(--fu-win-gold);
 }
+
+/* ── PNJ (onglet PNJ de la plateforme, spec_pnj.md §10.5) : cartes en fenêtres de menu ── */
+.vtt-npc-card-name, .vtt-npc-name, .vtt-npc-sheet-name { font-family: var(--fu-font-title); letter-spacing: .04em; }
+.vtt-npc-card.is-down { opacity: .5; filter: grayscale(.6); }
+.fu-npc-body, .fu-npc-form { display: grid; gap: .55rem; }
+.fu-npc-muted { font-size: .82rem; color: var(--fu-win-muted); }
+.fu-npc-traits { font-style: italic; font-size: .85rem; }
+.fu-npc-attrs, .fu-npc-values, .fu-npc-pills { display: flex; flex-wrap: wrap; align-items: center; gap: .35rem .9rem; }
+.fu-npc-pills { gap: .3rem; }
+.fu-npc-attr { display: inline-flex; align-items: center; gap: .3rem; }
+.fu-npc-counter { display: inline-flex; align-items: center; gap: .4rem; }
+.fu-npc-crisis { color: var(--fu-win-gold); border-color: var(--fu-win-gold); }
+.fu-npc-aff.is-VU { color: #ffb3a8; }
+.fu-npc-aff.is-RE, .fu-npc-aff.is-IM { color: var(--fu-win-muted); }
+.fu-npc-aff.is-AB { color: #a8f0c6; }
+.fu-npc-line { font-size: .88rem; }
+.fu-npc-fold > summary { cursor: pointer; }
+.fu-npc-fold p { font-size: .85rem; margin-top: .3rem; }
+.fu-npc-field { display: grid; gap: .2rem; }
+.fu-npc-field .vtt-input { width: 5.5rem; }
+.fu-npc-field.is-wide, .fu-npc-field.is-wide .vtt-input { width: 100%; }
+.fu-npc-die { padding: .1rem; border-radius: 6px; border: 1.5px solid transparent; background: transparent; }
+.fu-npc-die.is-on { border-color: var(--fu-win-edge); }
+.fu-npc-affinities { display: grid; gap: .25rem; }
+.fu-npc-aff-row { display: grid; grid-template-columns: 6rem 1fr; align-items: center; gap: .5rem; }

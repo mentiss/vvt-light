@@ -24,6 +24,8 @@ import {
     HamburgerMenuItemHome, HamburgerMenuItemLogout,
 } from '../../components/ui/HamburgerMenuItems.jsx';
 
+import TabNpcs             from '../../components/npc/TabNpcs.jsx';
+import vikingsConfig       from './config.jsx';
 import TabSession          from './gm/tabs/TabSession.jsx';
 import GMDiceModal         from './gm/modals/GMDiceModal.jsx';
 import VkIcon              from './components/ui/VkIcon.jsx';
@@ -34,6 +36,7 @@ import { REFERENCE_SECTIONS } from './config/reference.js';
 
 const TABS = [
     { id: 'session',    label: 'Session' },
+    { id: 'pnj',        label: 'PNJ' },
     { id: 'tableau',    label: 'Tableau' },
     { id: 'journal',    label: 'Journal' },
     { id: 'historique', label: 'Historique' },
@@ -108,6 +111,8 @@ const GMApp = ({ activeSession, onSessionChange, onlineCharacters, characterUpda
                     <TabSession activeSession={activeSession} onlineCharacters={onlineCharacters} characterUpdates={characterUpdates}
                                 onSessionChange={onSessionChange} />
                 )}
+                {/* PNJ : onglet de la plateforme, partie système components/npc/ (spec_pnj.md §10.2) */}
+                {activeTab === 'pnj' && <TabNpcs sessionId={sessionId} config={vikingsConfig.npc} />}
                 {/* Tableau partagé (brique plateforme, spec_tableau.md §10.8) */}
                 {activeTab === 'tableau' && (
                     <div className="vtt-board-page">

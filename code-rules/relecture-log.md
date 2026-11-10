@@ -14,7 +14,10 @@ Une ligne par relecture croisée (`/relecture`, `documentations/spec_relecture.m
 | 2026-11-09 | PNJ, lot 0 : suppression de l'ancien PNJ et du combat de la plateforme (`spec_pnj.md` §5) | — | — | ? / 1 (branches `isNPC` des dés Tecumah) |
 | 2026-11-09 | Historique des jets, passe générique (`spec_diceengine_v2.md`, « Passe générique ») | F-TOKENS | — | 0 / 0 |
 | 2026-11-10 | PNJ, lot 2 : plateforme + Dune (`spec_pnj.md` §6, §7), 2 passes | B-COALESCE ×2, C-SPEC | — | 6 / 6 (ordre des migrations, réponses tardives et échec du PATCH dans `useNpcs`, formulaire sans clé, responsive de l'onglet, rechargement des PNJ du tableau) |
-| 2026-11-10 | PNJ, lot 3 : Nimble + Maledictum (`spec_pnj.md` §8) | — | C-CRLF ×11 (fins de ligne lues dans l'index, normalisé en LF par `autocrlf`, au lieu de l'arbre de travail : fichiers gardés tels quels, slugs surtout en LF ; règle retirée le jour même) | 2 / 2 (résultat d'un jet caché affiché sur la fiche Maledictum, « PV par héros » remis à zéro quand un monstre Nimble n'est plus légendaire) |
+| 2026-11-10 | PNJ, lot 3 : Nimble + Maledictum (`spec_pnj.md` §8) | — | C-CRLF ×11 (fins de ligne lues dans l'index, normalisé en LF par `autocrlf`, au lieu de l'arbre de travail : fichiers gardés tels quels, slugs surtout en LF ; règle retirée le jour même) |
+| 2026-11-10 | PNJ, lot 4, sous-lots 4a à 4c : Vikings, VDA, Achtung (`spec_pnj.md` §10), 2 passes | C-SPEC ×4 (Troupe seule jamais vaincue, assistance comptée sans succès du chef, dégâts VDA sans `cannotBotch`, jet Vikings à 5 Blessures) | — | 0 / 0 |
+| 2026-11-10 | PNJ, lot 4, sous-lot 4d (Fabula) et retour du MJ sur Vikings (`spec_pnj.md` §10.2, §10.5), 2 passes | C-SPEC ×2 (Crise figée quand les PV changent, type de dégâts variable converti en physique) | — | 1 / 1 (malus de base repris depuis la bibliothèque, Vikings) |
+| 2026-11-10 | PNJ, lot 4 : attaque en un clic et historique des jets du MJ (Achtung), 2 passes | C-SPEC (bonus de dégâts d'un groupe absent du résultat enregistré) | — | 0 / 0 | 2 / 2 (résultat d'un jet caché affiché sur la fiche Maledictum, « PV par héros » remis à zéro quand un monstre Nimble n'est plus légendaire) |
 
 ## Décompte par identifiant
 
@@ -22,6 +25,6 @@ Une ligne par relecture croisée (`/relecture`, `documentations/spec_relecture.m
 |---|---|---|
 | C-TEST | 2 | 2026-11-08 |
 | B-LOG | 1 | 2026-11-08 |
-| C-SPEC | 2 | 2026-11-10 |
+| C-SPEC | 9 | 2026-11-10 |
 | F-TOKENS | 1 | 2026-11-09 |
 | B-COALESCE | 2 | 2026-11-10 |

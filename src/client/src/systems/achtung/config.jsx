@@ -9,6 +9,11 @@
 
 import { RollError } from '../../tools/diceEngine.js';
 import AchtungHistoryEntry from './components/AchtungHistoryEntry.jsx';
+import AcNpcSheet from './components/npc/AcNpcSheet.jsx';
+import AcNpcForm from './components/npc/AcNpcForm.jsx';
+import AcNpcRollWindow from './components/npc/AcNpcRollWindow.jsx';
+import { acNpcPick } from './components/npc/acNpcPick.js';
+import { NPC_RANKS, npcDefaults, initialNpcState, isGroupRank, isOut, stressMax } from './config/npc.js';
 
 export { KEYWORD_LABELS, getKeywordLabel } from './config/keywords.js';
 
@@ -134,10 +139,13 @@ const challengeDiceHooks = {
     },
 
     afterRoll: (raw, ctx) => {
-        const { activeSalvo = null, innateEffects = [] } = ctx.systemData;
+        // bonusStress : dégâts fixes en plus des dés (groupe de Troupes : +1 par membre au-delà du premier,
+        // spec_pnj.md §10.4) ; 0 pour un jet de joueur
+        const { activeSalvo = null, innateEffects = [], bonusStress = 0 } = ctx.systemData;
         const results = raw.groups[0].values;
-        const { stress, effects } = countChallengeDice(results, activeSalvo, innateEffects);
-        return { results, stress, effects, activeSalvo, innateEffects, label: ctx.label, successes: stress };
+        const counted = countChallengeDice(results, activeSalvo, innateEffects);
+        const stress = counted.stress + Math.max(0, Number(bonusStress) || 0);
+        return { results, stress, effects: counted.effects, bonusStress, activeSalvo, innateEffects, label: ctx.label, successes: stress };
     },
 
     buildAnimationSequence: (raw, ctx) => ({
@@ -168,6 +176,25 @@ const achtungConfig = {
     //   roll(notation, ctx, achtungConfig.dice)          → jet de compétence
     //   roll(notation, ctx, achtungConfig.challengeDice) → jet de dommages
     challengeDice: challengeDiceHooks,
+
+    // PNJ (spec_pnj.md §10.4) : onglet PNJ de l'interface MJ, partie système components/npc/
+    npc: {
+        librarySide:  'left',
+        tagGroups:    [{ label: 'Rang', tags: Object.values(NPC_RANKS) }, { label: 'Camp', tags: ['Alliés', 'Axe', 'Mythe', 'Autres'] }],
+        hiddenTags:   Object.values(NPC_RANKS),   // déjà dit par le résumé de chaque ligne
+        defaults:     npcDefaults,
+        summary:      (npc) => {
+            const sd = npc.systemData ?? {};
+            return [NPC_RANKS[sd.rank], sd.rank !== 'incidental' && `Stress ${stressMax(sd)}`, `Armure ${sd.armour ?? 0}`].filter(Boolean).join(' · ');
+        },
+        isGroup:      (npc) => isGroupRank(npc.systemData),
+        initialState: (npc, { quantity } = {}) => initialNpcState(npc.systemData, { quantity }),
+        isDown:       (instance) => isOut(instance.sheet?.systemData, instance.state),
+        Form:         AcNpcForm,
+        Sheet:        AcNpcSheet,
+        pick:         acNpcPick,
+        RollWindow:   AcNpcRollWindow,
+    },
 
     // Style par défaut des dés (lu par useDiceConfig)
     diceConfigDefault: {

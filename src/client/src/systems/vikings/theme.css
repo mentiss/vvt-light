@@ -1066,3 +1066,21 @@ html[data-vk-skin] .vk-cr-mini-caracs .vk-stat .lbl { font-size: .66rem; }
 .vtt-board-picker-item { border-radius: 0; border-color: var(--vk-border-soft); background: #e8dcc8; }
 .vtt-board-picker-item:hover { border-color: var(--color-primary); box-shadow: 0 0 0 1px var(--color-primary); }
 .vtt-board-picker-name { color: #4a3b2a; }
+
+/* ── PNJ (onglet PNJ de la plateforme, spec_pnj.md §10.2) ──────────────── */
+/* Cartes : vtt-panel, déjà habillé dans les deux thèmes ; polices du slug, partie système */
+.vtt-npc-card-name, .vtt-npc-name, .vtt-npc-sheet-name { font-family: var(--vk-font-title); font-weight: 400; letter-spacing: .02em; }
+.vtt-npc-card.is-down { opacity: .5; filter: grayscale(.5); }
+.vk-npc-body, .vk-npc-form { display: grid; gap: .6rem; }
+.vk-npc-hint { font-size: .85rem; color: var(--color-text-muted); }
+.vk-npc-caracs { display: grid; grid-template-columns: repeat(auto-fill, minmax(5.5rem, 1fr)); gap: .3rem; }
+.vk-npc-carac { display: grid; justify-items: center; gap: .1rem; padding: .3rem .2rem; border: 1px solid var(--vk-border-soft); background: transparent; cursor: pointer; }
+.vk-npc-carac:disabled { opacity: .45; cursor: not-allowed; }
+.vk-npc-carac:hover:not(:disabled) { border-color: var(--color-primary); background: color-mix(in srgb, var(--color-primary) 10%, transparent); }
+.vk-npc-carac .vk-label { font-size: .8rem; }
+.vk-npc-carac b { font-size: 1.2rem; }
+.vk-npc-counters, .vk-npc-grid { display: flex; flex-wrap: wrap; gap: .5rem 1.25rem; }
+.vk-npc-counter { display: flex; flex-wrap: wrap; align-items: center; gap: .5rem; }
+.vk-npc-pills { display: flex; flex-wrap: wrap; gap: .35rem; }
+.vk-npc-line { font-size: .92rem; }
+.vk-npc-fold > summary { cursor: pointer; color: var(--color-text-muted); }

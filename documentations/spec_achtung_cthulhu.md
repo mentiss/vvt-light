@@ -427,4 +427,4 @@ Aperçu complet de la fiche avant validation. Affichage du code d'accès génér
 - [ ] Modale de dommages (dés de Challenge, affichage résultats)
 - [ ] Historique de jets (AchtungHistoryEntry)
 - [ ] Wizard de création (6 étapes, pré-remplissage archétype + background + characteristic)
-- [ ] Interface GM (GMApp / GMView)
+- [ ] Interface GM (GMApp, GMView fondu dedans le 2026-11-10 ; onglet PNJ : `spec_pnj.md` §10.4)

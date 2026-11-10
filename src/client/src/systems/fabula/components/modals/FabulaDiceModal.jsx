@@ -44,7 +44,9 @@ const degatsLabel = (key) => TYPES_DEGATS.find(t => t.key === key)?.label ?? key
 const signed = (n) => (n >= 0 ? `+${n}` : `−${-n}`);
 
 // ── Résultat (colonne de droite) ─────────────────────────────────────────────
-const RollResult = ({ result, lucky, canLuck, support, onLuck, onLuckReset, onReroll }) => {
+// Exporté : la fenêtre de jet du MJ (FuGmDiceModal) affiche le même résultat
+// gm : jet du MJ, la maladresse ne rapporte pas de Point Fabula
+export const RollResult = ({ result, lucky, canLuck, support, onLuck, onLuckReset, onReroll, gm = false }) => {
     const { die1, die2, dieSize1, dieSize2, vh, total, modifier, bonus, nd, criticalSuccess, criticalFailure, success, skills } = result;
     const showDmg = result.type === 'attaque' && result.degats != null && !criticalFailure && (success !== false);
     return (
@@ -65,7 +67,7 @@ const RollResult = ({ result, lucky, canLuck, support, onLuck, onLuckReset, onRe
                     {die1} + {die2}{modifier ? ` ${signed(modifier)}` : ''}{bonus ? ` ${signed(bonus)}` : ''} · VH {vh}{nd != null ? ` · ND ${nd}` : ''}
                 </div>
                 {criticalSuccess ? <span className="fu-verdict is-crit">Réussite critique</span>
-                    : criticalFailure ? <span className="fu-verdict is-ko">Échec critique · +1 PF</span>
+                    : criticalFailure ? <span className="fu-verdict is-ko">{gm ? 'Échec critique' : 'Échec critique · +1 PF'}</span>
                     : success != null && <span className={`fu-verdict ${success ? 'is-ok' : 'is-ko'}`}>{success ? 'Réussite' : 'Échec'}</span>}
                 {support && success != null && (
                     <div className="fu-total-detail mt-2">{success ? 'Réussi : +1 au meneur' : 'Raté : pas de bonus pour le meneur'}</div>

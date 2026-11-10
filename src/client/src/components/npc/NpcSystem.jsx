@@ -11,18 +11,19 @@
 //   pick : {
 //     groups(npc)             → [{ key, label }]  (ex. une compétence, un principe)
 //     part(npc, group, key)   → { label, value }
-//     extra?(npc)             → { label, value } | null : part fixe ajoutée au total
-//     resolve(npc, sel, name) → requête de jet transmise à onRoll
+//     extra?(npc, state)             → { label, value } | null : part fixe ajoutée au total
+//     resolve(npc, sel, name, state) → requête de jet transmise à onRoll
+//     (state : état du PNJ à la table, null en bibliothèque ; ex. malus de blessure)
 //   }
 // ─────────────────────────────────────────────────────────────────────────────
 
 import React, { useState } from 'react';
 
 // Barre « Lancer » : éléments choisis, total, effacer, lancer
-const NpcRollBar = ({ npc, pick, selection, name, onClear, onRoll }) => {
+const NpcRollBar = ({ npc, state, pick, selection, name, onClear, onRoll }) => {
     const groups = pick.groups(npc);
     const parts = groups.map(g => (selection[g.key] ? pick.part(npc, g.key, selection[g.key]) : null));
-    const extra = pick.extra?.(npc) ?? null;     // part fixe (ex. valeur « Principe » d'un PNJ mineur de Dune)
+    const extra = pick.extra?.(npc, state) ?? null;     // part fixe (ex. valeur « Principe » d'un PNJ mineur de Dune)
     const ready = parts.every(Boolean);
     const total = ready ? parts.reduce((sum, p) => sum + p.value, extra?.value ?? 0) : null;
     return (
@@ -41,7 +42,7 @@ const NpcRollBar = ({ npc, pick, selection, name, onClear, onRoll }) => {
                 <button type="button" className="vtt-btn vtt-btn-sm vtt-btn-icon vtt-npc-icon-btn" onClick={onClear} title="Effacer la sélection" aria-label="Effacer la sélection">✕</button>
             )}
             <button type="button" className="vtt-btn vtt-btn-sm vtt-btn-primary" disabled={!ready}
-                    onClick={() => onRoll(pick.resolve(npc, selection, name))}>Lancer</button>
+                    onClick={() => onRoll(pick.resolve(npc, selection, name, state))}>Lancer</button>
         </div>
     );
 };
@@ -69,7 +70,7 @@ const NpcSystem = ({ npc, instance = null, name, config = {}, hiddenRolls = fals
                        pick={pick} hiddenRolls={hiddenRolls} sessionId={sessionId} name={name} onRoll={onRoll} />
             </div>
             {pickConfig && (
-                <NpcRollBar npc={npc} pick={pickConfig} selection={selection} name={name}
+                <NpcRollBar npc={npc} state={instance?.state ?? null} pick={pickConfig} selection={selection} name={name}
                             onClear={() => setSelection({})} onRoll={onRoll} />
             )}
         </>

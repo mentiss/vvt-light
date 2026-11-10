@@ -1238,6 +1238,13 @@ select:disabled {
   .vtt-npc-icon { width: 70%; height: 70%; background: currentColor;
     -webkit-mask: center / contain no-repeat; mask: center / contain no-repeat; }
 
+  /* Liste éditable des formulaires de slug (NpcItemList) */
+  .vtt-npc-items { display: grid; gap: 0.5rem; justify-items: start; }
+  .vtt-npc-items-row { display: grid; gap: 0.4rem; width: 100%; }
+  .vtt-npc-items-fields { display: flex; flex-wrap: wrap; gap: 0.4rem; align-items: center; }
+  .vtt-npc-items-fields .vtt-input { flex: 1 1 10rem; min-width: 0; width: auto; }
+  .vtt-npc-items-fields .vtt-input.is-narrow { flex: 0 0 6.5em; }
+
   /* Bibliothèque */
   .vtt-npc-list { display: flex; flex-direction: column; gap: 0.4rem; }
   .vtt-npc-row { flex-wrap: wrap; gap: 0.6rem; padding: 0.5rem 0.6rem; cursor: pointer; }

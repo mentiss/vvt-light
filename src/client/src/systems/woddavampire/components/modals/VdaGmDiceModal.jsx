@@ -16,18 +16,20 @@ import { difficultyLabel } from '../../config/rules/sheetRules.js';
 import { VdaChip, VdaStepper, VdaToggle } from '../ui/VdaUi.jsx';
 import VdaHistoryEntry from '../layout/VdaHistoryEntry.jsx';
 
-const VdaGmDiceModal = ({ sessionId, onClose }) => {
+// Props facultatives d'un jet lancé depuis un PNJ (spec_pnj.md §10.3) : name (lanceur),
+// label, initial { dice, difficulty, specialty, cannotBotch (dégâts) }, hidden (réglage de l'onglet PNJ).
+const VdaGmDiceModal = ({ sessionId, onClose, name = null, label: initialLabel = '', initial = null, hidden: initialHidden = false }) => {
     const { launch: rollDice, rolling, error, entry } = useVdaRoll();
-    const [label, setLabel] = useState('');
-    const [dice, setDice] = useState(5);
-    const [difficulty, setDifficulty] = useState(6);
-    const [specialty, setSpecialty] = useState(false);
-    const [hidden, setHidden] = useState(false);
+    const [label, setLabel] = useState(initialLabel ?? '');
+    const [dice, setDice] = useState(initial?.dice ?? 5);
+    const [difficulty, setDifficulty] = useState(initial?.difficulty ?? 6);
+    const [specialty, setSpecialty] = useState(!!initial?.specialty);
+    const [hidden, setHidden] = useState(!!initialHidden);
 
     const launch = () => dice >= 1 && rollDice({
-        characterName: 'Conteur', sessionId: sessionId ?? null, label: label.trim() || 'Jet du Conteur', rollType: ROLL_TYPES.pool,
+        characterName: name ?? 'Conteur', sessionId: sessionId ?? null, label: label.trim() || 'Jet du Conteur', rollType: ROLL_TYPES.pool,
         persistHistory: !hidden,   // caché : ni historisé ni diffusé
-        systemData: { type: 'pool', dice, difficulty, specialty, autoSuccesses: 0 },
+        systemData: { type: 'pool', dice, difficulty, specialty, autoSuccesses: 0, cannotBotch: !!initial?.cannotBotch },
     });
 
     return (

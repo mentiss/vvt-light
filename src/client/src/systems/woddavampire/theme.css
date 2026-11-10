@@ -867,3 +867,17 @@ button.vda-power-name:hover { color: var(--color-primary); }
 .vtt-board-token-text, .vtt-board-ruler text { font-family: var(--vda-font-title); }
 .vtt-board-banner { border-radius: 0; border: 1px solid var(--vda-gold); border-left: 3px solid var(--vda-blood); background: var(--color-surface); box-shadow: 0 6px 18px rgba(0, 0, 0, .5); font-family: var(--vda-font-body); }
 .vtt-board-banner strong { font-family: var(--vda-font-title); letter-spacing: .06em; color: var(--vda-gold); }
+
+/* ── PNJ du Conteur (onglet PNJ de la plateforme, spec_pnj.md §10.3) ── */
+.vtt-npc-card, .vtt-npc-zone { border-radius: 0; border-color: var(--vda-gold); box-shadow: 0 0 0 3px var(--color-surface), 0 0 0 4px var(--color-border); }
+.vtt-npc-card.is-down { opacity: .5; filter: grayscale(.6); }
+.vtt-npc-card-name, .vtt-npc-name, .vtt-npc-sheet-name { font-family: var(--vda-font-title); font-weight: 400; letter-spacing: .03em; }
+.vtt-npc-rollbar { border-radius: 0; border-color: var(--vda-gold); }
+.vtt-npc-rollbar.is-ready { border-color: var(--vda-blood); }
+.vda-npc-body, .vda-npc-form, .vda-npc-attrs { display: grid; gap: 8px; }
+.vda-npc-values { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 18px; }
+.vda-npc-value { display: inline-flex; align-items: center; gap: 6px; }
+.vda-npc-value b { font-weight: 600; }
+.vda-npc-line { font-size: 15px; }
+.vda-npc-note { font-style: italic; color: var(--color-text-muted); font-size: 14px; }
+.vda-npc-fold > summary { cursor: pointer; font-family: var(--vda-font-title); color: var(--color-text-muted); }

@@ -5,6 +5,7 @@
 //     (onglets Session / Coterie / Journal / Historique / Aide de jeu ; actions de table : Donner de l'XP,
 //     Réveil, Fin d'histoire, ciblables ; jet du Conteur en d10).
 //   - Session : la table et la fiche MJ (gm/tabs/TabSession.jsx).
+//   - PNJ : onglet de la plateforme (components/npc/TabNpcs.jsx), partie système components/npc/ (spec_pnj.md §10.3).
 //   - Journal (TabJournal), Historique (DiceHistoryPage), panneau d'historique
 //     (DiceHistoryPanel, zone d'actions) : briques de la plateforme.
 // Contenu directement ici, sans GMView.
@@ -33,6 +34,8 @@ import { useTableCharacters } from './hooks/useTableCharacters.js';
 import TabSession from './gm/tabs/TabSession.jsx';
 import VdaTableActionModal from './components/modals/VdaTableActionModal.jsx';
 import VdaGmDiceModal from './components/modals/VdaGmDiceModal.jsx';
+import TabNpcs from '../../components/npc/TabNpcs.jsx';
+import woddavampireConfig from './config.jsx';
 import { REFERENCE_SECTIONS } from './config/reference.js';
 import { useBoxSize } from './hooks/useBoxSize.js';
 import { useCoterie } from './hooks/useCoterie.js';
@@ -42,6 +45,7 @@ import { VdaCoterieCreateModal } from './components/modals/VdaCoterieModals.jsx'
 const TABS = [
     { id: 'session',    label: 'Session' },
     { id: 'coterie',    label: 'Coterie' },
+    { id: 'pnj',        label: 'PNJ' },
     { id: 'journal',    label: 'Journal' },
     { id: 'tableau', label: 'Tableau' },
     { id: 'historique', label: 'Historique' },
@@ -98,6 +102,7 @@ const GMApp = ({ activeSession, onSessionChange, onlineCharacters, characterUpda
                                 loading={loading} patchCharacter={patchCharacter} onGiveXp={(id) => setTableAction({ kind: 'xp', preselect: [id] })}
                                 onSessionChange={onSessionChange} />
                 )}
+                {activeTab === 'pnj' && <TabNpcs sessionId={activeSession?.id ?? null} config={woddavampireConfig.npc} />}
                 {activeTab === 'coterie' && (
                     <div className="vda-page">
                         {!activeSession && <p className="vda-note p-6">Aucune table active : choisissez-en une dans le menu (gestion des tables).</p>}

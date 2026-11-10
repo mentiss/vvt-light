@@ -17,7 +17,9 @@ import React, { useState, useCallback } from 'react';
 import { roll, RollError } from '../../../../tools/diceEngine.js';
 import { useFetch }        from '../../../../hooks/useFetch.js';
 import { useSystem }       from '../../../../hooks/useSystem.js';
-import { countSuccesses } from '../../config.jsx';
+import { countAssisted, GROUP_MAX } from '../../config/npc.js';
+import { SALVO_LABELS } from '../../config/mechanics.js';
+import achtungConfig from '../../config.jsx';
 import Modal               from '../../../../components/ui/Modal.jsx';
 
 // ── Hooks dés GM — pas de validation de ressources ───────────────────────────
@@ -33,12 +35,15 @@ const GM_DICE_HOOKS = {
     beforeRoll: (ctx) => ctx, // pas de validation ressources côté GM
 
     afterRoll: (raw, ctx) => {
-        const { target, difficulty = 1 } = ctx.systemData;
+        const { target, difficulty = 1, skillRank = 0, focus = false, lead = null } = ctx.systemData;
         const results = raw.groups[0].values;
-        const { successes, complications } = countSuccesses(results, target, 0, false);
+        // Focus : un dé ≤ rang de la compétence compte deux succès (jet d'un PNJ, sinon sans effet) ;
+        // dés au-delà de `lead` : assistance d'un groupe, comptée seulement si le chef réussit
+        const { successes, complications } = countAssisted(results, lead ?? results.length, target, skillRank, focus);
         const success  = successes >= difficulty;
         const momentum = Math.max(0, successes - difficulty);
-        return { results, target, successes, complications, difficulty, success, momentum, label: ctx.label };
+        // hasFocus / skillRank : mêmes clés qu'un jet de compétence, pour le rendu de l'historique
+        return { results, target, successes, complications, difficulty, success, momentum, label: ctx.label, hasFocus: !!focus, skillRank };
     },
 
     buildAnimationSequence: (raw, ctx) => ({
@@ -57,6 +62,7 @@ const GM_DICE_HOOKS = {
 
 const MIN_DICE = 2;
 const MAX_DICE = 5;
+const GROUP_ASSIST_MAX = GROUP_MAX - 1;   // assistants d'un groupe de Troupes, en plus du chef
 
 // ── Affichage d'un dé ─────────────────────────────────────────────────────────
 
@@ -105,16 +111,25 @@ const Stepper = ({ label, value, onDec, onInc, min, max, color }) => (
 
 // ── Composant principal ───────────────────────────────────────────────────────
 
-const GMDiceModal = ({ onClose, sessionId }) => {
+// Props facultatives d'un jet lancé depuis un PNJ (spec_pnj.md §10.4) : name (lanceur), label,
+// initial { target, difficulty, dice, skill, focus, assist, damage? } (skill : rang de la compétence, zone de
+// critique avec un focus ; assist : dés d'assistance d'un groupe de Troupes, comptés seulement si le chef réussit ;
+// damage { dice, salvo, innate, groupBonus } : attaque, dégâts lancés après un test réussi), secret (réglage de l'onglet).
+const GMDiceModal = ({ onClose, sessionId, name = null, label: initialLabel = '', initial = null, secret = true }) => {
     const { apiBase }   = useSystem();
     const fetchWithAuth = useFetch();
+    const skillRank = initial?.skill ?? null;
+    const [assist,     setAssist]     = useState(initial?.assist ?? 0);
+    const [salvoOn,    setSalvoOn]    = useState(false);
+    const [damage,     setDamage]     = useState(null);   // { results, stress, effects }
 
     // ── Paramètres ────────────────────────────────────────────────────────────
-    const [target,     setTarget]     = useState(10);
-    const [difficulty, setDifficulty] = useState(1);
-    const [nbDice,     setNbDice]     = useState(2);
-    const [label,      setLabel]      = useState('');
-    const [broadcast,  setBroadcast]  = useState(false);
+    const [target,     setTarget]     = useState(initial?.target ?? 10);
+    const [difficulty, setDifficulty] = useState(initial?.difficulty ?? 1);
+    const [nbDice,     setNbDice]     = useState(initial?.dice ?? 2);
+    const [label,      setLabel]      = useState(initialLabel ?? '');
+    const [broadcast,  setBroadcast]  = useState(!secret);
+    const [focus,      setFocus]      = useState(!!initial?.focus);
 
     // ── État jet ──────────────────────────────────────────────────────────────
     const [step,       setStep]       = useState(1);
@@ -135,7 +150,7 @@ const GMDiceModal = ({ onClose, sessionId }) => {
                 apiBase,
                 fetchFn:        fetchWithAuth,
                 characterId:    -1,
-                characterName:  'GM',
+                characterName:  name ?? 'GM',
                 sessionId:      sessionId ?? null,
                 rollType:       'achtung_gm',
                 label:          label.trim() || `Jet GM — ${nbDice}d20 (cible ${target})`,
@@ -143,13 +158,16 @@ const GMDiceModal = ({ onClose, sessionId }) => {
                 systemData: {
                     target,
                     difficulty,
-                    nbDes: nbDice,
+                    nbDes: nbDice + assist,
+                    lead: nbDice,
+                    skillRank: skillRank ?? 0,
+                    focus: skillRank != null && focus,
                 },
             };
 
             // result = valeur retournée par GM_DICE_HOOKS.afterRoll
             // = { results, target, successes, complications, difficulty, success, momentum, label }
-            const result = await roll(`${nbDice}d20`, ctx, GM_DICE_HOOKS);
+            const result = await roll(GM_DICE_HOOKS.buildNotation(ctx), ctx, GM_DICE_HOOKS);
 
             setResults(result.results);
             setRollResult({
@@ -166,13 +184,40 @@ const GMDiceModal = ({ onClose, sessionId }) => {
         } finally {
             setRolling(false);
         }
-    }, [rolling, target, difficulty, nbDice, label, broadcast, apiBase, fetchWithAuth, sessionId]);
+    }, [rolling, target, difficulty, nbDice, assist, label, broadcast, apiBase, fetchWithAuth, sessionId, name, skillRank, focus]);
+
+    // ── Dégâts d'une attaque de PNJ (dés de Challenge, hooks challengeDice du slug) ──
+    const handleDamage = useCallback(async () => {
+        if (rolling || !initial?.damage?.dice) return;
+        setRolling(true);
+        setError(null);
+        try {
+            const ctx = {
+                apiBase, fetchFn: fetchWithAuth, characterId: -1, characterName: name ?? 'GM', sessionId: sessionId ?? null,
+                rollType: 'achtung_damage', label: `${label.trim() || 'Attaque'} — dégâts`, persistHistory: broadcast,
+                systemData: {
+                    nbDice: initial.damage.dice,
+                    activeSalvo: salvoOn && initial.damage.salvo ? { key: initial.damage.salvo } : null,
+                    innateEffects: initial.damage.innate ?? [],
+                    bonusStress: initial.damage.groupBonus ?? 0,
+                },
+            };
+            const result = await roll(achtungConfig.challengeDice.buildNotation(ctx), ctx, achtungConfig.challengeDice);
+            setDamage({ results: result.results, stress: result.stress, effects: result.effects });
+        } catch (err) {
+            if (err instanceof RollError) setError(err.message);
+            else console.error('[GMDiceModal/achtung] dégâts', err);
+        } finally {
+            setRolling(false);
+        }
+    }, [rolling, initial, apiBase, fetchWithAuth, name, sessionId, label, broadcast, salvoOn]);
 
     // ── Reset ─────────────────────────────────────────────────────────────────
     const handleReset = () => {
         setStep(1);
         setResults(null);
         setRollResult(null);
+        setDamage(null);
         setError(null);
     };
 
@@ -216,6 +261,22 @@ const GMDiceModal = ({ onClose, sessionId }) => {
                             color="var(--ac-primary)"
                         />
 
+                        {initial?.assist != null && initial.assist > 0 && (
+                            <Stepper
+                                label="Dés d'assistance (groupe)"
+                                value={assist}
+                                onDec={() => setAssist(v => Math.max(0, v - 1))}
+                                onInc={() => setAssist(v => Math.min(GROUP_ASSIST_MAX, v + 1))}
+                                min={0} max={GROUP_ASSIST_MAX}
+                            />
+                        )}
+
+                        {skillRank != null && (
+                            <button type="button" className={`vtt-pill${focus ? ' is-selected' : ''}`} onClick={() => setFocus(f => !f)}>
+                                Focus : un dé ≤ {skillRank} compte deux succès
+                            </button>
+                        )}
+
                         {/* Label optionnel */}
                         <div>
                             <div className="ac-label mb-1">Label (optionnel)</div>
@@ -234,7 +295,7 @@ const GMDiceModal = ({ onClose, sessionId }) => {
                             disabled={rolling}
                             className="ac-btn ac-btn-primary w-full disabled:opacity-40"
                         >
-                            {rolling ? '⏳ Lancement…' : `🎲 Lancer ${nbDice}d20`}
+                            {rolling ? '⏳ Lancement…' : `🎲 Lancer ${nbDice}d20${assist ? ` + ${assist}d20 d'assistance` : ''}`}
                         </button>
                     </div>
                 )}
@@ -278,6 +339,27 @@ const GMDiceModal = ({ onClose, sessionId }) => {
                                 )}
                             </div>
                         </div>
+
+                        {/* Dégâts d'une attaque de PNJ : dés de Challenge, après un test réussi (spec §3.9) */}
+                        {initial?.damage && rollResult.success && (
+                            <div className="flex flex-col gap-2">
+                                {initial.damage.salvo && (
+                                    <button type="button" className={`vtt-pill${salvoOn ? ' is-selected' : ''}`} onClick={() => setSalvoOn(v => !v)}>
+                                        Salve : {SALVO_LABELS[initial.damage.salvo]}
+                                    </button>
+                                )}
+                                <button type="button" onClick={handleDamage} disabled={rolling} className="ac-btn ac-btn-primary w-full disabled:opacity-40">
+                                    {rolling ? '⏳ Lancement…' : `Dégâts : ${initial.damage.dice} ▲${initial.damage.groupBonus ? ` (+${initial.damage.groupBonus} groupe)` : ''}`}
+                                </button>
+                                {damage && (
+                                    <div className="ac-text-muted text-center text-sm">
+                                        {damage.results.join(' · ')} → <b>{damage.stress} stress</b>
+                                        {initial.damage.groupBonus ? ` (dont +${initial.damage.groupBonus} groupe)` : ''}
+                                        {damage.effects > 0 ? ` · ${damage.effects} effet${damage.effects > 1 ? 's' : ''}` : ''}
+                                    </div>
+                                )}
+                            </div>
+                        )}
 
                         {/* Actions */}
                         <div className="flex gap-2">

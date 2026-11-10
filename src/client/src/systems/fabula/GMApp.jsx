@@ -13,12 +13,12 @@
 // ─────────────────────────────────────────────────────────────────────────────
 
 import React, { useState } from 'react';
-import './theme.css';
 
 import ToastNotifications from '../../components/layout/ToastNotifications.jsx';
 import DiceHistoryPage    from '../../components/layout/DiceHistoryPage.jsx';
 import FreeDiceModal      from '../../components/modals/FreeDiceModal.jsx';
-import { HamburgerMenu, HamburgerMenuSeparator } from '../../components/ui/HamburgerMenu.jsx';
+import { HamburgerMenu, HamburgerMenuItem, HamburgerMenuSeparator } from '../../components/ui/HamburgerMenu.jsx';
+import TabNpcs            from '../../components/npc/TabNpcs.jsx';
 import {
     HamburgerMenuItemTableManagement, HamburgerMenuItemDiceConfig, HamburgerMenuItemLogout,
 } from '../../components/ui/HamburgerMenuItems.jsx';
@@ -31,10 +31,13 @@ import FuBand              from './components/ui/FuBand.jsx';
 import FuIcon              from './components/ui/FuIcon.jsx';
 import FuWorld             from './components/ui/FuWorld.jsx';
 import GroupSheet          from './components/group/GroupSheet.jsx';
+import FuGmDiceModal       from './components/modals/FuGmDiceModal.jsx';
+import fabulaConfig        from './config.jsx';
 
 const TABS = [
     { id: 'session',    label: 'Session',    icon: 'party' },
     { id: 'groupe',     label: 'Groupe',     icon: 'bond' },
+    { id: 'pnj',        label: 'PNJ',        icon: 'sword' },
     { id: 'tableau',    label: 'Tableau',    icon: 'map' },
     { id: 'journal',    label: 'Journal',    icon: 'journal' },
     { id: 'historique', label: 'Historique', icon: 'scroll' },
@@ -45,6 +48,7 @@ const GMApp = ({ activeSession, onSessionChange, onlineCharacters, characterUpda
     const [activeTab, setActiveTab]       = useState('session');
     // (modales du menu : dans ses éléments, spec_ui_menu.md)
     const [showFreeDice, setShowFreeDice] = useState(false);
+    const [showGmDice, setShowGmDice]     = useState(false);
 
     return (
         <div className="fu-root fu-font-body">
@@ -60,6 +64,8 @@ const GMApp = ({ activeSession, onSessionChange, onlineCharacters, characterUpda
                         activeSessionId={activeSession?.id ?? null}
                         onSelectTable={(session) => onSessionChange?.(session)}
                     />
+                    {/* Jet du MJ sur les règles des joueurs, sans PNJ (spec_pnj.md §10.7, F-1) */}
+                    <HamburgerMenuItem icon={<FuIcon name="dice" />} onClick={() => setShowGmDice(true)}>Jet du MJ</HamburgerMenuItem>
                     <HamburgerMenuItemDiceConfig icon={<FuIcon name="sliders" />} />
                     <HamburgerMenuSeparator />
                     <HamburgerMenuItemLogout icon={<FuIcon name="exit" />} />
@@ -87,6 +93,12 @@ const GMApp = ({ activeSession, onSessionChange, onlineCharacters, characterUpda
                 {activeTab === 'groupe' && (
                     <div className="p-4">
                         <GroupSheet sessionId={activeSession?.id ?? null} isGM />
+                    </div>
+                )}
+                {/* PNJ : onglet de la plateforme, partie système components/npc/ (spec_pnj.md §10.5) */}
+                {activeTab === 'pnj' && (
+                    <div className="p-4">
+                        <TabNpcs sessionId={activeSession?.id ?? null} config={fabulaConfig.npc} />
                     </div>
                 )}
                 {/* Onglets hors session : dans une fenêtre, pour ne jamais poser de texte sur le monde */}
@@ -134,6 +146,7 @@ const GMApp = ({ activeSession, onSessionChange, onlineCharacters, characterUpda
                     onClose={() => setShowFreeDice(false)}
                 />
             )}
+            {showGmDice && <FuGmDiceModal sessionId={activeSession?.id ?? null} onClose={() => setShowGmDice(false)} />}
         </div>
     );
 };
