@@ -45,3 +45,10 @@
 09112026_2_vikings_dice_history.sql
 09112026_3_dice_history_drop_legacy.sql
 09112026_4_dice_history_notation_nullable.sql
+10112026_npcs.sql
+10112026_npcs_achtung.sql
+10112026_npcs_dune.sql
+10112026_npcs_fabula.sql
+10112026_npcs_maledictum.sql
+10112026_npcs_nimble.sql
+10112026_npcs_woddavampire.sql
