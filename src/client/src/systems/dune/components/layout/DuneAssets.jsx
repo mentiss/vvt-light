@@ -7,6 +7,7 @@
 
 import React, { useState } from 'react';
 import useConfirm from '../../../../hooks/useConfirm.jsx';
+import ExpandableText from '../../../../components/ui/ExpandableText.jsx';
 import DuneIcon from '../ui/DuneIcon.jsx';
 import { DuneField, DuneFrame } from '../ui/DuneFields.jsx';
 import DuneAssetCatalog, { QualityPills } from '../modals/DuneAssetCatalog.jsx';
@@ -22,7 +23,6 @@ const splitKeywords = (s) => (s ?? '').split(',').map(k => k.trim()).filter(Bool
  */
 const DuneAssets = ({ c, editing, onDraft, onPatch, onAddRow }) => {
     const [catalogOpen, setCatalogOpen] = useState(false);
-    const [openId, setOpenId] = useState(null);
     const { confirm, confirmEl } = useConfirm();
     const items = c.items ?? [];
 
@@ -34,7 +34,6 @@ const DuneAssets = ({ c, editing, onDraft, onPatch, onAddRow }) => {
         });
         if (ok) setItems(items.filter((_, i) => i !== index));
     };
-    const toggleDesc = (key) => setOpenId(o => (o === key ? null : key));
 
     return (
         <DuneFrame title="Atouts">
@@ -69,10 +68,7 @@ const DuneAssets = ({ c, editing, onDraft, onPatch, onAddRow }) => {
                         </button>
                     </div>
                     {it.description?.trim() && (
-                        <button type="button" className={`dn-item-desc text-left whitespace-pre-line${openId === (it.id ?? i) ? '' : ' line-clamp-2'}`}
-                                onClick={() => toggleDesc(it.id ?? i)}>
-                            {it.description}
-                        </button>
+                        <ExpandableText text={it.description} maxLength={140} className="dn-item-desc whitespace-pre-line" />
                     )}
                 </div>
             ))}

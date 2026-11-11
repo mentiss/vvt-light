@@ -1337,6 +1337,16 @@ select:disabled {
     .vtt-npc-tab { transition: none; }
     .vtt-npc-form-panel { animation: none; }
   }
+
+  /* ── Infobulle (components/ui/Tooltip.jsx) ───────────────────────────────────────
+     Rendue dans <body>, au-dessus de tout (modales comprises). Habillage par le theme.css du
+     slug : jamais position / top / left sur cette classe (posés par le composant). */
+  .vtt-tooltip {
+    position: fixed; z-index: 200; max-width: min(22rem, calc(100vw - 16px)); pointer-events: none;
+    padding: 0.4rem 0.6rem; font-size: 0.8125rem; line-height: 1.35; white-space: pre-line;
+    background: var(--color-surface); color: var(--color-text);
+    border: 1px solid var(--color-border); border-radius: 0.4rem; box-shadow: 0 6px 18px rgb(0 0 0 / 0.25);
+  }
 }
 
 /* ── Placements imposés par la plateforme (hors couche) ─────────────────────

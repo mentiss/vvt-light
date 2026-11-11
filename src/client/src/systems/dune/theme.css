@@ -439,6 +439,13 @@
 .vtt-floating-panel.is-minimized .vtt-modal-header { padding-top: .55rem; padding-bottom: .55rem; }
 .vtt-floating-panel.is-minimized .vtt-modal-header::after { display: none; }
 
+/* ── Infobulle (components/ui/Tooltip.jsx) : cartouche de la bande, filet d'épice ── */
+.vtt-tooltip {
+    border-radius: 0; border: 1px solid var(--dn-band-line); border-top: 2px solid var(--dn-spice); clip-path: var(--dn-cut-6);
+    background: var(--dn-band-bg); color: var(--dn-band-text); box-shadow: none;
+    font: italic 14px/1.4 var(--dn-font-body); padding: 7px 12px 8px;
+}
+
 /* ── Contrôles ── */
 .vtt-btn {
     border-radius: 0; border: 1px solid var(--dn-gold); background: transparent; color: var(--color-text);

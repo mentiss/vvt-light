@@ -3,6 +3,7 @@
 // livre ou en saisie libre ; mode Édition : nom, description, retrait.
 
 import React, { useState } from 'react';
+import ExpandableText from '../../../../components/ui/ExpandableText.jsx';
 import DuneIcon from '../ui/DuneIcon.jsx';
 import { DuneField, DuneFrame } from '../ui/DuneFields.jsx';
 import DuneTalentCatalog, { talentRestriction } from '../modals/DuneTalentCatalog.jsx';
@@ -15,12 +16,10 @@ import DuneTalentCatalog, { talentRestriction } from '../modals/DuneTalentCatalo
  */
 const DuneTalents = ({ c, editing, onDraft, onAddRow }) => {
     const [catalogOpen, setCatalogOpen] = useState(false);
-    const [openId, setOpenId] = useState(null);
     const talents = c.talents ?? [];
 
     const updateTalent = (index, fields) => onDraft({ talents: talents.map((t, i) => (i === index ? { ...t, ...fields } : t)) });
     const removeTalent = (index) => onDraft({ talents: talents.filter((_, i) => i !== index) });
-    const toggleDesc = (key) => setOpenId(o => (o === key ? null : key));
 
     return (
         <DuneFrame title="Talents">
@@ -44,10 +43,7 @@ const DuneTalents = ({ c, editing, onDraft, onAddRow }) => {
                         {talentRestriction(t.talentName) && <span className="dn-restr">{talentRestriction(t.talentName)}</span>}
                     </div>
                     {t.description?.trim() && (
-                        <button type="button" className={`dn-item-desc text-left whitespace-pre-line${openId === (t.id ?? i) ? '' : ' line-clamp-2'}`}
-                                onClick={() => toggleDesc(t.id ?? i)}>
-                            {t.description}
-                        </button>
+                        <ExpandableText text={t.description} maxLength={140} className="dn-item-desc whitespace-pre-line" />
                     )}
                 </div>
             ))}
