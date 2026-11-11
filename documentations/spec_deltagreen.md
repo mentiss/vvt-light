@@ -434,6 +434,8 @@ Comportement standard de la plateforme (identique aux autres slugs) — session/
 
 ### 6.3 Initiative (Combat v1)
 
+**Remplacée le 2026-11-11** par la brique Initiative de la plateforme (`spec_initiative.md`, lot 1) : mode trié, valeur = DEX (`initiative.characterInitiative` du `config.jsx`), égalités départagées en glissant les portraits. La barre maison de `TabSession.jsx` est retirée ; la liste des agents reste rangée par DEX. Ce qui suit est l'ancienne description, gardée pour mémoire.
+
 Gestion légère, sans tab dédié, dans TabSession :
 - Le Handler compte à rebours par DEX (plus haute → plus basse)
 - Chaque agent agit quand son score est atteint

@@ -18,7 +18,7 @@ Chaque ticket suit trois phases. Ne passe jamais à la suivante sans validation 
 
 1. **Brainstorming / diagnostic** : analyse, questions sur les cas d'usage, implications DB et sockets. **Aucun code.**
 2. **Spécification** : structure de données (schéma SQLite), événements socket, impact UI. Avantages et inconvénients exposés factuellement avant toute décision. Une spec fonctionnelle reste fonctionnelle (le quoi, pas le comment).
-3. **Implémentation** : code modulaire et commenté, liste des fichiers touchés. Une fois lint, tests et build verts, **relecture croisée par Codex** (`/relecture`, `documentations/spec_relecture.md`) avant de rendre la main : corrections appliquées, suggestions présentées à l'utilisateur. Si le quota Codex est épuisé, la relecture est sautée, pas reportée : on continue comme avant.
+3. **Implémentation** : code modulaire et commenté, liste des fichiers touchés. Une fois lint, tests et build verts, **relecture croisée par Codex** (`/relecture`, `documentations/spec_relecture.md`) **proposée à l'utilisateur, lancée seulement sur son accord** (elle coûte cher en quota : une relecture d'une trentaine de fichiers a pris 30 % d'une session) : corrections appliquées, suggestions présentées à l'utilisateur. Si le quota Codex est épuisé, la relecture est sautée, pas reportée : on continue comme avant.
 
 La phase 1 commence toujours par la lecture de la spec existante dans `documentations/` (voir plus bas).
 

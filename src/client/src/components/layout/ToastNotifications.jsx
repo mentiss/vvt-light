@@ -81,14 +81,29 @@ const ToastNotifications = ({
             }, TOAST_MESSAGE_TTL);
         };
 
+        // Initiative (spec_initiative.md §4.5, Q-11) : « À toi de jouer » quand le personnage
+        // du joueur devient actif ; éphémère, rien dans l'historique
+        const myKey = myCharacterId ? `c${myCharacterId}` : null;
+        let lastActive = null;
+        const onInitiative = (payload) => {
+            if (sessionId && payload?.sessionId !== sessionId) return;
+            const active = payload?.state?.activeKey ?? null;
+            if (myKey && active === myKey && lastActive !== myKey) {
+                add({ id: Date.now(), type: 'turn', animation: 'default' }, TOAST_DICE_TTL);
+            }
+            lastActive = active;
+        };
+
         socket.on('dice-roll',          onDice);
         socket.on('gm-message-received', onGMMessage);
         socket.on('gm-item-received',    onGMItem);
+        socket.on('initiative-state',    onInitiative);
 
         return () => {
             socket.off('dice-roll',           onDice);
             socket.off('gm-message-received', onGMMessage);
             socket.off('gm-item-received',    onGMItem);
+            socket.off('initiative-state',    onInitiative);
         };
     }, [socket, sessionId, myCharacterId]);
 
@@ -134,6 +149,13 @@ const ToastNotifications = ({
                                     )}
                                 </div>
                             </div>
+                        </ToastShell>
+                    )}
+
+                    {/* ── Initiative : à toi de jouer ─────────────────────── */}
+                    {toast.type === 'turn' && (
+                        <ToastShell onClose={() => remove(toast.id)} accent>
+                            <p className="vtt-initiative-toast">À toi de jouer !</p>
                         </ToastShell>
                     )}
 

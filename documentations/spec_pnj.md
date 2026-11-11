@@ -197,7 +197,7 @@ Un commit à part, avant les lots PNJ. On supprime l'ancien système de PNJ **et
 | `sort_order` | INTEGER | ordre d'affichage |
 | `created_at` | DATETIME | |
 
-Pas de colonne d'initiative : le futur gestionnaire de rounds l'ajoutera par sa propre migration, la table est faite pour la recevoir. Pas de socket : les PNJ ne vivent que côté MJ ; le tableau lit ce dont il a besoin par sa route (§6.5).
+Pas de colonne d'initiative : le futur gestionnaire de rounds l'ajoutera par sa propre migration, la table est faite pour la recevoir. *(2026-11-11 : finalement inutile, l'initiative d'un PNJ vit dans l'état de la brique Initiative, en mémoire du serveur, `spec_initiative.md` §7.1 et §9.3 ; aucune colonne ajoutée.)* Pas de socket : les PNJ ne vivent que côté MJ ; le tableau lit ce dont il a besoin par sa route (§6.5).
 
 ### 6.3 Route `/api/:slug/npcs` (routeur partagé, monté pour tous les slugs)
 

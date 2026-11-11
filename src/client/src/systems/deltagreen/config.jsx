@@ -1025,6 +1025,13 @@ const deltgreenConfig = {
         sounds:           true,      // Le bruit des dés est crucial pour la tension
         animationEnabled: true,
     },
+
+    // Initiative de la plateforme (spec_initiative.md §9.8, spec_deltagreen.md §6.3) :
+    // ordre par DEX décroissante ; les égalités se départagent en glissant les portraits
+    initiative: {
+        mode: 'order',
+        characterInitiative: (character) => (typeof character?.dex === 'number' ? character.dex : null),
+    },
 };
 
 export default deltgreenConfig;

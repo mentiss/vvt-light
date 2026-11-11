@@ -7,7 +7,7 @@ Relecture croisée : **$ARGUMENTS**
 
 Référence : `documentations/spec_relecture.md`. Les règles sont dans `code-rules/` (`common.md`, `front.md`, `back.md`). Codex relit en **lecture seule** ; c'est toi (Claude) qui appliques les corrections.
 
-Tu lances cette relecture **toi-même à la fin de chaque implémentation**, une fois lint, tests et build verts, avant de dire à l'utilisateur qu'il peut tester. Annonce-la en une ligne : elle prend quelques minutes.
+À la fin d'une implémentation, une fois lint, tests et build verts, tu **proposes** cette relecture à l'utilisateur (périmètre et nombre de fichiers) et tu ne la lances **que sur son accord** : elle coûte cher en quota (une relecture d'une trentaine de fichiers a pris 30 % d'une session de 5 h, décision du 2026-11-11). Même règle pour une seconde passe. Lancée à la main par `/relecture`, elle vaut accord.
 
 ## 1. Fichiers à relire
 

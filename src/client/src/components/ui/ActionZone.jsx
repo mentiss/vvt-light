@@ -144,12 +144,12 @@ export const ZoneAction = ({ id, icon, label, order = 0, active = false, highlig
     const shownIcon = zone.icons?.[id] ?? icon;
     const states = `${active ? ' is-active' : ''}${highlighted ? ' is-highlighted' : ''}`;
     const button = zone.mini ? (
-        <button type="button" className={`vtt-menu-item vtt-action-item${states}`} style={{ order }}
+        <button type="button" className={`vtt-menu-item vtt-action-item${states}`} style={{ order }} data-action={id}
                 aria-pressed={active} onClick={() => { zone.closeList(); onSelect?.(); }}>
             <span className="vtt-menu-icon">{shownIcon}</span>{label}
         </button>
     ) : (
-        <button type="button" className={`vtt-action-btn${states}`} style={{ order }}
+        <button type="button" className={`vtt-action-btn${states}`} style={{ order }} data-action={id}
                 title={label} aria-label={label} aria-pressed={active} onClick={onSelect}>
             {shownIcon}
         </button>

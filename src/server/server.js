@@ -90,6 +90,7 @@ for (const [slug] of getAllSystems()) {
     app.use(`${prefix}/npcs`,       resolver, getSharedRoute('npcs'));
     app.use(`${prefix}/audio`,      resolver, getSharedRoute('audio'));
     app.use(`${prefix}/board`,      resolver, getSharedRoute('board'));
+    app.use(`${prefix}/initiative`, resolver, getSharedRoute('initiative'));
 
     // ── Routes extra slug-spécifiques (auto-scan de systems/:slug/routes/) ───
     // Tout fichier .js autre que characters.js est monté ici.

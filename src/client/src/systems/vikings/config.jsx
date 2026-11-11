@@ -34,7 +34,8 @@ export * from './config/utils.js';
 import VikingsHistoryEntry from './components/layout/VikingsHistoryEntry.jsx';
 import VkNpcSheet from './components/npc/VkNpcSheet.jsx';
 import VkNpcForm from './components/npc/VkNpcForm.jsx';
-import { npcDefaults, initialNpcState, isOut } from './config/npc.js';
+import { npcDefaults, initialNpcState, isOut, blessureMax } from './config/npc.js';
+import { woundFromRatio } from '../../tools/initiative.js';
 
 // ─── Métadonnées système ──────────────────────────────────────────────────────
 
@@ -396,6 +397,17 @@ const vikingsConfig = {
         isDown:       (instance) => isOut(instance.sheet?.systemData, instance.state),
         Form:         VkNpcForm,
         Sheet:        VkNpcSheet,
+    },
+
+    // ─── Initiative de la plateforme (spec_initiative.md §9.8, §12, Q-36) ─────────────────────
+    // Ordre trié : 2d10 + Agilité lancés à la table, valeur saisie par le MJ. Les actions d'un PNJ
+    // (sd.actions) se jouent pendant son tour : pas de passage de plus dans la bande.
+    initiative: {
+        mode: 'order',
+        npcWound: ({ sheet, state }) => {
+            const sd = sheet?.systemData;
+            return isOut(sd, state) ? 'out' : woundFromRatio(1 - Number(state?.blessure ?? 0) / blessureMax(sd));
+        },
     },
 };
 

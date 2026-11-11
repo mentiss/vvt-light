@@ -603,3 +603,56 @@ button.dn-npc-cell:hover { border-color: var(--dn-spice); }
 .dn-npc-picker { display: flex; flex-wrap: wrap; align-items: center; gap: 4px; }
 .dn-npc-picker > span { min-width: 6rem; font-family: var(--dn-font-tech); font-size: 12px; color: var(--color-text-muted); }
 .dn-npc-picker .vtt-pill { padding: 2px 8px; font-size: 12px; }
+
+/* ── Initiative (components/initiative, spec_initiative.md §11) ── */
+/* Pont de vaisseau, comme le menu et la zone d'actions : bande sombre aux pans coupés, filet d'épice,
+   Cinzel / Rajdhani en capitales espacées ; portraits hexagonaux de la barre de session, anneau d'or,
+   d'épice pour qui agit ; ✦ camp qui a la main souligné d'épice. */
+.vtt-initiative {
+    border-radius: 0; border: none; clip-path: var(--dn-cut-8); background: var(--dn-band-bg); color: var(--dn-band-text);
+    box-shadow: inset 0 0 0 1px var(--dn-band-line), inset 2px 0 0 var(--dn-spice); backdrop-filter: none; font-family: var(--dn-font-tech);
+}
+.vtt-initiative-handle { border-radius: 0; background: radial-gradient(circle, var(--dn-band-muted) 1px, transparent 1.5px) 0 0 / 5px 5px; }
+.vtt-initiative-label { font: 700 10px/1 var(--dn-font-tech); letter-spacing: .26em; color: var(--dn-band-muted); }
+.vtt-initiative-round { font-family: var(--dn-font-title); font-weight: 600; letter-spacing: .12em; text-transform: uppercase; color: var(--dn-spice); }
+.vtt-initiative-group { border-radius: 0; }
+.vtt-initiative-group[data-hand] { border: none; background: linear-gradient(180deg, transparent, rgba(232,121,43,.12)); box-shadow: inset 0 -2px 0 var(--dn-spice); }
+.vtt-initiative-group-title { font: 700 10px/1 var(--dn-font-tech); letter-spacing: .22em; color: var(--dn-band-muted); }
+.vtt-initiative-group[data-hand] .vtt-initiative-group-title { color: var(--dn-spice); }
+.vtt-initiative-reserve { border-color: var(--dn-band-line); background: transparent; }
+.vtt-initiative-sep { background: var(--dn-band-line); }
+/* Portrait hexagonal : la découpe va sur l'avatar et l'anneau, pas sur le cadre (les pastilles débordent) */
+.vtt-initiative-frame { border: none; padding: 2px; background: transparent; }
+.vtt-initiative-frame::before { content: ''; position: absolute; inset: 0; clip-path: var(--dn-hexagon); background: var(--dn-gold-soft); }
+.vtt-initiative-avatar { border-radius: 0; clip-path: var(--dn-hexagon); font-family: var(--dn-font-title); color: var(--dn-gold); }
+.vtt-initiative-entry[data-side] .vtt-initiative-avatar { background: color-mix(in srgb, var(--dn-gold) 12%, var(--dn-band-bg)); }
+.vtt-initiative-entry[data-active] .vtt-initiative-frame { box-shadow: none; }
+.vtt-initiative-entry[data-active] .vtt-initiative-frame::before { background: var(--dn-spice); }
+.vtt-initiative-entry.is-clickable:hover .vtt-initiative-frame::before { background: var(--dn-gold); }
+.vtt-initiative-name { font: 700 10.5px/1.2 var(--dn-font-tech); letter-spacing: .12em; text-transform: uppercase; color: var(--dn-band-muted); }
+.vtt-initiative-entry[data-active] .vtt-initiative-name, .vtt-initiative-entry[data-me] .vtt-initiative-name { color: var(--dn-spice); }
+.vtt-initiative-badge { border-radius: 0; background: var(--dn-band-bg); color: var(--dn-band-text); border-color: var(--dn-band-line); font-family: var(--dn-font-tech); }
+.vtt-initiative-badge.is-actions, .vtt-initiative-badge.is-done { background: var(--dn-spice); border-color: var(--dn-spice); color: var(--dn-on-spice); }
+.vtt-initiative-btn {
+    border-radius: 0; border: 1px solid var(--dn-band-line); background: transparent; color: var(--dn-band-text);
+    font: 700 11px/1 var(--dn-font-tech); letter-spacing: .2em; text-transform: uppercase;
+}
+.vtt-initiative-btn:hover:not(:disabled) { border-color: var(--dn-spice); background: rgba(232,121,43,.14); }
+.vtt-initiative-btn.is-primary { border: none; clip-path: var(--dn-cut-8); background: var(--dn-spice); color: var(--dn-on-spice); }
+.vtt-initiative-btn.is-primary:hover:not(:disabled) { background: var(--dn-spice-hover); }
+.vtt-initiative-btn.is-keep { border-color: var(--dn-spice); color: var(--dn-spice); }
+.vtt-initiative-btn.is-icon { border-color: transparent; color: var(--dn-band-muted); }
+.vtt-initiative-more { border-radius: 0; background: var(--dn-band-bg); color: var(--dn-band-text); border-color: var(--dn-band-line); }
+.vtt-initiative-wait { color: var(--dn-band-muted); font-family: var(--dn-font-body); }
+.vtt-initiative-menu, .vtt-initiative-card {
+    border-radius: 0; border: 1px solid var(--dn-gold-soft); border-top: 2px solid var(--dn-spice); background: var(--color-surface); box-shadow: 0 16px 40px rgba(0,0,0,.45);
+}
+.vtt-initiative-menu-title, .vtt-initiative-card-title { font-family: var(--dn-font-title); letter-spacing: .1em; }
+.vtt-initiative-resume { border-radius: 0; border: 1px solid var(--dn-gold-soft); border-left: 3px solid var(--dn-spice); background: var(--dn-band-bg); color: var(--dn-band-text); font-family: var(--dn-font-body); }
+/* Zone d'actions : le bouton hexagonal rogne un halo extérieur ; halo intérieur d'épice à la place */
+.vtt-action-btn[data-action="initiative"].is-highlighted:not(.is-active) { animation: dn-initiative-halo 1.8s ease-in-out infinite; }
+@keyframes dn-initiative-halo {
+    0%, 100% { box-shadow: inset 0 0 0 2px var(--dn-spice); }
+    50%      { box-shadow: inset 0 0 0 5px var(--dn-spice), inset 0 0 14px var(--dn-spice-glow); }
+}
+@media (prefers-reduced-motion: reduce) { .vtt-action-btn[data-action="initiative"].is-highlighted:not(.is-active) { animation: none; } }

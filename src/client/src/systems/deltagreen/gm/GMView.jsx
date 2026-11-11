@@ -2,7 +2,7 @@
 // ─────────────────────────────────────────────────────────────────────────────
 // Interface GM Delta Green.
 // Onglets : Session (agents) + Journal.
-// Pas de TabCombat en v1 — initiative légère dans TabSession.
+// Pas de TabCombat en v1 — initiative par la brique de la plateforme (spec_initiative.md).
 // ─────────────────────────────────────────────────────────────────────────────
 
 import React, { useState } from 'react';

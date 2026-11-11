@@ -977,3 +977,52 @@ button.fu-die:disabled { cursor: default; }
 .fu-npc-die.is-on { border-color: var(--fu-win-edge); }
 .fu-npc-affinities { display: grid; gap: .25rem; }
 .fu-npc-aff-row { display: grid; grid-template-columns: 6rem 1fr; align-items: center; gap: .5rem; }
+
+/* ── Initiative (components/initiative, spec_initiative.md §11, planche documentations/initiative/) ── */
+/* Fenêtre de menu JRPG, comme la barre de session : dégradé bleu nuit, liseré argent, or des points
+   Fabula, Antonio / PT Sans Narrow ; ✦ curseur ▼ (▶ en vertical) sur le personnage qui agit. */
+.vtt-initiative {
+    border-radius: 10px; background: linear-gradient(180deg, var(--fu-win-top), var(--fu-win-bottom)); border: 2px solid var(--fu-win-edge);
+    box-shadow: 0 0 0 1px var(--fu-win-shadow), inset 0 0 0 1px var(--fu-win-shadow), inset 0 1px 0 1px rgba(255,255,255,.18), 0 6px 18px rgba(0,0,0,.35);
+    color: var(--fu-win-text); text-shadow: 1px 1px 0 var(--fu-win-shadow); font-family: 'PT Sans Narrow', Arial, sans-serif; backdrop-filter: none;
+}
+.vtt-initiative-handle { background: radial-gradient(circle, var(--fu-win-muted) 1px, transparent 1.5px) 0 0 / 5px 5px; }
+.vtt-initiative-label { font-family: 'Antonio', 'Arial Narrow', sans-serif; letter-spacing: .22em; color: var(--fu-win-muted); }
+.vtt-initiative-round { font-family: 'Antonio', 'Arial Narrow', sans-serif; font-weight: 600; text-transform: uppercase; color: var(--fu-win-gold); }
+.vtt-initiative-group { border-radius: 4px; }
+.vtt-initiative-group[data-hand] { border: 1px solid color-mix(in srgb, var(--fu-win-gold) 70%, transparent); background: rgba(255,255,255,.08); }
+.vtt-initiative-group-title { font-family: 'Antonio', 'Arial Narrow', sans-serif; color: var(--fu-win-muted); }
+.vtt-initiative-group[data-hand] .vtt-initiative-group-title { color: var(--fu-win-gold); }
+.vtt-initiative-reserve { border-color: color-mix(in srgb, var(--fu-win-edge) 35%, transparent); background: rgba(0,0,0,.15); }
+.vtt-initiative-sep { background: linear-gradient(180deg, transparent, var(--fu-win-gold), transparent); }
+.vtt-initiative-frame { border-radius: 4px; border-color: color-mix(in srgb, var(--fu-win-edge) 40%, transparent); background: color-mix(in srgb, var(--fu-win-edge) 25%, transparent); }
+.vtt-initiative-avatar { border-radius: 2px; color: #fff; }
+.vtt-initiative-entry[data-side="players"] .vtt-initiative-avatar { background: linear-gradient(180deg, #4a63c8, #1c2768); }
+.vtt-initiative-entry[data-side="gm"] .vtt-initiative-avatar { background: linear-gradient(180deg, #8a3a52, #3a1024); }
+.vtt-initiative-name { font-size: .72rem; letter-spacing: .04em; text-transform: uppercase; color: var(--fu-win-muted); }
+.vtt-initiative-entry[data-active] .vtt-initiative-frame { border-color: var(--fu-win-edge); box-shadow: 0 0 10px rgba(242, 210, 122, .6); }
+.vtt-initiative-entry[data-active] .vtt-initiative-name { color: var(--fu-win-text); }
+.vtt-initiative-entry[data-active]::before {   /* ✦ curseur de menu */
+    content: '▶'; position: absolute; left: -.55rem; top: 1rem; font-size: .62rem; color: var(--fu-win-text); animation: fu-cursor-x .9s ease-in-out infinite;
+}
+.vtt-initiative[data-orientation="horizontal"] .vtt-initiative-entry[data-active]::before { content: '▼'; left: 50%; top: -.75rem; margin-left: -.3rem; animation-name: fu-cursor-y; }
+@keyframes fu-cursor-x { 0%, 100% { transform: translateX(0); } 50% { transform: translateX(3px); } }
+@keyframes fu-cursor-y { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(3px); } }
+.vtt-initiative-entry[data-me] .vtt-initiative-name { color: var(--fu-win-gold); }
+.vtt-initiative-badge { border-radius: 3px; background: var(--fu-win-bottom); color: var(--fu-win-text); border-color: var(--fu-win-edge); text-shadow: none; }
+.vtt-initiative-badge.is-actions { background: var(--fu-win-gold); border-color: var(--fu-win-gold); color: #3a2a00; }
+.vtt-initiative-btn {
+    border-radius: 4px; border-color: color-mix(in srgb, var(--fu-win-edge) 45%, transparent); background: rgba(255,255,255,.08); color: var(--fu-win-text);
+    font-family: 'Antonio', 'Arial Narrow', sans-serif; letter-spacing: .06em; text-transform: uppercase; text-shadow: 1px 1px 0 var(--fu-win-shadow);
+}
+.vtt-initiative-btn:hover:not(:disabled) { border-color: var(--fu-win-edge); background: rgba(255,255,255,.16); }
+.vtt-initiative-btn.is-primary { background: linear-gradient(180deg, #f6dc8e, #c99a2e); border-color: var(--fu-win-gold); color: #2b1d00; text-shadow: none; }
+.vtt-initiative-btn.is-icon { background: transparent; border-color: transparent; color: var(--fu-win-muted); }
+.vtt-initiative-more { background: var(--fu-win-bottom); border-color: var(--fu-win-edge); color: #fff; }
+.vtt-initiative-wait { color: var(--fu-win-muted); }
+.vtt-initiative-menu, .vtt-initiative-card, .vtt-initiative-resume {
+    border-radius: 8px; background: linear-gradient(180deg, var(--fu-win-top), var(--fu-win-bottom)); border: 2px solid var(--fu-win-edge); color: var(--fu-win-text);
+}
+.vtt-initiative-card-line { color: var(--fu-win-muted); }
+.vtt-initiative-card-line b { color: var(--fu-win-text); }
+@media (prefers-reduced-motion: reduce) { .vtt-initiative-entry[data-active]::before { animation: none; } }

@@ -12,7 +12,8 @@ import { RollError } from '../../tools/diceEngine.js';
 import FabulaHistoryEntry from './components/layout/FabulaHistoryEntry.jsx';
 import FuIcon from './components/ui/FuIcon.jsx';
 import { resolveFabulaTest } from './config/rolls.js';
-import { RANKS, SPECIES, npcDefaults, initialNpcState, isOut, rankLabel } from './config/npc.js';
+import { RANKS, SPECIES, npcDefaults, initialNpcState, isOut, rankLabel, turnsPerRound } from './config/npc.js';
+import { woundFromRatio } from '../../tools/initiative.js';
 import FuNpcSheet from './components/npc/FuNpcSheet.jsx';
 import FuNpcForm from './components/npc/FuNpcForm.jsx';
 
@@ -214,6 +215,23 @@ const fabulaConfig = {
         gravity:          500,
         sounds:           true,
         animationEnabled: true,
+    },
+
+    // Initiative de la plateforme (spec_initiative.md §7.7, §9.8) : conflit en alternance
+    // stricte entre camps, sans « garder la main » ; le camp qui ouvre chaque round vient du
+    // test d'initiative de groupe (choisi au lancement) ; Élite et Champion ont plusieurs tours.
+    initiative: {
+        label: 'Conflit',
+        mode: 'sides',
+        opening: 'choose',
+        sides: { players: 'Héros', gm: 'Adversaires' },
+        enemyOrder: true,   // règle optionnelle « initiative ennemie » (livre p. 63)
+        npcInitiative: (instance) => (instance.sheet?.systemData?.init ?? null),
+        npcActions: (instance) => turnsPerRound(instance.sheet?.systemData),
+        npcWound: (instance) => {
+            const max = Number(instance.sheet?.systemData?.hp ?? 0);
+            return max > 0 ? woundFromRatio(Number(instance.state?.hp ?? max) / max) : null;
+        },
     },
 };
 

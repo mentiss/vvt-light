@@ -29,7 +29,7 @@
 import React, { useState } from 'react';
 import Modal from '../ui/Modal.jsx';
 import ConfirmModal from '../modals/ConfirmModal.jsx';
-import { useNpcs } from '../../hooks/useNpcs.js';
+import { useNpcs, NPC_ROLLS_OPTIONS } from '../../hooks/useNpcs.js';
 import { useSystem } from '../../hooks/useSystem.js';
 import { usePersistedState } from '../../hooks/usePersistedState.js';
 import { tableScope } from '../../tools/browserStorage.js';
@@ -46,7 +46,7 @@ const LIBRARY_OPTIONS = {
         && (v.tagsOpen === undefined || typeof v.tagsOpen === 'boolean')
         && (v.tags === undefined || (Array.isArray(v.tags) && v.tags.every(t => typeof t === 'string'))),
 };
-const ROLLS_OPTIONS   = { defaults: { hidden: false }, validate: v => typeof v?.hidden === 'boolean' };
+const ROLLS_OPTIONS   = NPC_ROLLS_OPTIONS;   // partagée avec la fiche ouverte depuis l'initiative
 
 const emptyNpc = (config) => ({
     prenom: '', nom: '', role: '', tags: [], description: '', gmNotes: '',

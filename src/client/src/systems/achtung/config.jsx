@@ -13,7 +13,9 @@ import AcNpcSheet from './components/npc/AcNpcSheet.jsx';
 import AcNpcForm from './components/npc/AcNpcForm.jsx';
 import AcNpcRollWindow from './components/npc/AcNpcRollWindow.jsx';
 import { acNpcPick } from './components/npc/acNpcPick.js';
-import { NPC_RANKS, npcDefaults, initialNpcState, isGroupRank, isOut, stressMax } from './config/npc.js';
+import { NPC_RANKS, npcDefaults, initialNpcState, isGroupRank, isOut, stressMax, injuriesMax } from './config/npc.js';
+import { woundFromRatio } from '../../tools/initiative.js';
+import { changeSessionResource } from '../../tools/sessionResources.js';
 
 export { KEYWORD_LABELS, getKeywordLabel } from './config/keywords.js';
 
@@ -212,6 +214,30 @@ const achtungConfig = {
         gravity:          400,
         sounds:           false,
         animationEnabled: true,
+    },
+
+    // Initiative de la plateforme (spec_initiative.md §9.8, §11) : alternance entre camps ;
+    // Keep the Initiative une fois par tour et par camp, la main passant à un autre personnage
+    // du camp (règle de table, Q-37) : 2 Momentum côté PJ, 2 Threat côté adversaires (Q-43).
+    // Pas de perte de Momentum en fin de round (jamais jouée à la table, Q-41).
+    initiative: {
+        mode: 'sides',
+        keepInitiative: {
+            players: { label: '2 Momentum', run: (ctx) => changeSessionResource(ctx, 'momentum', -2, 'Momentum') },
+            gm:      { label: '2 Threat',   run: (ctx) => changeSessionResource(ctx, 'threat', -2, 'Threat') },
+        },
+        // Blessures du rang (Stress en appoint) ; un groupe de troupes : membres encore debout
+        npcWound: ({ sheet, state }) => {
+            const sd = sheet?.systemData;
+            if (isOut(sd, state)) return 'out';
+            if (state?.alive != null && Number(state.count) > 0) return woundFromRatio(Number(state.alive) / Number(state.count));
+            const injuries = Number(state?.injuries ?? 0);
+            if (injuries > 0) return woundFromRatio(1 - injuries / Math.max(1, injuriesMax(sd)));
+            // Stress au maximum sans blessure du rang : encore debout (seul isOut met hors de combat)
+            const stress = stressMax(sd);
+            const wound = stress > 0 ? woundFromRatio(1 - Number(state?.stress ?? 0) / stress) : null;
+            return wound === 'out' ? 'severe' : wound;
+        },
     },
 };
 

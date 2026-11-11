@@ -777,3 +777,46 @@ body:has([data-palier="4"]) .vtt-modal-panel { filter: grayscale(1) contrast(1.5
 .vtt-board-token-text, .vtt-board-ruler text { font-family: var(--dg-font-stamp); }
 .vtt-board-banner { border-radius: 0; border: 1px solid var(--color-text); border-left: 4px solid var(--dg-header-bg); background: var(--dg-field-bg); box-shadow: 3px 3px 0 rgba(0,0,0,.18); font-family: var(--dg-font-body); }
 .vtt-board-banner strong { font-family: var(--dg-font-stamp); letter-spacing: .08em; text-transform: uppercase; }
+
+/* ── Initiative (components/initiative, spec_initiative.md §9.6, planche documentations/initiative/) ── */
+/* Ordre d'intervention : formulaire photocopié (bandeau dg-header, Courier, cases à angles droits),
+   surligneur fluo pour l'agent qui agit, nom barré une fois qu'il a agi, tampon bleu ; dégradation par palier. */
+.vtt-initiative { border-radius: 0; padding-top: 1.35rem; background: var(--color-bg); border: 1px solid var(--dg-field-border);
+    box-shadow: 3px 4px 0 rgba(0,0,0,.12), 0 10px 26px rgba(0,0,0,.3); font-family: var(--dg-font-body); backdrop-filter: none; }
+.vtt-initiative::before {   /* bandeau dg-header */
+    content: 'Ordre d\'intervention · Formulaire DG-117'; position: absolute; left: 0; right: 0; top: 0; padding: .12rem .6rem;
+    background: var(--dg-header-bg); color: var(--dg-header-text); font-family: var(--dg-font-stamp); font-size: .6rem;
+    letter-spacing: .14em; text-transform: uppercase; white-space: nowrap; overflow: hidden; }
+.vtt-initiative-handle { border-radius: 0; }
+.vtt-initiative-label { font-family: var(--dg-font-body); }
+.vtt-initiative-round { font-family: var(--dg-font-stamp); font-weight: 400; text-transform: uppercase; color: var(--dg-stamp-red); }
+.vtt-initiative-group, .vtt-initiative-entry { border-radius: 0; }
+.vtt-initiative-frame { border-radius: 0; border-width: 1px; border-color: var(--dg-field-border); background: var(--dg-field-bg); }
+.vtt-initiative-avatar { border-radius: 0; font-family: var(--dg-font-body); }
+.vtt-initiative-entry[data-side] .vtt-initiative-avatar { background: var(--dg-field-bg); }
+.vtt-initiative-avatar img { filter: grayscale(1) contrast(1.35) brightness(1.05); }   /* photocopie, comme la barre de session */
+.vtt-initiative-name { font-family: var(--dg-font-body); font-size: .66rem; text-transform: uppercase; color: var(--color-text); }
+.vtt-initiative-entry[data-active] .vtt-initiative-frame { border: 2px solid var(--color-text); box-shadow: none; }
+.vtt-initiative-entry[data-active] .vtt-initiative-name {   /* surligneur fluo */
+    padding: 0 .15rem; color: #1a1a1a;
+    background: linear-gradient(100deg, transparent 2%, rgba(255, 236, 60, .85) 4%, rgba(255, 230, 40, .8) 94%, transparent 97%); }
+.vtt-initiative-entry[data-done] { opacity: 1; }
+.vtt-initiative-entry[data-done] .vtt-initiative-name { text-decoration: line-through; color: var(--color-text-muted); }
+.vtt-initiative-entry[data-done] .vtt-initiative-avatar { opacity: .5; }
+.vtt-initiative-badge { border-radius: 0; font-family: var(--dg-font-body); background: var(--dg-field-bg); border-color: var(--dg-field-border); }
+.vtt-initiative-badge.is-done { border: none; background: none; color: var(--dg-stamp-blue); font-family: var(--dg-font-stamp); font-size: .9rem; }
+.vtt-initiative-badge.is-hidden { background: var(--dg-header-bg); color: var(--dg-header-text); }
+.vtt-initiative-btn { border-radius: 0; font-family: var(--dg-font-body); font-size: .7rem; letter-spacing: .06em; text-transform: uppercase;
+    background: var(--dg-field-bg); border-color: var(--dg-field-border); }
+.vtt-initiative-btn.is-primary { background: var(--dg-header-bg); border-color: var(--dg-header-bg); color: var(--dg-header-text); }
+.vtt-initiative-btn.is-icon { background: transparent; border-color: transparent; }
+.vtt-initiative-more { border-radius: 0; }
+.vtt-initiative-menu, .vtt-initiative-card { border-radius: 0; background: var(--color-bg); border-color: var(--dg-field-border);
+    box-shadow: 3px 4px 0 rgba(0,0,0,.1), 0 14px 32px rgba(0,0,0,.4); font-family: var(--dg-font-body); }
+.vtt-initiative-resume { border-radius: 0; border: 1px solid var(--color-text); border-left: 4px solid var(--dg-header-bg); background: var(--dg-field-bg);
+    box-shadow: 3px 3px 0 rgba(0,0,0,.18); font-family: var(--dg-font-body); }
+/* Dégradation : la bande, rendue dans <body>, est atteinte par body:has (comme la carte de la barre de session) */
+body:has([data-palier="1"]) .vtt-initiative,
+body:has([data-palier="2"]) .vtt-initiative { animation: dg-eye-strain 12s infinite alternate ease-in-out; }
+body:has([data-palier="3"]) .vtt-initiative { filter: saturate(.2) contrast(1.2) sepia(.2); }
+body:has([data-palier="4"]) .vtt-initiative { filter: grayscale(1) contrast(1.5) brightness(.9); }

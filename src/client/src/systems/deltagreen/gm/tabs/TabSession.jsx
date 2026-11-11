@@ -50,7 +50,7 @@ const PALIER_TEXT = [
 // AgentCard — mode étendu (inchangé)
 // ══════════════════════════════════════════════════════════════════════════════
 
-const AgentCard = ({ character, isOnline, isActiveTurn, onPalierChange, onTagChange, onSelect, isSelected }) => {
+const AgentCard = ({ character, isOnline, onPalierChange, onTagChange, onSelect, isSelected }) => {
     const [showTags, setShowTags] = useState(false);
 
     const san    = character.sanCurrent ?? 0;
@@ -77,7 +77,6 @@ const AgentCard = ({ character, isOnline, isActiveTurn, onPalierChange, onTagCha
         <div className={[
             'border bg-surface transition-all',
             isSelected    ? 'border-accent'      : 'border-default',
-            isActiveTurn  ? 'ring-2 ring-accent/50' : '',
         ].join(' ')}>
             <div
                 className="flex items-center gap-3 p-3 cursor-pointer hover:bg-surface-alt"
@@ -99,9 +98,6 @@ const AgentCard = ({ character, isOnline, isActiveTurn, onPalierChange, onTagCha
                 <div className="flex items-center gap-2 shrink-0">
                     <div className={['w-2 h-2 rounded-full', isOnline ? 'bg-success' : 'bg-muted/40'].join(' ')}
                          title={isOnline ? 'En ligne' : 'Hors ligne'} />
-                    {isActiveTurn && (
-                        <span className="text-xs font-mono text-accent border border-accent/50 px-1.5 py-0.5">TOUR</span>
-                    )}
                 </div>
             </div>
 
@@ -188,7 +184,7 @@ const AgentCard = ({ character, isOnline, isActiveTurn, onPalierChange, onTagCha
 // AgentCompactRow — mode réduit
 // ══════════════════════════════════════════════════════════════════════════════
 
-const AgentCompactRow = ({ character, isOnline, isActiveTurn, isSelected, onSelect }) => {
+const AgentCompactRow = ({ character, isOnline, isSelected, onSelect }) => {
     const palier = character.degradationPalier ?? 0;
     return (
         <div
@@ -197,7 +193,6 @@ const AgentCompactRow = ({ character, isOnline, isActiveTurn, isSelected, onSele
                 'flex items-center gap-2 px-3 py-2 cursor-pointer border-b border-default/20',
                 'hover:bg-surface-alt transition-colors',
                 isSelected   ? 'bg-accent/5 border-l-2 border-l-accent' : 'border-l-2 border-l-transparent',
-                isActiveTurn ? 'ring-1 ring-inset ring-accent/30' : '',
             ].join(' ')}
         >
             <div className={['w-1.5 h-1.5 rounded-full shrink-0', isOnline ? 'bg-success' : 'bg-muted/30'].join(' ')} />
@@ -545,8 +540,6 @@ const TabSession = ({ activeSession, onlineCharacters, onSessionChange }) => {
     const [loading,       setLoading]       = useState(false);
     const [selectedId,    setSelectedId]    = useState(null);
     const [collapsed,     setCollapsed]     = useState(false);
-    const [activeTurnId,  setActiveTurnId]  = useState(null);
-    const [initiativeOn,  setInitiativeOn]  = useState(false);
     const [showSendNote,  setShowSendNote]  = useState(false);
     const [sendPreselect, setSendPreselect] = useState(null);
 
@@ -616,14 +609,9 @@ const TabSession = ({ activeSession, onlineCharacters, onSessionChange }) => {
         } catch (err) { console.error('[TabSession] tags:', err); }
     }, [apiBase]); // eslint-disable-line react-hooks/exhaustive-deps
 
-    // ── Initiative ────────────────────────────────────────────────────────────
+    // Agents rangés par DEX décroissante (ordre d'initiative du jeu) ; l'initiative
+    // elle-même est la brique de la plateforme (spec_initiative.md, bouton de la zone d'actions)
     const sorted = Object.values(characters).sort((a, b) => (b.dex ?? 10) - (a.dex ?? 10));
-
-    const handleNextTurn = () => {
-        if (!sorted.length) return;
-        const idx  = sorted.findIndex(c => c.id === activeTurnId);
-        setActiveTurnId(sorted[(idx + 1) % sorted.length].id);
-    };
 
     // ── Gardes ────────────────────────────────────────────────────────────────
     if (!activeSession) return (
@@ -672,48 +660,6 @@ const TabSession = ({ activeSession, onlineCharacters, onSessionChange }) => {
                                         className="w-full mt-1 text-[10px] font-mono uppercase tracking-wider border border-default/40 text-muted px-1.5 py-1 hover:border-default transition-colors" />
                 </div>
 
-                {/* Barre initiative — masquée en mode compact */}
-                {!collapsed && (
-                    <div className="px-3 py-2 border-b border-default/40 shrink-0">
-                        <div className="flex items-center justify-between mb-1.5">
-                            <span className="text-[10px] font-mono text-muted uppercase tracking-wider">
-                                Initiative
-                            </span>
-                            <div className="flex gap-1">
-                                {initiativeOn && (
-                                    <button
-                                        onClick={handleNextTurn}
-                                        className="text-[10px] font-mono border border-accent text-accent px-1.5 py-0.5 hover:bg-accent/10 transition-colors"
-                                    >Suivant →</button>
-                                )}
-                                <button
-                                    onClick={() => {
-                                        if (initiativeOn) { setInitiativeOn(false); setActiveTurnId(null); }
-                                        else { setInitiativeOn(true); setActiveTurnId(sorted[0]?.id ?? null); }
-                                    }}
-                                    className="text-[10px] font-mono border border-default/40 text-muted px-1.5 py-0.5 hover:border-default transition-colors"
-                                >{initiativeOn ? 'Reset' : 'Démarrer'}</button>
-                            </div>
-                        </div>
-                        {initiativeOn && (
-                            <div className="flex flex-wrap gap-1">
-                                {sorted.map(c => (
-                                    <button
-                                        key={c.id}
-                                        onClick={() => setActiveTurnId(c.id)}
-                                        className={[
-                                            'text-[10px] font-mono border px-1.5 py-0.5 transition-colors',
-                                            activeTurnId === c.id
-                                                ? 'border-accent text-accent bg-accent/10'
-                                                : 'border-default/40 text-muted hover:border-default',
-                                        ].join(' ')}
-                                    >{c.nom ?? '?'} {(c.dex ?? 10) * 5}%</button>
-                                ))}
-                            </div>
-                        )}
-                    </div>
-                )}
-
                 {/* Liste agents */}
                 <div className="flex-1 overflow-y-auto">
                     {sorted.length === 0 ? (
@@ -726,7 +672,6 @@ const TabSession = ({ activeSession, onlineCharacters, onSessionChange }) => {
                                 key={char.id}
                                 character={char}
                                 isOnline={onlineIds.has(char.id)}
-                                isActiveTurn={activeTurnId === char.id}
                                 isSelected={selectedId === char.id}
                                 onSelect={setSelectedId}
                             />
@@ -738,7 +683,6 @@ const TabSession = ({ activeSession, onlineCharacters, onSessionChange }) => {
                                     key={char.id}
                                     character={char}
                                     isOnline={onlineIds.has(char.id)}
-                                    isActiveTurn={activeTurnId === char.id}
                                     isSelected={selectedId === char.id}
                                     onSelect={setSelectedId}
                                     onPalierChange={handlePalierChange}

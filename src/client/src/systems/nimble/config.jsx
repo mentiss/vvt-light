@@ -12,6 +12,7 @@ import NbNpcSheet from './components/npc/NbNpcSheet.jsx';
 import NbNpcForm from './components/npc/NbNpcForm.jsx';
 import { FAMILIES, MONSTERS } from './config/bestiary.js';
 import { ARMOR_LABELS, isDown, levelValue, monsterState, monsterView } from './config/rules/encounter.js';
+import { woundFromRatio } from '../../tools/initiative.js';
 import {
     VICIOUS_POOL, clampEdge, dicePoolSize, pickDice, resolveMinions, resolveAttack, resolveD20, initiativeActions, resolveHitDice, sumDice,
 } from './config/rules/dice.js';
@@ -162,6 +163,23 @@ const nimbleConfig = {
         gravity:          500,
         sounds:           true,
         animationEnabled: true,
+    },
+
+    // Initiative de la plateforme (spec_initiative.md §9.8, Q-32) : les héros jouent dans
+    // l'ordre qui leur va, puis les monstres (camp après camp, sans alternance).
+    initiative: {
+        label: 'Combat',
+        mode: 'sides',
+        alternate: false,
+        sides: { players: 'Héros', gm: 'Monstres' },
+        // PV, ou membres encore debout pour un groupe de sbires
+        npcWound: ({ state }) => {
+            if (!state) return null;
+            if (Number(state.hpMax) > 0) return woundFromRatio(Number(state.hp) / Number(state.hpMax));
+            return Number(state.count) > 0 ? woundFromRatio(Number(state.alive) / Number(state.count)) : null;
+        },
+        // PV d'un monstre de la bibliothèque : par héros de la table (Q-44)
+        npcContext: (characters) => ({ heroes: Math.max(1, characters.length) }),
     },
 };
 

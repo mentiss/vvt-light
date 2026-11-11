@@ -10,7 +10,9 @@ import { RollError } from '../../tools/diceEngine.js';
 import VdaHistoryEntry from './components/layout/VdaHistoryEntry.jsx';
 import { resolvePool, clampDifficulty } from './config/rules/dicePool.js';
 import { CHRONICLE } from './config/chronicle.js';
-import { NATURES, npcDefaults, initialNpcState, isOut } from './config/rules/npc.js';
+import { NATURES, npcDefaults, initialNpcState, isOut, npcHealthMarks } from './config/rules/npc.js';
+import { initiativeValue } from './config/rules/sheetRules.js';
+import { woundFromRatio } from '../../tools/initiative.js';
 import VdaNpcSheet from './components/npc/VdaNpcSheet.jsx';
 import VdaNpcForm from './components/npc/VdaNpcForm.jsx';
 import VdaNpcRollWindow from './components/npc/VdaNpcRollWindow.jsx';
@@ -138,6 +140,31 @@ const woddavampireConfig = {
         gravity:          500,
         sounds:           true,
         animationEnabled: true,
+    },
+
+    // Initiative de la plateforme (spec_initiative.md §9.8, §12, Q-16) : ordre trié ; valeur
+    // = Dextérité + Astuce + Célérité, le MJ y ajoute le d10 annoncé ; action retardée.
+    // PNJ : Dex + Astuce (nuée : sa valeur d'initiative) ; blessure par les niveaux de santé,
+    // la santé d'une nuée ou l'Essence d'un esprit.
+    initiative: {
+        mode: 'order',
+        delay: true,
+        characterInitiative: (character) => initiativeValue(character),
+        npcInitiative: ({ sheet }) => {
+            const sd = sheet?.systemData ?? {};
+            if ((sd.nature ?? 'character') === 'swarm') return typeof sd.initiative === 'number' ? sd.initiative : null;
+            const a = sd.attributes ?? {};
+            return typeof a.dexterity === 'number' || typeof a.wits === 'number' ? (a.dexterity ?? 0) + (a.wits ?? 0) : null;
+        },
+        npcWound: ({ sheet, state }) => {
+            const sd = sheet?.systemData ?? {};
+            if (isOut(sd, state)) return 'out';
+            const nature = sd.nature ?? 'character';
+            if (nature === 'swarm') return woundFromRatio(1 - Number(state?.damage ?? 0) / Math.max(1, Number(sd.healthPoints ?? 1)));
+            if (nature === 'spirit') return Number(sd.essence) > 0 ? woundFromRatio(Number(state?.essence ?? sd.essence) / Number(sd.essence)) : null;
+            const marks = npcHealthMarks(sd, state);
+            return woundFromRatio(1 - marks.filter(Boolean).length / marks.length);
+        },
     },
 };
 

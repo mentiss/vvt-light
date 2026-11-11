@@ -49,7 +49,7 @@ describe('droits des routes', () => {
         const routers = [
             ['auth', require(path.join(SERVER, 'routes/auth.js'))],
             ['characters', require(path.join(SERVER, 'routes/characters.js'))],
-            ...['sessions', 'journal', 'dice', 'npcs', 'audio', 'board'].map(r => [r, Loader.getSharedRoute(r)]),
+            ...['sessions', 'journal', 'dice', 'npcs', 'audio', 'board', 'initiative'].map(r => [r, Loader.getSharedRoute(r)]),
         ];
         for (const slug of slugs.filter(s => !PENDING_SLUGS.includes(s))) {
             const own = path.join(SERVER, 'systems', slug, 'routes', 'characters.js');

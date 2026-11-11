@@ -679,3 +679,17 @@ html[data-vk-skin="pierre"] .vk-brand.is-title .vk-brand-runes { color: var(--co
     html[data-vk-skin="pierre"] .vk-tab.is-active::before,
     html[data-vk-skin="pierre"] :is(.vk-token.is-blessure, .vk-token.is-fatigue)::before { animation: none; }
 }
+
+/* ── Initiative (spec_initiative.md §12, planche documentations/initiative/, retour MJ : la forme
+   angulaire des dalles) : la bande, son menu, sa carte et son bandeau prennent la dalle taillée
+   (VkSlabBg.jsx, SLAB_TARGETS) ; portraits ronds cerclés d'ocre, Uncial et Alegreya SC. ── */
+html[data-vk-skin="pierre"] :is(.vtt-initiative, .vtt-initiative-menu, .vtt-initiative-card, .vtt-initiative-resume) {
+    isolation: isolate; background: transparent; border: none; box-shadow: none; backdrop-filter: none;
+}
+html[data-vk-skin="pierre"] .vtt-initiative { padding: .55rem .8rem; }
+html[data-vk-skin="pierre"] :is(.vtt-initiative-menu, .vtt-initiative-card) { padding: .9rem 1rem; }
+html[data-vk-skin="pierre"] .vtt-initiative-frame { border-radius: 50%; border-color: color-mix(in srgb, var(--color-primary) 55%, transparent); }
+html[data-vk-skin="pierre"] .vtt-initiative-avatar { border-radius: 50%; font-family: 'Uncial Antiqua', serif; }
+html[data-vk-skin="pierre"] :is(.vtt-initiative-round, .vtt-initiative-btn) { font-family: 'Alegreya SC', serif; }
+html[data-vk-skin="pierre"] .vtt-initiative-btn { border-radius: 6px; box-shadow: inset 1px 1px 0 var(--vk-slab-hi), inset -1px -1px 0 var(--vk-slab-lo); }
+html[data-vk-skin="pierre"] .vtt-initiative-btn.is-icon { box-shadow: none; }

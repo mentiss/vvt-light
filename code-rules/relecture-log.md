@@ -27,7 +27,9 @@ Une ligne par relecture croisée (`/relecture`, `documentations/spec_relecture.m
 | 2026-11-11 | Musique, complément du bloc C : Suno retiré, Google Drive et Dropbox (`spec_audio.md` §14.3 bis) | — | — | 0 / 0 |
 | 2026-11-11 | Musique : retrait de la source « fichier son » (Drive bloqué par le navigateur, MP3 hébergés laissés de côté), 2 passes | C-SPEC (titres YouTube demandés avant la vérification des autres liens d'un ajout mixte) | — | ? / 1 (vérifier dans le test l'absence d'appel réseau, pas seulement le refus) |
 | 2026-11-11 | Vileborn, défis : bandeau du dernier déclencheur atteint maintenu aux cases suivantes | — | — | 0 / 0 |
+| 2026-11-11 | Initiative, lot 1 : socle + Delta Green (`spec_initiative.md` §10) ; seconde passe non relue (quota) | F-TOKENS (repli `#fff` des nouvelles classes) | — | 5 / 5 (camp vidé qui bloquait le mode camps, annulation appliquée à une autre table, réponses d'écritures hors d'ordre, `is-active` des segments, fenêtre de lancement fermée sur un refus) |
 | 2026-11-11 | Dune, fiche : infobulle habillée (nouvelle brique `Tooltip`) sur maximes et spécialisations, descriptions d'atouts et de talents en `ExpandableText` | non relu (quota) | — | — |
+| 2026-11-11 | Initiative, lots 2 et 3 + retours du MJ (`spec_initiative.md` §11, §12), relus ensemble après réinitialisation du quota ; seconde passe non lancée (relecture désormais sur accord du MJ : celle-ci a pris 30 % d'une session) | C-SPEC ×4 (PNJ sortis trop tôt sur Maledictum et Achtung, actif fantôme après vidage de la table, camp d'ouverture vide qui figeait le tour) | — | 2 / 2 (verrou de « garder la main » pendant le paiement et état le plus récent, erreurs affichées dans la fiche ouverte depuis la bande) |
 
 ## Décompte par identifiant
 
@@ -35,6 +37,6 @@ Une ligne par relecture croisée (`/relecture`, `documentations/spec_relecture.m
 |---|---|---|
 | C-TEST | 2 | 2026-11-08 |
 | B-LOG | 1 | 2026-11-08 |
-| C-SPEC | 14 | 2026-11-11 |
-| F-TOKENS | 1 | 2026-11-09 |
+| C-SPEC | 18 | 2026-11-11 |
+| F-TOKENS | 2 | 2026-11-11 |
 | B-COALESCE | 2 | 2026-11-10 |

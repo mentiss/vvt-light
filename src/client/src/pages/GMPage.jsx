@@ -18,6 +18,7 @@ import { ModalHostProvider } from '../components/ui/ModalHost.jsx';
 import { ActionZoneProvider } from '../components/ui/ActionZone.jsx';
 import AudioLayer    from '../components/audio/AudioLayer.jsx';
 import BoardLayer    from '../components/board/BoardLayer.jsx';
+import InitiativeLayer from '../components/initiative/InitiativeLayer.jsx';
 
 const SYSTEM_GM_APPS = import.meta.glob('../systems/*/GMApp.jsx');
 const THEMES    = import.meta.glob('../systems/*/theme.css');
@@ -97,6 +98,8 @@ const GMPage = () => {
                 <AudioLayer role="gm" sessionId={activeSession?.id ?? null} />
                 {/* Tableau partagé de la table active (spec_tableau.md §10.8) */}
                 <BoardLayer role="gm" sessionId={activeSession?.id ?? null} />
+                {/* Initiative de la table active, si le slug l'a adoptée (spec_initiative.md §9.6) */}
+                <InitiativeLayer role="gm" sessionId={activeSession?.id ?? null} characters={activeSession?.characters} />
             </ActionZoneProvider>
             </ModalHostProvider>
         );

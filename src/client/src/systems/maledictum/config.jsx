@@ -9,7 +9,8 @@
 import { RollError } from '../../tools/diceEngine.js';
 import MlHistoryEntry from './components/layout/MlHistoryEntry.jsx';
 import { resolveTest, resolveAttack, resolvePower, applySlBonus, slBand, charsFromDice } from './config/rules/dice.js';
-import { CHAR_KEYS } from './config/rules/character.js';
+import { CHAR_KEYS, derived } from './config/rules/character.js';
+import { woundFromRatio } from '../../tools/initiative.js';
 import { lookupTable } from './config/rules/tables.js';
 import { SETUP, available } from './config/setup.js';
 import { BESTIARY } from './config/bestiary.js';
@@ -152,6 +153,24 @@ const maledictumConfig = {
         gravity:          500,
         sounds:           true,
         animationEnabled: true,
+    },
+
+    // Initiative de la plateforme (spec_initiative.md §9.8, §12) : ordre trié par l'initiative
+    // statique (BPer + BAg + bonus, spec_maledictum : « le bloc combat de la plateforme ordonne ») ;
+    // blessure d'un PNJ : Blessures encaissées, une Blessure critique la rend grave.
+    initiative: {
+        mode: 'order',
+        characterInitiative: (character) => derived(character).initiative,
+        npcInitiative: ({ sheet }) => (typeof sheet?.systemData?.initiative === 'number' ? sheet.systemData.initiative : null),
+        npcWound: ({ sheet, state }) => {
+            const sd = sheet?.systemData;
+            if (isOut(sd, state)) return 'out';
+            if (Number(state?.crits ?? 0) > 0) return 'severe';
+            // Toutes les Blessures sans critique : encore debout (seul isOut met hors de combat)
+            const max = Number(sd?.wounds ?? 0);
+            const wound = max > 0 ? woundFromRatio(1 - Number(state?.wounds ?? 0) / max) : null;
+            return wound === 'out' ? 'severe' : wound;
+        },
     },
 };
 

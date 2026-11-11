@@ -11,6 +11,8 @@ import { BASE_DICE, MAX_DICE, resolveRoll } from './config/rules/roll.js';
 import { bestSkill, defaultNpcData, initialNpcState, rankLabel } from './config/rules/npc.js';
 import { traitLabel } from './config/traits.js';
 import DuneIcon from './components/ui/DuneIcon.jsx';
+import { woundFromRatio } from '../../tools/initiative.js';
+import { changeSessionResource } from '../../tools/sessionResources.js';
 import DuneNpcSheet from './components/npc/DuneNpcSheet.jsx';
 import DuneNpcForm from './components/npc/DuneNpcForm.jsx';
 import DuneNpcRollWindow from './components/npc/DuneNpcRollWindow.jsx';
@@ -154,6 +156,30 @@ const duneConfig = {
         // Délègue au composant Dune-spécifique.
         renderHistoryEntry: (entry) => <DuneHistoryEntry roll={entry} />,
         renderAllRollTypes: true,   // le slug rend aussi le jet libre (onglet, panneau, notifications)
+    },
+
+    // Initiative de la plateforme (spec_initiative.md §9.8, §11) : conflit en alternance entre
+    // camps ; garder la main une fois par tour et par camp, la main passant à un autre
+    // personnage du camp (règle de table, Q-37, Q-38). Côté PJ : 2 Impulsion ou +2 Menace (Q-39) ;
+    // côté adversaires : 2 Menace dépensés. Débit par la route des ressources de session (Q-43).
+    initiative: {
+        label: 'Conflit',
+        mode: 'sides',
+        keepInitiative: {
+            players: [
+                { label: '2 Impulsion', run: (ctx) => changeSessionResource(ctx, 'impulsions', -2, 'Impulsion') },
+                { label: '+2 Menace',   run: (ctx) => changeSessionResource(ctx, 'menace', 2, 'Menace') },
+            ],
+            gm: { label: '2 Menace', run: (ctx) => changeSessionResource(ctx, 'menace', -2, 'Menace') },
+        },
+        // Défaite : vaincu, ou part du seuil de défaite (quand le MJ l'a fixé)
+        npcWound: ({ state }) => {
+            if (state?.defeated) return 'out';
+            // Seuil atteint sans être vaincu (résistance possible) : encore debout, au plus grave
+            const max = Number(state?.defeatMax ?? 0);
+            const wound = max > 0 ? woundFromRatio(1 - Number(state?.defeat ?? 0) / max) : null;
+            return wound === 'out' ? 'severe' : wound;
+        },
     },
 };
 

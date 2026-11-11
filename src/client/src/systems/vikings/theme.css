@@ -1084,3 +1084,24 @@ html[data-vk-skin] .vk-cr-mini-caracs .vk-stat .lbl { font-size: .66rem; }
 .vk-npc-pills { display: flex; flex-wrap: wrap; gap: .35rem; }
 .vk-npc-line { font-size: .92rem; }
 .vk-npc-fold > summary { cursor: pointer; color: var(--color-text-muted); }
+
+/* ── Initiative (components/initiative, spec_initiative.md §12, planche documentations/initiative/) ── */
+/* Bois et or : panneau vk à bordure, ombre du panneau, Grenze pour le tour et les boutons, Alegreya,
+   initiales en Eagle Lake ; halo doré pour qui agit. La pierre peinte est dans theme-pierre.css. */
+.vtt-initiative { border-radius: 2px; border: 2px solid var(--color-border); background: var(--color-surface); box-shadow: var(--vk-panel-shadow); backdrop-filter: none; font-family: var(--vk-font-body); }
+.vtt-initiative-label { font-family: var(--vk-font-body); font-weight: 400; letter-spacing: .12em; }
+.vtt-initiative-round { font-family: var(--vk-font-label); font-weight: 400; font-size: 1.3rem; }
+.vtt-initiative-group { border-radius: 2px; }
+.vtt-initiative-sep { background: linear-gradient(180deg, transparent, var(--color-border) 20%, var(--color-border) 80%, transparent); }
+.vtt-initiative-frame { border-radius: 2px; }
+.vtt-initiative-avatar { border-radius: 0; font-family: var(--vk-font-title); font-weight: 400; color: var(--color-primary); }
+.vtt-initiative-name { font-size: .72rem; font-style: italic; }
+.vtt-initiative-entry[data-active] .vtt-initiative-frame { box-shadow: 0 0 0 2px color-mix(in srgb, var(--color-primary) 30%, transparent), 0 0 12px color-mix(in srgb, var(--color-primary) 45%, transparent); }
+.vtt-initiative-badge { border-radius: 2px; font-family: var(--vk-font-body); }
+.vtt-initiative-btn { border-radius: 2px; background: transparent; border-color: var(--color-border); font-family: var(--vk-font-label); font-weight: 400; font-size: .95rem; }
+.vtt-initiative-btn.is-primary { background: var(--color-primary); color: var(--color-on-primary, var(--color-surface)); }
+.vtt-initiative-btn.is-icon { border-color: transparent; font-size: .8rem; }
+.vtt-initiative-menu, .vtt-initiative-card, .vtt-initiative-resume {
+    border-radius: 2px; border: 2px solid var(--color-border); box-shadow: var(--vk-panel-shadow), 0 14px 32px rgba(0,0,0,.45); font-family: var(--vk-font-body);
+}
+.vtt-initiative-menu-title, .vtt-initiative-card-title { font-family: var(--vk-font-label); font-weight: 400; font-size: 1.05rem; }
