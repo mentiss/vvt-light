@@ -18,7 +18,7 @@ import CatalogModal from '../../../../components/modals/CatalogModal.jsx';
 import ConfirmModal from '../../../../components/modals/ConfirmModal.jsx';
 import { DEFAULT_DIFFICULTY } from '../../config/rules/test.js';
 import { addWound, sufferState } from '../../config/rules/character.js';
-import { toggleBox, reachedTrigger, blankSheet, duplicateSheet, cleanSheet, canSaveSheet } from '../../config/rules/challenge.js';
+import { toggleBox, lastReachedTrigger, blankSheet, duplicateSheet, cleanSheet, canSaveSheet } from '../../config/rules/challenge.js';
 import { CHALLENGE_FILTERS, CHALLENGE_GROUP, CHALLENGE_SEARCH, sortByFamily, sourceLabel } from '../../config/challenges.js';
 import { useChallenges } from '../../hooks/useChallenges.js';
 import VilChallengeSheet from '../../components/challenge/VilChallengeSheet.jsx';
@@ -47,7 +47,6 @@ const TabChallenges = ({ activeSession, characters, order, patchCharacter }) => 
     const [libId, setLibId] = useState(null);
     const [draft, setDraft] = useState(null);        // formulaire ouvert (fiche, avec id si modification)
     const [base, setBase] = useState(DEFAULT_DIFFICULTY);
-    const [trigger, setTrigger] = useState(null);    // { activeId, trigger } : déclencheur mis en avant
     const [picker, setPicker] = useState(null);      // { anchor, effect } : choix du Paria
     const [darkFor, setDarkFor] = useState(null);    // fiche du défi dont on lance le d12
     const [confirm, setConfirm] = useState(null);    // { title, message, confirmText, onConfirm }
@@ -60,16 +59,13 @@ const TabChallenges = ({ activeSession, characters, order, patchCharacter }) => 
 
     const launch = async (challengeId) => {
         const created = await ch.launch(challengeId);
-        if (created) { setActiveId(created.id); setTrigger(null); }
+        if (created) setActiveId(created.id);
         return created;
     };
 
     // ── À la table ──
     const onProgress = (box) => {
-        const next = toggleBox(current.progress, box);
-        const reached = reachedTrigger(current.sheet, current.progress, next);
-        setTrigger(reached ? { activeId: current.id, trigger: reached } : null);
-        ch.patchActive(current.id, { progress: next });
+        ch.patchActive(current.id, { progress: toggleBox(current.progress, box) });
     };
     const applyEffect = (c) => {
         patchCharacter(c.id, picker.effect === 'wound' ? addWound(c) : sufferState(c, picker.effect));
@@ -126,7 +122,7 @@ const TabChallenges = ({ activeSession, characters, order, patchCharacter }) => 
                         {ch.active.length === 0 && <p className="vil-note">Aucun défi en cours.</p>}
                         {ch.active.map(a => (
                             <button key={a.id} type="button" className={`vil-ch-item${a.id === current?.id ? ' is-selected' : ''}`}
-                                    onClick={() => { setActiveId(a.id); setTrigger(null); }}>
+                                    onClick={() => setActiveId(a.id)}>
                                 <small>{a.sheet.kind}</small>
                                 <strong>{a.sheet.name}</strong>
                                 <VilTrackMini sheet={a.sheet} progress={a.progress} />
@@ -142,7 +138,7 @@ const TabChallenges = ({ activeSession, characters, order, patchCharacter }) => 
                             onNotes={(notes) => ch.patchActive(current.id, { notes })}
                             onEffect={(effect, anchor) => setPicker({ effect, anchor })}
                             onDark={() => setDarkFor(current.sheet)}
-                            trigger={trigger?.activeId === current.id ? trigger.trigger : null} onCloseTrigger={() => setTrigger(null)}
+                            trigger={lastReachedTrigger(current.sheet, current.progress)}
                             actions={<>
                                 <button type="button" className="vtt-btn vtt-btn-sm" onClick={openModel} disabled={!current.challengeId}
                                         title={current.challengeId ? undefined : 'Le modèle a été supprimé de la bibliothèque'}>Ouvrir le modèle</button>

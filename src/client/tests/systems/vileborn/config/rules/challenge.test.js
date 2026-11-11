@@ -3,7 +3,7 @@
 // et de la Revenante (kit p. 72-73).
 import { describe, it, expect } from 'vitest';
 import {
-    finalDifficulty, reachedTrigger, toggleBox, isDone, darkActive, darkRow,
+    finalDifficulty, lastReachedTrigger, toggleBox, isDone, darkActive, darkRow,
     duplicateSheet, cleanSheet, canSaveSheet, blankSheet,
 } from '../../../../../src/systems/vileborn/config/rules/challenge.js';
 
@@ -36,14 +36,21 @@ describe('Piste et déclencheurs', () => {
         expect(toggleBox(3, 3)).toBe(2);
         expect(toggleBox(3, 1)).toBe(0);
     });
-    it('cocher la 3ᵉ case d\'Igritte déclenche sa transformation', () => {
-        expect(reachedTrigger(igritte, 2, 3)).toMatchObject({ box: 3 });
-        expect(reachedTrigger(igritte, 0, 5)).toMatchObject({ box: 3 });
+    it('rien avant la 3ᵉ case d\'Igritte', () => {
+        expect(lastReachedTrigger(igritte, 0)).toBeNull();
+        expect(lastReachedTrigger(igritte, 2)).toBeNull();
     });
-    it('rien en décochant ni en restant sous la case', () => {
-        expect(reachedTrigger(igritte, 3, 2)).toBeNull();
-        expect(reachedTrigger(igritte, 0, 2)).toBeNull();
-        expect(reachedTrigger(igritte, 3, 4)).toBeNull();
+    it('la transformation d\'Igritte reste en avant aux cases suivantes', () => {
+        expect(lastReachedTrigger(igritte, 3)).toMatchObject({ box: 3 });
+        expect(lastReachedTrigger(igritte, 4)).toMatchObject({ box: 3 });
+        expect(lastReachedTrigger(igritte, 5)).toMatchObject({ box: 3 });
+    });
+    it('plusieurs déclencheurs (Igritte de l\'Apocrypha) : le plus haut atteint, l\'ancien revient en décochant', () => {
+        const apocrypha = { track: 8, triggers: [2, 4, 6, 8].map(box => ({ box, text: `Case ${box}` })) };
+        expect(lastReachedTrigger(apocrypha, 5)).toMatchObject({ box: 4 });
+        expect(lastReachedTrigger(apocrypha, 6)).toMatchObject({ box: 6 });
+        expect(lastReachedTrigger(apocrypha, 3)).toMatchObject({ box: 2 });
+        expect(lastReachedTrigger(apocrypha, 1)).toBeNull();
     });
     it('défi surmonté quand la piste est pleine', () => {
         expect(isDone(igritte, 5)).toBe(true);

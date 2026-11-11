@@ -3,7 +3,7 @@
 // Défis (spec_vileborn_defis.md §II.1, §II.4) — pur.
 //   - difficulté finale d'une approche : base choisie par le MJ + écart de la
 //     fiche + ajustement en jeu (le total peut dépasser 7) ;
-//   - piste : déclencheur d'une case, déclencheur atteint en cochant ;
+//   - piste : déclencheur d'une case, dernier déclencheur atteint ;
 //   - dé d'obscurité : actif selon `when`, ligne retenue = la plus haute dont
 //     le minimum est atteint ;
 //   - fiche vierge, duplication, validation du formulaire.
@@ -22,12 +22,12 @@ export const finalDifficulty = (sheet, adjust, approach, base) =>
 export const triggerAt = (sheet, box) => (sheet?.triggers ?? []).find(t => t.box === box) ?? null;
 
 /**
- * Déclencheur atteint en passant la piste de `from` à `to` cases cochées : le
- * plus haut franchi (cocher plusieurs cases d'un coup n'en montre qu'un). null
- * en décochant.
+ * Dernier déclencheur atteint avec `progress` cases cochées : celui de la case
+ * à déclencheur la plus haute parmi les cochées (null avant le premier). Il
+ * reste mis en avant aux cases suivantes, jusqu'au déclencheur d'après.
  */
-export const reachedTrigger = (sheet, from, to) => {
-    for (let box = to; box > from; box--) {
+export const lastReachedTrigger = (sheet, progress) => {
+    for (let box = progress; box > 0; box--) {
         const trigger = triggerAt(sheet, box);
         if (trigger) return trigger;
     }

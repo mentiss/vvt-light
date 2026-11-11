@@ -59,7 +59,7 @@ Réponds dans la colonne « Réponse ».
 |---|---|---|---|
 | 6 | Où vit le défi en cours ? | Un onglet **« Défi »** dans l'interface MJ (à côté de Session) : bouton « Lancer un défi » → catalogue (filtres par famille, recherche) → la fiche s'ouvre en version **jouable**. | Oui (reco). |
 | 7 | Plusieurs défis **en même temps** ? | **Oui** (ex. la Revenante pendant un Voyage), empilés en cartes ; un seul déplié à la fois. | Oui (reco). |
-| 8 | La **piste de progression** : | Cases cliquables (coche / décoche). Les cases à déclencheur sont marquées en rouge ; **cocher une telle case met son effet en avant** (encadré en tête de la fiche) jusqu'à ce que le MJ le referme. Au bout de la piste : « Défi surmonté ». | Oui (reco). |
+| 8 | La **piste de progression** : | Cases cliquables (coche / décoche). Les cases à déclencheur sont marquées en rouge ; **cocher une telle case met son effet en avant** (encadré en tête de la fiche), maintenu aux cases suivantes : l'encadré montre toujours le dernier déclencheur atteint, sans bouton de fermeture, et revient au précédent si la piste est décochée sous sa case (retour du MJ, 2026-11-11). Au bout de la piste : « Défi surmonté ». | Oui (reco). |
 | 9 | La **difficulté** : | Bandeau des 6 approches avec le modificateur, et la difficulté finale calculée pour la base choisie (pills Facile 4 · Normale 5 · Difficile 6 · Très difficile 7). Un déclencheur qui change la difficulté (Igritte : « +1 à tous les tests ») se coche à la main, sans moteur de règles. | Oui (reco). |
 | 10 | Les **complications** : | Liste de phrases avec l'effet. **Clic sur l'effet → choix du Paria → l'état ou la blessure est cochée sur sa fiche** (même règle que le MJ applique déjà : état déjà coché → blessure). Ça évite l'aller-retour vers l'onglet Session. | Oui (reco). |
 | 11 | Le **dé d'obscurité** du défi : | Bouton « Dé d'obscurité » **dans la fiche du défi** : même lancer que l'actuel (public ou caché), mais le résultat affiche **la ligne de la table du défi** atteinte (la plus haute ≤ résultat). Le bouton général de la bande reste pour les d12 improvisés. | Oui (reco). |
@@ -154,7 +154,7 @@ Validation : `sheet` objet avec `name` non vide et `track` entier de 1 à 12 ; `
 ```
 config/challenges.js       FAMILIES, SOURCES, CHALLENGE_EFFECTS, DARK_WHEN ; filtres et groupes de recherche (CatalogModal, bibliothèque)
 config/rules/challenge.js  pures, testées : finalDifficulty(sheet, adjust, approach, base),
-                           triggerAt(sheet, box), reachedTrigger(sheet, from, to), toggleBox(progress, box),
+                           triggerAt(sheet, box), lastReachedTrigger(sheet, progress), toggleBox(progress, box),
                            darkRow(sheet, value), darkActive(sheet, progress), isDone(sheet, progress),
                            blankSheet(), duplicateSheet(sheet), cleanSheet(sheet), canSaveSheet(sheet)
 hooks/useChallenges.js     bibliothèque + défis en cours de la table (HTTP)
@@ -180,7 +180,7 @@ Les **actions d'une fiche sont en tête**, dans une barre au-dessus du nom (acc�
 
 **À la table**
 - Liste des défis en cours (nom, piste en miniature, sous-titre) ; un seul affiché. Vide : « Aucun défi en cours » + « Lancer un défi ».
-- **Fiche en mode jeu** : en-tête (nom, sous-titre, source et page, citation) · **piste** (cases cliquables, cases à déclencheur en rouge, « Défi surmonté » au bout) · **déclencheur atteint** encadré en tête, refermable · **difficultés** (base en pills 4 · 5 · 6 · 7 ; par approche l'écart, l'ajustement en jeu −/+ et la difficulté finale) · résistances / vulnérabilités · déclencheurs · **complications** (phrase + effet cliquable) · **dé d'obscurité** (quand, seuil, lignes ; bouton de lancer, ligne atteinte surlignée) · règles spéciales, règles de la famille repliées · **notes**. Barre d'actions : Ouvrir le modèle (dans la bibliothèque) · Retirer le défi.
+- **Fiche en mode jeu** : en-tête (nom, sous-titre, source et page, citation) · **piste** (cases cliquables, cases à déclencheur en rouge, « Défi surmonté » au bout) · **dernier déclencheur atteint** encadré en tête, maintenu aux cases suivantes (déduit de la piste) · **difficultés** (base en pills 4 · 5 · 6 · 7 ; par approche l'écart, l'ajustement en jeu −/+ et la difficulté finale) · résistances / vulnérabilités · déclencheurs · **complications** (phrase + effet cliquable) · **dé d'obscurité** (quand, seuil, lignes ; bouton de lancer, ligne atteinte surlignée) · règles spéciales, règles de la famille repliées · **notes**. Barre d'actions : Ouvrir le modèle (dans la bibliothèque) · Retirer le défi.
 
 **Bibliothèque**
 - Liste filtrée (recherche, Source, Famille), groupée par famille, avec « Nouveau défi ».

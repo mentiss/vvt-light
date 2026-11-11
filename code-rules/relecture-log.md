@@ -26,6 +26,7 @@ Une ligne par relecture croisée (`/relecture`, `documentations/spec_relecture.m
 | 2026-11-10 | Musique, bloc C : nouvelles sources (Vimeo, SoundCloud, Suno, fichier son, `spec_audio.md` §14.3), 2 passes | C-SPEC ×3 (autopause Vimeo et exclusivité SoundCloud qui coupaient une autre piste, `links` mal formé filtré au lieu de refusé) | — | 1 / 1 (écouteur READY du widget SoundCloud figé sur le premier chargement) |
 | 2026-11-11 | Musique, complément du bloc C : Suno retiré, Google Drive et Dropbox (`spec_audio.md` §14.3 bis) | — | — | 0 / 0 |
 | 2026-11-11 | Musique : retrait de la source « fichier son » (Drive bloqué par le navigateur, MP3 hébergés laissés de côté), 2 passes | C-SPEC (titres YouTube demandés avant la vérification des autres liens d'un ajout mixte) | — | ? / 1 (vérifier dans le test l'absence d'appel réseau, pas seulement le refus) |
+| 2026-11-11 | Vileborn, défis : bandeau du dernier déclencheur atteint maintenu aux cases suivantes | — | — | 0 / 0 |
 
 ## Décompte par identifiant
 

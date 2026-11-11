@@ -10,7 +10,7 @@
 // Props : sheet, mode ('play' | 'read'), actions (nœud de la barre d'actions)
 //   play seulement : progress, adjust, notes, base, onBase(n), onProgress(n),
 //   onAdjust(adjust), onNotes(text), onEffect(effectKey, anchorEl), onDark(),
-//   trigger (déclencheur mis en avant ou null), onCloseTrigger()
+//   trigger (dernier déclencheur atteint, maintenu aux cases suivantes, ou null)
 // ─────────────────────────────────────────────────────────────────────────────
 
 import React, { useState } from 'react';
@@ -70,7 +70,7 @@ const Notes = ({ notes, onNotes }) => {
 const VilChallengeSheet = ({
     sheet, mode = 'read', actions,
     progress = 0, adjust = {}, notes = '', base = DEFAULT_DIFFICULTY,
-    onBase, onProgress, onAdjust, onNotes, onEffect, onDark, trigger, onCloseTrigger,
+    onBase, onProgress, onAdjust, onNotes, onEffect, onDark, trigger,
 }) => {
     const play = mode === 'play';
     const dark = sheet.dark ?? { when: 'none', rows: [] };
@@ -95,7 +95,6 @@ const VilChallengeSheet = ({
             {play && trigger && (
                 <div className="vil-ch-alert" role="status">
                     <div><b>Déclencheur — case {trigger.box}</b>{trigger.text}</div>
-                    <button type="button" onClick={onCloseTrigger} aria-label="Fermer">×</button>
                 </div>
             )}
             {sheet.description && <p className="vil-ch-desc">{sheet.description}</p>}
