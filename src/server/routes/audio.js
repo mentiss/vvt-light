@@ -23,6 +23,7 @@ const { sharedState } = require('../socket/index');
 const { getDbForSystem } = require('../db');
 const { getModuleConfig } = require('../db/moduleConfig');
 const { getConfigForSystem } = require('../systems/Loader');
+const { parseLink, resolveLink, LinkError } = require('../utils/audioSources');
 
 const YOUTUBE_ID = /^[A-Za-z0-9_-]{11}$/;
 const OEMBED_URL = 'https://www.youtube.com/oembed?format=json&url=';
@@ -61,7 +62,7 @@ function nestCollections(db, collections) {
         WHERE collection_id IN (SELECT value FROM json_each(?)) ORDER BY position, id
     `).all(ids);
     const tracks = db.prepare(`
-        SELECT t.id, t.playlist_id, t.youtube_id, t.title, t.gain, t.unavailable, t.duration
+        SELECT t.id, t.playlist_id, t.source, t.media_id, t.title, t.gain, t.unavailable, t.duration
         FROM audio_tracks t JOIN audio_playlists p ON p.id = t.playlist_id
         WHERE p.collection_id IN (SELECT value FROM json_each(?)) ORDER BY t.position, t.id
     `).all(ids);
@@ -69,7 +70,7 @@ function nestCollections(db, collections) {
     const tracksByPlaylist = new Map();
     for (const t of tracks) {
         if (!tracksByPlaylist.has(t.playlist_id)) tracksByPlaylist.set(t.playlist_id, []);
-        tracksByPlaylist.get(t.playlist_id).push({ id: t.id, youtubeId: t.youtube_id, title: t.title, gain: t.gain, unavailable: !!t.unavailable, duration: t.duration });
+        tracksByPlaylist.get(t.playlist_id).push({ id: t.id, source: t.source, mediaId: t.media_id, title: t.title, gain: t.gain, unavailable: !!t.unavailable, duration: t.duration });
     }
     const playlistsByCollection = new Map();
     for (const p of playlists) {
@@ -168,8 +169,8 @@ function reorder(db, table, ids, where, params) {
 function copyTracks(db, fromPlaylistId, toPlaylistId) {
     const start = nextPosition(db, 'audio_tracks', 'playlist_id = ?', [toPlaylistId]);
     db.prepare(`
-        INSERT INTO audio_tracks (playlist_id, youtube_id, title, gain, duration, position)
-        SELECT ?, youtube_id, title, gain, duration, ? + ROW_NUMBER() OVER (ORDER BY position, id) - 1
+        INSERT INTO audio_tracks (playlist_id, source, media_id, title, gain, duration, position)
+        SELECT ?, source, media_id, title, gain, duration, ? + ROW_NUMBER() OVER (ORDER BY position, id) - 1
         FROM audio_tracks WHERE playlist_id = ?
     `).run(toPlaylistId, start, fromPlaylistId);
 }
@@ -248,13 +249,40 @@ function createCollection(ctx, name) {
             nextPosition(ctx.db, 'audio_collections', ...owner)).lastInsertRowid;
 }
 
-/** Ajoute des vidéos en fin de playlist, titres repris de YouTube (Q-21). */
-async function addTracks(ctx, playlistId, videoIds) {
-    const titles = await fetchTitles(videoIds);
-    const insert = ctx.db.prepare('INSERT INTO audio_tracks (playlist_id, youtube_id, title, position) VALUES (?, ?, ?, ?)');
+/**
+ * Titres à ajouter : vidéos YouTube (titres repris par oEmbed, Q-21) et liens d'autres
+ * plateformes résolus (§14.3). Un lien refusé fait tout refuser : { error } en français.
+ */
+async function resolveItems(videoIds, links) {
+    const items = [];
+    try {
+        // Tous les liens lus avant le premier appel réseau (YouTube compris) : un lien refusé ne fait rien résoudre
+        links.forEach(parseLink);
+        if (videoIds.length) {
+            const titles = await fetchTitles(videoIds);
+            videoIds.forEach((videoId, i) => items.push({ source: 'youtube', mediaId: videoId, title: titles[i], duration: null }));
+        }
+        for (const link of links) items.push(await resolveLink(link));
+    } catch (error) {
+        if (error instanceof LinkError) return { error: error.message };
+        throw error;
+    }
+    return { items };
+}
+
+/** Liens reçus : absents = aucun ; sinon une liste de textes non vides, ou null (refus du lot entier). */
+const linkList = (links) => {
+    if (links === undefined || links === null) return [];
+    return Array.isArray(links) && links.every(isText) ? links : null;
+};
+const INVALID_LINKS = 'Liens invalides : une liste d\'adresses est attendue';
+
+/** Ajoute des titres résolus en fin de playlist. */
+function addTracks(ctx, playlistId, items) {
+    const insert = ctx.db.prepare('INSERT INTO audio_tracks (playlist_id, source, media_id, title, duration, position) VALUES (?, ?, ?, ?, ?, ?)');
     ctx.db.transaction(() => {
         let position = nextPosition(ctx.db, 'audio_tracks', 'playlist_id = ?', [playlistId]);
-        videoIds.forEach((videoId, i) => insert.run(playlistId, videoId, titles[i], position++));
+        for (const item of items) insert.run(playlistId, item.source, item.mediaId, item.title, item.duration, position++);
     })();
 }
 
@@ -279,8 +307,9 @@ const stateKey = (slug, sessionId) => `${slug}_${sessionId}`;
 const timerKey = (ctx, slot) => `${ctx.key}:${slot}`;
 
 const emptySlot = (slot, mode = SLOTS[slot].mode) => ({
-    status: 'stopped', trackId: null, youtubeId: null, title: null, gain: 100,
+    status: 'stopped', trackId: null, source: null, mediaId: null, title: null, gain: 100,
     playlistId: null, mode, position: 0, refTime: 0, duration: null,
+    start: 0,   // point d'entrée du morceau en cours (timecode d'un bouton, §14.2) : la boucle repart de là
 });
 
 function getState(ctx) {
@@ -337,21 +366,29 @@ function scheduleEnd(ctx, slot) {
     }, remainingMs));
 }
 
-/** Lance une vidéo de la bibliothèque de la table sur une piste. Renvoie false si elle n'y est pas. */
+/**
+ * Lance une vidéo de la bibliothèque de la table sur une piste, depuis `position`
+ * (retenue comme point d'entrée, §14.2). Renvoie false si elle n'y est pas.
+ */
 function playTrack(ctx, slot, trackId, position = 0) {
     const track = own(ctx, OWN_TRACK, trackId);
     if (!track) return false;
     const current = getState(ctx).slots[slot];
+    // Départ au-delà de la durée connue (bouton créé quand elle ne l'était pas) : depuis le début
+    const asked = Math.max(0, Number(position) || 0);
+    const start = track.duration && asked >= track.duration ? 0 : asked;
     Object.assign(current, {
         status: 'playing',
         trackId: track.id,
-        youtubeId: track.youtube_id,
+        source: track.source,
+        mediaId: track.media_id,
         title: track.title,
         gain: track.gain,
         playlistId: track.playlist_id,
-        position: Math.max(0, Number(position) || 0),
+        position: start,
         refTime: Date.now(),
         duration: null,
+        start,
     });
     clearEndTimer(ctx, slot);
     return true;
@@ -383,7 +420,8 @@ function advance(ctx, slot, { auto = false, step = 1 } = {}) {
 
     if (auto && current.mode === 'once') return stopSlot(ctx, slot);
     if (auto && current.mode === 'loop') {
-        Object.assign(current, { status: 'playing', position: 0, refTime: Date.now() });
+        // La boucle repart du timecode de lancement (V-6), 0 sans timecode
+        Object.assign(current, { status: 'playing', position: current.start ?? 0, refTime: Date.now() });
         return scheduleEnd(ctx, slot);
     }
 
@@ -459,6 +497,8 @@ const SLOT_COMMANDS = {
         const value = Number(duration);
         if (current.trackId !== trackId || !Number.isFinite(value) || value <= 0) return null;
         current.duration = value;
+        // Départ découvert au-delà de la fin : la boucle repartira du début, pas hors du morceau
+        if (current.start >= value) current.start = 0;
         // Lisible, et sa durée s'affiche désormais dans la bibliothèque
         ctx.db.prepare('UPDATE audio_tracks SET unavailable = 0, duration = ? WHERE id = ?').run(value, trackId);
         scheduleEnd(ctx, slot);
@@ -526,24 +566,47 @@ function captureScene(ctx) {
     return any ? { slots } : null;
 }
 
+/**
+ * Timecode d'un bouton sur un titre (§14.2), en secondes entières : undefined si absent
+ * (depuis le début), NaN si illisible ; au-delà de la durée connue du titre, ramené à 0.
+ */
+function parseStart(track, value) {
+    if (value === undefined || value === null || value === '') return undefined;
+    // Un nombre seulement : true ou [83] ne passent pas par Number()
+    if (typeof value !== 'number' || !Number.isFinite(value) || value < 0) return NaN;
+    // Arrondi avant la comparaison : 299,8 s sur un titre de 300 s ne tombe pas pile à la fin
+    const seconds = Math.round(value);
+    return track.duration && seconds >= track.duration ? 0 : seconds;
+}
+
 /** Actions d'un bouton ciblé, vérifiées (§12.6) ; { error } si refusé. */
-function targetActions(ctx, { slot, trackId, playlistId, shuffle }) {
+function targetActions(ctx, { slot, trackId, playlistId, shuffle, start }) {
     if (!SLOTS[slot]) return { error: `Unknown slot: ${slot}` };
     if (trackId) {
-        return own(ctx, OWN_TRACK, trackId) ? { slot, trackId: Number(trackId) } : { error: 'Track not found in this table library' };
+        const track = own(ctx, OWN_TRACK, trackId);
+        if (!track) return { error: 'Track not found in this table library' };
+        const seconds = parseStart(track, start);
+        if (Number.isNaN(seconds)) return { error: 'Invalid start' };
+        return seconds ? { slot, trackId: Number(trackId), start: seconds } : { slot, trackId: Number(trackId) };
     }
+    if (start !== undefined && start !== null && start !== '') return { error: 'A playlist button has no start' };
     if (!own(ctx, OWN_PLAYLIST, playlistId)) return { error: 'Playlist not found in this table library' };
     if (slot === 'effect') return { error: 'A playlist cannot target the effect slot' };
     if (shuffle && slot !== 'music') return { error: 'Shuffle is only available on the music slot' };
     return { slot, playlistId: Number(playlistId), shuffle: !!shuffle };
 }
 
-/** Lance une piste d'après une entrée (mode rétabli, depuis le début ; au hasard en mode shuffle). */
+/**
+ * Lance une piste d'après une entrée : mode rétabli, depuis son timecode (`start`, 0 sinon) ;
+ * au hasard en mode shuffle, toujours depuis le début.
+ */
 function runEntry(ctx, slot, entry) {
     const mode = entry.shuffle ? 'shuffle' : entry.mode ?? (entry.playlistId && !entry.trackId ? 'playlist' : null);
     if (mode && SLOTS[slot].modes.includes(mode)) getState(ctx).slots[slot].mode = mode;
     const fromPlaylist = entry.playlistId && (mode === 'shuffle' || !entry.trackId);
-    const ok = fromPlaylist ? !SLOT_COMMANDS.playPlaylist(ctx, slot, { playlistId: entry.playlistId }) : playTrack(ctx, slot, entry.trackId);
+    const ok = fromPlaylist
+        ? !SLOT_COMMANDS.playPlaylist(ctx, slot, { playlistId: entry.playlistId })
+        : playTrack(ctx, slot, entry.trackId, entry.start ?? 0);
     if (!ok) stopSlot(ctx, slot);
 }
 
@@ -779,9 +842,14 @@ router.post('/sessions/:sid/collections/:id/copy', ...gm, libraryRoute('copy col
 // Playlists
 // Création en un appel, pour coller un lien sans étape préalable : collection facultative
 // (la première de la table, créée au besoin), nom facultatif (titre de la playlist YouTube
-// importée, sinon « Playlist n »), vidéos facultatives (listId : playlist YouTube importée)
-router.post('/sessions/:sid/playlists', ...gm, libraryRoute('create playlist', async (ctx, { collectionId, name, listId, videoIds }) => {
+// importée, sinon « Playlist n »), vidéos facultatives (listId : playlist YouTube importée),
+// liens d'autres plateformes facultatifs (links, §14.3), résolus avant toute écriture
+router.post('/sessions/:sid/playlists', ...gm, libraryRoute('create playlist', async (ctx, { collectionId, name, listId, videoIds, links }) => {
     const ids = Array.isArray(videoIds) ? videoIds.filter(v => YOUTUBE_ID.test(v)) : [];
+    const urls = linkList(links);
+    if (!urls) return invalid(INVALID_LINKS);
+    const resolved = await resolveItems(ids, urls);
+    if (resolved.error) return invalid(resolved.error);
 
     let collection = collectionId;
     if (collection !== undefined && collection !== null) {
@@ -796,7 +864,7 @@ router.post('/sessions/:sid/playlists', ...gm, libraryRoute('create playlist', a
     const { lastInsertRowid } = ctx.db.prepare('INSERT INTO audio_playlists (collection_id, name, position) VALUES (?, ?, ?)')
         .run(collection, playlistName, nextPosition(ctx.db, 'audio_playlists', 'collection_id = ?', [collection]));
 
-    if (ids.length) await addTracks(ctx, lastInsertRowid, ids);
+    if (resolved.items.length) addTracks(ctx, lastInsertRowid, resolved.items);
     return { created: true };
 }));
 
@@ -843,12 +911,17 @@ router.post('/sessions/:sid/playlists/:id/copy', ...gm, libraryRoute('copy playl
     return { created: true };
 }));
 
-// Ajout d'une ou plusieurs vidéos (lien simple ou playlist YouTube importée, Q-21, Q-22)
-router.post('/sessions/:sid/playlists/:id/tracks', ...gm, libraryRoute('add tracks', async (ctx, { videoIds }, { id }) => {
+// Ajout d'un ou plusieurs titres : vidéos YouTube (lien simple ou playlist importée, Q-21, Q-22)
+// ou liens d'autres plateformes (links, §14.3)
+router.post('/sessions/:sid/playlists/:id/tracks', ...gm, libraryRoute('add tracks', async (ctx, { videoIds, links }, { id }) => {
     const ids = Array.isArray(videoIds) ? videoIds.filter(v => YOUTUBE_ID.test(v)) : [];
-    if (ids.length === 0) return invalid('No valid YouTube video id');
+    const urls = linkList(links);
+    if (!urls) return invalid(INVALID_LINKS);
+    if (ids.length === 0 && urls.length === 0) return invalid('Aucun lien valide');
     if (!own(ctx, OWN_PLAYLIST, id)) return notFound('Playlist');
-    await addTracks(ctx, id, ids);
+    const resolved = await resolveItems(ids, urls);
+    if (resolved.error) return invalid(resolved.error);
+    addTracks(ctx, id, resolved.items);
     return { created: true };
 }));
 
@@ -895,8 +968,8 @@ router.post('/sessions/:sid/tracks/:id/copy', ...gm, libraryRoute('copy track', 
     const source = readable(ctx, READABLE_TRACK, id);
     if (!source) return notFound('Track');
     if (!own(ctx, OWN_PLAYLIST, playlistId)) return notFound('Playlist');
-    ctx.db.prepare('INSERT INTO audio_tracks (playlist_id, youtube_id, title, gain, duration, position) VALUES (?, ?, ?, ?, ?, ?)')
-        .run(playlistId, source.youtube_id, source.title, source.gain, source.duration, nextPosition(ctx.db, 'audio_tracks', 'playlist_id = ?', [playlistId]));
+    ctx.db.prepare('INSERT INTO audio_tracks (playlist_id, source, media_id, title, gain, duration, position) VALUES (?, ?, ?, ?, ?, ?, ?)')
+        .run(playlistId, source.source, source.media_id, source.title, source.gain, source.duration, nextPosition(ctx.db, 'audio_tracks', 'playlist_id = ?', [playlistId]));
     return { created: true };
 }));
 
@@ -953,10 +1026,49 @@ router.put('/sessions/:sid/buttons/order', ...gm, buttonsRoute('reorder buttons'
     if (!reorder(ctx.db, 'audio_buttons', ids, 'slug = ? AND session_id = ?', [ctx.slug, ctx.sessionId])) return invalid('ids must be an array');
 }));
 
-// Renommer ; capture : remplacer une scène par ce qui joue
-router.put('/sessions/:sid/buttons/:id', ...gm, buttonsRoute('update button', (ctx, { label, capture }, { id }) => {
+/**
+ * Timecodes modifiés d'un bouton (§14.2) : `start` pour un bouton ciblé sur un titre,
+ * `starts` ({ piste: secondes | null }) pour une scène ; null ou vide = depuis le début.
+ * Renvoie les actions à jour, ou { error }.
+ */
+function withStarts(ctx, row, { start, starts }) {
+    const actions = parseActions(row);
+    if (!actions) return { error: 'Invalid button' };
+    const setStart = (entry, value) => {
+        if (!entry?.trackId || entry.mode === 'shuffle' || entry.shuffle) return 'Only a track can have a start';
+        const track = own(ctx, OWN_TRACK, entry.trackId);
+        if (!track) return 'Track not found in this table library';
+        const seconds = parseStart(track, value);
+        if (Number.isNaN(seconds)) return 'Invalid start';
+        if (seconds) entry.start = seconds;
+        else delete entry.start;
+        return null;
+    };
+
+    if (row.mode === 'target') {
+        if (start === undefined) return { actions };
+        const error = setStart(actions, start);
+        return error ? { error } : { actions };
+    }
+    if (starts === undefined) return { actions };
+    if (!starts || typeof starts !== 'object' || Array.isArray(starts)) return { error: 'starts must be an object' };
+    for (const [slot, value] of Object.entries(starts)) {
+        if (!SLOTS[slot]) return { error: `Unknown slot: ${slot}` };
+        const error = setStart(actions.slots?.[slot], value);
+        if (error) return { error };
+    }
+    return { actions };
+}
+
+// Renommer ; capture : remplacer une scène par ce qui joue ; start / starts : timecodes (§14.2)
+router.put('/sessions/:sid/buttons/:id', ...gm, buttonsRoute('update button', (ctx, { label, capture, start, starts }, { id }) => {
     const row = own(ctx, OWN_BUTTON, id);
     if (!row) return notFound('Button');
+    if (start !== undefined || starts !== undefined) {
+        const timed = withStarts(ctx, row, { start, starts });
+        if (timed.error) return invalid(timed.error);
+        ctx.db.prepare('UPDATE audio_buttons SET actions = ? WHERE id = ?').run(JSON.stringify(timed.actions), id);
+    }
     if (label !== undefined) {
         const name = buttonLabel(label);
         if (!name) return invalid('Label required');

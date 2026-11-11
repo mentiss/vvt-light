@@ -92,8 +92,10 @@ export function useAudioButtons(sessionId) {
         /** Lance un bouton ; l'état de lecture arrive par audio-state. */
         run: (id) => request('POST', `/${id}/run`),
         saveScene: (label) => write('POST', '', { label, mode: 'scene' }),
-        createTarget: ({ label, slot, trackId, playlistId, shuffle }) => write('POST', '', { label, mode: 'target', slot, trackId, playlistId, shuffle }),
+        createTarget: ({ label, slot, trackId, playlistId, shuffle, start }) => write('POST', '', { label, mode: 'target', slot, trackId, playlistId, shuffle, start }),
         rename: (id, label) => write('PUT', `/${id}`, { label }),
+        /** Timecodes (§14.2) : { start } pour un bouton ciblé, { starts: { piste: secondes | null } } pour une scène. */
+        setStart: (id, timecodes) => write('PUT', `/${id}`, timecodes),
         capture: (id) => write('PUT', `/${id}`, { capture: true }),
         reorder: (ids) => write('PUT', '/order', { ids }),
         remove: (id) => write('DELETE', `/${id}`),

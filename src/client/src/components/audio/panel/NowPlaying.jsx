@@ -23,7 +23,7 @@ export const NowPlaying = ({ audio, library, scenes, onGoto }) => {
 
     const slots = audio.state?.slots ?? {};
     const music = slots.music;
-    const hasMusic = !!music?.youtubeId;
+    const hasMusic = !!music?.mediaId;
     const place = hasMusic ? findPlaylist(library, music.playlistId) : null;
     const position = hasMusic ? expectedPosition(music, now) : 0;
     const send = (slot, action, extra = {}) => sendCommand({ slot, action, ...extra });
@@ -59,7 +59,7 @@ export const NowPlaying = ({ audio, library, scenes, onGoto }) => {
         );
     }
 
-    const layers = LAYER_SLOTS.filter(slot => slots[slot]?.youtubeId);
+    const layers = LAYER_SLOTS.filter(slot => slots[slot]?.mediaId);
 
     return (
         <div className="vtt-audio-now" role="region" aria-label="En cours de lecture">

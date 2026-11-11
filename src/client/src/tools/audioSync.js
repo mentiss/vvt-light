@@ -3,7 +3,7 @@
 // Synchronisation d'un lecteur YouTube local sur l'état de lecture du serveur
 // (documentations/spec_audio.md §9.3, §9.6). Fonctions pures, testées sous Vitest.
 //
-// État du serveur : { status, youtubeId, position, refTime, duration }
+// État du serveur : { status, mediaId, position, refTime, duration }
 //   position (s) à l'instant refTime (horloge du serveur, ms).
 // L'horloge locale diffère de celle du serveur : on estime l'écart à partir
 // d'échantillons (heure du serveur, aller-retour réseau).
@@ -40,7 +40,7 @@ export function bestOffset(samples) {
  * @param {number} serverNow heure du serveur estimée (ms)
  */
 export function expectedPosition(state, serverNow) {
-    if (!state?.youtubeId) return 0;
+    if (!state?.mediaId) return 0;
     const elapsed = state.status === 'playing' ? Math.max(0, serverNow - state.refTime) / 1000 : 0;
     const position = state.position + elapsed;
     return state.duration ? Math.min(position, state.duration) : position;
@@ -62,13 +62,13 @@ export function expectedPosition(state, serverNow) {
 export function planSync({ state, serverNow, loadedId, playerState, currentTime, threshold = 1.5 }) {
     const active = playerState === 'playing' || playerState === 'buffering';
 
-    if (!state?.youtubeId || state.status === 'stopped') {
+    if (!state?.mediaId || state.status === 'stopped') {
         return active ? { type: 'stop' } : { type: 'none' };
     }
 
     const expected = expectedPosition(state, serverNow);
 
-    if (loadedId !== state.youtubeId) {
+    if (loadedId !== state.mediaId) {
         return { type: 'load', position: expected, autoplay: state.status === 'playing' };
     }
 

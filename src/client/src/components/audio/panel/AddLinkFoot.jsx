@@ -6,11 +6,12 @@
 
 import React, { useRef, useState } from 'react';
 import { Icon, IconButton } from './PanelIcons.jsx';
-import { parseYouTubeLink } from '../../../tools/youtubeApi.js';
+import { parseMediaLink } from '../../../tools/mediaLinks.js';
 
 export const AddLinkFoot = ({ adding, setAdding, message, importing, onSubmit, onCatalog }) => {
     const [link, setLink] = useState('');
-    const parsed = parseYouTubeLink(link);
+    // YouTube (vidéo ou playlist), Vimeo ou SoundCloud (§14.3)
+    const parsed = parseMediaLink(link);
     const openRef = useRef(null);
 
     const close = () => { setAdding(false); setLink(''); setTimeout(() => openRef.current?.focus(), 0); };
@@ -26,9 +27,9 @@ export const AddLinkFoot = ({ adding, setAdding, message, importing, onSubmit, o
         <div className="vtt-audio-foot">
             {adding ? (
                 <form className="vtt-audio-add-form" onSubmit={submit}>
-                    <label className="sr-only" htmlFor="vtt-audio-add-input">Lien YouTube à ajouter</label>
+                    <label className="sr-only" htmlFor="vtt-audio-add-input">Lien à ajouter</label>
                     <input id="vtt-audio-add-input" className="vtt-input" type="url" value={link} autoFocus autoComplete="off"
-                           placeholder="Coller un lien YouTube (vidéo ou playlist)" onChange={e => setLink(e.target.value)}
+                           placeholder="Lien YouTube (vidéo ou playlist), Vimeo ou SoundCloud" onChange={e => setLink(e.target.value)}
                            onKeyDown={e => { if (e.key === 'Escape') { e.stopPropagation(); close(); } }} />
                     <button type="submit" className="vtt-btn vtt-btn-primary vtt-btn-sm" disabled={!parsed}>
                         {parsed?.listId ? 'Importer la playlist' : 'Ajouter'}

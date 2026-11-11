@@ -2,7 +2,7 @@
 import { describe, it, expect } from 'vitest';
 import { clockSample, bestOffset, expectedPosition, planSync } from '../../src/tools/audioSync.js';
 
-const playing = { status: 'playing', youtubeId: 'aaaaaaaaaaa', position: 10, refTime: 100_000, duration: 200 };
+const playing = { status: 'playing', mediaId: 'aaaaaaaaaaa', position: 10, refTime: 100_000, duration: 200 };
 
 describe('horloge', () => {
     it('mesure l\'écart au milieu de l\'aller-retour', () => {
@@ -29,7 +29,7 @@ describe('expectedPosition', () => {
 });
 
 describe('planSync', () => {
-    const at = (overrides) => planSync({ state: playing, serverNow: 105_000, loadedId: playing.youtubeId, playerState: 'playing', currentTime: 15, ...overrides });
+    const at = (overrides) => planSync({ state: playing, serverNow: 105_000, loadedId: playing.mediaId, playerState: 'playing', currentTime: 15, ...overrides });
 
     it('ne fait rien quand le lecteur est dans la tolérance', () => {
         expect(at({ currentTime: 15.8 })).toEqual({ type: 'none', drift: expect.closeTo(0.8) });
@@ -63,7 +63,7 @@ describe('planSync', () => {
     });
 
     it('arrête la lecture locale quand le serveur est arrêté', () => {
-        const stopped = { status: 'stopped', youtubeId: null };
+        const stopped = { status: 'stopped', mediaId: null };
         expect(at({ state: stopped })).toEqual({ type: 'stop' });
         expect(at({ state: stopped, playerState: 'paused' })).toEqual({ type: 'none' });
     });

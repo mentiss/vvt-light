@@ -1,6 +1,6 @@
 // Position et taille d'une fenêtre flottante (spec_ui_panneaux.md) : ancrage, déplacement, redimensionnement
 import { describe, it, expect } from 'vitest';
-import { clampRect, defaultRect, moveRect, resizeRect } from '../../src/tools/floatingGeometry.js';
+import { clampRect, collapseRect, defaultRect, expandRect, moveRect, resizeRect } from '../../src/tools/floatingGeometry.js';
 
 const viewport = { width: 1600, height: 900 };
 const rect = { left: 600, top: 200, width: 480, height: 500 };
@@ -74,5 +74,32 @@ describe('resizeRect', () => {
         const r = resizeRect(rect, 'w', 400, 0, viewport);
         expect(r.width).toBe(320);
         expect(r.left + r.width).toBe(rect.left + rect.width);
+    });
+});
+
+describe('expandRect / collapseRect (fenêtre réduite, spec_audio.md §14.1)', () => {
+    it('s\'ouvre vers le bas quand la place suffit, sans barre à reprendre', () => {
+        expect(expandRect(rect, 40, viewport)).toEqual({ rect, barTop: null });
+    });
+
+    it('sans place en dessous, s\'ouvre vers le haut, bas calé sur le bas de la barre', () => {
+        const bar = { ...rect, top: 840 };   // barre réduite posée en bas de l'écran
+        const { rect: open, barTop } = expandRect(bar, 40, viewport);
+        expect(open.top + open.height).toBe(840 + 40);
+        expect(open.height).toBe(500);
+        expect(barTop).toBe(840);
+    });
+
+    it('bornée au haut de l\'écran quand la fenêtre est trop haute', () => {
+        const { rect: open } = expandRect({ ...rect, top: 600, height: 880 }, 40, viewport);
+        expect(open.top).toBe(8);
+    });
+
+    it('réduite à nouveau, la barre revient à sa place', () => {
+        const bar = { ...rect, top: 840 };
+        const { rect: open, barTop } = expandRect(bar, 40, viewport);
+        expect(collapseRect(open, barTop, viewport)).toEqual(bar);
+        // Ouverte vers le bas : rien ne bouge
+        expect(collapseRect(rect, null, viewport)).toBe(rect);
     });
 });

@@ -26,7 +26,7 @@ import AudioScenesMenu from './AudioScenesMenu.jsx';
 import { TargetButtonDialog } from './panel/ScenesDialog.jsx';
 import { usePersistedState } from '../../hooks/usePersistedState.js';
 import { getSystemFromPath } from '../../hooks/useSystem.js';
-import { parseYouTubeLink } from '../../tools/youtubeApi.js';
+import { parseMediaLink } from '../../tools/mediaLinks.js';
 import { findPlaylist, newestPlaylist, displayedTracks } from '../../tools/audioLibrary.js';
 import { tableScope } from '../../tools/browserStorage.js';
 import { Icon, IconButton } from './panel/PanelIcons.jsx';
@@ -95,13 +95,15 @@ const AudioGMPanel = ({ sessionId, audio, onClose, focusOnOpen = true }) => {
             setImporting({ listId: parsed.listId, collectionId: validView.collectionId });
             return;
         }
+        // YouTube par son identifiant, les autres sources par leur lien, résolu par le serveur (§14.3)
+        const content = parsed.source === 'youtube' ? { videoIds: [parsed.videoId] } : { links: [parsed.url] };
         const target = validView.playlistId && findPlaylist(library, validView.playlistId);
         if (target) {
-            if (await write('POST', `/playlists/${target.playlist.id}/tracks`, { videoIds: [parsed.videoId] })) flash(`Ajouté à « ${target.playlist.name} »`);
+            if (await write('POST', `/playlists/${target.playlist.id}/tracks`, content)) flash(`Ajouté à « ${target.playlist.name} »`);
             return;
         }
         // Pas de playlist ouverte : une playlist est créée (et une collection s'il n'y en a pas)
-        const updated = await write('POST', '/playlists', { collectionId: validView.collectionId ?? undefined, videoIds: [parsed.videoId] });
+        const updated = await write('POST', '/playlists', { collectionId: validView.collectionId ?? undefined, ...content });
         if (updated) flash(`Nouvelle playlist « ${showNewest(updated)?.name} »`);
     };
 
@@ -126,13 +128,14 @@ const AudioGMPanel = ({ sessionId, audio, onClose, focusOnOpen = true }) => {
         }, 1500);
     }, [write]);
     useEffect(() => () => clearTimeout(flushRef.current), []);
-    const missingDurations = displayedTracks(library, validView, search).filter(t => !t.duration && !t.unavailable);
+    // Lecteur caché YouTube seulement : les autres sources ont leur durée à l'ajout ou à la première lecture
+    const missingDurations = displayedTracks(library, validView, search).filter(t => t.source === 'youtube' && !t.duration && !t.unavailable);
     // Playlist ouverte (hors recherche) : sa pastille de piste dans la barre de navigation
     const openPlace = !search.trim() && validView.playlistId ? findPlaylist(library, validView.playlistId) : null;
 
     const onPaste = (e) => {
         if (e.target.closest('input, textarea')) return;
-        const parsed = parseYouTubeLink(e.clipboardData.getData('text'));
+        const parsed = parseMediaLink(e.clipboardData.getData('text'));
         if (!parsed) return;
         e.preventDefault();
         addLink(parsed);
@@ -158,11 +161,11 @@ const AudioGMPanel = ({ sessionId, audio, onClose, focusOnOpen = true }) => {
     };
 
     const music = audio.state?.slots?.music;
-    const nowLabel = music?.youtubeId ? `${music.status === 'playing' ? '' : '(pause) '}${music.title}` : null;
+    const nowLabel = music?.mediaId ? `${music.status === 'playing' ? '' : '(pause) '}${music.title}` : null;
 
     // Panneau réduit : mini-contrôles de la musique et arrêt de tout, à la place du titre en cours
-    const hasMusic = !!music?.youtubeId;
-    const anyPlaying = Object.values(audio.state?.slots ?? {}).some(s => s.youtubeId);
+    const hasMusic = !!music?.mediaId;
+    const anyPlaying = Object.values(audio.state?.slots ?? {}).some(s => s.mediaId);
     const send = (action) => audio.sendCommand({ slot: 'music', action });
     const miniControls = (
         <>

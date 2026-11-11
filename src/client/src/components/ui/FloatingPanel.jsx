@@ -135,7 +135,7 @@ const FloatingPanel = ({
                 </div>
                 {showActions && <div className="vtt-floating-actions">{minimizedActions}</div>}
                 {minimizable && (
-                    <button type="button" className="vtt-modal-expand vtt-floating-btn" onClick={win.toggleMinimized}
+                    <button type="button" className="vtt-modal-expand vtt-floating-btn" onClick={() => win.toggleMinimized(ref.current?.offsetHeight)}
                             aria-label={minimized ? 'Agrandir la fenêtre' : 'Réduire la fenêtre'} title={minimized ? 'Agrandir' : 'Réduire'}>
                         <Icon name={minimized ? 'restore' : 'minimize'} />
                     </button>

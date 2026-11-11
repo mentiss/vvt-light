@@ -1,14 +1,28 @@
 // src/client/src/components/audio/SlotPlayer.jsx
 // ─────────────────────────────────────────────────────────────────────────────
-// Lecteur YouTube caché d'une piste (documentations/spec_audio.md §11.7) : monté
-// seulement quand la piste a un contenu (une piste vide ne crée pas de cadre
-// YouTube). Se recale sur l'état du serveur avec audioSync.js, la boucle validée
-// par le prototype (§9.9, §10.1). Côté MJ, remonte la durée et les erreurs.
+// Lecteur caché d'une piste (documentations/spec_audio.md §11.7, §14.3) : monté
+// seulement quand la piste a un contenu (une piste vide ne crée pas de cadre).
+// Se recale sur l'état du serveur avec audioSync.js, la boucle validée par le
+// prototype (§9.9, §10.1). Côté MJ, remonte la durée et les erreurs.
+//
+// Un lecteur par source (YouTube, Vimeo, SoundCloud), tous avec l'interface du
+// lecteur YouTube. AudioLayer donne à chaque
+// SlotPlayer une clé faite de la piste et de la source : la source d'une instance
+// ne change jamais, donc le hook appelé non plus.
 // ─────────────────────────────────────────────────────────────────────────────
 
 import React, { useCallback, useEffect, useRef } from 'react';
 import { useYouTubePlayer, PLAYER_STATES } from '../../hooks/useYouTubePlayer.js';
+import { useVimeoPlayer } from '../../hooks/useVimeoPlayer.js';
+import { useSoundCloudPlayer } from '../../hooks/useSoundCloudPlayer.js';
 import { planSync } from '../../tools/audioSync.js';
+
+const PLAYER_HOOKS = {
+    youtube: useYouTubePlayer,
+    vimeo: useVimeoPlayer,
+    soundcloud: useSoundCloudPlayer,
+};
+const PLAYER_SIZE = { width: 1, height: 1 };
 
 const SYNC_INTERVAL_MS = 1000;   // contrôle de l'écart
 const COOLDOWN_MS = 3000;        // pas de nouveau recalage juste après un chargement ou un saut
@@ -24,7 +38,9 @@ const COOLDOWN_MS = 3000;        // pas de nouveau recalage juste après un char
  * @param {Function} [props.onReport]    MJ seulement : (action, payload) pour duration / error
  */
 const SlotPlayer = ({ slot, slotState, getServerNow, tolerance, unlocked, volume, onReport }) => {
-    const { containerRef, player, error } = useYouTubePlayer({ width: 1, height: 1 });
+    // Hook fixé par la source, constante pour cette instance (clé de AudioLayer)
+    const usePlayer = PLAYER_HOOKS[slotState.source] ?? useYouTubePlayer;
+    const { containerRef, player, error } = usePlayer(PLAYER_SIZE);
 
     const stateRef    = useRef(slotState);
     const loadedIdRef = useRef(null);
@@ -47,7 +63,7 @@ const SlotPlayer = ({ slot, slotState, getServerNow, tolerance, unlocked, volume
 
         // Durée connue : le serveur peut armer la fin de morceau (MJ seulement)
         const report = settingsRef.current.onReport;
-        if (report && state.trackId && !state.duration && reportedRef.current.duration !== state.trackId && loadedIdRef.current === state.youtubeId) {
+        if (report && state.trackId && !state.duration && reportedRef.current.duration !== state.trackId && loadedIdRef.current === state.mediaId) {
             const duration = player.getDuration?.() ?? 0;
             if (duration > 0) {
                 reportedRef.current.duration = state.trackId;
@@ -63,9 +79,9 @@ const SlotPlayer = ({ slot, slotState, getServerNow, tolerance, unlocked, volume
                 loadedIdRef.current = null;
                 break;
             case 'load':
-                if (plan.autoplay) player.loadVideoById({ videoId: state.youtubeId, startSeconds: plan.position });
-                else player.cueVideoById({ videoId: state.youtubeId, startSeconds: plan.position });
-                loadedIdRef.current = state.youtubeId;
+                if (plan.autoplay) player.loadVideoById({ videoId: state.mediaId, startSeconds: plan.position });
+                else player.cueVideoById({ videoId: state.mediaId, startSeconds: plan.position });
+                loadedIdRef.current = state.mediaId;
                 cooldownRef.current = now + COOLDOWN_MS;
                 break;
             case 'play':

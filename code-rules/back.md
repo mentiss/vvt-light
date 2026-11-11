@@ -44,6 +44,7 @@ Routes publiques (sans `authenticate`) : `POST /characters` (création), `GET /c
 | B-ROUTE-ORDER | Règle | Les routes spécifiques (`GET /:id/sessions`) sont déclarées avant les génériques (`GET /:id`). | Sinon la générique capture la requête. | relecture |
 | B-ROUTE-URL | Règle | Une route de slug est montée par le Loader sur `/api/:slug/<fichier>` : l'URL appelée par le client correspond à une route réellement montée. | Un écart donne un 404 que rien ne signale avant la partie. | relecture |
 | B-BROADCAST | Règle | Toute route qui écrit dans `characters` ou une sous-table de fiche diffuse la fiche : `broadcastCharacterUpdate(io, db, slug, id, fiche)`, ou `emitToCharacterSessions` pour un autre événement. | Sinon la vue MJ reste figée jusqu'au rechargement. | relecture |
+| B-NUMBER | Règle | Un nombre reçu dans le corps JSON (`req.body`) ou un payload socket se vérifie par `typeof value === 'number'` et `Number.isFinite(value)` (bornes en plus si besoin), jamais par `Number(value)` seul. Les paramètres d'URL et de requête (`req.params`, `req.query`), toujours des chaînes, se convertissent par `Number()` puis se vérifient (`Number.isInteger`…). | `Number()` accepte n'importe quoi en silence : `true` → 1, `[83]` → 83, `''` → 0, `null` → 0. | relecture |
 | B-THIN-ROUTE | Préférence | La route valide l'entrée et délègue ; la logique métier vit dans le contrôleur. | La logique dispersée dans les handlers se duplique. | relecture |
 
 ### Socket.io

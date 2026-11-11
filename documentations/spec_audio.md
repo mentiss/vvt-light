@@ -928,3 +928,240 @@ Les chemins des §11.7 et §11.9 sont remplacés par ceux-ci. Principe : la briq
 - **Bouton ciblé** dont le titre ou la playlist a disparu : **supprimé**.
 - **Scène** : la piste dont le contenu a disparu est **retirée** (elle sera arrêtée au lancement, comme une piste vide) ; la scène n'est supprimée que s'il ne lui reste aucune piste. Dernière scène lancée effacée si son bouton disparaît.
 - Seul cas restant « en erreur » : un bouton « au hasard » dont la playlist existe mais a été vidée ; grisé dans le menu, il ne fait rien (422).
+
+## 13. Autres sources, timecode, fenêtres réduites — phase 1 (2026-11-10)
+
+### 13.1 Demande
+
+1. Ajouter et lire des vidéos d'autres plateformes que YouTube.
+2. Ajouter et lire des morceaux de Suno.
+3. Fenêtres flottantes (brique plateforme, pas seulement la musique) : réduites et sans place en dessous, elles doivent s'agrandir vers le haut.
+4. Les boutons d'actions de la musique doivent pouvoir lancer à partir d'un timecode.
+
+### 13.2 Diagnostic : tout est lié à YouTube, sauf la synchronisation
+
+- Liés à YouTube : la colonne `audio_tracks.youtube_id`, le champ `youtubeId` de l'état diffusé, `SlotPlayer` (bâti sur `useYouTubePlayer`), l'ajout par lien (`parseYouTubeLink`, titres par l'oEmbed de YouTube), la durée relevée par les lecteurs cachés du panneau (`HiddenPlayers`).
+- **Indépendante du lecteur** : la synchronisation (`audioSync.planSync`) ne demande que charger, lire, mettre en pause, se positionner, lire la position et l'état. C'est elle qui a été validée en conditions réelles : elle ne bouge pas.
+- Piste proposée : un morceau a une **source** et un **identifiant** ; chaque source a son **adaptateur de lecteur**, tous avec la même interface, branché sous `SlotPlayer`. Bibliothèque, partage, copie, pistes, boutons : inchangés.
+- Base : une colonne `audio_tracks.source` (`youtube` par défaut) et `youtube_id` renommée `media_id` (identifiant YouTube, Vimeo ou Suno, ou adresse du fichier). Migration `-- systems: audio` ; rien dans les slugs.
+
+### 13.3 Plateformes
+
+| Plateforme | Pilotable (lecture, pause, position, volume, fin) | Titre | Remarque | Avis |
+|---|---|---|---|---|
+| YouTube | Oui | oEmbed | En place | — |
+| Vimeo | Oui (Player SDK officiel) | oEmbed | Sans pub ; l'auteur peut interdire l'intégration | Oui |
+| SoundCloud | Oui (Widget API officielle) | oEmbed | Son seul : beaucoup d'ambiances et de bandes originales ; certains titres réduits à un extrait de 30 s (réservés aux abonnés) | Oui |
+| Dailymotion | Oui (Player API) | oEmbed | Demande de créer un lecteur sur un compte Dailymotion (gratuit) ; pubs comme YouTube | À voir selon ton besoin |
+| **Suno** | Pas d'API de lecteur intégré ; mais une chanson publique est servie en fichier MP3 direct, lu par le lecteur audio du navigateur | Lu sur la page de la chanson (côté serveur) | Zéro pub, synchronisation parfaite, aucun fichier sur notre serveur ; adresse du MP3 non documentée par Suno, à vérifier sur un vrai lien ; chanson privée illisible | Oui |
+| Spotify, Deezer, Apple Music | Non : sans le compte de chaque auditeur, extraits de 30 s ; pas de réglage du volume | — | — | Écartés |
+| Twitch | Direct : pas de position commune | — | — | Écarté |
+
+**Suggestion** : le lecteur audio du navigateur qu'il faut pour Suno lit aussi n'importe quel **lien direct vers un fichier son** (MP3 / OGG hébergé ailleurs : Dropbox, archive.org, Tabletop Audio…). Ça vient presque sans travail en plus et reste fidèle à la décision « aucun fichier sur le serveur » (§3) : le fichier est hébergé ailleurs.
+
+Ajout : la même barre « Ajouter un lien » et Ctrl+V reconnaissent la plateforme d'après le lien. Import de playlist : YouTube seulement au départ (V-4).
+
+### 13.4 Timecode
+
+- Aujourd'hui, un morceau lancé démarre à 0 ; seul `seek` le déplace ensuite.
+- Endroits possibles du point de départ :
+  - **(a) bouton ciblé** sur un titre : « à partir de 1:23 », dans le JSON du bouton (pas de migration) ;
+  - **(b) scène** : « Enregistrer ce qui joue » garde la position de chaque piste (aujourd'hui, une scène relance depuis le début), modifiable dans « Modifier les scènes… » ;
+  - **(c) titre de la bibliothèque** : un début (et une fin) d'extrait par titre, valable pour ▶, l'enchaînement, la boucle et les boutons (évolution déjà notée au §8 : introduction coupée, effet tiré d'une compilation). Demande une colonne.
+- Saisie : « 1:23 », « 1:02:03 » ou des secondes (fonction pure testée). Un lien collé avec un temps (`?t=83`, `&t=1m23s`) peut le reprendre.
+- Question de fond : une boucle repart-elle du timecode ou de 0 (V-6) ?
+
+### 13.5 Fenêtres réduites
+
+- Brique commune (`FloatingPanel`, `useFloatingWindow`, `floatingGeometry.js`) : musique, historique des dés, tableau en profitent tous.
+- Défaut : réduite, la barre peut être posée tout en bas (`clampRect` ne garde visible que la barre de titre) ; à l'agrandissement, la fenêtre reprend sa hauteur vers le bas et sort de l'écran.
+- **A.** À l'agrandissement, la fenêtre remonte juste assez pour tenir entière ; elle reste là ensuite.
+- **B.** Sans place en dessous, le bas de la fenêtre se cale sur le bas de la barre : elle s'agrandit vers le haut ; réduite à nouveau, la barre revient où elle était.
+- Fonction pure dans `floatingGeometry.js`, testée.
+
+### 13.6 Questions
+
+| # | Question | Proposition | Réponse MJ |
+|---|---|---|---|
+| V-1 | « Lire des vidéos » : le son seul (lecteur caché, comme YouTube aujourd'hui) ou aussi l'image montrée aux joueurs ? | Son seul : montrer l'image est un autre module (affichage synchronisé, plein écran chez les joueurs) | Son seul, depuis d'autres plateformes |
+| V-2 | Quelles plateformes ? | Vimeo, SoundCloud et Suno ; Dailymotion seulement si tu en as l'usage ; Spotify, Deezer, Apple Music et Twitch écartés (§13.3) | Vimeo, SoundCloud, Suno, Dailymotion |
+| V-3 | Lien direct vers un fichier son hébergé ailleurs, en plus de Suno ? | Oui : même lecteur que Suno, presque sans travail en plus | Hésitation : un lien seulement, sans envoi sur le VPS ? Oui (§13.7) |
+| V-4 | Import de playlists : YouTube seulement, les autres plateformes titre par titre ? | Oui ; les playlists SoundCloud pourront suivre si le besoin vient | Playlists Dailymotion et Suno aussi, si possible (§13.7) |
+| V-5 | Où se règle le timecode : (a) bouton ciblé, (b) position gardée par une scène, (c) début / fin d'extrait par titre (§13.4) ? | (a) et (b), ce que tu demandes ; (c) en évolution si l'introduction coupée devient un besoin | (a) et (b) |
+| V-6 | Un morceau lancé à 1:23 en boucle : repart à 1:23 ou à 0 ? | À 1:23 avec (c) ; à 0 avec (a) / (b), le timecode n'étant que le point d'entrée | Repart du timecode (§13.7) |
+| V-7 | Timecode repris d'un lien collé (`?t=`) ? | Oui : avec (c), il devient le début d'extrait du titre ; sans (c), il est ignoré à l'ajout (le timecode se saisit sur le bouton) | Question en retour sur (c) (§13.7) |
+| V-8 | Fenêtres réduites : A ou B (§13.5) ? | **B** : la barre reste où tu l'as posée, la fenêtre s'ouvre vers le haut | B (barre de titre toujours en haut de la fenêtre ouverte) |
+| V-9 | Pastille de la source (YouTube, Vimeo, SoundCloud, Suno, fichier) sur chaque ligne de la bibliothèque ? | Oui, discrète, pour savoir d'où vient un titre muet | Oui, discrète, à voir à l'usage |
+
+### 13.7 Second tour (2026-11-10)
+
+**Précisions**
+- **Lien direct (V-3)** : un lien seulement, collé comme un lien YouTube. Le fichier reste chez son hébergeur et chaque navigateur le lit de là : rien n'est envoyé ni stocké sur le VPS, aucune bande passante du VPS.
+- **Playlists (V-4)** :
+  - Dailymotion : faisable, l'API publique de Dailymotion liste les vidéos d'une playlist sans clé ;
+  - Suno : pas d'API publique ; la liste se lirait dans la page de la playlist, comme le MP3 d'une chanson, donc sans garantie (Suno peut changer sa page) ; à essayer sur un vrai lien ;
+  - SoundCloud : faisable aussi (le lecteur officiel donne la liste d'une playlist).
+- **Boucle au timecode (V-6)** : le point de départ est retenu avec le morceau lancé sur la piste. La boucle repart du timecode ; en mode playlist ou aléatoire, les morceaux suivants partent de 0 ; ▶ dans la bibliothèque part toujours de 0.
+- **(c), rappel (V-7)** : (c) est un début (et une fin) d'extrait **enregistré sur le titre** dans la bibliothèque, valable partout : ▶, enchaînement, boucle et boutons. Avec (a) et (b) seulement, le timecode vit sur le bouton ; le temps d'un lien collé (`?t=`) n'a alors nulle part où aller et est ignoré.
+- **Dailymotion** : leur lecteur pilotable demande un « identifiant de lecteur » créé une fois sur un compte Dailymotion (gratuit). À vérifier en phase 2 ; s'il est nécessaire, il se range dans le `.env` (comme la tolérance de recalage).
+
+| # | Question | Proposition | Réponse MJ |
+|---|---|---|---|
+| V-10 | Liens directs vers un fichier son : retenus, maintenant qu'il est clair que rien ne passe par le VPS ? | Oui | Oui |
+| V-11 | Playlists : Dailymotion et SoundCloud fermes, Suno à l'essai (abandonné si la page ne s'y prête pas) ? | Oui | Playlists Dailymotion seulement, le reste en lien simple ; Dailymotion abandonné ensuite (§13.8) |
+| V-12 | (c) en plus de (a) et (b) ? | Non pour l'instant : (a) et (b), avec la boucle au timecode, couvrent les boutons ; (c) reste en évolution (§8) | Oui (pas de (c)) |
+| V-13 | Liens pour les essais : une chanson et une playlist Suno, une playlist Dailymotion ; et un compte Dailymotion, si l'identifiant de lecteur est nécessaire ? | Tu me les donnes en phase 2 | Une chanson Suno et une playlist Dailymotion fournies ; s'il faut un compte Dailymotion, on oublie : rester au plus simple |
+
+### 13.8 Décisions et vérifications (2026-11-10)
+
+**Décisions**
+- Son seul, depuis d'autres plateformes (V-1).
+- Sources : YouTube, Vimeo, SoundCloud, Suno, lien direct vers un fichier son (V-2, V-10). **Dailymotion abandonné** (vérification ci-dessous).
+- Playlists : YouTube seulement (la seule déjà en place) ; tout le reste titre par titre (V-4, V-11).
+- Timecode : (a) bouton ciblé sur un titre et (b) scène qui garde la position de chaque piste ; la boucle repart du timecode (V-5, V-6). Pas de (c) : pas de début / fin d'extrait sur le titre, le temps d'un lien collé est ignoré (V-7, V-12).
+
+**Vérifications sur les liens fournis**
+- **Suno** (`suno.com/s/…`) : le lien court redirige vers `suno.com/song/<identifiant>?sh=…`. La page donne le titre (`og:title`) et l'adresse d'un fichier son lisible sans compte (`…cloudfront.net/1/clip/<identifiant>.m4a`, Opus en MP4, lu par Chrome, Edge et Firefox). La chanson essayée n'est pas publique (partagée par lien) et marche quand même. L'adresse « MP3 » attendue (`cdn1.suno.ai`) est refusée : c'est le `.m4a` qui sert. Adresse non documentée par Suno : si elle change, l'ajout par lien Suno casse, les autres sources non.
+- **Dailymotion** : l'API publique liste bien la playlist (42 vidéos, titres et durées, sans clé), mais le lecteur **pilotable** (lecture, pause, position, volume) passe par le script de Dailymotion et un identifiant de lecteur créé sur un compte ; l'ancien lecteur intégré sans compte est retiré depuis septembre 2025. Sans pilotage, pas de synchronisation : abandonné, comme convenu.
+
+## 14. Spécification technique (phase 2, 2026-11-10)
+
+Suite du §13.8. Trois blocs indépendants, livrés dans cet ordre : **A** fenêtres réduites (brique commune, petit), **B** timecode des boutons, **C** nouvelles sources. A et B ne dépendent pas de C.
+
+### 14.1 Bloc A : fenêtre réduite qui s'ouvre vers le haut (V-8, option B)
+
+- `tools/floatingGeometry.js` gagne une fonction pure, testée (`tests/tools/floatingGeometry.test.js`) : `expandRect(rect, barHeight, viewport, min)`. À l'agrandissement, si la fenêtre ne tient pas sous la barre, son bas se cale sur le bas de la barre (elle s'ouvre vers le haut), bornée au haut de l'écran ; sinon rien ne change. Elle renvoie aussi `barTop`, la place de la barre avant l'ouverture.
+- À la réduction suivante, la barre reprend `barTop` (borné par `clampRect`).
+- `useFloatingWindow` : `toggleMinimized` applique l'un ou l'autre ; `barTop` est gardé dans la géométrie mémorisée (même clé `vtt:<slug>:panel:<id>`) et effacé dès que la fenêtre ouverte est déplacée (la barre suit alors le haut de la fenêtre, comme aujourd'hui).
+- `FloatingPanel` mesure la hauteur réelle de sa barre. Aucune prop nouvelle : musique, historique des dés et tableau en profitent sans changement.
+- La barre de titre reste toujours en haut de la fenêtre ouverte.
+
+### 14.2 Bloc B : lancer à partir d'un timecode (V-5, V-6)
+
+**État** : chaque piste gagne `start` (secondes, 0 par défaut), le point d'entrée du morceau en cours.
+- `playTrack(ctx, slot, trackId, position)` fixe `start` à `position`.
+- Fin de morceau en mode `loop` : repart de `start` (au lieu de 0). En `playlist` et `shuffle`, le morceau suivant part de 0 (`start` remis à 0). ▶ dans la bibliothèque : 0.
+
+**Boutons** (`audio_buttons.actions`, JSON, aucune migration ; une entrée sans `start` part de 0, les boutons existants ne changent donc pas) :
+- ciblé sur un **titre** : `{ slot, trackId, start? }` ; un bouton ciblé sur une playlist n'a pas de timecode ;
+- **scène** : chaque piste `{ trackId, playlistId, mode, start? }`. « Enregistrer ce qui joue » et « Remplacer par ce qui joue » ne prennent **aucune position** (W-3 bis) : la scène part de 0 ; un timecode se règle à la main dans « Modifier les scènes… ». Une piste en mode `shuffle` relance au hasard : pas de timecode possible.
+- `runEntry` passe `start` à `playTrack` quand l'entrée vise un titre.
+
+**Routes** (`routes/audio.js`) :
+- `POST /buttons { mode: 'target', slot, trackId, start? }` ;
+- `PUT /buttons/:id { start }` (ciblé) ou `{ starts: { music: 83, ambience1: null } }` (scène ; `null` = depuis le début) ;
+- `start` : nombre fini positif ou nul, sinon 400 ; au-delà de la durée connue du titre, ramené à 0.
+
+**Client** :
+- `tools/timecode.js` (nouveau, testé) : `parseTimecode` lit « 1:23 », « 1:02:03 » ou « 83 » en secondes, `null` si illisible ; l'affichage reprend `formatTime` de `audioLibrary.js`.
+- `ScenesDialog` : à la création d'un bouton ciblé sur un titre, un champ facultatif « À partir de » ; dans « Modifier les scènes… », chaque bouton montre ses titres avec leur départ, modifiable sur place (vide = depuis le début).
+- `hooks/useAudioButtons.js` : `createTarget` accepte `start` ; nouvelle action `setStart`.
+
+### 14.3 Bloc C : nouvelles sources (V-1 à V-4, V-9, V-10)
+
+**Sources** : `youtube`, `vimeo`, `soundcloud`, `suno`, `file`. Son seul, lecteur caché comme pour YouTube.
+
+| Source | Lien reconnu | `media_id` enregistré | Titre et durée à l'ajout (serveur) | Lecteur (client) |
+|---|---|---|---|---|
+| `youtube` | Inchangé (`parseYouTubeLink`) | Identifiant à 11 caractères (inchangé) | oEmbed YouTube ; durée à la lecture et par `DurationProbe` (inchangé) | IFrame API (inchangé) |
+| `vimeo` | `vimeo.com/<id>`, `vimeo.com/<id>/<hash>`, `player.vimeo.com/video/<id>` | Adresse de la vidéo (garde le `hash` d'une vidéo non répertoriée) | oEmbed Vimeo : titre et durée | Player SDK (`player.vimeo.com/api/player.js`, chargé à la demande comme l'API YouTube) |
+| `soundcloud` | `soundcloud.com/<artiste>/<titre>` (lien privé avec jeton accepté) | Adresse `api.soundcloud.com/tracks/<id>` tirée de l'oEmbed | oEmbed SoundCloud : titre ; durée à la lecture | Widget API (`w.soundcloud.com/player/api.js`, à la demande) |
+| `suno` | `suno.com/s/<code>`, `suno.com/song/<uuid>` | Adresse du fichier `.m4a` | Page de la chanson (redirection suivie) : `og:title` et adresse dans `media_urls` ; durée à la lecture | Lecteur audio du navigateur (élément `audio`) |
+| `file` | Adresse **https** finissant par `.mp3`, `.ogg`, `.oga`, `.m4a`, `.wav`, `.opus` (paramètres permis, ex. Dropbox `?dl=1`) | L'adresse | Nom du fichier sans extension, décodé ; **le serveur ne télécharge rien** ; durée à la lecture | Élément `audio` |
+
+- Liens refusés : autres domaines, `http` (bloqué par le navigateur sous HTTPS en prod), playlists hors YouTube (« Les playlists ne s'importent que depuis YouTube »).
+- Le serveur n'interroge que `vimeo.com`, `soundcloud.com` et `suno.com`, jamais l'adresse d'un fichier.
+- Suno : adresse non documentée (§13.8). Si la page ne donne pas d'adresse lisible, l'ajout est refusé (« Chanson Suno illisible ») ; un titre dont le fichier disparaît plus tard passe « indisponible », comme une vidéo YouTube supprimée (Q-23).
+
+**Base** (`audio.db`) : migration `10112026_audio_track_source.sql` (`-- systems: audio`) et `audio-schema.sql` :
+
+```sql
+ALTER TABLE audio_tracks RENAME COLUMN youtube_id TO media_id;
+ALTER TABLE audio_tracks ADD COLUMN source TEXT not null default 'youtube';
+```
+
+Les titres existants deviennent `source = 'youtube'` sans autre reprise. `copyTracks` et la copie d'un titre recopient `source` et `media_id`.
+
+**Serveur** :
+- `POST /playlists/:id/tracks` et `POST /playlists` acceptent, à côté de `videoIds` (YouTube, inchangé), `links` (liste d'adresses) : chaque lien est résolu (tableau ci-dessus) puis inséré ; 400 avec un message en français si un lien est refusé, et rien n'est inséré.
+- Résolution dans un module à part, `src/server/utils/audioSources.js` (lecture des liens en fonctions pures, plus les appels oEmbed et la page Suno) : `routes/audio.js` fait déjà près de 1 000 lignes (C-SIZE).
+- État d'une piste : `youtubeId` remplacé par `source` et `mediaId` ; dans la bibliothèque, chaque titre porte `source` et `mediaId`.
+
+**Client** :
+- `tools/mediaLinks.js` (nouveau, testé) : `parseMediaLink` renvoie `{ source: 'youtube', videoId, listId }` (par `parseYouTubeLink`), `{ source, url }` pour les autres, ou `null`. Utilisé par « Ajouter un lien » et Ctrl+V ; YouTube passe par `videoIds` comme aujourd'hui, le reste par `links`.
+- **Lecteurs** : un hook par source, tous avec la même interface : celle du lecteur YouTube dont `SlotPlayer` se sert déjà (`getPlayerState` avec les codes de l'IFrame API, `getCurrentTime`, `getDuration`, `loadVideoById` / `cueVideoById` avec `{ videoId, startSeconds }`, `seekTo`, `playVideo`, `pauseVideo`, `stopVideo`, `setVolume` de 0 à 100), `videoId` étant l'identifiant de la source (une adresse hors YouTube).
+  - `hooks/useYouTubePlayer.js` : inchangé, il est l'interface ;
+  - `hooks/useVimeoPlayer.js`, `hooks/useSoundCloudPlayer.js` (nouveaux) : leurs API répondent par promesses ou rappels ; la position est tenue à jour par leurs événements de progression, pour être lue tout de suite par la synchronisation ;
+  - `hooks/useAudioElementPlayer.js` (nouveau) : élément `audio`, pour `suno` et `file` ;
+  - scripts Vimeo et SoundCloud chargés à la demande par `tools/mediaApis.js` ; un volume réglé avant la création du lecteur est appliqué à sa création.
+- `SlotPlayer` choisit le hook selon la source de la piste ; `AudioLayer` donne à chaque `SlotPlayer` une clé faite de la piste et de la source (changer de source remonte le lecteur). `audioSync.js` : `youtubeId` devient `mediaId`, logique inchangée.
+- Autres usages de `youtubeId` (`AudioGMPanel`, `AudioLayer`, `NowPlaying`, `LibraryRows`) : `mediaId`.
+- `DurationProbe` reste YouTube seulement (les autres sources ont leur durée à l'ajout ou à la première lecture).
+- **Pastille de source** (V-9) : court libellé discret sur la ligne du titre (`Vimeo`, `SoundCloud`, `Suno`, `Fichier`), classe `vtt-audio-source`, style par défaut dans `index.css` (texte atténué), aucun habillage de slug requis.
+
+**Risque à lever en premier** : le déblocage du son. La modale « Activer le son » (`AudioUnlockModal`) débloque le lecteur YouTube ; il faut vérifier que ce même clic suffit au SDK Vimeo, au widget SoundCloud et à l'élément `audio`, la lecture étant lancée ensuite par la synchronisation, sans nouveau clic. Essai en dev des trois avant le reste du bloc C ; si l'un ne suit pas, le clic de la modale l'amorcera aussi.
+
+### 14.3 bis Suno : essai en dev (2026-11-11)
+
+- Retour du MJ : les liens Suno sont acceptés, mais rien ne joue. SoundCloud fonctionne ; Vimeo pas encore essayé (pas de lien sous la main).
+- Diagnostic : le fichier `.m4a` donné par la page n'est **pas un fichier son lisible**. Ses premiers octets ne sont pas ceux d'un MP4 (pas de boîte `ftyp`), et la page le déclare avec un `"encoding": "1.0.0"` propre à Suno : le flux est encodé, et seul le lecteur de Suno sait le décoder. L'adresse « MP3 » (`cdn1.suno.ai`) répond par un refus, que la chanson soit privée ou publique. Le lecteur intégré de Suno (`suno.com/embed/<id>`) existe, mais n'expose aucune commande (lecture, position, volume) : pas de synchronisation possible.
+- Lecteur intégré, vérifié sur retour du MJ (« il existe un partage en embed ») : la page `suno.com/embed/<id>` se charge, mais aucun de ses scripts n'écoute les messages de la page qui l'intègre (pas d'écouteur `message` sur la fenêtre) ni ne lui en envoie (`parent.postMessage` absent). Il se joue d'un clic **dans** le lecteur, mais ne se pilote pas de l'extérieur : ni lancement au même moment chez tous, ni position, ni volume, ni fin de morceau signalée. C'est ce que demandent YouTube, Vimeo et SoundCloud et que leurs lecteurs offrent (IFrame API, Player SDK, Widget API).
+- Seconde chanson essayée (lien d'intégration fourni par le MJ, `suno.com/embed/e4e0eba3-…`) : même constat. Le lecteur intégré ne donne que le même `.m4a` encodé ; l'adresse MP3 est refusée.
+- Décoder le flux nous-mêmes reviendrait à contourner la protection de Suno : écarté.
+- Voie qui marche déjà : **télécharger le MP3 depuis Suno** (bouton de téléchargement de la chanson, selon l'abonnement), le déposer chez un hébergeur (Dropbox, Google Drive avec lien direct, archive.org…) et coller ce lien : c'est la source « fichier son », lue par le navigateur.
+
+| # | Question | Proposition | Réponse MJ |
+|---|---|---|---|
+| X-1 | Que faire de la source Suno ? (1) la retirer : un lien Suno est refusé avec un message qui explique la voie du MP3 téléchargé ; (2) la garder telle quelle, en espérant que Suno change | **(1)** : un lien accepté qui ne joue jamais est pire qu'un refus expliqué | (1), avec Google Drive et Dropbox en plus |
+| X-2 | Les titres Suno déjà ajoutés en dev : les supprimer à la main, ou une migration qui les retire ? | À la main : ils n'existent qu'en dev, la prod n'a jamais eu la source | |
+
+**Décisions (2026-11-11)**
+- **Source Suno retirée.** Le téléchargement du MP3 est payant chez Suno (et limité à 27 par mois avec l'abonnement) ; automatiser téléchargement et dépôt serait une usine à gaz. Un lien Suno collé est refusé : « Suno ne permet pas la lecture hors de son site : télécharge le MP3 depuis Suno, puis ajoute-le par un lien Google Drive ou Dropbox ».
+- **Google Drive** : le lien de partage (`drive.google.com/file/d/<id>/view`, `open?id=`, `uc?id=`) devient un fichier son, lu par l'adresse de téléchargement direct `drive.google.com/uc?export=download&id=<id>`. Titre : nom du fichier, lu sur la page de partage, ce qui vérifie aussi le partage (fichier en accès restreint : refusé, « partage-le avec "Tous les utilisateurs disposant du lien" »). Vérifié sur un MP3 du MJ : servi en `audio/mpeg`, sauts acceptés (requêtes partielles). Limites Google : avertissement au-delà d'environ 100 Mo, limitation possible d'un fichier très demandé.
+- **Dropbox** : un lien de partage en `dl=0` (page d'aperçu) passe en `dl=1` (fichier).
+- Le serveur ne lit que la page de partage Drive, jamais le fichier son.
+
+**Essai en dev (2026-11-11) : Drive ne se lit pas dans le navigateur.** Retour du MJ, puis vérification dans Edge sans interface, depuis une page servie en `http://localhost` :
+- témoin `archive.org` : chargé et lu (le lecteur du navigateur et le banc d'essai fonctionnent) ;
+- Drive, par `drive.google.com/uc` comme par `drive.usercontent.google.com/download`, avec et sans mode CORS : refusé (« Format error »), et un `fetch` en CORS échoue aussi.
+- Cause : Google répond avec `cross-origin-resource-policy: same-site` (et `cross-origin-embedder-policy: require-corp`). Le navigateur refuse donc que le fichier soit lu par une page d'un autre site. curl, qui ignore ces en-têtes, recevait bien le MP3 : d'où le faux positif de la première vérification.
+- Vimeo : se lit (vidéo d'exemple sans son, essai du son à refaire avec une vraie vidéo).
+
+| # | Question | Proposition | Réponse MJ |
+|---|---|---|---|
+| X-3 | Que faire de Drive ? | Le refuser à son tour, avec un message qui oriente vers Dropbox ou archive.org, plutôt que d'accepter des liens qui ne joueront jamais | Voir X-4 |
+| X-4 | Hébergeur de remplacement pour les MP3 (Suno compris) : Dropbox (lien de partage, passé en `dl=1`) ou archive.org (vérifié dans le navigateur) ? | Dropbox, à vérifier sur un vrai lien avant de l'annoncer ; archive.org en secours, mais tout y est public | **Les MP3 hébergés sont laissés de côté pour l'instant** |
+
+**Décision (2026-11-11) : sources retenues YouTube, Vimeo et SoundCloud.** La source « fichier son » (lien direct, Drive, Dropbox) est retirée du code, lecteur audio du navigateur compris : elle pourra revenir plus tard (un lien direct `archive.org` s'est lu dans le navigateur, Dropbox reste à vérifier, Drive est exclu). Un lien Suno est refusé : « Suno ne permet pas la lecture de ses morceaux hors de son site ». Tous les liens d'un ajout sont lus avant le premier appel réseau : un lien refusé ne fait rien résoudre. Les mentions de Suno, Drive, Dropbox et du lien direct dans les §14.3 et §14.3 bis plus haut sont l'historique de l'essai.
+
+### 14.4 Tests et documentation
+
+- Front (Vitest) : `floatingGeometry` (ouverture vers le haut, retour de la barre), `timecode`, `mediaLinks`, `audioSync` (renommage).
+- Serveur : `tests/server/routes/audio.test.js` (nouveau, base audio temporaire comme `board.test.js`) : ajout par `links` (résolution simulée, sans réseau), refus d'un lien non reconnu, `start` d'un bouton ciblé et d'une scène, boucle qui repart de `start`.
+- Doc : ce §14, `spec_ui_panneaux.md` (ouverture vers le haut), `spec_browser_storage.md` (`barTop` dans la géométrie), `src/client/CLAUDE.md` si les hooks de lecteurs y sont listés.
+
+### 14.5 Fichiers touchés
+
+| Bloc | Fichiers |
+|---|---|
+| A | `src/client/src/tools/floatingGeometry.js`, `hooks/useFloatingWindow.js`, `components/ui/FloatingPanel.jsx`, test |
+| B | `src/server/routes/audio.js`, `src/client/src/tools/timecode.js` (nouveau), `hooks/useAudioButtons.js`, `components/audio/panel/ScenesDialog.jsx`, tests |
+| C | `database-template/audio-schema.sql`, migration `10112026_audio_track_source.sql`, `src/server/routes/audio.js`, `src/server/utils/audioSources.js` (nouveau), `src/client/src/tools/mediaLinks.js` (nouveau), `tools/audioSync.js`, `hooks/useYouTubePlayer.js`, `hooks/useVimeoPlayer.js`, `hooks/useSoundCloudPlayer.js`, `hooks/useAudioElementPlayer.js` (nouveaux), `components/audio/SlotPlayer.jsx`, `AudioLayer.jsx`, `AudioGMPanel.jsx`, `panel/AddLinkFoot.jsx`, `panel/NowPlaying.jsx`, `panel/LibraryRows.jsx`, `src/client/src/index.css`, tests |
+
+Rien dans les slugs.
+
+### 14.6 Points à valider
+
+| # | Point | Proposition | Réponse MJ |
+|---|---|---|---|
+| W-1 | Ordre de livraison : A, puis B, puis C (essai du déblocage du son en tête de C), avec un point de contrôle en dev après chaque bloc ? | Oui | Oui |
+| W-2 | Une scène enregistrée garde **toujours** la position de chaque piste (modifiable ou vidée ensuite dans « Modifier les scènes… »), plutôt qu'une case à cocher à l'enregistrement ? | Oui : pas de case en plus ; vider le champ revient au début | Oui |
+| W-3 | Conséquence de V-6 : une ambiance en boucle capturée à 2:47 dans une scène rebouclera à 2:47. D'accord, ou une scène ne garde la position que pour la musique ? | D'accord tel quel : c'est la règle de V-6, et le départ se vide d'un clic | Question en retour : réexpliqué ci-dessous |
+| W-4 | Liens de fichier son : extensions `.mp3`, `.ogg`, `.oga`, `.m4a`, `.wav`, `.opus`, en https seulement ? | Oui | Oui |
+| W-5 | Pastille de source aussi sur les titres YouTube, ou seulement sur les autres (encore plus discret) ? | Seulement les autres : YouTube reste la source par défaut, la pastille signale l'exception | Oui |
+
+**W-3 réexpliqué** : la boucle ne dure pas une seconde. Un morceau de 5:00 lancé à 2:47 en boucle joue de 2:47 à 5:00, puis reprend à 2:47, et ainsi de suite : le passage de 0:00 à 2:47 n'est plus jamais entendu. Le piège vient de « Enregistrer ce qui joue » : la scène retient la position du moment, souvent prise au hasard (l'ambiance tournait depuis 2:47 quand le MJ a cliqué), et la boucle s'en trouverait raccourcie sans que ce soit voulu.
+
+| # | Point | Proposition | Réponse MJ |
+|---|---|---|---|
+| W-3 bis | Que garde « Enregistrer ce qui joue » ? (1) la position de chaque piste, boucles comprises (règle V-6 telle quelle) ; (2) la position de la **musique** seulement, les ambiances et l'effet repartant de 0 ; (3) aucune position : la scène part de 0, le timecode se saisit à la main dans « Modifier les scènes… » quand il est voulu | **(3)** : un timecode n'est jamais pris par hasard, il est choisi ; la règle V-6 (boucle au timecode) s'applique alors à un départ voulu | **(3)**, remplace W-2 |

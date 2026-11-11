@@ -808,6 +808,8 @@ select:disabled {
   .vtt-audio-row-name.is-track { display: flex; align-items: center; gap: 0.3rem; min-width: 0; }
   .vtt-audio-row-title { flex: 0 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .vtt-audio-row-duration { flex-shrink: 0; font-weight: 400; color: var(--color-text-muted); font-variant-numeric: tabular-nums; }
+  /* Source d'un titre hors YouTube (spec_audio.md §14.3, V-9) : discrète, texte atténué */
+  .vtt-audio-source { flex-shrink: 0; font-size: 0.7rem; font-weight: 400; color: var(--color-text-muted); border: 1px solid currentColor; border-radius: 999px; padding: 0 0.4rem; line-height: 1.35; opacity: 0.8; }
   .vtt-audio-row-name.is-track .vtt-audio-eq { flex-shrink: 0; margin-right: 0; }
   .vtt-audio-row.is-current .vtt-audio-row-name { font-weight: 700; color: var(--color-primary); }
   .vtt-audio-row.is-unavailable .vtt-audio-row-name { text-decoration: line-through; color: var(--color-text-muted); }
@@ -865,6 +867,11 @@ select:disabled {
   .vtt-audio-scene-grip { cursor: grab; color: var(--color-text-muted); letter-spacing: -0.15em; }
   .vtt-audio-scene-name { flex: 1 1 10rem; min-width: 0; display: flex; flex-direction: column; }
   .vtt-audio-scene-actions { display: flex; flex-wrap: wrap; gap: 0.35rem; }
+  /* Timecodes des titres d'un bouton (§14.2) : une ligne sous le nom */
+  .vtt-audio-scene-starts { flex-basis: 100%; display: flex; flex-wrap: wrap; gap: 0.35rem 1rem; padding-left: 1.4rem; }
+  .vtt-audio-scene-start { display: inline-flex; align-items: center; gap: 0.4rem; font-size: 0.85rem; color: var(--color-text-muted); }
+  .vtt-audio-scene-start input { width: 5.5rem; height: 1.9rem; }
+  .vtt-audio-scene-start input[aria-invalid] { border-color: var(--color-danger); }
   .vtt-audio-add-form { display: flex; flex: 1; gap: 0.35rem; align-items: center; }
   .vtt-audio-add-form input { flex: 1; min-width: 0; height: 2.1rem; }
   .vtt-audio-foot-message { font-size: 0.78rem; color: var(--color-text-muted); }

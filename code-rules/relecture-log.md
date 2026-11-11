@@ -21,6 +21,11 @@ Une ligne par relecture croisée (`/relecture`, `documentations/spec_relecture.m
 | 2026-11-10 | Dune, Nimble, Maledictum sur la brique NpcItemList | — | — | 0 / 1 (ordre de tabulation et largeur du texte des talents de Dune : laissé tel quel, décision du MJ) |
 | 2026-11-10 | Bibliothèque PNJ : boutons sur la ligne du nom, avatar en haut | — | — | 0 / 0 | 2 / 2 (résultat d'un jet caché affiché sur la fiche Maledictum, « PV par héros » remis à zéro quand un monstre Nimble n'est plus légendaire) |
 | 2026-11-10 | Maledictum : écart entre les losanges de la zone d'actions | — | — | 0 / 0 |
+| 2026-11-10 | Musique, bloc A : fenêtre flottante réduite qui s'ouvre vers le haut (`spec_audio.md` §14.1) | — | — | 0 / 0 |
+| 2026-11-10 | Musique, bloc B : timecode des boutons (`spec_audio.md` §14.2), 2 passes | C-SPEC (timecode : `true` et `[83]` acceptés par `Number()`) | — | 3 / 4 (départ au-delà d'une durée découverte plus tard, arrondi près de la fin, champ non réconcilié après normalisation ; écartée : écriture partielle du PUT sur libellé refusé) ; récurrence C-SPEC sur la validation des nombres : nouvelle règle B-NUMBER |
+| 2026-11-10 | Musique, bloc C : nouvelles sources (Vimeo, SoundCloud, Suno, fichier son, `spec_audio.md` §14.3), 2 passes | C-SPEC ×3 (autopause Vimeo et exclusivité SoundCloud qui coupaient une autre piste, `links` mal formé filtré au lieu de refusé) | — | 1 / 1 (écouteur READY du widget SoundCloud figé sur le premier chargement) |
+| 2026-11-11 | Musique, complément du bloc C : Suno retiré, Google Drive et Dropbox (`spec_audio.md` §14.3 bis) | — | — | 0 / 0 |
+| 2026-11-11 | Musique : retrait de la source « fichier son » (Drive bloqué par le navigateur, MP3 hébergés laissés de côté), 2 passes | C-SPEC (titres YouTube demandés avant la vérification des autres liens d'un ajout mixte) | — | ? / 1 (vérifier dans le test l'absence d'appel réseau, pas seulement le refus) |
 
 ## Décompte par identifiant
 
@@ -28,6 +33,6 @@ Une ligne par relecture croisée (`/relecture`, `documentations/spec_relecture.m
 |---|---|---|
 | C-TEST | 2 | 2026-11-08 |
 | B-LOG | 1 | 2026-11-08 |
-| C-SPEC | 9 | 2026-11-10 |
+| C-SPEC | 14 | 2026-11-11 |
 | F-TOKENS | 1 | 2026-11-09 |
 | B-COALESCE | 2 | 2026-11-10 |

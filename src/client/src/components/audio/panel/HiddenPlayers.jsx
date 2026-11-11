@@ -51,12 +51,12 @@ export const DurationProbe = ({ tracks, onFound }) => {
                 const next = tracksRef.current.find(t => !tried.has(t.id));
                 if (!next) { await wait(1000); continue; }
                 tried.add(next.id);
-                player.cueVideoById(next.youtubeId);
+                player.cueVideoById(next.mediaId);
                 const started = Date.now();
                 while (!cancelled && Date.now() - started < PROBE_TIMEOUT_MS) {
                     await wait(300);
                     // La durée doit être celle de cette vidéo, pas de la précédente
-                    const duration = player.getVideoData?.()?.video_id === next.youtubeId ? player.getDuration?.() : 0;
+                    const duration = player.getVideoData?.()?.video_id === next.mediaId ? player.getDuration?.() : 0;
                     if (duration > 0) { onFoundRef.current(next.id, duration); break; }
                 }
             }

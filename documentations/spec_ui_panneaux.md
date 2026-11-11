@@ -68,6 +68,7 @@ Hors périmètre :
 - **Premier plan** (F-1) : un clic n'importe où dans la fenêtre la passe devant les autres fenêtres flottantes ; toutes restent sous les modales.
 - **Conteneur de requêtes de taille** : le contenu s'adapte à la largeur de la fenêtre (`@container`), pas à celle de l'écran. Conséquence à connaître : ce qui est en position fixe dans le contenu (menus, fenêtres modales) doit passer par l'emplacement à modales (`HostedModal`), sinon il est rogné. Écrit dans le commentaire du composant.
 - **Réduite** : barre de titre seule (titre, `titleExtra`, boutons), à sa position.
+- **Agrandie depuis la barre réduite** (`spec_audio.md` §14.1) : sans place en dessous, la fenêtre s'ouvre vers le haut, son bas calé sur le bas de la barre, barre de titre en haut ; réduite à nouveau, la barre revient où elle était (sauf si la fenêtre ouverte a été déplacée ou redimensionnée entre-temps).
 - **Plein écran** : marge de 1 rem tout autour, ni poignées ni déplacement ; non mémorisé.
 - **Petit écran** (F-2) : plein écran d'office, boutons Réduire et Fermer gardés.
 - **Accessibilité** : `role="dialog"`, `aria-modal="false"`, nom de la fenêtre par le titre ; boutons nommés ; focus visible ; F-4 pour le focus à l'ouverture.

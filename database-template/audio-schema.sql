@@ -45,8 +45,9 @@ create table audio_playlists
 create index idx_audio_playlists_collection
     on audio_playlists (collection_id, position);
 
--- Vidéos YouTube : gain de 0 à 100 pour égaliser les niveaux d'origine (S-15) ;
--- durée en secondes, connue à la première lecture ou à l'affichage (null : inconnue)
+-- Titres : gain de 0 à 100 pour égaliser les niveaux d'origine (S-15) ;
+-- durée en secondes, connue à l'ajout, à la première lecture ou à l'affichage (null : inconnue) ;
+-- source youtube | vimeo | soundcloud, media_id : identifiant YouTube, ou adresse (§14.3)
 create table audio_tracks
 (
     id          INTEGER
@@ -54,13 +55,14 @@ create table audio_tracks
     playlist_id INTEGER not null
         references audio_playlists
             on delete cascade,
-    youtube_id  TEXT    not null,
+    media_id    TEXT    not null,
     title       TEXT    not null,
     gain        INTEGER not null default 100,
     position    INTEGER not null default 0,
     unavailable INTEGER not null default 0,
     duration    REAL,
-    created_at  DATETIME default CURRENT_TIMESTAMP
+    created_at  DATETIME default CURRENT_TIMESTAMP,
+    source      TEXT    not null default 'youtube'
 );
 
 create index idx_audio_tracks_playlist

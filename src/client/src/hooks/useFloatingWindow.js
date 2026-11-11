@@ -12,7 +12,7 @@
 // ─────────────────────────────────────────────────────────────────────────────
 
 import { useEffect, useRef, useState } from 'react';
-import { clampRect, defaultRect, moveRect, resizeRect } from '../tools/floatingGeometry.js';
+import { clampRect, collapseRect, defaultRect, expandRect, moveRect, resizeRect } from '../tools/floatingGeometry.js';
 import { readStored, storageKey, writeStored } from '../tools/browserStorage.js';
 import { getSystemFromPath } from './useSystem.js';
 
@@ -43,7 +43,9 @@ export function useFloatingWindow({
             if (movable) Object.assign(rect, { left: saved.rect.left, top: saved.rect.top });
             if (resizable) Object.assign(rect, { width: saved.rect.width, height: saved.rect.height });
         }
-        return { rect: clampRect(rect, viewport(), minSize), minimized: minimizable && !!saved?.minimized };
+        // barTop : place de la barre réduite quand la fenêtre s'est ouverte vers le haut (§14.1 de spec_audio.md)
+        const barTop = minimizable && movable && Number.isFinite(saved?.barTop) ? saved.barTop : null;
+        return { rect: clampRect(rect, viewport(), minSize), minimized: minimizable && !!saved?.minimized, barTop };
     });
 
     // Pendant un geste, rien n'est enregistré ; à la fin, l'état final l'est
@@ -71,7 +73,8 @@ export function useFloatingWindow({
         const start = geometryRef.current.rect;
         const x0 = e.clientX;
         const y0 = e.clientY;
-        const move = (ev) => setGeometry(g => ({ ...g, rect: compute(start, ev.clientX - x0, ev.clientY - y0) }));
+        // Fenêtre déplacée ou redimensionnée : la barre suit désormais le haut de la fenêtre
+        const move = (ev) => setGeometry(g => ({ ...g, rect: compute(start, ev.clientX - x0, ev.clientY - y0), barTop: null }));
         const end = () => {
             window.removeEventListener('pointermove', move);
             window.removeEventListener('pointerup', end);
@@ -87,7 +90,13 @@ export function useFloatingWindow({
     return {
         rect: geometry.rect,
         minimized: geometry.minimized,
-        toggleMinimized: () => setGeometry(g => ({ ...g, minimized: !g.minimized })),
+        // barHeight : hauteur de la barre réduite, pour ouvrir vers le haut faute de place en dessous
+        toggleMinimized: (barHeight) => setGeometry(g => {
+            if (!g.minimized) return { ...g, minimized: true, rect: collapseRect(g.rect, g.barTop, viewport(), minSize), barTop: null };
+            if (!movable) return { ...g, minimized: false };
+            const { rect, barTop } = expandRect(g.rect, barHeight, viewport(), minSize);
+            return { ...g, minimized: false, rect, barTop };
+        }),
         startMove: (e) => {
             if (!movable || e.target.closest('button')) return;
             startGesture(e, (s, dx, dy) => moveRect(s, dx, dy, viewport(), minSize));

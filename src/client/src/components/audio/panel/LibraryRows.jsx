@@ -12,6 +12,7 @@ import { MenuButton, MenuItem, MenuLabel, MenuSeparator } from './RowMenu.jsx';
 import { SlotChip } from './SlotChip.jsx';
 import { SLOTS, SLOT_LABEL, VISIBILITIES, VISIBILITY_LABEL } from '../../../tools/audioSlots.js';
 import { formatTime } from '../../../tools/audioLibrary.js';
+import { SOURCE_LABELS } from '../../../tools/mediaLinks.js';
 
 /** Champ de renommage sur place : Entrée valide, Échap annule. */
 const RenameInput = ({ value, onSave, onCancel }) => {
@@ -45,7 +46,7 @@ const LayersMenu = ({ label, slots, state, onPlay }) => (
             <>
                 <MenuLabel>Jouer en</MenuLabel>
                 {slots.map(slot => (
-                    <MenuItem key={slot} hint={state?.slots?.[slot]?.youtubeId ? 'remplace' : null} onSelect={() => { close(); onPlay(slot); }}>
+                    <MenuItem key={slot} hint={state?.slots?.[slot]?.mediaId ? 'remplace' : null} onSelect={() => { close(); onPlay(slot); }}>
                         {SLOT_LABEL[slot]}
                     </MenuItem>
                 ))}
@@ -80,6 +81,8 @@ export const TrackRow = ({ track, slot = 'music', path, playingSlot, audioState,
                         {current && <Equalizer playing={audioState?.slots?.[playingSlot]?.status === 'playing'} />}
                         <span className="vtt-audio-row-title" title={track.title}>{track.title}</span>
                         {track.duration > 0 && <span className="vtt-audio-row-duration">({formatTime(track.duration)})</span>}
+                        {/* Source hors YouTube, signalée discrètement (V-9, W-5) */}
+                        {track.source && track.source !== 'youtube' && <span className="vtt-audio-source">{SOURCE_LABELS[track.source] ?? track.source}</span>}
                     </span>
                     {meta && <span className="vtt-audio-row-meta">{meta}</span>}
                 </span>

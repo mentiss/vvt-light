@@ -4,8 +4,9 @@
 // générique, dans l'emplacement à modales de la page :
 // - SceneNameDialog : nom d'une scène enregistrée depuis ce qui joue ;
 // - TargetButtonDialog : bouton ciblé créé depuis un titre ou une playlist ;
-// - ScenesDialog : « Modifier les scènes… » (renommer, ordre, remplacer par ce qui
-//   joue, supprimer). La gestion ne vit qu'ici, pas dans le panneau.
+// - ScenesDialog : « Modifier les scènes… » (renommer, ordre, timecodes des titres
+//   (§14.2), remplacer par ce qui joue, supprimer). La gestion ne vit qu'ici, pas
+//   dans le panneau.
 // ─────────────────────────────────────────────────────────────────────────────
 
 import React, { useState } from 'react';
@@ -14,6 +15,44 @@ import { HostedModal } from '../../ui/ModalHost.jsx';
 import useConfirm from '../../../hooks/useConfirm.jsx';
 import { useDragOrder } from '../../../hooks/useDragOrder.js';
 import { SLOT_LABEL } from '../../../tools/audioSlots.js';
+import { formatTime } from '../../../tools/audioLibrary.js';
+import { parseTimecode } from '../../../tools/timecode.js';
+
+/**
+ * Champ « à partir de » d'un titre (§14.2) : enregistré en quittant le champ ou par Entrée ;
+ * vide = depuis le début ; un timecode illisible est signalé et rien ne part.
+ */
+const StartField = ({ label, seconds, onCommit }) => {
+    const shown = seconds ? formatTime(seconds) : '';
+    // null : le champ montre la valeur du serveur ; un texte : saisie en cours
+    const [text, setText] = useState(null);
+    const [invalid, setInvalid] = useState(false);
+    const commit = async () => {
+        if (text === null) return;
+        const value = parseTimecode(text);
+        setInvalid(value === null);
+        if (value === null) return;
+        if (value !== (seconds ?? 0)) await onCommit(value || null);
+        // Retour à la valeur enregistrée : le serveur a pu la ramener au début (au-delà de la durée)
+        setText(null);
+    };
+    return (
+        <label className="vtt-audio-scene-start">
+            <span>{label} à partir de</span>
+            <input className="vtt-input" value={text ?? shown} placeholder="0:00" inputMode="numeric" aria-invalid={invalid || undefined}
+                   title={invalid ? 'Timecode illisible : 1:23, 1:02:03 ou des secondes' : undefined}
+                   onChange={e => { setText(e.target.value); setInvalid(false); }} onBlur={commit}
+                   onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); commit(); } if (e.key === 'Escape') { e.stopPropagation(); setText(null); setInvalid(false); } }} />
+        </label>
+    );
+};
+
+/** Titres d'un bouton qui acceptent un timecode : [piste, entrée] (pas une playlist ni le hasard). */
+const timedEntries = (button) => {
+    const actions = button.actions ?? {};
+    if (button.mode === 'target') return actions.trackId ? [[actions.slot, actions]] : [];
+    return Object.entries(actions.slots ?? {}).filter(([, e]) => e?.trackId && e.mode !== 'shuffle');
+};
 
 /** Résumé d'un bouton : « Scène » ou la piste visée. */
 export const buttonSummary = (button) => (button.mode === 'scene'
@@ -50,7 +89,7 @@ const NameForm = ({ title, initial, submitLabel, onSubmit, onClose, error, child
 export const SceneNameDialog = ({ count, error, onSave, onClose }) => (
     <NameForm title="Enregistrer ce qui joue" initial={`Scène ${count + 1}`} submitLabel="Enregistrer"
               onSubmit={onSave} onClose={onClose} error={error}>
-        <p className="text-sm text-muted">Le bouton relancera la musique, les ambiances et l'effet en cours, chacun avec son mode ; les pistes vides seront arrêtées.</p>
+        <p className="text-sm text-muted">Le bouton relancera la musique, les ambiances et l'effet en cours, chacun avec son mode, depuis le début (un départ se règle ensuite dans « Modifier les scènes… ») ; les pistes vides seront arrêtées.</p>
     </NameForm>
 );
 
@@ -62,12 +101,18 @@ export const TargetButtonDialog = ({ target, error, onCreate, onClose }) => {
     const slots = target.kind === 'track' ? ['music', 'ambience1', 'ambience2', 'effect'] : ['music', 'ambience1', 'ambience2'];
     const [slot, setSlot] = useState(slots.includes(target.slot) ? target.slot : 'music');
     const [shuffle, setShuffle] = useState(false);
-    const create = (label) => onCreate({
-        label, slot,
-        ...(target.kind === 'track' ? { trackId: target.trackId } : { playlistId: target.playlistId, shuffle: slot === 'music' && shuffle }),
-    });
+    const [startText, setStartText] = useState('');
+    const [startError, setStartError] = useState(null);
+    const create = (label) => {
+        const start = target.kind === 'track' ? parseTimecode(startText) : 0;
+        if (start === null) { setStartError('Timecode illisible : 1:23, 1:02:03 ou des secondes'); return; }
+        onCreate({
+            label, slot,
+            ...(target.kind === 'track' ? { trackId: target.trackId, start: start || undefined } : { playlistId: target.playlistId, shuffle: slot === 'music' && shuffle }),
+        });
+    };
     return (
-        <NameForm title="Créer un bouton" initial={target.name} submitLabel="Créer" onSubmit={create} onClose={onClose} error={error}>
+        <NameForm title="Créer un bouton" initial={target.name} submitLabel="Créer" onSubmit={create} onClose={onClose} error={startError ?? error}>
             <div className="space-y-1">
                 <span className="vtt-field-label">Piste</span>
                 <div className="flex flex-wrap gap-2">
@@ -84,6 +129,13 @@ export const TargetButtonDialog = ({ target, error, onCreate, onClose }) => {
                     <button type="button" className={`vtt-pill${shuffle ? ' is-selected' : ''}`} aria-pressed={shuffle} onClick={() => setShuffle(true)}>Au hasard</button>
                 </div>
             )}
+            {target.kind === 'track' && (
+                <label className="block space-y-1">
+                    <span className="vtt-field-label">À partir de</span>
+                    <input className="vtt-input" value={startText} placeholder="0:00" inputMode="numeric" aria-invalid={!!startError || undefined}
+                           onChange={e => { setStartText(e.target.value); setStartError(null); }} />
+                </label>
+            )}
             <p className="text-sm text-muted">Le bouton ne change que cette piste ; les autres continuent.</p>
         </NameForm>
     );
@@ -93,6 +145,7 @@ export const TargetButtonDialog = ({ target, error, onCreate, onClose }) => {
 const SceneRow = ({ button, canCapture, scenes, confirm, dragProps }) => {
     const [editing, setEditing] = useState(false);
     const [name, setName] = useState(button.label);
+    const timed = timedEntries(button);
     const save = () => { setEditing(false); if (name.trim() && name.trim() !== button.label) scenes.rename(button.id, name.trim()); };
     const remove = async () => {
         if (await confirm({ title: 'Supprimer le bouton', message: `Supprimer « ${button.label} » ?`, confirmText: 'Supprimer', danger: true })) scenes.remove(button.id);
@@ -108,6 +161,14 @@ const SceneRow = ({ button, canCapture, scenes, confirm, dragProps }) => {
                 <span className="vtt-audio-scene-name">
                     <span>{button.broken && <span title="Playlist vide" aria-label="Playlist vide">⚠ </span>}{button.label}</span>
                     <span className="vtt-audio-row-meta">{buttonSummary(button)}{button.broken ? ' · playlist vide' : ''}</span>
+                </span>
+            )}
+            {timed.length > 0 && (
+                <span className="vtt-audio-scene-starts">
+                    {timed.map(([slot, entry]) => (
+                        <StartField key={`${slot}:${entry.trackId}`} label={SLOT_LABEL[slot]} seconds={entry.start}
+                                    onCommit={value => scenes.setStart(button.id, button.mode === 'target' ? { start: value } : { starts: { [slot]: value } })} />
+                    ))}
                 </span>
             )}
             <span className="vtt-audio-scene-actions">

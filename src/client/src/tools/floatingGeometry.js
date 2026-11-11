@@ -81,3 +81,25 @@ export function resizeRect(start, dir, dx, dy, viewport, min = MIN_SIZE) {
     }
     return clampRect({ left, top, width: Math.max(min.width, width), height: Math.max(min.height, height) }, viewport, min);
 }
+
+/**
+ * Agrandissement d'une fenêtre réduite (spec_audio.md §14.1) : sans place sous la
+ * barre, la fenêtre s'ouvre vers le haut, son bas calé sur le bas de la barre ;
+ * la barre de titre reste en haut de la fenêtre ouverte.
+ *
+ * @param {object} rect      rectangle mémorisé (top = place de la barre réduite)
+ * @param {number} barHeight hauteur de la barre réduite (px)
+ * @returns {{ rect: object, barTop: number|null }} barTop : place de la barre à reprendre
+ *   à la réduction suivante, null si la fenêtre s'est ouverte vers le bas
+ */
+export function expandRect(rect, barHeight, viewport, min = MIN_SIZE) {
+    const fitted = clampRect(rect, viewport, min);
+    if (fitted.top + fitted.height <= viewport.height - MARGIN) return { rect: fitted, barTop: null };
+    const top = fitted.top + (Number(barHeight) || 0) - fitted.height;
+    return { rect: clampRect({ ...fitted, top }, viewport, min), barTop: fitted.top };
+}
+
+/** Réduction d'une fenêtre ouverte vers le haut : la barre revient à sa place (barTop). */
+export function collapseRect(rect, barTop, viewport, min = MIN_SIZE) {
+    return barTop == null ? rect : clampRect({ ...rect, top: barTop }, viewport, min);
+}

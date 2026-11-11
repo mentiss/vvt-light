@@ -59,14 +59,15 @@ const AudioLayer = ({ role, sessionId }) => {
     const slots = audio.enabled ? (audio.state?.slots ?? {}) : {};
     const music = slots.music;
     // Joueurs : titre de la musique seulement, sauf si le MJ le masque (S-11, Q-28) ; le MJ le voit toujours
-    const musicTitle = music?.youtubeId && (isGM || !audio.hideTitle) ? music.title : null;
+    const musicTitle = music?.mediaId && (isGM || !audio.hideTitle) ? music.title : null;
     const playing = Object.values(slots).some(s => s.status === 'playing');
 
     return (
         <>
-            {Object.entries(slots).map(([slot, slotState]) => slotState.youtubeId && (
+            {Object.entries(slots).map(([slot, slotState]) => slotState.mediaId && (
                 <SlotPlayer
-                    key={slot}
+                    // Changer de source remonte le lecteur (un lecteur par source, §14.3)
+                    key={`${slot}:${slotState.source ?? 'youtube'}`}
                     slot={slot}
                     slotState={slotState}
                     getServerNow={audio.getServerNow}
