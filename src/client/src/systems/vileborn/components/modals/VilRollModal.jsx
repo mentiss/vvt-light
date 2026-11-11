@@ -10,7 +10,7 @@
 // ─────────────────────────────────────────────────────────────────────────────
 
 import React, { useState } from 'react';
-import Modal from '../../../../components/ui/Modal.jsx';
+import Modal from '@/ui/modal/Modal.jsx';
 import { APPROACHES, ROLL_TYPES } from '../../config.jsx';
 import { DIFFICULTIES, DEFAULT_DIFFICULTY, blockedByStates, buildTestContext, darkThreshold, poolSize, statePenalty, ordinal } from '../../config/rules/test.js';
 import { displayName, exploreTicks } from '../../config/rules/character.js';

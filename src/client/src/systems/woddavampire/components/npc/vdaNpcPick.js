@@ -15,7 +15,7 @@ export const abilityLabel = (a) => {
 
 const findAbility = (sd, key) => (sd?.abilities ?? []).find(a => a.key === key);
 
-/** Contrat `pick` de la brique NpcSystem (components/npc/NpcSystem.jsx). */
+/** Contrat `pick` de la brique NpcSystem (features/npc/NpcSystem.jsx). */
 export const vdaNpcPick = {
     groups: () => [{ key: 'attribute', label: 'un Attribut' }, { key: 'ability', label: 'une Capacité' }],
     part: (npc, group, key) => (group === 'attribute'

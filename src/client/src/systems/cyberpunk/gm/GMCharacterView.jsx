@@ -11,7 +11,7 @@
 // ─────────────────────────────────────────────────────────────────────────────
 
 import React, { useState } from 'react';
-import CopyAccessButton from '../../../components/ui/CopyAccessButton.jsx';
+import CopyAccessButton from '@/features/table/CopyAccessButton.jsx';
 import { SheetBody } from '../components/layout/SheetBody.jsx';
 import { Card } from '../components/layout/Card.jsx';
 import { useSheetEditor } from '../hooks/useSheetEditor.js';

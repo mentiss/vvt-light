@@ -6,7 +6,7 @@
 // ⚠️ Module ES — importé uniquement par le frontend React.
 // ─────────────────────────────────────────────────────────────────────────────
 
-import { RollError } from '../../tools/diceEngine.js';
+import { RollError } from '@/features/dice/tools/diceEngine.js';
 import VilHistoryEntry from './components/layout/VilHistoryEntry.jsx';
 import { resolveTest, poolSize } from './config/rules/test.js';
 

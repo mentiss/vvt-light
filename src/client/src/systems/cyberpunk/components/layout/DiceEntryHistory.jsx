@@ -7,7 +7,7 @@
 
 import React from "react";
 import { OUTCOME_LABEL, STAT_LABELS } from "../../config.jsx";
-import { parseFreeRoll } from "../../../../tools/freeRoll.js";
+import { parseFreeRoll } from "@/features/dice/tools/freeRoll.js";
 import { RollBand, D10Face } from "../ui/RollBand.jsx";
 
 const signed = (v) => (v > 0 ? `+${v}` : `−${Math.abs(v)}`);

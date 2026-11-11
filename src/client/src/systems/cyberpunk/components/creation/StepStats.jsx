@@ -4,7 +4,7 @@
 // Clic sur une stat posée : la valeur revient dans la réserve.
 import React, { useState } from 'react';
 import { STAT_PROFILES, STATS, STAT_LABELS, STAT_DESCRIPTIONS, findPlaybook, playbookStatProfile } from '../../config.jsx';
-import { useSystem } from '../../../../hooks/useSystem.js';
+import { useSystem } from '@/app/hooks/useSystem.js';
 import { usePlaybookMoves } from '../../hooks/usePlaybookMoves.js';
 import { Card } from '../layout/Card.jsx';
 import { StepHead, PickCard, StatProfile } from './CreationParts.jsx';

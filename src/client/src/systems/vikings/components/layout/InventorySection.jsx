@@ -17,8 +17,8 @@ import { getCombatValues } from "../../config/rules.js";
 import VkModal from "../ui/VkModal.jsx";
 import VkIcon from "../ui/VkIcon.jsx";
 import VkQuantity from "../ui/VkQuantity.jsx";
-import useConfirm from "../../../../hooks/useConfirm.jsx";
-import CatalogModal from "../../../../components/modals/CatalogModal.jsx";
+import useConfirm from "@/ui/hooks/useConfirm.jsx";
+import CatalogModal from "@/ui/catalog/CatalogModal.jsx";
 
 const FILTERS = [['all', 'Tous'], ['weapon', 'Armes'], ['armor', 'Armures'], ['item', 'Objets']];
 const CATEGORIES = [['item', 'Objet'], ['weapon', 'Arme'], ['armor', 'Armure']];

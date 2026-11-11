@@ -22,10 +22,10 @@ import {
 import { formatExplosion, formatSkillName } from '../../config/utils.js';
 import getTraitBonuses from '../../config/traitBonuses.js';
 import { CARACNAMES }  from '../../config/competences.js';
-import { roll, RollError } from '../../../../tools/diceEngine.js';
+import { roll, RollError } from '@/features/dice/tools/diceEngine.js';
 import vikingsConfig   from '../../config.jsx';
-import { useFetch }    from '../../../../hooks/useFetch.js';
-import { useSystem }   from '../../../../hooks/useSystem.js';
+import { useFetch }    from '@/app/hooks/useFetch.js';
+import { useSystem }   from '@/app/hooks/useSystem.js';
 import { emitVk, VK_TRIPLE } from '../../hooks/useVkLook.js';
 import VkTray  from '../ui/VkTray.jsx';   // plateau de jet (spec_vikings_pierre_peinte.md D-11), à la place d'une fenêtre
 import VkIcon  from '../ui/VkIcon.jsx';

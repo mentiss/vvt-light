@@ -6,8 +6,8 @@
 // Qualité et mots-clefs sont facultatifs : un atout d'avant la refonte n'en a pas.
 
 import React, { useState } from 'react';
-import useConfirm from '../../../../hooks/useConfirm.jsx';
-import ExpandableText from '../../../../components/ui/ExpandableText.jsx';
+import useConfirm from '@/ui/hooks/useConfirm.jsx';
+import ExpandableText from '@/ui/text/ExpandableText.jsx';
 import DuneIcon from '../ui/DuneIcon.jsx';
 import { DuneField, DuneFrame } from '../ui/DuneFields.jsx';
 import DuneAssetCatalog, { QualityPills } from '../modals/DuneAssetCatalog.jsx';

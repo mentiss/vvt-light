@@ -15,8 +15,8 @@
 // ─────────────────────────────────────────────────────────────────────────────
 
 import React, { useState } from 'react';
-import AvatarUploader from '../../../../components/AvatarUploader.jsx';
-import { usePersistedState } from '../../../../hooks/usePersistedState.js';
+import AvatarUploader from '@/ui/image/AvatarUploader.jsx';
+import { usePersistedState } from '@/app/hooks/usePersistedState.js';
 import { IdentityCard } from './IdentityCard.jsx';
 import { Card } from './Card.jsx';
 import { CyberwareRow, DirectiveRow, ItemRow, QuickAddItem, RelationRow } from './Rows.jsx';

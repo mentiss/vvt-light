@@ -8,7 +8,7 @@
 // ⚠️  Module ES — uniquement importé par le frontend React.
 // ─────────────────────────────────────────────────────────────────────────────
 
-import { RollError } from '../../tools/diceEngine.js';
+import { RollError } from '@/features/dice/tools/diceEngine.js';
 import ZoneBlancheHistoryEntry from './components/layout/ZoneBlancheHistoryEntry.jsx';
 
 export { PRINCIPES, COMPETENCES, ARCHETYPES, getArchetype } from './config/base.js';
@@ -19,7 +19,7 @@ export { TALENTS_CATALOG } from './config/talents.js';
 export { EQUIPMENT_CATALOG, EQUIPMENT_CATEGORY_ORDER, BUDGET_PRESETS } from './config/equipment.js';
 
 // ══════════════════════════════════════════════════════════════════════════════
-// BLOC DÉS — contrat diceEngine v2 (vérifié contre tools/diceEngine.js)
+// BLOC DÉS — contrat diceEngine v2 (vérifié contre features/dice/tools/diceEngine.js)
 //
 //   roll(notation, ctx, hooks) est ASYNC et retourne directement le résultat
 //   d'afterRoll — jamais un objet dés brut.

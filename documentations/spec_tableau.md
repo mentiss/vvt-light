@@ -26,7 +26,7 @@ Contraintes du MJ :
 
 Dans le backlog : « Battlemap simple avec interaction joueurs / MJ » (briques plateforme, 2026-10-18).
 
-Nom de travail proposé : **tableau** (classes `vtt-board*`, code `components/board/`). Voir Q-1.
+Nom de travail proposé : **tableau** (classes `vtt-board*`, code `features/board/`). Voir Q-1.
 
 ---
 
@@ -142,7 +142,7 @@ Hors v1 proposés : texte libre, formes géométriques, calques, lignes de vue, 
 - **Base** : `database/board.db` avec son propre schéma (diapositives, objets, images, réglages par session dont l'activation et le « à conserver ») ; les bases des slugs ne sont pas touchées. Migration et release à étendre à cette base hors slug (§3.3).
 - **Serveur** : une route générique (comme `routes/audio.js` sur la branche `audio`), un handler socket générique. Aucun fichier image sur le disque (§3.2).
 - **Sockets** : quelques événements (diapositive affichée, objet ajouté / déplacé / supprimé, ping, brouillard), tous diffusés dans `${slug}_session_${sessionId}`.
-- **Client** : `components/board/`, montage dans `PlayerPage` / `GMPage`, élément d'activation pour `TabSession`, classes `vtt-board*` dans `index.css`.
+- **Client** : `features/board/`, montage dans `PlayerPage` / `GMPage`, élément d'activation pour `TabSession`, classes `vtt-board*` dans `features/board/board.css`.
 - **Slug pilote** : à choisir (Q-2).
 - **Tests** : fonctions pures seulement (conversion de coordonnées écran ↔ tableau, mesure de distance, simplification des traits).
 
@@ -528,7 +528,7 @@ Le relais ne vérifie que la forme (types, room du socket) : la position défini
   - `src/client/public/board/icons/<auteur>/<nom>.svg` (4 180 fichiers, ~6,5 Mo, servis tels quels par Vite et par Express) ;
   - `src/client/public/board/icons/index.json` : `{ groups: [{ label, tags: [...] }], icons: [{ id: 'lorc/campfire', tags: [...] }] }` (~200 Ko), **versionné** et modifiable à la main (Q-44 : traduction, recatégorisation).
 - Relancer le script écrase ces fichiers : à éviter une fois l'index retouché (il le dit en tête).
-- **Sélecteur** (`IconPicker`) : index chargé à la première ouverture ; recherche sans accents sur le nom et les tags (`normalizeText` de `tools/catalog.js`), catégories = groupes de tags plus « Divers » ; 120 résultats affichés au plus, le reste par « Voir plus ». Chaque icône est un `<img>` du fichier SVG, mis en cache par le navigateur.
+- **Sélecteur** (`IconPicker`) : index chargé à la première ouverture ; recherche sans accents sur le nom et les tags (`normalizeText` de `ui/tools/catalog.js`), catégories = groupes de tags plus « Divers » ; 120 résultats affichés au plus, le reste par « Voir plus ». Chaque icône est un `<img>` du fichier SVG, mis en cache par le navigateur.
 - Sur le tableau, l'icône est rendue en ligne dans le SVG (contenu du fichier, chargé une fois et gardé en mémoire), pour prendre sa couleur.
 - **Crédits** (CC BY 3.0) : une ligne en pied de la page d'accueil de la plateforme (`HomePage.jsx`) et un paragraphe dans le `README.md`.
 
@@ -536,25 +536,25 @@ Le relais ne vérifie que la forme (types, room du socket) : la position défini
 
 | Fichier | Rôle |
 |---|---|
-| `hooks/useBoardSession.js` | Table : `{ loaded, enabled, shownSlideId, grid, keep, purgeAt, size, slides }` au chargement et à la reconnexion, écoute `board-session` / `board-slides`, actions du MJ |
-| `hooks/useBoardSlide.js` | Diapositive : `{ slide, items }`, écoute `board-items` / `board-fog` / `board-drag` / `board-ping`, actions (poser, déplacer, effacer…) avec mise à jour immédiate à l'écran |
-| `hooks/useBoardImages.js` | Cache des images de la page (id → adresse locale), libérées au démontage |
-| `tools/boardGeometry.js` | Pur : écran ↔ tableau, zoom autour du pointeur, boîte englobante, simplification d'un trait (Ramer-Douglas-Peucker) |
-| `tools/boardGrid.js` | Pur : cascade de la grille, distance mesurée, format (« 4,5 m ») |
-| `tools/boardRights.js` | Pur : ce qu'un rôle peut faire d'un objet sur une diapositive (§10.2), pour griser les outils |
-| `tools/imageResize.js` | Pur côté navigateur : réduction et recompression d'une image, sorti de `RichTextEditor.jsx`, qui l'importe désormais (P-8) |
-| `components/board/BoardLayer.jsx` | Monté par `GMPage` et `PlayerPage` (comme `AudioLayer`) : rien si le tableau est désactivé (joueur) ; `ZoneAction` « Tableau » (`board`, `highlighted` si une nouvelle diapositive n'a pas été vue) ; bandeau « Le MJ partage un visuel · Voir » (Q-6) ; mode réduit en `FloatingPanel` (mémorisé par slug, fermable) ; joueur : bascule plein écran |
-| `components/board/Board.jsx` | **Le composant à poser par un slug dans un onglet**, joueur ou MJ (Q-5) : `<Board sessionId role />`. Assemble la vue, la barre d'outils et, pour le MJ, la liste des diapositives |
-| `components/board/BoardCanvas.jsx` | Vue SVG : fond, objets, traits, brouillard (masque ; transparent pour le MJ), grille, règle, pings ; zoom (molette, pincement), déplacement de la vue, poignées de redimensionnement |
-| `components/board/BoardToolbar.jsx` | Outils : main, trait, rectangle, gomme, règle (si grille), palette fixe ; MJ : image, icône, jeton, PJ, brouillard, verrou |
-| `components/board/SlideList.jsx` | MJ : diapositives (glisser-déposer par `useDragOrder`), « Montrer », réglages, dupliquer, supprimer, taille, purge et « À conserver » |
-| `components/board/IconPicker.jsx` | Sélecteur d'icônes (§10.7), dans une `HostedModal` |
-| `components/board/BoardSessionToggle.jsx` | Élément d'activation pour `TabSession`, comme `AudioSessionToggle` (`label`, `icon`, `className`) |
+| `features/board/hooks/useBoardSession.js` | Table : `{ loaded, enabled, shownSlideId, grid, keep, purgeAt, size, slides }` au chargement et à la reconnexion, écoute `board-session` / `board-slides`, actions du MJ |
+| `features/board/hooks/useBoardSlide.js` | Diapositive : `{ slide, items }`, écoute `board-items` / `board-fog` / `board-drag` / `board-ping`, actions (poser, déplacer, effacer…) avec mise à jour immédiate à l'écran |
+| `features/board/hooks/useBoardImages.js` | Cache des images de la page (id → adresse locale), libérées au démontage |
+| `features/board/tools/boardGeometry.js` | Pur : écran ↔ tableau, zoom autour du pointeur, boîte englobante, simplification d'un trait (Ramer-Douglas-Peucker) |
+| `features/board/tools/boardGrid.js` | Pur : cascade de la grille, distance mesurée, format (« 4,5 m ») |
+| `features/board/tools/boardRights.js` | Pur : ce qu'un rôle peut faire d'un objet sur une diapositive (§10.2), pour griser les outils |
+| `ui/tools/imageResize.js` | Pur côté navigateur : réduction et recompression d'une image, sorti de `RichTextEditor.jsx`, qui l'importe désormais (P-8) |
+| `features/board/BoardLayer.jsx` | Monté par `GMPage` et `PlayerPage` (comme `AudioLayer`) : rien si le tableau est désactivé (joueur) ; `ZoneAction` « Tableau » (`board`, `highlighted` si une nouvelle diapositive n'a pas été vue) ; bandeau « Le MJ partage un visuel · Voir » (Q-6) ; mode réduit en `FloatingPanel` (mémorisé par slug, fermable) ; joueur : bascule plein écran |
+| `features/board/Board.jsx` | **Le composant à poser par un slug dans un onglet**, joueur ou MJ (Q-5) : `<Board sessionId role />`. Assemble la vue, la barre d'outils et, pour le MJ, la liste des diapositives |
+| `features/board/BoardCanvas.jsx` | Vue SVG : fond, objets, traits, brouillard (masque ; transparent pour le MJ), grille, règle, pings ; zoom (molette, pincement), déplacement de la vue, poignées de redimensionnement |
+| `features/board/BoardToolbar.jsx` | Outils : main, trait, rectangle, gomme, règle (si grille), palette fixe ; MJ : image, icône, jeton, PJ, brouillard, verrou |
+| `features/board/SlideList.jsx` | MJ : diapositives (glisser-déposer par `useDragOrder`), « Montrer », réglages, dupliquer, supprimer, taille, purge et « À conserver » |
+| `features/board/IconPicker.jsx` | Sélecteur d'icônes (§10.7), dans une `HostedModal` |
+| `features/board/BoardSessionToggle.jsx` | Élément d'activation pour `TabSession`, comme `AudioSessionToggle` (`label`, `icon`, `className`) |
 
-- Palette fixe de 8 couleurs (celle de la prévisualisation), dans `tools/boardGrid.js` ou un petit `tools/boardPalette.js`.
+- Palette fixe de 8 couleurs (celle de la prévisualisation), dans `features/board/tools/boardGrid.js` ou un petit `tools/boardPalette.js`.
 - Couleur de ping d'un participant : tirée de la palette à partir de son identifiant (stable).
 - Stockage navigateur : mode joueur (réduit / plein écran) et ouverture du mode réduit par slug (`vtt:<slug>:board`), position de la fenêtre par `FloatingPanel` ; vue (zoom, cadrage) non mémorisée.
-- Habillage : classes `vtt-board*` dans `index.css` (`@layer components`, variables `--color-*`), fenêtre en `vtt-floating-*`, menus en `vtt-menu*`, boutons en `vtt-btn` : le tableau reprend l'habillage déjà fait par chaque slug ; Vikings en pilote.
+- Habillage : classes `vtt-board*` dans `features/board/board.css` (`@layer components`, variables `--color-*`), fenêtre en `vtt-floating-*`, menus en `vtt-menu*`, boutons en `vtt-btn` : le tableau reprend l'habillage déjà fait par chaque slug ; Vikings en pilote.
 
 ### 10.9 Lots
 
@@ -591,11 +591,11 @@ Historique des lots 1 et 2 :
 | `src/server/systems/Loader.js`, `src/server/server.js` | Montage de la route (une ligne chacun) |
 | `src/server/socket/index.js` | Branchement du domaine `board` |
 | `scripts/board-icons.js`, `src/client/public/board/icons/**` | Nouveaux (lot 4) |
-| `src/client/src/hooks/useBoard*.js`, `src/client/src/tools/board*.js`, `tools/imageResize.js`, `components/board/*` | Nouveaux |
-| `src/client/src/components/shared/RichTextEditor.jsx` | Import de `imageResize.js` au lieu de sa copie (P-8) |
-| `src/client/src/pages/GMPage.jsx`, `PlayerPage.jsx` | Montage de `BoardLayer` |
-| `src/client/src/index.css` | Style par défaut `vtt-board*` |
-| `src/client/src/pages/HomePage.jsx`, `README.md` | Crédits des icônes |
+| `src/client/src/features/board/hooks/useBoard*.js`, `src/client/src/features/board/tools/board*.js`, `ui/tools/imageResize.js`, `features/board/*` | Nouveaux |
+| `src/client/src/ui/text/RichTextEditor.jsx` | Import de `imageResize.js` au lieu de sa copie (P-8) |
+| `src/client/src/app/pages/GMPage.jsx`, `PlayerPage.jsx` | Montage de `BoardLayer` |
+| `src/client/src/features/board/board.css` | Style par défaut `vtt-board*` |
+| `src/client/src/app/pages/HomePage.jsx`, `README.md` | Crédits des icônes |
 | `src/client/src/systems/vikings/gm/tabs/TabSession.jsx`, `systems/vikings/GMApp.jsx`, `systems/vikings/theme.css` | Pilote (P-7) |
 | `src/client/tests/tools/board*.test.js`, `tests/server/routes/board.test.js` | Nouveaux |
 | `CLAUDE.md`, `src/client/CLAUDE.md`, `src/server/CLAUDE.md`, `/new-slug` | Brique tableau |
@@ -604,14 +604,14 @@ Historique des lots 1 et 2 :
 
 | # | Point | Proposition | Réponse MJ |
 |---|---|---|---|
-| P-1 | **Relais temps réel émis par le client** (`board-drag`, `board-ping`) : aujourd'hui, seul `audio-ping` part du client, et en lecture seule. Ici le serveur relaie à la room sans rien écrire. Sans ça, un déplacement « en direct » (Q-11) demanderait une requête HTTP à chaque mouvement, et le ping un enregistrement inutile | Oui : relais sans écriture, la position définitive passant toujours par le `PATCH` qui vérifie les droits | Oui, relais socket. Ce qui est à proscrire, c'est un slug qui émet lui-même alors que les sockets sont branchés ailleurs ; une brique de la plateforme qui émet depuis ses propres hooks est le cas standard. Les émissions vivent donc dans `hooks/useBoardSlide.js`, jamais dans le code d'un slug |
+| P-1 | **Relais temps réel émis par le client** (`board-drag`, `board-ping`) : aujourd'hui, seul `audio-ping` part du client, et en lecture seule. Ici le serveur relaie à la room sans rien écrire. Sans ça, un déplacement « en direct » (Q-11) demanderait une requête HTTP à chaque mouvement, et le ping un enregistrement inutile | Oui : relais sans écriture, la position définitive passant toujours par le `PATCH` qui vérifie les droits | Oui, relais socket. Ce qui est à proscrire, c'est un slug qui émet lui-même alors que les sockets sont branchés ailleurs ; une brique de la plateforme qui émet depuis ses propres hooks est le cas standard. Les émissions vivent donc dans `features/board/hooks/useBoardSlide.js`, jamais dans le code d'un slug |
 | P-2 | Un trait d'un autre participant apparaît **à la fin du geste** (au lâcher), pas pendant qu'il le trace | Oui en v1 ; le tracé en direct pourra passer plus tard par le même relais | Oui, à la fin, au moins pour la v1 |
 | P-3 | Icônes : posées par le MJ seulement, comme images et jetons ? | Oui en v1 ; les joueurs dessinent, déplacent (si permis) et pingent | Oui |
 | P-4 | Gomme des joueurs : traits et rectangles seulement (jamais images, icônes, jetons) ; « Tout effacer » réservé au MJ | Oui | Oui |
 | P-5 | « Utilisé » pour la purge = diapositive montrée ou écriture sur le tableau ; ouvrir le tableau ne compte pas (sinon la mention ne s'affiche jamais) ; mention à moins de 14 jours | Oui | Oui, sauf si on ouvre un tableau qui devrait être supprimé : ça vaut prolongation (§10.6) |
 | P-6 | Icônes **dans le dépôt** (`public/board/icons/`, 4 180 fichiers, ~6,5 Mo), plutôt que téléchargées à l'installation | Oui : l'index retouché à la main vit avec elles, la release ne change pas | Oui, 7 Mo ce n'est pas la mort |
 | P-7 | Pilote Vikings : élément d'activation dans `TabSession` et **onglet « Tableau » dans `GMApp`** ; côté joueur, le tableau de la plateforme seul (bascule et mode réduit), sans onglet dans la fiche | Oui | Oui |
-| P-8 | Sortir la réduction d'image de `RichTextEditor.jsx` dans `tools/imageResize.js`, partagé avec le tableau (le journal l'importe, comportement inchangé) | Oui, plutôt qu'une seconde copie | Oui |
+| P-8 | Sortir la réduction d'image de `RichTextEditor.jsx` dans `ui/tools/imageResize.js`, partagé avec le tableau (le journal l'importe, comportement inchangé) | Oui, plutôt qu'une seconde copie | Oui |
 | P-9 | Ménage des tables disparues au chargement par le MJ, comme l'audio | Oui | Oui |
 | P-10 | Rectangle (Q-34, resté sans réponse sur ce point) : plein et légèrement transparent par défaut, contour en option | Oui | Oui |
 | P-11 | Annuler (Ctrl+Z) : hors v1 (Q-22 : pas obligatoire) | Hors v1 | Pour après, hors v1 |
@@ -711,7 +711,7 @@ Lots A, B, C, D dans cet ordre (Q-45), sans les marqueurs (lot C) ni les miniatu
 
 ## 12. Lot A — ergonomie : spécification technique (phase 2, 2026-11-07)
 
-**Rien côté serveur** : ni schéma, ni migration, ni route, ni événement socket. Tout se passe dans `components/board/` et le style. Désactiver le tableau passe par l'action existante (`board.setEnabled`, `PUT /sessions/:sid`).
+**Rien côté serveur** : ni schéma, ni migration, ni route, ni événement socket. Tout se passe dans `features/board/` et le style. Désactiver le tableau passe par l'action existante (`board.setEnabled`, `PUT /sessions/:sid`).
 
 ### 12.1 Barre d'outils
 
@@ -785,14 +785,14 @@ Les deux restent dans le cadre du tableau (positionnés dans `vtt-board-stage`),
 
 | Fichier | Changement |
 |---|---|
-| `components/board/BoardToolbar.jsx` | Outils Sélection / Main, groupes contextuels, menu « Ajouter ▾ », fenêtre du lien d'image, raccourcis dans les infobulles ; recadrer retiré |
-| `components/board/BoardCanvas.jsx` | Outil `select` (l'actuel `hand`) et vraie `hand` ; clic molette, espace maintenu, déplacement à deux doigts ; zoom demandé de l'extérieur (boutons, touches) |
-| `components/board/Board.jsx` | Raccourcis clavier (sur le cadre du tableau), coins zoom et « ? », « Les joueurs voient », confirmation avant de montrer, bascule d'activation en fenêtre réduite |
-| `components/board/BoardHelp.jsx` | Nouveau : bouton « ? » et sa bulle, contenu selon le rôle et les droits |
-| `components/board/SlideList.jsx` | Poignée ⠿, rail réordonnable, bascule d'activation, confirmation avant de montrer |
-| `tools/boardGeometry.js` | Zoom et déplacement à deux doigts en une fonction pure (milieu et écart des doigts) |
+| `features/board/BoardToolbar.jsx` | Outils Sélection / Main, groupes contextuels, menu « Ajouter ▾ », fenêtre du lien d'image, raccourcis dans les infobulles ; recadrer retiré |
+| `features/board/BoardCanvas.jsx` | Outil `select` (l'actuel `hand`) et vraie `hand` ; clic molette, espace maintenu, déplacement à deux doigts ; zoom demandé de l'extérieur (boutons, touches) |
+| `features/board/Board.jsx` | Raccourcis clavier (sur le cadre du tableau), coins zoom et « ? », « Les joueurs voient », confirmation avant de montrer, bascule d'activation en fenêtre réduite |
+| `features/board/BoardHelp.jsx` | Nouveau : bouton « ? » et sa bulle, contenu selon le rôle et les droits |
+| `features/board/SlideList.jsx` | Poignée ⠿, rail réordonnable, bascule d'activation, confirmation avant de montrer |
+| `features/board/tools/boardGeometry.js` | Zoom et déplacement à deux doigts en une fonction pure (milieu et écart des doigts) |
 | `src/client/tests/tools/boardGeometry.test.js` | Cas du déplacement à deux doigts |
-| `index.css` | `vtt-board-corner`, `vtt-board-help*`, poignée ; menu en `vtt-menu` existant |
+| `features/board/board.css` | `vtt-board-corner`, `vtt-board-help*`, poignée ; menu en `vtt-menu` existant |
 | `systems/*/theme.css` | Seulement si l'essai montre un coin ou la bulle mal habillés dans un slug |
 | `spec_tableau.md` | État du lot |
 
@@ -817,7 +817,7 @@ Les deux restent dans le cadre du tableau (positionnés dans `vtt-board-stage`),
   - « Ajouter ▾ » juste après les outils (il était en bout de barre), suivi d'un bouton **« Jetons des PJ · n »** toujours visible (n = PJ de la table sans jeton sur la diapositive, grisé à 0), retiré du menu. « Tout effacer » reste seul en bout de barre.
   - Activation à **un seul endroit** : la pastille de l'en-tête de la vue, dans tous les modes ; le bandeau « Tableau désactivé… Activer », la pastille de la liste et le bouton du rail sont retirés. Tableau désactivé, l'en-tête dit « Les joueurs ne voient pas le tableau ».
   - Dans la liste, un **œil** remplace « Montrer / Retirer » : ouvert et en couleur = montrée, barré = pas montrée ; infobulles « Montrer aux joueurs » / « Cacher aux joueurs ». Le badge « Montrée » est retiré (le liseré reste). Le bouton de l'en-tête dit aussi « Cacher aux joueurs ».
-- Le menu « Ajouter ▾ » reprend le menu des lignes de l'audio (`components/audio/panel/RowMenu.jsx`) : déjà habillé par chaque slug, pas de copie.
+- Le menu « Ajouter ▾ » reprend le menu des lignes de l'audio (`features/audio/panel/RowMenu.jsx`) : déjà habillé par chaque slug, pas de copie.
 - Raccourcis inactifs aussi quand le focus est dans une fenêtre ou un menu (ils s'y effaceraient mal).
 - Clic molette et Main ne désélectionnent pas l'objet du MJ (seule la Sélection le fait).
 
@@ -876,16 +876,16 @@ alter table board_items add column rotation REAL not null default 0;   -- degré
 
 | Fichier | Changement |
 |---|---|
-| `components/board/BoardCanvas.jsx` | Rendu des quatre types, de la rotation (`transform` autour du centre) et des filtres (`filter` CSS sur l'image) ; gestes des nouveaux outils, Maj ; poignée de rotation ; double-clic sur un texte |
-| `components/board/BoardTextInput.jsx` | Nouveau : champ de saisie posé sur le cadre à l'endroit du texte, mesure du texte (largeur, hauteur) à la validation |
-| `components/board/BoardToolbar.jsx` | Outils Ligne, Ellipse, Halo, Texte ; options contextuelles (Plein / Contour, Flèche, Fond) |
-| `components/board/BoardImageFilters.jsx` | Nouveau : préréglages et curseurs, dans une bulle comme l'aide |
-| `components/board/Board.jsx` | Barre de sélection enrichie, Ctrl+D |
-| `hooks/useBoardSlide.js` | `duplicateItem`, `reorderItem` ; rotation dans `emitDrag` |
-| `tools/boardGeometry.js` | Toucher un objet tourné, point d'une ligne à 15°, angle de la poignée de rotation |
-| `tools/boardRights.js` | `PLAYER_DRAW_KINDS` aligné sur le serveur ; ce qui tourne, ce qui se duplique |
-| `tools/boardFilters.js` | Nouveau, pur : préréglages → valeurs, valeurs → `filter` CSS |
-| `index.css` | Champ de texte, bulle des filtres, poignée de rotation |
+| `features/board/BoardCanvas.jsx` | Rendu des quatre types, de la rotation (`transform` autour du centre) et des filtres (`filter` CSS sur l'image) ; gestes des nouveaux outils, Maj ; poignée de rotation ; double-clic sur un texte |
+| `features/board/BoardTextInput.jsx` | Nouveau : champ de saisie posé sur le cadre à l'endroit du texte, mesure du texte (largeur, hauteur) à la validation |
+| `features/board/BoardToolbar.jsx` | Outils Ligne, Ellipse, Halo, Texte ; options contextuelles (Plein / Contour, Flèche, Fond) |
+| `features/board/BoardImageFilters.jsx` | Nouveau : préréglages et curseurs, dans une bulle comme l'aide |
+| `features/board/Board.jsx` | Barre de sélection enrichie, Ctrl+D |
+| `features/board/hooks/useBoardSlide.js` | `duplicateItem`, `reorderItem` ; rotation dans `emitDrag` |
+| `features/board/tools/boardGeometry.js` | Toucher un objet tourné, point d'une ligne à 15°, angle de la poignée de rotation |
+| `features/board/tools/boardRights.js` | `PLAYER_DRAW_KINDS` aligné sur le serveur ; ce qui tourne, ce qui se duplique |
+| `features/board/tools/boardFilters.js` | Nouveau, pur : préréglages → valeurs, valeurs → `filter` CSS |
+| `features/board/board.css` | Champ de texte, bulle des filtres, poignée de rotation |
 
 ### 13.5 Tests
 
@@ -913,7 +913,7 @@ alter table board_items add column rotation REAL not null default 0;   -- degré
 - Un objet tourné se redimensionne autour de son centre (un objet droit garde son coin haut gauche fixe).
 - Texte modifié jusqu'à le vider : il est effacé.
 - **Barre de sélection en surimpression** dans le coin haut gauche du cadre (filtres compris) : en apparaissant au-dessus du cadre, elle décalait la vue, si bien que le second clic d'un double-clic (modifier un texte) tombait à côté. Constaté à l'essai à l'écran.
-- Nouveaux fichiers : `BoardTextInput.jsx`, `BoardImageFilters.jsx`, `tools/boardFilters.js` (et son test) ; migration `07112026_board_rotation.sql`.
+- Nouveaux fichiers : `BoardTextInput.jsx`, `BoardImageFilters.jsx`, `features/board/tools/boardFilters.js` (et son test) ; migration `07112026_board_rotation.sql`.
 - Essayé et validé par le MJ le 2026-11-07.
 
 ---
@@ -1006,15 +1006,15 @@ alter table board_items add column group_id INTEGER;                      -- gro
 
 | Fichier | Changement |
 |---|---|
-| `components/board/BoardCanvas.jsx` | Sélection multiple (rectangle, Maj+clic), déplacement d'une sélection ou d'un groupe, objets cachés (transparence et pastille chez le MJ, absents chez le joueur), clic droit |
-| `components/board/BoardContextMenu.jsx` | Nouveau : menu au point du clic, sur un objet ou dans le vide, selon le rôle |
-| `components/board/Board.jsx` | Sélection en liste d'identifiants, barre de sélection pour plusieurs objets (couleur, cacher, grouper), Ctrl+A ; actions partagées avec le menu |
-| `components/audio/panel/RowMenu.jsx` | Rien, ou un point d'ancrage au lieu d'un bouton si le menu contextuel le réutilise (à voir à l'écriture, sans changer son comportement pour l'audio) |
-| `hooks/useBoardSlide.js` | `patchItems`, `groupItems`, `ungroupItems`, `duplicateItems`, `removeItems` ; relais d'une liste |
-| `tools/boardGeometry.js` | Objets entièrement dans un rectangle (rotation comprise) |
-| `tools/boardSelection.js` | Nouveau, pur : sélection étendue au groupe, Maj+clic, ce que permet une sélection (une ou plusieurs, verrouillés, couleurs) |
-| `tools/boardRights.js` | Objet visible du rôle (caché), objet recolorable |
-| `index.css` | Rectangle de sélection, objet caché et sa pastille, menu au point du clic |
+| `features/board/BoardCanvas.jsx` | Sélection multiple (rectangle, Maj+clic), déplacement d'une sélection ou d'un groupe, objets cachés (transparence et pastille chez le MJ, absents chez le joueur), clic droit |
+| `features/board/BoardContextMenu.jsx` | Nouveau : menu au point du clic, sur un objet ou dans le vide, selon le rôle |
+| `features/board/Board.jsx` | Sélection en liste d'identifiants, barre de sélection pour plusieurs objets (couleur, cacher, grouper), Ctrl+A ; actions partagées avec le menu |
+| `features/audio/panel/RowMenu.jsx` | Rien, ou un point d'ancrage au lieu d'un bouton si le menu contextuel le réutilise (à voir à l'écriture, sans changer son comportement pour l'audio) |
+| `features/board/hooks/useBoardSlide.js` | `patchItems`, `groupItems`, `ungroupItems`, `duplicateItems`, `removeItems` ; relais d'une liste |
+| `features/board/tools/boardGeometry.js` | Objets entièrement dans un rectangle (rotation comprise) |
+| `features/board/tools/boardSelection.js` | Nouveau, pur : sélection étendue au groupe, Maj+clic, ce que permet une sélection (une ou plusieurs, verrouillés, couleurs) |
+| `features/board/tools/boardRights.js` | Objet visible du rôle (caché), objet recolorable |
+| `features/board/board.css` | Rectangle de sélection, objet caché et sa pastille, menu au point du clic |
 
 ### 14.7 Tests
 
@@ -1042,4 +1042,4 @@ alter table board_items add column group_id INTEGER;                      -- gro
 - Le menu générique (`RowMenu`) s'ouvre aussi à un point de l'écran ; rien ne change pour l'audio.
 - PC-5 : la réponse du MJ (« + grouper, premier plan / arrière-plan, ajouter ici ») est lue comme le contenu du menu du MJ, déjà prévu ; le menu du joueur reste Ping ici, Recadrer, Effacer (confirmé par le MJ le 2026-11-08, « pour l'instant »).
 - Essai à l'écran (2026-11-08) : rectangle de sélection, grouper et déplacer le groupe, cacher (transparence et pastille), menus sur un objet et dans le vide, « Ajouter ici ▸ Texte », couleur sur une sélection. Pastille d'un objet rond (halo, jeton) placée sur le cercle plutôt qu'au coin de sa boîte, loin de la lueur.
-- Nouveaux fichiers : `BoardContextMenu.jsx`, `tools/boardSelection.js` (et son test) ; migration `07112026_board_hidden_groups.sql`.
+- Nouveaux fichiers : `BoardContextMenu.jsx`, `features/board/tools/boardSelection.js` (et son test) ; migration `07112026_board_hidden_groups.sql`.

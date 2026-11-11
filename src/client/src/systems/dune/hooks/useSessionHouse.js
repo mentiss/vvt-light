@@ -3,9 +3,9 @@
 // Affichée sur la fiche joueur (C-5).
 
 import { useEffect, useState } from 'react';
-import { useSocket } from '../../../context/SocketContext.jsx';
-import { useFetch }  from '../../../hooks/useFetch.js';
-import { useSystem } from '../../../hooks/useSystem.js';
+import { useSocket } from '@/app/context/SocketContext.jsx';
+import { useFetch }  from '@/app/hooks/useFetch.js';
+import { useSystem } from '@/app/hooks/useSystem.js';
 
 /** @returns {{ nom, description }|null} */
 export function useSessionHouse(sessionId) {

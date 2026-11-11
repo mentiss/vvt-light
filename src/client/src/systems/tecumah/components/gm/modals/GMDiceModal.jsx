@@ -5,11 +5,11 @@
 // Jet public (visible dans l'historique) ou privé.
 
 import React, { useState, useCallback } from 'react';
-import {roll, RollError} from "../../../../../tools/diceEngine.js";
+import {roll, RollError} from "@/features/dice/tools/diceEngine.js";
 import tecumahConfig, {DIFFICULTY_LEVELS} from "../../../config.jsx";
-import {useFetch} from "../../../../../hooks/useFetch.js";
-import useSystem from "../../../../../hooks/useSystem.js";
-import Modal from '../../../../../components/ui/Modal.jsx';
+import {useFetch} from "@/app/hooks/useFetch.js";
+import useSystem from "@/app/hooks/useSystem.js";
+import Modal from '@/ui/modal/Modal.jsx';
 
 // Hooks GM inline — pool direct, Wild Die activé, pas de ressource dépensée
 const GM_HOOKS = {

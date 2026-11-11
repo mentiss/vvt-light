@@ -11,7 +11,7 @@
 // ─────────────────────────────────────────────────────────────────────────────
 
 import React, { useState } from 'react';
-import { useSystem } from '../../hooks/useSystem.js';
+import { useSystem } from '@/app/hooks/useSystem.js';
 import DuneBand from './components/ui/DuneBand.jsx';
 import DuneIcon from './components/ui/DuneIcon.jsx';
 import {

@@ -1,0 +1,33 @@
+/* Point d'entrée des styles de la plateforme (importé par main.jsx).
+   Les @import viennent en tête : un @import placé après une autre règle est ignoré.
+   Ordre de déclaration d'origine conservé : l'ordre compte (à spécificité égale, la dernière
+   règle gagne). Chaque feuille de brique est en couche « components » : le theme.css d'un slug
+   (hors couche) la surcharge toujours, et les utilitaires Tailwind restent applicables sur les
+   classes vtt-*. Uniquement les variables --color-*.
+   Une feuille ne s'importe qu'ici, jamais depuis un composant (spec_arborescence_client.md §4). */
+@import "tailwindcss";
+@import './generated-css-utils.css';
+@import './base.css';
+@import '../../ui/modal/modal.css';
+@import '../../ui/panel/panel.css';
+@import '../../ui/catalog/catalog.css';
+@import '../../features/dice/history/history.css';
+@import '../../ui/menu/menu.css';
+@import '../../features/table/session-bar.css';
+@import './platform.css';
+@import '../../features/table/actions.css';
+@import '../../features/audio/audio.css';
+@import '../../features/reference/reference.css';
+@import '../../features/board/board.css';
+@import '../../features/dice/dice2d.css';
+@import '../../features/npc/npc.css';
+@import '../../ui/text/tooltip.css';
+@import '../../features/initiative/initiative.css';
+@import './placements.css';
+
+@config "../../../tailwind.config.js";
+
+@theme {
+  /* Bordure par défaut — s'applique à tout border-* Tailwind */
+  --default-border-color:    var(--color-border);
+}

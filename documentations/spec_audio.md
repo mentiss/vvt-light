@@ -107,7 +107,7 @@ Effet de bord à table : la pub ne tombe pas au même moment pour tout le monde,
 - Choix d'activation **mémorisé avec la session** (Q-30).
 
 **Habillage**
-- Même fonctionnement que les modales et le menu hamburger : style par défaut de la plateforme dans `index.css` (`@layer components`, variables `--color-*` seulement), classes `vtt-audio*` que chaque slug surcharge dans son `theme.css`, hors couche.
+- Même fonctionnement que les modales et le menu hamburger : style par défaut de la plateforme dans `features/audio/audio.css` (`@layer components`, variables `--color-*` seulement), classes `vtt-audio*` que chaque slug surcharge dans son `theme.css`, hors couche.
 - La modale « Activer le son » passe par la `Modal` générique : elle hérite de l'habillage des modales déjà en place dans chaque slug.
 - L'habillage d'un slug se fait dans le lot où ce slug reçoit la brique.
 
@@ -300,7 +300,7 @@ Actions de `command` : `play { trackId, position? }`, `pause`, `resume`, `seek {
 
 ### 9.6 Client : briques
 
-Dossier `src/client/src/components/audio/` :
+Dossier `src/client/src/features/audio/` :
 
 | Fichier | Rôle |
 |---|---|
@@ -324,7 +324,7 @@ Visibilité (Q-12) : l'état diffusé contient le titre et le nom de playlist ; 
 ### 9.7 Habillage
 
 - Classes stables : `vtt-audio-panel` (panneau MJ, modificateur `vtt-audio-panel-full`), `vtt-audio-widget` (joueur), `vtt-audio-controls`, `vtt-audio-btn`, `vtt-audio-volume`, `vtt-audio-now` (morceau en cours), `vtt-audio-library`, `vtt-audio-collection`, `vtt-audio-playlist`, `vtt-audio-track` (états `is-playing`, `is-unavailable`, `is-dragging`), `vtt-audio-toggle`.
-- Style par défaut dans `index.css`, `@layer components`, variables `--color-*` seulement. Surcharge par le `theme.css` du slug, hors couche.
+- Style par défaut dans `features/audio/audio.css`, `@layer components`, variables `--color-*` seulement. Surcharge par le `theme.css` du slug, hors couche.
 - **Vikings (pilote)** : habillage dans `systems/vikings/theme.css`, dans l'identité de ses panneaux et boutons `vk-*` (partage de classes, comme `vk-menu-*` pour le menu). `AudioSessionToggle` posé dans l'`aside` de `TabSession`, avec les boutons Note / Objet, `className="vk-btn vk-btn-sm"`.
 
 ### 9.8 Fichiers touchés
@@ -337,13 +337,13 @@ Visibilité (Q-12) : l'état diffusé contient le titre et le nom de playlist ; 
 | `src/server/systems/Loader.js` | Entrée `audio` dans `SHARED_ROUTES` |
 | `src/server/server.js` | Montage de `/api/:slug/audio` |
 | `src/server/socket/index.js` | `audioStates` dans `sharedState` |
-| `src/client/src/hooks/useAudioSession.js` | Nouveau |
-| `src/client/src/components/audio/*` | Nouveaux (§9.6) |
-| `src/client/src/pages/GMPage.jsx`, `PlayerPage.jsx` | Montage d'`AudioLayer` |
-| `src/client/src/index.css` | Style par défaut `vtt-audio*` |
+| `src/client/src/features/audio/hooks/useAudioSession.js` | Nouveau |
+| `src/client/src/features/audio/*` | Nouveaux (§9.6) |
+| `src/client/src/app/pages/GMPage.jsx`, `PlayerPage.jsx` | Montage d'`AudioLayer` |
+| `src/client/src/features/audio/audio.css` | Style par défaut `vtt-audio*` |
 | `src/client/src/systems/vikings/gm/tabs/TabSession.jsx` | Pose d'`AudioSessionToggle` |
 | `src/client/src/systems/vikings/theme.css` | Habillage |
-| `src/client/tests/components/audio/youtubeApi.test.js` | Extraction des identifiants (liens vidéo, courts, playlist, invalides) |
+| `src/client/tests/features/audio/tools/youtubeApi.test.js` | Extraction des identifiants (liens vidéo, courts, playlist, invalides) |
 | `src/client/CLAUDE.md`, `src/server/CLAUDE.md`, `/new-slug` | Mention de la brique et de son élément `TabSession` |
 
 ### 9.9 Risque technique à lever en premier
@@ -352,7 +352,7 @@ Visibilité (Q-12) : l'état diffusé contient le titre et le nom de playlist ; 
 
 **Résultat (MJ, 2026-10-27, page temporaire `/tools/audio`)** : sous Opera, vidéo seule et playlist (import compris) fonctionnent, lecture différée sans clic comprise. Un lecteur de **0 × 0 reste affiché** (YouTube impose sa taille) : le lecteur caché est donc un lecteur de **1 × 1 placé hors écran**. Firefox et Brave seront testés plus tard avec des joueurs ; on poursuit sans attendre.
 
-**Passe 2, synchronisation (demandée par le MJ avant migration)** : la page `/tools/audio` gagne les rôles Meneur / Auditeur, reliés par un relais socket jetable (`socket/audioProto.js`, état en mémoire, room fixe, sans base). L'algorithme de recalage est écrit pour de bon dans `components/audio/audioSync.js` (écart d'horloge par aller-retour, position attendue, décision charger / lire / pause / recaler, testé sous Vitest) et servira tel quel au lecteur de la brique. Chaque page affiche l'écart avec la position attendue et le nombre de recalages ; tolérance réglable (0,5 à 3 s), pause locale de 10 s pour simuler une pub. Test à distance avec les joueurs prévu après une release.
+**Passe 2, synchronisation (demandée par le MJ avant migration)** : la page `/tools/audio` gagne les rôles Meneur / Auditeur, reliés par un relais socket jetable (`socket/audioProto.js`, état en mémoire, room fixe, sans base). L'algorithme de recalage est écrit pour de bon dans `features/audio/tools/audioSync.js` (écart d'horloge par aller-retour, position attendue, décision charger / lire / pause / recaler, testé sous Vitest) et servira tel quel au lecteur de la brique. Chaque page affiche l'écart avec la position attendue et le nombre de recalages ; tolérance réglable (0,5 à 3 s), pause locale de 10 s pour simuler une pub. Test à distance avec les joueurs prévu après une release.
 
 ### 9.10 Points à valider
 
@@ -685,11 +685,11 @@ Exécution côté serveur par les commandes du §11.4 (une seule diffusion à la
 
 ### 11.7 Client
 
-Dossier `components/audio/` (en plus des briques déjà commitées : `youtubeApi.js`, `useYouTubePlayer.js`, `audioSync.js`) :
+Dossier `features/audio/` (en plus des briques déjà commitées : `youtubeApi.js`, `useYouTubePlayer.js`, `audioSync.js`) :
 
 | Fichier | Rôle |
 |---|---|
-| `hooks/useAudioSession.js` | `{ enabled, hideTitle, state }` à l'entrée et à la reconnexion, écoute `audio-state` / `audio-enabled`, mesure de l'horloge |
+| `features/audio/hooks/useAudioSession.js` | `{ enabled, hideTitle, state }` à l'entrée et à la reconnexion, écoute `audio-state` / `audio-enabled`, mesure de l'horloge |
 | `audioVolume.js` | Volumes du joueur : général et par type, pré-réglages (musique 50, ambiance 10, effet 50), lecture / écriture dans le navigateur sous une clé **unique pour toute la plateforme** ; calcul du volume d'une piste (gain × type × général). Fonctions pures testées |
 | `SlotPlayer.jsx` | Un lecteur caché par piste **non vide** (une piste vide ne crée pas de cadre YouTube), recalé par `audioSync.js` ; côté MJ, remonte durée et erreurs |
 | `AudioLayer.jsx` | Monté par `GMPage` et `PlayerPage` : rien si la musique est désactivée ; sinon les `SlotPlayer`, la modale « Activer le son », et le panneau MJ ou le lecteur joueur |
@@ -717,11 +717,11 @@ Habillage : classes `vtt-audio*` (§9.7), plus `vtt-audio-slot` (états `is-musi
 | `src/server/routes/audio.js` | Repris de la branche, adapté |
 | `src/server/systems/Loader.js`, `src/server/server.js` | Montage (déjà dans la branche) |
 | `src/server/socket/index.js` | `audioStates` (déjà là), `audio-ping` |
-| `src/client/src/hooks/useAudioSession.js`, `src/client/src/components/audio/*` | Nouveaux (§11.7) |
-| `src/client/src/pages/GMPage.jsx`, `PlayerPage.jsx` | Montage d'`AudioLayer` |
-| `src/client/src/index.css` | Style par défaut `vtt-audio*` |
+| `src/client/src/features/audio/hooks/useAudioSession.js`, `src/client/src/features/audio/*` | Nouveaux (§11.7) |
+| `src/client/src/app/pages/GMPage.jsx`, `PlayerPage.jsx` | Montage d'`AudioLayer` |
+| `src/client/src/features/audio/audio.css` | Style par défaut `vtt-audio*` |
 | `src/client/src/systems/vikings/gm/tabs/TabSession.jsx`, `systems/vikings/theme.css` | Pose de l'élément d'activation, habillage |
-| `src/client/tests/components/audio/audioVolume.test.js` | Nouveau |
+| `src/client/tests/features/audio/tools/audioVolume.test.js` | Nouveau |
 | `documentations/spec_release.md`, `src/server/CLAUDE.md`, `/new-slug` | Bases de module, brique audio et son élément `TabSession` |
 
 ### 11.10 Points à valider
@@ -788,16 +788,16 @@ Les chemins des §11.7 et §11.9 sont remplacés par ceux-ci. Principe : la briq
 - **Sockets de la plateforme, un fichier par domaine** : `src/server/socket/platform/presence.js`, `sessions.js` (sessions MJ et rooms), `audio.js` (`audio-ping`) ; chacun exporte `register(io, socket, sharedState)` et gère sa propre déconnexion ; `socket/index.js` les branche, puis les handlers des slugs. L'ancien `socket/handlers.js` disparaît, comportement inchangé (vérifié : présence, sessions MJ, rooms, joueur tardif, déconnexion et timer, reprise, désactivation).
 - **Base de module, une déclaration par base** : `src/server/db/modules/audio.js` ; `getModuleConfig(nom)` (`src/server/db/moduleConfig.js`) ne charge que la déclaration demandée. Route inchangée : `src/server/routes/audio.js`.
 - **Client rangé selon les conventions** :
-  - composants : `components/audio/` (`AudioLayer`, `AudioGMPanel` qui assemble, `AudioPlayerWidget`, `SlotPlayer`, `AudioUnlockModal`, `AudioSessionToggle`) et `components/audio/panel/` (le panneau découpé : `NowPlaying`, `LibraryBrowser`, `LibraryRows`, `RowMenu`, `SlotChip`, `PanelDialogs`, `HiddenPlayers`, `AddLinkFoot`, `PanelIcons`) ;
-  - hooks : `hooks/useAudioSession.js`, `useAudioLibrary.js`, `useYouTubePlayer.js`, et deux hooks génériques `useFloatingWindow.js` (fenêtre flottante) et `useDragOrder.js` (glisser-déposer) ;
-  - logique pure et config : `tools/audioSync.js`, `audioVolume.js`, `audioLibrary.js`, `audioSlots.js`, `panelGeometry.js`, `youtubeApi.js` ; `tools/utils.js` gagne `readStorage` / `writeStorage` ;
-  - tests : `tests/tools/` (miroir) ; la recherche ignore désormais les accents (`normalizeText` de `tools/catalog.js`).
+  - composants : `features/audio/` (`AudioLayer`, `AudioGMPanel` qui assemble, `AudioPlayerWidget`, `SlotPlayer`, `AudioUnlockModal`, `AudioSessionToggle`) et `features/audio/panel/` (le panneau découpé : `NowPlaying`, `LibraryBrowser`, `LibraryRows`, `RowMenu`, `SlotChip`, `PanelDialogs`, `HiddenPlayers`, `AddLinkFoot`, `PanelIcons`) ;
+  - hooks : `features/audio/hooks/useAudioSession.js`, `useAudioLibrary.js`, `useYouTubePlayer.js`, et deux hooks génériques `useFloatingWindow.js` (fenêtre flottante) et `useDragOrder.js` (glisser-déposer) ;
+  - logique pure et config : `features/audio/tools/audioSync.js`, `audioVolume.js`, `audioLibrary.js`, `audioSlots.js`, `panelGeometry.js`, `youtubeApi.js` ; `app/tools/utils.js` gagne `readStorage` / `writeStorage` ;
+  - tests : `tests/tools/` (miroir) ; la recherche ignore désormais les accents (`normalizeText` de `ui/tools/catalog.js`).
 - **Classes génériques réutilisées** : le panneau prend `vtt-modal-panel`, `vtt-modal-header`, `vtt-modal-title`, `vtt-modal-close` / `-expand` et `vtt-modal-deco` ; les menus ≋ et ⋯, la pastille de piste et le petit panneau du son prennent `vtt-menu`, `vtt-menu-item`, `vtt-menu-separator`. Ils reprennent ainsi l'habillage des modales et des menus de chaque slug ; les classes `vtt-audio-*` ne gardent que ce qui n'a pas d'équivalent (fenêtre flottante, ce qui joue, lignes, pastilles, poignées, boutons ronds).
 
 ### 11.17 Passage sur les briques génériques (2026-11-01)
 
 - **Fenêtre** : le panneau MJ est une `FloatingPanel` (`spec_ui_panneaux.md`), mémorisée sous `vtt:platform:panel:audio` ; `AudioGMPanel` ne garde que le contenu. Les classes `vtt-audio-panel-*` et `vtt-audio-resize-*` laissent place aux `vtt-floating-*` ; `vtt-audio-panel` reste sur la fenêtre pour qu'un slug puisse habiller celle-ci en particulier.
-- **Stockage** (`spec_browser_storage.md`) : réglages audio du navigateur regroupés dans `vtt:platform:audio` (volumes, réglages du son dépliés, volumes par type dépliés, panneau MJ ouvert), dernière vue de la bibliothèque dans `vtt:<slug>:<table>:audio` ; tout passe par `usePersistedState`. Les six anciennes clés `vtt-audio-…` n'ont jamais été en prod : pas de reprise (en dev, elles restent inertes et peuvent être effacées). `readStorage` / `writeStorage` sont retirés de `tools/utils.js`.
+- **Stockage** (`spec_browser_storage.md`) : réglages audio du navigateur regroupés dans `vtt:platform:audio` (volumes, réglages du son dépliés, volumes par type dépliés, panneau MJ ouvert), dernière vue de la bibliothèque dans `vtt:<slug>:<table>:audio` ; tout passe par `usePersistedState`. Les six anciennes clés `vtt-audio-…` n'ont jamais été en prod : pas de reprise (en dev, elles restent inertes et peuvent être effacées). `readStorage` / `writeStorage` sont retirés de `app/tools/utils.js`.
 - Le petit panneau du son est désormais tenu par `AudioLayer` (états dépliés en props), qui donne le focus au panneau MJ seulement quand il est ouvert d'un clic.
 
 ### 11.18 Tous les slugs et habillage (2026-11-01)
@@ -811,7 +811,7 @@ Les chemins des §11.7 et §11.9 sont remplacés par ceux-ci. Principe : la briq
 ### 11.19 Lot 3 : nettoyage du prototype (2026-11-01)
 
 - Retirés : la page `/tools/audio` (`pages/AudioProtoPage.jsx` et sa route dans `AppRouter.jsx`) et le relais `socket/audioProto.js` (et son branchement dans `socket/index.js`), comme prévu (R-15, T-5).
-- Gardés, car utilisés par la brique : `tools/audioSync.js`, `tools/youtubeApi.js`, `hooks/useYouTubePlayer.js`.
+- Gardés, car utilisés par la brique : `features/audio/tools/audioSync.js`, `features/audio/tools/youtubeApi.js`, `features/audio/hooks/useYouTubePlayer.js`.
 
 ### 11.20 Boutons sur la zone d'actions (2026-11-01)
 
@@ -908,13 +908,13 @@ Les chemins des §11.7 et §11.9 sont remplacés par ceux-ci. Principe : la briq
 
 | Fichier | Rôle |
 |---|---|
-| `hooks/useAudioButtons.js` (nouveau) | Liste des boutons d'une table (MJ), relue sur `audio-buttons-changed` ; `run`, `saveScene(label)`, `createTarget(…)`, `rename`, `capture`, `reorder`, `remove` |
-| `components/audio/AudioScenesMenu.jsx` (nouveau) | Le menu (via `RowMenu` : `.vtt-menu`, `HostedModal`, habillé par le slug) ; bouton déclencheur fourni par l'appelant (texte « Scènes ▾ », icône dans la barre réduite, « Musique ▾ » dans l'onglet Session) |
-| `components/audio/panel/ScenesDialog.jsx` (nouveau) | « Modifier les scènes… » : liste, renommage, ordre (glisser, `useDragOrder`), suppression (confirmation), « Remplacer par ce qui joue » ; nom demandé à l'enregistrement |
-| `components/audio/AudioSessionToggle.jsx` | Devient la **bascule** : désactivée → « Activer la musique » ; activée → « Musique ▾ » qui ouvre `AudioScenesMenu`, terminé par « Désactiver la musique ». **Même contrat** (`sessionId`, `label`, `icon`, `className`) : les 8 `TabSession` n'ont rien à changer |
-| `components/audio/panel/NowPlaying.jsx` | « Scènes ▾ » à côté du menu ⋯ de la session |
-| `components/audio/AudioGMPanel.jsx` | « Scènes » dans les actions de la barre réduite, à côté de ■ |
-| `components/audio/panel/LibraryRows.jsx` | « Créer un bouton… » dans le menu ⋯ d'un titre et d'une playlist (choix de la piste, « au hasard » pour la musique) |
+| `features/audio/hooks/useAudioButtons.js` (nouveau) | Liste des boutons d'une table (MJ), relue sur `audio-buttons-changed` ; `run`, `saveScene(label)`, `createTarget(…)`, `rename`, `capture`, `reorder`, `remove` |
+| `features/audio/AudioScenesMenu.jsx` (nouveau) | Le menu (via `RowMenu` : `.vtt-menu`, `HostedModal`, habillé par le slug) ; bouton déclencheur fourni par l'appelant (texte « Scènes ▾ », icône dans la barre réduite, « Musique ▾ » dans l'onglet Session) |
+| `features/audio/panel/ScenesDialog.jsx` (nouveau) | « Modifier les scènes… » : liste, renommage, ordre (glisser, `useDragOrder`), suppression (confirmation), « Remplacer par ce qui joue » ; nom demandé à l'enregistrement |
+| `features/audio/AudioSessionToggle.jsx` | Devient la **bascule** : désactivée → « Activer la musique » ; activée → « Musique ▾ » qui ouvre `AudioScenesMenu`, terminé par « Désactiver la musique ». **Même contrat** (`sessionId`, `label`, `icon`, `className`) : les 8 `TabSession` n'ont rien à changer |
+| `features/audio/panel/NowPlaying.jsx` | « Scènes ▾ » à côté du menu ⋯ de la session |
+| `features/audio/AudioGMPanel.jsx` | « Scènes » dans les actions de la barre réduite, à côté de ■ |
+| `features/audio/panel/LibraryRows.jsx` | « Créer un bouton… » dans le menu ⋯ d'un titre et d'une playlist (choix de la piste, « au hasard » pour la musique) |
 
 - **États du menu** : coche sur `lastButtonId` ; bouton `broken` grisé avec ⚠ et infobulle « Contenu supprimé » ; musique désactivée (panneau) : boutons grisés et « Musique désactivée » ; « Enregistrer ce qui joue… » grisé si rien ne joue ou si 5 boutons existent déjà ; « Créer un bouton… » grisé à 5 avec « 5 boutons au plus ».
 - **Habillage** : rien de propre au slug, le menu et la fenêtre reprennent `.vtt-menu`, `.vtt-modal-*` et `.vtt-btn*` déjà habillés ; STOP en `is-danger`.
@@ -1030,7 +1030,7 @@ Suite du §13.8. Trois blocs indépendants, livrés dans cet ordre : **A** fenê
 
 ### 14.1 Bloc A : fenêtre réduite qui s'ouvre vers le haut (V-8, option B)
 
-- `tools/floatingGeometry.js` gagne une fonction pure, testée (`tests/tools/floatingGeometry.test.js`) : `expandRect(rect, barHeight, viewport, min)`. À l'agrandissement, si la fenêtre ne tient pas sous la barre, son bas se cale sur le bas de la barre (elle s'ouvre vers le haut), bornée au haut de l'écran ; sinon rien ne change. Elle renvoie aussi `barTop`, la place de la barre avant l'ouverture.
+- `ui/tools/floatingGeometry.js` gagne une fonction pure, testée (`tests/tools/floatingGeometry.test.js`) : `expandRect(rect, barHeight, viewport, min)`. À l'agrandissement, si la fenêtre ne tient pas sous la barre, son bas se cale sur le bas de la barre (elle s'ouvre vers le haut), bornée au haut de l'écran ; sinon rien ne change. Elle renvoie aussi `barTop`, la place de la barre avant l'ouverture.
 - À la réduction suivante, la barre reprend `barTop` (borné par `clampRect`).
 - `useFloatingWindow` : `toggleMinimized` applique l'un ou l'autre ; `barTop` est gardé dans la géométrie mémorisée (même clé `vtt:<slug>:panel:<id>`) et effacé dès que la fenêtre ouverte est déplacée (la barre suit alors le haut de la fenêtre, comme aujourd'hui).
 - `FloatingPanel` mesure la hauteur réelle de sa barre. Aucune prop nouvelle : musique, historique des dés et tableau en profitent sans changement.
@@ -1053,9 +1053,9 @@ Suite du §13.8. Trois blocs indépendants, livrés dans cet ordre : **A** fenê
 - `start` : nombre fini positif ou nul, sinon 400 ; au-delà de la durée connue du titre, ramené à 0.
 
 **Client** :
-- `tools/timecode.js` (nouveau, testé) : `parseTimecode` lit « 1:23 », « 1:02:03 » ou « 83 » en secondes, `null` si illisible ; l'affichage reprend `formatTime` de `audioLibrary.js`.
+- `features/audio/tools/timecode.js` (nouveau, testé) : `parseTimecode` lit « 1:23 », « 1:02:03 » ou « 83 » en secondes, `null` si illisible ; l'affichage reprend `formatTime` de `audioLibrary.js`.
 - `ScenesDialog` : à la création d'un bouton ciblé sur un titre, un champ facultatif « À partir de » ; dans « Modifier les scènes… », chaque bouton montre ses titres avec leur départ, modifiable sur place (vide = depuis le début).
-- `hooks/useAudioButtons.js` : `createTarget` accepte `start` ; nouvelle action `setStart`.
+- `features/audio/hooks/useAudioButtons.js` : `createTarget` accepte `start` ; nouvelle action `setStart`.
 
 ### 14.3 Bloc C : nouvelles sources (V-1 à V-4, V-9, V-10)
 
@@ -1088,16 +1088,16 @@ Les titres existants deviennent `source = 'youtube'` sans autre reprise. `copyTr
 - État d'une piste : `youtubeId` remplacé par `source` et `mediaId` ; dans la bibliothèque, chaque titre porte `source` et `mediaId`.
 
 **Client** :
-- `tools/mediaLinks.js` (nouveau, testé) : `parseMediaLink` renvoie `{ source: 'youtube', videoId, listId }` (par `parseYouTubeLink`), `{ source, url }` pour les autres, ou `null`. Utilisé par « Ajouter un lien » et Ctrl+V ; YouTube passe par `videoIds` comme aujourd'hui, le reste par `links`.
+- `features/audio/tools/mediaLinks.js` (nouveau, testé) : `parseMediaLink` renvoie `{ source: 'youtube', videoId, listId }` (par `parseYouTubeLink`), `{ source, url }` pour les autres, ou `null`. Utilisé par « Ajouter un lien » et Ctrl+V ; YouTube passe par `videoIds` comme aujourd'hui, le reste par `links`.
 - **Lecteurs** : un hook par source, tous avec la même interface : celle du lecteur YouTube dont `SlotPlayer` se sert déjà (`getPlayerState` avec les codes de l'IFrame API, `getCurrentTime`, `getDuration`, `loadVideoById` / `cueVideoById` avec `{ videoId, startSeconds }`, `seekTo`, `playVideo`, `pauseVideo`, `stopVideo`, `setVolume` de 0 à 100), `videoId` étant l'identifiant de la source (une adresse hors YouTube).
-  - `hooks/useYouTubePlayer.js` : inchangé, il est l'interface ;
-  - `hooks/useVimeoPlayer.js`, `hooks/useSoundCloudPlayer.js` (nouveaux) : leurs API répondent par promesses ou rappels ; la position est tenue à jour par leurs événements de progression, pour être lue tout de suite par la synchronisation ;
+  - `features/audio/hooks/useYouTubePlayer.js` : inchangé, il est l'interface ;
+  - `features/audio/hooks/useVimeoPlayer.js`, `features/audio/hooks/useSoundCloudPlayer.js` (nouveaux) : leurs API répondent par promesses ou rappels ; la position est tenue à jour par leurs événements de progression, pour être lue tout de suite par la synchronisation ;
   - `hooks/useAudioElementPlayer.js` (nouveau) : élément `audio`, pour `suno` et `file` ;
-  - scripts Vimeo et SoundCloud chargés à la demande par `tools/mediaApis.js` ; un volume réglé avant la création du lecteur est appliqué à sa création.
+  - scripts Vimeo et SoundCloud chargés à la demande par `features/audio/tools/mediaApis.js` ; un volume réglé avant la création du lecteur est appliqué à sa création.
 - `SlotPlayer` choisit le hook selon la source de la piste ; `AudioLayer` donne à chaque `SlotPlayer` une clé faite de la piste et de la source (changer de source remonte le lecteur). `audioSync.js` : `youtubeId` devient `mediaId`, logique inchangée.
 - Autres usages de `youtubeId` (`AudioGMPanel`, `AudioLayer`, `NowPlaying`, `LibraryRows`) : `mediaId`.
 - `DurationProbe` reste YouTube seulement (les autres sources ont leur durée à l'ajout ou à la première lecture).
-- **Pastille de source** (V-9) : court libellé discret sur la ligne du titre (`Vimeo`, `SoundCloud`, `Suno`, `Fichier`), classe `vtt-audio-source`, style par défaut dans `index.css` (texte atténué), aucun habillage de slug requis.
+- **Pastille de source** (V-9) : court libellé discret sur la ligne du titre (`Vimeo`, `SoundCloud`, `Suno`, `Fichier`), classe `vtt-audio-source`, style par défaut dans `features/audio/audio.css` (texte atténué), aucun habillage de slug requis.
 
 **Risque à lever en premier** : le déblocage du son. La modale « Activer le son » (`AudioUnlockModal`) débloque le lecteur YouTube ; il faut vérifier que ce même clic suffit au SDK Vimeo, au widget SoundCloud et à l'élément `audio`, la lecture étant lancée ensuite par la synchronisation, sans nouveau clic. Essai en dev des trois avant le reste du bloc C ; si l'un ne suit pas, le clic de la modale l'amorcera aussi.
 
@@ -1144,9 +1144,9 @@ Les titres existants deviennent `source = 'youtube'` sans autre reprise. `copyTr
 
 | Bloc | Fichiers |
 |---|---|
-| A | `src/client/src/tools/floatingGeometry.js`, `hooks/useFloatingWindow.js`, `components/ui/FloatingPanel.jsx`, test |
-| B | `src/server/routes/audio.js`, `src/client/src/tools/timecode.js` (nouveau), `hooks/useAudioButtons.js`, `components/audio/panel/ScenesDialog.jsx`, tests |
-| C | `database-template/audio-schema.sql`, migration `10112026_audio_track_source.sql`, `src/server/routes/audio.js`, `src/server/utils/audioSources.js` (nouveau), `src/client/src/tools/mediaLinks.js` (nouveau), `tools/audioSync.js`, `hooks/useYouTubePlayer.js`, `hooks/useVimeoPlayer.js`, `hooks/useSoundCloudPlayer.js`, `hooks/useAudioElementPlayer.js` (nouveaux), `components/audio/SlotPlayer.jsx`, `AudioLayer.jsx`, `AudioGMPanel.jsx`, `panel/AddLinkFoot.jsx`, `panel/NowPlaying.jsx`, `panel/LibraryRows.jsx`, `src/client/src/index.css`, tests |
+| A | `src/client/src/ui/tools/floatingGeometry.js`, `ui/hooks/useFloatingWindow.js`, `ui/panel/FloatingPanel.jsx`, test |
+| B | `src/server/routes/audio.js`, `src/client/src/features/audio/tools/timecode.js` (nouveau), `features/audio/hooks/useAudioButtons.js`, `features/audio/panel/ScenesDialog.jsx`, tests |
+| C | `database-template/audio-schema.sql`, migration `10112026_audio_track_source.sql`, `src/server/routes/audio.js`, `src/server/utils/audioSources.js` (nouveau), `src/client/src/features/audio/tools/mediaLinks.js` (nouveau), `features/audio/tools/audioSync.js`, `features/audio/hooks/useYouTubePlayer.js`, `features/audio/hooks/useVimeoPlayer.js`, `features/audio/hooks/useSoundCloudPlayer.js`, `hooks/useAudioElementPlayer.js` (nouveaux), `features/audio/SlotPlayer.jsx`, `AudioLayer.jsx`, `AudioGMPanel.jsx`, `panel/AddLinkFoot.jsx`, `panel/NowPlaying.jsx`, `panel/LibraryRows.jsx`, `src/client/src/features/audio/audio.css`, tests |
 
 Rien dans les slugs.
 

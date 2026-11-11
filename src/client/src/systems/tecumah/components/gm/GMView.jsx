@@ -7,15 +7,15 @@ import React, {useState} from 'react';
 import TecumahDiceModal from "../modals/TecumahDiceModal.jsx";
 import TabSession from "./tabs/TabSession.jsx";
 import TabResource from "./tabs/TabResource.jsx";
-import TabJournal from "../../../../components/gm/tabs/TabJournal.jsx";
-import Board      from '../../../../components/board/Board.jsx';
-import DiceHistoryPage from "../../../../components/layout/DiceHistoryPage.jsx";
-import ToastNotifications from "../../../../components/layout/ToastNotifications.jsx";
+import TabJournal from "@/features/journal/TabJournal.jsx";
+import Board      from '@/features/board/Board.jsx';
+import DiceHistoryPage from "@/features/dice/history/DiceHistoryPage.jsx";
+import ToastNotifications from "@/features/table/ToastNotifications.jsx";
 import GMDiceModal from "./modals/GMDiceModal.jsx";
-import { HamburgerMenu, HamburgerMenuSeparator } from "../../../../components/ui/HamburgerMenu.jsx";
+import { HamburgerMenu, HamburgerMenuSeparator } from "@/ui/menu/HamburgerMenu.jsx";
 import {
     HamburgerMenuItemTableManagement, HamburgerMenuItemDiceConfig, HamburgerMenuItemLogout,
-} from "../../../../components/ui/HamburgerMenuItems.jsx";
+} from "@/features/table/HamburgerMenuItems.jsx";
 
 const GM_TABS = [
     { id: 'session',    label: '📜 Session'    },

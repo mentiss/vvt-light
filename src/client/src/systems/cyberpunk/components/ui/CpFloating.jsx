@@ -12,7 +12,7 @@
 // ─────────────────────────────────────────────────────────────────────────────
 
 import React, { useEffect, useLayoutEffect, useRef } from 'react';
-import { HostedModal } from '../../../../components/ui/ModalHost.jsx';
+import { HostedModal } from '@/ui/modal/ModalHost.jsx';
 
 const GAP = 6;
 const MARGIN = 8;

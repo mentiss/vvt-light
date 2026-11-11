@@ -39,7 +39,7 @@ Hors périmètre :
 
 ---
 
-## 3. Briques de base (`components/ui/HamburgerMenu.jsx`)
+## 3. Briques de base (`ui/menu/HamburgerMenu.jsx`)
 
 ### 3.1 `HamburgerMenu`
 
@@ -133,7 +133,7 @@ Props communes à tous : `label` (libellé par défaut ci-dessous), `icon` (abse
 
 ## 7. Style par défaut et habillage
 
-- Style par défaut dans `index.css`, couche `@layer components`, uniquement avec les variables `--color-*` : panneau `--color-surface` à bordure fine et ombre, éléments en ligne avec icône `--color-primary`, survol teinté `--color-primary`, élément `danger` en `--color-danger`, filet `--color-border`.
+- Style par défaut dans `ui/menu/menu.css`, couche `@layer components`, uniquement avec les variables `--color-*` : panneau `--color-surface` à bordure fine et ombre, éléments en ligne avec icône `--color-primary`, survol teinté `--color-primary`, élément `danger` en `--color-danger`, filet `--color-border`.
 - Chaque slug surcharge les classes `vtt-menu*` dans son `theme.css`, hors couche. S'il a déjà ses classes de menu, il les partage (`.zb-menu-item, .vtt-menu-item { … }`), comme H-5 des modales.
 - Slugs sans classes de menu (Cyberpunk, Delta Green, Dune, Fabula, Tecumah) : habillage écrit au lot 2, dans l'identité de leur barre de session et de leurs modales.
 
@@ -187,7 +187,7 @@ Pour chaque menu migré : surcouche `fixed inset-0` et états des modales de la 
 | T-4 | Anciens slugs | Delta Green, Noctis et Achtung, qui montent leur propre `TableManagementModal`, passent par la brique ; leur bouton existant (en-tête, barre d'outils) ouvre la brique, sans changer leur disposition. |
 | T-5 | Ouverture automatique | **Non** : pas de modale imposée à l'arrivée ; on prépare une partie hors table (bestiaire, aide de jeu). |
 
-### 12.2 Brique `TableManagementButton` (`components/gm/TableManagementButton.jsx`)
+### 12.2 Brique `TableManagementButton` (`features/table/TableManagementButton.jsx`)
 
 | Prop | Rôle | Défaut |
 |---|---|---|

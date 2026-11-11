@@ -1,23 +1,23 @@
 // src/client/src/systems/tecumah/Sheet.jsx
 
 import React, { useState, useEffect, useCallback } from 'react';
-import { useSocket }   from '../../context/SocketContext.jsx';
-import { useFetch }    from '../../hooks/useFetch.js';
-import { useSystem }   from '../../hooks/useSystem.js';
-import { useSession }  from '../../context/SessionContext.jsx';
+import { useSocket }   from '@/app/context/SocketContext.jsx';
+import { useFetch }    from '@/app/hooks/useFetch.js';
+import { useSystem }   from '@/app/hooks/useSystem.js';
+import { useSession }  from '@/app/context/SessionContext.jsx';
 import './theme.css';
 
 // Composants génériques
-import SessionPlayersBar  from '../../components/layout/SessionPlayersBar.jsx';
-import ToastNotifications from '../../components/layout/ToastNotifications.jsx';
-import AvatarUploader     from '../../components/AvatarUploader.jsx';
-import { HamburgerMenu, HamburgerMenuItem, HamburgerMenuSeparator } from '../../components/ui/HamburgerMenu.jsx';
+import SessionPlayersBar  from '@/features/table/SessionPlayersBar.jsx';
+import ToastNotifications from '@/features/table/ToastNotifications.jsx';
+import AvatarUploader     from '@/ui/image/AvatarUploader.jsx';
+import { HamburgerMenu, HamburgerMenuItem, HamburgerMenuSeparator } from '@/ui/menu/HamburgerMenu.jsx';
 import {
     HamburgerMenuItemDiceConfig, HamburgerMenuItemSwitchCharacter, HamburgerMenuItemCreateCharacter,
     HamburgerMenuItemGMInterface, HamburgerMenuItemLogout, HamburgerMenuItemAccessCode, HamburgerMenuItemFreeDice,
-} from '../../components/ui/HamburgerMenuItems.jsx';
-import JournalTab         from '../../components/tabs/JournalTab.jsx';
-import DiceHistoryPage    from '../../components/layout/DiceHistoryPage.jsx';
+} from '@/features/table/HamburgerMenuItems.jsx';
+import JournalTab         from '@/features/journal/JournalTab.jsx';
+import DiceHistoryPage    from '@/features/dice/history/DiceHistoryPage.jsx';
 
 // Composants Tecumah
 import HealthDisplay  from './components/HealthDisplay.jsx';

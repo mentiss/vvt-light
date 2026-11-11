@@ -3,7 +3,7 @@
 // livre ou en saisie libre ; mode Édition : nom, description, retrait.
 
 import React, { useState } from 'react';
-import ExpandableText from '../../../../components/ui/ExpandableText.jsx';
+import ExpandableText from '@/ui/text/ExpandableText.jsx';
 import DuneIcon from '../ui/DuneIcon.jsx';
 import { DuneField, DuneFrame } from '../ui/DuneFields.jsx';
 import DuneTalentCatalog, { talentRestriction } from '../modals/DuneTalentCatalog.jsx';

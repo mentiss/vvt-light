@@ -9,11 +9,11 @@
  */
 
 import { useState, useEffect, useCallback } from 'react';
-import { useSocket }   from '../../../../context/SocketContext.jsx';
-import { useFetch }    from '../../../../hooks/useFetch.js';
-import { useSystem }   from '../../../../hooks/useSystem.js';
-import GMSendModal     from '../../../../components/gm/modals/GMSendModal.jsx';
-import TableManagementButton from '../../../../components/gm/TableManagementButton.jsx';
+import { useSocket }   from '@/app/context/SocketContext.jsx';
+import { useFetch }    from '@/app/hooks/useFetch.js';
+import { useSystem }   from '@/app/hooks/useSystem.js';
+import GMSendModal     from '@/features/table/modals/GMSendModal.jsx';
+import TableManagementButton from '@/features/table/TableManagementButton.jsx';
 
 import {
     DOMAINES, computeMalusBlessure,

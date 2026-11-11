@@ -5,7 +5,7 @@
 // Le jet passe par le hook useDuneRoll ; les règles par config/rules/roll.js.
 
 import React, { useState } from 'react';
-import Modal from '../../../../components/ui/Modal.jsx';
+import Modal from '@/ui/modal/Modal.jsx';
 import DuneIcon from '../ui/DuneIcon.jsx';
 import DuneDie from '../ui/DuneDie.jsx';
 import { useDuneRoll } from '../../hooks/useDuneRoll.js';

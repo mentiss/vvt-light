@@ -39,7 +39,7 @@ export const DARK_WHEN = [
 
 const labelOf = (list, key) => list.find(x => x.key === key)?.label ?? key;
 
-// Recherche, filtres et groupes (tools/catalog.js), communs à la bibliothèque et à CatalogModal
+// Recherche, filtres et groupes (ui/tools/catalog.js), communs à la bibliothèque et à CatalogModal
 export const CHALLENGE_FILTERS = [
     { key: 'source', getValue: c => c.source, options: SOURCES.map(s => ({ value: s.key, label: s.label })) },
     { key: 'family', getValue: c => c.family, options: FAMILIES.map(f => ({ value: f.key, label: f.label })) },

@@ -1,0 +1,140 @@
+// src/client/src/app/pages/GMPage.jsx
+// Shell GM : auth + chargement dynamique de GMView via import.meta.glob.
+// useGMSession gère les sockets génériques (session active, présence en ligne,
+// mises à jour personnage temps réel).
+
+import React, { useState, useEffect, Suspense } from 'react';
+import { useParams, useOutletContext } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext.jsx';
+import { useGMSession } from '../hooks/useGMSession.js';
+import CodeModal from '@/features/table/modals/CodeModal.jsx';
+import DiceAnimationOverlay from "@/features/dice/DiceAnimationOverlay.jsx";
+import LoadingScreen from "../components/LoadingScreen.jsx";
+import SlugPage      from '../components/SlugPage.jsx';
+import SystemBrand   from '../components/SystemBrand.jsx';
+import ErrorPage     from './ErrorPage.jsx';
+import { useSystem } from '../hooks/useSystem.js';
+import { ModalHostProvider } from '@/ui/modal/ModalHost.jsx';
+import { ActionZoneProvider } from '@/features/table/ActionZone.jsx';
+import AudioLayer    from '@/features/audio/AudioLayer.jsx';
+import BoardLayer    from '@/features/board/BoardLayer.jsx';
+import InitiativeLayer from '@/features/initiative/InitiativeLayer.jsx';
+
+const SYSTEM_GM_APPS = import.meta.glob('../../systems/*/GMApp.jsx');
+const THEMES    = import.meta.glob('../../systems/*/theme.css');
+
+const gmLazyCache = {};
+const getGMLazyComponent = (key) => {
+    if (!gmLazyCache[key]) {
+        gmLazyCache[key] = React.lazy(SYSTEM_GM_APPS[key]);
+    }
+    return gmLazyCache[key];
+};
+
+const GMPage = () => {
+    const { system }                     = useParams();
+    const { darkMode, onToggleDarkMode } = useOutletContext();
+    const { user }                       = useAuth();
+    const [gmCharacter,    setGmCharacter]    = useState(null);
+    const [showCodeModal,  setShowCodeModal]  = useState(false);
+    const { label } = useSystem();
+
+    const apiBase   = `/api/${system}`;
+    const moduleKey = `../../systems/${system}/GMApp.jsx`;
+    const loader    = SYSTEM_GM_APPS[moduleKey];
+
+    // ── Sockets génériques GM ────────────────────────────────────────────────
+    // characterUpdates : nouveau, additif — un slug qui ne le destructure pas
+    // dans son GMApp n'est pas affecté.
+    const { activeSession, setActiveSession, onlineCharacters, characterUpdates } = useGMSession({ apiBase });
+
+    useEffect(() => {
+        const key = `../../systems/${system}/theme.css`;
+        if (THEMES[key]) THEMES[key]();
+    }, [system]);
+
+    // ── Chargement du personnage GM pour l'auth ──────────────────────────────
+    useEffect(() => {
+        if (user?.isGM || !loader) return;
+
+        fetch(`${apiBase}/characters/by-url/this-is-MJ`)
+            .then(r => r.json())
+            .then(character => { if (character?.id === -1) setGmCharacter(character); })
+            .catch(err => console.error('[GMPage] Error loading GM character:', err));
+    }, [system, user, loader, apiBase]);
+
+    if (!loader) {
+        return (
+            <ErrorPage
+                title="Interface MJ indisponible"
+                message={`Le système « ${label || system} » n'a pas encore d'interface MJ.`}
+                slug={system}
+                label={label}
+            />
+        );
+    }
+
+    const SystemGMApp = getGMLazyComponent(moduleKey);
+
+    if (user?.isGM) {
+        // ModalHostProvider : emplacement à modales des éléments du menu (spec_ui_menu.md §4)
+        // ActionZoneProvider : zone d'actions en bas à droite (spec_ui_actions.md §6.2)
+        return (
+            <ModalHostProvider>
+            <ActionZoneProvider>
+                <Suspense fallback={<LoadingScreen />}>
+                    {/* eslint-disable-next-line react-hooks/static-components */}
+                    <SystemGMApp
+                        activeSession={activeSession}
+                        onSessionChange={setActiveSession}
+                        onlineCharacters={onlineCharacters}
+                        characterUpdates={characterUpdates}
+                        darkMode={darkMode}
+                        onToggleDarkMode={onToggleDarkMode}
+                    />
+                    <DiceAnimationOverlay />
+                </Suspense>
+                {/* Musique de la table active, si le MJ l'a activée (spec_audio.md §11.7) */}
+                <AudioLayer role="gm" sessionId={activeSession?.id ?? null} />
+                {/* Tableau partagé de la table active (spec_tableau.md §10.8) */}
+                <BoardLayer role="gm" sessionId={activeSession?.id ?? null} />
+                {/* Initiative de la table active, si le slug l'a adoptée (spec_initiative.md §9.6) */}
+                <InitiativeLayer role="gm" sessionId={activeSession?.id ?? null} characters={activeSession?.characters} />
+            </ActionZoneProvider>
+            </ModalHostProvider>
+        );
+    }
+
+    if (!gmCharacter) return <LoadingScreen />;
+
+    return (
+        <>
+            {/* Connexion du MJ : thème et marque du slug (spec_plateforme_accueil.md §6) */}
+            <SlugPage>
+                <div className="vtt-panel w-full max-w-md p-6 text-center space-y-5">
+                    <div className="text-3xl"><SystemBrand variant="title" slug={system} label={label} /></div>
+                    <div>
+                        <h2 className="font-bold text-lg">Interface du meneur</h2>
+                        <p className="text-sm text-muted mt-1">Le code d'accès du MJ est demandé pour continuer.</p>
+                    </div>
+                    <div className="space-y-2">
+                        <button type="button" onClick={() => setShowCodeModal(true)} className="vtt-btn vtt-btn-primary w-full">
+                            Se connecter
+                        </button>
+                        <a href={`/${system}/`} className="vtt-btn w-full">
+                            Retour à l'espace joueur
+                        </a>
+                    </div>
+                </div>
+            </SlugPage>
+            <CodeModal
+                isOpen={showCodeModal}
+                onClose={() => setShowCodeModal(false)}
+                character={gmCharacter}
+                onSuccess={() => setShowCodeModal(false)}
+            />
+        </>
+    );
+};
+
+export default GMPage;

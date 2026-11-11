@@ -2,7 +2,7 @@
 
 ## Statut
 
-**Validée par le MJ le 2026-11-01** (décisions F-1 à F-7, O-1 à O-3 au §1). **Implémentée le 2026-11-01** (`components/ui/FloatingPanel.jsx`, `hooks/useFloatingWindow.js`, `tools/floatingGeometry.js`) ; le panneau audio l'utilise. Vérification en dev par le MJ en attente (§5).
+**Validée par le MJ le 2026-11-01** (décisions F-1 à F-7, O-1 à O-3 au §1). **Implémentée le 2026-11-01** (`ui/panel/FloatingPanel.jsx`, `ui/hooks/useFloatingWindow.js`, `ui/tools/floatingGeometry.js`) ; le panneau audio l'utilise. Vérification en dev par le MJ en attente (§5).
 
 Écart avec le §2.1 : le focus à l'ouverture (F-4) passe par une prop `focusOnOpen` (vrai par défaut), que l'appelant met à faux quand la fenêtre se rouvre seule après un rechargement.
 
@@ -28,7 +28,7 @@ Hors périmètre :
 | F-3 | Échap | Ne ferme pas la fenêtre (elle ne bloque pas la page ; Échap sert aux menus, champs et modales). Fermeture par ✕. |
 | F-4 | Focus | Donné à la fenêtre quand elle s'ouvre par un geste de l'utilisateur ; pas quand elle se rouvre seule après un rechargement. |
 | F-5 | Clavier | Déplacer et redimensionner au clavier : plus tard (ex. Alt + flèches). Réduire, plein écran et fermer restent au clavier. |
-| F-6 | Noms | `tools/panelGeometry.js` devient `tools/floatingGeometry.js` ; `hooks/useFloatingWindow.js` garde son nom. |
+| F-6 | Noms | `tools/panelGeometry.js` devient `ui/tools/floatingGeometry.js` ; `ui/hooks/useFloatingWindow.js` garde son nom. |
 | F-7 | Spec | Ce fichier, au format de `spec_ui_modales.md`. |
 | O-1 | Options | Déplacement, redimensionnement, réduction, plein écran, fermeture, taille et position de départ, taille minimale, mémorisation : au choix de la fenêtre (§2). |
 | O-2 | Position de départ | Par ancrage (`'bottom-right'`…) plutôt qu'en pixels, juste sur tous les écrans. |
@@ -36,7 +36,7 @@ Hors périmètre :
 
 ---
 
-## 2. Composant `components/ui/FloatingPanel.jsx`
+## 2. Composant `ui/panel/FloatingPanel.jsx`
 
 ### 2.1 Contrat
 
@@ -92,15 +92,15 @@ section.vtt-modal-panel.vtt-floating-panel[.is-minimized][.is-full]   (style : p
   span.vtt-floating-resize.vtt-floating-resize-{n,s,e,w,ne,nw,se,sw}
 ```
 
-Style par défaut dans `index.css` (`@layer components`, variables `--color-*` seulement) : position fixe, ordre, poignées, état réduit et plein écran, boutons Réduire / Plein écran gardés sur petit écran. Fond, bordure, en-tête, titre et boutons : ceux de la modale. Un slug n'a rien à habiller de plus que ses modales ; il peut cibler `.vtt-floating-panel` s'il veut distinguer les deux.
+Style par défaut dans `ui/panel/panel.css` (`@layer components`, variables `--color-*` seulement) : position fixe, ordre, poignées, état réduit et plein écran, boutons Réduire / Plein écran gardés sur petit écran. Fond, bordure, en-tête, titre et boutons : ceux de la modale. Un slug n'a rien à habiller de plus que ses modales ; il peut cibler `.vtt-floating-panel` s'il veut distinguer les deux.
 
 ### 2.4 Briques internes
 
 | Fichier | Rôle |
 |---|---|
-| `tools/floatingGeometry.js` (ex `panelGeometry.js`) | Calculs purs, testés : rectangle par défaut depuis un ancrage, maintien dans la fenêtre, déplacement, redimensionnement |
-| `hooks/useFloatingWindow.js` | Position, taille, réduction (mémorisées par `usePersistedState` si `persistAs`), gestes au pointeur, suivi du redimensionnement du navigateur, options O-1 |
-| `components/ui/FloatingPanel.jsx` | Le composant, la pile de premier plan, le petit écran |
+| `ui/tools/floatingGeometry.js` (ex `panelGeometry.js`) | Calculs purs, testés : rectangle par défaut depuis un ancrage, maintien dans la fenêtre, déplacement, redimensionnement |
+| `ui/hooks/useFloatingWindow.js` | Position, taille, réduction (mémorisées par `usePersistedState` si `persistAs`), gestes au pointeur, suivi du redimensionnement du navigateur, options O-1 |
+| `ui/panel/FloatingPanel.jsx` | Le composant, la pile de premier plan, le petit écran |
 
 ---
 
@@ -117,12 +117,12 @@ Style par défaut dans `index.css` (`@layer components`, variables `--color-*` s
 
 | Fichier | Changement |
 |---|---|
-| `src/client/src/components/ui/FloatingPanel.jsx` | Nouveau |
-| `src/client/src/hooks/useFloatingWindow.js` | Options O-1, ancrage, mémorisation par `usePersistedState`, pile de premier plan |
+| `src/client/src/ui/panel/FloatingPanel.jsx` | Nouveau |
+| `src/client/src/ui/hooks/useFloatingWindow.js` | Options O-1, ancrage, mémorisation par `usePersistedState`, pile de premier plan |
 | `src/client/src/tools/panelGeometry.js` → `floatingGeometry.js` | Renommé ; rectangle par défaut depuis un ancrage et un décalage |
 | `src/client/tests/tools/panelGeometry.test.js` → `floatingGeometry.test.js` | Renommé ; cas des ancrages |
-| `src/client/src/index.css` | Style par défaut `vtt-floating-*` ; retrait des `vtt-audio-panel*` / `vtt-audio-resize*` |
-| `src/client/src/components/audio/AudioGMPanel.jsx` | Passage sur `FloatingPanel` |
+| `src/client/src/ui/panel/panel.css` | Style par défaut `vtt-floating-*` ; retrait des `vtt-audio-panel*` / `vtt-audio-resize*` |
+| `src/client/src/features/audio/AudioGMPanel.jsx` | Passage sur `FloatingPanel` |
 | `src/client/CLAUDE.md` | `FloatingPanel` parmi les composants génériques dont on lit le contrat ; règle du `HostedModal` dans une fenêtre flottante |
 
 ---

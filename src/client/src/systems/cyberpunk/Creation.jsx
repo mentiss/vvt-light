@@ -13,8 +13,8 @@
 // ─────────────────────────────────────────────────────────────────────────────
 
 import React, { useState, useCallback, useRef } from 'react';
-import { useSystem } from '../../hooks/useSystem.js';
-import ThemeToggle from '../../components/ui/ThemeToggle.jsx';
+import { useSystem } from '@/app/hooks/useSystem.js';
+import ThemeToggle from '@/app/components/ThemeToggle.jsx';
 import CpWorld from './components/ui/CpWorld.jsx';
 import CpIcon from './components/ui/CpIcon.jsx';
 import BoltFarm from './components/ui/BoltFarm.jsx';

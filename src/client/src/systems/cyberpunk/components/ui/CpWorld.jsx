@@ -12,7 +12,7 @@
 // ─────────────────────────────────────────────────────────────────────────────
 
 import React, { useEffect, useRef, useSyncExternalStore } from 'react';
-import { HamburgerMenuItem } from '../../../../components/ui/HamburgerMenu.jsx';
+import { HamburgerMenuItem } from '@/ui/menu/HamburgerMenu.jsx';
 import CpIcon from './CpIcon.jsx';
 import { useCpAmbience } from '../../hooks/useCpAmbience.js';
 

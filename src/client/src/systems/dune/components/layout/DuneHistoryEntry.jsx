@@ -6,7 +6,7 @@
 // Jets d'avant la refonte : pas de roll_result.dice → dés reconstruits depuis results.
 
 import React from 'react';
-import { parseFreeRoll } from '../../../../tools/freeRoll.js';
+import { parseFreeRoll } from '@/features/dice/tools/freeRoll.js';
 import DuneDie from '../ui/DuneDie.jsx';
 import { resolveDie } from '../../config/rules/roll.js';
 

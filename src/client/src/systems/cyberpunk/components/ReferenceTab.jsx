@@ -6,7 +6,7 @@
 // ─────────────────────────────────────────────────────────────────────────────
 
 import React from 'react';
-import ReferenceGuide from '../../../components/reference/ReferenceGuide.jsx';
+import ReferenceGuide from '@/features/reference/ReferenceGuide.jsx';
 import { REFERENCE_SECTIONS } from '../config/referenceGuide.js';
 
 const ReferenceTab = ({ isGM = false }) => (

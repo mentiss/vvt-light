@@ -8,7 +8,7 @@
 // ─────────────────────────────────────────────────────────────────────────────
 
 import React from 'react';
-import CatalogModal from '../../../../components/modals/CatalogModal.jsx';
+import CatalogModal from '@/ui/catalog/CatalogModal.jsx';
 import { EQUIPMENT_CATALOG, EQUIPMENT_CATEGORY_LABELS } from '../../config.jsx';
 import EquipmentFields, { equipmentToDraft, draftToEquipment } from '../ui/EquipmentFields.jsx';
 

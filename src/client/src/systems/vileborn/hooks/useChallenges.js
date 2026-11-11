@@ -12,8 +12,8 @@
 // ─────────────────────────────────────────────────────────────────────────────
 
 import { useCallback, useEffect, useState } from 'react';
-import { useFetch } from '../../../hooks/useFetch.js';
-import { useSystem } from '../../../hooks/useSystem.js';
+import { useFetch } from '@/app/hooks/useFetch.js';
+import { useSystem } from '@/app/hooks/useSystem.js';
 
 const JSON_HEADERS = { 'Content-Type': 'application/json' };
 

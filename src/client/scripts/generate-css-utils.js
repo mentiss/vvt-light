@@ -228,7 +228,7 @@ const output = [
 ].join('\n');
 
 // Si scripts/ est à la racine du projet (projet/scripts/generate-css-utils.js)
-const outPath = path.resolve(__dirname, '../src/generated-css-utils.css');
+const outPath = path.resolve(__dirname, '../src/app/styles/generated-css-utils.css');
 
 fs.writeFileSync(outPath, output, 'utf8');
 

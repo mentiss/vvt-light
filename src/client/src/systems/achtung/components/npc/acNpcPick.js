@@ -9,7 +9,7 @@ import { NPC_QUALITIES, assistDice, attributeLabel, npcTest, skillLabel } from '
 
 const isIncidental = (npc) => npc.systemData?.rank === 'incidental';
 
-/** Contrat `pick` de la brique NpcSystem (components/npc/NpcSystem.jsx). */
+/** Contrat `pick` de la brique NpcSystem (features/npc/NpcSystem.jsx). */
 export const acNpcPick = {
     groups: (npc) => (isIncidental(npc) ? [] : [{ key: 'attribute', label: 'un attribut' }, { key: 'skill', label: 'une compétence' }]),
     part: (npc, group, key) => (group === 'attribute'

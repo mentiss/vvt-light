@@ -17,23 +17,23 @@ import React, { useState, useEffect, useCallback } from 'react';
 // theme.css n'est PAS importé ici : c'est une dépendance de page, chargée par
 // PlayerPage/GMPage via import.meta.glob keyé sur le slug (convention plateforme).
 
-import { useSystem }  from '../../hooks/useSystem.js';
-import { useSocket }  from '../../context/SocketContext.jsx';
-import { useSession } from '../../context/SessionContext.jsx';
-import { useFetch }   from '../../hooks/useFetch.js';
+import { useSystem }  from '@/app/hooks/useSystem.js';
+import { useSocket }  from '@/app/context/SocketContext.jsx';
+import { useSession } from '@/app/context/SessionContext.jsx';
+import { useFetch }   from '@/app/hooks/useFetch.js';
 
-import ThemeToggle        from '../../components/ui/ThemeToggle.jsx';
-import ToastNotifications from '../../components/layout/ToastNotifications.jsx';
-import SessionPlayersBar  from '../../components/layout/SessionPlayersBar.jsx';
-import JournalTab         from '../../components/tabs/JournalTab.jsx';
-import DiceHistoryPage    from '../../components/layout/DiceHistoryPage.jsx';
-import AvatarUploader     from '../../components/AvatarUploader.jsx';
-import { HamburgerMenu, HamburgerMenuSeparator } from '../../components/ui/HamburgerMenu.jsx';
+import ThemeToggle        from '@/app/components/ThemeToggle.jsx';
+import ToastNotifications from '@/features/table/ToastNotifications.jsx';
+import SessionPlayersBar  from '@/features/table/SessionPlayersBar.jsx';
+import JournalTab         from '@/features/journal/JournalTab.jsx';
+import DiceHistoryPage    from '@/features/dice/history/DiceHistoryPage.jsx';
+import AvatarUploader     from '@/ui/image/AvatarUploader.jsx';
+import { HamburgerMenu, HamburgerMenuSeparator } from '@/ui/menu/HamburgerMenu.jsx';
 import {
     HamburgerMenuItemCreateCharacter, HamburgerMenuItemSwitchCharacter, HamburgerMenuItemAvatar,
     HamburgerMenuItemAccessCode, HamburgerMenuItemFreeDice, HamburgerMenuItemDiceConfig,
     HamburgerMenuItemGMInterface, HamburgerMenuItemLogout,
-} from '../../components/ui/HamburgerMenuItems.jsx';
+} from '@/features/table/HamburgerMenuItems.jsx';
 
 
 import SheetLayout              from './components/layout/SheetLayout.jsx';

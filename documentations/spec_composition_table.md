@@ -50,10 +50,10 @@ Pas d'émission globale (`io.emit`) : la room pour la table, le socket du person
 | Fichier | Changement |
 |---|---|
 | `src/server/routes/sessions.js` | Émission des deux événements après l'ajout et le retrait |
-| `src/client/src/hooks/useGMSession.js` | Écoute de `session-characters-update` (table active) |
-| `src/client/src/components/layout/SessionPlayersBar.jsx` | Écoute de `session-characters-update` (sa table) |
-| `src/client/src/hooks/usePlayerSession.js` | Écoute de `character-sessions-changed` (rechargement des tables du personnage) |
-| `src/client/src/context/SessionContext.jsx` | Distinction « tables pas encore chargées » / « aucune table » : un joueur retiré de sa seule table quitte bien la table active (constaté à l'implémentation) |
+| `src/client/src/app/hooks/useGMSession.js` | Écoute de `session-characters-update` (table active) |
+| `src/client/src/features/table/SessionPlayersBar.jsx` | Écoute de `session-characters-update` (sa table) |
+| `src/client/src/app/hooks/usePlayerSession.js` | Écoute de `character-sessions-changed` (rechargement des tables du personnage) |
+| `src/client/src/app/context/SessionContext.jsx` | Distinction « tables pas encore chargées » / « aucune table » : un joueur retiré de sa seule table quitte bien la table active (constaté à l'implémentation) |
 
 Aucun changement de base de données. Aucun slug modifié : les onglets Session suivent `activeSession.characters`, déjà mis à jour par `useGMSession`.
 

@@ -769,7 +769,7 @@
 /* Les jauges de régie s'alignent et respirent, budget compris */
 .zb-gauges .zb-gauge { min-width: 12rem; }
 
-/* ── Barre de session (components/layout/SessionPlayersBar.jsx, spec_session_bar.md) ─ */
+/* ── Barre de session (features/table/SessionPlayersBar.jsx, spec_session_bar.md) ─ */
 /* ── Zone Blanche : zb-panel (vignettage, lignes de balayage), zb-eyebrow, zb-display,
    zb-mono, zb-card (bord gauche épais), angles quasi droits ; ✦ REC, viseur ── */
 .vtt-session-bar { background: var(--color-surface); border-right: 1px solid var(--color-border); font-family: var(--zb-font-body); }
@@ -821,7 +821,7 @@
 .vtt-session-bar-card[data-online] .vtt-session-bar-card-status { color: var(--zb-rec-dot); }
 .vtt-session-bar-card[data-online] .vtt-session-bar-card-status::before { background: var(--zb-rec-dot); animation: zb-brand-pulse 1.4s ease-in-out infinite; }
 
-/* ── Modales génériques et journal (components/ui/Modal.jsx, spec_ui_modales.md §11) ─ */
+/* ── Modales génériques et journal (ui/modal/Modal.jsx, spec_ui_modales.md §11) ─ */
 /* ── Zone Blanche : partage avec zb-modal (bord gauche accent, en-tête zb-bar), zb-btn-*,
    zb-input, zb-pill / zb-select, zb-card, zb-eyebrow, zb-display, angles quasi droits ;
    ✦ vignettage et lignes de balayage de zb-panel sur la fenêtre ── */
@@ -868,7 +868,7 @@
 .vtt-journal-editor { border-radius: 2px; }
 .vtt-journal-list-toggle { font-family: var(--zb-font-mono); letter-spacing: .1em; text-transform: uppercase; }
 
-/* ── Zone d'actions : boutons (components/ui/ActionZone.jsx, spec_ui_actions.md §6.2) ── */
+/* ── Zone d'actions : boutons (features/table/ActionZone.jsx, spec_ui_actions.md §6.2) ── */
 /* ✦ Boîtier de caméscope : angles quasi droits, bord gauche accent ; voyant d'enregistrement quand ça joue */
 .vtt-action-btn {
     border-radius: 2px; border: 1px solid var(--color-border); border-left: 3px solid var(--color-accent);

@@ -14,8 +14,8 @@ import React, { useEffect, useRef } from 'react';
 import FuIcon from '../ui/FuIcon.jsx';
 import { Clock } from './GroupSheet.jsx';
 import { useGroupe } from '../../hooks/useGroupe.js';
-import { useSocket } from '../../../../context/SocketContext.jsx';
-import { usePersistedState } from '../../../../hooks/usePersistedState.js';
+import { useSocket } from '@/app/context/SocketContext.jsx';
+import { usePersistedState } from '@/app/hooks/usePersistedState.js';
 
 const DRAWER_OPTIONS = { defaults: { open: false }, version: 1 };
 

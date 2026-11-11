@@ -502,7 +502,7 @@
     color: rgba(160, 200, 160, 0.2);
 }
 
-/* ── Barre de session (components/layout/SessionPlayersBar.jsx, spec_session_bar.md) ─ */
+/* ── Barre de session (features/table/SessionPlayersBar.jsx, spec_session_bar.md) ─ */
 /* ── Delta Green : ✦ procédure administrative des années 90 (formulaire photocopié, Courier,
    cases libellées, surligneur, agrafe, code-barres) ; repris du slug : bandeau dg-header,
    dg-section-label, dg-form-line, dg-stamp, dg-censured, dégradation par palier ── */
@@ -626,7 +626,7 @@ body:has([data-palier="4"]) .vtt-session-bar-card:not([data-me]) .vtt-session-ba
     background: linear-gradient(var(--dg-censure-color), var(--dg-censure-color)) .4rem 70% / calc(100% - .8rem) 45% no-repeat, var(--dg-field-bg);
 }
 
-/* ── Modales génériques et journal (components/ui/Modal.jsx, spec_ui_modales.md §11) ─ */
+/* ── Modales génériques et journal (ui/modal/Modal.jsx, spec_ui_modales.md §11) ─ */
 /* ── Delta Green : ✦ procédure administrative des années 90 (comme la barre) ; bandeau
    dg-header, dg-field-input, dg-section-label, dg-stamp ; ✦ agrafe et tampon « Confidentiel »
    sur la fenêtre, cases à cocher sur les pastilles, surligneur sur la ligne choisie,
@@ -726,7 +726,7 @@ button.vtt-list-item:hover { border-color: var(--dg-field-border); background: v
 body:has([data-palier="3"]) .vtt-modal-panel { filter: saturate(.2) contrast(1.2) sepia(.2); }
 body:has([data-palier="4"]) .vtt-modal-panel { filter: grayscale(1) contrast(1.5) brightness(.9); }
 
-/* ── Menu hamburger (components/ui/HamburgerMenu.jsx, spec_ui_menu.md §7) ────
+/* ── Menu hamburger (ui/menu/HamburgerMenu.jsx, spec_ui_menu.md §7) ────
    Bouton du bandeau dg-header (☰ gris, blanc au survol) ; panneau en feuillet
    comme les fenêtres : angles vifs, grain du papier, ombre portée, police du formulaire. ── */
 .vtt-menu-button {
@@ -744,7 +744,7 @@ body:has([data-palier="4"]) .vtt-modal-panel { filter: grayscale(1) contrast(1.5
 .vtt-menu-item:hover:not(:disabled) { background: var(--color-surface-alt); }
 .vtt-menu-separator { margin: .25rem 0; background: var(--dg-field-border); }
 
-/* ── Zone d'actions : boutons (components/ui/ActionZone.jsx, spec_ui_actions.md §6.2) ── */
+/* ── Zone d'actions : boutons (features/table/ActionZone.jsx, spec_ui_actions.md §6.2) ── */
 /* ✦ Case de formulaire : angles droits, trait noir, ombre décalée ; bandeau dg-header quand ça joue */
 .vtt-action-btn {
     border-radius: 0; border: 1px solid var(--color-text); background: var(--dg-field-bg); color: var(--color-text);
@@ -756,7 +756,7 @@ body:has([data-palier="4"]) .vtt-modal-panel { filter: grayscale(1) contrast(1.5
 /* Bouton principal du panneau (lecture / pause) : angles droits */
 .vtt-audio-icon-btn.is-main { border-radius: 0; }
 
-/* ── Fenêtres flottantes (components/ui/FloatingPanel.jsx, spec_ui_panneaux.md) ── */
+/* ── Fenêtres flottantes (ui/panel/FloatingPanel.jsx, spec_ui_panneaux.md) ── */
 /* Sans le tampon « Confidentiel » : posé sur le contenu, il gênait la lecture ; l'agrafe reste */
 .vtt-floating-panel .vtt-modal-deco::after { display: none; }
 

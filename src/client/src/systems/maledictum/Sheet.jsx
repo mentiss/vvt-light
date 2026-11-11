@@ -16,21 +16,21 @@
 
 import React, { useRef, useState } from 'react';
 
-import SessionPlayersBar  from '../../components/layout/SessionPlayersBar.jsx';
-import ToastNotifications from '../../components/layout/ToastNotifications.jsx';
-import JournalTab         from '../../components/tabs/JournalTab.jsx';
-import DiceHistoryPage    from '../../components/layout/DiceHistoryPage.jsx';
-import DiceHistoryPanel   from '../../components/layout/DiceHistoryPanel.jsx';
-import AvatarUploader     from '../../components/AvatarUploader.jsx';
-import ReferenceGuide     from '../../components/reference/ReferenceGuide.jsx';
-import { HamburgerMenuSeparator } from '../../components/ui/HamburgerMenu.jsx';
+import SessionPlayersBar  from '@/features/table/SessionPlayersBar.jsx';
+import ToastNotifications from '@/features/table/ToastNotifications.jsx';
+import JournalTab         from '@/features/journal/JournalTab.jsx';
+import DiceHistoryPage    from '@/features/dice/history/DiceHistoryPage.jsx';
+import DiceHistoryPanel   from '@/features/dice/history/DiceHistoryPanel.jsx';
+import AvatarUploader     from '@/ui/image/AvatarUploader.jsx';
+import ReferenceGuide     from '@/features/reference/ReferenceGuide.jsx';
+import { HamburgerMenuSeparator } from '@/ui/menu/HamburgerMenu.jsx';
 import {
     HamburgerMenuItemCreateCharacter, HamburgerMenuItemSwitchCharacter, HamburgerMenuItemFreeDice,
     HamburgerMenuItemAccessCode, HamburgerMenuItemDiceConfig, HamburgerMenuItemGMInterface,
     HamburgerMenuItemLogout,
-} from '../../components/ui/HamburgerMenuItems.jsx';
-import { useSession } from '../../context/SessionContext.jsx';
-import { useHashTab } from '../../hooks/useHashTab.js';
+} from '@/features/table/HamburgerMenuItems.jsx';
+import { useSession } from '@/app/context/SessionContext.jsx';
+import { useHashTab } from '@/ui/hooks/useHashTab.js';
 
 import MlTopBar from './components/ui/MlTopBar.jsx';
 import MlSheet from './components/layout/MlSheet.jsx';

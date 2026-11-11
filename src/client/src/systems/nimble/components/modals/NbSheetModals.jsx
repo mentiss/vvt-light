@@ -16,9 +16,9 @@
 // ─────────────────────────────────────────────────────────────────────────────
 
 import React, { useState } from 'react';
-import Modal from '../../../../components/ui/Modal.jsx';
-import ConfirmModal from '../../../../components/modals/ConfirmModal.jsx';
-import CatalogModal from '../../../../components/modals/CatalogModal.jsx';
+import Modal from '@/ui/modal/Modal.jsx';
+import ConfirmModal from '@/ui/modal/ConfirmModal.jsx';
+import CatalogModal from '@/ui/catalog/CatalogModal.jsx';
 import { CONDITIONS } from '../../config/basics.js';
 import { WEAPONS, ARMORS, GEAR, MAGIC_ITEMS } from '../../config/equipment.js';
 import { SCHOOL_BY_KEY } from '../../config/catalog.js';

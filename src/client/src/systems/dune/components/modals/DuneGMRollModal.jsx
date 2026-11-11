@@ -8,10 +8,10 @@
 // payés en Menace (1, puis 2, puis 3), excédent versé en Menace après le jet.
 
 import React, { useState } from 'react';
-import Modal from '../../../../components/ui/Modal.jsx';
-import { roll, RollError } from '../../../../tools/diceEngine.js';
-import { useFetch }  from '../../../../hooks/useFetch.js';
-import { useSystem } from '../../../../hooks/useSystem.js';
+import Modal from '@/ui/modal/Modal.jsx';
+import { roll, RollError } from '@/features/dice/tools/diceEngine.js';
+import { useFetch }  from '@/app/hooks/useFetch.js';
+import { useSystem } from '@/app/hooks/useSystem.js';
 import DuneIcon from '../ui/DuneIcon.jsx';
 import DuneDie  from '../ui/DuneDie.jsx';
 import { DuneStepper } from '../ui/DuneFields.jsx';

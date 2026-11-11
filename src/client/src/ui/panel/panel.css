@@ -1,0 +1,103 @@
+@layer components {
+  /* ── Fenêtres flottantes (FloatingPanel, spec_ui_panneaux.md) ──────────────── */
+  /* Fond, bordure, en-tête, titre, boutons : classes de la modale ci-dessus (habillage des slugs).
+     Ici, ce qui fait une fenêtre flottante : position et taille portées par style, ordre au premier
+     plan (--vtt-floating-order), poignées, réduction, plein écran. Toujours sous les modales. */
+  :root { --vtt-z-floating: 46; }
+  .vtt-floating-panel {
+    position: fixed; max-height: none; width: auto;
+    z-index: calc(var(--vtt-z-floating) + var(--vtt-floating-order, 0));
+    container-type: inline-size;
+  }
+  .vtt-floating-panel:focus { outline: none; }
+  .vtt-floating-panel.is-full { inset: 1rem; width: auto; height: auto; }
+  .vtt-floating-panel.is-full.is-minimized { top: auto; height: auto; }
+  .vtt-floating-header { gap: 0.25rem; user-select: none; }
+  .vtt-floating-header.is-movable { cursor: move; touch-action: none; }
+  .vtt-floating-panel.is-minimized .vtt-floating-header { border-bottom: 0; padding-top: 0.5rem; padding-bottom: 0.5rem; }
+  .vtt-floating-header .vtt-modal-title { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .vtt-floating-title-extra { font-weight: 400; letter-spacing: normal; text-transform: none; color: var(--color-text-muted); }
+  /* Réduire reste utile sur petit écran (la modale y masque Agrandir) */
+  .vtt-floating-header .vtt-floating-btn { display: inline-flex; }
+  .vtt-floating-actions { display: flex; align-items: center; gap: 0.1rem; flex-shrink: 0; cursor: default; }
+  .vtt-floating-body { flex: 1 1 auto; min-height: 0; display: flex; flex-direction: column; overflow: hidden; }
+  .vtt-floating-body[hidden] { display: none; }
+  .vtt-floating-resize { position: absolute; z-index: 1; touch-action: none; }
+  .vtt-floating-resize-n, .vtt-floating-resize-s { left: 0.75rem; right: 0.75rem; height: 0.5rem; cursor: ns-resize; }
+  .vtt-floating-resize-e, .vtt-floating-resize-w { top: 0.75rem; bottom: 0.75rem; width: 0.5rem; cursor: ew-resize; }
+  .vtt-floating-resize-n { top: 0; }
+  .vtt-floating-resize-s { bottom: 0; }
+  .vtt-floating-resize-e { right: 0; }
+  .vtt-floating-resize-w { left: 0; }
+  .vtt-floating-resize-ne, .vtt-floating-resize-nw, .vtt-floating-resize-se, .vtt-floating-resize-sw { width: 0.9rem; height: 0.9rem; }
+  .vtt-floating-resize-ne { top: 0; right: 0; cursor: nesw-resize; }
+  .vtt-floating-resize-sw { bottom: 0; left: 0; cursor: nesw-resize; }
+  .vtt-floating-resize-nw { top: 0; left: 0; cursor: nwse-resize; }
+  .vtt-floating-resize-se { bottom: 0; right: 0; cursor: nwse-resize; }
+
+  /* Barres de défilement (§3.4) : épaisseur et couleurs uniquement.
+     Les zones qui défilent à l'intérieur (listes) en héritent. */
+  .vtt-scroll, .vtt-scroll * { scrollbar-width: thin; }
+  .vtt-scroll { scrollbar-color: var(--color-border) transparent; }
+  .vtt-scroll:hover { scrollbar-color: var(--color-primary) transparent; }
+
+  /* Boutons */
+  .vtt-btn {
+    display: inline-flex; align-items: center; justify-content: center; gap: 0.4rem;
+    padding: 0.5rem 1rem; border-radius: 0.5rem; font-size: 0.875rem; font-weight: 600;
+    border: 1px solid var(--color-border); background: var(--color-surface-alt); color: var(--color-text);
+    transition: border-color 0.15s, background-color 0.15s, filter 0.15s, opacity 0.15s;
+  }
+  .vtt-btn:hover:not(:disabled) { border-color: var(--color-primary); }
+  .vtt-btn:focus-visible { outline: 2px solid var(--color-primary); outline-offset: 2px; }
+  .vtt-btn:disabled { opacity: 0.5; }
+  .vtt-btn-primary { background: var(--color-primary); border-color: var(--color-primary); color: var(--color-on-primary, #fff); }
+  .vtt-btn-primary:hover:not(:disabled) { filter: brightness(1.1); }
+  .vtt-btn-danger { background: var(--color-danger); border-color: var(--color-danger); color: #fff; }
+  .vtt-btn-danger:hover:not(:disabled) { border-color: var(--color-danger); filter: brightness(1.1); }
+  .vtt-btn-sm { padding: 0.25rem 0.65rem; font-size: 0.8rem; }
+  .vtt-btn-icon { padding: 0; width: 2rem; height: 2rem; }
+  .vtt-btn-icon.vtt-btn-sm { width: 1.75rem; height: 1.75rem; }
+
+  /* Champs */
+  .vtt-field-label { display: block; margin-bottom: 0.25rem; font-size: 0.875rem; font-weight: 600; color: var(--color-text); }
+  .vtt-input {
+    width: 100%; padding: 0.5rem 0.75rem; border-radius: 0.5rem; font-size: 0.9rem;
+    border: 1px solid var(--color-border); background: var(--color-surface-alt); color: var(--color-text);
+  }
+  .vtt-input::placeholder { color: var(--color-text-muted); opacity: 0.8; }
+  .vtt-input:focus { outline: none; border-color: var(--color-primary); box-shadow: 0 0 0 2px color-mix(in srgb, var(--color-primary) 25%, transparent); }
+  textarea.vtt-input { resize: vertical; }
+
+  /* Pastilles et segments (pas de <select> ni de case à cocher) */
+  .vtt-pill {
+    display: inline-flex; align-items: center; gap: 0.3rem;
+    padding: 0.25rem 0.75rem; border-radius: 999px; font-size: 0.8rem; font-weight: 500;
+    border: 1px solid var(--color-border); background: var(--color-surface-alt); color: var(--color-text-muted);
+    transition: color 0.15s, border-color 0.15s, background-color 0.15s;
+  }
+  .vtt-pill:hover { color: var(--color-text); border-color: var(--color-primary); }
+  .vtt-pill.is-selected { background: var(--color-primary); border-color: var(--color-primary); color: var(--color-on-primary, #fff); }
+  .vtt-segmented {
+    display: flex; gap: 0.25rem; padding: 0.25rem; border-radius: 0.75rem;
+    border: 1px solid var(--color-border); background: var(--color-surface-alt);
+  }
+  .vtt-segment {
+    flex: 1; display: inline-flex; align-items: center; justify-content: center; gap: 0.5rem;
+    padding: 0.5rem; border-radius: 0.5rem; font-size: 0.75rem; font-weight: 600;
+    letter-spacing: 0.04em; text-transform: uppercase; color: var(--color-text-muted);
+    transition: color 0.15s, background-color 0.15s;
+  }
+  .vtt-segment:hover { color: var(--color-text); background: var(--color-surface); }
+  .vtt-segment.is-active { background: var(--color-primary); color: var(--color-on-primary, #fff); }
+
+  /* Ligne de liste (table, personnage) */
+  .vtt-list-item {
+    display: flex; align-items: center; gap: 0.75rem; width: 100%; padding: 0.75rem;
+    border-radius: 0.75rem; border: 1px solid var(--color-border);
+    background: var(--color-surface-alt); color: var(--color-text); text-align: left;
+    transition: border-color 0.15s, background-color 0.15s;
+  }
+  button.vtt-list-item:hover { border-color: var(--color-primary); }
+  .vtt-list-item.is-selected { border-color: var(--color-primary); background: color-mix(in srgb, var(--color-primary) 15%, transparent); }
+}

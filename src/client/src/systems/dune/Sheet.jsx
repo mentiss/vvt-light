@@ -14,19 +14,19 @@
 
 import React, { useState } from 'react';
 
-import ToastNotifications from '../../components/layout/ToastNotifications.jsx';
-import SessionPlayersBar  from '../../components/layout/SessionPlayersBar.jsx';
-import JournalTab         from '../../components/tabs/JournalTab.jsx';
-import DiceHistoryPage    from '../../components/layout/DiceHistoryPage.jsx';
-import DiceHistoryPanel   from '../../components/layout/DiceHistoryPanel.jsx';
-import AvatarUploader     from '../../components/AvatarUploader.jsx';
-import { HamburgerMenu, HamburgerMenuSeparator } from '../../components/ui/HamburgerMenu.jsx';
+import ToastNotifications from '@/features/table/ToastNotifications.jsx';
+import SessionPlayersBar  from '@/features/table/SessionPlayersBar.jsx';
+import JournalTab         from '@/features/journal/JournalTab.jsx';
+import DiceHistoryPage    from '@/features/dice/history/DiceHistoryPage.jsx';
+import DiceHistoryPanel   from '@/features/dice/history/DiceHistoryPanel.jsx';
+import AvatarUploader     from '@/ui/image/AvatarUploader.jsx';
+import { HamburgerMenu, HamburgerMenuSeparator } from '@/ui/menu/HamburgerMenu.jsx';
 import {
     HamburgerMenuItemCreateCharacter, HamburgerMenuItemSwitchCharacter, HamburgerMenuItemAccessCode,
     HamburgerMenuItemFreeDice, HamburgerMenuItemDiceConfig, HamburgerMenuItemGMInterface, HamburgerMenuItemLogout,
-} from '../../components/ui/HamburgerMenuItems.jsx';
-import { useSession } from '../../context/SessionContext.jsx';
-import { useHashTab } from '../../hooks/useHashTab.js';
+} from '@/features/table/HamburgerMenuItems.jsx';
+import { useSession } from '@/app/context/SessionContext.jsx';
+import { useHashTab } from '@/ui/hooks/useHashTab.js';
 
 import DuneBand      from './components/ui/DuneBand.jsx';
 import DuneIcon      from './components/ui/DuneIcon.jsx';

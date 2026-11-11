@@ -155,8 +155,8 @@ export default defineConfig([
       }],
     },
   },
-  { files: ['src/tools/browserStorage.js'], rules: { 'vtt/F-STORAGE': 'off' } },
-  { files: ['src/hooks/**', 'src/context/**'], rules: { 'vtt/F-SOCK-INFRA': 'off' } },
+  { files: ['src/app/tools/browserStorage.js'], rules: { 'vtt/F-STORAGE': 'off' } },
+  { files: ['src/app/hooks/**', 'src/app/context/**', 'src/features/*/hooks/**', 'src/ui/hooks/**'], rules: { 'vtt/F-SOCK-INFRA': 'off' } },
   { files: ['src/systems/vikings/**'], rules: { 'vtt/F-TOKENS': ['error', ...BASE_TOKENS] } },
 
   // Dette (voir LEGACY en tête du fichier)

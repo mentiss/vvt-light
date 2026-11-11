@@ -157,7 +157,7 @@ Le calcul n'est pas mémorisé : on suit un projet en cours ailleurs (journal, n
 | `src/client/tests/systems/fabula/config/projects.test.js` *(nouveau)* | Les 9 exemples du livre (coût et PP), Visionnaire plafonné au coût, minimum 1 PP, jours avec 0 PP |
 | Docs | Spec fonctionnelle (Bricoleur : projets, Version améliorée, Acheter des qualités) ; `fabula_ultima_conception_des_objets_rare.md` (étapes de conception) |
 
-Réutilisé : `normalizeText` (`tools/catalog.js`) pour la recherche ; `character.classes` (`classKey`, `niveau`) et `character.skills` (`classKey: 'bricoleur'`, `skillKey: 'visionnaire'`, `rang`) pour le pré-remplissage. Classes de couleurs existantes du thème Fabula, pas de nouvelle identité graphique.
+Réutilisé : `normalizeText` (`ui/tools/catalog.js`) pour la recherche ; `character.classes` (`classKey`, `niveau`) et `character.skills` (`classKey: 'bricoleur'`, `skillKey: 'visionnaire'`, `rang`) pour le pré-remplissage. Classes de couleurs existantes du thème Fabula, pas de nouvelle identité graphique.
 
 ### 5.6 Hors périmètre
 

@@ -6,7 +6,7 @@
 // ─────────────────────────────────────────────────────────────────────────────
 
 import React from 'react';
-import { HamburgerMenuItem } from '../../../../components/ui/HamburgerMenu.jsx';
+import { HamburgerMenuItem } from '@/ui/menu/HamburgerMenu.jsx';
 import { useVkLook } from '../../hooks/useVkLook.js';
 import VkIcon from './VkIcon.jsx';
 

@@ -11,9 +11,9 @@
 // ─────────────────────────────────────────────────────────────────────────────
 
 import { useState } from 'react';
-import { roll } from '../../../tools/diceEngine.js';
-import { useSystem } from '../../../hooks/useSystem.js';
-import { useFetch } from '../../../hooks/useFetch.js';
+import { roll } from '@/features/dice/tools/diceEngine.js';
+import { useSystem } from '@/app/hooks/useSystem.js';
+import { useFetch } from '@/app/hooks/useFetch.js';
 import vdaConfig from '../config.jsx';
 
 export const useVdaRoll = () => {

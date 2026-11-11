@@ -1,7 +1,7 @@
 // src/client/src/systems/cyberpunk/components/creation/StepFinal.jsx
 // Étape 9 : dark secret (facultatif), création ; puis le code d'accès à noter.
 import React from 'react';
-import CopyAccessButton from '../../../../components/ui/CopyAccessButton.jsx';
+import CopyAccessButton from '@/features/table/CopyAccessButton.jsx';
 import { findPlaybook } from '../../config.jsx';
 import { Card } from '../layout/Card.jsx';
 import { StepHead } from './CreationParts.jsx';

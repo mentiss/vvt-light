@@ -1,7 +1,7 @@
 import { useState, useCallback } from 'react';
-import { useSystem }  from '../../hooks/useSystem.js';
+import { useSystem }  from '@/app/hooks/useSystem.js';
 import { useNavigate } from 'react-router-dom';
-import ThemeToggle    from '../../components/ui/ThemeToggle.jsx';
+import ThemeToggle    from '@/app/components/ThemeToggle.jsx';
 import {
     DOMAINES, STAT_LABELS, SPECIALTY_TYPES, SPECIALTY_NIVEAUX,
     SPECIALTIES_REFERENCE, OMBRE_TYPES, computeReserveMax, computeInitiative,

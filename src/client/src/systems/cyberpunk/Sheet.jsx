@@ -12,23 +12,23 @@
 import React, { useState, useEffect, useRef } from 'react';
 
 // Composants génériques
-import ThemeToggle         from '../../components/ui/ThemeToggle.jsx';
-import ToastNotifications  from '../../components/layout/ToastNotifications.jsx';
-import SessionPlayersBar   from '../../components/layout/SessionPlayersBar.jsx';
-import JournalTab          from '../../components/tabs/JournalTab.jsx';
-import DiceHistoryPage     from '../../components/layout/DiceHistoryPage.jsx';
-import { HamburgerMenu, HamburgerMenuSeparator } from '../../components/ui/HamburgerMenu.jsx';
+import ThemeToggle         from '@/app/components/ThemeToggle.jsx';
+import ToastNotifications  from '@/features/table/ToastNotifications.jsx';
+import SessionPlayersBar   from '@/features/table/SessionPlayersBar.jsx';
+import JournalTab          from '@/features/journal/JournalTab.jsx';
+import DiceHistoryPage     from '@/features/dice/history/DiceHistoryPage.jsx';
+import { HamburgerMenu, HamburgerMenuSeparator } from '@/ui/menu/HamburgerMenu.jsx';
 import {
     HamburgerMenuItemCreateCharacter, HamburgerMenuItemSwitchCharacter, HamburgerMenuItemAccessCode,
     HamburgerMenuItemFreeDice, HamburgerMenuItemDiceConfig, HamburgerMenuItemGMInterface, HamburgerMenuItemLogout,
-} from '../../components/ui/HamburgerMenuItems.jsx';
+} from '@/features/table/HamburgerMenuItems.jsx';
 
 // Composants Cyberpunk
 import MoveModal           from './components/modals/MoveModal.jsx';
 
-import { useSystem }  from '../../hooks/useSystem.js';
-import { useFetch }   from '../../hooks/useFetch.js';
-import { useSession } from '../../context/SessionContext.jsx';
+import { useSystem }  from '@/app/hooks/useSystem.js';
+import { useFetch }   from '@/app/hooks/useFetch.js';
+import { useSession } from '@/app/context/SessionContext.jsx';
 import { useTableWeather } from './hooks/useTableWeather.js';
 import {XPPanel} from "./components/modals/XPPanel.jsx";
 import {XPButton} from "./components/layout/ResourceStrip.jsx";

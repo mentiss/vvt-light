@@ -7,11 +7,11 @@
 // ─────────────────────────────────────────────────────────────────────────────
 
 import React, { useState, useCallback } from 'react';
-import { roll } from '../../../../tools/diceEngine.js';
+import { roll } from '@/features/dice/tools/diceEngine.js';
 import { splitDiceWaves } from '../../config/rules.js';
 import { netSuccesses } from '../../config/npc.js';
-import { useFetch }  from '../../../../hooks/useFetch.js';
-import { useSystem } from '../../../../hooks/useSystem.js';
+import { useFetch }  from '@/app/hooks/useFetch.js';
+import { useSystem } from '@/app/hooks/useSystem.js';
 import VkModal from '../../components/ui/VkModal.jsx';
 import VkIcon  from '../../components/ui/VkIcon.jsx';
 

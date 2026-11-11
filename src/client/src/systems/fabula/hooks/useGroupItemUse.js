@@ -11,9 +11,9 @@
 // ─────────────────────────────────────────────────────────────────────────────
 
 import { useCallback } from 'react';
-import { useFetch } from '../../../hooks/useFetch.js';
-import { useSystem } from '../../../hooks/useSystem.js';
-import { recordHistoryEntry } from '../../../tools/diceHistory.js';
+import { useFetch } from '@/app/hooks/useFetch.js';
+import { useSystem } from '@/app/hooks/useSystem.js';
+import { recordHistoryEntry } from '@/features/dice/tools/diceHistory.js';
 import { FRAGMENT_ELEMENTS } from '../config/groupItems.js';
 
 const characterName = (c) => [c?.prenom, c?.nom].filter(Boolean).join(' ') || 'Personnage';

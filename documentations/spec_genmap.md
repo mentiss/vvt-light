@@ -365,12 +365,12 @@ Les éléments suivants sont explicitement hors scope pour la première version 
 
 | Fichier | Rôle |
 |---|---|
-| `src/client/src/genmap/generate.js` | Moteur : graine, structurants, couloirs, pièces, portes |
-| `src/client/src/genmap/renderSvg.js` | Rendu SVG d'un étage |
-| `src/client/src/genmap/data/engine.json` | Réglages du moteur : tentatives, pénalité de virage, ramifications, branche minimale d'un L (`minArm`), largeur maximale du couloir par défaut, densités |
-| `src/client/src/genmap/data/roomTypes.json` | Bibliothèque des types de pièces |
-| `src/client/src/genmap/data/presets/inn.json` | Preset Auberge |
-| `src/client/src/pages/GenMapPage.jsx` | Page `/tools/plans`, styles de la plateforme comme l'accueil |
+| `src/client/src/features/genmap/tools/generate.js` | Moteur : graine, structurants, couloirs, pièces, portes |
+| `src/client/src/features/genmap/tools/renderSvg.js` | Rendu SVG d'un étage |
+| `src/client/src/features/genmap/data/engine.json` | Réglages du moteur : tentatives, pénalité de virage, ramifications, branche minimale d'un L (`minArm`), largeur maximale du couloir par défaut, densités |
+| `src/client/src/features/genmap/data/roomTypes.json` | Bibliothèque des types de pièces |
+| `src/client/src/features/genmap/data/presets/inn.json` | Preset Auberge |
+| `src/client/src/app/pages/GenMapPage.jsx` | Page `/tools/plans`, styles de la plateforme comme l'accueil |
 | `src/client/tests/genmap/generate.test.js` | Tests du moteur |
 
 ### 11.3 Contrat du moteur

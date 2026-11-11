@@ -8,7 +8,7 @@
 //     sorts, équipement ; bestiaire pour le MJ), construits ici : rien n'est recopié.
 // ─────────────────────────────────────────────────────────────────────────────
 
-import { markdownToSections } from '../../../tools/reference.js';
+import { markdownToSections } from '@/features/reference/tools/reference.js';
 import { STAT_BY_KEY } from './basics.js';
 import { CLASS_LIST } from './catalog.js';
 import { ANCESTRIES } from './ancestries.js';

@@ -7,10 +7,10 @@
 Brique de plateforme : concerne tous les slugs (onglet Journal du joueur, onglet Journal du MJ, modale d'envoi de message du MJ).
 
 Fichiers concernés :
-- `src/client/src/components/tabs/JournalTab.jsx` (journal du joueur, réutilisé par le MJ via `components/gm/tabs/TabJournal.jsx` avec le personnage -1) ;
-- `src/client/src/components/shared/RichTextEditor.jsx` et `.css` (éditeur TipTap) ;
-- `src/client/src/components/gm/modals/GMSendModal.jsx` (envoi de message) ;
-- `src/client/src/components/layout/ToastNotifications.jsx` (notification d'un message reçu) ;
+- `src/client/src/features/journal/JournalTab.jsx` (journal du joueur, réutilisé par le MJ via `features/journal/TabJournal.jsx` avec le personnage -1) ;
+- `src/client/src/ui/text/RichTextEditor.jsx` et `.css` (éditeur TipTap) ;
+- `src/client/src/features/table/modals/GMSendModal.jsx` (envoi de message) ;
+- `src/client/src/features/table/ToastNotifications.jsx` (notification d'un message reçu) ;
 - `src/server/routes/journal.js` (inchangé, sauf mention contraire).
 
 Hors périmètre : stockage des images en fichiers sur le serveur (les images restent dans le texte des notes), structure de la table `character_journal` (aucune migration).
@@ -82,7 +82,7 @@ Le double branchement de l'agrandissement d'image au double-clic est réduit à 
 
 ## 3. Lot B — habillage du journal (J-7)
 
-Même démarche que les modales génériques (`spec_ui_modales.md`) : classes stables `vtt-*` et style par défaut dans `index.css` (`@layer components`), surcharges éventuelles dans le `theme.css` du slug.
+Même démarche que les modales génériques (`spec_ui_modales.md`) : classes stables `vtt-*` et style par défaut dans `app/styles/index.css` (`@layer components`), surcharges éventuelles dans le `theme.css` du slug.
 
 - `JournalTab` : barre d'outils (recherche, filtres, nouvelle note), liste, panneau de détail et états vides sur les classes `vtt-*` existantes (`vtt-input`, `vtt-btn`, `vtt-pill`, `vtt-list-item`, `vtt-scroll`…) ; plus d'emojis ni de styles en ligne pour les couleurs.
 - `RichTextEditor` : couleurs de l'éditeur (barre flottante, barre d'outils, titres, citations, sélection d'image, poignées de redimensionnement) sur les variables `--color-*`, au lieu de l'or de Vikings et du fond blanc codés en dur ; plus d'emoji sur le bouton Image.

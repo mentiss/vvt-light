@@ -7,8 +7,8 @@
 // serait insérée de nouveau au PUT suivant. (Modèle : vileborn.)
 // ─────────────────────────────────────────────────────────────────────────────
 
-import { useSystem } from '../../../hooks/useSystem.js';
-import { useFetch } from '../../../hooks/useFetch.js';
+import { useSystem } from '@/app/hooks/useSystem.js';
+import { useFetch } from '@/app/hooks/useFetch.js';
 
 const addsRows = (patch) => Object.values(patch).some(v => Array.isArray(v) && v.some(r => r && typeof r === 'object' && 'kind' in r && (!r.id || typeof r.id === 'string')));
 

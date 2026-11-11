@@ -5,8 +5,8 @@
 // pas les règles (décision du MJ, spec_dune.md §6.6).
 
 import React, { useState } from 'react';
-import { useFetch }  from '../../../../hooks/useFetch.js';
-import { useSystem } from '../../../../hooks/useSystem.js';
+import { useFetch }  from '@/app/hooks/useFetch.js';
+import { useSystem } from '@/app/hooks/useSystem.js';
 import { useSessionHouse } from '../../hooks/useSessionHouse.js';
 import DuneIcon from '../../components/ui/DuneIcon.jsx';
 import { DuneField, DuneFrame } from '../../components/ui/DuneFields.jsx';

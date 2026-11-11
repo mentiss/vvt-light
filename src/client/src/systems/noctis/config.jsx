@@ -1,4 +1,4 @@
-import { RollError } from '../../tools/diceEngine.js';
+import { RollError } from '@/features/dice/tools/diceEngine.js';
 
 // ── Constantes système ────────────────────────────────────────────────────────
 

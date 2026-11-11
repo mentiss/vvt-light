@@ -7,7 +7,7 @@
 //     action : jet libre ;
 //   - Session : musique, tableau partagé, acolytes de la table et leur fiche (gm/tabs/TabSession.jsx) ;
 //   - Patron : fiche de groupe, Supériorité, Subtilité (gm/tabs/TabPatron.jsx) ;
-//   - Rencontre : onglet PNJ de la plateforme (components/npc/TabNpcs.jsx) ; bestiaire en
+//   - Rencontre : onglet PNJ de la plateforme (features/npc/TabNpcs.jsx) ; bestiaire en
 //     bibliothèque, Blessures, Blessures critiques, jets (partie système : components/npc/) ;
 //   - Journal (TabJournal), Historique (DiceHistoryPage), Tableau (Board),
 //     panneau d'historique (DiceHistoryPanel, zone d'actions) : briques de la plateforme.
@@ -18,18 +18,18 @@
 // ─────────────────────────────────────────────────────────────────────────────
 
 import React, { useRef, useState } from 'react';
-import ToastNotifications from '../../components/layout/ToastNotifications.jsx';
-import DiceHistoryPage    from '../../components/layout/DiceHistoryPage.jsx';
-import DiceHistoryPanel   from '../../components/layout/DiceHistoryPanel.jsx';
-import TabJournal         from '../../components/gm/tabs/TabJournal.jsx';
-import FreeDiceModal      from '../../components/modals/FreeDiceModal.jsx';
-import Board              from '../../components/board/Board.jsx';
-import ReferenceGuide     from '../../components/reference/ReferenceGuide.jsx';
-import { useHashTab }     from '../../hooks/useHashTab.js';
-import { HamburgerMenuSeparator } from '../../components/ui/HamburgerMenu.jsx';
+import ToastNotifications from '@/features/table/ToastNotifications.jsx';
+import DiceHistoryPage    from '@/features/dice/history/DiceHistoryPage.jsx';
+import DiceHistoryPanel   from '@/features/dice/history/DiceHistoryPanel.jsx';
+import TabJournal         from '@/features/journal/TabJournal.jsx';
+import FreeDiceModal      from '@/features/dice/modals/FreeDiceModal.jsx';
+import Board              from '@/features/board/Board.jsx';
+import ReferenceGuide     from '@/features/reference/ReferenceGuide.jsx';
+import { useHashTab }     from '@/ui/hooks/useHashTab.js';
+import { HamburgerMenuSeparator } from '@/ui/menu/HamburgerMenu.jsx';
 import {
     HamburgerMenuItemTableManagement, HamburgerMenuItemDiceConfig, HamburgerMenuItemLogout,
-} from '../../components/ui/HamburgerMenuItems.jsx';
+} from '@/features/table/HamburgerMenuItems.jsx';
 
 import MlTopBar from './components/ui/MlTopBar.jsx';
 import { DiceIcon } from './components/ui/MlUi.jsx';
@@ -40,7 +40,7 @@ import { useLivery } from './hooks/useLivery.js';
 import { themeForPatron } from './config/rules/themes.js';
 import TabSession from './gm/tabs/TabSession.jsx';
 import TabPatron from './gm/tabs/TabPatron.jsx';
-import TabNpcs from '../../components/npc/TabNpcs.jsx';
+import TabNpcs from '@/features/npc/TabNpcs.jsx';
 import maledictumConfig from './config.jsx';
 import { REFERENCE_SECTIONS } from './config/reference.js';
 

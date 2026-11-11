@@ -16,7 +16,7 @@
 // ─────────────────────────────────────────────────────────────────────────────
 
 import React from 'react';
-import CopyAccessButton from '../../../../components/ui/CopyAccessButton.jsx';
+import CopyAccessButton from '@/features/table/CopyAccessButton.jsx';
 import { DISCIPLINES, IMPOSED_STATES, IMPOSED_STATE_ORDER } from '../../config.jsx';
 import { characterProfile, archetypeLabel, traitMaxFor, disciplineSummary } from '../../config/rules/character.js';
 import { woundSummary, xpAvailable } from '../../config/rules/sheetRules.js';

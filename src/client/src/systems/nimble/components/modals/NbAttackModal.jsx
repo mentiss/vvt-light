@@ -14,7 +14,7 @@
 // ─────────────────────────────────────────────────────────────────────────────
 
 import React, { useState } from 'react';
-import Modal from '../../../../components/ui/Modal.jsx';
+import Modal from '@/ui/modal/Modal.jsx';
 import { STAT_BY_KEY } from '../../config/basics.js';
 import { SCHOOL_BY_KEY } from '../../config/catalog.js';
 import { evalFormula, parseDice, diceLabel, signed } from '../../config/rules/formula.js';

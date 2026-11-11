@@ -7,15 +7,15 @@
 // ⚠️  Module ES — uniquement importé par le frontend React.
 // ─────────────────────────────────────────────────────────────────────────────
 
-import { RollError } from '../../tools/diceEngine.js';
+import { RollError } from '@/features/dice/tools/diceEngine.js';
 import AchtungHistoryEntry from './components/AchtungHistoryEntry.jsx';
 import AcNpcSheet from './components/npc/AcNpcSheet.jsx';
 import AcNpcForm from './components/npc/AcNpcForm.jsx';
 import AcNpcRollWindow from './components/npc/AcNpcRollWindow.jsx';
 import { acNpcPick } from './components/npc/acNpcPick.js';
 import { NPC_RANKS, npcDefaults, initialNpcState, isGroupRank, isOut, stressMax, injuriesMax } from './config/npc.js';
-import { woundFromRatio } from '../../tools/initiative.js';
-import { changeSessionResource } from '../../tools/sessionResources.js';
+import { woundFromRatio } from '@/features/initiative/tools/initiative.js';
+import { changeSessionResource } from '@/features/table/tools/sessionResources.js';
 
 export { KEYWORD_LABELS, getKeywordLabel } from './config/keywords.js';
 

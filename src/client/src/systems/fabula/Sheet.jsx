@@ -17,21 +17,21 @@
 import React, { useState, useCallback } from 'react';
 import './theme.css';
 
-import SessionPlayersBar   from '../../components/layout/SessionPlayersBar.jsx';
-import ToastNotifications  from '../../components/layout/ToastNotifications.jsx';
-import JournalTab          from '../../components/tabs/JournalTab.jsx';
-import DiceHistoryPage     from '../../components/layout/DiceHistoryPage.jsx';
-import AvatarUploader      from '../../components/AvatarUploader.jsx';
-import { HamburgerMenu, HamburgerMenuSeparator } from '../../components/ui/HamburgerMenu.jsx';
+import SessionPlayersBar   from '@/features/table/SessionPlayersBar.jsx';
+import ToastNotifications  from '@/features/table/ToastNotifications.jsx';
+import JournalTab          from '@/features/journal/JournalTab.jsx';
+import DiceHistoryPage     from '@/features/dice/history/DiceHistoryPage.jsx';
+import AvatarUploader      from '@/ui/image/AvatarUploader.jsx';
+import { HamburgerMenu, HamburgerMenuSeparator } from '@/ui/menu/HamburgerMenu.jsx';
 import {
     HamburgerMenuItemCreateCharacter, HamburgerMenuItemSwitchCharacter, HamburgerMenuItemFreeDice,
     HamburgerMenuItemAccessCode, HamburgerMenuItemDiceConfig, HamburgerMenuItemGMInterface,
     HamburgerMenuItemLogout,
-} from '../../components/ui/HamburgerMenuItems.jsx';
+} from '@/features/table/HamburgerMenuItems.jsx';
 
-import { useSession } from '../../context/SessionContext.jsx';
-import { useSystem }  from '../../hooks/useSystem.js';
-import { useFetch }   from '../../hooks/useFetch.js';
+import { useSession } from '@/app/context/SessionContext.jsx';
+import { useSystem }  from '@/app/hooks/useSystem.js';
+import { useFetch }   from '@/app/hooks/useFetch.js';
 
 import FicheGrid           from './components/layout/FicheGrid.jsx';
 import FuBand              from './components/ui/FuBand.jsx';

@@ -10,7 +10,7 @@
 // ─────────────────────────────────────────────────────────────────────────────
 
 import React from 'react';
-import { NpcPresets } from '../../../../components/npc/NpcPresets.jsx';
+import { NpcPresets } from '@/features/npc/NpcPresets.jsx';
 import { DuneStepper } from '../ui/DuneFields.jsx';
 import { COMPETENCES, PRINCIPES, traitLabel } from '../../config/traits.js';
 import { canResistDefeat, isMinor, rankLabel } from '../../config/rules/npc.js';

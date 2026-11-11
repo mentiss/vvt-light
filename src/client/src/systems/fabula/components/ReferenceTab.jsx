@@ -12,7 +12,7 @@
 // ─────────────────────────────────────────────────────────────────────────────
 
 import React from 'react';
-import ReferenceGuide from '../../../components/reference/ReferenceGuide.jsx';
+import ReferenceGuide from '@/features/reference/ReferenceGuide.jsx';
 import { REFERENCE_SECTIONS } from '../config/reference.js';
 import {
     PROJECT_POWERS, PROJECT_AREAS, PROJECT_USAGES, PROJECT_AMOUNTS, PROJECT_AMOUNT_LABELS,

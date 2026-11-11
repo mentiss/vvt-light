@@ -7,11 +7,11 @@
 // ─────────────────────────────────────────────────────────────────────────────
 
 import React, { useState, useCallback } from 'react';
-import { roll }                         from '../../../../tools/diceEngine.js';
-import { useSystem }                    from '../../../../hooks/useSystem.js';
-import {useFetch}                         from '../../../../hooks/useFetch.js';
+import { roll }                         from '@/features/dice/tools/diceEngine.js';
+import { useSystem }                    from '@/app/hooks/useSystem.js';
+import {useFetch}                         from '@/app/hooks/useFetch.js';
 import deltgreenConfig, { SKILL_BY_KEY } from '../../config.jsx';
-import Modal                            from '../../../../components/ui/Modal.jsx';
+import Modal                            from '@/ui/modal/Modal.jsx';
 
 const EvolveModal = ({ character, onSubmit, onClose }) => {
     const { apiBase }   = useSystem();

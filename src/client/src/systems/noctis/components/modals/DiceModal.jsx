@@ -17,9 +17,9 @@
  */
 
 import { useState } from 'react';
-import { useSystem }       from '../../../../hooks/useSystem.js';
-import { useFetch }        from '../../../../hooks/useFetch.js';
-import { roll, RollError } from '../../../../tools/diceEngine.js';
+import { useSystem }       from '@/app/hooks/useSystem.js';
+import { useFetch }        from '@/app/hooks/useFetch.js';
+import { roll, RollError } from '@/features/dice/tools/diceEngine.js';
 import { useGroupReserve } from '../../hooks/useGroupReserve.jsx';
 import noctisConfig, {
     DOMAINES, STAT_LABELS, SPECIALTY_NIVEAUX, computeMalusBlessure,

@@ -11,7 +11,7 @@
 //     Ce fichier est un module ES, importé uniquement par le frontend React.
 // ─────────────────────────────────────────────────────────────────────────────
 
-import { RollError } from '../../tools/diceEngine.js';
+import { RollError } from '@/features/dice/tools/diceEngine.js';
 import DiceEntryHistory from "./components/layout/DiceEntryHistory.jsx";
 
 // ══════════════════════════════════════════════════════════════════════════════

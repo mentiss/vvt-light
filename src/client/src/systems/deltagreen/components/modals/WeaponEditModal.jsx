@@ -7,8 +7,8 @@
 // ─────────────────────────────────────────────────────────────────────────────
 
 import React, { useState } from 'react';
-import Modal from '../../../../components/ui/Modal.jsx';
-import useConfirm from '../../../../hooks/useConfirm.jsx';
+import Modal from '@/ui/modal/Modal.jsx';
+import useConfirm from '@/ui/hooks/useConfirm.jsx';
 import WeaponFields, { weaponToDraft, draftToWeapon } from '../ui/WeaponFields.jsx';
 
 /**

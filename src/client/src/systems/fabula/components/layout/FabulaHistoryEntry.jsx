@@ -14,7 +14,7 @@
 // ─────────────────────────────────────────────────────────────────────────────
 
 import React from 'react';
-import { parseFreeRoll } from '../../../../tools/freeRoll.js';
+import { parseFreeRoll } from '@/features/dice/tools/freeRoll.js';
 import FuIcon from '../ui/FuIcon.jsx';
 import FuDie from '../ui/FuDie.jsx';
 

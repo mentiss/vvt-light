@@ -2,7 +2,7 @@
 // ─────────────────────────────────────────────────────────────────────────────
 // Interface GM Achtung! Cthulhu (contenu directement ici, sans GMView) — onglets :
 //   Session     → personnages, ressources Momentum/Threat/Complications
-//   PNJ         → onglet PNJ de la plateforme (components/npc/TabNpcs.jsx), partie système
+//   PNJ         → onglet PNJ de la plateforme (features/npc/TabNpcs.jsx), partie système
 //                 components/npc/ (spec_pnj.md §10.4)
 //   Journal     → journal GM (générique TabJournal characterId=-1)
 //   Tableau     → tableau partagé
@@ -18,18 +18,18 @@
 // ─────────────────────────────────────────────────────────────────────────────
 
 import React, { useState, useCallback } from 'react';
-import ToastNotifications from '../../components/layout/ToastNotifications.jsx';
-import ThemeToggle        from '../../components/ui/ThemeToggle.jsx';
-import TabJournal         from '../../components/gm/tabs/TabJournal.jsx';
-import Board              from '../../components/board/Board.jsx';
-import TabNpcs            from '../../components/npc/TabNpcs.jsx';
-import { HamburgerMenu, HamburgerMenuSeparator } from '../../components/ui/HamburgerMenu.jsx';
+import ToastNotifications from '@/features/table/ToastNotifications.jsx';
+import ThemeToggle        from '@/app/components/ThemeToggle.jsx';
+import TabJournal         from '@/features/journal/TabJournal.jsx';
+import Board              from '@/features/board/Board.jsx';
+import TabNpcs            from '@/features/npc/TabNpcs.jsx';
+import { HamburgerMenu, HamburgerMenuSeparator } from '@/ui/menu/HamburgerMenu.jsx';
 import {
     HamburgerMenuItemTableManagement, HamburgerMenuItemPlayerView, HamburgerMenuItemDiceConfig,
     HamburgerMenuItemLogout,
-} from '../../components/ui/HamburgerMenuItems.jsx';
-import DiceHistoryPage    from '../../components/layout/DiceHistoryPage.jsx';
-import FreeDiceModal      from '../../components/modals/FreeDiceModal.jsx';
+} from '@/features/table/HamburgerMenuItems.jsx';
+import DiceHistoryPage    from '@/features/dice/history/DiceHistoryPage.jsx';
+import FreeDiceModal      from '@/features/dice/modals/FreeDiceModal.jsx';
 
 import TabSession          from './gm/tabs/TabSession.jsx';
 import GMDiceModal         from './gm/modals/GMDiceModal.jsx';

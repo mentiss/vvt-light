@@ -7,8 +7,8 @@
 // ─────────────────────────────────────────────────────────────────────────────
 
 import { useCallback, useEffect, useState } from 'react';
-import { useFetch } from '../../../hooks/useFetch.js';
-import { useSystem } from '../../../hooks/useSystem.js';
+import { useFetch } from '@/app/hooks/useFetch.js';
+import { useSystem } from '@/app/hooks/useSystem.js';
 
 /**
  * @returns {{ characters: Object<number, object>, order: number[], loading: boolean,

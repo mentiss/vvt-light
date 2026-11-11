@@ -6,13 +6,13 @@
 // ⚠️ Module ES — importé uniquement par le frontend React.
 // ─────────────────────────────────────────────────────────────────────────────
 
-import { RollError } from '../../tools/diceEngine.js';
+import { RollError } from '@/features/dice/tools/diceEngine.js';
 import VdaHistoryEntry from './components/layout/VdaHistoryEntry.jsx';
 import { resolvePool, clampDifficulty } from './config/rules/dicePool.js';
 import { CHRONICLE } from './config/chronicle.js';
 import { NATURES, npcDefaults, initialNpcState, isOut, npcHealthMarks } from './config/rules/npc.js';
 import { initiativeValue } from './config/rules/sheetRules.js';
-import { woundFromRatio } from '../../tools/initiative.js';
+import { woundFromRatio } from '@/features/initiative/tools/initiative.js';
 import VdaNpcSheet from './components/npc/VdaNpcSheet.jsx';
 import VdaNpcForm from './components/npc/VdaNpcForm.jsx';
 import VdaNpcRollWindow from './components/npc/VdaNpcRollWindow.jsx';

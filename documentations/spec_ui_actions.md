@@ -18,13 +18,13 @@ Deux briques de la plateforme, liées :
 
 | Élément | Où | Position | Remarque |
 |---|---|---|---|
-| Musique : réglages du son, panneau MJ | `components/audio/AudioPlayerWidget.jsx`, monté par `AudioLayer` (PlayerPage / GMPage) | bas droite, plan 100 | habillés par chaque `theme.css` (`vtt-audio-toggle`) |
-| Notifications (jets, messages du MJ) | `components/layout/ToastNotifications.jsx`, monté par chaque slug | bas droite, 4 rem du bas, plan 50 | le volet des réglages du son passe devant elles |
+| Musique : réglages du son, panneau MJ | `features/audio/AudioPlayerWidget.jsx`, monté par `AudioLayer` (PlayerPage / GMPage) | bas droite, plan 100 | habillés par chaque `theme.css` (`vtt-audio-toggle`) |
+| Notifications (jets, messages du MJ) | `features/table/ToastNotifications.jsx`, monté par chaque slug | bas droite, 4 rem du bas, plan 50 | le volet des réglages du son passe devant elles |
 | Historique (ex-bouton 📜 de Dune MJ), Jet MJ (Zone Blanche) | retirés le 2026-11-01 | — | la zone d'actions est la place prévue pour ce genre d'accès |
 
 ### 2.2 Historique des jets
 
-- **Onglet Historique** : `components/layout/DiceHistoryPage.jsx`, dans les 9 slugs, joueur et MJ (18 usages). Rendu par `renderHistoryEntry` du slug ; suppression d'un jet et remise à zéro.
+- **Onglet Historique** : `features/dice/history/DiceHistoryPage.jsx`, dans les 9 slugs, joueur et MJ (18 usages). Rendu par `renderHistoryEntry` du slug ; suppression d'un jet et remise à zéro.
 - **Panneau latéral** : `components/layout/HistoryPanel.jsx` (263 lignes), tiroir pleine hauteur à droite avec fond qui bloque la page. Mêmes fonctions que l'onglet (chargement, temps réel par socket, suppression, remise à zéro), **code en double** avec `DiceHistoryPage`, mise en forme en Tailwind et `style=` (15), non habillable par les slugs.
 - Utilisé par : **Cyberpunk MJ** (entrée « Historique des jets » du menu), **Dune MJ** (bouton « 📜 Historique des jets » de l'onglet Ressources). Import mort dans la fiche Dune.
 - Les 9 `config.jsx` exposent déjà `dice.renderHistoryEntry` : la plateforme peut monter le panneau **sans code dans les slugs**, comme la couche audio.
@@ -98,17 +98,17 @@ Les 8 slugs hors Noctis passent `renderAllRollTypes` partout. Achtung et Zone Bl
 **Ce qui dépend de `HistoryPanel.jsx`** :
 
 - code : `cyberpunk/gm/GMView.jsx` (import, état `historyPanelOpen`, entrée du menu « Historique des jets », composant) ; `dune/gm/tabs/TabResources.jsx` (import, état `historyOpen`, bouton « 📜 Historique des jets », composant, commentaire d'en-tête) ; `dune/Sheet.jsx` (import inutilisé) ;
-- commentaires : `tools/diceEngine.js` (l. 71), `index.css` (bloc `vtt-history-entry`) ;
+- commentaires : `features/dice/tools/diceEngine.js` (l. 71), `features/dice/history/history.css` (bloc `vtt-history-entry`) ;
 - docs : `spec_diceengine_v2.md` (périmètre, l. 484 et 491), `/new-slug` (checklist), `archi-multijdr.md` (schéma ancien), `src/client/CLAUDE.md` (contrat de `DiceHistoryPage`) ;
 - `index.html` à la racine du dépôt cite un ancien `src/components/HistoryPanel.js` : fichier d'avant Vite, plus servi (le serveur sert `src/client/dist/index.html`), hors chantier.
 
 Rien d'autre ne l'importe : la suppression est sans risque une fois ces points traités.
 
-**Accès à la config du slug depuis la plateforme** : `hooks/useSlugConfig.js` charge `systems/<slug>/config.jsx` du slug de l'adresse (asynchrone : `null` au premier rendu). Les briques s'en servent ; elles n'affichent rien tant que la config n'est pas là.
+**Accès à la config du slug depuis la plateforme** : `app/hooks/useSlugConfig.js` charge `systems/<slug>/config.jsx` du slug de l'adresse (asynchrone : `null` au premier rendu). Les briques s'en servent ; elles n'affichent rien tant que la config n'est pas là.
 
 **Montage** : `PlayerPage` et `GMPage` posent `ModalHostProvider` autour de la page du slug (chargée à la demande) et montent `AudioLayer` à l'intérieur : un fournisseur de zone posé au même niveau est vu par la page du slug et par la couche audio.
 
-### 6.2 Zone d'actions (`components/ui/ActionZone.jsx`)
+### 6.2 Zone d'actions (`features/table/ActionZone.jsx`)
 
 - **`ActionZoneProvider`** : posé par `PlayerPage` / `GMPage` dans `ModalHostProvider`. Rend la zone (`div.vtt-actions`, en bas à droite, plan 100 comme aujourd'hui), avec deux emplacements : `vtt-actions-panels` (volets, au-dessus) et `vtt-actions-buttons` (actions). Partage par contexte les emplacements et le mode.
 - **`ZoneAction`** : rendu par portail dans l'emplacement, comme `HostedModal`. Props : `id`, `icon`, `label`, `order` (fixé par la plateforme : réglages du son 10, panneau de la musique 20, historique 30), `active` (sa fenêtre ou son volet est ouvert), `highlighted` (quelque chose tourne, ex. musique en lecture), `onSelect`, et `children` = contenu du volet, affiché quand `active` (les actions à fenêtre n'en ont pas). Sans fournisseur : ne rend rien (la brique fonctionne sans bouton).
@@ -125,10 +125,10 @@ Rien d'autre ne l'importe : la suppression est sans risque une fois ces points t
 ### 6.4 Historique des jets
 
 - **Déclaration unique** (`config.jsx` du slug) : `dice.renderHistoryEntry` (existant) et `dice.renderAllRollTypes` (nouveau, `true` pour les 8 slugs, absent pour Noctis = `false`).
-- **`tools/rollDate.js`** : `formatRollDate(timestamp, now)` → « à l'instant », « il y a 12 min », « il y a 3 h » (même jour), « hier 21:40 », « 12/10 21:40 » ; `fullRollDate` pour l'infobulle. Test `tests/tools/rollDate.test.js`.
-- **`components/layout/DiceHistoryList.jsx`** (nouveau) : le cœur actuel de `DiceHistoryPage` : chargement (200 jets), **temps réel** (`dice-roll`, repris de l'ancien panneau), barre (nombre, Actualiser, Tout effacer), cartes (nom, date hybride, suppression), rendu par la config (`useSlugConfig`) avec le rendu générique de repli. Prop : `sessionId`.
+- **`features/dice/tools/rollDate.js`** : `formatRollDate(timestamp, now)` → « à l'instant », « il y a 12 min », « il y a 3 h » (même jour), « hier 21:40 », « 12/10 21:40 » ; `fullRollDate` pour l'infobulle. Test `tests/tools/rollDate.test.js`.
+- **`features/dice/history/DiceHistoryList.jsx`** (nouveau) : le cœur actuel de `DiceHistoryPage` : chargement (200 jets), **temps réel** (`dice-roll`, repris de l'ancien panneau), barre (nombre, Actualiser, Tout effacer), cartes (nom, date hybride, suppression), rendu par la config (`useSlugConfig`) avec le rendu générique de repli. Prop : `sessionId`.
 - **`DiceHistoryPage`** : la liste, centrée (`max-w-2xl`). **Contrat : `sessionId` seul** (`renderHistoryEntry` et `renderAllRollTypes` retirés, lus dans la config). Aucun onglet supprimé.
-- **`components/layout/DiceHistoryPanel.jsx`** (nouveau, brique montée par le slug) : prop `sessionId` ; une `ZoneAction` « Historique des jets » (ordre 30, `active` si ouvert) et, ouvert, une `FloatingPanel` « Historique des jets » (`persistAs="history"`, collée au côté droit comme l'ancien panneau, presque toute la hauteur, ~360 px de large, `resizable`, `minimizable`) contenant la liste. Ouverture mémorisée par slug (`vtt:<slug>:history`, `{ open }`). À monter **à la racine** de la fiche ou de l'interface MJ, pas dans un onglet.
+- **`features/dice/history/DiceHistoryPanel.jsx`** (nouveau, brique montée par le slug) : prop `sessionId` ; une `ZoneAction` « Historique des jets » (ordre 30, `active` si ouvert) et, ouvert, une `FloatingPanel` « Historique des jets » (`persistAs="history"`, collée au côté droit comme l'ancien panneau, presque toute la hauteur, ~360 px de large, `resizable`, `minimizable`) contenant la liste. Ouverture mémorisée par slug (`vtt:<slug>:history`, `{ open }`). À monter **à la racine** de la fiche ou de l'interface MJ, pas dans un onglet.
 - **`ToastNotifications`** : `renderDiceToast` et `renderAllRollTypes` retirés, lus dans la config ; contrat : `sessionId` seul.
 - **`HistoryPanel.jsx` supprimé.**
 
@@ -144,8 +144,8 @@ Rien d'autre ne l'importe : la suppression est sans risque une fois ces points t
 
 ### 6.7 Fichiers
 
-Créés : `components/ui/ActionZone.jsx`, `components/layout/DiceHistoryList.jsx`, `components/layout/DiceHistoryPanel.jsx`, `tools/rollDate.js`, `tests/tools/rollDate.test.js`.
-Modifiés : `pages/PlayerPage.jsx`, `pages/GMPage.jsx`, `components/audio/AudioPlayerWidget.jsx`, `components/layout/DiceHistoryPage.jsx`, `components/layout/ToastNotifications.jsx`, `index.css`, les 9 slugs (config, fiche, interface MJ), Dune `TabResources.jsx`, 8 `theme.css`, docs du §6.6.
+Créés : `features/table/ActionZone.jsx`, `features/dice/history/DiceHistoryList.jsx`, `features/dice/history/DiceHistoryPanel.jsx`, `features/dice/tools/rollDate.js`, `tests/tools/rollDate.test.js`.
+Modifiés : `app/pages/PlayerPage.jsx`, `app/pages/GMPage.jsx`, `features/audio/AudioPlayerWidget.jsx`, `features/dice/history/DiceHistoryPage.jsx`, `features/table/ToastNotifications.jsx`, `app/styles/index.css`, les 9 slugs (config, fiche, interface MJ), Dune `TabResources.jsx`, 8 `theme.css`, docs du §6.6.
 Supprimé : `components/layout/HistoryPanel.jsx`.
 
 ### 6.8 Questions

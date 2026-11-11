@@ -1,7 +1,7 @@
 // src/client/src/systems/deltagreen/components/layout/DiceEntryHistory.jsx
 
 import React from 'react';
-import { parseFreeRoll } from '../../../../tools/freeRoll.js';
+import { parseFreeRoll } from '@/features/dice/tools/freeRoll.js';
 
 // Jet libre (FreeDiceModal) : même ligne de registre que les autres jets
 // (type, libellé, valeur), dés par type en ligne secondaire

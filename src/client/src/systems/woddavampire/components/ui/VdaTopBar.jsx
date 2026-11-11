@@ -9,8 +9,8 @@
 // ─────────────────────────────────────────────────────────────────────────────
 
 import React from 'react';
-import ThemeToggle from '../../../../components/ui/ThemeToggle.jsx';
-import { HamburgerMenu } from '../../../../components/ui/HamburgerMenu.jsx';
+import ThemeToggle from '@/app/components/ThemeToggle.jsx';
+import { HamburgerMenu } from '@/ui/menu/HamburgerMenu.jsx';
 import { VdaTabsNav } from './VdaUi.jsx';
 
 const VdaTopBar = ({ title, menu, tabs, active, onSelect, actions, darkMode, onToggleDarkMode, ref }) => (

@@ -26,7 +26,7 @@ Hors périmètre (proposé) : les dégâts, la santé, les actions, les états d
 | Élément | Où | Remarque |
 |---|---|---|
 | Initiative maison de Delta Green | `deltagreen/gm/tabs/TabSession.jsx` (l. 549, 619-708) | PJ seulement, triés par DEX, bouton « Suivant », état local au MJ (perdu au rechargement, invisible des joueurs). Spec §6.3. Remplacée par la brique si Delta Green l'adopte. |
-| Fenêtre flottante | `components/ui/FloatingPanel.jsx`, `hooks/useFloatingWindow.js`, `tools/floatingGeometry.js` | Déplacement, mémorisation par slug, pile de premier plan, maintien dans l'écran : réutilisables. Mais c'est une fenêtre à barre de titre, habillée comme une modale : trop lourde pour une bande fine (§4.6). |
+| Fenêtre flottante | `ui/panel/FloatingPanel.jsx`, `ui/hooks/useFloatingWindow.js`, `ui/tools/floatingGeometry.js` | Déplacement, mémorisation par slug, pile de premier plan, maintien dans l'écran : réutilisables. Mais c'est une fenêtre à barre de titre, habillée comme une modale : trop lourde pour une bande fine (§4.6). |
 | Briques activées par table | `AudioSessionToggle`, `BoardSessionToggle` montés dans le `TabSession` des 13 slugs ; `AudioLayer`, `BoardLayer` montés par `PlayerPage` / `GMPage` | Modèle direct pour activer la bande sur une table et l'afficher chez tous. |
 | Bases de module | `database/audio.db`, `database/board.db` (`src/server/db/modules/`) | Une ligne porte le slug et la table : pas de migration dans les 13 bases de slugs. |
 | PNJ à la table | `session_npcs` (`base.sql`) : `name`, `sheet`, `state`, `sort_order` | `spec_pnj.md` §6 prévoyait une colonne d'initiative ajoutée « par sa propre migration ». Voir Q-9. |
@@ -136,7 +136,7 @@ Sans fonction, la valeur reste vide et le MJ la saisit (ou range à la main). **
 - Réutilise `useFloatingWindow` (position, mémorisation, maintien dans l'écran, premier plan) mais **pas `FloatingPanel`** : pas de barre de titre ni d'habillage de modale, une poignée discrète au bout de la bande. Le MJ a ses boutons (Suivant, Ajouter, ⋯) au bout de la bande ; le joueur n'a que la poignée et la bascule.
 - Nombreux participants : la bande défile, l'actif reste visible ; portraits rapetissés au-delà d'une largeur.
 - Portraits : avatar (ou initiales), nom au survol, pastilles « a agi », « ×2 », valeur d'initiative.
-- Habillage : classes `vtt-turns-*`, style par défaut dans `index.css`, `theme.css` par slug ; **planche HTML avant le code** (avec 2 ou 3 slugs pilotes, Q-14).
+- Habillage : classes `vtt-turns-*`, style par défaut dans `features/initiative/initiative.css`, `theme.css` par slug ; **planche HTML avant le code** (avec 2 ou 3 slugs pilotes, Q-14).
 
 ### 4.7 Données et temps réel
 
@@ -473,7 +473,7 @@ En mémoire du serveur, une entrée par table (`sharedState.initiativeStates`, c
 
 ### 9.5 Front : fonctions pures
 
-`src/client/src/tools/initiative.js`, testé dans `tests/tools/initiative.test.js` :
+`src/client/src/features/initiative/tools/initiative.js`, testé dans `tests/tools/initiative.test.js` :
 
 | Fonction | Rôle |
 |---|---|
@@ -495,20 +495,20 @@ En mémoire du serveur, une entrée par table (`sharedState.initiativeStates`, c
 
 | Fichier | Rôle |
 |---|---|
-| `hooks/useInitiativeSession.js` | Lecture (GET), écoute `initiative-state`, écriture du MJ (PUT / DELETE), copie de secours (`browserStorage`, `vtt:<slug>:initiative:<sessionId>`) et proposition « Reprendre (tour N) » si le serveur n'a plus rien |
-| `components/initiative/InitiativeLayer.jsx` | Montée par `GMPage` et `PlayerPage` (comme `BoardLayer`) ; ne rend rien si le slug n'a pas de bloc `initiative` (`useSlugConfig`). MJ : bouton de la zone d'actions (« Lancer » / afficher) ; joueur : la bande dès qu'une initiative est en cours |
-| `components/initiative/InitiativeStrip.jsx` | La bande : portraits, tour en cours, camp qui a la main, poignée de déplacement, bascule horizontal / vertical, réduction ; boutons du MJ (Suivant, Garder la main, Ajouter, ⋯ : trier, annuler, terminer) |
-| `components/initiative/InitiativePortrait.jsx` | Un portrait : avatar ou silhouette, pastilles (a agi, ×2, retardé, valeur pour le MJ), filtre de blessure, marque « moi » |
-| `components/initiative/InitiativeLaunchModal.jsx` | Lancement (`Modal`) : participants (§9.7), camp d'ouverture (`sides`), initiative ennemie (si le slug la propose) |
-| `components/initiative/InitiativeEntryMenu.jsx` | Menu d'un portrait (MJ) : valeur, actions par tour, camp, nom affiché aux joueurs, caché, blessure, retirer, retarder ; fiche du PNJ (le `Sheet` du bloc `npc` du slug, contrat de `NpcSystem.jsx`) ou carte du PJ si le slug en déclare une |
+| `features/initiative/hooks/useInitiativeSession.js` | Lecture (GET), écoute `initiative-state`, écriture du MJ (PUT / DELETE), copie de secours (`browserStorage`, `vtt:<slug>:initiative:<sessionId>`) et proposition « Reprendre (tour N) » si le serveur n'a plus rien |
+| `features/initiative/InitiativeLayer.jsx` | Montée par `GMPage` et `PlayerPage` (comme `BoardLayer`) ; ne rend rien si le slug n'a pas de bloc `initiative` (`useSlugConfig`). MJ : bouton de la zone d'actions (« Lancer » / afficher) ; joueur : la bande dès qu'une initiative est en cours |
+| `features/initiative/InitiativeStrip.jsx` | La bande : portraits, tour en cours, camp qui a la main, poignée de déplacement, bascule horizontal / vertical, réduction ; boutons du MJ (Suivant, Garder la main, Ajouter, ⋯ : trier, annuler, terminer) |
+| `features/initiative/InitiativePortrait.jsx` | Un portrait : avatar ou silhouette, pastilles (a agi, ×2, retardé, valeur pour le MJ), filtre de blessure, marque « moi » |
+| `features/initiative/InitiativeLaunchModal.jsx` | Lancement (`Modal`) : participants (§9.7), camp d'ouverture (`sides`), initiative ennemie (si le slug la propose) |
+| `features/initiative/InitiativeEntryMenu.jsx` | Menu d'un portrait (MJ) : valeur, actions par tour, camp, nom affiché aux joueurs, caché, blessure, retirer, retarder ; fiche du PNJ (le `Sheet` du bloc `npc` du slug, contrat de `NpcSystem.jsx`) ou carte du PJ si le slug en déclare une |
 
 Retouches de l'existant :
-- `tools/floatingGeometry.js` : ancrage `'top-center'` (et son test).
-- `hooks/useFloatingWindow.js` : taille mesurée pour un contenu à taille libre (la bande n'est pas redimensionnable : seule sa position est mémorisée).
-- `components/layout/ToastNotifications.jsx` : écoute `initiative-state` ; quand le participant actif devient le personnage du joueur, toast « À toi de jouer » (aucune écriture dans l'historique, Q-11).
-- `hooks/useNpcs.js` : après la modification d'un PNJ de la table, événement du navigateur `vtt:session-npc-changed { sessionId, npc }` ; la bande du MJ recalcule la blessure (si non forcée) et renvoie l'état. Pas de socket : les PNJ restent côté MJ.
-- `pages/GMPage.jsx`, `pages/PlayerPage.jsx` : une ligne chacune.
-- `index.css` : style par défaut `vtt-initiative-*` (variables `--color-*`) ; habillage dans les `theme.css`.
+- `ui/tools/floatingGeometry.js` : ancrage `'top-center'` (et son test).
+- `ui/hooks/useFloatingWindow.js` : taille mesurée pour un contenu à taille libre (la bande n'est pas redimensionnable : seule sa position est mémorisée).
+- `features/table/ToastNotifications.jsx` : écoute `initiative-state` ; quand le participant actif devient le personnage du joueur, toast « À toi de jouer » (aucune écriture dans l'historique, Q-11).
+- `features/npc/hooks/useNpcs.js` : après la modification d'un PNJ de la table, événement du navigateur `vtt:session-npc-changed { sessionId, npc }` ; la bande du MJ recalcule la blessure (si non forcée) et renvoie l'état. Pas de socket : les PNJ restent côté MJ.
+- `app/pages/GMPage.jsx`, `app/pages/PlayerPage.jsx` : une ligne chacune.
+- `features/initiative/initiative.css` : style par défaut `vtt-initiative-*` (variables `--color-*`) ; habillage dans les `theme.css`.
 
 ### 9.7 Ajout des participants (lancement et « Ajouter »)
 
@@ -614,13 +614,13 @@ Retours v2 (2026-11-11), intégrés dans la v3 :
 | `src/server/systems/Loader.js`, `src/server/server.js` | Route partagée `initiative`, montée pour chaque slug |
 | `tests/server/routes/initiative.test.js` | Nouveau : droits, forme, diffusion, avatars, fin |
 | `tests/server/routes/rights.test.js` | Route `initiative` dans la liste des routeurs partagés |
-| `src/client/src/tools/initiative.js` | Nouveau : fonctions pures (§9.5) |
+| `src/client/src/features/initiative/tools/initiative.js` | Nouveau : fonctions pures (§9.5) |
 | `src/client/tests/tools/initiative.test.js` | Nouveau : modes trié, 2D20, Fabula (exemple du livre), Nimble ; réserve ; blessures ; vue joueur |
-| `src/client/src/hooks/useInitiativeSession.js` | Nouveau : lecture, temps réel, écriture du MJ, annulation, copie de secours |
-| `src/client/src/components/initiative/` | Nouveau : `InitiativeLayer`, `InitiativeStrip`, `InitiativeEntryMenu`, `InitiativeLaunchModal` |
-| `src/client/src/pages/GMPage.jsx`, `PlayerPage.jsx` | `InitiativeLayer` monté (une ligne chacune) |
-| `src/client/src/components/layout/ToastNotifications.jsx` | Toast « À toi de jouer » sur `initiative-state` |
-| `src/client/src/index.css` | Style par défaut `vtt-initiative-*` |
+| `src/client/src/features/initiative/hooks/useInitiativeSession.js` | Nouveau : lecture, temps réel, écriture du MJ, annulation, copie de secours |
+| `src/client/src/features/initiative/` | Nouveau : `InitiativeLayer`, `InitiativeStrip`, `InitiativeEntryMenu`, `InitiativeLaunchModal` |
+| `src/client/src/app/pages/GMPage.jsx`, `PlayerPage.jsx` | `InitiativeLayer` monté (une ligne chacune) |
+| `src/client/src/features/table/ToastNotifications.jsx` | Toast « À toi de jouer » sur `initiative-state` |
+| `src/client/src/features/initiative/initiative.css` | Style par défaut `vtt-initiative-*` |
 | `src/client/src/systems/deltagreen/config.jsx` | Bloc `initiative` (mode trié, DEX) |
 | `src/client/src/systems/deltagreen/gm/tabs/TabSession.jsx` | Initiative maison retirée (état, barre, marque « TOUR » des cartes) ; liste toujours rangée par DEX |
 | `src/client/src/systems/deltagreen/theme.css` | Habillage de la planche (formulaire DG-117) + dégradation par palier, comme la barre de session |
@@ -678,10 +678,10 @@ Autres réponses (chat, 2026-11-11) : **Q-39** oui (deux boutons côté PJ de Du
 
 | Fichier | Changement |
 |---|---|
-| `src/client/src/tools/sessionResources.js` | Nouveau : `changeSessionResource(ctx, field, delta, label)` par la route HTTP du slug ; une dépense lit d'abord la réserve et refuse si elle ne suffit pas |
-| `src/client/src/components/initiative/InitiativeLayer.jsx` | « Garder la main » : une ou plusieurs façons de payer par camp (`keepInitiative[camp]` objet ou tableau) ; refus affiché, la main n'est pas gardée |
-| `src/client/src/components/initiative/InitiativeStrip.jsx` | Un bouton par façon de payer |
-| `src/client/src/components/initiative/InitiativeLaunchModal.jsx` | `npcContext(characters)` du slug passé à `initialState` d'un PNJ de la bibliothèque |
+| `src/client/src/features/table/tools/sessionResources.js` | Nouveau : `changeSessionResource(ctx, field, delta, label)` par la route HTTP du slug ; une dépense lit d'abord la réserve et refuse si elle ne suffit pas |
+| `src/client/src/features/initiative/InitiativeLayer.jsx` | « Garder la main » : une ou plusieurs façons de payer par camp (`keepInitiative[camp]` objet ou tableau) ; refus affiché, la main n'est pas gardée |
+| `src/client/src/features/initiative/InitiativeStrip.jsx` | Un bouton par façon de payer |
+| `src/client/src/features/initiative/InitiativeLaunchModal.jsx` | `npcContext(characters)` du slug passé à `initialState` d'un PNJ de la bibliothèque |
 | `src/client/src/systems/fabula/config.jsx` | Bloc `initiative` : « Conflit », camps, ouverture choisie, Héros / Adversaires, initiative ennemie, tours d'Élite et de Champion, blessure par les PV |
 | `src/client/src/systems/dune/config.jsx` | « Conflit », camps ; garder la main 2 Impulsion ou +2 Menace (PJ), 2 Menace (adversaires) ; blessure par la défaite |
 | `src/client/src/systems/achtung/config.jsx` | Camps ; 2 Momentum (PJ), 2 Threat (adversaires) ; blessure par les blessures, le Stress ou les troupes debout |
@@ -705,7 +705,7 @@ Reporté au lot 3 : **« Voir la fiche » d'un PNJ** depuis le menu ⋯ (la fich
 
 ### 12.2 « Voir la fiche »
 
-Menu ⋯ d'un PNJ de la table (slug avec un bloc `npc`) → fenêtre `InitiativeNpcSheet` : la partie système du slug (`NpcSystem`, comme l'onglet PNJ), son état modifiable (PV, blessures…), ses jets par la fenêtre du slug (`RollWindow`), préférence « jets cachés » de la table partagée avec l'onglet PNJ (`NPC_ROLLS_OPTIONS`, déplacée dans `hooks/useNpcs.js`).
+Menu ⋯ d'un PNJ de la table (slug avec un bloc `npc`) → fenêtre `InitiativeNpcSheet` : la partie système du slug (`NpcSystem`, comme l'onglet PNJ), son état modifiable (PV, blessures…), ses jets par la fenêtre du slug (`RollWindow`), préférence « jets cachés » de la table partagée avec l'onglet PNJ (`NPC_ROLLS_OPTIONS`, déplacée dans `features/npc/hooks/useNpcs.js`).
 
 ### 12.3 Slugs
 
@@ -719,11 +719,11 @@ Menu ⋯ d'un PNJ de la table (slug avec un bloc `npc`) → fenêtre `Initiative
 
 | Fichier | Changement |
 |---|---|
-| `src/client/src/hooks/useNpcs.js` | Événement `vtt:session-npc-changed` (émis et écouté), `NPC_ROLLS_OPTIONS` exportée |
-| `src/client/src/components/npc/TabNpcs.jsx` | `ROLLS_OPTIONS` reprise de `useNpcs.js` |
-| `src/client/src/tools/initiative.js` (+ test) | `applyNpcChange` |
-| `src/client/src/components/initiative/InitiativeLayer.jsx`, `InitiativeEntryMenu.jsx` | Écoute des PNJ modifiés ; bouton « Voir la fiche » |
-| `src/client/src/components/initiative/InitiativeNpcSheet.jsx` | Nouveau : fiche du PNJ en fenêtre |
+| `src/client/src/features/npc/hooks/useNpcs.js` | Événement `vtt:session-npc-changed` (émis et écouté), `NPC_ROLLS_OPTIONS` exportée |
+| `src/client/src/features/npc/TabNpcs.jsx` | `ROLLS_OPTIONS` reprise de `useNpcs.js` |
+| `src/client/src/features/initiative/tools/initiative.js` (+ test) | `applyNpcChange` |
+| `src/client/src/features/initiative/InitiativeLayer.jsx`, `InitiativeEntryMenu.jsx` | Écoute des PNJ modifiés ; bouton « Voir la fiche » |
+| `src/client/src/features/initiative/InitiativeNpcSheet.jsx` | Nouveau : fiche du PNJ en fenêtre |
 | `src/client/src/systems/{maledictum,woddavampire,vikings}/config.jsx` (+ tests) | Bloc `initiative` |
 | `src/client/src/systems/{maledictum,woddavampire,vikings}/theme.css`, `vikings/theme-pierre.css`, `vikings/components/ui/VkSlabBg.jsx` | Habillages |
 

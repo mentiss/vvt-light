@@ -20,11 +20,11 @@
 
 import React, { useState, useMemo, useCallback } from 'react';
 import './theme.css';
-import { useSystem }   from '../../hooks/useSystem.js';
-import { useFetch }    from '../../hooks/useFetch.js';
+import { useSystem }   from '@/app/hooks/useSystem.js';
+import { useFetch }    from '@/app/hooks/useFetch.js';
 import { useNavigate } from 'react-router-dom';
-import { roll }        from '../../tools/diceEngine.js';
-import CopyAccessButton from '../../components/ui/CopyAccessButton.jsx';
+import { roll }        from '@/features/dice/tools/diceEngine.js';
+import CopyAccessButton from '@/features/table/CopyAccessButton.jsx';
 import fabulaConfig, { CLASSES, CLASS_ORDER, SPELL_LISTS, ARCANA_LISTS, equipItem, unequipItem, classAtoutBonuses } from './config.jsx';
 import EquipmentEditForm, { EquipmentItemSummary, EMPLACEMENT_LABELS, createEmptyItem } from './components/layout/EquipmentEditForm.jsx';
 import EquipmentCatalogModal from './components/modals/EquipmentCatalogModal.jsx';

@@ -20,10 +20,10 @@
 // ─────────────────────────────────────────────────────────────────────────────
 
 import React, { useState, useMemo, useCallback } from 'react';
-import { roll, RollError } from '../../../../tools/diceEngine.js';
-import { useFetch }        from '../../../../hooks/useFetch.js';
-import { useSystem }       from '../../../../hooks/useSystem.js';
-import Modal               from '../../../../components/ui/Modal.jsx';
+import { roll, RollError } from '@/features/dice/tools/diceEngine.js';
+import { useFetch }        from '@/app/hooks/useFetch.js';
+import { useSystem }       from '@/app/hooks/useSystem.js';
+import Modal               from '@/ui/modal/Modal.jsx';
 import zoneblancheConfig, {
     PRINCIPES, COMPETENCES,
     MAX_DES_ACHETES, POOL_BASE, DIFFICULTE_MIN, DIFFICULTE_MAX, AUDIMAT_MAX,

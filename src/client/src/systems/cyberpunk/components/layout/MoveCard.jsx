@@ -8,7 +8,7 @@
 // ─────────────────────────────────────────────────────────────────────────────
 
 import { STAT_LABELS } from "../../config.jsx";
-import ExpandableText from "../../../../components/ui/ExpandableText.jsx";
+import ExpandableText from "@/ui/text/ExpandableText.jsx";
 import CpIcon from "../ui/CpIcon.jsx";
 
 export const MoveCard = ({

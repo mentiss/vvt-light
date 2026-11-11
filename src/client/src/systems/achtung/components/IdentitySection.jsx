@@ -2,7 +2,7 @@
 // Section identité complète — réutilisable dans Sheet et GMView.
 
 import React from 'react';
-import ExpandableText from '../../../components/ui/ExpandableText.jsx';
+import ExpandableText from '@/ui/text/ExpandableText.jsx';
 import { ARCHETYPES, BACKGROUNDS, CHARACTERISTICS } from '../config.jsx';
 
 const resolveLabel = (list, key) => list.find(i => i.key === key)?.label ?? key ?? '—';

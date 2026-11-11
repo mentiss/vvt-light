@@ -132,7 +132,7 @@ La planche validée est la spécification graphique : tout ce qu'elle montre s'a
 ### Lot 3 : plateau de jet (2026-11-07)
 
 - **`components/ui/VkTray.jsx`** : tiroir fixé en bas de l'écran, repliable en une barre (titre, résumé du dernier résultat, Déplier, fermer), Échap ferme. Il remplace `VkModal` dans `DiceModal.jsx` (joueur et MJ, même composant) ; **la logique du jet n'est pas modifiée**, seul le contenant change (trois colonnes : le jet · paramètres, malus et options · Saga et lancer ; résultat à gauche, Relancer et Fermer à droite).
-- **Cohabitation sans toucher aux briques de la plateforme** : le plateau pose `--vtt-actions-bottom` (variable prévue par index.css) à sa hauteur, puis déclenche un « resize » : ActionZone recalcule `--vtt-actions-offset` et les notifications remontent au-dessus d'elle. La page se rallonge de la hauteur du plateau (`--vk-tray-h` sur `.vk-root`). Panneau de combat présent (fixé en bas à gauche) : le plateau commence à sa droite.
+- **Cohabitation sans toucher aux briques de la plateforme** : le plateau pose `--vtt-actions-bottom` (variable prévue par features/table/actions.css) à sa hauteur, puis déclenche un « resize » : ActionZone recalcule `--vtt-actions-offset` et les notifications remontent au-dessus d'elle. La page se rallonge de la hauteur du plateau (`--vk-tray-h` sur `.vk-root`). Panneau de combat présent (fixé en bas à gauche) : le plateau commence à sa droite.
 - **Vérifié à l'écran** (vue MJ, sans lancer de jet) : plateau ouvert et replié, pierre peinte de jour et bois et or de nuit ; zone d'actions mesurée à 220 px du bas plateau ouvert, 64 px replié, 16 px fermé. **Non vérifié** : un vrai jet (animation des dés, résultat, notification) et la cohabitation avec le panneau de combat (aucun combat en cours).
 
 ### Lot 4 : halle du MJ (2026-11-07)
@@ -154,7 +154,7 @@ La planche validée est la spécification graphique : tout ce qu'elle montre s'a
 
 ### Retours du MJ après test (2026-11-07)
 
-- **Fenêtres** : `VkModal` repose désormais sur la fenêtre générique (`components/ui/Modal.jsx`), rendue hors de la page par `HostedModal` ; elles ne restent plus prises dans la carte qui les ouvre (elles passaient sous la carte voisine et sous l'en-tête). Ajout de trait et de compétence : **catalogue de la plateforme** (`CatalogModal`) ; trait hors de portée grisé avec sa raison ; compétence spécialisable : spécialisation demandée avant l'ajout.
+- **Fenêtres** : `VkModal` repose désormais sur la fenêtre générique (`ui/modal/Modal.jsx`), rendue hors de la page par `HostedModal` ; elles ne restent plus prises dans la carte qui les ouvre (elles passaient sous la carte voisine et sous l'en-tête). Ajout de trait et de compétence : **catalogue de la plateforme** (`CatalogModal`) ; trait hors de portée grisé avec sa raison ; compétence spécialisable : spécialisation demandée avant l'ajout.
 - **Plateau de jet** : il se range aussi à droite de la barre de session ouverte (il passait dessous).
 - **Survols** (pierre peinte) : fond toujours opaque (Inventaire, Évolution et Fin d'arc la nuit, Édition, Copier les accès).
 - **Runes** : plus de « points en trop » (une rune s'apprend aussi en jeu) ; bouton **Futhark** dans le coin de la carte, qui ouvre le futhark dans une fenêtre (même usage qu'Inventaire).

@@ -2,6 +2,7 @@ import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 import { execFileSync } from 'node:child_process'
 import process from 'node:process'
+import { fileURLToPath } from 'node:url'
 
 // Version affichée en pied de page de l'accueil : dernier commit au moment du build
 // (« hash|AAAA-MM-JJ ») ; « dev » si git n'est pas disponible.
@@ -16,6 +17,10 @@ try {
 // https://vite.dev/config/
 export default defineConfig({
   plugins: [react()],
+  // « @/ » = src/ : import entre briques (documentations/spec_arborescence_client.md §2). Lu aussi par Vitest.
+  resolve: {
+    alias: { '@': fileURLToPath(new URL('./src', import.meta.url)) },
+  },
   build: {
     terserOptions: {
       compress: {

@@ -6,9 +6,9 @@
 
 Sur la planche, les coins de Vikings n'apparaissent pas : leurs images sont des variables du `theme.css` du slug, résolues depuis la planche. Dans l'appli, l'habillage vit dans `theme.css` et les coins s'affichent.
 
-Brique de plateforme : composant générique `src/client/src/components/layout/SessionPlayersBar.jsx`, affiché sur la fiche joueur de tous les slugs.
+Brique de plateforme : composant générique `src/client/src/features/table/SessionPlayersBar.jsx`, affiché sur la fiche joueur de tous les slugs.
 
-Même démarche que les modales génériques (`spec_ui_modales.md`) : classes stables `vtt-*`, style par défaut dans `index.css` (`@layer components`), habillage par le `theme.css` du slug, aucune couleur codée en dur ni emoji dans le générique.
+Même démarche que les modales génériques (`spec_ui_modales.md`) : classes stables `vtt-*`, style par défaut dans `features/table/session-bar.css` (`@layer components`), habillage par le `theme.css` du slug, aucune couleur codée en dur ni emoji dans le générique.
 
 Hors périmètre : affichage tablette et téléphone (passe responsive globale à faire plus tard), interface MJ, contenu de la barre au-delà de l'existant (avatar, personnage, joueur, statut).
 
@@ -21,7 +21,7 @@ Hors périmètre : affichage tablette et téléphone (passe responsive globale �
 | B-1 | Zoom sur un avatar | Carte flottante hors de la barre, ouverte au survol (souris) après un court délai. Le toucher n'est pas traité (personne ne joue sur tablette ou téléphone pour l'instant). |
 | B-2 | Modes d'affichage | Trois modes au choix du joueur : **panneau** (actuel), **rail** (colonne fine de petits avatars) et **masqué** (bouton pour rouvrir). Le masquage reste possible pour récupérer de la place sur la fiche. |
 | B-3 | Contrat du composant | Props inchangées (`character`, `sessionId`, `sessionName`, `headerHeight`, `bottomHeight`, `noWidthWhenCollapsed`) : aucune fiche de slug n'est modifiée. |
-| B-4 | Style | Classes `vtt-session-bar*`, style par défaut dans `index.css`, surchargeable par le slug. |
+| B-4 | Style | Classes `vtt-session-bar*`, style par défaut dans `features/table/session-bar.css`, surchargeable par le slug. |
 | B-5 | Slugs pilotes | Habillage de Vikings et de Cyberpunk. |
 | B-6 | Méthode | Planche HTML avec les vrais thèmes des pilotes, à valider avant le code. |
 

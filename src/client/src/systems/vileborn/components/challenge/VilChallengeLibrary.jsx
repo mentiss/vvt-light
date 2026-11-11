@@ -2,14 +2,14 @@
 // ─────────────────────────────────────────────────────────────────────────────
 // Colonne de la bibliothèque des défis (spec_vileborn_defis.md §II.5) :
 // « Nouveau défi », recherche, filtres Source et Famille, fiches groupées par
-// famille avec leur piste en miniature. Recherche et filtres par tools/catalog.js,
+// famille avec leur piste en miniature. Recherche et filtres par ui/tools/catalog.js,
 // comme CatalogModal.
 //
 // Props : library, selectedId, onSelect(id), onNew()
 // ─────────────────────────────────────────────────────────────────────────────
 
 import React, { useMemo, useState } from 'react';
-import { filterCatalog, groupCatalog } from '../../../../tools/catalog.js';
+import { filterCatalog, groupCatalog } from '@/ui/tools/catalog.js';
 import { CHALLENGE_FILTERS, CHALLENGE_GROUP, CHALLENGE_SEARCH, sortByFamily, sourceLabel } from '../../config/challenges.js';
 import { VilPill } from '../ui/VilUi.jsx';
 import VilTrackMini from './VilTrackMini.jsx';

@@ -13,7 +13,7 @@
 // ─────────────────────────────────────────────────────────────────────────────
 
 import { useEffect } from 'react';
-import { usePersistedState } from '../../../hooks/usePersistedState.js';
+import { usePersistedState } from '@/app/hooks/usePersistedState.js';
 import { watchPlatformSlabs } from '../components/ui/VkSlabBg.jsx';
 
 export const SKINS  = ['pierre', 'bois'];

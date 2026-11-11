@@ -14,7 +14,7 @@
 // ─────────────────────────────────────────────────────────────────────────────
 
 import React from 'react';
-import { parseFreeRoll } from '../../../../tools/freeRoll.js';
+import { parseFreeRoll } from '@/features/dice/tools/freeRoll.js';
 import { formatSl, signed, splitD100, LOCATION_LABELS } from '../../config/rules/dice.js';
 import { CHAR_KEYS, CHAR_SHORT } from '../../config/rules/character.js';
 import { TABLE_LABELS } from '../../config/rules/tables.js';

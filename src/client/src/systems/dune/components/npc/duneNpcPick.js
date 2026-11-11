@@ -23,7 +23,7 @@ export function presetText(sd, preset) {
     return `${parts.join(' + ')} · ${testThreshold(sd, preset.pick)}`;
 }
 
-/** Contrat `pick` de la brique NpcSystem (components/npc/NpcSystem.jsx). */
+/** Contrat `pick` de la brique NpcSystem (features/npc/NpcSystem.jsx). */
 export const duneNpcPick = {
     groups: (npc) => (isMinor(npc.systemData)
         ? [{ key: 'competences', label: 'une compétence' }]

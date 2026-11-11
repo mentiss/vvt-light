@@ -14,13 +14,13 @@
 // ─────────────────────────────────────────────────────────────────────────────
 
 import React, { useState, useCallback } from 'react';
-import { roll, RollError } from '../../../../tools/diceEngine.js';
-import { useFetch }        from '../../../../hooks/useFetch.js';
-import { useSystem }       from '../../../../hooks/useSystem.js';
+import { roll, RollError } from '@/features/dice/tools/diceEngine.js';
+import { useFetch }        from '@/app/hooks/useFetch.js';
+import { useSystem }       from '@/app/hooks/useSystem.js';
 import { countAssisted, GROUP_MAX } from '../../config/npc.js';
 import { SALVO_LABELS } from '../../config/mechanics.js';
 import achtungConfig from '../../config.jsx';
-import Modal               from '../../../../components/ui/Modal.jsx';
+import Modal               from '@/ui/modal/Modal.jsx';
 
 // ── Hooks dés GM — pas de validation de ressources ───────────────────────────
 // Le GM n'achète pas de dés via Momentum/Threat — pas de beforeRoll restrictif.

@@ -8,7 +8,7 @@
 //     du sang, clans, Atouts et Handicaps), construites ici : rien n'est recopié.
 // ─────────────────────────────────────────────────────────────────────────────
 
-import { markdownToSections } from '../../../tools/reference.js';
+import { markdownToSections } from '@/features/reference/tools/reference.js';
 import { CLANS, CLAN_ORDER } from './clans.js';
 import { DISCIPLINES, DISCIPLINE_ORDER } from './disciplines.js';
 import { PATHS, KRAINA, RITUALS } from './bloodMagic.js';

@@ -10,7 +10,7 @@
 
 import React, { useEffect } from 'react';
 import { CREATION_STEPS, getCreationMissing } from '../../config/creation.js';
-import CopyAccessButton from '../../../../components/ui/CopyAccessButton.jsx';
+import CopyAccessButton from '@/features/table/CopyAccessButton.jsx';
 import { emitVk, VK_TRIPLE } from '../../hooks/useVkLook.js';
 import VkIcon from '../ui/VkIcon.jsx';
 import VkPanel from '../ui/VkPanel.jsx';

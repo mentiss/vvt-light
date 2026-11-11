@@ -22,7 +22,7 @@
 // ─────────────────────────────────────────────────────────────────────────────
 
 import React, { useState } from 'react';
-import Modal from '../../../../components/ui/Modal.jsx';
+import Modal from '@/ui/modal/Modal.jsx';
 
 import { CLAN_WEAKNESS_STATES, ATTRIBUTE_GROUPS, ABILITY_GROUPS, ABILITY_LABELS, ABILITY_CATEGORY, BODY_CRAFTS, DISCIPLINES, ROLL_TYPES } from '../../config.jsx';
 import { buildPool, difficultyLabel, physicalBonusFor, disciplineRating, abilityRating, traitLabel, traitValue, spendCost, costLabel } from '../../config/rules/sheetRules.js';

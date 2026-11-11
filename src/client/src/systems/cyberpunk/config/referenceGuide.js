@@ -8,7 +8,7 @@
 //     chrome et du matos.
 // ─────────────────────────────────────────────────────────────────────────────
 
-import { markdownToSections } from '../../../tools/reference.js';
+import { markdownToSections } from '@/features/reference/tools/reference.js';
 import { REFERENCE_LISTS } from './reference.js';
 import { CYBERWARE_ALL } from './cyberware.js';
 import { ITEMS_ALL } from './items.js';

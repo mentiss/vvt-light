@@ -7,7 +7,7 @@
 // ─────────────────────────────────────────────────────────────────────────────
 
 import React, { useState } from 'react';
-import NpcItemList from '../../../../components/npc/NpcItemList.jsx';
+import NpcItemList from '@/features/npc/NpcItemList.jsx';
 import FuDie from '../ui/FuDie.jsx';
 import { TYPES_DEGATS } from '../../config/equipment.js';
 import { AFFINITIES, ATTR_KEYS, RANKS, SPECIES, VILLAINS } from '../../config/npc.js';

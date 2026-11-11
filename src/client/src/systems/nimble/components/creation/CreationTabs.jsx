@@ -7,8 +7,8 @@
 // ─────────────────────────────────────────────────────────────────────────────
 
 import React, { useState } from 'react';
-import AvatarUploader from '../../../../components/AvatarUploader.jsx';
-import CatalogModal from '../../../../components/modals/CatalogModal.jsx';
+import AvatarUploader from '@/ui/image/AvatarUploader.jsx';
+import CatalogModal from '@/ui/catalog/CatalogModal.jsx';
 import { STATS, SKILLS, STAT_ARRAYS, STARTING_GOLD, LICENSE_TEXT } from '../../config/basics.js';
 import { CLASS_LIST, ITEM_BY_KEY } from '../../config/catalog.js';
 import { ANCESTRIES, LANGUAGES, ANCESTRY_RARITIES } from '../../config/ancestries.js';

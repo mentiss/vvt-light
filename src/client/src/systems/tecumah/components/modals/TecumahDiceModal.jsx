@@ -8,17 +8,17 @@
 // Étape 3 — Résultat
 
 import React, { useState, useCallback } from 'react';
-import { roll, RollError }   from '../../../../tools/diceEngine.js';
-import { useSocket }         from '../../../../context/SocketContext.jsx';
-import { useFetch }          from '../../../../hooks/useFetch.js';
-import { useSystem }         from '../../../../hooks/useSystem.js';
+import { roll, RollError }   from '@/features/dice/tools/diceEngine.js';
+import { useSocket }         from '@/app/context/SocketContext.jsx';
+import { useFetch }          from '@/app/hooks/useFetch.js';
+import { useSystem }         from '@/app/hooks/useSystem.js';
 import tecumahConfig, {
     ATTRIBUTS, ATTRIBUT_LABELS, SKILLS_BY_ATTR, SKILLS,
     DIFFICULTY_LEVELS,
     pipsToNotation, pipsToPool, pipsResidual, getBlessureMalus, BLESSURE_LABELS,
 } from '../../config.jsx';
 import DieFace from "../DieFace.jsx";
-import Modal   from '../../../../components/ui/Modal.jsx';
+import Modal   from '@/ui/modal/Modal.jsx';
 
 const MAX_PP = 3;
 

@@ -13,8 +13,8 @@
 
 import React, { useState, useCallback } from 'react';
 import './theme.css';
-import { useSystem }   from '../../hooks/useSystem.js';
-import CopyAccessButton from '../../components/ui/CopyAccessButton.jsx';
+import { useSystem }   from '@/app/hooks/useSystem.js';
+import CopyAccessButton from '@/features/table/CopyAccessButton.jsx';
 import {
     ATTRIBUTS, ATTRIBUT_LABELS, SKILLS, SKILLS_BY_ATTR,
     BACKGROUNDS, BACKGROUNDS_BY_ID,

@@ -8,8 +8,8 @@
 // ─────────────────────────────────────────────────────────────────────────────
 
 import React, { useState } from 'react';
-import CatalogModal from '../../../../components/modals/CatalogModal.jsx';
-import Modal from '../../../../components/ui/Modal.jsx';
+import CatalogModal from '@/ui/catalog/CatalogModal.jsx';
+import Modal from '@/ui/modal/Modal.jsx';
 import { CYBERWARE_ALL, ITEMS_ALL, ITEM_AND_CYBERWARE_CATEGORY_LABEL, TAG_VARIANT_CLASS, tagChoicesOf, chosenOptions } from '../../config.jsx';
 import { TagList } from '../layout/TagManager.jsx';
 import { TagChoices } from '../creation/CreationParts.jsx';

@@ -10,7 +10,7 @@
 // ─────────────────────────────────────────────────────────────────────────────
 
 import React, { useState } from 'react';
-import Modal from '../../../../components/ui/Modal.jsx';
+import Modal from '@/ui/modal/Modal.jsx';
 import { SKILL_BY_KEY, STAT_BY_KEY } from '../../config/basics.js';
 import { signed } from '../../config/rules/formula.js';
 import { displayName, skillValue, statValue, saveEdge, initiativeOf, effectsOf } from '../../config/rules/character.js';

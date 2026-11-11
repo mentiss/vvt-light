@@ -28,20 +28,20 @@ import VkSky              from './components/ui/VkSky.jsx';
 import VkBody, { HURT_LEVELS } from './components/ui/VkBody.jsx';
 import { BLESSURE_MAX, isFatigueKO } from './config/rules.js';
 import { useVkLookOnRoot } from './hooks/useVkLook.js';
-import AvatarUploader     from '../../components/AvatarUploader.jsx';
-import JournalTab         from '../../components/tabs/JournalTab.jsx';
-import ToastNotifications from '../../components/layout/ToastNotifications.jsx';
-import DiceHistoryPage    from '../../components/layout/DiceHistoryPage.jsx';
-import SessionPlayersBar  from '../../components/layout/SessionPlayersBar.jsx';
-import ReferenceGuide     from '../../components/reference/ReferenceGuide.jsx';
-import { HamburgerMenu, HamburgerMenuSeparator } from '../../components/ui/HamburgerMenu.jsx';
+import AvatarUploader     from '@/ui/image/AvatarUploader.jsx';
+import JournalTab         from '@/features/journal/JournalTab.jsx';
+import ToastNotifications from '@/features/table/ToastNotifications.jsx';
+import DiceHistoryPage    from '@/features/dice/history/DiceHistoryPage.jsx';
+import SessionPlayersBar  from '@/features/table/SessionPlayersBar.jsx';
+import ReferenceGuide     from '@/features/reference/ReferenceGuide.jsx';
+import { HamburgerMenu, HamburgerMenuSeparator } from '@/ui/menu/HamburgerMenu.jsx';
 import {
     HamburgerMenuItemCreateCharacter, HamburgerMenuItemSwitchCharacter, HamburgerMenuItemAvatar,
     HamburgerMenuItemAccessCode, HamburgerMenuItemFreeDice, HamburgerMenuItemDiceConfig,
     HamburgerMenuItemGMInterface, HamburgerMenuItemLogout,
-} from '../../components/ui/HamburgerMenuItems.jsx';
-import { useSession }     from '../../context/SessionContext.jsx';
-import { useSystem }      from '../../hooks/useSystem.js';
+} from '@/features/table/HamburgerMenuItems.jsx';
+import { useSession }     from '@/app/context/SessionContext.jsx';
+import { useSystem }      from '@/app/hooks/useSystem.js';
 import { REFERENCE_SECTIONS } from './config/reference.js';
 
 // Runes et inventaire sont des sections de la fiche, plus des onglets.

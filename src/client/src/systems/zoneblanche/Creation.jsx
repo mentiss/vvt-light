@@ -13,9 +13,9 @@
 
 import React, { useState, useMemo, useEffect, useRef } from 'react';
 import './theme.css';
-import { useSystem } from '../../hooks/useSystem.js';
-import ThemeToggle from '../../components/ui/ThemeToggle.jsx';
-import CopyAccessButton from '../../components/ui/CopyAccessButton.jsx';
+import { useSystem } from '@/app/hooks/useSystem.js';
+import ThemeToggle from '@/app/components/ThemeToggle.jsx';
+import CopyAccessButton from '@/features/table/CopyAccessButton.jsx';
 import {
     PRINCIPES, COMPETENCES, ARCHETYPES, getArchetype,
     FOCUS_CATALOG, getMaximesForArchetype, VERITES_CATALOG, TALENTS_CATALOG,

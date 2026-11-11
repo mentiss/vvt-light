@@ -166,7 +166,7 @@ Le pied de page de l'accueil affiche la version de release en plus du hash et de
 | `deploy.config.example.json` | nouveau : modèle versionné de `deploy.config.json` |
 | `.claude/commands/release.md` | nouveau : commande `/release` (§12) |
 | `database-template/migrations/released.txt` | nouveau |
-| `src/client/src/pages/HomePage.jsx` | version de release au pied de page (variable `VITE_RELEASE_VERSION` fournie au build) |
+| `src/client/src/app/pages/HomePage.jsx` | version de release au pied de page (variable `VITE_RELEASE_VERSION` fournie au build) |
 | `CLAUDE.md`, `README.md` | règle de l'en-tête `-- systems:` et procédure de release |
 
 ---

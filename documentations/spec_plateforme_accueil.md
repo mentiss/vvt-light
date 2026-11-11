@@ -10,7 +10,7 @@ Choix d'implémentation du lot 2 :
 
 Brique de plateforme : page d'accueil (sélection des slugs), pages d'accès d'un slug (chargement, erreurs, arrivée du joueur, connexion du MJ), et visuel de chaque slug sur ces pages.
 
-Même démarche que les modales génériques (`spec_ui_modales.md`) : classes stables `vtt-*`, style par défaut dans `index.css` (`@layer components`), habillage par le slug, aucune couleur codée en dur ni emoji dans le générique.
+Même démarche que les modales génériques (`spec_ui_modales.md`) : classes stables `vtt-*`, style par défaut dans `app/styles/platform.css` (`@layer components`), habillage par le slug, aucune couleur codée en dur ni emoji dans le générique.
 
 Hors périmètre : Noctis (carte par défaut en attendant sa refonte), « partie en cours » sur la carte d'un slug (I-2, plus tard), modules plus lourds (initiative partagée, carte de jeu…).
 
@@ -54,7 +54,7 @@ Polices : les polices maison (Cyberpunk, Dune, Tecumah…) sont déclarées dans
 
 ## 3. Thème de la plateforme
 
-- Palette jour et nuit propre à la plateforme (couleurs `--color-*`), définie dans `index.css` sur une enveloppe **`.vtt-platform`** posée autour des pages hors slug (accueil). Définies sur l'enveloppe, ces couleurs l'emportent sur celles d'un thème de slug resté chargé (P-3 réglé pour l'accueil).
+- Palette jour et nuit propre à la plateforme (couleurs `--color-*`), définie dans `app/styles/platform.css` sur une enveloppe **`.vtt-platform`** posée autour des pages hors slug (accueil). Définies sur l'enveloppe, ces couleurs l'emportent sur celles d'un thème de slug resté chargé (P-3 réglé pour l'accueil).
 - Palette retenue après la planche (H-3).
 - Préférence jour / nuit de la plateforme enregistrée à part (clé « global », déjà utilisée), indépendante de celle de chaque slug.
 
@@ -149,7 +149,7 @@ En passant d'un slug à l'autre sans recharger, le thème du premier ne doit plu
 
 **Règle retenue : une page = un slug.** Tout changement de slug (y compris vers ou depuis l'accueil) est un chargement complet de la page :
 - les liens de la plateforme qui changent de slug sont des liens classiques (`<a href>`), pas des navigations internes ;
-- garde-fou générique (`hooks/useSlugGuard.js`, appelé par l'accueil et `SystemLayout`) : une navigation interne qui change de slug est transformée en chargement complet de la même adresse. Il protège les liens futurs (ex. bascule d'un personnage vers un autre système au cours d'une campagne).
+- garde-fou générique (`app/hooks/useSlugGuard.js`, appelé par l'accueil et `SystemLayout`) : une navigation interne qui change de slug est transformée en chargement complet de la même adresse. Il protège les liens futurs (ex. bascule d'un personnage vers un autre système au cours d'une campagne).
 
 Alternative écartée : isoler chaque `theme.css` dans son slug ou le retirer au changement de slug (réécriture de neuf thèmes, retrait non fiable avec Vite).
 
@@ -168,9 +168,9 @@ Alternative écartée : isoler chaque `theme.css` dans son slug ou le retirer au
 
 ## 10. Fichiers touchés (prévision)
 
-- Lot 2 : `AppRouter.jsx` (route « tout le reste », gestion d'erreur), nouveau composant de page d'erreur, `pages/HomePage.jsx`, `pages/SystemLayout.jsx`, `pages/PlayerPage.jsx`, `pages/GMPage.jsx`, `components/gm/layout/LoadingScreen.jsx`, `index.css`, `hooks/useDiceConfig.js`, `components/modals/FreeDiceModal.jsx` (option sans enregistrement), `context/SystemsContext.jsx`, `vite.config.js` (version), `context/AuthContext.jsx` (pas de vérification de connexion sur l'accueil), `src/server/server.js` (API des systèmes, route des connexions actives), `src/server/systems/Loader.js` (option `hidden` documentée), nouveau composant de carte générique.
+- Lot 2 : `AppRouter.jsx` (route « tout le reste », gestion d'erreur), nouveau composant de page d'erreur, `app/pages/HomePage.jsx`, `app/pages/SystemLayout.jsx`, `app/pages/PlayerPage.jsx`, `app/pages/GMPage.jsx`, `app/components/LoadingScreen.jsx`, `app/styles/platform.css`, `features/dice/hooks/useDiceConfig.js`, `features/dice/modals/FreeDiceModal.jsx` (option sans enregistrement), `app/context/SystemsContext.jsx`, `vite.config.js` (version), `app/context/AuthContext.jsx` (pas de vérification de connexion sur l'accueil), `src/server/server.js` (API des systèmes, route des connexions actives), `src/server/systems/Loader.js` (option `hidden` documentée), nouveau composant de carte générique.
 - Lot 3 : `systems/:slug/Brand.jsx`, `Brand.css`, `theme.css` des huit slugs.
-- Lot 4 : nouveau `hooks/useSlugGuard.js`, `pages/HomePage.jsx`, `pages/SystemLayout.jsx`, `src/client/CLAUDE.md` (règle).
+- Lot 4 : nouveau `app/hooks/useSlugGuard.js`, `app/pages/HomePage.jsx`, `app/pages/SystemLayout.jsx`, `src/client/CLAUDE.md` (règle).
 
 ---
 

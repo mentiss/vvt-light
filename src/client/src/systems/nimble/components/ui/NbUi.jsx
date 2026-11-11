@@ -6,7 +6,7 @@
 // ─────────────────────────────────────────────────────────────────────────────
 
 import React from 'react';
-import { inlineSegments } from '../../../../tools/reference.js';
+import { inlineSegments } from '@/features/reference/tools/reference.js';
 import { signed } from '../../config/rules/formula.js';
 
 /** Choix « pill » (remplace les listes déroulantes) */

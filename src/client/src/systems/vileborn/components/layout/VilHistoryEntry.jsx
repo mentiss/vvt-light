@@ -14,7 +14,7 @@
 // ─────────────────────────────────────────────────────────────────────────────
 
 import React from 'react';
-import { parseFreeRoll } from '../../../../tools/freeRoll.js';
+import { parseFreeRoll } from '@/features/dice/tools/freeRoll.js';
 import { VERDICT_LABELS, ordinal } from '../../config/rules/test.js';
 
 const parseResult = (entry) => {

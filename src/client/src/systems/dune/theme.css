@@ -421,7 +421,7 @@
    COMPOSANTS DE LA PLATEFORME (hors couche, comme les autres slugs)
    ═══════════════════════════════════════════════════════════════════════════ */
 
-/* ── Modales (components/ui/Modal.jsx, spec_ui_modales.md §11) : fenêtre de la Guilde ── */
+/* ── Modales (ui/modal/Modal.jsx, spec_ui_modales.md §11) : fenêtre de la Guilde ── */
 .vtt-modal-backdrop { background: radial-gradient(ellipse at 50% 120%, rgba(232,121,43,.25), transparent 60%), rgba(5,6,10,.82); backdrop-filter: blur(3px); }
 .vtt-modal-panel { border-radius: 0; border: 1px solid var(--dn-gold); background: var(--color-surface); box-shadow: 0 30px 80px rgba(0,0,0,.55); }
 .vtt-modal-header {
@@ -439,7 +439,7 @@
 .vtt-floating-panel.is-minimized .vtt-modal-header { padding-top: .55rem; padding-bottom: .55rem; }
 .vtt-floating-panel.is-minimized .vtt-modal-header::after { display: none; }
 
-/* ── Infobulle (components/ui/Tooltip.jsx) : cartouche de la bande, filet d'épice ── */
+/* ── Infobulle (ui/text/Tooltip.jsx) : cartouche de la bande, filet d'épice ── */
 .vtt-tooltip {
     border-radius: 0; border: 1px solid var(--dn-band-line); border-top: 2px solid var(--dn-spice); clip-path: var(--dn-cut-6);
     background: var(--dn-band-bg); color: var(--dn-band-text); box-shadow: none;
@@ -481,7 +481,7 @@ button.vtt-list-item:hover { border-left-color: var(--dn-gold); }
 .vtt-scroll { scrollbar-color: var(--dn-gold-soft) transparent; }
 .vtt-scroll:hover { scrollbar-color: var(--dn-gold) transparent; }
 
-/* ── Catalogue (components/modals/CatalogModal.jsx, spec_ui_catalogue.md) : lignes à filet, + hexagonal ── */
+/* ── Catalogue (ui/catalog/CatalogModal.jsx, spec_ui_catalogue.md) : lignes à filet, + hexagonal ── */
 .vtt-catalog-list { border-radius: 0; border-color: var(--dn-gold-soft); }
 .vtt-catalog-list-header, .vtt-catalog-group { font: 700 10px/1 var(--dn-font-tech); letter-spacing: .26em; text-transform: uppercase; color: var(--dn-gold); background: var(--color-surface-alt); }
 .vtt-catalog-item { border-radius: 0; border-bottom: 1px solid var(--dn-gold-soft); }
@@ -496,7 +496,7 @@ button.vtt-list-item:hover { border-left-color: var(--dn-gold); }
 .vtt-journal-editor { border-radius: 0; border: 1px solid var(--dn-gold-soft); background: var(--color-surface); }
 .vtt-journal-list-toggle { background: transparent; border-bottom-color: var(--dn-gold-soft); font-family: var(--dn-font-tech); letter-spacing: .18em; text-transform: uppercase; }
 
-/* ── Menu (components/ui/HamburgerMenu.jsx, spec_ui_menu.md §7) : pont de vaisseau, filet d'épice ── */
+/* ── Menu (ui/menu/HamburgerMenu.jsx, spec_ui_menu.md §7) : pont de vaisseau, filet d'épice ── */
 .vtt-menu-button {
     width: 32px; height: 32px; border-radius: 0;
     border: 1px solid var(--dn-band-line); background: transparent; color: var(--dn-band-text);
@@ -512,7 +512,7 @@ button.vtt-list-item:hover { border-left-color: var(--dn-gold); }
 .vtt-menu-separator { height: 10px; margin: 4px 16px; background: var(--dn-band-line);
     -webkit-mask: var(--dn-crest) center / 100% 100% no-repeat; mask: var(--dn-crest) center / 100% 100% no-repeat; }
 
-/* ── Zone d'actions (components/ui/ActionZone.jsx, spec_ui_actions.md §6.2) : hexagones ── */
+/* ── Zone d'actions (features/table/ActionZone.jsx, spec_ui_actions.md §6.2) : hexagones ── */
 .vtt-action-btn {
     width: 46px; height: 46px; border-radius: 0; border: none; box-shadow: none; clip-path: var(--dn-hexagon);
     background: var(--dn-band-bg); color: var(--dn-band-text);
@@ -523,7 +523,7 @@ button.vtt-list-item:hover { border-left-color: var(--dn-gold); }
 .vtt-actions-bar { filter: drop-shadow(0 4px 10px rgba(0,0,0,.35)); }   /* l'ombre ne survit pas au clip-path */
 .vtt-audio-icon-btn.is-main { border-radius: 0; clip-path: var(--dn-hexagon); }
 
-/* ── Barre de session (components/layout/SessionPlayersBar.jsx, spec_session_bar.md) ── */
+/* ── Barre de session (features/table/SessionPlayersBar.jsx, spec_session_bar.md) ── */
 .vtt-session-bar { background: var(--color-surface); border-right: 1px solid var(--dn-gold-soft); }
 .vtt-session-bar-header { border-bottom: 1px solid var(--dn-gold-soft); }
 .vtt-session-bar-eyebrow { font: 700 10px/1 var(--dn-font-tech); letter-spacing: .26em; text-transform: uppercase; color: var(--color-text-muted); }

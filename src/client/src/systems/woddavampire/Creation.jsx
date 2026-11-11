@@ -15,9 +15,9 @@
 
 import React, { useCallback, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useSystem } from '../../hooks/useSystem.js';
-import ThemeToggle   from '../../components/ui/ThemeToggle.jsx';
-import CopyAccessButton from '../../components/ui/CopyAccessButton.jsx';
+import { useSystem } from '@/app/hooks/useSystem.js';
+import ThemeToggle   from '@/app/components/ThemeToggle.jsx';
+import CopyAccessButton from '@/features/table/CopyAccessButton.jsx';
 
 import { ROLL_TYPES, BONUS_COSTS } from './config.jsx';
 import { useVdaRoll } from './hooks/useVdaRoll.js';

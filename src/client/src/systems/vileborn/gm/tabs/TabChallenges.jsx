@@ -14,8 +14,8 @@
 // ─────────────────────────────────────────────────────────────────────────────
 
 import React, { useState } from 'react';
-import CatalogModal from '../../../../components/modals/CatalogModal.jsx';
-import ConfirmModal from '../../../../components/modals/ConfirmModal.jsx';
+import CatalogModal from '@/ui/catalog/CatalogModal.jsx';
+import ConfirmModal from '@/ui/modal/ConfirmModal.jsx';
 import { DEFAULT_DIFFICULTY } from '../../config/rules/test.js';
 import { addWound, sufferState } from '../../config/rules/character.js';
 import { toggleBox, lastReachedTrigger, blankSheet, duplicateSheet, cleanSheet, canSaveSheet } from '../../config/rules/challenge.js';

@@ -9,7 +9,7 @@
 // ─────────────────────────────────────────────────────────────────────────────
 
 import React, { useState } from 'react';
-import NpcItemList from '../../../../components/npc/NpcItemList.jsx';
+import NpcItemList from '@/features/npc/NpcItemList.jsx';
 import { CHAR_KEYS, CHAR_SHORT } from '../../config/rules/character.js';
 import { ROLE_LABELS } from '../../config/rules/npc.js';
 import { Field, Pill, Pills } from '../ui/MlUi.jsx';

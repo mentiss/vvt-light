@@ -4,7 +4,7 @@
 // onAdd reçoit un atout au format de la fiche : { nom, description, quantite, qualite, motsCles }.
 
 import React from 'react';
-import CatalogModal from '../../../../components/modals/CatalogModal.jsx';
+import CatalogModal from '@/ui/catalog/CatalogModal.jsx';
 import { DuneField } from '../ui/DuneFields.jsx';
 import { ASSETS, ASSET_FAMILIES } from '../../config/assets.js';
 

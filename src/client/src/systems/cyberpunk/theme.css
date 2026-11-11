@@ -314,7 +314,7 @@
 .cp-outcome-partial { background: rgba(255, 170, 0, 0.15); color: var(--cp-neon-amber);   border: 1px solid rgba(255, 170, 0, 0.4); }
 .cp-outcome-failure { background: rgba(255, 45, 120, 0.15); color: var(--cp-neon-magenta); border: 1px solid rgba(255, 45, 120, 0.4); }
 
-/* ── Barre de session (components/layout/SessionPlayersBar.jsx, spec_session_bar.md) ─
+/* ── Barre de session (features/table/SessionPlayersBar.jsx, spec_session_bar.md) ─
    Coins arrondis comme la fiche, intitulés cp-font-ui, filet cp-divider, « moi » en
    dégradé néon, halo cyan sur les avatars en ligne ; carte cp-border-neon. */
 .vtt-session-bar { background: var(--color-surface); border-right: 1px solid var(--color-border); }
@@ -389,7 +389,7 @@
     background: var(--cp-tag-positive-bg); border-color: color-mix(in srgb, var(--color-success) 40%, transparent);
 }
 
-/* ── Modales génériques et journal (components/ui/Modal.jsx, spec_ui_modales.md §11) ─ */
+/* ── Modales génériques et journal (ui/modal/Modal.jsx, spec_ui_modales.md §11) ─ */
 /* ── Cyberpunk : coins coupés, néon cyan, cp-font-ui (Rajdhani) en capitales, cp-divider,
    cp-glow-cyan ; ✦ boutons principaux en contour néon, lignes de balayage sur le panneau ── */
 .vtt-modal-backdrop { background: rgba(5, 5, 8, .8); backdrop-filter: blur(3px); }
@@ -488,7 +488,7 @@
 @keyframes cp-xp-pulse { 50% { opacity: .45; } }
 @media (prefers-reduced-motion: reduce) { .cp-xp-notch.is-next { animation: none; } }
 
-/* ── Menu hamburger (components/ui/HamburgerMenu.jsx, spec_ui_menu.md §7) ────
+/* ── Menu hamburger (ui/menu/HamburgerMenu.jsx, spec_ui_menu.md §7) ────
    Même identité que les modales : coins coupés et balayage, Rajdhani en capitales,
    filets cp-divider, survol néon cyan, danger en magenta. ── */
 .vtt-menu-button { background: var(--color-surface-alt); border-color: var(--color-border); }
@@ -517,7 +517,7 @@
     background: linear-gradient(to right, transparent, color-mix(in srgb, var(--color-primary) 40%, transparent) 30%, color-mix(in srgb, var(--color-primary) 40%, transparent) 70%, transparent);
 }
 
-/* ── Zone d'actions : boutons (components/ui/ActionZone.jsx, spec_ui_actions.md §6.2) ── */
+/* ── Zone d'actions : boutons (features/table/ActionZone.jsx, spec_ui_actions.md §6.2) ── */
 /* ✦ Coins coupés, contour néon ; balayage et lueur cyan quand ça joue */
 .vtt-action-btn {
     border-radius: 0; border: 1px solid var(--color-border); background: var(--color-surface-alt); color: var(--color-text-muted);
@@ -534,7 +534,7 @@
 /* Bouton principal du panneau (lecture / pause) : coins coupés, comme les boutons flottants */
 .vtt-audio-icon-btn.is-main { border-radius: 0; clip-path: polygon(8px 0, 100% 0, 100% calc(100% - 8px), calc(100% - 8px) 100%, 0 100%, 0 8px); }
 
-/* ── Fenêtres flottantes (components/ui/FloatingPanel.jsx, spec_ui_panneaux.md) ── */
+/* ── Fenêtres flottantes (ui/panel/FloatingPanel.jsx, spec_ui_panneaux.md) ── */
 /* Réduite : sans le filet sous l'en-tête (il doublait le bord du panneau) */
 .vtt-floating-panel.is-minimized .vtt-modal-header { background: none; }
 

@@ -8,7 +8,7 @@
 import React from 'react';
 import { pipsToNotation, BLESSURE_LABELS } from '../config.jsx';
 import DieFace from "./DieFace.jsx";
-import { parseFreeRoll } from '../../../tools/freeRoll.js';
+import { parseFreeRoll } from '@/features/dice/tools/freeRoll.js';
 
 // Jet libre (FreeDiceModal) : libellé, dés normaux par type, total
 const FreeRollEntry = ({ free }) => (

@@ -1360,7 +1360,7 @@ body::before {
     color:          var(--ac-muted);
 }
 
-/* ── Barre de session (components/layout/SessionPlayersBar.jsx, spec_session_bar.md) ─ */
+/* ── Barre de session (features/table/SessionPlayersBar.jsx, spec_session_bar.md) ─ */
 /* ── Achtung : repris du slug : bandeau en négatif (ac-section-header), ac-card, Oswald
    (ac-label) et Special Elite (ac-font-title), rayons 3-5 px ; ✦ papiers d'identité WWII :
    avatars en photos à bord blanc, carte en laissez-passer (guilloché, champs libellés,
@@ -1454,7 +1454,7 @@ body::before {
 .vtt-session-bar-card-status::before { display: none; }
 .vtt-session-bar-card:not([data-online]):not([data-me]) .vtt-session-bar-card-status { color: #8b1a1a; }
 
-/* ── Modales génériques et journal (components/ui/Modal.jsx, spec_ui_modales.md §11) ─ */
+/* ── Modales génériques et journal (ui/modal/Modal.jsx, spec_ui_modales.md §11) ─ */
 /* ── Achtung : ✦ réquisition papier de la Seconde Guerre mondiale (retour MJ : la première
    version faisait jeu de stratégie des années 90). Document imprimé et tapé à la machine :
    papier ivoire et encre brune le jour, papier carbone et encre claire la nuit (2026-10-25),
@@ -1607,7 +1607,7 @@ button.vtt-list-item:hover { border-color: var(--ac-ink); background: rgba(var(-
 .vtt-journal-list-toggle { background: transparent; color: var(--ac-ink-soft); border-bottom-color: rgba(var(--ac-ink-rgb), .35); font-family: var(--ac-font-heading); letter-spacing: .1em; text-transform: uppercase; }
 .vtt-scroll { scrollbar-color: rgba(var(--ac-ink-rgb), .4) transparent; }
 
-/* ── Zone d'actions : boutons (components/ui/ActionZone.jsx, spec_ui_actions.md §6.2) ── */
+/* ── Zone d'actions : boutons (features/table/ActionZone.jsx, spec_ui_actions.md §6.2) ── */
 /* ✦ Tampon encreur : papier, contour à l'encre ; encre olive pleine quand ça joue */
 .vtt-action-btn {
     border-radius: 2px; border: 1.5px solid var(--ac-ink); background: var(--ac-paper); color: var(--ac-ink);
@@ -1619,7 +1619,7 @@ button.vtt-list-item:hover { border-color: var(--ac-ink); background: rgba(var(-
 /* Bouton principal du panneau (lecture / pause) : tampon */
 .vtt-audio-icon-btn.is-main { border-radius: 2px; }
 
-/* ── Fenêtres flottantes (components/ui/FloatingPanel.jsx, spec_ui_panneaux.md) ── */
+/* ── Fenêtres flottantes (ui/panel/FloatingPanel.jsx, spec_ui_panneaux.md) ── */
 /* Sans le pli horizontal du papier : à mi-hauteur d'une fenêtre réduite, il barrait le titre */
 .vtt-floating-panel.vtt-modal-panel {
     background:

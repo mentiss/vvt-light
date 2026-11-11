@@ -17,7 +17,7 @@ import React, { useEffect, useState } from "react";
 import { gainSaga, getTraitSagaBonus, withDerivedValues } from "./config/rules.js";
 import { CREATION_STEPS, EMPTY_GEAR, STEP, getCreationInventory, getCreationKit, getInvalidTraits } from "./config/creation.js";
 import { toRunes } from "./config/runes.js";
-import useSystem from "../../hooks/useSystem.js";
+import useSystem from "@/app/hooks/useSystem.js";
 import { useVkLook, useVkLookOnRoot } from "./hooks/useVkLook.js";
 import VkPanel from "./components/ui/VkPanel.jsx";
 import VkIcon from "./components/ui/VkIcon.jsx";

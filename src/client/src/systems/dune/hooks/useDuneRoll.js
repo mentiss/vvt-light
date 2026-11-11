@@ -7,11 +7,11 @@
 // dette connue du pattern 2D20 (src/client/CLAUDE.md), reprise telle quelle.
 
 import { useState, useCallback } from 'react';
-import { roll } from '../../../tools/diceEngine.js';
-import { useSocket }  from '../../../context/SocketContext.jsx';
-import { useSession } from '../../../context/SessionContext.jsx';
-import { useFetch }   from '../../../hooks/useFetch.js';
-import { useSystem }  from '../../../hooks/useSystem.js';
+import { roll } from '@/features/dice/tools/diceEngine.js';
+import { useSocket }  from '@/app/context/SocketContext.jsx';
+import { useSession } from '@/app/context/SessionContext.jsx';
+import { useFetch }   from '@/app/hooks/useFetch.js';
+import { useSystem }  from '@/app/hooks/useSystem.js';
 import duneConfig from '../config.jsx';
 import { impulsionCost, poolSize, impulsionGain } from '../config/rules/roll.js';
 import { traitLabel, characterFullName } from '../config/traits.js';

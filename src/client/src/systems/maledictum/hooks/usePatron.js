@@ -10,9 +10,9 @@
 // ─────────────────────────────────────────────────────────────────────────────
 
 import { useCallback, useEffect, useState } from 'react';
-import { useFetch } from '../../../hooks/useFetch.js';
-import { useSystem } from '../../../hooks/useSystem.js';
-import { useSocket } from '../../../context/SocketContext.jsx';
+import { useFetch } from '@/app/hooks/useFetch.js';
+import { useSystem } from '@/app/hooks/useSystem.js';
+import { useSocket } from '@/app/context/SocketContext.jsx';
 
 export const usePatron = (sessionId) => {
     const { apiBase } = useSystem();

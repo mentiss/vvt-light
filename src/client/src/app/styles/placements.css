@@ -1,0 +1,11 @@
+/* ── Placements imposés par la plateforme (hors couche) ─────────────────────
+   Hors couche et plus précis qu'une classe seule : un theme.css qui place sa classe générique
+   (ex. .vtt-menu en position absolue pour son menu hamburger) ne les déplace pas. Un slug qui
+   veut vraiment les changer reprend le même sélecteur. */
+.vtt-actions .vtt-audio-widget-panel,
+.vtt-actions .vtt-actions-list { position: static; inset: auto; margin: 0; }
+.vtt-actions .vtt-actions-list[hidden] { display: none; }
+.vtt-actions .vtt-action-item { display: flex; align-items: center; gap: 0.6rem; }
+/* Petits boutons à icône des PNJ (spec_pnj.md §6.7) : les thèmes donnent du padding à .vtt-btn,
+   l'icône disparaîtrait dans un bouton de 1,5 rem */
+.vtt-btn.vtt-npc-icon-btn { padding: 0; }

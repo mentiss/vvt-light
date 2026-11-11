@@ -236,7 +236,7 @@ npc: {
 ### 6.5 Briques client
 
 - Hooks : `useNpcs()` (bibliothèque) et `useSessionNpcs(sessionId)` (PNJ de la table), sur `fetchWithAuth`.
-- Composants (`components/npc/`) :
+- Composants (`features/npc/`) :
   - `NpcAvatar` : image, sinon icône colorée, sinon initiales ;
   - `NpcAvatarPicker` : image (`AvatarUploader`), icône (`IconPicker` du tableau) ou rien ;
   - `NpcLibrary` : liste, recherche, filtre par étiquette ;
@@ -352,7 +352,7 @@ Ensuite, presque partout, il reste des choix au moment de lancer (difficulté, d
 **Plateforme**
 - Tables `npcs` et `session_npcs` dans `base.sql` et les 13 schémas de slug ; migration `10112026_npcs.sql` (`-- systems: all`). Test de conformité des schémas étendu aux deux tables.
 - Route `/api/:slug/npcs` (`routes/npcs.js`, contrôleur `utils/npcs.js`), réservée au MJ ; tests `tests/server/routes/npcs.test.js`.
-- Client : hook `useNpcs`, briques `components/npc/` (`NpcAvatar`, `NpcAvatarPicker`, `NpcLibrary`, `NpcForm`, `NpcSheet`, `NpcCard`, `NpcSystem`, `NpcPresets` / `NpcPresetEditor`), onglet assemblé `TabNpcs` ; CSS `vtt-npc-*` dans `index.css` (le padding des petits boutons à icône hors couche, sinon les thèmes l'écrasent).
+- Client : hook `useNpcs`, briques `features/npc/` (`NpcAvatar`, `NpcAvatarPicker`, `NpcLibrary`, `NpcForm`, `NpcSheet`, `NpcCard`, `NpcSystem`, `NpcPresets` / `NpcPresetEditor`), onglet assemblé `TabNpcs` ; CSS `vtt-npc-*` dans `app/styles/index.css` (le padding des petits boutons à icône hors couche, sinon les thèmes l'écrasent).
 - Tableau (P-21) : jeton `{ npcId, label, color }`, route `GET /board/sessions/:sid/npcs` (nom, avatar, icône ; jamais la fiche), « Jeton de PNJ… » propose d'abord les PNJ de la table ; `IconPicker` reçoit un titre facultatif.
 
 **Dune**
@@ -517,7 +517,7 @@ Chaque sous-lot se vérifie à l'écran et se relit seul ; un commit à la fin d
 ### 10.6 bis Implémentation des sous-lots 4a à 4c (2026-11-10)
 
 **Plateforme**
-- Brique `components/npc/NpcItemList.jsx` : liste éditable des formulaires de slug (texte, nombre, pastilles, texte long, suggestions). Dune, Nimble et Maledictum gardent leur copie : bascule à proposer à part.
+- Brique `features/npc/NpcItemList.jsx` : liste éditable des formulaires de slug (texte, nombre, pastilles, texte long, suggestions). Dune, Nimble et Maledictum gardent leur copie : bascule à proposer à part.
 - `NpcSystem` : `pick.extra(npc, state)` et `pick.resolve(npc, sel, name, state)` reçoivent l'état du PNJ à la table (malus de blessure de VDA) ; Dune inchangé.
 
 **Vikings** : `config/npc.js` (jets, hors de combat), `components/npc/VkNpcSheet.jsx` et `VkNpcForm.jsx`, onglet PNJ ; `GMDiceModal` : props `name`, `label`, `initial`, `secret`. Pas de versement.

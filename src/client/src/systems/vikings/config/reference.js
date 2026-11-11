@@ -22,7 +22,7 @@
 // règles, création et traits sont dans les autres sections.
 // ─────────────────────────────────────────────────────────────────────────────
 
-import { markdownToSections } from '../../../tools/reference.js';
+import { markdownToSections } from '@/features/reference/tools/reference.js';
 
 const MARKDOWN = import.meta.glob('./reference/*.md', { query: '?raw', import: 'default', eager: true });
 

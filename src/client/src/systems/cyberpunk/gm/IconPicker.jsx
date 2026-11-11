@@ -10,7 +10,7 @@
 // ─────────────────────────────────────────────────────────────────────────────
 
 import React, { useRef, useState } from 'react';
-import AlertModal from "../../../components/modals/AlertModal.jsx";
+import AlertModal from "@/ui/modal/AlertModal.jsx";
 import CpIcon from '../components/ui/CpIcon.jsx';
 
 const DEFAULT_THREAT_PRESETS = ['threat', 'corp', 'gang', 'ai', 'person', 'place', 'skull', 'eye', 'gun', 'dna', 'bomb', 'fire', 'bolt', 'drop', 'city', 'mask'];

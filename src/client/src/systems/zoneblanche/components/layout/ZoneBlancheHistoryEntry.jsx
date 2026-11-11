@@ -10,7 +10,7 @@
 // Rendu identique dans l'historique et dans la notification (pas de mode resserré).
 
 import React from 'react';
-import { parseFreeRoll } from '../../../../tools/freeRoll.js';
+import { parseFreeRoll } from '@/features/dice/tools/freeRoll.js';
 
 const parseResult = (entry) => {
     const raw = entry?.roll_result ?? entry?.details ?? null;
@@ -27,7 +27,7 @@ const ZoneBlancheHistoryEntry = ({ entry }) => {
 
     const rollType = entry?.roll_type ?? '';
 
-    // ── Jet libre (FreeDiceModal) — rendu dans le style ZB, lu par tools/freeRoll.js
+    // ── Jet libre (FreeDiceModal) — rendu dans le style ZB, lu par features/dice/tools/freeRoll.js
     const free = parseFreeRoll(entry);
     if (free) {
         const allValues = free.groups.flatMap(g => g.values);

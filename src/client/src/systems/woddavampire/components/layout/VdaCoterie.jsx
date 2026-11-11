@@ -17,7 +17,7 @@
 // ─────────────────────────────────────────────────────────────────────────────
 
 import React, { useState } from 'react';
-import AvatarUploader from '../../../../components/AvatarUploader.jsx';
+import AvatarUploader from '@/ui/image/AvatarUploader.jsx';
 import {
     POOL_MAX, backgroundLabel, poolCap, isOverAnchor, shownPools, stakeOf, isMember, memberStakes, isAtTable,
 } from '../../config/rules/coterie.js';

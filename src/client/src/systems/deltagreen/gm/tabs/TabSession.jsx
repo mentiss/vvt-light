@@ -6,8 +6,8 @@
 // ─────────────────────────────────────────────────────────────────────────────
 
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { useSystem }   from '../../../../hooks/useSystem.js';
-import { useFetch }    from '../../../../hooks/useFetch.js';
+import { useSystem }   from '@/app/hooks/useSystem.js';
+import { useFetch }    from '@/app/hooks/useFetch.js';
 import { GM_TAGS }     from '../../config.jsx';
 import '../../theme.css';
 
@@ -26,11 +26,11 @@ import MotivationsSection        from '../../components/layout/MotivationsSectio
 import SanLogSection             from '../../components/layout/SanLogSection.jsx';
 import PhysicalDescriptionSection from '../../components/layout/PhysicalDescriotionSection.jsx';
 import DiceModal                 from '../../components/modals/DiceModal.jsx';
-import GMSendModal               from '../../../../components/gm/modals/GMSendModal.jsx';
-import AudioSessionToggle        from '../../../../components/audio/AudioSessionToggle.jsx';
-import BoardSessionToggle        from '../../../../components/board/BoardSessionToggle.jsx';
-import CopyAccessButton          from '../../../../components/ui/CopyAccessButton.jsx';
-import TableManagementButton     from '../../../../components/gm/TableManagementButton.jsx';
+import GMSendModal               from '@/features/table/modals/GMSendModal.jsx';
+import AudioSessionToggle        from '@/features/audio/AudioSessionToggle.jsx';
+import BoardSessionToggle        from '@/features/board/BoardSessionToggle.jsx';
+import CopyAccessButton          from '@/features/table/CopyAccessButton.jsx';
+import TableManagementButton     from '@/features/table/TableManagementButton.jsx';
 
 // ── Constantes ────────────────────────────────────────────────────────────────
 

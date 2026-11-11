@@ -8,7 +8,7 @@
 // ─────────────────────────────────────────────────────────────────────────────
 
 import React from 'react';
-import NpcItemList from '../../../../components/npc/NpcItemList.jsx';
+import NpcItemList from '@/features/npc/NpcItemList.jsx';
 import { MONSTER_SIZES } from '../../config/bestiary.js';
 import { ARMOR_LABELS } from '../../config/rules/encounter.js';
 

@@ -156,7 +156,7 @@ Seulement ce qu'il faut pour que l'app actuelle continue de marcher avec le nouv
 | Fichier | Changement |
 |---|---|
 | `src/tools/data.js` | les 3 noms de compétences (§3.4), et la clé `requiresSkill` de *Virtuose de l'arc* |
-| `src/tools/utils.js` | `SPECIALIZABLE_SKILLS` et `getSkillExamples` aux nouveaux noms ; `formatFullName` lit `nom` au lieu de `nomParent` |
+| `src/app/tools/utils.js` | `SPECIALIZABLE_SKILLS` et `getSkillExamples` aux nouveaux noms ; `formatFullName` lit `nom` au lieu de `nomParent` |
 | `systems/vikings/components/modals/PostureModal.jsx` | liste des compétences de parade/esquive : `Combat CàC (armé)`, `Combat CàC (non armé)` (les entrées « Esquive » et « Parade », qui n'existent pas, disparaissent) |
 | `systems/vikings/Creation.jsx`, `Sheet.jsx` | champ `nomParent` → `nom` |
 
@@ -206,10 +206,10 @@ Aucun appel client ne change de verbe HTTP dans ce lot : le `PATCH` est exposé,
 |---|---|
 | `tools/data.js` (supprimé) | `competences.js` (CARACNAMES, COMPETENCES), `traits.js`, `runes.js`, `equipment.js` (ITEMS), `npcs.js` |
 | `tools/traitBonuses.js` | `traitBonuses.js` |
-| fonctions de jeu de `tools/utils.js` | `rules.js` (règles) et `utils.js` (affichage) |
+| fonctions de jeu de `app/tools/utils.js` | `rules.js` (règles) et `utils.js` (affichage) |
 | `components/gm/modals/GMSendItemModal.jsx` (utilisé par Vikings seul, V-2) | `systems/vikings/gm/modals/GMSendItemModal.jsx` |
 
-`config.jsx` réexporte données et règles ; les composants du slug importent directement `config/*.js` (évite les imports circulaires avec les modales importées par `config.jsx`). `tools/utils.js` ne garde que la gestion du thème. Anciens lanceurs de dés et sauvegarde locale de personnage, inutilisés, supprimés (V-4).
+`config.jsx` réexporte données et règles ; les composants du slug importent directement `config/*.js` (évite les imports circulaires avec les modales importées par `config.jsx`). `app/tools/utils.js` ne garde que la gestion du thème. Anciens lanceurs de dés et sauvegarde locale de personnage, inutilisés, supprimés (V-4).
 
 `CharacterListModal` (générique) : cas particulier Vikings **supprimé**, affichage « Prénom Nom » pour tous les slugs (V-3).
 

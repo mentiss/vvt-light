@@ -15,11 +15,11 @@
 // ─────────────────────────────────────────────────────────────────────────────
 
 import React, { useState } from 'react';
-import { roll, RollError } from '../../../../tools/diceEngine.js';
-import { useSystem }       from '../../../../hooks/useSystem.js';
-import { useFetch }        from '../../../../hooks/useFetch.js';
+import { roll, RollError } from '@/features/dice/tools/diceEngine.js';
+import { useSystem }       from '@/app/hooks/useSystem.js';
+import { useFetch }        from '@/app/hooks/useFetch.js';
 import deltgreenConfig     from '../../config.jsx';
-import Modal               from '../../../../components/ui/Modal.jsx';
+import Modal               from '@/ui/modal/Modal.jsx';
 
 // Borne le score effectif entre 1 et 99
 const clampScore = (score) => Math.min(99, Math.max(1, score));

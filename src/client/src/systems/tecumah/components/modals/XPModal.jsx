@@ -8,7 +8,7 @@ import {
     SKILLS, ATTRIBUTS, ATTRIBUT_LABELS, BACKGROUNDS_BY_ID,
     pipsToNotation, getCost,
 } from '../../config.jsx';
-import Modal from '../../../../components/ui/Modal.jsx';
+import Modal from '@/ui/modal/Modal.jsx';
 
 const TABS = [
     { id: 'skills',      label: 'Compétences' },

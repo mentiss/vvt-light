@@ -9,7 +9,7 @@
 // et dans la notification (pas de mode resserré).
 
 import React from 'react';
-import { parseFreeRoll } from '../../../../tools/freeRoll.js';
+import { parseFreeRoll } from '@/features/dice/tools/freeRoll.js';
 
 const parseResult = (entry) => {
     const raw = entry?.roll_result ?? null;
@@ -44,7 +44,7 @@ const Dice = ({ values, threshold, explosionThresholds }) => (
     </div>
 );
 
-// Jet libre (FreeDiceModal) : lu par tools/freeRoll.js (libellé, total, groupes par type)
+// Jet libre (FreeDiceModal) : lu par features/dice/tools/freeRoll.js (libellé, total, groupes par type)
 const FreeRollEntry = ({ free }) => (
     <div className="space-y-1.5">
         <div className="flex items-center justify-between gap-2">

@@ -1,6 +1,6 @@
 import { useState } from 'react';
-import { useFetch }        from '../../../../hooks/useFetch.js';
-import { useSystem }       from '../../../../hooks/useSystem.js';
+import { useFetch }        from '@/app/hooks/useFetch.js';
+import { useSystem }       from '@/app/hooks/useSystem.js';
 import {useGroupReserve} from "../../hooks/useGroupReserve.jsx";
 
 const REGLE_LABELS = {

@@ -5,7 +5,7 @@
 // d'aide contextuelle au survol ou au focus d'un élément.
 
 import React, { useState } from 'react';
-import CopyAccessButton from '../../../../components/ui/CopyAccessButton.jsx';
+import CopyAccessButton from '@/features/table/CopyAccessButton.jsx';
 import DuneIcon from '../ui/DuneIcon.jsx';
 import DuneWorm from '../ui/DuneWorm.jsx';
 import { DuneField, DuneFrame, DuneStepper } from '../ui/DuneFields.jsx';

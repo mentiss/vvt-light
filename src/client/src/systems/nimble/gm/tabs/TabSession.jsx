@@ -10,11 +10,11 @@
 // ─────────────────────────────────────────────────────────────────────────────
 
 import React, { useState } from 'react';
-import AudioSessionToggle from '../../../../components/audio/AudioSessionToggle.jsx';
-import BoardSessionToggle from '../../../../components/board/BoardSessionToggle.jsx';
-import CopyAccessButton from '../../../../components/ui/CopyAccessButton.jsx';
-import TableManagementButton from '../../../../components/gm/TableManagementButton.jsx';
-import ConfirmModal from '../../../../components/modals/ConfirmModal.jsx';
+import AudioSessionToggle from '@/features/audio/AudioSessionToggle.jsx';
+import BoardSessionToggle from '@/features/board/BoardSessionToggle.jsx';
+import CopyAccessButton from '@/features/table/CopyAccessButton.jsx';
+import TableManagementButton from '@/features/table/TableManagementButton.jsx';
+import ConfirmModal from '@/ui/modal/ConfirmModal.jsx';
 import NbGmTableRow from '../../components/layout/NbGmTableRow.jsx';
 import NbSheet from '../../components/layout/NbSheet.jsx';
 import NbEditForm from '../../components/layout/NbEditForm.jsx';

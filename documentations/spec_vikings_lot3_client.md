@@ -180,8 +180,8 @@ Renvoie `{ sagaActuelle, sagaTotale }` : `sagaActuelle = min(5, actuelle + n)`, 
 
 | Fichier | Modification |
 |---|---|
-| `hooks/usePlayerSession.js` | Retrait du listener `character-light-update` et du paramètre `onCharacterHasUpdated` (B-5). |
-| `pages/PlayerPage.jsx` | Retrait de `handleCharacterHasUpdated` (plus utilisé). |
+| `app/hooks/usePlayerSession.js` | Retrait du listener `character-light-update` et du paramètre `onCharacterHasUpdated` (B-5). |
+| `app/pages/PlayerPage.jsx` | Retrait de `handleCharacterHasUpdated` (plus utilisé). |
 
 Aucun autre fichier générique n'est modifié. `cyberpunk/Sheet.jsx` écoute aussi `character-light-update` en direct (listener mort) : signalé, non traité (§13).
 

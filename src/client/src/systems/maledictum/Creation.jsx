@@ -11,8 +11,8 @@
 
 import React, { useMemo, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useSystem } from '../../hooks/useSystem.js';
-import CopyAccessButton from '../../components/ui/CopyAccessButton.jsx';
+import { useSystem } from '@/app/hooks/useSystem.js';
+import CopyAccessButton from '@/features/table/CopyAccessButton.jsx';
 
 import { SKILLS } from './config/skills.js';
 import { INITIAL_CREATION, creationTodo, isCreationComplete, buildCharacterPayload, creationXp } from './config/rules/creation.js';

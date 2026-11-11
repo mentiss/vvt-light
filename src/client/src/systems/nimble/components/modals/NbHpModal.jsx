@@ -9,7 +9,7 @@
 // ─────────────────────────────────────────────────────────────────────────────
 
 import React, { useState } from 'react';
-import Modal from '../../../../components/ui/Modal.jsx';
+import Modal from '@/ui/modal/Modal.jsx';
 import { defenseOf, maxHp } from '../../config/rules/character.js';
 import { NbPill, NbToggle } from '../ui/NbUi.jsx';
 

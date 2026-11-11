@@ -61,7 +61,7 @@ Passage que seul le MJ voit, intertitre compris.
 
 ## 4. Contrat
 
-Composant `src/client/src/components/reference/ReferenceGuide.jsx` ; conversion dans `src/client/src/tools/reference.js` (fonctions pures, testées).
+Composant `src/client/src/features/reference/ReferenceGuide.jsx` ; conversion dans `src/client/src/features/reference/tools/reference.js` (fonctions pures, testées).
 
 | Prop | Type | Rôle |
 |---|---|---|
@@ -86,7 +86,7 @@ Tout bloc et toute section peuvent porter `visibility: 'gm' | 'player'` (masqué
 
 ## 5. Habillage
 
-Classes : `vtt-reference` (conteneur), `vtt-reference-nav`, `vtt-reference-nav-item`, `vtt-reference-search`, `vtt-reference-empty`, `vtt-reference-section`, `vtt-reference-section-head`, `vtt-reference-section-title`, `vtt-reference-badge`, `vtt-reference-body`, `vtt-reference-heading`, `vtt-reference-text`, `vtt-reference-list`, `vtt-reference-table`. Style par défaut dans `index.css` (tokens du thème), surchargeable par le slug.
+Classes : `vtt-reference` (conteneur), `vtt-reference-nav`, `vtt-reference-nav-item`, `vtt-reference-search`, `vtt-reference-empty`, `vtt-reference-section`, `vtt-reference-section-head`, `vtt-reference-section-title`, `vtt-reference-badge`, `vtt-reference-body`, `vtt-reference-heading`, `vtt-reference-text`, `vtt-reference-list`, `vtt-reference-table`. Style par défaut dans `features/reference/reference.css` (tokens du thème), surchargeable par le slug.
 
 ## 6. Reprise de Fabula
 

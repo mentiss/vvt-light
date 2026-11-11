@@ -8,7 +8,7 @@
 //     leurs dons, origines), construites ici : rien n'est recopié.
 // ─────────────────────────────────────────────────────────────────────────────
 
-import { markdownToSections } from '../../../tools/reference.js';
+import { markdownToSections } from '@/features/reference/tools/reference.js';
 import { HERITAGES, HERITAGE_ORDER } from './heritages.js';
 import { ORIGINS, ORIGIN_ORDER } from './origins.js';
 

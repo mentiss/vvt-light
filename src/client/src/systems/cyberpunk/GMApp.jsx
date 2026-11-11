@@ -9,18 +9,18 @@
 // ─────────────────────────────────────────────────────────────────────────────
 
 import React, { useState } from 'react';
-import { useFetch }   from '../../hooks/useFetch.js';
-import { useSystem }  from '../../hooks/useSystem.js';
+import { useFetch }   from '@/app/hooks/useFetch.js';
+import { useSystem }  from '@/app/hooks/useSystem.js';
 
-import ToastNotifications   from '../../components/layout/ToastNotifications.jsx';
-import DiceHistoryPanel     from '../../components/layout/DiceHistoryPanel.jsx';
-import ThemeToggle          from '../../components/ui/ThemeToggle.jsx';
-import TabJournal           from '../../components/gm/tabs/TabJournal.jsx';
-import Board                from '../../components/board/Board.jsx';
-import { HamburgerMenu } from '../../components/ui/HamburgerMenu.jsx';
+import ToastNotifications   from '@/features/table/ToastNotifications.jsx';
+import DiceHistoryPanel     from '@/features/dice/history/DiceHistoryPanel.jsx';
+import ThemeToggle          from '@/app/components/ThemeToggle.jsx';
+import TabJournal           from '@/features/journal/TabJournal.jsx';
+import Board                from '@/features/board/Board.jsx';
+import { HamburgerMenu } from '@/ui/menu/HamburgerMenu.jsx';
 import {
     HamburgerMenuItemTableManagement, HamburgerMenuItemFreeDice, HamburgerMenuItemDiceConfig, HamburgerMenuItemLogout,
-} from '../../components/ui/HamburgerMenuItems.jsx';
+} from '@/features/table/HamburgerMenuItems.jsx';
 
 import { STAT_LABELS } from './config.jsx';
 import TabSession from "./gm/tabs/TabSession.jsx";
@@ -30,7 +30,7 @@ import { useTableWeather, WEATHERS } from "./hooks/useTableWeather.js";
 import CpClock from "./components/ui/CpClock.jsx";
 import TabMoves from "./gm/tabs/TabMoves.jsx";
 import DiceEntryHistory from "./components/layout/DiceEntryHistory.jsx";
-import DiceHistoryPage from "../../components/layout/DiceHistoryPage.jsx";
+import DiceHistoryPage from "@/features/dice/history/DiceHistoryPage.jsx";
 import BoltFarm from "./components/ui/BoltFarm.jsx";
 import ReferenceTab from "./components/ReferenceTab.jsx";
 import CpWorld, { CpAnimationsMenuItem } from "./components/ui/CpWorld.jsx";

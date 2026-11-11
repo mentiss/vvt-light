@@ -4,9 +4,9 @@
 // Historique en mémoire locale (remis à zéro à la déconnexion).
 
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import useSystem from "../../../../../hooks/useSystem.js";
-import {useFetch} from "../../../../../hooks/useFetch.js";
-import {useSocket} from "../../../../../context/SocketContext.jsx";
+import useSystem from "@/app/hooks/useSystem.js";
+import {useFetch} from "@/app/hooks/useFetch.js";
+import {useSocket} from "@/app/context/SocketContext.jsx";
 
 const TabResource = ({ activeSession }) => {
     const { apiBase }   = useSystem();

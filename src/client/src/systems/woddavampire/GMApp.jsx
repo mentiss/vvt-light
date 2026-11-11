@@ -5,7 +5,7 @@
 //     (onglets Session / Coterie / Journal / Historique / Aide de jeu ; actions de table : Donner de l'XP,
 //     Réveil, Fin d'histoire, ciblables ; jet du Conteur en d10).
 //   - Session : la table et la fiche MJ (gm/tabs/TabSession.jsx).
-//   - PNJ : onglet de la plateforme (components/npc/TabNpcs.jsx), partie système components/npc/ (spec_pnj.md §10.3).
+//   - PNJ : onglet de la plateforme (features/npc/TabNpcs.jsx), partie système components/npc/ (spec_pnj.md §10.3).
 //   - Journal (TabJournal), Historique (DiceHistoryPage), panneau d'historique
 //     (DiceHistoryPanel, zone d'actions) : briques de la plateforme.
 // Contenu directement ici, sans GMView.
@@ -15,17 +15,17 @@
 // ─────────────────────────────────────────────────────────────────────────────
 
 import React, { useRef, useState } from 'react';
-import ToastNotifications from '../../components/layout/ToastNotifications.jsx';
-import DiceHistoryPage    from '../../components/layout/DiceHistoryPage.jsx';
-import DiceHistoryPanel   from '../../components/layout/DiceHistoryPanel.jsx';
-import TabJournal         from '../../components/gm/tabs/TabJournal.jsx';
-import Board              from '../../components/board/Board.jsx';
-import { useHashTab }     from '../../hooks/useHashTab.js';
-import ReferenceGuide     from '../../components/reference/ReferenceGuide.jsx';
-import { HamburgerMenuSeparator } from '../../components/ui/HamburgerMenu.jsx';
+import ToastNotifications from '@/features/table/ToastNotifications.jsx';
+import DiceHistoryPage    from '@/features/dice/history/DiceHistoryPage.jsx';
+import DiceHistoryPanel   from '@/features/dice/history/DiceHistoryPanel.jsx';
+import TabJournal         from '@/features/journal/TabJournal.jsx';
+import Board              from '@/features/board/Board.jsx';
+import { useHashTab }     from '@/ui/hooks/useHashTab.js';
+import ReferenceGuide     from '@/features/reference/ReferenceGuide.jsx';
+import { HamburgerMenuSeparator } from '@/ui/menu/HamburgerMenu.jsx';
 import {
     HamburgerMenuItemTableManagement, HamburgerMenuItemDiceConfig, HamburgerMenuItemLogout,
-} from '../../components/ui/HamburgerMenuItems.jsx';
+} from '@/features/table/HamburgerMenuItems.jsx';
 
 import { wakeUp, endOfStory } from './config/rules/sheetRules.js';
 import { MENU_ICON, D10Icon } from './components/ui/VdaUi.jsx';
@@ -34,7 +34,7 @@ import { useTableCharacters } from './hooks/useTableCharacters.js';
 import TabSession from './gm/tabs/TabSession.jsx';
 import VdaTableActionModal from './components/modals/VdaTableActionModal.jsx';
 import VdaGmDiceModal from './components/modals/VdaGmDiceModal.jsx';
-import TabNpcs from '../../components/npc/TabNpcs.jsx';
+import TabNpcs from '@/features/npc/TabNpcs.jsx';
 import woddavampireConfig from './config.jsx';
 import { REFERENCE_SECTIONS } from './config/reference.js';
 import { useBoxSize } from './hooks/useBoxSize.js';

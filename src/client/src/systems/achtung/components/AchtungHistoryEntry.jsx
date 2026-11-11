@@ -1,7 +1,7 @@
 // src/client/src/systems/achtung/components/AchtungHistoryEntry.jsx
 import React from 'react';
 import { SALVO_LABELS } from '../config.jsx';
-import { parseFreeRoll } from '../../../tools/freeRoll.js';
+import { parseFreeRoll } from '@/features/dice/tools/freeRoll.js';
 
 const LABEL_STYLE = {
     fontFamily: 'var(--ac-font-heading)',

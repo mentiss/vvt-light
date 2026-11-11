@@ -11,7 +11,7 @@
 //     des livres disponibles.
 // ─────────────────────────────────────────────────────────────────────────────
 
-import { markdownToSections } from '../../../tools/reference.js';
+import { markdownToSections } from '@/features/reference/tools/reference.js';
 import { ORIGINS, INQUISITION_ORIGINS } from './origins.js';
 import { FACTIONS } from './factions.js';
 import { ROLES } from './roles.js';

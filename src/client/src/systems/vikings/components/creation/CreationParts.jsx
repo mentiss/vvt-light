@@ -15,7 +15,7 @@ import { getSuccessThreshold, getExplosionThreshold, getSuccessChance } from '..
 import { formatExplosion } from '../../config/utils.js';
 import { CREATION_STEPS } from '../../config/creation.js';
 import { useVkLook } from '../../hooks/useVkLook.js';
-import { inlineSegments } from '../../../../tools/reference.js';
+import { inlineSegments } from '@/features/reference/tools/reference.js';
 import VkIcon from '../ui/VkIcon.jsx';
 
 const BASE_POOL = 3;
@@ -73,7 +73,7 @@ export const TradeAdvice = ({ paragraphs, children }) => (
     </div>
 );
 
-/** Texte du guide avec **gras** et *italique* (tools/reference.js) */
+/** Texte du guide avec **gras** et *italique* (features/reference/tools/reference.js) */
 export const RichText = ({ text }) => inlineSegments(text).map((s, i) => (
     s.bold ? <strong key={i}>{s.text}</strong> : s.italic ? <em key={i}>{s.text}</em> : <React.Fragment key={i}>{s.text}</React.Fragment>
 ));

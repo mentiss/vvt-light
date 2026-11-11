@@ -9,7 +9,7 @@
 // ─────────────────────────────────────────────────────────────────────────────
 
 import React, { useRef, useState } from 'react';
-import useConfirm from '../../../../hooks/useConfirm.jsx';
+import useConfirm from '@/ui/hooks/useConfirm.jsx';
 import CpClock from '../../components/ui/CpClock.jsx';
 import CpIcon from '../../components/ui/CpIcon.jsx';
 import { IconPreview } from '../IconPicker.jsx';

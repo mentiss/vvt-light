@@ -12,7 +12,7 @@
 // ─────────────────────────────────────────────────────────────────────────────
 
 import React from 'react';
-import { RollError }        from '../../tools/diceEngine.js';
+import { RollError }        from '@/features/dice/tools/diceEngine.js';
 import TecumahHistoryEntry  from './components/TecumahHistoryEntry.jsx';
 
 export { getCost } from './xpCosts.js';

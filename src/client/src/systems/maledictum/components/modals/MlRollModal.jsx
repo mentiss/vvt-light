@@ -11,7 +11,7 @@
 // ─────────────────────────────────────────────────────────────────────────────
 
 import React, { useMemo, useState } from 'react';
-import Modal from '../../../../components/ui/Modal.jsx';
+import Modal from '@/ui/modal/Modal.jsx';
 import { DIFFICULTIES } from '../../config/tables.js';
 import { charBonus, displayName, derived } from '../../config/rules/character.js';
 import { applySlBonus, slBand, formatSl, signed, edgeTargetBonus, overWarpThreshold } from '../../config/rules/dice.js';

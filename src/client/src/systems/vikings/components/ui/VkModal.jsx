@@ -1,6 +1,6 @@
 // src/client/src/systems/vikings/components/ui/VkModal.jsx
 // ─────────────────────────────────────────────────────────────────────────────
-// Fenêtre du slug : la fenêtre générique de la plateforme (components/ui/Modal.jsx,
+// Fenêtre du slug : la fenêtre générique de la plateforme (ui/modal/Modal.jsx,
 // spec_ui_modales.md), rendue hors de la page par HostedModal (ModalHost.jsx) pour
 // ne jamais rester prise dans la carte qui l'ouvre (retour MJ du 2026-11-07).
 // Habillage : .vtt-modal-* dans theme.css (bois et or) et theme-pierre.css.
@@ -8,8 +8,8 @@
 // ─────────────────────────────────────────────────────────────────────────────
 
 import React from 'react';
-import Modal from '../../../../components/ui/Modal.jsx';
-import { HostedModal } from '../../../../components/ui/ModalHost.jsx';
+import Modal from '@/ui/modal/Modal.jsx';
+import { HostedModal } from '@/ui/modal/ModalHost.jsx';
 import VkIcon from './VkIcon.jsx';
 
 // Anciennes largeurs → tailles de la fenêtre générique

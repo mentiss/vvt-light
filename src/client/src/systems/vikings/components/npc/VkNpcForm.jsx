@@ -7,7 +7,7 @@
 // ─────────────────────────────────────────────────────────────────────────────
 
 import React from 'react';
-import NpcItemList from '../../../../components/npc/NpcItemList.jsx';
+import NpcItemList from '@/features/npc/NpcItemList.jsx';
 import VkIcon from '../ui/VkIcon.jsx';
 import { CARACNAMES, COMPETENCES } from '../../config/competences.js';
 import { CARAC_KEYS } from '../../config/npc.js';

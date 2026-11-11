@@ -6,11 +6,11 @@
 // ⚠️ Module ES — importé uniquement par le frontend React.
 // ─────────────────────────────────────────────────────────────────────────────
 
-import { RollError } from '../../tools/diceEngine.js';
+import { RollError } from '@/features/dice/tools/diceEngine.js';
 import MlHistoryEntry from './components/layout/MlHistoryEntry.jsx';
 import { resolveTest, resolveAttack, resolvePower, applySlBonus, slBand, charsFromDice } from './config/rules/dice.js';
 import { CHAR_KEYS, derived } from './config/rules/character.js';
-import { woundFromRatio } from '../../tools/initiative.js';
+import { woundFromRatio } from '@/features/initiative/tools/initiative.js';
 import { lookupTable } from './config/rules/tables.js';
 import { SETUP, available } from './config/setup.js';
 import { BESTIARY } from './config/bestiary.js';

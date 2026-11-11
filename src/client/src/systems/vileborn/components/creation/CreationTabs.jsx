@@ -7,7 +7,7 @@
 // ─────────────────────────────────────────────────────────────────────────────
 
 import React, { useState } from 'react';
-import AvatarUploader from '../../../../components/AvatarUploader.jsx';
+import AvatarUploader from '@/ui/image/AvatarUploader.jsx';
 import {
     HERITAGES, HERITAGE_ORDER, ORIGINS, ORIGIN_ORDER, RESOURCES, APPROACHES,
     PERSONALITY_SUGGESTIONS, TRAINING_SUGGESTIONS, GUIDE,

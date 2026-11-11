@@ -1,0 +1,164 @@
+// src/client/src/app/hooks/useGMSession.js
+// Hook générique qui gère toute la couche socket/session côté GM.
+// Extrait de GMView.jsx Vikings — aucune logique système dedans.
+//
+// Responsabilités :
+//   - Charger la session active mémorisée dans le navigateur au boot (vtt:<slug>:gm)
+//   - Émettre gm-set-active-session + join/leave session quand activeSession change
+//   - Écouter online-characters-update
+//   - Écouter character-full-update / character-update et les exposer via
+//     characterUpdates (nouveau — corrige un bug de référence circulaire qui
+//     empêchait toute remontée temps réel côté GM, cf. onCharacterUpdate
+//     s'appelant lui-même faute de callback externe branché)
+//   - Exposer activeSession + setActiveSession pour que GMView puisse en changer
+//
+// characterUpdates est un ajout PUREMENT ADDITIF : les slugs qui ne le
+// consomment pas ne sont pas affectés, ils reçoivent juste un prop inutilisé.
+
+import { useEffect, useState, useCallback } from 'react';
+import { useSocket } from '../context/SocketContext.jsx';
+import { useFetch } from './useFetch.js';
+import { readStored, removeStored, storageKey, writeStored } from '../tools/browserStorage.js';
+
+/**
+ * @param {string} apiBase - ex: '/api/vikings'
+ * @returns {{
+ *   activeSession: object|null,
+ *   setActiveSession: function,
+ *   onlineCharacters: array,
+ *   characterUpdates: object,  // { [characterId]: { type: 'full'|'partial', data, ts } }
+ * }}
+ */
+export function useGMSession({ apiBase }) {
+    const socket = useSocket();
+    const fetchWithAuth = useFetch();
+
+    const [activeSession,    setActiveSessionState] = useState(null);
+    const [onlineCharacters, setOnlineCharacters]   = useState([]);
+    const [characterUpdates, setCharacterUpdates]   = useState({});
+
+    const slug = apiBase.replace(/^\/api\//, '').replace(/\/$/, '');
+    // Table active du MJ, mémorisée dans ce navigateur : vtt:<slug>:gm (spec_browser_storage.md §6)
+    const gmKey = storageKey(slug, 'gm');
+
+    // ── Chargement initial depuis le navigateur ─────────────────────────────
+    useEffect(() => {
+        const savedId = readStored(gmKey)?.activeSessionId;
+        if (!savedId) return;
+
+        fetchWithAuth(`${apiBase}/sessions/${savedId}`)
+            .then(r => r.ok ? r.json() : null)
+            .then(session => { if (session) setActiveSessionState(session); })
+            .catch(err => {
+                console.error('[useGMSession] Error loading saved session:', err);
+                removeStored(gmKey);
+            });
+    }, [apiBase]);
+
+    // ── Présence en ligne ───────────────────────────────────────────────────
+    useEffect(() => {
+        if (!socket) return;
+
+        // Présences de ce slug uniquement : un même id peut exister dans un autre slug
+        const ofThisSlug = (chars) => setOnlineCharacters((chars ?? []).filter(c => c.slug === slug));
+
+        // Charger l'état initial
+        fetch('/api/online-characters')
+            .then(r => r.json())
+            .then(ofThisSlug)
+            .catch(console.error);
+
+        const handleOnlineUpdate = ofThisSlug;
+        socket.on('online-characters-update', handleOnlineUpdate);
+
+        return () => socket.off('online-characters-update', handleOnlineUpdate);
+    }, [socket, slug]);
+
+    // ── Mises à jour personnage temps réel (corrigé) ─────────────────────────
+    useEffect(() => {
+        if (!socket) return;
+
+        const onFullUpdate = ({ characterId, character }) => {
+            setCharacterUpdates(prev => ({
+                ...prev,
+                [characterId]: { type: 'full', data: character, ts: Date.now() },
+            }));
+        };
+        const onPartialUpdate = ({ characterId, updates }) => {
+            setCharacterUpdates(prev => ({
+                ...prev,
+                [characterId]: { type: 'partial', data: updates, ts: Date.now() },
+            }));
+        };
+
+        socket.on('character-full-update', onFullUpdate);
+        socket.on('character-update',      onPartialUpdate);
+        return () => {
+            socket.off('character-full-update', onFullUpdate);
+            socket.off('character-update',      onPartialUpdate);
+        };
+    }, [socket]);
+
+    // ── Composition de la table active (ajout / retrait d'un personnage) ─────
+    useEffect(() => {
+        if (!socket) return;
+
+        const onComposition = ({ system, sessionId, session }) => {
+            if (system !== slug) return;
+            setActiveSessionState(prev => (prev && prev.id === sessionId ? session : prev));
+        };
+
+        socket.on('session-characters-update', onComposition);
+        return () => socket.off('session-characters-update', onComposition);
+    }, [socket, slug]);
+
+    // ── Broadcast session active + join/leave room ──────────────────────────
+    useEffect(() => {
+        if (!socket) return;
+
+        const announce = () => {
+            socket.emit('gm-set-active-session', { sessionId: activeSession.id, system: slug });
+            socket.emit('join-session',           { sessionId: activeSession.id, system: slug });
+        };
+        if (activeSession) {
+            announce();
+            // Reconnexion (serveur relancé, réseau coupé) : le serveur a oublié la room et la
+            // session active ; on les reprend. Pas au premier « connect » : les envois ci-dessus
+            // sont déjà mis en attente par socket.io jusqu'à la connexion.
+            socket.io.on('reconnect', announce);
+        }
+
+        return () => {
+            socket.io.off('reconnect', announce);
+            if (activeSession) {
+                // Désactivation explicite à la sortie (changement ou démontage)
+                socket.emit('gm-clear-session', { sessionId: activeSession.id, system: slug });
+                socket.emit('leave-session',    { sessionId: activeSession.id, system: slug });
+            }
+        };
+    }, [socket, activeSession?.id]);
+
+    // ── setActiveSession, mémorisée dans le navigateur ──────────────────────
+    const setActiveSession = useCallback(async (session) => {
+        if (!session) {
+            setActiveSessionState(null);
+            removeStored(gmKey);
+            return;
+        }
+
+        // Si l'objet session vient de la liste, il n'a pas forcément `characters`.
+        // On force un fetch de l'endpoint détail pour garantir les données complètes.
+        try {
+            const r = await fetchWithAuth(`${apiBase}/sessions/${session.id}`);
+            const full = r.ok ? await r.json() : session; // fallback sur l'objet partiel
+            setActiveSessionState(full);
+            writeStored(gmKey, { activeSessionId: full.id });
+        } catch {
+            // fallback silencieux
+            setActiveSessionState(session);
+            writeStored(gmKey, { activeSessionId: session.id });
+        }
+    }, [apiBase, fetchWithAuth]);
+
+    return { activeSession, setActiveSession, onlineCharacters, characterUpdates };
+}

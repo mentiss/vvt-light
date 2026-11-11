@@ -1,9 +1,9 @@
 import { useState, useEffect, useCallback } from 'react';
-import { useSocket }  from '../../../context/SocketContext.jsx';
-import { useSession } from '../../../context/SessionContext.jsx';
-import { useFetch }   from '../../../hooks/useFetch.js';
-import { useSystem }  from '../../../hooks/useSystem.js';
-import {useGMSession} from "../../../hooks/useGMSession.js";
+import { useSocket }  from '@/app/context/SocketContext.jsx';
+import { useSession } from '@/app/context/SessionContext.jsx';
+import { useFetch }   from '@/app/hooks/useFetch.js';
+import { useSystem }  from '@/app/hooks/useSystem.js';
+import {useGMSession} from "@/app/hooks/useGMSession.js";
 
 const DEFAULT = {
     current:     0,

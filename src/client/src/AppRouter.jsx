@@ -4,14 +4,14 @@
 
 import React, { useState } from 'react';
 import { createBrowserRouter, RouterProvider, Navigate } from 'react-router-dom';
-import { loadTheme, saveTheme } from './tools/utils';
-import SystemLayout from './pages/SystemLayout.jsx';
-import GMPage       from './pages/GMPage.jsx';
-import PlayerPage   from './pages/PlayerPage.jsx';
-import HomePage     from './pages/HomePage.jsx';
-import CreationPage from './pages/CreationPage.jsx';
-import GenMapPage   from './pages/GenMapPage.jsx';
-import { SlugNotFound, RouteErrorPage } from './components/platform/ErrorPage.jsx';
+import { loadTheme, saveTheme } from './app/tools/utils';
+import SystemLayout from './app/pages/SystemLayout.jsx';
+import GMPage       from './app/pages/GMPage.jsx';
+import PlayerPage   from './app/pages/PlayerPage.jsx';
+import HomePage     from './app/pages/HomePage.jsx';
+import CreationPage from './app/pages/CreationPage.jsx';
+import GenMapPage   from './app/pages/GenMapPage.jsx';
+import { SlugNotFound, RouteErrorPage } from './app/pages/ErrorPage.jsx';
 
 const AppRouter = () => {
     // Préférence de la plateforme (accueil), lue dès le premier rendu.

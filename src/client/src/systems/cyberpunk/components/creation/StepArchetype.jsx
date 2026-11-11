@@ -3,7 +3,7 @@
 // qui en dépend (manœuvres, chrome, matos) : confirmation demandée (spec §9.1).
 import React from 'react';
 import { PLAYBOOKS, playbookStatProfile } from '../../config.jsx';
-import { useSystem } from '../../../../hooks/useSystem.js';
+import { useSystem } from '@/app/hooks/useSystem.js';
 import { usePlaybookMoves } from '../../hooks/usePlaybookMoves.js';
 import { Card } from '../layout/Card.jsx';
 import { StepHead, PickCard, StatProfile } from './CreationParts.jsx';

@@ -5,9 +5,9 @@
 // du pattern 2D20 (src/client/CLAUDE.md), reprise telle quelle.
 
 import { useCallback, useEffect, useState } from 'react';
-import { useSocket } from '../../../context/SocketContext.jsx';
-import { useFetch }  from '../../../hooks/useFetch.js';
-import { useSystem } from '../../../hooks/useSystem.js';
+import { useSocket } from '@/app/context/SocketContext.jsx';
+import { useFetch }  from '@/app/hooks/useFetch.js';
+import { useSystem } from '@/app/hooks/useSystem.js';
 import { IMPULSION_MAX } from '../config/rules/roll.js';
 
 const EMPTY = { impulsions: 0, menace: 0, complications: 0 };

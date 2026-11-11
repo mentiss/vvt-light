@@ -10,7 +10,7 @@
 // ─────────────────────────────────────────────────────────────────────────────
 
 import React, { useState } from 'react';
-import Modal from '../../../../components/ui/Modal.jsx';
+import Modal from '@/ui/modal/Modal.jsx';
 import { SKILLS, STAT_BY_KEY } from '../../config/basics.js';
 import { SCHOOLS } from '../../config/spells.js';
 import { EPIC_BOONS } from '../../config/boons.js';

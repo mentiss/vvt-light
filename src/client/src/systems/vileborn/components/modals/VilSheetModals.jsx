@@ -12,8 +12,8 @@
 // ─────────────────────────────────────────────────────────────────────────────
 
 import React, { useState } from 'react';
-import Modal from '../../../../components/ui/Modal.jsx';
-import ConfirmModal from '../../../../components/modals/ConfirmModal.jsx';
+import Modal from '@/ui/modal/Modal.jsx';
+import ConfirmModal from '@/ui/modal/ConfirmModal.jsx';
 import { STATES } from '../../config/approaches.js';
 import { checkedStates, REVERIE_TEXT, URGE_TEXT } from '../../config/rules/character.js';
 import { VilPill } from '../ui/VilUi.jsx';

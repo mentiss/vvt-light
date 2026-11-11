@@ -4,7 +4,7 @@
 // ItemRow est un sous-composant interne — non exporté.
 
 import React, { useState } from 'react';
-import CatalogModal from '../../../components/modals/CatalogModal.jsx';
+import CatalogModal from '@/ui/catalog/CatalogModal.jsx';
 
 // ── Constantes ────────────────────────────────────────────────────────────────
 

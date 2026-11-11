@@ -23,7 +23,7 @@
 
 import React, { useState, useMemo } from 'react';
 import { EQUIPMENT_CATALOG, EQUIPMENT_CATEGORY_ORDER } from '../../config.jsx';
-import Modal from '../../../../components/ui/Modal.jsx';
+import Modal from '@/ui/modal/Modal.jsx';
 
 // Recherche insensible à la casse ET aux accents ("detecteur" trouve "Détecteur").
 const norm = (s) => (s ?? '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();

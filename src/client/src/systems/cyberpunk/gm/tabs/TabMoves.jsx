@@ -15,7 +15,7 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { Btn, Input, Textarea } from '../BasicComponents.jsx';
 import { PLAYBOOKS, STATS, STAT_LABELS } from '../../config.jsx';
-import useConfirm from '../../../../hooks/useConfirm.jsx';
+import useConfirm from '@/ui/hooks/useConfirm.jsx';
 
 // ── Constantes ────────────────────────────────────────────────────────────────
 

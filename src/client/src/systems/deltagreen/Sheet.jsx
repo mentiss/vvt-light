@@ -23,9 +23,9 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
 
-import { useSystem }  from '../../hooks/useSystem.js';
-import { useSession } from '../../context/SessionContext.jsx';
-import { useFetch } from '../../hooks/useFetch.js';
+import { useSystem }  from '@/app/hooks/useSystem.js';
+import { useSession } from '@/app/context/SessionContext.jsx';
+import { useFetch } from '@/app/hooks/useFetch.js';
 
 import './theme.css';
 import IdentitySection from "./components/layout/IdentitySection.jsx";
@@ -39,25 +39,25 @@ import InjuriesSection, {
     NotesSection,
     SpecialTrainingSection
 } from "./components/layout/Page2Sections.jsx";
-import JournalTab from "../../components/tabs/JournalTab.jsx";
-import AvatarUploader from "../../components/AvatarUploader.jsx";
-import { HamburgerMenu, HamburgerMenuItem, HamburgerMenuSeparator } from "../../components/ui/HamburgerMenu.jsx";
+import JournalTab from "@/features/journal/JournalTab.jsx";
+import AvatarUploader from "@/ui/image/AvatarUploader.jsx";
+import { HamburgerMenu, HamburgerMenuItem, HamburgerMenuSeparator } from "@/ui/menu/HamburgerMenu.jsx";
 import {
     HamburgerMenuItemAvatar, HamburgerMenuItemCreateCharacter, HamburgerMenuItemSwitchCharacter,
     HamburgerMenuItemGMInterface, HamburgerMenuItemAccessCode, HamburgerMenuItemDiceConfig,
     HamburgerMenuItemLogout,
-} from "../../components/ui/HamburgerMenuItems.jsx";
+} from "@/features/table/HamburgerMenuItems.jsx";
 import SanModal from "./components/modals/SanModal.jsx";
 import EvolveModal from "./components/modals/EvolveModal.jsx";
 import DiceModal from "./components/modals/DiceModal.jsx";
-import DiceHistoryPage from "../../components/layout/DiceHistoryPage.jsx";
-import ToastNotifications from "../../components/layout/ToastNotifications.jsx";
-import SessionPlayersBar from "../../components/layout/SessionPlayersBar.jsx";
+import DiceHistoryPage from "@/features/dice/history/DiceHistoryPage.jsx";
+import ToastNotifications from "@/features/table/ToastNotifications.jsx";
+import SessionPlayersBar from "@/features/table/SessionPlayersBar.jsx";
 import WeaponsSection from "./components/layout/WeaponsSection.jsx";
 import EquipmentSection from "./components/layout/EquipmentSection.jsx";
 import IdentityInlineSection from "./components/layout/IdentityInlineSection.jsx";
 import PhysicalDescriptionSection from "./components/layout/PhysicalDescriotionSection.jsx";
-import FreeDiceModal from "../../components/modals/FreeDiceModal.jsx";
+import FreeDiceModal from "@/features/dice/modals/FreeDiceModal.jsx";
 
 // ── Onglets ──────────────────────────────────────────────────────────────────
 

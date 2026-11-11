@@ -14,10 +14,10 @@
 
 import React, { useState, useCallback, useMemo } from 'react';
 import './theme.css';
-import { useSystem }   from '../../hooks/useSystem.js';
+import { useSystem }   from '@/app/hooks/useSystem.js';
 import { useNavigate } from 'react-router-dom';
-import ThemeToggle from '../../components/ui/ThemeToggle.jsx';
-import CopyAccessButton from '../../components/ui/CopyAccessButton.jsx';
+import ThemeToggle from '@/app/components/ThemeToggle.jsx';
+import CopyAccessButton from '@/features/table/CopyAccessButton.jsx';
 import {
     ATTRIBUTES, SKILLS, ATTR_LABEL, SKILL_LABEL,
     ARCHETYPE_DATA, BACKGROUND_DATA, CHARACTERISTIC_DATA,

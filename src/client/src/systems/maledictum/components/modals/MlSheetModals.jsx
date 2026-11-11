@@ -15,9 +15,9 @@
 // ─────────────────────────────────────────────────────────────────────────────
 
 import React, { useMemo, useState } from 'react';
-import Modal from '../../../../components/ui/Modal.jsx';
-import ConfirmModal from '../../../../components/modals/ConfirmModal.jsx';
-import CatalogModal from '../../../../components/modals/CatalogModal.jsx';
+import Modal from '@/ui/modal/Modal.jsx';
+import ConfirmModal from '@/ui/modal/ConfirmModal.jsx';
+import CatalogModal from '@/ui/catalog/CatalogModal.jsx';
 import { SKILLS } from '../../config/skills.js';
 import { TALENTS } from '../../config/talents.js';
 import { POWERS } from '../../config/powers.js';

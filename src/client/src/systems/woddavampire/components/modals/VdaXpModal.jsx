@@ -10,7 +10,7 @@
 // ─────────────────────────────────────────────────────────────────────────────
 
 import React, { useState } from 'react';
-import Modal from '../../../../components/ui/Modal.jsx';
+import Modal from '@/ui/modal/Modal.jsx';
 import {
     ATTRIBUTE_GROUPS, ABILITY_GROUPS, BACKGROUNDS, DISCIPLINES, DISCIPLINE_ORDER, PATHS, KRAINA,
     VIRTUE_LABELS, roadVirtues, availableRituals, CLANS,

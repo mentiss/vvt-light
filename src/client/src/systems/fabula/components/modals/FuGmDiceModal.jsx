@@ -10,10 +10,10 @@
 // ─────────────────────────────────────────────────────────────────────────────
 
 import React, { useState, useCallback } from 'react';
-import { roll } from '../../../../tools/diceEngine.js';
-import { useFetch }  from '../../../../hooks/useFetch.js';
-import { useSystem } from '../../../../hooks/useSystem.js';
-import Modal from '../../../../components/ui/Modal.jsx';
+import { roll } from '@/features/dice/tools/diceEngine.js';
+import { useFetch }  from '@/app/hooks/useFetch.js';
+import { useSystem } from '@/app/hooks/useSystem.js';
+import Modal from '@/ui/modal/Modal.jsx';
 import FuIcon from '../ui/FuIcon.jsx';
 import FuDie from '../ui/FuDie.jsx';
 import fabulaConfig, { TYPES_DEGATS } from '../../config.jsx';

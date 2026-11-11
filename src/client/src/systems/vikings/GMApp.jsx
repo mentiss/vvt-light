@@ -13,18 +13,18 @@
 
 import React, { useState, useEffect } from 'react';
 
-import ToastNotifications   from '../../components/layout/ToastNotifications.jsx';
-import DiceHistoryPage      from '../../components/layout/DiceHistoryPage.jsx';
-import TabJournal           from '../../components/gm/tabs/TabJournal.jsx';
-import ReferenceGuide       from '../../components/reference/ReferenceGuide.jsx';
-import Board                from '../../components/board/Board.jsx';
-import { HamburgerMenu, HamburgerMenuSeparator } from '../../components/ui/HamburgerMenu.jsx';
+import ToastNotifications   from '@/features/table/ToastNotifications.jsx';
+import DiceHistoryPage      from '@/features/dice/history/DiceHistoryPage.jsx';
+import TabJournal           from '@/features/journal/TabJournal.jsx';
+import ReferenceGuide       from '@/features/reference/ReferenceGuide.jsx';
+import Board                from '@/features/board/Board.jsx';
+import { HamburgerMenu, HamburgerMenuSeparator } from '@/ui/menu/HamburgerMenu.jsx';
 import {
     HamburgerMenuItemTableManagement, HamburgerMenuItemFreeDice, HamburgerMenuItemDiceConfig,
     HamburgerMenuItemHome, HamburgerMenuItemLogout,
-} from '../../components/ui/HamburgerMenuItems.jsx';
+} from '@/features/table/HamburgerMenuItems.jsx';
 
-import TabNpcs             from '../../components/npc/TabNpcs.jsx';
+import TabNpcs             from '@/features/npc/TabNpcs.jsx';
 import vikingsConfig       from './config.jsx';
 import TabSession          from './gm/tabs/TabSession.jsx';
 import GMDiceModal         from './gm/modals/GMDiceModal.jsx';

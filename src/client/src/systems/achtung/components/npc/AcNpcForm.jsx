@@ -7,7 +7,7 @@
 // ─────────────────────────────────────────────────────────────────────────────
 
 import React, { useState } from 'react';
-import NpcItemList from '../../../../components/npc/NpcItemList.jsx';
+import NpcItemList from '@/features/npc/NpcItemList.jsx';
 import { ATTRIBUTES, SKILLS } from '../../config/base.js';
 import { NPC_QUALITIES, NPC_RANKS, RANK_RULES, rankStress, skillLabel } from '../../config/npc.js';
 

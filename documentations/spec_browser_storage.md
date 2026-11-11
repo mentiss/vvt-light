@@ -27,7 +27,7 @@ Hors périmètre :
 | P-4 | Défauts trouvés | Corrigés au passage : suppression d'une mauvaise clé dans `TableManagementModal`, clé morte `currentCharacterId_<slug>` retirée. |
 | P-5 | Onglets | Synchronisation entre onglets du même navigateur. |
 | P-6 | Réinitialisation | Plus tard. |
-| N-1 | Nommage | `tools/browserStorage.js` (dit où c'est rangé : ce navigateur, pas le serveur, pas les autres appareils) et `hooks/usePersistedState.js` (dit l'usage : un `useState` qui survit au rechargement). Pas « preferences » : on y range aussi de l'état d'interface et de travail. |
+| N-1 | Nommage | `app/tools/browserStorage.js` (dit où c'est rangé : ce navigateur, pas le serveur, pas les autres appareils) et `app/hooks/usePersistedState.js` (dit l'usage : un `useState` qui survit au rechargement). Pas « preferences » : on y range aussi de l'état d'interface et de travail. |
 | N-2 | Portée réservée | **Aucun slug ne peut s'appeler `platform`** (ses clés se mêleraient à celles de la plateforme). Déjà vrai pour les dés, désormais écrit et contrôlé (§7). |
 
 ---
@@ -36,21 +36,21 @@ Hors périmètre :
 
 | Clé actuelle | Contenu | Où | Remarque |
 |---|---|---|---|
-| `vtt_theme_global` | Thème de l'accueil | `tools/utils.js` (`saveTheme`, `loadTheme`) | Sans protection d'erreur |
+| `vtt_theme_global` | Thème de l'accueil | `app/tools/utils.js` (`saveTheme`, `loadTheme`) | Sans protection d'erreur |
 | `vtt_theme_<slug>` | Thème d'un jeu | idem | idem |
-| `pureVikingsTheme` | Ancien thème Vikings | `tools/utils.js` (`loadTheme`) | Encore lu en secours |
-| `<slug>_vtt-dice_config` | Configuration des dés (`platform` pour l'accueil) | `hooks/useDiceConfig.js` (`diceStorageKey`, `readDiceConfig`, `writeDiceConfig`), `tools/diceEngine.js` (`roll`) | |
-| `<slug>_player_session_bar` | Mode de la barre de session (`panel`, `rail`, `hidden` ; anciennement `1` / `0`) | `components/layout/SessionPlayersBar.jsx` | Reprend déjà `1` / `0` |
-| `activeSessionId_<slug>` | Table active du MJ | `hooks/useGMSession.js` | Sans protection d'erreur |
-| `activeSessionId` | — | `components/gm/modals/TableManagementModal.jsx:86` | **Bug** : supprime une clé qui n'existe pas au lieu de `activeSessionId_<slug>` ; une table supprimée reste « active » au rechargement |
-| `currentCharacterId_<slug>` | Personnage connecté | `context/AuthContext.jsx` | **Clé morte** : écrite et effacée, jamais lue |
-| `vtt-audio-…` (6 clés) | Brique audio | `components/audio/`, `tools/audioVolume.js` | Jamais en prod : pas de reprise nécessaire |
+| `pureVikingsTheme` | Ancien thème Vikings | `app/tools/utils.js` (`loadTheme`) | Encore lu en secours |
+| `<slug>_vtt-dice_config` | Configuration des dés (`platform` pour l'accueil) | `features/dice/hooks/useDiceConfig.js` (`diceStorageKey`, `readDiceConfig`, `writeDiceConfig`), `features/dice/tools/diceEngine.js` (`roll`) | |
+| `<slug>_player_session_bar` | Mode de la barre de session (`panel`, `rail`, `hidden` ; anciennement `1` / `0`) | `features/table/SessionPlayersBar.jsx` | Reprend déjà `1` / `0` |
+| `activeSessionId_<slug>` | Table active du MJ | `app/hooks/useGMSession.js` | Sans protection d'erreur |
+| `activeSessionId` | — | `features/table/modals/TableManagementModal.jsx:86` | **Bug** : supprime une clé qui n'existe pas au lieu de `activeSessionId_<slug>` ; une table supprimée reste « active » au rechargement |
+| `currentCharacterId_<slug>` | Personnage connecté | `app/context/AuthContext.jsx` | **Clé morte** : écrite et effacée, jamais lue |
+| `vtt-audio-…` (6 clés) | Brique audio | `features/audio/`, `features/audio/tools/audioVolume.js` | Jamais en prod : pas de reprise nécessaire |
 
 Quatre conventions de nommage différentes, la moitié des accès sans protection (navigation privée, stockage plein).
 
 ---
 
-## 3. Module `tools/browserStorage.js`
+## 3. Module `app/tools/browserStorage.js`
 
 Logique pure, sans React, testée sous Vitest (le stockage est passé en paramètre dans les tests ; `window.localStorage` par défaut).
 
@@ -86,7 +86,7 @@ Options de `readStored` :
 
 ---
 
-## 4. Hook `hooks/usePersistedState.js`
+## 4. Hook `app/hooks/usePersistedState.js`
 
 ```js
 const [audio, setAudio] = usePersistedState('platform', 'audio', { defaults: AUDIO_DEFAULTS, version: 1 });
@@ -103,7 +103,7 @@ setAudio(prev => ({ ...prev, volumes: { ...prev.volumes, master: 80 } }));
 
 Sans reprise, joueurs et MJ perdraient leurs réglages actuels (thème, dés, barre de session, table active) à la mise à jour. La reprise est faite **une fois, au démarrage de l'application**, dans un seul fichier, plutôt qu'à la première lecture de chaque clé (conversion éparpillée, et clés d'un jeu non visité laissées en l'état) :
 
-- `tools/browserStorageMigration.js`, fonction pure (stockage en paramètre), appelée une fois dans `main.jsx` avant l'affichage ;
+- `app/tools/browserStorageMigration.js`, fonction pure (stockage en paramètre), appelée une fois dans `main.jsx` avant l'affichage ;
 - elle parcourt les clés présentes, reconnaît chaque ancien format **par la forme de la clé** (pas par la liste des slugs actifs : un jeu retiré depuis est repris aussi, sans gêne), le convertit, écrit la nouvelle clé, efface l'ancienne ;
 - **elle ne remplace jamais une nouvelle clé déjà présente** ; une ancienne valeur abîmée est ignorée (et effacée) sans erreur ;
 - sans rien à reprendre, elle ne fait rien : elle peut tourner à chaque démarrage.
@@ -142,7 +142,7 @@ Testée sous Vitest avec des navigateurs simulés : chaque ancien format, ancien
 
 `currentCharacterId_<slug>` n'est plus écrite ; l'ancienne valeur est effacée par la reprise (§5).
 
-`saveTheme` / `loadTheme` (`tools/utils.js`) restent comme façade, réécrits sur `browserStorage` ; `readStorage` / `writeStorage`, ajoutés au rangement de la brique audio, disparaissent au profit de `readStored` / `writeStored`.
+`saveTheme` / `loadTheme` (`app/tools/utils.js`) restent comme façade, réécrits sur `browserStorage` ; `readStorage` / `writeStorage`, ajoutés au rangement de la brique audio, disparaissent au profit de `readStored` / `writeStored`.
 
 ---
 
@@ -157,18 +157,18 @@ Testée sous Vitest avec des navigateurs simulés : chaque ancien format, ancien
 
 | Fichier | Changement |
 |---|---|
-| `src/client/src/tools/browserStorage.js` | Nouveau (§3) |
-| `src/client/src/hooks/usePersistedState.js` | Nouveau (§4) |
-| `src/client/src/tools/browserStorageMigration.js` | Nouveau (§5) |
+| `src/client/src/app/tools/browserStorage.js` | Nouveau (§3) |
+| `src/client/src/app/hooks/usePersistedState.js` | Nouveau (§4) |
+| `src/client/src/app/tools/browserStorageMigration.js` | Nouveau (§5) |
 | `src/client/src/main.jsx` | Appel de la reprise avant l'affichage |
 | `src/client/tests/tools/browserStorage.test.js` | Nouveau : clés, format, défauts, validation, version et conversion, stockage indisponible |
 | `src/client/tests/tools/browserStorageMigration.test.js` | Nouveau : cas du §5 |
-| `src/client/src/tools/utils.js` | `saveTheme` / `loadTheme` sur `browserStorage` ; retrait de `readStorage` / `writeStorage` |
-| `src/client/src/AppRouter.jsx`, `pages/SystemLayout.jsx` | Thème (si l'appel change) |
-| `src/client/src/hooks/useDiceConfig.js`, `tools/diceEngine.js` | Dés |
-| `src/client/src/components/layout/SessionPlayersBar.jsx` | Mode de la barre |
-| `src/client/src/hooks/useGMSession.js`, `components/gm/modals/TableManagementModal.jsx` | Table active, correction du bug |
-| `src/client/src/context/AuthContext.jsx` | Retrait de la clé morte |
+| `src/client/src/app/tools/utils.js` | `saveTheme` / `loadTheme` sur `browserStorage` ; retrait de `readStorage` / `writeStorage` |
+| `src/client/src/AppRouter.jsx`, `app/pages/SystemLayout.jsx` | Thème (si l'appel change) |
+| `src/client/src/features/dice/hooks/useDiceConfig.js`, `features/dice/tools/diceEngine.js` | Dés |
+| `src/client/src/features/table/SessionPlayersBar.jsx` | Mode de la barre |
+| `src/client/src/app/hooks/useGMSession.js`, `features/table/modals/TableManagementModal.jsx` | Table active, correction du bug |
+| `src/client/src/app/context/AuthContext.jsx` | Retrait de la clé morte |
 | `src/server/systems/Loader.js` | Refus du slug `platform` |
 | `CLAUDE.md`, `src/client/CLAUDE.md`, `/new-slug` | Règle : tout passe par `browserStorage` / `usePersistedState` ; clés `vtt:<portée>:<fonction>` ; slug `platform` interdit |
 

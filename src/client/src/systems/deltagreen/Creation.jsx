@@ -10,8 +10,8 @@
 
 import React, { useState, useCallback } from 'react';
 import { useNavigate }   from 'react-router-dom';
-import { useSystem }     from '../../hooks/useSystem.js';
-import CopyAccessButton  from '../../components/ui/CopyAccessButton.jsx';
+import { useSystem }     from '@/app/hooks/useSystem.js';
+import CopyAccessButton  from '@/features/table/CopyAccessButton.jsx';
 import { BASE_SKILLS, PROFESSIONS, SKILL_BY_KEY } from './config.jsx';
 import './theme.css';
 

@@ -4,7 +4,7 @@
 // personnalisé de la faiblesse, trois phrases d'historique. §4.1, §15.1.
 
 import React, { useState } from 'react';
-import AvatarUploader from '../../../../components/AvatarUploader.jsx';
+import AvatarUploader from '@/ui/image/AvatarUploader.jsx';
 import { ARCHETYPES } from '../../config.jsx';
 import { clanProfile } from '../../config/rules/character.js';
 import { VdaChip, VdaSectionTitle } from '../ui/VdaUi.jsx';

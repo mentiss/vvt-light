@@ -11,7 +11,7 @@
 // ─────────────────────────────────────────────────────────────────────────────
 
 import React, { useState } from 'react';
-import Modal from '../../../../components/ui/Modal.jsx';
+import Modal from '@/ui/modal/Modal.jsx';
 import { MONSTER_SIZES } from '../../config/bestiary.js';
 import { parseDice, signed } from '../../config/rules/formula.js';
 import { MAX_EDGE } from '../../config/rules/dice.js';

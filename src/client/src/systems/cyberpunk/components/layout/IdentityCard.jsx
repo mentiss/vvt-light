@@ -7,7 +7,7 @@
 
 import React from "react";
 import { Card } from "./Card.jsx";
-import ExpandableText from "../../../../components/ui/ExpandableText.jsx";
+import ExpandableText from "@/ui/text/ExpandableText.jsx";
 
 const Field = ({ label, children }) => (
     <label className="cp-field">

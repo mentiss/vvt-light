@@ -72,7 +72,7 @@ Commun à tous : recherche, filtres en pills, liste qui défile, état vide, ajo
 
 ## 4. Contrat du composant (pour le slug)
 
-Composant `CatalogModal` (`src/client/src/components/modals/CatalogModal.jsx`), filtrage dans `src/client/src/tools/catalog.js` (fonctions pures, testées dans `tests/tools/catalog.test.js`).
+Composant `CatalogModal` (`src/client/src/ui/catalog/CatalogModal.jsx`), filtrage dans `src/client/src/ui/tools/catalog.js` (fonctions pures, testées dans `tests/tools/catalog.test.js`).
 
 | Prop | Rôle |
 |---|---|
@@ -94,7 +94,7 @@ Composant `CatalogModal` (`src/client/src/components/modals/CatalogModal.jsx`), 
 | `layout` | Optionnel (D-19). Ordre des blocs du haut parmi `'tabs'`, `'search'`, `'filters'` (défaut `['tabs', 'search', 'filters']`). |
 | `tabsAs` | Optionnel (D-19). `'tabs'` (défaut) : onglets séparés ; `'pill'` : l'entrée libre devient la dernière pill de la première rangée de filtres. |
 
-Classes stables, style par défaut dans `index.css`, habillables par le `theme.css` de chaque slug : `vtt-catalog`, `vtt-catalog-tabs`, `vtt-catalog-controls` (zone recherche et filtres), `vtt-catalog-search`, `vtt-catalog-filters`, `vtt-catalog-list`, `vtt-catalog-list-header`, `vtt-catalog-group`, `vtt-catalog-item` (`is-added`), `vtt-catalog-item-body`, `vtt-catalog-add`, `vtt-catalog-empty`, `vtt-catalog-count`, `vtt-catalog-custom`.
+Classes stables, style par défaut dans `ui/catalog/catalog.css`, habillables par le `theme.css` de chaque slug : `vtt-catalog`, `vtt-catalog-tabs`, `vtt-catalog-controls` (zone recherche et filtres), `vtt-catalog-search`, `vtt-catalog-filters`, `vtt-catalog-list`, `vtt-catalog-list-header`, `vtt-catalog-group`, `vtt-catalog-item` (`is-added`), `vtt-catalog-item-body`, `vtt-catalog-add`, `vtt-catalog-empty`, `vtt-catalog-count`, `vtt-catalog-custom`.
 
 ---
 

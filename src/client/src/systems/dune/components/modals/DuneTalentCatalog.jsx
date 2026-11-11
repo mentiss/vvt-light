@@ -4,7 +4,7 @@
 // onAdd reçoit un talent au format de la fiche : { talentName, description }.
 
 import React from 'react';
-import CatalogModal from '../../../../components/modals/CatalogModal.jsx';
+import CatalogModal from '@/ui/catalog/CatalogModal.jsx';
 import { TALENTS, TALENT_RESTRICTIONS } from '../../config/talents.js';
 
 export const RESTRICTION_LABELS = Object.fromEntries(TALENT_RESTRICTIONS.map(r => [r.id, r.label]));

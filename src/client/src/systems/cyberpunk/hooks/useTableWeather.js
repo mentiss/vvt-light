@@ -7,9 +7,9 @@
 // ─────────────────────────────────────────────────────────────────────────────
 
 import { useCallback, useEffect, useState } from 'react';
-import { useSocket } from '../../../context/SocketContext.jsx';
-import { useFetch } from '../../../hooks/useFetch.js';
-import { useSystem } from '../../../hooks/useSystem.js';
+import { useSocket } from '@/app/context/SocketContext.jsx';
+import { useFetch } from '@/app/hooks/useFetch.js';
+import { useSystem } from '@/app/hooks/useSystem.js';
 
 export const WEATHERS = [
     { id: 'auto',  label: 'Auto'    },

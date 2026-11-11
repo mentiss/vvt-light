@@ -14,17 +14,17 @@
 
 import React, { useState } from 'react';
 
-import ToastNotifications from '../../components/layout/ToastNotifications.jsx';
-import DiceHistoryPage    from '../../components/layout/DiceHistoryPage.jsx';
-import DiceHistoryPanel   from '../../components/layout/DiceHistoryPanel.jsx';
-import TabJournal         from '../../components/gm/tabs/TabJournal.jsx';
-import Board              from '../../components/board/Board.jsx';
-import TabNpcs            from '../../components/npc/TabNpcs.jsx';
-import { HamburgerMenu, HamburgerMenuSeparator } from '../../components/ui/HamburgerMenu.jsx';
+import ToastNotifications from '@/features/table/ToastNotifications.jsx';
+import DiceHistoryPage    from '@/features/dice/history/DiceHistoryPage.jsx';
+import DiceHistoryPanel   from '@/features/dice/history/DiceHistoryPanel.jsx';
+import TabJournal         from '@/features/journal/TabJournal.jsx';
+import Board              from '@/features/board/Board.jsx';
+import TabNpcs            from '@/features/npc/TabNpcs.jsx';
+import { HamburgerMenu, HamburgerMenuSeparator } from '@/ui/menu/HamburgerMenu.jsx';
 import {
     HamburgerMenuItemTableManagement, HamburgerMenuItemDiceConfig, HamburgerMenuItemPlayerView,
     HamburgerMenuItemLogout,
-} from '../../components/ui/HamburgerMenuItems.jsx';
+} from '@/features/table/HamburgerMenuItems.jsx';
 
 import DuneBand from './components/ui/DuneBand.jsx';
 import DuneIcon from './components/ui/DuneIcon.jsx';

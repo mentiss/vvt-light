@@ -1,6 +1,6 @@
 // src/client/src/systems/achtung/components/TalentsList.jsx
 import React, { useState } from 'react';
-import ExpandableText from '../../../components/ui/ExpandableText.jsx';
+import ExpandableText from '@/ui/text/ExpandableText.jsx';
 import { TALENTS } from '../config.jsx';
 
 const EMPTY_TALENT = { name: '', keywords: '', effect: '' };

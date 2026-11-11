@@ -9,8 +9,8 @@
 // ─────────────────────────────────────────────────────────────────────────────
 
 import React, { useState } from 'react';
-import CatalogModal from '../../../../components/modals/CatalogModal.jsx';
-import Modal from '../../../../components/ui/Modal.jsx';
+import CatalogModal from '@/ui/catalog/CatalogModal.jsx';
+import Modal from '@/ui/modal/Modal.jsx';
 import { WEAPON_CATALOG } from '../../config.jsx';
 import WeaponFields, { weaponToDraft, draftToWeapon } from '../ui/WeaponFields.jsx';
 

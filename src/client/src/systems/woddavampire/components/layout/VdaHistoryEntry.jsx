@@ -13,7 +13,7 @@
 // ─────────────────────────────────────────────────────────────────────────────
 
 import React, { useMemo } from 'react';
-import { parseFreeRoll } from '../../../../tools/freeRoll.js';
+import { parseFreeRoll } from '@/features/dice/tools/freeRoll.js';
 import VdaBloodSoak, { SOAK_ORIGINS_NO_TOP } from './VdaBloodSoak.jsx';
 
 const FRESH_MS = 20000;   // une entrée plus ancienne s'affiche déjà sèche

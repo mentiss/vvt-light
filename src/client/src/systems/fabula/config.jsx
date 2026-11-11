@@ -8,12 +8,12 @@
 // ⚠️  Module ES — uniquement importé par le frontend React.
 // ─────────────────────────────────────────────────────────────────────────────
 
-import { RollError } from '../../tools/diceEngine.js';
+import { RollError } from '@/features/dice/tools/diceEngine.js';
 import FabulaHistoryEntry from './components/layout/FabulaHistoryEntry.jsx';
 import FuIcon from './components/ui/FuIcon.jsx';
 import { resolveFabulaTest } from './config/rolls.js';
 import { RANKS, SPECIES, npcDefaults, initialNpcState, isOut, rankLabel, turnsPerRound } from './config/npc.js';
-import { woundFromRatio } from '../../tools/initiative.js';
+import { woundFromRatio } from '@/features/initiative/tools/initiative.js';
 import FuNpcSheet from './components/npc/FuNpcSheet.jsx';
 import FuNpcForm from './components/npc/FuNpcForm.jsx';
 

@@ -5,7 +5,7 @@
 // La météo elle-même sera choisie par le MJ pour la table (lot 4).
 // ─────────────────────────────────────────────────────────────────────────────
 
-import { usePersistedState } from '../../../hooks/usePersistedState.js';
+import { usePersistedState } from '@/app/hooks/usePersistedState.js';
 
 const AMBIENCE_OPTIONS = {
     defaults: { animations: true },

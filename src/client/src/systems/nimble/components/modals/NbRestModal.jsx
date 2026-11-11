@@ -10,7 +10,7 @@
 // ─────────────────────────────────────────────────────────────────────────────
 
 import React, { useState } from 'react';
-import Modal from '../../../../components/ui/Modal.jsx';
+import Modal from '@/ui/modal/Modal.jsx';
 import { signed } from '../../config/rules/formula.js';
 import { displayName, hitDiceLeft, hitDieSides, statValue, maxHp } from '../../config/rules/character.js';
 import { resolveHitDice } from '../../config/rules/dice.js';

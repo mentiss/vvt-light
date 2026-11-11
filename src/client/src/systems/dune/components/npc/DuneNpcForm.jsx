@@ -9,8 +9,8 @@
 // ─────────────────────────────────────────────────────────────────────────────
 
 import React from 'react';
-import { NpcPresetEditor } from '../../../../components/npc/NpcPresets.jsx';
-import NpcItemList from '../../../../components/npc/NpcItemList.jsx';
+import { NpcPresetEditor } from '@/features/npc/NpcPresets.jsx';
+import NpcItemList from '@/features/npc/NpcItemList.jsx';
 import { COMPETENCES, PRINCIPES } from '../../config/traits.js';
 import { NPC_RANKS, applyRankTemplate, isMinor } from '../../config/rules/npc.js';
 

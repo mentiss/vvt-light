@@ -6,13 +6,13 @@
 // ⚠️ Module ES — importé uniquement par le frontend React.
 // ─────────────────────────────────────────────────────────────────────────────
 
-import { RollError } from '../../tools/diceEngine.js';
+import { RollError } from '@/features/dice/tools/diceEngine.js';
 import NbHistoryEntry from './components/layout/NbHistoryEntry.jsx';
 import NbNpcSheet from './components/npc/NbNpcSheet.jsx';
 import NbNpcForm from './components/npc/NbNpcForm.jsx';
 import { FAMILIES, MONSTERS } from './config/bestiary.js';
 import { ARMOR_LABELS, isDown, levelValue, monsterState, monsterView } from './config/rules/encounter.js';
-import { woundFromRatio } from '../../tools/initiative.js';
+import { woundFromRatio } from '@/features/initiative/tools/initiative.js';
 import {
     VICIOUS_POOL, clampEdge, dicePoolSize, pickDice, resolveMinions, resolveAttack, resolveD20, initiativeActions, resolveHitDice, sumDice,
 } from './config/rules/dice.js';

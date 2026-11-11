@@ -3,23 +3,23 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import './theme.css';
 
-import { useSystem }  from '../../hooks/useSystem.js';
-import { useSession } from '../../context/SessionContext.jsx';
-import { useSocket }  from '../../context/SocketContext.jsx';
-import { useFetch }   from '../../hooks/useFetch.js';
+import { useSystem }  from '@/app/hooks/useSystem.js';
+import { useSession } from '@/app/context/SessionContext.jsx';
+import { useSocket }  from '@/app/context/SocketContext.jsx';
+import { useFetch }   from '@/app/hooks/useFetch.js';
 
-import ThemeToggle        from '../../components/ui/ThemeToggle.jsx';
-import ToastNotifications from '../../components/layout/ToastNotifications.jsx';
-import SessionPlayersBar  from '../../components/layout/SessionPlayersBar.jsx';
-import JournalTab         from '../../components/tabs/JournalTab.jsx';
-import DiceHistoryPage    from '../../components/layout/DiceHistoryPage.jsx';
-import AvatarUploader     from '../../components/AvatarUploader.jsx';
-import { HamburgerMenu, HamburgerMenuSeparator } from '../../components/ui/HamburgerMenu.jsx';
+import ThemeToggle        from '@/app/components/ThemeToggle.jsx';
+import ToastNotifications from '@/features/table/ToastNotifications.jsx';
+import SessionPlayersBar  from '@/features/table/SessionPlayersBar.jsx';
+import JournalTab         from '@/features/journal/JournalTab.jsx';
+import DiceHistoryPage    from '@/features/dice/history/DiceHistoryPage.jsx';
+import AvatarUploader     from '@/ui/image/AvatarUploader.jsx';
+import { HamburgerMenu, HamburgerMenuSeparator } from '@/ui/menu/HamburgerMenu.jsx';
 import {
     HamburgerMenuItemCreateCharacter, HamburgerMenuItemSwitchCharacter, HamburgerMenuItemAvatar,
     HamburgerMenuItemAccessCode, HamburgerMenuItemDiceConfig, HamburgerMenuItemGMInterface,
     HamburgerMenuItemLogout,
-} from '../../components/ui/HamburgerMenuItems.jsx';
+} from '@/features/table/HamburgerMenuItems.jsx';
 
 import VerticalGauge from './components/VerticalGauge.jsx';
 import AttributeGrid      from './components/AttributeGrid.jsx';
@@ -34,7 +34,7 @@ import SpellsSection      from './components/SpellsSection.jsx';
 import IdentitySection    from './components/IdentitySection.jsx';
 import TruthsSection      from './components/TruthsSection.jsx';
 import AchtungDiceModal    from './dice/AchtungDiceModal.jsx';
-import FreeDiceModal from "../../components/modals/FreeDiceModal.jsx";
+import FreeDiceModal from "@/features/dice/modals/FreeDiceModal.jsx";
 
 const TABS = [
     { id: 'fiche',      label: '📋 Fiche' },

@@ -10,8 +10,8 @@
 // ─────────────────────────────────────────────────────────────────────────────
 
 import React from 'react';
-import ThemeToggle from '../../../../components/ui/ThemeToggle.jsx';
-import { HamburgerMenu } from '../../../../components/ui/HamburgerMenu.jsx';
+import ThemeToggle from '@/app/components/ThemeToggle.jsx';
+import { HamburgerMenu } from '@/ui/menu/HamburgerMenu.jsx';
 import Brand from '../../Brand.jsx';
 import { MlTabs, Orn } from './MlUi.jsx';
 

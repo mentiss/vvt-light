@@ -10,7 +10,7 @@
 // ─────────────────────────────────────────────────────────────────────────────
 
 import React, { useState } from 'react';
-import Modal from '../../../../components/ui/Modal.jsx';
+import Modal from '@/ui/modal/Modal.jsx';
 import { wakeUp, endOfStory } from '../../config/rules/sheetRules.js';
 import { VdaChip } from '../ui/VdaUi.jsx';
 

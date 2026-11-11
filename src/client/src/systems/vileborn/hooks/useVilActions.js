@@ -9,9 +9,9 @@
 //   patch(objet) : enregistre les champs modifiés (PUT joueur ou PATCH MJ)
 // ─────────────────────────────────────────────────────────────────────────────
 
-import { useSystem } from '../../../hooks/useSystem.js';
-import { useFetch } from '../../../hooks/useFetch.js';
-import { recordHistoryEntry } from '../../../tools/diceHistory.js';
+import { useSystem } from '@/app/hooks/useSystem.js';
+import { useFetch } from '@/app/hooks/useFetch.js';
+import { recordHistoryEntry } from '@/features/dice/tools/diceHistory.js';
 import { ROLL_TYPES } from '../config.jsx';
 import {
     displayName, sufferState, healState, addWound, spendAspiration, spendDuty, setGiftChecked, giftInfo,

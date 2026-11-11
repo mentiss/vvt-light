@@ -8,7 +8,7 @@
 
 import React, { useState } from 'react';
 import { REFERENCE_SECTIONS, guideParagraphs } from '../../config/reference.js';
-import ReferenceGuide from '../../../../components/reference/ReferenceGuide.jsx';
+import ReferenceGuide from '@/features/reference/ReferenceGuide.jsx';
 import VkModal from '../ui/VkModal.jsx';
 import { RichText, TradeAdvice } from './CreationParts.jsx';
 

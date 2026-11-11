@@ -10,7 +10,7 @@
 // ─────────────────────────────────────────────────────────────────────────────
 
 import React, { useState } from 'react';
-import NpcItemList from '../../../../components/npc/NpcItemList.jsx';
+import NpcItemList from '@/features/npc/NpcItemList.jsx';
 import { ATTRIBUTE_GROUPS, ABILITY_LABELS } from '../../config/traits.js';
 import { DISCIPLINES } from '../../config/disciplines.js';
 import { DAMAGE_TYPE_SHORT } from '../../config/equipment.js';

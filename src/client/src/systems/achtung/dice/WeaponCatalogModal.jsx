@@ -9,8 +9,8 @@
 // ─────────────────────────────────────────────────────────────────────────────
 
 import React, { useState } from 'react';
-import CatalogModal from '../../../components/modals/CatalogModal.jsx';
-import { normalizeText } from '../../../tools/catalog.js';
+import CatalogModal from '@/ui/catalog/CatalogModal.jsx';
+import { normalizeText } from '@/ui/tools/catalog.js';
 import { WEAPON_CATALOG, FACTION_LABELS } from '../config/weaponCatalog.js';
 import {
     RANGE_LABELS, WEAPON_RANGES, WEAPON_SIZES,

@@ -9,7 +9,7 @@
 // ─────────────────────────────────────────────────────────────────────────────
 
 import React, { useState } from 'react';
-import Modal from '../../../../components/ui/Modal.jsx';
+import Modal from '@/ui/modal/Modal.jsx';
 import { ROLL_TYPES } from '../../config.jsx';
 import { useVdaRoll } from '../../hooks/useVdaRoll.js';
 import { difficultyLabel } from '../../config/rules/sheetRules.js';

@@ -3,7 +3,7 @@
 // d'office (affichées repliées, pour mémoire).
 import React, { useState } from 'react';
 import { usePlaybookMoves } from '../../hooks/usePlaybookMoves.js';
-import { useSystem } from '../../../../hooks/useSystem.js';
+import { useSystem } from '@/app/hooks/useSystem.js';
 import { STAT_LABELS, CREATION_MOVE_PICKS, moveTagRule, buildMoveTag, referenceList, stepRemaining } from '../../config.jsx';
 import { Card } from '../layout/Card.jsx';
 import { StepHead, PickCard, ConfigBox, ListChoice } from './CreationParts.jsx';

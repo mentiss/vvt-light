@@ -24,12 +24,12 @@
 //   readOnly    — true côté MJ
 
 import React, { useState, useEffect, useCallback } from 'react';
-import { useSocket } from '../../../../context/SocketContext.jsx';
-import { useFetch }  from '../../../../hooks/useFetch.js';
-import { useSystem } from '../../../../hooks/useSystem.js';
-import useConfirm    from '../../../../hooks/useConfirm.jsx';
+import { useSocket } from '@/app/context/SocketContext.jsx';
+import { useFetch }  from '@/app/hooks/useFetch.js';
+import { useSystem } from '@/app/hooks/useSystem.js';
+import useConfirm    from '@/ui/hooks/useConfirm.jsx';
 import EquipmentCatalogModal from '../modals/EquipmentCatalogModal.jsx';
-import ExpandableText        from '../../../../components/ui/ExpandableText.jsx';
+import ExpandableText        from '@/ui/text/ExpandableText.jsx';
 import { EQUIPMENT_CATALOG, EQUIPMENT_CATEGORY_ORDER } from '../../config.jsx';
 
 // Description de chaque objet du catalogue, par clé (les objets de scénario n'en ont pas)

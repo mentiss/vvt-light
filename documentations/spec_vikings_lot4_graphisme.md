@@ -27,9 +27,9 @@ Demandes du MJ reportées du lot 3 : malus de fatigue visible avant le jet et d�
 ## 2. Système CSS (rappel, à respecter)
 
 - `systems/vikings/theme.css` définit les **variables plateforme** (`--color-primary`, `--color-secondary`, `--color-accent`, `--color-danger`, `--color-success`, `--color-bg`, `--color-surface`, `--color-surface-alt`, `--color-text`, `--color-text-muted`, `--color-border`) dans `:root` (jour) et dans `.dark, [data-theme="dark"]` (nuit).
-- Les classes génériques (`bg-*`, `text-*`, `border-*`, opacités `/N`, états `hover:`…, `ring-*`, `glow-*`, `placeholder-*`) viennent de `generated-css-utils.css` (script `scripts/generate-css-utils.js`) : on ne les redéfinit pas.
+- Les classes génériques (`bg-*`, `text-*`, `border-*`, opacités `/N`, états `hover:`…, `ring-*`, `glow-*`, `placeholder-*`) viennent de `app/styles/generated-css-utils.css` (script `scripts/generate-css-utils.js`) : on ne les redéfinit pas.
 - Le spécifique Vikings se limite à des **variables `--vk-*`** et des **classes `.vk-*`** (modèle : `cp-` de cyberpunk, `dg-` de deltagreen). Mise en page : Tailwind.
-- Le bloc `<style id="theme">` de la planche **est** le futur `theme.css` (seules les images, embarquées dans la planche, deviendront des fichiers). Pour s'ouvrir de n'importe où (aperçu de l'IDE compris), la planche est autonome : les règles de `generated-css-utils.css` qu'elle utilise y sont copiées telles quelles dans `<style id="generated-utils">`.
+- Le bloc `<style id="theme">` de la planche **est** le futur `theme.css` (seules les images, embarquées dans la planche, deviendront des fichiers). Pour s'ouvrir de n'importe où (aperçu de l'IDE compris), la planche est autonome : les règles de `app/styles/generated-css-utils.css` qu'elle utilise y sont copiées telles quelles dans `<style id="generated-utils">`.
 
 ## 3. Images
 
@@ -37,7 +37,7 @@ Demandes du MJ reportées du lot 3 : malus de fatigue visible avant le jet et d�
 
 **Icônes** : plus d'emojis (hors contexte du 9ᵉ siècle, retour MJ). Jeu d'icônes au trait (sprite SVG de la planche → composant `VkIcon` en 4b) : dé long en os, hache, bouclier rond, bourse, maison longue, parchemin, clé, Yggdrasil, plume, casque, portrait, porte, soleil, lune, goutte de sang, flèche, œil, corne… Runes comme symboles quand elles ont du sens (ᛟ Saga, ᛊ triple 10).
 
-**Fichiers de la planche** : `UIkit_complet.html` (autonome, à ouvrir) est généré depuis `UIkit_complet.source.html` (chemins relatifs vers `assets/` et `generated-css-utils.css`), qui reste la référence pour écrire `theme.css` en 4b.
+**Fichiers de la planche** : `UIkit_complet.html` (autonome, à ouvrir) est généré depuis `UIkit_complet.source.html` (chemins relatifs vers `assets/` et `app/styles/generated-css-utils.css`), qui reste la référence pour écrire `theme.css` en 4b.
 
 ## 4. Découpage
 

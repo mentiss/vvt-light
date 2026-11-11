@@ -6,7 +6,7 @@
 
 Brique de plateforme : concerne tous les slugs.
 
-Objectif : donner aux modales génériques (`src/client/src/components/`) une structure et des classes communes, avec un style par défaut propre, que chaque slug peut habiller dans son `theme.css` (coins ornés, boutons, champs) sans aucun code de slug dans le générique.
+Objectif : donner aux modales génériques (`src/client/src/ui/modal/`) une structure et des classes communes, avec un style par défaut propre, que chaque slug peut habiller dans son `theme.css` (coins ornés, boutons, champs) sans aucun code de slug dans le générique.
 
 Hors périmètre :
 - le bug des props de `GMSendModal` dans fabula, zoneblanche, achtung, deltagreen et noctis (M-7) : seul son habillage sera repris au lot 2 ;
@@ -24,7 +24,7 @@ Hors périmètre :
 | M-3 | Découpage | **Pilote** : composant, classes, style par défaut ; migration de l'upload d'avatar, de la gestion des tables (et ses sous-modales) et de l'alerte ; habillage Vikings. **Lot 2** : les autres modales génériques (§8). |
 | M-4 | Icônes | Pas d'emoji dans les modales génériques. L'icône reste une option du composant, non utilisée par le générique. |
 | M-5 | Habillage d'un slug | Tout le style propre à un slug (coins ornés, cadres, polices, boutons) est une **surcharge dans son `theme.css`**. Le générique ne fournit que des classes stables et un élément décoratif vide. Vikings : cadre à coins légers, boutons et champs `vk-` partagés avec les classes `vtt-`. |
-| M-6 | Emplacement du style par défaut | Dans `src/client/src/index.css`, dans une couche **`@layer components`** : le `theme.css` d'un slug (hors couche) l'emporte toujours, quel que soit l'ordre de chargement, et les utilitaires Tailwind (`hidden`, `flex`, `w-full`…) restent applicables sur les classes `vtt-*`. |
+| M-6 | Emplacement du style par défaut | Dans `src/client/src/ui/modal/modal.css`, dans une couche **`@layer components`** : le `theme.css` d'un slug (hors couche) l'emporte toujours, quel que soit l'ordre de chargement, et les utilitaires Tailwind (`hidden`, `flex`, `w-full`…) restent applicables sur les classes `vtt-*`. |
 | M-7 | Bug des props de `GMSendModal` | Hors de ce chantier. |
 
 ---
@@ -38,7 +38,7 @@ Hors périmètre :
 
 ---
 
-## 3. Composant `components/ui/Modal.jsx`
+## 3. Composant `ui/modal/Modal.jsx`
 
 ### 3.1 Contrat
 
@@ -119,7 +119,7 @@ Sur le modèle de Bootstrap, la taille se choisit par la prop `size` :
 
 ---
 
-## 5. Style par défaut (`index.css`, `@layer components`)
+## 5. Style par défaut (`ui/modal/modal.css`, `@layer components`)
 
 - Uniquement les variables plateforme `--color-*` (aucune couleur codée en dur), dans l'esprit de la configuration des dés : fond `rgba(0,0,0,.7)` flouté, panneau `--color-surface` arrondi à bordure fine `--color-border`, titre court en petites capitales `--color-primary`, sous-titre `--color-text-muted`, corps défilant, pied séparé par un filet.
 - Texte sur fond `primary` : nouvelle variable **facultative** `--color-on-primary` (repli : `#fff`), qu'un thème peut définir pour garantir le contraste. Aucune autre variable plateforme n'est ajoutée.
@@ -146,12 +146,12 @@ Sur le modèle de Bootstrap, la taille se choisit par la prop `size` :
 
 | Fichier | Modification |
 |---|---|
-| `components/ui/Modal.jsx` | nouveau (§3) |
-| `index.css` | classes `vtt-*` et style par défaut (§4, §5) |
-| `components/AvatarUploader.jsx` | migration (props inchangées) |
-| `components/gm/modals/TableManagementModal.jsx` | migration, sous-modale `SessionFormModal` comprise |
-| `components/gm/modals/TableCharactersModal.jsx` | migration, sous-modale `AddCharacterModal` et ligne `CharacterRow` comprises |
-| `components/modals/AlertModal.jsx` | migration (appelée par les trois modales ci-dessus) |
+| `ui/modal/Modal.jsx` | nouveau (§3) |
+| `ui/modal/modal.css` | classes `vtt-*` et style par défaut (§4, §5) |
+| `ui/image/AvatarUploader.jsx` | migration (props inchangées) |
+| `features/table/modals/TableManagementModal.jsx` | migration, sous-modale `SessionFormModal` comprise |
+| `features/table/modals/TableCharactersModal.jsx` | migration, sous-modale `AddCharacterModal` et ligne `CharacterRow` comprises |
+| `ui/modal/AlertModal.jsx` | migration (appelée par les trois modales ci-dessus) |
 | `systems/vikings/theme.css` | habillage (§6), barres de défilement comprises |
 | `systems/vikings/components/ui/VkModal.jsx` | classe `vtt-scroll` sur le corps (§3.4) |
 | `documentations/refonte_vikings/UIkit_complet.source.html` (+ version autonome) | reprise de l'habillage des modales génériques dans la planche, référence du thème |

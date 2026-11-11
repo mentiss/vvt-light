@@ -13,7 +13,7 @@
 // ─────────────────────────────────────────────────────────────────────────────
 
 import React, { useState } from 'react';
-import CatalogModal from '../../../../components/modals/CatalogModal.jsx';
+import CatalogModal from '@/ui/catalog/CatalogModal.jsx';
 import { UNARMED, ABILITY_LABELS, SOAK_TYPES, EQUIPMENT_CATALOG, EQUIPMENT_FILTERS } from '../../config.jsx';
 import {
     initiativeValue, initiativeBase, attackSetup, damageSetup, defenseSetup, soakSetup, parseDamage,

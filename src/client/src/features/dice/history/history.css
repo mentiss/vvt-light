@@ -1,0 +1,15 @@
+@layer components {
+  /* ── Historique des jets : corps d'une carte (DiceHistoryPage, HistoryPanel) ─
+     La plateforme porte la marge ; les rendus des slugs (renderHistoryEntry,
+     renderDiceToast) n'en mettent pas. La notification a la sienne (ToastShell).
+     Cadres habillables par le slug : carte (.vtt-history-card), son bandeau
+     nom / date (.vtt-history-card-meta), notification (.vtt-toast, .is-accent). */
+  .vtt-history-card { position: relative; border: 1px solid var(--color-border); border-radius: 0.5rem; overflow: hidden; }
+  .vtt-history-card-meta { background: var(--color-surface-alt); color: var(--color-text-muted); }
+  .vtt-history-entry { padding: 0.6rem 0.75rem; background: var(--color-surface); }
+  .vtt-toast {
+    background: var(--color-surface); border: 2px solid var(--color-border); border-radius: 0.5rem;
+    box-shadow: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);   /* shadow-xl */
+  }
+  .vtt-toast.is-accent { border-color: var(--color-accent); }
+}

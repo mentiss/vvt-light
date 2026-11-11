@@ -1,13 +1,13 @@
 import { useState } from 'react';
-import { HamburgerMenu } from '../../../components/ui/HamburgerMenu.jsx';
-import { HamburgerMenuItemLogout } from '../../../components/ui/HamburgerMenuItems.jsx';
+import { HamburgerMenu } from '@/ui/menu/HamburgerMenu.jsx';
+import { HamburgerMenuItemLogout } from '@/features/table/HamburgerMenuItems.jsx';
 
-import ThemeToggle          from '../../../components/ui/ThemeToggle.jsx';
-import ToastNotifications   from '../../../components/layout/ToastNotifications.jsx';
-import DiceHistoryPage      from '../../../components/layout/DiceHistoryPage.jsx';
-import TableManagementButton from '../../../components/gm/TableManagementButton.jsx';
-import FreeDiceModal        from '../../../components/modals/FreeDiceModal.jsx';
-import TabJournal           from '../../../components/gm/tabs/TabJournal.jsx';
+import ThemeToggle          from '@/app/components/ThemeToggle.jsx';
+import ToastNotifications   from '@/features/table/ToastNotifications.jsx';
+import DiceHistoryPage      from '@/features/dice/history/DiceHistoryPage.jsx';
+import TableManagementButton from '@/features/table/TableManagementButton.jsx';
+import FreeDiceModal        from '@/features/dice/modals/FreeDiceModal.jsx';
+import TabJournal           from '@/features/journal/TabJournal.jsx';
 
 import GearBackground   from '../components/ui/GearBackground.jsx';
 import NoctisLogo       from '../components/ui/NoctisLogo.jsx';

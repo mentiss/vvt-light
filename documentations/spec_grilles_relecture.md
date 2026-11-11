@@ -39,7 +39,7 @@ Une règle qui fait débat (le relecteur hésite, ou une correction semble absur
 
 | Id | Niveau | Règle | Pourquoi | Contrôle |
 |---|---|---|---|---|
-| F-STORAGE | Règle | Jamais `localStorage` / `sessionStorage` en direct hors `tools/browserStorage.js` : `usePersistedState`, ou `readStored` / `writeStored`. | Clés rangées par portée, versions et reprises, synchro entre onglets, `try/catch`. | lint |
+| F-STORAGE | Règle | Jamais `localStorage` / `sessionStorage` en direct hors `app/tools/browserStorage.js` : `usePersistedState`, ou `readStored` / `writeStored`. | Clés rangées par portée, versions et reprises, synchro entre onglets, `try/catch`. | lint |
 ```
 
 - **Id** : `C-` commun, `F-` front, `B-` back, puis un mot-clé stable. Un identifiant ne change jamais : une règle abandonnée est marquée « retirée », pas renumérotée.
@@ -96,7 +96,7 @@ Une règle qui fait débat (le relecteur hésite, ou une correction semble absur
 
 | Id | Niveau | Règle | Contrôle | Réponse                                                        |
 |---|---|---|---|----------------------------------------------------------------|
-| F-STORAGE | Règle | Jamais `localStorage` / `sessionStorage` en direct hors `tools/browserStorage.js` : `usePersistedState` dans React, `readStored` / `writeStored` ailleurs ; options de `usePersistedState` en constantes du module. | lint |                                                                |
+| F-STORAGE | Règle | Jamais `localStorage` / `sessionStorage` en direct hors `app/tools/browserStorage.js` : `usePersistedState` dans React, `readStored` / `writeStored` ailleurs ; options de `usePersistedState` en constantes du module. | lint |                                                                |
 | F-LAZY | Règle | `React.lazy()` au niveau module (pattern `lazyCache`), jamais dans un composant. | lint |                                                                |
 | F-SUBCOMP | Règle | Les sous-composants sont définis au niveau module, jamais dans une fonction de rendu. | lint (règle `static-components` passée en erreur) |                                                                |
 | F-KEY | Règle | Pas de clé React par index quand l'élément a un identifiant stable. | relecture |                                                                |
@@ -153,7 +153,7 @@ Ajouts à `src/client/eslint.config.js`. Chaque contrôle est une copie de la r�
 
 | Règle | Détection | Niveau |
 |---|---|---|
-| F-STORAGE | `localStorage`, `sessionStorage`, `window.localStorage` hors `tools/browserStorage.js` | erreur |
+| F-STORAGE | `localStorage`, `sessionStorage`, `window.localStorage` hors `app/tools/browserStorage.js` | erreur |
 | F-LAZY | relecture seulement : le pattern `lazyCache` appelle `React.lazy` dans une fonction, le lint ne sait pas l'en distinguer | — |
 | F-SUBCOMP | relecture seulement : `static-components` signale aussi les composants tirés de `lazyCache` (`PlayerPage`, `CreationPage`), il reste en avertissement | — |
 | F-SOCK-INFRA | `emit('join-session' …)` et les cinq autres hors `hooks/`, `context/` | erreur |
@@ -178,5 +178,5 @@ Deux tests ajoutés au banc existant (`tests/server/`) :
 ## 12. Fichiers touchés (implémentation)
 
 - Nouveaux : `code-rules/common.md`, `code-rules/front.md`, `code-rules/back.md`, `AGENTS.md`.
-- Modifiés : `CLAUDE.md`, `src/client/CLAUDE.md`, `src/server/CLAUDE.md`, `src/server/systems/Loader.js` (commentaires), `src/client/src/hooks/useFetch.js`, `src/client/eslint.config.js`.
+- Modifiés : `CLAUDE.md`, `src/client/CLAUDE.md`, `src/server/CLAUDE.md`, `src/server/systems/Loader.js` (commentaires), `src/client/src/app/hooks/useFetch.js`, `src/client/eslint.config.js`.
 - Pas de code applicatif modifié hors `useFetch`.

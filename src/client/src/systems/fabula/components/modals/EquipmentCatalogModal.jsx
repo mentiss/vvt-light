@@ -20,7 +20,7 @@
 // ─────────────────────────────────────────────────────────────────────────────
 
 import React, { useMemo } from 'react';
-import CatalogModal from '../../../../components/modals/CatalogModal.jsx';
+import CatalogModal from '@/ui/catalog/CatalogModal.jsx';
 import { EQUIPMENT_CATALOG, CATALOG_ORDER, catalogToItem } from '../../config.jsx';
 import { EQUIPMENT_RARE_CATALOG, RARE_CATALOG_ORDER, rareCatalogToItem } from '../../config/equipmentRare.js';
 import EquipmentEditForm, { EquipmentItemSummary, createEmptyItem } from '../layout/EquipmentEditForm.jsx';

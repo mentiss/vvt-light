@@ -4,7 +4,7 @@
 // la maxime ou la spécialisation sous le nom. Mode Édition : rang, maxime, spécialisation.
 
 import React, { useRef } from 'react';
-import { useTooltip } from '../../../../components/ui/Tooltip.jsx';
+import { useTooltip } from '@/ui/text/Tooltip.jsx';
 import DuneIcon from '../ui/DuneIcon.jsx';
 import { DuneFrame, DuneStepper } from '../ui/DuneFields.jsx';
 import { COMPETENCES, PRINCIPES, traitLabel } from '../../config/traits.js';

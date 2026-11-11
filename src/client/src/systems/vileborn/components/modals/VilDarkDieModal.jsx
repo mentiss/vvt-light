@@ -11,7 +11,7 @@
 // ─────────────────────────────────────────────────────────────────────────────
 
 import React, { useState } from 'react';
-import Modal from '../../../../components/ui/Modal.jsx';
+import Modal from '@/ui/modal/Modal.jsx';
 import { ROLL_TYPES } from '../../config.jsx';
 import { DARK_INTENSITIES } from '../../config/rules/test.js';
 import { darkRow } from '../../config/rules/challenge.js';

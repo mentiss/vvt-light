@@ -11,7 +11,7 @@
 // ─────────────────────────────────────────────────────────────────────────────
 
 import React, { useState } from 'react';
-import Modal from '../../../../components/ui/Modal.jsx';
+import Modal from '@/ui/modal/Modal.jsx';
 import {
     POOLABLE_BACKGROUNDS, POOL_MAX, backgroundLabel, poolCap, shownPools, stakeOf, contributionOptions, withdrawRefund,
 } from '../../config/rules/coterie.js';

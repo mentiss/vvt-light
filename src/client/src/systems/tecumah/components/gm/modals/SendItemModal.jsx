@@ -4,9 +4,9 @@
 // Le serveur insère l'item et émet gm-item-received → toast côté joueur.
 
 import React, { useState } from 'react';
-import { useFetch }  from '../../../../../hooks/useFetch.js';
-import { useSystem } from '../../../../../hooks/useSystem.js';
-import Modal         from '../../../../../components/ui/Modal.jsx';
+import { useFetch }  from '@/app/hooks/useFetch.js';
+import { useSystem } from '@/app/hooks/useSystem.js';
+import Modal         from '@/ui/modal/Modal.jsx';
 
 const CATEGORIES = [
     { value: 'misc',          label: 'Objet'       },

@@ -16,20 +16,20 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
 
-import { useSystem } from '../../hooks/useSystem.js';
-import { useSocket } from '../../context/SocketContext.jsx';
-import { useFetch }  from '../../hooks/useFetch.js';
+import { useSystem } from '@/app/hooks/useSystem.js';
+import { useSocket } from '@/app/context/SocketContext.jsx';
+import { useFetch }  from '@/app/hooks/useFetch.js';
 
-import ThemeToggle          from '../../components/ui/ThemeToggle.jsx';
-import ToastNotifications   from '../../components/layout/ToastNotifications.jsx';
-import TabJournal           from '../../components/gm/tabs/TabJournal.jsx';
-import Board                from '../../components/board/Board.jsx';
-import DiceHistoryPage      from '../../components/layout/DiceHistoryPage.jsx';
-import { HamburgerMenu, HamburgerMenuSeparator } from '../../components/ui/HamburgerMenu.jsx';
+import ThemeToggle          from '@/app/components/ThemeToggle.jsx';
+import ToastNotifications   from '@/features/table/ToastNotifications.jsx';
+import TabJournal           from '@/features/journal/TabJournal.jsx';
+import Board                from '@/features/board/Board.jsx';
+import DiceHistoryPage      from '@/features/dice/history/DiceHistoryPage.jsx';
+import { HamburgerMenu, HamburgerMenuSeparator } from '@/ui/menu/HamburgerMenu.jsx';
 import {
     HamburgerMenuItemTableManagement, HamburgerMenuItemFreeDice, HamburgerMenuItemDiceConfig,
     HamburgerMenuItemLogout,
-} from '../../components/ui/HamburgerMenuItems.jsx';
+} from '@/features/table/HamburgerMenuItems.jsx';
 
 import TabSession                from './gm/tabs/TabSession.jsx';
 import { BUDGET_PRESETS }        from './config.jsx';

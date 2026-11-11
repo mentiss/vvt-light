@@ -27,7 +27,7 @@
 Un singleton léger (~20 lignes), zéro dépendance externe :
 
 ```js
-// src/client/src/tools/diceAnimBridge.js
+// src/client/src/features/dice/tools/diceAnimBridge.js
 
 let _resolve  = null;
 let _listener = null;
@@ -333,7 +333,7 @@ const result = await roll(notation, ctx, hooks);
 
 ### Payload `POST ${ctx.apiBase}/dice/roll`
 
-Construit par `recordHistoryEntry` (`tools/diceHistory.js`), contrat complet dans « Passe générique : contrat » plus bas (2026-11-09) :
+Construit par `recordHistoryEntry` (`features/dice/tools/diceHistory.js`), contrat complet dans « Passe générique : contrat » plus bas (2026-11-09) :
 
 ```js
 {
@@ -478,7 +478,7 @@ notre `buildBoxNotation` qui ne généraient que des notations mono-type.
 
 `FreeDiceModal` fournit son propre `afterRoll` : le résultat enregistré (`roll_result`) contient, en plus de `allDice`, `groups` et `flags`, le **total**, le **modificateur** et le **libellé** saisi. Avant le 2026-10-23, seuls les dés étaient enregistrés.
 
-### Lecture : `tools/freeRoll.js`
+### Lecture : `features/dice/tools/freeRoll.js`
 
 `parseFreeRoll(entry)` renvoie `{ label, total, modifier, groups: [{ notation, values, subtotal }] }`, ou `null` si l'entrée n'est pas un jet libre lisible. Les anciens jets restent lisibles : total recalculé à partir des dés, modificateur lu dans la notation du dernier groupe (« 1d8+3 »), libellé « Jet libre ». Test : `tests/tools/freeRoll.test.js`.
 
@@ -492,7 +492,7 @@ notre `buildBoxNotation` qui ne généraient que des notations mono-type.
 
 ### Marges : portées par la plateforme
 
-- La carte d'historique (`DiceHistoryList`, commune à l'onglet et au panneau) pose la marge intérieure via la classe habillable `vtt-history-entry` (`index.css`) ; la notification a la sienne (`ToastShell`). Les cadres sont habillables par le slug, sans style en ligne : carte `vtt-history-card`, son bandeau nom / date `vtt-history-card-meta`, notification `vtt-toast` (`is-accent` pour un message mis en avant).
+- La carte d'historique (`DiceHistoryList`, commune à l'onglet et au panneau) pose la marge intérieure via la classe habillable `vtt-history-entry` (`features/dice/history/history.css`) ; la notification a la sienne (`ToastShell`). Les cadres sont habillables par le slug, sans style en ligne : carte `vtt-history-card`, son bandeau nom / date `vtt-history-card-meta`, notification `vtt-toast` (`is-accent` pour un message mis en avant).
 - Le rendu du slug (`dice.renderHistoryEntry`) **ne met aucune marge extérieure**. Seul un décor propre au slug garde un espacement interne au décor : bande teintée et filet gauche de Delta Green, bloc encadré `zb-history-entry` de Zone Blanche.
 
 ---
@@ -505,18 +505,18 @@ notre `buildBoxNotation` qui ne généraient que des notations mono-type.
 
 | `config.jsx` du slug | Rendu |
 |---|---|
-| `dice.renderer: '2d'` | `components/shared/DiceOverlay2D.jsx` |
-| absent ou `'3d'` (et hors slug) | `components/shared/DiceOverlay3D.jsx` (dice-box-threejs), chargé à la demande |
+| `dice.renderer: '2d'` | `features/dice/DiceOverlay2D.jsx` |
+| absent ou `'3d'` (et hors slug) | `features/dice/DiceOverlay3D.jsx` (dice-box-threejs), chargé à la demande |
 
 - Un slug en 2D ne charge pas la 3D. Tant que la configuration du slug n'est pas chargée, aucun rendu n'écoute : `diceAnimBridge.play()` rend alors la main sans animation (il ne bloque plus un jet sans rendu). Chaque rendu se désabonne du pont au démontage.
-- `diceEngine.roll()`, le pont et les hooks des slugs ne changent pas. Les deux rendus suivent le même rythme (`DICE_TIMING`, `tools/dice2d.js`) : groupes en séquence, vagues, éclair des explosions, résultat affiché avant de rendre la main, « Passer » à tout moment.
+- `diceEngine.roll()`, le pont et les hooks des slugs ne changent pas. Les deux rendus suivent le même rythme (`DICE_TIMING`, `features/dice/tools/dice2d.js`) : groupes en séquence, vagues, éclair des explosions, résultat affiché avant de rendre la main, « Passer » à tout moment.
 - 2D : chaque dé (`Die2D`) est jeté depuis un bord, ses chiffres défilent, puis il se pose sur sa valeur.
 
 ### Apparence d'un dé : une même notation pour la 2D et la 3D
 
 Une configuration de dé, complète ou partielle, au format que lit déjà la 3D (`diceConfigDefault.custom`) : `foreground` (chiffre), `background` (corps), `outline` (contour du chiffre), `edge` (arête), `texture` (clé de la bibliothèque : `marble`, `wood`, `stars`…, images de `public/dice-assets/textures/`), `material` (`plastic`, `metal`, `glass`, `wood`, `none`).
 
-Résolution **champ par champ** (`resolveDieConfig`, `tools/dice2d.js`, testée) — la première valeur trouvée gagne :
+Résolution **champ par champ** (`resolveDieConfig`, `features/dice/tools/dice2d.js`, testée) — la première valeur trouvée gagne :
 
 1. le dé : `waves[n].colors[i]` ;
 2. le groupe : `groups[n].color` (objet ; une chaîne comme `'default'` ou `'fortune'` ne fixe rien) ;
@@ -527,7 +527,7 @@ Sans `colors`, `color` objet ni `byType`, rien ne change pour un slug.
 
 ### Règle d'habillage : la configuration donne les valeurs, le CSS le traitement
 
-`Die2D` (`components/dice/Die2D.jsx`) pose sur le dé `--die-fg`, `--die-bg`, `--die-outline`, `--die-edge` et les attributs `data-type`, `data-material`. Le CSS de base (`index.css`, `.vtt-die2d*`, `.vtt-dice2d*`) dessine à partir de ces variables seulement : texture découpée à la forme du dé, matière en traitement de surface (plastique : reflet doux ; métal : reflet dur ; verre : translucide ; bois et aucune : mat). Un slug peut passer par la configuration (rendu valable en 2D et, plus tard, en 3D) et / ou styler en CSS (`.vtt-die2d[data-type="d8"]`, rendu propre à la 2D) ; ses effets reprennent les variables (lueur en `var(--die-edge)`), jamais des couleurs en dur. `Die2D` est réutilisable par les rendus de jet des slugs.
+`Die2D` (`features/dice/Die2D.jsx`) pose sur le dé `--die-fg`, `--die-bg`, `--die-outline`, `--die-edge` et les attributs `data-type`, `data-material`. Le CSS de base (`features/dice/dice2d.css`, `.vtt-die2d*`, `.vtt-dice2d*`) dessine à partir de ces variables seulement : texture découpée à la forme du dé, matière en traitement de surface (plastique : reflet doux ; métal : reflet dur ; verre : translucide ; bois et aucune : mat). Un slug peut passer par la configuration (rendu valable en 2D et, plus tard, en 3D) et / ou styler en CSS (`.vtt-die2d[data-type="d8"]`, rendu propre à la 2D) ; ses effets reprennent les variables (lueur en `var(--die-edge)`), jamais des couleurs en dur. `Die2D` est réutilisable par les rendus de jet des slugs.
 
 ### Réglages des dés en 2D
 
@@ -571,7 +571,7 @@ Décidée avec le MJ le 2026-11-09 : retirer du moteur, de la route `/dice/roll`
 **Lecteurs à corriger** :
 - `ToastNotifications` : en-tête (`toast.roll_target`) et rendu de secours (`toast.successes`).
 - `DiceHistoryList` (rendu de secours) : `result.results`, `result.succes` (lus dans `roll_result`, donc hors colonnes, mais propres à un slug).
-- `tools/freeRoll.js` : `entry.roll_target` en libellé de secours.
+- `features/dice/tools/freeRoll.js` : `entry.roll_target` en libellé de secours.
 - `ZoneBlancheHistoryEntry` : `entry.roll_target`, toujours vide depuis mars.
 - `VikingsHistoryEntry` : branche « ancien format », à supprimer après la migration.
 
@@ -618,7 +618,7 @@ DE-1 et DE-2 (contenu et remplissage de `roll_definition`) sont sans objet.
 
 ## Passe générique : contrat *(phase 2, 2026-11-09 ; implémenté le 2026-11-09)*
 
-Écarts de l'implémentation : la migration 1 vide aussi les notations de remplissage des anciennes entrées sans dé (`porte-bonheur`, `objet`, `—`) ; les libellés de secours des rendus qui lisaient la notation (Delta Green, Dune, Fabula, Zone Blanche) lisent `label`. Le rendu de secours commun est `components/layout/GenericRollEntry.jsx`.
+Écarts de l'implémentation : la migration 1 vide aussi les notations de remplissage des anciennes entrées sans dé (`porte-bonheur`, `objet`, `—`) ; les libellés de secours des rendus qui lisaient la notation (Delta Green, Dune, Fabula, Zone Blanche) lisent `label`. Le rendu de secours commun est `features/dice/history/GenericRollEntry.jsx`.
 
 ### Table `dice_history`
 
@@ -653,13 +653,13 @@ Supprimées : `roll_definition`, `roll_target`, `pool`, `threshold`, `results`, 
 
 ### Côté client
 
-- **Helper `tools/diceHistory.js`** : `recordHistoryEntry(fetchFn, apiBase, { sessionId, characterId, characterName, rollType, label, result, notation?, raw? })`, seul constructeur du corps envoyé. Il exporte aussi `PLATFORM_ROLL_TYPES` (`['free_roll']`), aujourd'hui recopié dans `ToastNotifications` et `DiceHistoryList`.
+- **Helper `features/dice/tools/diceHistory.js`** : `recordHistoryEntry(fetchFn, apiBase, { sessionId, characterId, characterName, rollType, label, result, notation?, raw? })`, seul constructeur du corps envoyé. Il exporte aussi `PLATFORM_ROLL_TYPES` (`['free_roll']`), aujourd'hui recopié dans `ToastNotifications` et `DiceHistoryList`.
 - **Moteur** : `_persistRoll` passe par le helper avec `ctx.rollType`, `ctx.label`, la notation et le brut. Plus de défaut `generic`, plus de `successes` ni de `pool`. Le contrat de `ctx` gagne deux champs obligatoires dès que le jet est enregistré : `rollType` et `label`. Un jet qui ne les a pas est refusé par la route ; le moteur le signale en console sans bloquer le jet (comme aujourd'hui pour un échec d'enregistrement).
 - **Entrées sans dé** (Fabula : porte-bonheur, objet utilisé ; Vileborn : Rêverie, Pulsion) : appel au helper, sans `notation` ni `raw`.
 - **Chaque appel à `roll()` des slugs** passe `rollType` et `label`. Inventaire et correction en phase 3, appel par appel.
 - **Rendu de secours commun** (`DiceHistoryList` et `ToastNotifications`, aujourd'hui deux versions) : un seul composant. Il affiche les dés de `raw_result` groupe par groupe et `roll_result.total` s'il est un nombre ; rien d'autre n'est lu dans `roll_result`.
 - **En-tête des notifications** : `label`, sinon `roll_type`, sinon « Jet ».
-- **Lecteurs corrigés** : `tools/freeRoll.js` (libellé : `label`, puis `roll_result.label`, puis « Jet libre » ; plus de `roll_target`), `ZoneBlancheHistoryEntry` (`label` au lieu de `roll_target`), `VikingsHistoryEntry` (branche « ancien format » supprimée ; « explosion … » masqué quand les seuils sont inconnus), commentaire de `DuneHistoryEntry` (`roll_definition`).
+- **Lecteurs corrigés** : `features/dice/tools/freeRoll.js` (libellé : `label`, puis `roll_result.label`, puis « Jet libre » ; plus de `roll_target`), `ZoneBlancheHistoryEntry` (`label` au lieu de `roll_target`), `VikingsHistoryEntry` (branche « ancien format » supprimée ; « explosion … » masqué quand les seuils sont inconnus), commentaire de `DuneHistoryEntry` (`roll_definition`).
 
 ### Migrations (ordre garanti par le nom)
 

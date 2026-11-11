@@ -15,18 +15,18 @@
 // ─────────────────────────────────────────────────────────────────────────────
 
 import React, { useRef, useState } from 'react';
-import ToastNotifications from '../../components/layout/ToastNotifications.jsx';
-import DiceHistoryPage    from '../../components/layout/DiceHistoryPage.jsx';
-import DiceHistoryPanel   from '../../components/layout/DiceHistoryPanel.jsx';
-import TabJournal         from '../../components/gm/tabs/TabJournal.jsx';
-import Board              from '../../components/board/Board.jsx';
-import FreeDiceModal      from '../../components/modals/FreeDiceModal.jsx';
-import { useHashTab }     from '../../hooks/useHashTab.js';
-import ReferenceGuide     from '../../components/reference/ReferenceGuide.jsx';
-import { HamburgerMenuSeparator } from '../../components/ui/HamburgerMenu.jsx';
+import ToastNotifications from '@/features/table/ToastNotifications.jsx';
+import DiceHistoryPage    from '@/features/dice/history/DiceHistoryPage.jsx';
+import DiceHistoryPanel   from '@/features/dice/history/DiceHistoryPanel.jsx';
+import TabJournal         from '@/features/journal/TabJournal.jsx';
+import Board              from '@/features/board/Board.jsx';
+import FreeDiceModal      from '@/features/dice/modals/FreeDiceModal.jsx';
+import { useHashTab }     from '@/ui/hooks/useHashTab.js';
+import ReferenceGuide     from '@/features/reference/ReferenceGuide.jsx';
+import { HamburgerMenuSeparator } from '@/ui/menu/HamburgerMenu.jsx';
 import {
     HamburgerMenuItemTableManagement, HamburgerMenuItemDiceConfig, HamburgerMenuItemLogout,
-} from '../../components/ui/HamburgerMenuItems.jsx';
+} from '@/features/table/HamburgerMenuItems.jsx';
 
 import VilTopBar from './components/ui/VilTopBar.jsx';
 import VilDarkDieModal from './components/modals/VilDarkDieModal.jsx';

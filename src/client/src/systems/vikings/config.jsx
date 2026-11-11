@@ -21,7 +21,7 @@ import {
 } from './config/rules.js';
 import getTraitBonuses from './config/traitBonuses.js';
 import { CARACNAMES }  from './config/competences.js';
-import { RollError }   from '../../tools/diceEngine.js';
+import { RollError }   from '@/features/dice/tools/diceEngine.js';
 
 // Données et règles du slug (systems/vikings/config/), réexportées pour l'extérieur
 export { CARACNAMES, COMPETENCES } from './config/competences.js';
@@ -35,7 +35,7 @@ import VikingsHistoryEntry from './components/layout/VikingsHistoryEntry.jsx';
 import VkNpcSheet from './components/npc/VkNpcSheet.jsx';
 import VkNpcForm from './components/npc/VkNpcForm.jsx';
 import { npcDefaults, initialNpcState, isOut, blessureMax } from './config/npc.js';
-import { woundFromRatio } from '../../tools/initiative.js';
+import { woundFromRatio } from '@/features/initiative/tools/initiative.js';
 
 // ─── Métadonnées système ──────────────────────────────────────────────────────
 

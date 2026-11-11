@@ -9,10 +9,10 @@
 // ─────────────────────────────────────────────────────────────────────────────
 
 import React, { useState } from 'react';
-import AudioSessionToggle from '../../../../components/audio/AudioSessionToggle.jsx';
-import BoardSessionToggle from '../../../../components/board/BoardSessionToggle.jsx';
-import CopyAccessButton from '../../../../components/ui/CopyAccessButton.jsx';
-import TableManagementButton from '../../../../components/gm/TableManagementButton.jsx';
+import AudioSessionToggle from '@/features/audio/AudioSessionToggle.jsx';
+import BoardSessionToggle from '@/features/board/BoardSessionToggle.jsx';
+import CopyAccessButton from '@/features/table/CopyAccessButton.jsx';
+import TableManagementButton from '@/features/table/TableManagementButton.jsx';
 import VilGmTableRow from '../../components/layout/VilGmTableRow.jsx';
 import VilSheet from '../../components/layout/VilSheet.jsx';
 import VilEditForm from '../../components/layout/VilEditForm.jsx';

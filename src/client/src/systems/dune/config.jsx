@@ -6,13 +6,13 @@
 // ─────────────────────────────────────────────────────────────────────────────
 
 import DuneHistoryEntry from "./components/layout/DuneHistoryEntry.jsx";
-import {RollError} from "../../tools/diceEngine.js";
+import {RollError} from "@/features/dice/tools/diceEngine.js";
 import { BASE_DICE, MAX_DICE, resolveRoll } from './config/rules/roll.js';
 import { bestSkill, defaultNpcData, initialNpcState, rankLabel } from './config/rules/npc.js';
 import { traitLabel } from './config/traits.js';
 import DuneIcon from './components/ui/DuneIcon.jsx';
-import { woundFromRatio } from '../../tools/initiative.js';
-import { changeSessionResource } from '../../tools/sessionResources.js';
+import { woundFromRatio } from '@/features/initiative/tools/initiative.js';
+import { changeSessionResource } from '@/features/table/tools/sessionResources.js';
 import DuneNpcSheet from './components/npc/DuneNpcSheet.jsx';
 import DuneNpcForm from './components/npc/DuneNpcForm.jsx';
 import DuneNpcRollWindow from './components/npc/DuneNpcRollWindow.jsx';

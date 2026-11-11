@@ -1,10 +1,10 @@
 import {STAT_LABELS, STATS, moveTagRule, buildMoveTag, referenceList, consoleTarget} from "../../config.jsx";
-import {useFetch} from "../../../../hooks/useFetch.js";
+import {useFetch} from "@/app/hooks/useFetch.js";
 import React, {useEffect, useRef, useState} from "react";
-import useSystem from "../../../../hooks/useSystem.js";
-import Modal from "../../../../components/ui/Modal.jsx";
-import ConfirmModal from "../../../../components/modals/ConfirmModal.jsx";
-import ExpandableText from "../../../../components/ui/ExpandableText.jsx";
+import useSystem from "@/app/hooks/useSystem.js";
+import Modal from "@/ui/modal/Modal.jsx";
+import ConfirmModal from "@/ui/modal/ConfirmModal.jsx";
+import ExpandableText from "@/ui/text/ExpandableText.jsx";
 import { ListChoice } from "../creation/CreationParts.jsx";
 
 // Choix du tag d'une manœuvre débloquée (liste de l'aide de jeu ou libellé libre)

@@ -1,12 +1,12 @@
 // src/client/src/systems/achtung/dice/AchtungDiceModal.jsx
 
 import React, { useState, useCallback, useMemo } from 'react';
-import { roll, RollError }  from '../../../tools/diceEngine.js';
-import { useSocket }        from '../../../context/SocketContext.jsx';
-import { useFetch }         from '../../../hooks/useFetch.js';
-import { useSystem }        from '../../../hooks/useSystem.js';
-import { useSession }       from '../../../context/SessionContext.jsx';
-import Modal                from '../../../components/ui/Modal.jsx';
+import { roll, RollError }  from '@/features/dice/tools/diceEngine.js';
+import { useSocket }        from '@/app/context/SocketContext.jsx';
+import { useFetch }         from '@/app/hooks/useFetch.js';
+import { useSystem }        from '@/app/hooks/useSystem.js';
+import { useSession }       from '@/app/context/SessionContext.jsx';
+import Modal                from '@/ui/modal/Modal.jsx';
 import achtungConfig, {
     ATTRIBUTES, SKILLS, getBonusDamage, EXTRA_DIE_COST, ATTR_LABEL, SALVO_LABELS, UNARMED_WEAPON,
 } from '../config.jsx';
