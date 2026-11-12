@@ -1,0 +1,56 @@
+{
+  "roles": [
+    { "id": "room",        "label": "Pièce" },
+    { "id": "annex",       "label": "Pièce adjointe" },
+    { "id": "circulation", "label": "Circulation" },
+    { "id": "structure",   "label": "Structure" }
+  ],
+  "categories": [
+    { "id": "circulation", "label": "Circulation" },
+    { "id": "living",      "label": "Vie et réception" },
+    { "id": "sleeping",    "label": "Repos" },
+    { "id": "service",     "label": "Service et entretien" },
+    { "id": "water",       "label": "Eau et hygiène" },
+    { "id": "storage",     "label": "Stockage" },
+    { "id": "work",        "label": "Travail et artisanat" },
+    { "id": "worship",     "label": "Culte" },
+    { "id": "military",    "label": "Défense et détention" },
+    { "id": "commerce",    "label": "Commerce" },
+    { "id": "outdoor",     "label": "Extérieur" }
+  ],
+  "eras": [
+    { "id": "antiquity",          "label": "Antiquité" },
+    { "id": "early_middle_ages",  "label": "Haut Moyen Âge" },
+    { "id": "middle_ages",        "label": "Moyen Âge" },
+    { "id": "renaissance",        "label": "Renaissance" },
+    { "id": "classical",          "label": "Classique (XVIIᵉ-XVIIIᵉ)" },
+    { "id": "industrial",         "label": "Industriel (XIXᵉ)" },
+    { "id": "modern",             "label": "Moderne (1900-1970)" },
+    { "id": "contemporary",       "label": "Contemporain" },
+    { "id": "future",             "label": "Futur" }
+  ],
+  "ranks": [
+    { "id": "destitute", "label": "Misérable" },
+    { "id": "modest",    "label": "Modeste" },
+    { "id": "wealthy",   "label": "Aisé" },
+    { "id": "noble",     "label": "Noble" },
+    { "id": "princely",  "label": "Princier" }
+  ],
+  "traits": [
+    { "id": "magic",         "label": "Magie" },
+    { "id": "occult",        "label": "Occulte" },
+    { "id": "advanced_tech", "label": "Technologie avancée" }
+  ],
+  "families": [
+    { "id": "bath",    "label": "Salle d'eau" },
+    { "id": "storage", "label": "Rangement" },
+    { "id": "lounge",  "label": "Pièce de séjour" },
+    { "id": "office",  "label": "Bureau" },
+    { "id": "laundry", "label": "Linge" }
+  ],
+  "exposures": [
+    { "id": "window",   "label": "Avec fenêtre" },
+    { "id": "interior", "label": "Intérieure" },
+    { "id": "any",      "label": "Indifférente" }
+  ]
+}

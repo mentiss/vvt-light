@@ -1,0 +1,10 @@
+{
+  "shapes": [
+    { "id": "L",           "label": "L",            "notchWidth": [0.35, 0.55], "notchDepth": [0.35, 0.55] },
+    { "id": "T",           "label": "T",            "barDepth": [0.35, 0.5], "stemWidth": [0.35, 0.5] },
+    { "id": "U",           "label": "U",            "baseDepth": [0.35, 0.5], "gapWidth": [0.3, 0.4] },
+    { "id": "latin_cross", "label": "Croix latine", "naveWidth": [0.35, 0.45], "transeptAt": [0.2, 0.3], "transeptDepth": [0.18, 0.25] },
+    { "id": "circle",      "label": "Cercle" }
+  ],
+  "minPart": 3
+}

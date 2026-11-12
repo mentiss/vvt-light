@@ -366,7 +366,7 @@ Les éléments suivants sont explicitement hors scope pour la première version 
 | Fichier | Rôle |
 |---|---|
 | `src/client/src/features/genmap/tools/generate.js` | Moteur : contrat public (§11.3), génération d'un niveau et du bâtiment ; les étapes sont dans `tools/engine/` depuis M2 (§36.10) : `random`, `grid`, `heap`, `program`, `structure`, `corridors`, `rooms`, `doors`, `checks` |
-| `src/client/scripts/genmap-bench.js` | Banc d'essai (§36.10, M1) : `npm run genmap:bench` depuis `src/client` |
+| `src/client/scripts/genmap-bench.js` | Banc d'essai (§36.10, M1) : `npm run genmap:bench` depuis `src/client` ; `-- --show=preset:graine[:variante]` affiche un plan en texte (§37.1) |
 | `src/client/src/features/genmap/tools/renderSvg.js` | Rendu SVG d'un étage |
 | `src/client/src/features/genmap/data/engine.json` | Réglages du moteur : tentatives, pénalité de virage, ramifications, branche minimale d'un L (`minArm`), largeur maximale du couloir par défaut, densités |
 | `src/client/src/features/genmap/data/roomTypes.json` | Bibliothèque des types de pièces |
@@ -1496,3 +1496,307 @@ Conséquences :
 **Fait (12/11/2026)** :
 - M1 : banc en place, 66 configurations × 40 graines, environ 4 minutes. Référence : 2 268 / 2 640 plans aboutis, empreinte totale `437a2c4e…`.
 - M2 : `generate.js` passe de 1 710 à 636 lignes (contrat public, construction des pièces et des liens, niveau, bâtiment) ; neuf modules dans `tools/engine/` (de 25 à 326 lignes). Seul ajustement : `rectCentre`, déclarée en bas du fichier et utilisée plus haut, rejoint `grid.js`. Banc : **même empreinte totale avant et après** ; 661 tests verts. `attemptLevel` (environ 400 lignes) reste d'un seul tenant : la redécouper changerait sa logique, à faire au besoin pendant M3.
+
+---
+
+## 37. M3 Robustesse — diagnostic et premier correctif (12/11/2026)
+
+### 37.1 Le banc affiné
+
+- **Couloir en trop** (remplace la « plus grande zone de couloir », qui comptait aussi les couloirs voulus du traversant et de la galerie) : cases de couloir qui ne sont sur aucun plus court chemin entre la racine (porte d'entrée, escalier d'arrivée) et une porte ou un escalier donnant sur le réseau, élargi à la largeur du couloir. Un dégagement atteint par une pièce seulement est tout entier en trop. Le banc donne la plus grande zone en trop d'un seul tenant, et la graine du pire plan.
+- **Échecs structurels** marqués `*` (programme trop chargé, bâtiment trop grand) : aucune graine ne peut réussir, ce ne sont pas des défauts du moteur.
+- **Étapes en échec** des tentatives dans le rapport JSON, pour le diagnostic.
+- **Plan en texte** : `npm run genmap:bench -- --show=manor:1777` (ou `--show=manor:1777:couloir 1`) affiche chaque niveau, une lettre par pièce, `.` couloir utile, `#` couloir en trop, `=` escalier.
+
+### 37.2 Diagnostic
+
+Tri des configurations sous 40 / 40 :
+
+| Cause | Configurations | Nature |
+|---|---|---|
+| **Restes que personne ne prend**, laissés en couloir puis refusés comme couloir trop large (étape `width`) | manoir couloir 1 (27 échecs), manoir × 1,2 (18), entrepôt couloir 1 (2) | Défaut du moteur : c'est le « grand reste » (§29) |
+| **Schéma imposé qui ne va pas au preset** (étape `rooms` / `scheme`) | auberge traversant 0 / 40 et galerie 9 / 40, tour traversant et galerie 0 / 40, maison galerie 32 / 40, manoir galerie 27 / 40 | Attendu en partie : la page permet d'imposer un schéma que le preset ne déclare pas (une tour de 7 × 7 n'a pas de couloir traversant) |
+| **Bâtiment rétréci de 20 %** | auberge × 0,8 (2 / 40, pièce maîtresse qui ne tient plus), maison × 0,8 (0 / 40, trop chargé), manoir × 0,8 (9 / 40) | Surtout structurel : le programme du preset ne tient plus |
+| **Bâtiment agrandi de 20 %**, tour | tour × 1,2 (0 / 40, trop grand) | Structurel |
+
+Plans aboutis mais médiocres : avec les réglages des presets, jusqu'à 16 à 20 cases de couloir en trop d'un seul tenant (manoir, lieu de culte, entrepôt), jusqu'à 39 en × 1,2. Deux formes reviennent :
+1. **une bande d'une case le long d'un mur extérieur, devant plusieurs pièces** : aucune pièce ne peut la prendre entière (la règle des restes du §6.1 exige qu'une seule pièce prenne toute la zone) ;
+2. **un vrai grand reste** : une zone que les pièces voisines ne peuvent pas prendre sans sortir de leurs tailles ou de leurs proportions (lieu de culte : bande de 2 cases au-dessus des chapelles ; entrepôt : coin de 12 à 20 cases au bout du hall).
+
+### 37.3 Premier correctif : partage des restes
+
+Un reste qu'aucune pièce ne peut prendre entier est **partagé** : chaque pièce rectangulaire voisine avance d'un côté entier pris dans le reste, dans ses proportions et sous sa taille maximale + 25 % (la marge déjà admise pour un reste, D-1). On recommence tant qu'une pièce avance ; ce qui reste suit la règle habituelle (débarras s'il est petit, sinon couloir). En contour libre, le retrait d'un angle reste prioritaire. Aucun changement de règle fonctionnelle : c'est l'application de « les restes vont aux pièces voisines » à plusieurs pièces à la fois.
+
+Mesure (40 graines, 66 configurations) : 2 268 → **2 277** plans aboutis ; manoir couloir 1 : 13 → **19** ; manoir × 1,2 : 22 → 25 ; couloir en trop moyen en baisse presque partout (auberge × 1,2 : 7,7 → 4,7 ; entrepôt × 1,2 : 7,8 → 5,2 ; lieu de culte × 1,2 : pire cas 39 → 30). Recul : manoir en équilibré et en aéré, 40 → 39. 661 tests verts.
+
+### 37.4 Questions
+
+| # | Question | Proposition | Réponse MJ |
+|---|---|---|---|
+| GR-1 | Que devient un grand reste que les voisines ne peuvent pas prendre ? | Dans l'ordre : (1) une **pièce de complément** du réservoir du preset, pour ce niveau, dont la taille et les proportions vont à la forme du reste et qui peut être desservie là où elle est (la graine choisit parmi celles qui vont) ; (2) à défaut, une **réserve** (type générique de rangement, comme le débarras mais plus grand) rattachée à une pièce voisine qui l'accepte ; (3) en dernier, le couloir, comme aujourd'hui. | |
+| GR-2 | Pièce de complément ajoutée « par la place » | Elle compte dans le programme affiché du plan comme les annexes imposées par la place (§31), sans être signalée à part. | |
+| GR-3 | Schéma imposé qui ne va pas au preset | Ne plus le compter comme un défaut dans l'objectif de robustesse (R-2) : seuls comptent les schémas que le preset déclare. Dans la page, garder la liste complète (outil de comparaison) ou ne proposer que les schémas du preset + « Libre » ? Ma reco : ne proposer que ceux du preset + Libre, la page n'étant plus un banc d'essai. | |
+| GR-4 | Dimensions | Les dimensions × 0,8 sortent de l'objectif (le programme ne tient plus) ; garder × 1,2, qui fait apparaître les grands restes. | |
+
+> **Réponses (chat, 12/11/2026)** : GR-1 validé dans cet ordre, avec un ajout du MJ : **déplacer une pièce, si possible, pour manger l'espace**. GR-2 à GR-4 : recos suivies.
+
+### 37.5 Règle du grand reste — mise en œuvre (12/11/2026)
+
+Un reste qu'aucune pièce ne prend entier passe, dans l'ordre (après le retrait d'un angle en contour libre) :
+1. **Partage** (§37.3) : les pièces voisines avancent chacune d'un côté entier pris dans le reste.
+2. **Glissement** (ajout du MJ) : une pièce rectangulaire voisine glisse dans le reste, d'autant de rangées que le reste en a devant elle ; la bande qu'elle libère derrière elle doit être prise en entier ou partagée par une autre voisine, sinon on annule. La pièce garde ses contacts : le réseau si elle le touchait, l'extérieur s'il lui est obligatoire, ses voisines imposées, ses annexes, les pièces qui ont besoin d'elle ; elle ne touche aucun type interdit. Ne glissent pas : l'entrée et les pièces à porte dehors obligatoire, les pièces ouvertes, celles qui ont reçu un palier. Le glissement passe avant l'ajout d'une pièce : il garde le programme intact.
+3. **Pièce de complément** : une pièce du réservoir du preset possible à ce niveau (ni structurante, ni à ciel ouvert, ni ouverte, ni annexe, ni à porte dehors obligatoire), qui a la taille, les proportions et la forme du reste, et y est desservie (sur le réseau hors densité dense ; contre une pièce en dense), voisinages respectés ; la graine choisit parmi celles qui vont.
+4. **Réserve** (type `storeroom`), seulement si le reste dépasse la taille d'un débarras, dans ses proportions et sous sa taille maximale + 25 %.
+5. Sinon, couloir, comme avant (débarras ensuite s'il est petit et isolé).
+
+Un reste de forme irrégulière (en U, en escalier, autour d'un escalier) : la pièce de complément ou la réserve prend le plus grand rectangle qui lui va, le bout restant repasse par la règle. Avec un couloir, une pièce n'est ajoutée qu'une fois le couloir élagué (elle ne doit pas s'appuyer sur un couloir provisoire). Une pièce ajoutée est marquée `fromSpace`, comme les annexes imposées par la place, numérotée à la suite des pièces de son type dans le bâtiment.
+
+**Page (GR-3)** : la circulation imposée ne propose plus que les schémas que le preset déclare pour tout le bâtiment (manoir : galerie, traversant ; lieu de culte et tour : enfilade), plus « Preset » et « Libre » ; changer de preset ramène au schéma du preset si le schéma imposé n'existe plus. **Banc (GR-4)** : mêmes schémas, plus de taille × 0,8 ; 46 configurations, environ 3 minutes.
+
+**Mesure** (40 graines, mêmes 46 configurations, avant / après la règle complète) : 1 751 → 1 752 plans aboutis. Couloir en trop, pire cas avec les réglages des presets : auberge 10, manoir 17, lieu de culte 17 → **10**, entrepôt 18 → **11**, maison 9, tour 10 ; moyennes de 1 à 3,5 cases. Manoir couloir 1 : 13 (référence du §36.10) → **25** / 40. Reculs : auberge en aéré 38 → 36, manoir × 1,2 27 → 25, manoir galerie 28 → 27. Test ajouté : une pièce posée dans un grand reste vient du réservoir ou est une réserve, dans ses tailles et sa forme. 1 382 tests verts, lint et build verts.
+
+**Objectif R-2** (30 / 40 pour toute variante proposée par la page, aucun reste de plus de 6 cases avec les réglages des presets) : **pas encore atteint**. Restent :
+- **Escalier qui ouvre dans un recoin** (manoir 1000, RDC : l'escalier de la cave ouvre du côté opposé au couloir, son palier et le passage qui le relie restent en couloir, 17 cases) : le côté ouvert d'un escalier posé à un niveau qui a un couloir devrait regarder le réseau, comme l'escalier qui monte regarde l'entrée (PA-2). C'est le cas de la « trappe isolée » du §33.
+- **Manoir** sous 30 / 40 en couloir 1 (25), en × 1,2 (25) et en galerie (27) : étape `width` (dégagement trop large) et placement des pièces.
+- Petits restes de 7 à 10 cases le long du réseau (auberge, maison, tour), sous la taille d'une réserve.
+
+### 37.6 Recoin enfermé et côté ouvert des escaliers (12/11/2026)
+
+Diagnostic du manoir 1000 : ce n'était pas l'escalier qui ouvrait du mauvais côté, mais un **recoin enfermé** de 17 cases entre l'étude, le cellier et la trappe, qui ne touche pas le réseau. La réserve exigeait d'être sur le réseau ; la proposition GR-1 la voulait « rattachée à une pièce voisine qui l'accepte ».
+- **Réserve rattachée** : quand le reste ne touche pas le réseau, la réserve devient l'annexe d'une pièce voisine qui accepte un débarras (on y entre par elle). Manoir 1000 : le recoin devient une réserve et deux débarras, plus de couloir en trop.
+- **Côté ouvert** : tout escalier droit posé à un niveau ouvre de préférence, à ce niveau, du côté de la racine (l'entrée au RDC, l'escalier d'arrivée ailleurs), sauf quand la règle d'axe du couloir de l'étage décide (CN-3). C'était déjà le cas de l'escalier qui monte du RDC (PA-2) ; cela vaut maintenant aussi pour l'escalier qui descend à la cave ou à la crypte.
+- **Hôte d'une réserve rattachée** : une pièce qui accepte d'ouvrir sur une réserve (ses accès, §23) ; une chambre, qui n'accepte que salle d'eau, dressing et débarras, n'en reçoit pas. Test de desserte : une annexe (hôte désigné) s'atteint par son hôte, pas par le réseau.
+- **Mesure** : 1 752 → **1 757** plans aboutis ; manoir couloir 1 : 25 → **31** / 40 (objectif atteint) ; pire couloir en trop avec les réglages des presets : auberge 10, manoir 16, lieu de culte 8, entrepôt 11, maison 9, tour 10. Restent sous 30 / 40 : manoir en galerie (27) et en × 1,2 (24) ; auberge en aéré 36. 662 tests verts.
+
+> **M3 clôturée (décision du MJ, 12/11/2026)** : le niveau atteint suffit pour l'instant ; on pourra la reprendre plus tard. Points ouverts laissés en l'état : manoir en galerie et en × 1,2 sous 30 / 40, petits restes de 7 à 10 cases le long du réseau, pire couloir en trop du manoir (16 cases) avec ses réglages.
+
+---
+
+## 38. Escaliers : plusieurs dispositions — phase 1 (12/11/2026)
+
+> Remarque du MJ : aujourd'hui il y a un escalier pour les étages et un escalier pour le sous-sol. Ce n'est pas toujours le cas : il peut y avoir plusieurs cages d'escalier pour les étages, ou un escalier unique qui dessert les étages et le sous-sol. Il n'y a pas un modèle unique à envisager.
+
+### 38.1 Aujourd'hui
+
+- Un preset déclare des **liens verticaux**, chacun entre **deux** niveaux (`floorFrom`, `floorTo`) : escalier RDC → étage 1, trappe RDC → sous-sol.
+- Le moteur **complète** : pour chaque étage en plus, un escalier qui prolonge le précédent dans la même cage (même emprise du RDC au dernier étage) ; un escalier de cave séparé si un sous-sol existe sans lien.
+- Un escalier qui monte et celui qui descend ne partagent jamais leur cage ; il n'y a jamais deux cages vers les étages ; le preset ne peut pas proposer plusieurs dispositions.
+
+### 38.2 Ce qui existe dans les bâtiments
+
+| Disposition | Exemples |
+|---|---|
+| **Cage unique**, du sous-sol au dernier étage | Maison de ville, immeuble, tour de garde |
+| **Cage des étages + accès à la cave séparé** (escalier, trappe) | Auberge, ferme, maison (aujourd'hui le seul modèle) |
+| **Escalier d'honneur + escalier de service** : le service va souvent de la cave aux combles, près de la cuisine ; l'honneur part du hall et s'arrête au premier ou au dernier étage | Manoir, hôtel particulier, château |
+| **Plusieurs cages pour des ailes** séparées | Grand bâtiment, caserne, hôpital |
+| **Accès partiel** : échelle de meunier vers les combles, escalier de mezzanine, escalier extérieur | Grange, entrepôt, moulin |
+
+### 38.3 Proposition
+
+- **Cage d'escalier** à la place du lien entre deux niveaux : une emprise, au même endroit à tous les niveaux qu'elle dessert, avec une **plage de niveaux** continue (`from` → `to` : sous-sol → dernier étage, RDC → étage 1…), un genre (droit, colimaçon, trappe, échelle) et une taille. Un escalier droit qui traverse un niveau est ouvert des deux côtés à ce niveau (comme aujourd'hui aux étages intermédiaires) ; la trappe et l'échelle ne desservent que deux niveaux.
+- **Plusieurs dispositions par preset**, tirées par la graine : le preset déclare une ou plusieurs listes de cages. Exemple pour le manoir : (a) escalier d'honneur RDC → dernier étage + trappe de cave ; (b) escalier d'honneur RDC → étage 1 + escalier de service sous-sol → dernier étage. Le moteur ne complète plus que ce qui manque pour relier tous les niveaux (comme aujourd'hui).
+- **Préférences de place** par cage : `near` (près d'un type de pièce : le service près de la cuisine, l'honneur dans ou contre le hall) ; deux cages vers les mêmes niveaux s'éloignent l'une de l'autre (pour desservir le bâtiment, pas se doubler).
+- **Escalier dans une pièce** (hall, salon) : c'est la notion d'élément du §15, toujours reportée ; la cage reste une cage fermée pour l'instant.
+- **Colimaçon partout** (remarque du MJ) : le colimaçon n'est pas réservé à la tour (escalier de service d'un manoir, tourelle d'escalier, accès aux combles, clocher). Une cage, quelle que soit la disposition, peut être droite ou en colimaçon ; le colimaçon garde ses règles du §34 (cage carrée, une ouverture par niveau, de préférence contre un mur extérieur), y compris quand il descend au sous-sol.
+
+### 38.4 Questions
+
+| # | Question | Proposition | Réponse MJ |
+|---|---|---|---|
+| ST-1 | Cage d'escalier avec plage de niveaux | Remplace le lien entre deux niveaux ; les presets actuels se convertissent tels quels (même plan attendu, à la graine près). | |
+| ST-2 | Qui choisit la disposition ? | Le preset en déclare une ou plusieurs, la graine tire ; plus tard, l'éditeur de presets (M6) permet de les composer. Pas de choix dans la page pour l'instant. | |
+| ST-3 | Escalier de service près de la cuisine | Préférence `near` par cage (types de pièces), pas une obligation. | |
+| ST-4 | Deux cages vers les mêmes niveaux | Elles s'éloignent l'une de l'autre (préférence : au moins la moitié de la longueur du bâtiment entre elles). | |
+| ST-5 | Dispositions des presets actuels | Auberge : cage RDC → étages (+ trappe si sous-sol). Manoir : (a) et (b) ci-dessus, l'escalier de service pouvant être droit ou en colimaçon. Maison : cage unique sous-sol → étages, ou cage des étages + escalier de cave. Lieu de culte : escalier de crypte seul. Tour : colimaçon unique (inchangé). Entrepôt : escalier de mezzanine. | |
+| ST-6 | Quand ? | Dans le lot « Moteur », juste après la robustesse (M3) et avant la bibliothèque (M4) : elle touche la pose des structurants et le format des presets que l'éditeur (M6) exposera. | |
+| ST-7 | Genre d'une cage | Droit ou colimaçon pour toute cage, déclaré par le preset ; une disposition peut laisser la graine choisir entre les deux (« escalier de service droit ou à vis »). | |
+
+> **Réponses (chat, 12/11/2026)** : ST-1 oui ; ST-2 reco (réponse notée « 3 », lue comme ST-2) ; ST-3 oui, **en préférence, pas en obligation : il ne faut pas retrouver systématiquement l'escalier de service contre la cuisine** ; ST-4 oui, à voir ce que ça donne ; ST-5 reco ; ST-6 maintenant ; ST-7 reco.
+
+### 38.5 Spécification technique — phase 2
+
+**Format du preset** : `stairs` remplace `verticalLinks`. C'est une liste de **dispositions** ; la graine en tire une. Une disposition liste ses cages.
+
+```json
+"stairs": [
+  { "cages": [
+      { "label": "Escalier d'honneur", "from": "ground", "to": "top", "kind": "straight", "size": 6, "near": ["hall"] },
+      { "label": "Trappe de cave", "from": "basement", "to": "ground", "kind": "trap", "size": 2 } ] },
+  { "cages": [
+      { "label": "Escalier d'honneur", "from": "ground", "to": "1", "kind": "straight", "size": 6, "near": ["hall"] },
+      { "label": "Escalier de service", "from": "basement", "to": "top", "kind": ["straight", "spiral"], "size": 6, "near": ["kitchen"] } ] }
+]
+```
+
+| Champ | Sens |
+|---|---|
+| `from`, `to` | Plage de niveaux : `basement`, `ground`, `top` (dernier étage) ou un numéro. Rognée aux niveaux qui existent (sans sous-sol, une cage `basement` → `top` part du RDC) ; une cage qui ne dessert plus deux niveaux disparaît |
+| `kind` | `straight` (droit, orienté), `spiral` (colimaçon, §34), `trap` (trappe, deux niveaux seulement) ; une liste = la graine choisit |
+| `size` | Emprise en cases (6 = 2 × 3 ; colimaçon : carré de 4 ou 9) |
+| `near` | Types de pièces que la cage attire (ST-3), en préférence |
+
+**Moteur**
+- Une cage devient, en interne, une suite de liens d'un niveau au suivant qui **partagent la même emprise** (généralisation de l'escalier qui « prolonge » celui du dessous, §20, qui ne marchait que vers le haut). La cage est posée au premier niveau traité qu'elle dessert ; un escalier droit qui traverse un niveau y est ouvert des deux côtés, comme aujourd'hui aux étages intermédiaires ; le colimaçon garde une ouverture par niveau.
+- **Complément** : si un niveau n'est relié à aucun autre, la cage qui dessert le niveau voisin est prolongée jusqu'à lui (la plus longue, droite de préférence) ; un sous-sol sans cage reçoit un escalier de cave, comme aujourd'hui.
+- **`near` (ST-3)** : pour chaque cage, la graine décide si l'attirance joue pour ce plan (probabilité `nearChance` dans `engine.json`, proposée à 0,6) ; si oui, la première pièce d'un type attiré, au niveau où elle est posée, cherche de préférence une place contre la cage ou son palier. Les pièces étant posées après les structurants, c'est la pièce qui vient vers la cage, pas l'inverse.
+- **Deux cages vers les mêmes niveaux (ST-4)** : la seconde se pose de préférence loin de la première (distance entre centres maximale parmi les places possibles).
+- **Sortie inchangée** : un lien par cage et par niveau (`links`, avec `targets`, `sides`, `kind`), comme aujourd'hui ; le rendu SVG ne change pas, sauf la trappe (dessinée comme aujourd'hui l'escalier carré).
+
+**Presets (ST-5)** : auberge (cage RDC → dernier étage + trappe si sous-sol), manoir (les deux dispositions ci-dessus), maison (cage unique sous-sol → dernier étage, ou cage des étages + escalier de cave), lieu de culte (escalier de crypte), tour (colimaçon RDC → dernier étage), entrepôt (escalier de mezzanine).
+
+**Page** : la section « Liens verticaux » du programme liste les dispositions (« Disposition 1 : … ; disposition 2 : … »).
+
+**Tests** : une cage du sous-sol au dernier étage a la même emprise à tous ses niveaux et est ouverte des deux côtés aux niveaux traversés ; les deux dispositions du manoir apparaissent sur une série de graines ; un colimaçon qui descend au sous-sol ; tous les niveaux reliés ; `near` : la cuisine touche l'escalier de service sur une partie des graines, pas sur toutes. Le banc mesure le reste ; les empreintes changent (nouveaux tirages).
+
+**Contrat (§11.3)** : `program.verticalLinks` devient `program.stairs` (dispositions résolues) ; `generate()` et la forme du plan ne changent pas.
+
+### 38.6 Mise en œuvre (12/11/2026)
+
+- **Format** comme au §38.5, plus : `size` peut être donnée par genre quand la graine choisit le genre (`{ "straight": 6, "spiral": 4 }` : un colimaçon de 6 cases n'existe pas, sa cage est carrée).
+- **Moteur** : disposition, genre et attirance tirés une fois par graine, sur un tirage à part ; chaque cage devient une suite de liens qui partagent son emprise ; une cage posée à un niveau est reprise telle quelle aux autres. Les paliers de toutes les cages d'un niveau sont réservés, pas seulement ceux de l'escalier d'arrivée ; un colimaçon traversé sans y arriver ouvre de préférence vers la racine. **Une cage qui traverse un niveau a deux ouvertures : chacune est reliée au couloir** (sinon la seconde devenait un débarras). Complément : un étage non desservi prolonge la cage qui arrive au niveau du dessous (droite de préférence) ; un sous-sol sans cage reçoit un escalier de cave.
+- **Éloignement (ST-4)** : la seconde cage cherche à s'éloigner de la première **jusqu'à la moitié de la longueur du bâtiment**. Sans plafond, le manoir à deux cages tombait à 34 / 40 ; plafonné : 37 / 40, cages à 11 cases l'une de l'autre en moyenne (8 sans préférence).
+- **Attirance (ST-3)** : active pour 60 % des plans (`nearChance`) ; la pièce attirée gagne un bonus quand elle touche la cage. Effet volontairement léger : sur 40 manoirs, le hall touche l'escalier d'honneur dans un plan sur quatre environ, la cuisine l'escalier de service dans un sur dix. Un bonus plus fort (cuisine dans un plan sur quatre) faisait tomber le manoir à 37 et 31 / 40 : gardé léger, à revoir si le MJ veut plus d'effet.
+- **Presets** : auberge (escalier RDC → dernier étage + trappe si sous-sol), manoir (honneur + trappe, ou honneur RDC → étage 1 + service sous-sol → dernier étage, droit ou à vis), maison (cage unique sous-sol → dernier étage, ou cage des étages + escalier de cave), lieu de culte (escalier de crypte), tour (colimaçon du sous-sol au dernier étage : il descend au sous-sol si on en ajoute un), entrepôt (escalier de mezzanine).
+- **Page** : la section « Escaliers » du programme liste les dispositions (plage de niveaux et genre de chaque cage).
+- **Tests** : les deux dispositions du manoir apparaissent ; une cage sous-sol → dernier étage garde son emprise et s'ouvre des deux côtés au RDC ; le colimaçon de la tour descend au sous-sol, une ouverture par niveau ; l'attirance joue sur une partie des plans seulement. Test du sous-sol (E2-6) : le couloir peut faire toute la largeur du palier d'un escalier droit ou d'un colimaçon, plus seulement une case. 1 391 tests verts, lint et build verts.
+- **Banc** (avant / après) : 1 757 → 1 744 plans aboutis. Le recul est tout entier au manoir, qui a maintenant deux cages une fois sur deux : réglages du preset 40 → 39, galerie 27 → **17**, couloir 1 31 → 30 ; couloir en trop en baisse (pire cas avec ses réglages 16 → 9). Les autres presets ne bougent pas. La galerie du manoir à deux cages (environ 5 / 40) est le point faible à reprendre avec la robustesse.
+
+---
+
+## 39. M4 Bibliothèque — classement des types (12/11/2026)
+
+> Consigne du MJ : « fais le tri directement, on regardera après ». Classement fait selon le modèle du §36.6 à §36.9, à relire.
+
+**Données**
+- `data/library.json` (nouveau) : les échelles et listes, dans l'ordre, avec leurs libellés : rôles, catégories, **époques** (antiquité, haut Moyen Âge, Moyen Âge, Renaissance, classique, industriel, moderne, contemporain, futur ; T-1), **rangs** (misérable, modeste, aisé, noble, princier ; T-3), traits (`magic`, `occult`, `advanced_tech` ; B2-4), familles, expositions.
+- `data/roomTypes.json` : chaque type gagne `role`, `category`, `era` (`{ from, to }`, une borne vide = ouverte, `null` = toutes les époques), `traits` (exigés ; aucun type actuel n'en exige), `rank` (`{ from, to }` ou `null`), `family`, `exposure` (`window` / `interior` / `any`) et `exposureRequired` (obligation, B2-9).
+- **Rien n'est encore lu par le moteur ni par la page** : même empreinte au banc avant et après (`e2001540…`). L'usage vient ensuite (36.9) : rôle à la place de la détection implicite des annexes, exposition et fenêtres dans le moteur, contexte du preset et filtre de l'éditeur.
+
+**Écart à T-6** : `living` (Séjour) n'est **pas** fusionné dans `living_room` (Salon). À la relecture des données, ce ne sont pas des doublons : le séjour est une pièce ouverte et prioritaire (circulation), le salon une pièce fermée qui cède des cases. Selon la règle du §36.7b (type distinct dès qu'il change plusieurs règles), ils restent deux types, réunis dans la famille « Pièce de séjour ».
+
+**Classement à relire** (trié par catégorie)
+
+| Type | Rôle | Catégorie | Époque | Rang | Famille | Exposition |
+|---|---|---|---|---|---|---|
+| Entrée | Circulation | Circulation | toutes | toutes |  | Indifférente |
+| Grand hall | Circulation | Circulation | Haut Moyen Âge → … | Noble → … |  | Indifférente |
+| Salle commune | Circulation | Vie et réception | Haut Moyen Âge → Moderne | Misérable → Aisé |  | Avec fenêtre |
+| Salon | Pièce | Vie et réception | Classique → … | Aisé → … | Pièce de séjour | Avec fenêtre |
+| Bibliothèque | Pièce | Vie et réception | Moyen Âge → … | Aisé → … |  | Avec fenêtre |
+| Salle à manger | Pièce | Vie et réception | Classique → … | Aisé → … |  | Avec fenêtre |
+| Petit salon | Pièce | Vie et réception | Classique → … | Aisé → … | Pièce de séjour | Avec fenêtre |
+| Boudoir | Pièce | Vie et réception | Classique → Moderne | Noble → … |  | Avec fenêtre |
+| Fumoir | Pièce | Vie et réception | Industriel → Moderne | Aisé → … |  | Indifférente |
+| Séjour | Circulation | Vie et réception | Moderne → … | Modeste → Aisé | Pièce de séjour | Avec fenêtre |
+| Chambre | Pièce | Repos | Moyen Âge → … | toutes |  | Avec fenêtre |
+| Chambre des maîtres | Pièce | Repos | Moyen Âge → … | Aisé → … |  | Avec fenêtre |
+| Dressing | Pièce adjointe | Repos | Classique → … | Aisé → … |  | Indifférente |
+| Dortoir | Pièce | Repos | toutes | toutes |  | Avec fenêtre |
+| Cuisine | Pièce | Service et entretien | toutes | toutes |  | Avec fenêtre |
+| Écurie | Pièce | Service et entretien | Antiquité → Moderne | Modeste → … |  | Indifférente |
+| Lavoir | Pièce | Service et entretien | Moyen Âge → Industriel | toutes | Linge | Indifférente |
+| Office | Pièce | Service et entretien | Renaissance → Moderne | Aisé → … |  | Indifférente |
+| Lingerie | Pièce | Service et entretien | Renaissance → … | Aisé → … | Linge | Indifférente |
+| Buanderie | Pièce | Service et entretien | Industriel → … | Modeste → … | Linge | Indifférente |
+| Garage | Pièce | Service et entretien | Moderne → … | Modeste → … |  | Indifférente |
+| Salle d'eau | Pièce | Eau et hygiène | Classique → … | Modeste → … | Salle d'eau | Indifférente |
+| Salle d'eau attenante | Pièce adjointe | Eau et hygiène | Industriel → … | Aisé → … | Salle d'eau | Indifférente |
+| WC | Pièce | Eau et hygiène | Industriel → … | Modeste → … | Salle d'eau | Indifférente |
+| Salle de bain | Pièce | Eau et hygiène | Industriel → … | Modeste → … | Salle d'eau | Indifférente |
+| Cellier | Pièce adjointe | Stockage | toutes | Modeste → … | Rangement | Indifférente |
+| Cave | Pièce | Stockage | toutes | Modeste → … |  | Indifférente |
+| Hall de stockage | Circulation | Stockage | toutes | toutes |  | Indifférente |
+| Réserve | Pièce | Stockage | toutes | toutes | Rangement | Indifférente |
+| Débarras | Pièce adjointe | Stockage | toutes | toutes | Rangement | Indifférente |
+| Bureau | Pièce | Travail et artisanat | Renaissance → … | Modeste → … | Bureau | Avec fenêtre |
+| Bureau du tenancier | Pièce | Travail et artisanat | Moyen Âge → Moderne | Modeste → … | Bureau | Indifférente |
+| Étude | Pièce | Travail et artisanat | Renaissance → … | Aisé → … | Bureau | Avec fenêtre |
+| Atelier | Pièce | Travail et artisanat | toutes | toutes |  | Avec fenêtre |
+| Vestiaire | Pièce | Travail et artisanat | Industriel → … | toutes |  | Indifférente |
+| Crypte | Pièce | Culte | Antiquité → … | toutes |  | Indifférente |
+| Nef | Circulation | Culte | Antiquité → … | toutes |  | Avec fenêtre |
+| Sacristie | Pièce | Culte | Moyen Âge → … | toutes |  | Indifférente |
+| Chapelle latérale | Circulation | Culte | Moyen Âge → … | toutes |  | Indifférente |
+| Baptistère | Pièce | Culte | Haut Moyen Âge → … | toutes |  | Indifférente |
+| Salle capitulaire | Pièce | Culte | Moyen Âge → … | toutes |  | Avec fenêtre |
+| Salle de garde | Pièce | Défense et détention | Haut Moyen Âge → … | toutes |  | Indifférente |
+| Armurerie | Pièce | Défense et détention | Haut Moyen Âge → … | toutes |  | Indifférente |
+| Poste de guet | Pièce | Défense et détention | toutes | toutes |  | Avec fenêtre (obligatoire) |
+| Quai de chargement | Circulation | Commerce | Moyen Âge → … | toutes |  | Indifférente |
+
+**Constats à la relecture**
+- **Trous d'époque** : la famille « Salle d'eau » n'a aucune variante avant le classique ; un manoir ou une auberge médiévale n'en aura donc pas (B2-8, voulu), mais il manque la **latrine** (garde-robe de château, Moyen Âge → Renaissance) citée par le MJ. De même rien pour la **chapelle privée** ou la **salle d'armes** d'un manoir noble ancien. À ajouter avec les presets de M7.
+- **Pièces modernes et futures** : seuls le séjour, le garage, la buanderie, le WC, la salle de bain et le vestiaire sont modernes ; aucune pièce contemporaine ou future propre (salle serveur, local technique, salle de surveillance…) : elles arriveront avec le preset moderne de M7.
+- **Traits** : aucun type n'exige encore la magie ou l'occulte ; l'atelier de mage, la salle d'invocation et la salle de rituel arriveront avec la tour de mage (M7).
+- **Exposition** : seul le poste de guet exige une fenêtre ; aucune pièce intérieure par nature dans la bibliothèque actuelle (chambre forte, cabinet secret à venir).
+
+### 39.1 Le classement lu par le moteur et la page (12/11/2026)
+
+- **Rôle** : le moteur reconnaît une pièce adjointe à son rôle (ou à un hôte désigné : débarras, réserve rattachée), et non plus à son accès obligatoire vers un autre type. Même résultat sur la bibliothèque actuelle.
+- **Contexte du preset** (§36.7a) : chaque preset déclare `context` = plage d'époque et époque de référence, traits acceptés et actifs par défaut, rang. Auberge : haut Moyen Âge → moderne, Moyen Âge, modeste. Manoir : Renaissance → moderne, classique, noble. Maison : industriel → futur, moderne, aisé. Lieu de culte : antiquité → futur, Moyen Âge. Tour : haut Moyen Âge → moderne, Moyen Âge. Entrepôt : Moyen Âge → futur, industriel. L'époque de référence est la première où toutes les pièces obligatoires existent : un preset ne perd rien par défaut.
+- **Résolution** (`resolvePreset(preset, types, { era, traits }, keep)`, §36.8) : une pièce de complément ou une annexe du réservoir hors contexte est écartée ; une pièce obligatoire hors contexte est retirée et signalée, sauf si l'utilisateur la garde (marquée anachronique) ; les annexes imposées par la place suivent aussi l'époque et le rang (pas de salle d'eau attenante dans une auberge modeste ni à la Renaissance).
+- **Familles** (L-6, B2-8) : une entrée `{ "family": "bath" }` tire sa variante parmi celles qui ont un sens dans le contexte, exemplaire par exemplaire ; une entrée sans hôte ne tire jamais une pièce adjointe ; aucune variante = pièce absente. La salle d'eau du réservoir de l'auberge et du manoir passe en famille : aucune au Moyen Âge, salle d'eau au classique, salle d'eau, salle de bain ou WC à partir du XIXᵉ.
+- **Classement corrigé** : le Séjour existe à toutes les époques (pièce à vivre), de misérable à aisé ; la « Salle de vie » de la tour, qui l'utilise, restait sinon écartée au Moyen Âge.
+- **Exposition** (B2-9) : au placement, une pièce qui veut une fenêtre gagne une note contre un mur extérieur, une pièce intérieure en perd ; une obligation refuse la position et se vérifie à la fin (étape `exposure`). La fenêtre ne compte pas au sous-sol.
+- **Fenêtres** (B2-10) : `floor.windows` = `{ x, y, side, room }` ; sur chaque mur extérieur d'un seul tenant d'au moins 2 cases d'une pièce qui veut une fenêtre : une au milieu, deux (au tiers et aux deux tiers) à partir de 6 cases ; jamais sur une porte ni au sous-sol. Rendu : le mur s'interrompt, un châssis fin le remplace.
+- **Page** : section « Époque » (les époques de la plage du preset) ; pièces retirées listées avec « Garder quand même » ; programme : famille affichée avec ses variantes, pièce gardée marquée « anachronique ». Les traits n'ont pas encore de commande : aucun preset n'en accepte (la tour de mage, M7).
+- **Tests** : retrait et « garder » au manoir Renaissance ; rien retiré à l'époque de référence ; variantes de la famille selon l'époque ; annexes imposées par la place selon l'époque et le rang ; fenêtres (pièce qui en veut, mur extérieur, ni porte ni sous-sol) ; poste de guet toujours fenêtré. 1 397 tests verts, lint et build verts.
+- **Banc** (avant / après) : 1 744 → **1 759** plans aboutis ; manoir 39 → 40 avec ses réglages, galerie 17 → **24**, × 1,2 25 → 29 (le réservoir du manoir classique pioche moins de pièces) ; maison : pire couloir en trop 9 → 5.
+- Reste de M4 : les nouveaux types (latrine, chapelle privée, pièces modernes, magiques) arrivent avec leurs presets (M7) ; le filtre de l'éditeur par contexte arrive avec l'éditeur (M6).
+
+---
+
+## 40. M5 Formes — gabarits L, T, U, croix latine (12/11/2026)
+
+> Décisions reprises : B-1 à B-6 (§16), T-4 (L, T, U, croix latine d'abord ; cercle demandé par le MJ ; croix grecque et haltère ensuite). Zones nommées (B-3, entrée au pied de la croix…) : plus tard.
+
+**Mise en œuvre**
+- **Contour à trois choix** (B-5) : `params.outline` = `rect` (défaut), `shape` (gabarit `params.shape`) ou `free` (contour libre, l'ancien `freeOutline`, toujours accepté). La largeur et la longueur restent celles du rectangle englobant.
+- **Gabarits** (`tools/engine/shapes.js`, proportions dans `data/shapes.json`, B-2) : L (encoche dans un angle), T (barre et pied centré), U (base et deux ailes, cour ouverte au milieu), croix latine (nef dans la grande dimension, transept pleine largeur près de la tête). Proportions et orientation tirées une fois par graine (tirage à part), chaque partie d'au moins 3 cases. Les cases hors forme sont retirées au RDC et au sous-sol avant toute génération ; les étages en héritent (et peuvent encore se resserrer, E2-7).
+- **Entrée** : sur un gabarit, contre un mur de la façade tirée, le mur continuant des deux côtés (jamais dans un angle, même rentrant). Sur un rectangle, rien ne change.
+- **Surface** : les contrôles « trop chargé » et « trop grand » comptent les cases du gabarit, pas le rectangle englobant.
+- **Preset** : le lieu de culte prend la croix latine par défaut, sur une enveloppe de 13 × 20 (au lieu de 10 × 16 en rectangle : le gabarit retire environ 40 % des cases).
+- **Page** : contour Rectangle / Gabarit / Libre ; avec Gabarit, choix de la forme ; changer de preset reprend son contour.
+- **Banc** : chaque preset est aussi essayé avec chaque gabarit, l'enveloppe agrandie de 25 % ; le lieu de culte aussi en rectangle. 70 configurations.
+- **Tests** : RDC conforme au gabarit (non rectangulaire), étages dedans, porte d'entrée sur un mur du gabarit (auberge en L et en T, entrepôt en U, lieu de culte en croix) ; même gabarit pour la même graine, proportions qui varient d'une graine à l'autre. Les tests « RDC rectangulaire » et « contour rectangle ou L » ne s'appliquent plus au contour imposé. 1 396 tests verts, lint et build verts.
+
+**Mesure** (40 graines, enveloppe × 1,25 sauf mention)
+
+| Preset | L | T | U | Croix latine |
+|---|---|---|---|---|
+| Auberge | 40 | 23 | 1 | 0 |
+| Manoir | 17 | 9 | 3 | 3 |
+| Lieu de culte | 39 | 39 | 17 | **39** (son défaut, 13 × 20) ; rectangle 40 |
+| Entrepôt | 40 | 39 | 23 | 30 |
+| Maison | 40 | 40 | 40 | 40 |
+| Tour | (trop grande en × 1,25) | 35 | — | 21 |
+
+À dimensions inchangées, les programmes calibrés sur un rectangle ne tiennent plus (auberge en T, U, croix : 0 / 40) : avec un gabarit, il faut agrandir l'enveloppe ; le message d'échec le propose déjà (« Largeur + 2 », « Longueur + 2 »).
+
+**Points faibles**
+- **Pièce maîtresse** (salle commune de l'auberge, nef, hall de stockage) : elle est posée comme un rectangle d'une part fixe du niveau ; dans un U ou une croix, aucun rectangle de cette taille ne tient → auberge en U et en croix presque toujours en échec. Piste : pièce maîtresse en L ou en T qui épouse le gabarit, ou part calculée sur la plus grande partie du gabarit.
+- **Couloirs de schéma** (galerie, traversant du manoir) : tracés comme dans un rectangle ; sur un gabarit, ils se coupent en morceaux → manoir faible partout. Piste : schéma qui suit l'axe du gabarit (galerie le long de la base du U, couloir dans le pied du T).
+- **U** : les deux ailes sont étroites ; c'est la forme la plus dure pour tout le monde.
+
+### 40.1 Cercle — questions
+
+> Demande du MJ : le cercle, pour les tours et les phares. Sur une grille carrée, un cercle est un disque pixelisé : ses cases du bord sont en escalier, et les pièces ne peuvent pas toutes être des rectangles ou des L.
+
+| # | Question | Proposition | Réponse MJ |
+|---|---|---|---|
+| CE-1 | Dessin du mur extérieur | Les cases restent des cases (le plan sert sur une grille de jeu), mais le mur extérieur est dessiné en **arc lissé** par-dessus le bord en escalier ; les cases coupées par l'arc restent jouables. | |
+| CE-2 | Forme des pièces | **Rectangle ou L rogné par le disque** : la pièce est un rectangle ou un L dont on retire les cases hors du cercle ; c'est le moteur actuel, avec un contrôle de forme assoupli au bord. Les secteurs (parts de tarte) demanderaient un autre moteur. | |
+| CE-3 | Dimensions | Cercle inscrit dans le carré de la plus petite dimension ; si largeur et longueur diffèrent, **ellipse** plus tard. | |
+| CE-4 | Petites tours | Une tour ronde de 7 à 9 cases de diamètre n'a souvent qu'une pièce par niveau autour de l'escalier à vis : c'est le comportement attendu, pas un échec. | |
+| CE-5 | Tour par défaut | La tour de garde passe en gabarit cercle par défaut une fois le cercle au point (diamètre 9) ; le carré reste au choix. | |
+
+> **Réponse (chat, 12/11/2026)** : CE-1 à CE-5 selon les propositions.
+
+### 40.2 Cercle — mise en œuvre (12/11/2026)
+
+- **Gabarit `circle`** : disque inscrit dans le carré de la plus petite dimension, centré ; une case en fait partie si son centre est dans le disque (CE-3). Les cases hors du disque sont **rognées** (`clip`) : à tous les niveaux, une pièce est un rectangle ou un L dont on retire ces cases (CE-2). La croissance des pièces, leurs ailes, le partage des restes et tous les contrôles de forme lisent la forme avec les cases rognées de leur rectangle englobant ; une amorce de pièce peut déborder sur elles.
+- **Dessin** (CE-1) : les cases restent des cases ; le mur extérieur est un cercle tracé par-dessus le bord en escalier, le dessin intérieur est rogné au cercle ; la porte d'entrée et les fenêtres sont reportées sur l'arc, à l'angle de leur arête. Le plan porte `floor.circle = { cx, cy, r }` (en cases).
+- **Tour de garde** (CE-5) : gabarit cercle par défaut, **diamètre 8** et non 9 : à 9, son programme ne remplit plus le disque (refus « trop grand ») ; à 7, l'entrée ne trouve plus de mur assez droit. Le carré (contour Rectangle) reste au choix. Une ou deux pièces par niveau autour de l'escalier à vis (CE-4).
+- **Tests** : la tour ronde suit le gabarit (RDC non rectangulaire, étages dedans, entrée sur le mur) ; chaque pièce est dans le disque et forme un rectangle ou un L avec ses cases rognées ; le test général des formes lit les cases rognées ; plage de dimensions de la tour : diamètre 8 seulement.
+- **Banc** (40 graines) : tour ronde 40 / 40 dans toutes ses variantes de densité, de schéma et de couloir ; lieu de culte et maison en cercle (enveloppe × 1,25) 40 / 40 ; auberge 16, manoir 2, entrepôt 0 (pièce maîtresse et hall de stockage, rectangles trop grands pour un disque). **La tour carrée ne tient plus en 8 × 8** (trop grande pour son programme) : en contour Rectangle, il faut revenir à 7 × 7. 2 444 / 3 040 plans aboutis sur les 76 configurations du banc.

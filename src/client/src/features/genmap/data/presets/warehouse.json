@@ -3,6 +3,7 @@
   "label": "Entrepôt / Dock",
   "layoutByLevel": { "ground": { "schemes": ["hub"], "hub": { "room": "storage_hall", "position": "centre", "share": [0.45,0.6] } } },
   "params": { "width": 16, "length": 12, "floors": 1, "basement": false, "density": "dense" },
+  "context": { "era": { "from": "middle_ages", "to": "future", "default": "industrial" }, "traits": { "accepted": [], "default": [] }, "rank": null },
   "rooms": [
     { "type": "loading_dock", "quantity": 1 },
     { "type": "storage_hall", "quantity": 1 },
@@ -16,7 +17,9 @@
     { "type": "workshop", "quantity": [0, 1] },
     { "type": "locker_room", "quantity": [0, 1] }
   ],
-  "verticalLinks": [
-    { "label": "Escalier de mezzanine", "floorFrom": "ground", "floorTo": "1", "sizeInCells": 6 }
+  "stairs": [
+    { "cages": [
+      { "label": "Escalier de mezzanine", "from": "ground", "to": "top", "kind": "straight", "size": 6 }
+    ] }
   ]
 }

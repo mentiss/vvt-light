@@ -107,7 +107,11 @@ describe.each(CASES)('generate, $preset, $density, contour libre $freeOutline, $
                 const w = Math.max(...xs) - Math.min(...xs) + 1, h = Math.max(...ys) - Math.min(...ys) + 1;
                 // Une petite annexe née d'un reste admet une marche d'une case (§31), comme une pièce
                 // qui a reçu le palier d'un escalier (§34, CO-7)
-                expect(shapeKind(room.cells, room.fromSpace || room.landing ? 1 : undefined)).not.toBeNull();
+                // Bâtiment rond (§40.1, CE-2) : la forme se lit avec les cases rognées par le disque
+                const clip = floor.circle ? new Set(floor.voids.map(key)) : new Set();
+                const filled = [...room.cells];
+                for (let y = Math.min(...ys); y <= Math.max(...ys); y++) for (let x = Math.min(...xs); x <= Math.max(...xs); x++) if (clip.has(`${x},${y}`)) filled.push([x, y]);
+                expect(shapeKind(filled, room.fromSpace || room.landing ? 1 : undefined)).not.toBeNull();
                 expect(room.cells.length).toBeGreaterThanOrEqual(type.sizeMin);
                 // sizeMax peut être dépassée pour absorber un reste, dans la limite de leftoverOverflow (§19, D-1)
                 expect(room.cells.length).toBeLessThanOrEqual(Math.floor(type.sizeMax * (1 + engine.leftoverOverflow)));
@@ -333,20 +337,24 @@ describe.each(CASES)('generate, $preset, $density, contour libre $freeOutline, $
             for (const floor of floors.filter(f => f.level >= 0)) {
                 const owners = ownership(floor);
                 const network = new Set([CORRIDOR, ...floor.rooms.filter(r => r.circulation).map(r => r.id)]);
-                for (const room of floor.rooms.filter(r => !r.circulation && typeOf(r).circulationAccess !== 'forbidden')) {
+                // Une annexe (hôte désigné, ex. réserve rattachée d'un grand reste, §37.6) s'atteint par son hôte
+                for (const room of floor.rooms.filter(r => !r.circulation && !r.hostId && typeOf(r).circulationAccess !== 'forbidden')) {
                     expect(room.cells.some(c => neighbours(c).some(n => network.has(ownerOf(owners, n))))).toBe(true);
                 }
             }
         });
     }
 
-    if (!variant.freeOutline) {
+    // Gabarit du preset (§40, lieu de culte en croix latine) : contour imposé, testé à part
+    const shaped = !variant.freeOutline && (variant.outline ?? params.outline) === 'shape';
+
+    if (!variant.freeOutline && !shaped) {
         it('garde le RDC rectangulaire', () => {
             for (const floor of grounds) expect(floor.voids).toEqual([]);
         });
     }
 
-    it('donne au RDC et aux étages un contour rectangle ou L (§13, O-4 ; §20, E2-7)', () => {
+    if (!shaped) it('donne au RDC et aux étages un contour rectangle ou L (§13, O-4 ; §20, E2-7)', () => {
         for (const floor of floors.filter(f => f.level >= 0)) {
             const voids = new Set(floor.voids.map(key));
             const building = [];
@@ -397,8 +405,9 @@ describe('generate, largeur maximale du couloir à 1', () => {
 describe('generate, plage de dimensions (§17, S-3)', () => {
     // Objectif × 0,9 à × 1,5 ; atteint aujourd'hui jusqu'à × 1,2 (au-delà, le réservoir ne suffit pas,
     // §18.4). Manoir : × 0,9 seulement, son étage échoue à × 1,2 (limite constatée, §20.3)
-    // Tour : × 0,9 seulement, son RDC (entrée, salle de garde) ne remplit pas un 8 × 8 (§34)
-    const SCALES = { manor: [0.9], tower: [0.9] };
+    // Tour ronde (§40.1) : diamètre 8 seulement ; à 7 l'entrée ne trouve pas de mur droit, à 9 et
+    // plus son programme ne remplit pas le disque (trop grand)
+    const SCALES = { manor: [0.9], tower: [1] };
     it.each(Object.keys(PRESETS))('%s aboutit de × 0,9 à × 1,2 de son enveloppe par défaut', (id) => {
         const { program: p, params: base } = PRESETS[id];
         for (const scale of SCALES[id] ?? [0.9, 1.2]) {
@@ -413,7 +422,8 @@ describe('generate, plage de dimensions (§17, S-3)', () => {
 describe('generate, réservoir de pièces de complément (§18.1)', () => {
     const optionalTypes = (id) => new Set(PRESETS[id].program.optionalRooms.map(r => r.id));
     const mandatoryTypes = (id) => new Set(PRESETS[id].program.rooms.map(r => r.id));
-    const pickedOf = (id, plan) => groundOf(plan).rooms.filter(r => optionalTypes(id).has(r.typeId) && !mandatoryTypes(id).has(r.typeId));
+    // Pioche avant génération seulement : une pièce posée dans un grand reste (`fromSpace`, §37) n'en est pas une
+    const pickedOf = (id, plan) => groundOf(plan).rooms.filter(r => !r.fromSpace && optionalTypes(id).has(r.typeId) && !mandatoryTypes(id).has(r.typeId));
 
     it('pioche peu au RDC quand le programme remplit déjà l\'enveloppe (auberge, taille par défaut)', () => {
         for (const seed of SEEDS.slice(0, 8)) {
@@ -421,6 +431,29 @@ describe('generate, réservoir de pièces de complément (§18.1)', () => {
             if (result.ok) expect(pickedOf('inn', result.plan).length).toBeLessThanOrEqual(1);
         }
     });
+
+    // Grand reste (§37, GR-1) : une pièce ajoutée par la place, hors annexes et débarras, vient du
+    // réservoir du preset ou est une réserve, et garde la taille et les proportions de son type
+    it('pose dans un grand reste une pièce du réservoir ou une réserve, dans ses tailles (§37)', () => {
+        let added = 0;
+        for (const id of ['inn', 'manor', 'temple', 'warehouse', 'house']) {
+            const { program: p, params: base } = PRESETS[id];
+            for (const seed of SEEDS.slice(0, 12)) {
+                const result = generate(p, { ...base, width: Math.round(base.width * 1.2), length: Math.round(base.length * 1.2), seed });
+                if (!result.ok) continue;
+                for (const room of result.plan.floors.flatMap(f => f.rooms).filter(r => r.fromSpace && !r.hostId)) {
+                    added++;
+                    const type = typeOf(room);
+                    expect(optionalTypes(id).has(room.typeId) || room.typeId === 'storeroom').toBe(true);
+                    expect(room.cells.length).toBeGreaterThanOrEqual(type.sizeMin);
+                    expect(room.cells.length).toBeLessThanOrEqual(Math.floor(type.sizeMax * (1 + engine.leftoverOverflow)));
+                    // Pièce qui a reçu le palier d'un escalier : bande d'une case admise (§34, CO-7)
+                    expect(shapeKind(room.cells, room.landing ? 1 : engine.minArm)).not.toBeNull();
+                }
+            }
+        }
+        expect(added).toBeGreaterThan(0);
+    }, 60_000);
 
     it('pioche des pièces de complément au RDC d\'un manoir plus grand', () => {
         const { program: p, params: base } = PRESETS.manor;
@@ -503,8 +536,10 @@ describe('generate, étages (§20)', () => {
             const result = generate(p, { ...base, seed });
             if (!result.ok) continue;
             const basement = result.plan.floors.find(f => f.level === -1);
-            // Seul le palier de l'escalier est du couloir (§24)
-            expect(basement.corridor.length).toBeLessThanOrEqual(1);
+            // Seul le palier de l'escalier est du couloir (§24) : une case devant une trappe, toute la
+            // largeur de l'ouverture devant un escalier droit ou un colimaçon (escalier de service, §38)
+            const landing = basement.links.reduce((n, l) => n + (l.sides ? l.sides.reduce((m, s) => m + (s === 'n' || s === 's' ? l.w : l.h), 0) : 1), 0);
+            expect(basement.corridor.length).toBeLessThanOrEqual(landing);
             expect(basement.voids.length).toBeGreaterThan(0);
         }
     });
@@ -605,6 +640,176 @@ describe('tour de garde et colimaçon (§34)', () => {
             expect(top.rooms.some(r => r.typeId === 'lookout')).toBe(true);
         }
     });
+});
+
+describe('cages d\'escalier à plusieurs dispositions (§38)', () => {
+    const rectOf = (l) => `${l.x},${l.y},${l.w},${l.h}`;
+    const touches = (room, link) => room.cells.some(([x, y]) => [[x + 1, y], [x - 1, y], [x, y + 1], [x, y - 1]]
+        .some(([nx, ny]) => nx >= link.x && nx < link.x + link.w && ny >= link.y && ny < link.y + link.h));
+
+    it('tire l\'une ou l\'autre disposition du manoir selon la graine', () => {
+        const { program: p, params: base } = PRESETS.manor;
+        const labels = SEEDS.slice(0, 16).map(seed => generate(p, { ...base, seed })).filter(r => r.ok)
+            .map(r => new Set(r.plan.floors.flatMap(f => f.links.map(l => l.label))));
+        expect(labels.some(s => s.has('Trappe de cave'))).toBe(true);
+        expect(labels.some(s => s.has('Escalier de service'))).toBe(true);
+    }, 60_000);
+
+    it('garde une cage du sous-sol au dernier étage au même endroit, ouverte des deux côtés aux niveaux traversés', () => {
+        const { program: p, params: base } = PRESETS.house;
+        let seen = 0;
+        for (const seed of SEEDS.slice(0, 12)) {
+            const result = generate(p, { ...base, basement: true, floors: 2, seed });
+            if (!result.ok) continue;
+            const ground = groundOf(result.plan);
+            const cage = ground.links.find(l => l.targets.includes(-1) && l.targets.includes(1));
+            if (!cage) continue;   // autre disposition : cage des étages + escalier de cave
+            seen++;
+            for (const floor of result.plan.floors) expect(floor.links.some(l => rectOf(l) === rectOf(cage))).toBe(true);
+            if (cage.sides) expect(cage.sides).toHaveLength(2);
+        }
+        expect(seen).toBeGreaterThan(0);
+    }, 60_000);
+
+    it('descend au sous-sol par le colimaçon de la tour, une ouverture par niveau', () => {
+        const { program: p, params: base } = PRESETS.tower;
+        const plans = SEEDS.slice(0, 8).map(seed => generate(p, { ...base, basement: true, seed })).filter(r => r.ok).map(r => r.plan);
+        expect(plans.length).toBeGreaterThan(0);
+        for (const plan of plans) {
+            const cages = plan.floors.map(f => f.links.find(l => l.kind === 'spiral'));
+            expect(cages.every(Boolean)).toBe(true);
+            expect(new Set(cages.map(rectOf)).size).toBe(1);
+            cages.forEach(l => expect(l.sides).toHaveLength(1));
+        }
+    }, 60_000);
+
+    it('attire le hall et la cuisine contre leur escalier sur une partie des plans seulement (ST-3)', () => {
+        const { program: p, params: base } = PRESETS.manor;
+        const pairs = [['hall', 'Escalier d\'honneur'], ['kitchen', 'Escalier de service']];
+        const contacts = Array.from({ length: 40 }, (_, i) => generate(p, { ...base, seed: 1000 + i * 37 })).filter(r => r.ok).map(r => groundOf(r.plan))
+            .flatMap(f => pairs.map(([type, label]) => [f.rooms.find(r => r.typeId === type), f.links.find(l => l.label === label)]))
+            .filter(([room, link]) => room && link)
+            .map(([room, link]) => touches(room, link));
+        expect(contacts.some(Boolean)).toBe(true);
+        expect(contacts.every(Boolean)).toBe(false);
+    }, 120_000);
+});
+
+describe('contexte du preset, familles, exposition (§36.6 à §36.8, §39)', () => {
+    const idsOf = (list) => list.map(r => r.id);
+
+    it('retire une pièce obligatoire hors de l\'époque choisie, sauf si l\'utilisateur la garde (anachronique)', () => {
+        const { removed, program: p } = resolvePreset(manor, roomTypes, { era: 'renaissance' });
+        expect(removed.map(r => r.id).sort()).toEqual(['dining_room', 'living_room']);
+        expect(idsOf(p.rooms)).not.toContain('living_room');
+        const kept = resolvePreset(manor, roomTypes, { era: 'renaissance' }, ['living_room']);
+        expect(kept.removed.map(r => r.id)).toEqual(['dining_room']);
+        expect(kept.program.rooms.find(r => r.id === 'living_room').anachronic).toBe(true);
+    });
+
+    it('ne retire rien à l\'époque de référence des presets', () => {
+        for (const preset of [inn, manor, temple, warehouse, house, tower]) expect(resolvePreset(preset, roomTypes).removed).toEqual([]);
+    });
+
+    it('tire la variante d\'une famille selon l\'époque, sans pièce adjointe hors hôte ; aucune variante = pièce absente', () => {
+        const bathOf = (era) => resolvePreset(inn, roomTypes, { era }).program.optionalRooms.find(r => r.family === 'bath');
+        expect(bathOf('middle_ages')).toBeUndefined();
+        expect(idsOf(bathOf('classical').variants)).toEqual(['washroom']);
+        expect(idsOf(bathOf('modern').variants).sort()).toEqual(['bathroom', 'toilet', 'washroom']);
+    });
+
+    it('n\'impose par la place que des annexes de l\'époque et du rang (salle d\'eau attenante : XIXᵉ, aisé)', () => {
+        const annexes = (preset, era) => resolvePreset(preset, roomTypes, { era }).program.spaceAnnexTypes.map(t => t.id);
+        expect(annexes(manor, 'renaissance')).not.toContain('ensuite');
+        expect(annexes(manor, 'modern')).toContain('ensuite');
+        expect(annexes(inn, 'modern')).not.toContain('ensuite');   // auberge de rang modeste
+    });
+
+    it('perce les fenêtres sur les murs extérieurs des pièces qui en veulent, jamais sur une porte ni au sous-sol', () => {
+        const typeExposure = new Map(roomTypes.map(t => [t.id, t.exposure]));
+        const { program: p, params: base } = PRESETS.manor;
+        let windows = 0;
+        for (const seed of SEEDS.slice(0, 6)) {
+            const result = generate(p, { ...base, seed });
+            if (!result.ok) continue;
+            for (const floor of result.plan.floors) {
+                if (floor.level < 0) expect(floor.windows).toEqual([]);
+                const doorEdges = new Set(floor.doors.map(d => `${d.x},${d.y},${d.side}`));
+                for (const w of floor.windows) {
+                    windows++;
+                    const room = floor.rooms.find(r => r.id === w.room);
+                    expect(typeExposure.get(room.typeId)).toBe('window');
+                    expect(room.cells.some(([x, y]) => x === w.x && y === w.y)).toBe(true);
+                    expect(doorEdges.has(`${w.x},${w.y},${w.side}`)).toBe(false);
+                    const [dx, dy] = { n: [0, -1], e: [1, 0], s: [0, 1], w: [-1, 0] }[w.side];
+                    const outside = ownership(floor);
+                    expect(ownerOf(outside, [w.x + dx, w.y + dy])).toBe(OUTSIDE);
+                }
+            }
+        }
+        expect(windows).toBeGreaterThan(0);
+    }, 60_000);
+
+    it('donne toujours une fenêtre au poste de guet (exposition obligatoire)', () => {
+        const { program: p, params: base } = PRESETS.tower;
+        for (const seed of SEEDS.slice(0, 6)) {
+            const result = generate(p, { ...base, seed });
+            if (!result.ok) continue;
+            const top = result.plan.floors.find(f => f.level === base.floors);
+            const lookout = top.rooms.find(r => r.typeId === 'lookout');
+            expect(top.windows.some(w => w.room === lookout.id)).toBe(true);
+        }
+    }, 60_000);
+});
+
+describe('gabarits du bâtiment (§16, §40)', () => {
+    const insideOf = (floor) => {
+        const voids = new Set(floor.voids.map(key));
+        const cells = [];
+        for (let y = 0; y < floor.length; y++) for (let x = 0; x < floor.width; x++) if (!voids.has(`${x},${y}`)) cells.push(`${x},${y}`);
+        return new Set(cells);
+    };
+    const cases = [['inn', 'L', 15, 12], ['inn', 'T', 15, 12], ['warehouse', 'U', 20, 15], ['temple', 'latin_cross', 13, 20], ['tower', 'circle', 8, 8]];
+
+    it('rogne au cercle les pièces d\'une tour ronde : chacune est un rectangle ou un L amputé de cases hors du disque (CE-2)', () => {
+        const { program: p, params: base } = PRESETS.tower;
+        const plans = SEEDS.slice(0, 8).map(seed => generate(p, { ...base, seed })).filter(r => r.ok).map(r => r.plan);
+        expect(plans.length).toBeGreaterThan(0);
+        for (const floor of plans.flatMap(plan => plan.floors)) {
+            const { cx, cy, r } = floor.circle;
+            const clip = new Set(floor.voids.map(key));
+            for (const room of floor.rooms) {
+                room.cells.forEach(([x, y]) => expect((x + 0.5 - cx) ** 2 + (y + 0.5 - cy) ** 2).toBeLessThanOrEqual(r * r));
+                const xs = room.cells.map(c => c[0]), ys = room.cells.map(c => c[1]);
+                const filled = [...room.cells];
+                for (let y = Math.min(...ys); y <= Math.max(...ys); y++) for (let x = Math.min(...xs); x <= Math.max(...xs); x++) if (clip.has(`${x},${y}`)) filled.push([x, y]);
+                expect(shapeKind(filled, room.landing || room.fromSpace ? 1 : engine.minArm), `${room.label} niveau ${floor.level}`).not.toBeNull();
+            }
+        }
+    }, 60_000);
+
+    it.each(cases)('%s en %s : le RDC suit le gabarit, les étages restent dedans, l\'entrée ouvre sur un mur du gabarit', (preset, shape, width, length) => {
+        const { program: p, params: base } = PRESETS[preset];
+        const plans = SEEDS.slice(0, 8).map(seed => generate(p, { ...base, outline: 'shape', shape, width, length, seed })).filter(r => r.ok).map(r => r.plan);
+        expect(plans.length).toBeGreaterThan(0);
+        for (const plan of plans) {
+            const ground = groundOf(plan);
+            const inside = insideOf(ground);
+            expect(ground.voids.length).toBeGreaterThan(0);
+            expect(shapeKind([...inside].map(k => k.split(',').map(Number)))).not.toBe('rect');
+            for (const floor of plan.floors.filter(f => f.level !== 0)) for (const k of insideOf(floor)) expect(inside.has(k)).toBe(true);
+            const door = ground.doors.find(d => d.between.includes(OUTSIDE));
+            const [dx, dy] = { n: [0, -1], e: [1, 0], s: [0, 1], w: [-1, 0] }[door.side];
+            expect(inside.has(`${door.x + dx},${door.y + dy}`)).toBe(false);
+        }
+    }, 120_000);
+
+    it('tire le même gabarit pour la même graine, et des proportions différentes selon la graine', () => {
+        const { program: p, params: base } = PRESETS.temple;
+        const voidsOf = (seed) => JSON.stringify(groundOf(generate(p, { ...base, seed }).plan).voids);
+        expect(voidsOf(SEEDS[0])).toBe(voidsOf(SEEDS[0]));
+        expect(new Set(SEEDS.slice(0, 6).map(voidsOf)).size).toBeGreaterThan(1);
+    }, 60_000);
 });
 
 describe('shapeKind', () => {

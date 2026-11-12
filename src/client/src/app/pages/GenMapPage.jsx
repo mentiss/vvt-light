@@ -8,7 +8,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { applyTheme } from '../tools/utils.js';
 import useSlugGuard from '../hooks/useSlugGuard.js';
-import { generate, resolvePreset } from '@/features/genmap/tools/generate.js';
+import { generate, resolvePreset, SHAPES } from '@/features/genmap/tools/generate.js';
 import { renderSvg, floorLabel } from '@/features/genmap/tools/renderSvg.js';
 import roomTypes from '@/features/genmap/data/roomTypes.json';
 import inn from '@/features/genmap/data/presets/inn.json';
@@ -18,9 +18,20 @@ import warehouse from '@/features/genmap/data/presets/warehouse.json';
 import house from '@/features/genmap/data/presets/house.json';
 import tower from '@/features/genmap/data/presets/tower.json';
 import engine from '@/features/genmap/data/engine.json';
+import library from '@/features/genmap/data/library.json';
 
-// Presets disponibles (§5, §14.3), résolus une fois pour toutes
-const PRESETS = [inn, manor, temple, warehouse, house, tower].map(preset => ({ id: preset.id, label: preset.label, ...resolvePreset(preset, roomTypes) }));
+// Presets disponibles (§5, §14.3) : le programme est résolu selon le contexte choisi (§39), ici
+// seulement les réglages par défaut et le contexte déclaré
+const RAW_PRESETS = [inn, manor, temple, warehouse, house, tower];
+const PRESETS = RAW_PRESETS.map(preset => ({ id: preset.id, label: preset.label, raw: preset, ...resolvePreset(preset, roomTypes) }));
+
+// Époques proposées par un preset (§36.7a) : celles de sa plage, dans l'ordre de la bibliothèque
+const erasOf = (context) => {
+    if (!context.era) return [];
+    const ids = library.eras.map(e => e.id);
+    return library.eras.slice(ids.indexOf(context.era.from), ids.indexOf(context.era.to) + 1);
+};
+const familyLabel = (id) => library.families.find(f => f.id === id)?.label ?? id;
 
 const DENSITIES = [
     { id: 'dense',    label: 'Dense' },
@@ -34,10 +45,11 @@ const CORRIDOR_WIDTHS = [1, 2, 3];
 // Nombre d'étages au-dessus du RDC (§4.2)
 const FLOOR_COUNTS = [0, 1, 2, 3, 4];
 
-// Contour du bâtiment, expérimental (§13, O-4)
+// Contour du bâtiment (§16, B-5, §40) : rectangle, gabarit (forme choisie), libre (expérimental)
 const OUTLINES = [
-    { id: false, label: 'Rectangle' },
-    { id: true,  label: 'Libre' },
+    { id: 'rect',  label: 'Rectangle' },
+    { id: 'shape', label: 'Gabarit' },
+    { id: 'free',  label: 'Libre' },
 ];
 
 // Schéma de circulation (§18.2) : celui du preset, ou imposé pour comparer
@@ -49,9 +61,16 @@ const SCHEMES = [
     { id: 'enfilade', label: 'Enfilade' },
 ];
 const SCHEME_LABELS = { spine: 'traversant', gallery: 'galerie', enfilade: 'enfilade' };
+// On n'impose que les schémas que le preset déclare pour tout le bâtiment, ou aucun (§37, GR-3)
+const schemeOffered = (program, id) => id === 'preset' || id === 'free' || (program.layout?.schemes ?? []).includes(id);
 const LEVEL_NAMES = { ground: 'RDC', upper: 'étages', basement: 'sous-sol' };
 
 const FLOOR_LABELS = { ground: 'RDC', upper: 'Étage', basement: 'Sous-sol', any: 'Libre', top: 'Dernier étage' };
+
+// Cages d'escalier (§38.5) : plage de niveaux et genre
+const STAIR_LEVELS = { basement: 'sous-sol', ground: 'RDC', top: 'dernier étage' };
+const STAIR_KINDS = { straight: 'droit', spiral: 'colimaçon', trap: 'trappe' };
+const stairKind = (kind) => [kind ?? 'straight'].flat().map(k => STAIR_KINDS[k] ?? k).join(' ou ');
 
 // Messages d'échec et suggestions (§6.2)
 const FAILURES = {
@@ -88,10 +107,15 @@ const randomSeed = () => Math.floor(Math.random() * 1_000_000_000);
 const clampSide  = (value) => Math.min(MAX_SIDE, Math.max(MIN_SIDE, Math.round(value) || MIN_SIDE));
 const quantityOf = (q) => (Array.isArray(q) ? `${q[0]}–${q[1]}` : q);
 
-// Ligne du programme : pièce, quantité, tailles, étage
+// Ligne du programme : pièce (ou famille, variante tirée selon l'époque), quantité, tailles, étage ;
+// une pièce gardée hors de son époque est marquée anachronique (§36.8)
 const ProgramRoom = ({ room }) => (
     <li className="flex justify-between gap-2">
-        <span>{room.label} ×{quantityOf(room.quantity)}{room.per && ` par ${typeLabel(room.per).toLowerCase()}`}</span>
+        <span>
+            {room.variants ? `${familyLabel(room.family)} (${room.variants.map(v => v.label.toLowerCase()).join(', ')})` : room.label} ×{quantityOf(room.quantity)}
+            {room.per && ` par ${typeLabel(room.per).toLowerCase()}`}
+            {room.anachronic && <span className="text-muted"> · anachronique</span>}
+        </span>
         <span className="text-muted">
             {room.sizeMin}–{room.sizeMax} cases · {FLOOR_LABELS[room.floor] ?? `Étage ${room.floor}`}
         </span>
@@ -105,12 +129,18 @@ const Icon = ({ d, children }) => (
 const GenMapPage = ({ darkMode, onToggleDarkMode }) => {
     const mustReload = useSlugGuard();
     const [presetId,  setPresetId]  = useState(PRESETS[0].id);
-    const { label: presetLabel, program, params: defaults } = PRESETS.find(p => p.id === presetId);
+    const { label: presetLabel, raw, params: defaults, context } = PRESETS.find(p => p.id === presetId);
+    // Contexte (§36.7a, §36.8) : époque choisie, pièces gardées hors de leur époque
+    const [era,       setEra]       = useState(PRESETS[0].context.era?.default ?? null);
+    const [keep,      setKeep]      = useState([]);
+    // Résolution à chaque rendu : quelques dizaines d'entrées, rien à mémoriser
+    const { program, removed } = resolvePreset(raw, roomTypes, { era }, keep);
     const [width,     setWidth]     = useState(defaults.width);
     const [length,    setLength]    = useState(defaults.length);
     const [density,   setDensity]   = useState(defaults.density);
     const [maxWidth,  setMaxWidth]  = useState(engine.corridorMaxWidth);
-    const [freeOutline, setFreeOutline] = useState(false);
+    const [outline,   setOutline]   = useState(defaults.outline ?? 'rect');
+    const [shape,     setShape]     = useState(defaults.shape ?? SHAPES[0].id);
     const [scheme,    setScheme]    = useState('preset');
     const [floors,    setFloors]    = useState(defaults.floors);
     const [basement,  setBasement]  = useState(defaults.basement);
@@ -126,7 +156,7 @@ const GenMapPage = ({ darkMode, onToggleDarkMode }) => {
     const run = (seed, overrides = {}) => {
         const params = {
             ...defaults, width: clampSide(width), length: clampSide(length), density,
-            corridorMaxWidth: maxWidth, freeOutline, scheme, floors, basement, ...overrides, seed,
+            corridorMaxWidth: maxWidth, outline, shape, scheme, floors, basement, ...overrides, seed,
         };
         setWidth(params.width);
         setLength(params.length);
@@ -147,13 +177,20 @@ const GenMapPage = ({ darkMode, onToggleDarkMode }) => {
 
     // Changer de preset reprend ses dimensions et sa densité, et efface le plan affiché
     const selectPreset = (id) => {
-        const { params } = PRESETS.find(p => p.id === id);
+        const { params, context: next } = PRESETS.find(p => p.id === id);
         setPresetId(id);
+        setEra(next.era?.default ?? null);
+        setKeep([]);
         setWidth(params.width);
         setLength(params.length);
         setDensity(params.density);
         setFloors(params.floors);
         setBasement(params.basement);
+        // Contour du preset (§40) : son gabarit par défaut s'il en a un
+        setOutline(params.outline ?? 'rect');
+        if (params.shape) setShape(params.shape);
+        // Un schéma imposé que le nouveau preset ne déclare pas revient à celui du preset
+        if (!schemeOffered(PRESETS.find(p => p.id === id).program, scheme)) setScheme('preset');
         setLevel(0);
         setResult(null);
     };
@@ -207,6 +244,31 @@ const GenMapPage = ({ darkMode, onToggleDarkMode }) => {
                         </div>
                     </section>
 
+                    {/* Époque (§36.7a) : dans la plage du preset ; une pièce obligatoire qui n'existe pas à
+                        cette époque est retirée et signalée, l'utilisateur peut la garder (§36.8) */}
+                    {erasOf(context).length > 1 && (
+                        <section>
+                            <h2 className="vtt-section-title">Époque</h2>
+                            <div className="flex flex-wrap gap-2">
+                                {erasOf(context).map(e => (
+                                    <button key={e.id} type="button" className={`vtt-pill${era === e.id ? ' is-selected' : ''}`} onClick={() => setEra(e.id)}>
+                                        {e.label}
+                                    </button>
+                                ))}
+                            </div>
+                            {removed.length > 0 && (
+                                <ul className="mt-2 space-y-1 text-sm">
+                                    {removed.map(r => (
+                                        <li key={r.id} className="flex items-center justify-between gap-2">
+                                            <span className="text-muted">{r.label} retirée : n'existe pas à cette époque</span>
+                                            <button type="button" className="vtt-btn vtt-btn-sm" onClick={() => setKeep([...keep, r.id])}>Garder quand même</button>
+                                        </li>
+                                    ))}
+                                </ul>
+                            )}
+                        </section>
+                    )}
+
                     {/* Actions en haut du panneau (§18, P-4) */}
                     <div className="flex gap-2">
                         <button type="button" className="vtt-btn vtt-btn-primary flex-1" onClick={onGenerate}>Générer</button>
@@ -244,7 +306,7 @@ const GenMapPage = ({ darkMode, onToggleDarkMode }) => {
                         <div>
                             <span className="vtt-field-label">Circulation</span>
                             <div className="flex flex-wrap gap-2">
-                                {SCHEMES.map(s => (
+                                {SCHEMES.filter(s => schemeOffered(program, s.id)).map(s => (
                                     <button key={s.id} type="button" className={`vtt-pill${scheme === s.id ? ' is-selected' : ''}`} onClick={() => setScheme(s.id)}>
                                         {s.id === 'preset' ? `Preset (${presetSchemes})` : s.label}
                                     </button>
@@ -275,11 +337,21 @@ const GenMapPage = ({ darkMode, onToggleDarkMode }) => {
                             <span className="vtt-field-label">Contour</span>
                             <div className="vtt-segmented">
                                 {OUTLINES.map(o => (
-                                    <button key={o.label} type="button" className={`vtt-segment${freeOutline === o.id ? ' is-active' : ''}`} onClick={() => setFreeOutline(o.id)}>
+                                    <button key={o.id} type="button" className={`vtt-segment${outline === o.id ? ' is-active' : ''}`} onClick={() => setOutline(o.id)}>
                                         {o.label}
                                     </button>
                                 ))}
                             </div>
+                            {/* Gabarit : la largeur et la longueur restent celles du rectangle englobant (§40) */}
+                            {outline === 'shape' && (
+                                <div className="flex flex-wrap gap-2 mt-2">
+                                    {SHAPES.map(s => (
+                                        <button key={s.id} type="button" className={`vtt-pill${shape === s.id ? ' is-selected' : ''}`} onClick={() => setShape(s.id)}>
+                                            {s.label}
+                                        </button>
+                                    ))}
+                                </div>
+                            )}
                         </div>
                         <label className="block">
                             <span className="vtt-field-label">Graine (facultative)</span>
@@ -309,15 +381,21 @@ const GenMapPage = ({ darkMode, onToggleDarkMode }) => {
                     </details>
 
                     <details className="vtt-panel p-3">
-                        <summary className="vtt-section-title cursor-pointer mb-0">Liens verticaux</summary>
-                        <ul className="mt-3 space-y-1 text-sm">
-                            {program.verticalLinks.map(link => (
-                                <li key={link.label} className="flex justify-between gap-2">
-                                    <span>{link.label}</span>
-                                    <span className="text-muted">{link.kind === 'spiral' && 'colimaçon · '}{link.sizeInCells} cases</span>
-                                </li>
-                            ))}
-                        </ul>
+                        <summary className="vtt-section-title cursor-pointer mb-0">Escaliers</summary>
+                        {/* Dispositions du preset (§38.5) : la graine en tire une */}
+                        {program.stairs.map((disposition, i) => (
+                            <div key={i} className="mt-3 text-sm">
+                                {program.stairs.length > 1 && <p className="text-muted mb-1">Disposition {i + 1}</p>}
+                                <ul className="space-y-1">
+                                    {disposition.cages.map(cage => (
+                                        <li key={cage.label} className="flex justify-between gap-2">
+                                            <span>{cage.label}</span>
+                                            <span className="text-muted">{STAIR_LEVELS[cage.from] ?? `étage ${cage.from}`} → {STAIR_LEVELS[cage.to] ?? `étage ${cage.to}`} · {stairKind(cage.kind)}</span>
+                                        </li>
+                                    ))}
+                                </ul>
+                            </div>
+                        ))}
                     </details>
                 </aside>
 
@@ -352,7 +430,7 @@ const GenMapPage = ({ darkMode, onToggleDarkMode }) => {
                                     <>
                                         <button type="button" className="vtt-btn vtt-btn-sm" onClick={() => run(result.seed, { width: clampSide(width - 2) })}>Largeur −2</button>
                                         <button type="button" className="vtt-btn vtt-btn-sm" onClick={() => run(result.seed, { length: clampSide(length - 2) })}>Longueur −2</button>
-                                        <button type="button" className="vtt-btn vtt-btn-sm" onClick={() => { setFreeOutline(true); run(result.seed, { freeOutline: true }); }}>Contour libre</button>
+                                        <button type="button" className="vtt-btn vtt-btn-sm" onClick={() => { setOutline('free'); run(result.seed, { outline: 'free' }); }}>Contour libre</button>
                                     </>
                                 )}
                             </div>

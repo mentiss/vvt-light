@@ -3,6 +3,7 @@
   "label": "Auberge",
   "layoutByLevel": { "upper": { "schemes": ["spine"], "width": 1 }, "ground": { "schemes": ["hub"], "hub": { "room": "common_room", "position": "axis", "share": [0.4,0.55] } } },
   "params": { "width": 12, "length": 9, "floors": 1, "basement": false, "density": "dense" },
+  "context": { "era": { "from": "early_middle_ages", "to": "modern", "default": "middle_ages" }, "traits": { "accepted": [], "default": [] }, "rank": "modest" },
   "rooms": [
     { "type": "entrance",    "quantity": 1 },
     { "type": "common_room", "quantity": 1 },
@@ -17,9 +18,12 @@
     { "type": "laundry", "quantity": [0, 1] },
     { "type": "bedroom", "quantity": [0, 2] },
     { "type": "linen_room", "quantity": [0, 1] },
-    { "type": "washroom", "quantity": [0, 1] }
+    { "family": "bath", "quantity": [0, 1] }
   ],
-  "verticalLinks": [
-    { "label": "Escalier", "floorFrom": "ground", "floorTo": "1", "sizeInCells": 6 }
+  "stairs": [
+    { "cages": [
+      { "label": "Escalier", "from": "ground", "to": "top", "kind": "straight", "size": 6 },
+      { "label": "Trappe de cave", "from": "basement", "to": "ground", "kind": "trap", "size": 2 }
+    ] }
   ]
 }

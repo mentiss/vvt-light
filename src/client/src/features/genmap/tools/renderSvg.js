@@ -3,7 +3,7 @@
 // Rendu SVG d'un étage généré (spec_genmap.md §7) : style plan technique neutre,
 // sans fond. Murs tracés aux frontières entre propriétaires de cases (simple pointillé
 // entre deux espaces de circulation), cases retirées du bâtiment laissées vides, portes
-// en trait fin avec arc, escaliers hachurés, libellés, en-tête d'étage, échelle.
+// en trait fin avec arc, fenêtres (§39), escaliers hachurés, libellés, en-tête d'étage, échelle.
 // ─────────────────────────────────────────────────────────────────────────────
 
 import { CORRIDOR, OUTSIDE } from './generate.js';
@@ -49,6 +49,17 @@ const doorSymbol = ({ x, y, side }) => {
     const sweep = side === 's' || side === 'w' ? 1 : 0;
     return `<line x1="${hx}" y1="${hy}" x2="${lx}" y2="${ly}" />`
         + `<path d="M${lx} ${ly} A${r} ${r} 0 0 ${sweep} ${ex} ${ey}" stroke-dasharray="2 2" />`;
+};
+
+// Fenêtre (§39, B2-10) : le mur extérieur s'interrompt, un châssis fin le remplace
+const windowSymbol = ({ x, y, side }) => {
+    const [x1, y1, x2, y2] = edgePoints(x, y, side);
+    const horizontal = side === 'n' || side === 's';
+    const len = CELL * 0.7, depth = 6;
+    const cx = (x1 + x2) / 2, cy = (y1 + y2) / 2;
+    const [w, h] = horizontal ? [len, depth] : [depth, len];
+    return `<rect x="${cx - w / 2}" y="${cy - h / 2}" width="${w}" height="${h}" fill="#fff" stroke="#000" stroke-width="0.8" />`
+        + (horizontal ? `<line x1="${cx - w / 2}" y1="${cy}" x2="${cx + w / 2}" y2="${cy}" />` : `<line x1="${cx}" y1="${cy - h / 2}" x2="${cx}" y2="${cy + h / 2}" />`);
 };
 
 // Escalier en colimaçon (§34) : cercle inscrit dans la cage, marches rayonnantes autour d'un
@@ -180,17 +191,40 @@ export const renderSvg = (plan, floorIndex = 0) => {
     const scale = Math.min(5, width);
     const sy = HEADER + length * CELL + 26;
 
+    // Bâtiment rond (§40.1, CE-1) : les cases restent des cases, mais le mur extérieur est un arc
+    // tracé par-dessus le bord en escalier ; le dessin intérieur est rogné au cercle ; portes et
+    // fenêtres extérieures sont reportées sur l'arc, à l'angle de leur arête
+    const disc = floor.circle ? { x: PAD + floor.circle.cx * CELL, y: HEADER + floor.circle.cy * CELL, r: floor.circle.r * CELL } : null;
+    const onArc = ({ x, y, side }) => {
+        const [x1, y1, x2, y2] = edgePoints(x, y, side);
+        const a = Math.atan2((y1 + y2) / 2 - disc.y, (x1 + x2) / 2 - disc.x);
+        return { px: disc.x + disc.r * Math.cos(a), py: disc.y + disc.r * Math.sin(a), deg: a * 180 / Math.PI + 90 };
+    };
+    const arcMark = (edge, framed) => {
+        const { px, py, deg } = onArc(edge);
+        const len = CELL * (framed ? 0.7 : 0.85);
+        return `<g transform="rotate(${deg} ${px} ${py})"><rect x="${px - len / 2}" y="${py - 4}" width="${len}" height="8" fill="#fff" stroke="${framed ? '#000' : 'none'}" stroke-width="0.8" />`
+            + (framed ? `<line x1="${px - len / 2}" y1="${py}" x2="${px + len / 2}" y2="${py}" stroke="#000" stroke-width="0.8" />` : '') + '</g>';
+    };
+    const outsideDoors = disc ? floor.doors.filter(d => d.between.includes(OUTSIDE)) : [];
+    const inside = (content) => (disc ? `<g clip-path="url(#genmap-disc)">${content}</g>` : content);
+
     return `<svg xmlns="http://www.w3.org/2000/svg" width="${svgWidth}" height="${svgHeight}" viewBox="0 0 ${svgWidth} ${svgHeight}" font-family="Arial, Helvetica, sans-serif" fill="#000">`
-        + `<defs><pattern id="genmap-hatch" width="8" height="8" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><line x1="0" y1="0" x2="0" y2="8" stroke="#000" stroke-width="0.8" stroke-opacity="0.35" /></pattern></defs>`
+        + `<defs><pattern id="genmap-hatch" width="8" height="8" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><line x1="0" y1="0" x2="0" y2="8" stroke="#000" stroke-width="0.8" stroke-opacity="0.35" /></pattern>`
+        + (disc ? `<clipPath id="genmap-disc"><circle cx="${disc.x}" cy="${disc.y}" r="${disc.r}" /></clipPath>` : '') + `</defs>`
         + `<text x="${PAD}" y="${HEADER - 14}" font-size="16" font-weight="bold">${escapeXml(floorLabel(floor.level))}</text>`
-        + `<g fill="#000" fill-opacity="0.06">${cellRects(circulationCells)}</g>`
-        + `<g fill="url(#genmap-hatch)">${outdoorRooms.map(r => cellRects(r.cells)).join('')}${cellRects(unexcavated)}</g>`
-        + `<path d="${segments(grid)}" stroke="#000" stroke-opacity="0.12" stroke-width="0.5" fill="none" />`
-        + floor.links.map(link => linkSymbol(link, floor.level)).join('')
-        + `<path d="${segments(limits)}" stroke="#000" stroke-width="1" stroke-dasharray="4 3" fill="none" />`
-        + `<path d="${segments(interior)}" stroke="#000" stroke-width="2.5" stroke-linecap="square" fill="none" />`
-        + `<path d="${segments(exterior)}" stroke="#000" stroke-width="5" stroke-linecap="square" fill="none" />`
-        + `<g stroke="#000" stroke-width="1.2" fill="none">${floor.doors.filter(d => d.kind === 'door').map(doorSymbol).join('')}</g>`
+        + inside(`<g fill="#000" fill-opacity="0.06">${cellRects(circulationCells)}</g>`
+            + `<g fill="url(#genmap-hatch)">${outdoorRooms.map(r => cellRects(r.cells)).join('')}${cellRects(unexcavated)}</g>`
+            + `<path d="${segments(grid)}" stroke="#000" stroke-opacity="0.12" stroke-width="0.5" fill="none" />`
+            + floor.links.map(link => linkSymbol(link, floor.level)).join('')
+            + `<path d="${segments(limits)}" stroke="#000" stroke-width="1" stroke-dasharray="4 3" fill="none" />`
+            + `<path d="${segments(interior)}" stroke="#000" stroke-width="2.5" stroke-linecap="square" fill="none" />`)
+        + (disc
+            ? `<circle cx="${disc.x}" cy="${disc.y}" r="${disc.r}" stroke="#000" stroke-width="5" fill="none" />`
+                + outsideDoors.map(d => arcMark(d, false)).join('') + (floor.windows ?? []).map(w => arcMark(w, true)).join('')
+            : `<path d="${segments(exterior)}" stroke="#000" stroke-width="5" stroke-linecap="square" fill="none" />`
+                + `<g stroke="#000" stroke-width="0.8">${(floor.windows ?? []).map(windowSymbol).join('')}</g>`)
+        + `<g stroke="#000" stroke-width="1.2" fill="none">${floor.doors.filter(d => d.kind === 'door' && !(disc && d.between.includes(OUTSIDE))).map(doorSymbol).join('')}</g>`
         + floor.rooms.map(roomLabel).join('')
         + `<g stroke="#000" stroke-width="1.5" fill="none"><path d="M${PAD} ${sy}H${PAD + scale * CELL}M${PAD} ${sy - 5}V${sy + 5}M${PAD + scale * CELL} ${sy - 5}V${sy + 5}" /></g>`
         + `<text x="${PAD + scale * CELL + 8}" y="${sy + 4}" font-size="11">${scale} cases</text>`

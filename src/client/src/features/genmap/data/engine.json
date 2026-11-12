@@ -18,6 +18,7 @@
   "closetMaxSize": 9,
   "hubShare": [0.4, 0.6],
   "shrinkComfort": 0.25,
+  "nearChance": 0.6,
   "densities": {
     "dense":    { "corridorWidth": 0, "reach": 0, "extraDoorChance": 0.35 },
     "balanced": { "corridorWidth": 1, "reach": 5, "extraDoorChance": 0.15 },

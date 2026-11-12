@@ -3,6 +3,7 @@
   "label": "Manoir",
   "layout": { "schemes": ["gallery", "spine"], "width": 2 },
   "params": { "width": 16, "length": 12, "floors": 1, "basement": true, "density": "dense" },
+  "context": { "era": { "from": "renaissance", "to": "modern", "default": "classical" }, "traits": { "accepted": [], "default": [] }, "rank": "noble" },
   "rooms": [
     { "type": "entrance",       "quantity": 1 },
     { "type": "hall",           "quantity": 1 },
@@ -23,14 +24,20 @@
     { "type": "smoking_room", "quantity": [0, 1] },
     { "type": "bedroom", "quantity": [0, 2] },
     { "type": "boudoir", "quantity": [0, 1], "floor": "upper" },
-    { "type": "washroom", "quantity": [0, 1] },
+    { "family": "bath", "quantity": [0, 1] },
     { "type": "linen_room", "quantity": [0, 1] },
     { "type": "ensuite", "per": "master_bedroom", "quantity": [0, 1] },
     { "type": "dressing", "per": "master_bedroom", "quantity": [0, 1] },
     { "type": "ensuite", "per": "bedroom", "quantity": [0, 1] }
   ],
-  "verticalLinks": [
-    { "label": "Escalier",       "floorFrom": "ground", "floorTo": "1",        "sizeInCells": 6 },
-    { "label": "Trappe de cave", "floorFrom": "ground", "floorTo": "basement", "sizeInCells": 2 }
+  "stairs": [
+    { "cages": [
+      { "label": "Escalier d'honneur", "from": "ground", "to": "top", "kind": "straight", "size": 6, "near": ["hall"] },
+      { "label": "Trappe de cave", "from": "basement", "to": "ground", "kind": "trap", "size": 2 }
+    ] },
+    { "cages": [
+      { "label": "Escalier d'honneur", "from": "ground", "to": "1", "kind": "straight", "size": 6, "near": ["hall"] },
+      { "label": "Escalier de service", "from": "basement", "to": "top", "kind": ["straight", "spiral"], "size": { "straight": 6, "spiral": 4 }, "near": ["kitchen"] }
+    ] }
   ]
 }

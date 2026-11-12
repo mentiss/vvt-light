@@ -2,6 +2,7 @@
   "id": "house",
   "label": "Maison individuelle",
   "params": { "width": 10, "length": 8, "floors": 1, "basement": false, "density": "dense" },
+  "context": { "era": { "from": "industrial", "to": "future", "default": "modern" }, "traits": { "accepted": [], "default": [] }, "rank": "wealthy" },
   "rooms": [
     { "type": "entrance",       "quantity": 1 },
     { "type": "living",         "quantity": 1 },
@@ -19,7 +20,13 @@
     { "type": "ensuite", "per": "master_bedroom", "quantity": [0, 1] },
     { "type": "dressing", "per": "master_bedroom", "quantity": [0, 1] }
   ],
-  "verticalLinks": [
-    { "label": "Escalier", "floorFrom": "ground", "floorTo": "1", "sizeInCells": 6 }
+  "stairs": [
+    { "cages": [
+      { "label": "Escalier", "from": "basement", "to": "top", "kind": "straight", "size": 6 }
+    ] },
+    { "cages": [
+      { "label": "Escalier", "from": "ground", "to": "top", "kind": "straight", "size": 6 },
+      { "label": "Escalier de cave", "from": "basement", "to": "ground", "kind": "straight", "size": 4 }
+    ] }
   ]
 }

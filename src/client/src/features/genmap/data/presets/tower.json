@@ -2,7 +2,8 @@
   "id": "tower",
   "label": "Tour de garde",
   "layout": { "schemes": ["enfilade"] },
-  "params": { "width": 7, "length": 7, "floors": 3, "basement": false, "density": "dense" },
+  "params": { "width": 8, "length": 8, "floors": 3, "basement": false, "density": "dense", "outline": "shape", "shape": "circle" },
+  "context": { "era": { "from": "early_middle_ages", "to": "modern", "default": "middle_ages" }, "traits": { "accepted": [], "default": [] }, "rank": null },
   "rooms": [
     { "type": "entrance",   "quantity": 1 },
     { "type": "guard_room", "quantity": 1, "floor": "ground" },
@@ -16,7 +17,9 @@
     { "type": "storeroom", "quantity": [0, 3], "floor": "upper" },
     { "type": "living",    "quantity": [0, 1], "floor": "upper", "label": "Salle de vie" }
   ],
-  "verticalLinks": [
-    { "label": "Escalier à vis", "floorFrom": "ground", "floorTo": "1", "sizeInCells": 4, "kind": "spiral" }
+  "stairs": [
+    { "cages": [
+      { "label": "Escalier à vis", "from": "basement", "to": "top", "kind": "spiral", "size": 4 }
+    ] }
   ]
 }
