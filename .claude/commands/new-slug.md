@@ -26,7 +26,7 @@ Respecte la méthode en trois phases du CLAUDE.md racine. **N'écris aucun fichi
 ## Phase 2 — Spécification (à faire valider)
 
 Présente :
-- le schéma SQLite du slug (tables propres seulement, bâti sur `base.sql`) ;
+- le schéma SQLite du slug : copie de `base.sql` (le socle, jamais exécuté seul), puis ses colonnes et ses tables propres ;
 - les routes au-delà de `characters.js` et les éventuels handlers socket ;
 - la logique des 5 hooks de dés ;
 - l'arborescence des composants et le découpage de la fiche (voir « Organisation du code » plus bas) : fiche sur **un seul onglet** inspirée de la fiche papier, découpée en **sections** que la fiche joueur et la fiche MJ assemblent chacune à leur façon ; onglets et ordre (ex. Fiche · Journal · Historique · Aide de jeu) ;
@@ -95,7 +95,7 @@ systems/<slug>/
 
 Vérifie chaque point avant d'annoncer la fin, et coche-les dans ton récapitulatif :
 
-- [ ] Schéma bâti sur `database-template/base.sql`, aucune table partagée redéfinie ; `characters` avec `login_attempts`, `last_attempt_at`, `last_accessed`, colonne `avatar` (pas `avatar_url`).
+- [ ] Schéma bâti en copiant `database-template/base.sql`, tables partagées gardées telles quelles (colonnes en plus permises) ; `characters` avec `login_attempts`, `last_attempt_at`, `last_accessed`, colonne `avatar` (pas `avatar_url`).
 - [ ] `config.jsx` : bloc `diceConfigDefault` aux couleurs du slug.
 - [ ] `config.jsx` : les 5 hooks (`buildNotation`, `beforeRoll`, `afterRoll`, `buildAnimationSequence`, `renderHistoryEntry`).
 - [ ] `roll()` exploité comme renvoyant le résultat d'`afterRoll()` ; `buildNotation` appelé dans le composant.

@@ -189,7 +189,6 @@ const DiceModal = ({ character, isBerserk, context, onClose, onUpdate, sessionId
 
             setDiceResults(result);
             if (tripleTen) emitVk(VK_TRIPLE, { id: character.id });   // faveur des dieux : présage, ciel, ruban
-            context?.onRollComplete?.(result);
 
         } catch (err) {
             if (err instanceof RollError) {
@@ -207,7 +206,7 @@ const DiceModal = ({ character, isBerserk, context, onClose, onUpdate, sessionId
         }
     }, [
         rolling, buildCtx, sagaMode, rollType, selectedSkill, autoSuccesses,
-        onUpdate, context,
+        onUpdate,
     ]);
 
     const title = rollType === 'skill' && selectedSkill

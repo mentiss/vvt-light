@@ -82,7 +82,7 @@ const GMApp = ({ activeSession, onSessionChange, onlineCharacters, characterUpda
                 {activeTab === 'defis' && (
                     <TabChallenges activeSession={activeSession} characters={characters} order={order} patchCharacter={patchCharacter} />
                 )}
-                {activeTab === 'journal' && <div className="vil-page"><TabJournal characterId={-1} /></div>}
+                {activeTab === 'journal' && <div className="vil-page"><TabJournal /></div>}
                 {/* Tableau partagé (brique plateforme, spec_tableau.md §10.8) */}
                 {activeTab === 'tableau' && (
                     <div className="vtt-board-page">
