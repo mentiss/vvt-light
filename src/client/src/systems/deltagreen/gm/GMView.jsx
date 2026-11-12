@@ -26,7 +26,7 @@ const GM_TABS = [
     { id: 'historique', label: 'Historique'  },
 ];
 
-const GMView = ({ activeSession, onSessionChange, onlineCharacters, darkMode, onToggleDarkMode }) => {
+const GMView = ({ activeSession, onSessionChange, onlineCharacters, characterUpdates, darkMode, onToggleDarkMode }) => {
     // Modales du menu : dans ses éléments (spec_ui_menu.md)
     const [showFreeDice, setShowFreeDice] = useState(false);
 
@@ -137,6 +137,7 @@ const GMView = ({ activeSession, onSessionChange, onlineCharacters, darkMode, on
                     <TabSession
                         activeSession={activeSession}
                         onlineCharacters={onlineCharacters}
+                        characterUpdates={characterUpdates}
                         onSessionChange={onSessionChange}
                     />
                 )}

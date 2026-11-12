@@ -12,8 +12,7 @@
 // ─────────────────────────────────────────────────────────────────────────────
 
 import React, { useState } from 'react';
-import AudioSessionToggle from '@/features/audio/AudioSessionToggle.jsx';
-import BoardSessionToggle from '@/features/board/BoardSessionToggle.jsx';
+import TableSessionTools from '@/features/table/TableSessionTools.jsx';
 import CopyAccessButton from '@/features/table/CopyAccessButton.jsx';
 import TableManagementButton from '@/features/table/TableManagementButton.jsx';
 import ConfirmModal from '@/ui/modal/ConfirmModal.jsx';
@@ -92,8 +91,7 @@ const TabSession = ({ activeSession, onlineCharacters, patron, patronState, char
     return (
         <div className="im-tab-page im-gm-layout">
             <aside className="im-gm-table">
-                <AudioSessionToggle sessionId={activeSession.id} className="vtt-btn vtt-btn-sm w-full" />
-                <BoardSessionToggle sessionId={activeSession.id} className="vtt-btn vtt-btn-sm w-full" />
+                <TableSessionTools sessionId={activeSession.id} className="vtt-btn vtt-btn-sm w-full" />
                 {order.length > 0 && <button type="button" className="vtt-btn vtt-btn-sm w-full" onClick={() => setRefill(true)}>Début de séance (Destin)</button>}
                 {patronState && <SuperiorityControl patronState={patronState} compact />}
                 {loading && <p className="im-empty">Chargement…</p>}

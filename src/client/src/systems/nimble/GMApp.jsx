@@ -30,7 +30,7 @@ import {
 
 import NbTopBar from './components/ui/NbTopBar.jsx';
 import { D20Icon } from './components/ui/NbUi.jsx';
-import { useTableCharacters } from './hooks/useTableCharacters.js';
+import { useTableCharacters } from '@/features/table/hooks/useTableCharacters.js';
 import { useBoxSize } from './hooks/useBoxSize.js';
 import TabSession from './gm/tabs/TabSession.jsx';
 import TabNpcs from '@/features/npc/TabNpcs.jsx';

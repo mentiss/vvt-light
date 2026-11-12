@@ -9,8 +9,7 @@
 // ─────────────────────────────────────────────────────────────────────────────
 
 import React, { useState } from 'react';
-import AudioSessionToggle from '@/features/audio/AudioSessionToggle.jsx';
-import BoardSessionToggle from '@/features/board/BoardSessionToggle.jsx';
+import TableSessionTools from '@/features/table/TableSessionTools.jsx';
 import CopyAccessButton from '@/features/table/CopyAccessButton.jsx';
 import TableManagementButton from '@/features/table/TableManagementButton.jsx';
 import VilGmTableRow from '../../components/layout/VilGmTableRow.jsx';
@@ -44,9 +43,7 @@ const TabSession = ({ activeSession, onlineCharacters, characters, order, loadin
     return (
         <div className="vil-page vil-gm-layout">
             <aside className="vil-gm-table">
-                <AudioSessionToggle sessionId={activeSession.id} className="vtt-btn vtt-btn-sm w-full" />
-                {/* Tableau partagé de la table (spec_tableau.md §10.8) */}
-                <BoardSessionToggle sessionId={activeSession.id} className="vtt-btn vtt-btn-sm w-full" />
+                <TableSessionTools sessionId={activeSession.id} className="vtt-btn vtt-btn-sm w-full" />
                 {loading && <p className="vil-note">Chargement…</p>}
                 {!loading && order.length === 0 && <p className="vil-note">Aucun Paria à cette table.</p>}
                 {order.map(id => (

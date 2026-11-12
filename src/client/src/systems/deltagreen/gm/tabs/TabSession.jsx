@@ -6,8 +6,7 @@
 // ─────────────────────────────────────────────────────────────────────────────
 
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { useSystem }   from '@/app/hooks/useSystem.js';
-import { useFetch }    from '@/app/hooks/useFetch.js';
+import { useTableCharacters } from '@/features/table/hooks/useTableCharacters.js';
 import { GM_TAGS }     from '../../config.jsx';
 import '../../theme.css';
 
@@ -27,8 +26,7 @@ import SanLogSection             from '../../components/layout/SanLogSection.jsx
 import PhysicalDescriptionSection from '../../components/layout/PhysicalDescriotionSection.jsx';
 import DiceModal                 from '../../components/modals/DiceModal.jsx';
 import GMSendModal               from '@/features/table/modals/GMSendModal.jsx';
-import AudioSessionToggle        from '@/features/audio/AudioSessionToggle.jsx';
-import BoardSessionToggle        from '@/features/board/BoardSessionToggle.jsx';
+import TableSessionTools         from '@/features/table/TableSessionTools.jsx';
 import CopyAccessButton          from '@/features/table/CopyAccessButton.jsx';
 import TableManagementButton     from '@/features/table/TableManagementButton.jsx';
 
@@ -532,82 +530,30 @@ const GMAgentPanel = ({ char, isOnline, sessionId, onCharacterUpdate, onSendNote
 // TabSession — composant principal
 // ══════════════════════════════════════════════════════════════════════════════
 
-const TabSession = ({ activeSession, onlineCharacters, onSessionChange }) => {
-    const { apiBase }   = useSystem();
-    const fetchWithAuth = useFetch();
-
-    const [characters,    setCharacters]    = useState({});
-    const [loading,       setLoading]       = useState(false);
-    const [selectedId,    setSelectedId]    = useState(null);
+const TabSession = ({ activeSession, onlineCharacters, characterUpdates, onSessionChange }) => {
+    // Fiches de la table et temps réel : useTableCharacters (spec_session_mj.md §3)
+    const { characters, order, loading, patchCharacter } = useTableCharacters(activeSession, characterUpdates);
+    const [pickedId,      setSelectedId]    = useState(null);
+    const selectedId = characters[pickedId] ? pickedId : (order[0] ?? null);   // premier agent par défaut
     const [collapsed,     setCollapsed]     = useState(false);
     const [showSendNote,  setShowSendNote]  = useState(false);
     const [sendPreselect, setSendPreselect] = useState(null);
 
     const onlineIds = new Set((onlineCharacters ?? []).map(c => c.characterId));
 
-    // ── Chargement ────────────────────────────────────────────────────────────
-    useEffect(() => {
-        if (!activeSession?.characters?.length) {
-            setCharacters({});
-            setSelectedId(null);
-            return;
-        }
-        setLoading(true);
-        Promise.all(
-            activeSession.characters.map(c =>
-                fetchWithAuth(`${apiBase}/characters/${c.id}`)
-                    .then(r => r.ok ? r.json() : null)
-                    .catch(() => null)
-            )
-        ).then(results => {
-            const map = {};
-            results.filter(Boolean).forEach(char => { map[char.id] = char; });
-            setCharacters(map);
-            setSelectedId(prev =>
-                (prev && map[prev]) ? prev : (activeSession.characters[0]?.id ?? null)
-            );
-        }).finally(() => setLoading(false));
-    }, [activeSession?.id, activeSession?.characters?.length]); // eslint-disable-line react-hooks/exhaustive-deps
-
-    // ── Persistance ───────────────────────────────────────────────────────────
-    const handleCharacterUpdate = useCallback(async (updatedChar) => {
-        if (!updatedChar?.id) return;
-        setCharacters(prev => ({ ...prev, [updatedChar.id]: updatedChar }));
-        try {
-            const r = await fetchWithAuth(`${apiBase}/characters/${updatedChar.id}`, {
-                method:  'PUT',
-                headers: { 'Content-Type': 'application/json' },
-                body:    JSON.stringify(updatedChar),
-            });
-            if (r.ok) {
-                const saved = await r.json();
-                setCharacters(prev => ({ ...prev, [saved.id]: saved }));
-            }
-        } catch (err) {
-            console.error('[TabSession/DG] handleCharacterUpdate:', err);
-        }
-    }, [apiBase]); // fetchWithAuth intentionnellement absent
+    // ── Persistance (patchCharacter : affichage immédiat, retour arrière en cas d'échec)
+    const handleCharacterUpdate = useCallback((updatedChar) => {
+        if (updatedChar?.id) patchCharacter(updatedChar.id, updatedChar);
+    }, [patchCharacter]);
 
     // ── Palier / Tags depuis AgentCard ────────────────────────────────────────
-    const handlePalierChange = useCallback(async (charId, palier) => {
-        setCharacters(prev => ({ ...prev, [charId]: { ...prev[charId], degradationPalier: palier } }));
-        try {
-            await fetchWithAuth(`${apiBase}/characters/${charId}`, {
-                method: 'PUT', headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ degradationPalier: palier }),
-            });
-        } catch (err) { console.error('[TabSession] palier:', err); }
-    }, [apiBase]); // eslint-disable-line react-hooks/exhaustive-deps
+    const handlePalierChange = useCallback((charId, palier) => {
+        patchCharacter(charId, { degradationPalier: palier });
+    }, [patchCharacter]);
 
-    const handleTagChange = useCallback(async (charId, tags) => {
-        setCharacters(prev => ({ ...prev, [charId]: { ...prev[charId], tags } }));
-        try {
-            await fetchWithAuth(`${apiBase}/characters/${charId}`, {
-                method: 'PUT', headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ tags }),
-            });
-        } catch (err) { console.error('[TabSession] tags:', err); }
-    }, [apiBase]); // eslint-disable-line react-hooks/exhaustive-deps
+    const handleTagChange = useCallback((charId, tags) => {
+        patchCharacter(charId, { tags });
+    }, [patchCharacter]);
 
     // Agents rangés par DEX décroissante (ordre d'initiative du jeu) ; l'initiative
     // elle-même est la brique de la plateforme (spec_initiative.md, bouton de la zone d'actions)
@@ -651,13 +597,10 @@ const TabSession = ({ activeSession, onlineCharacters, onSessionChange }) => {
                     >{collapsed ? '⊞' : '⊟'}</button>
                 </div>
 
-                {/* Musique de la table (brique audio, spec_audio.md §11.7) */}
+                {/* Outils de table : musique, tableau (spec_session_mj.md §4) */}
                 <div className="px-3 py-2 border-b border-default/40 shrink-0">
-                    <AudioSessionToggle sessionId={activeSession.id}
-                                        className="w-full text-[10px] font-mono uppercase tracking-wider border border-default/40 text-muted px-1.5 py-1 hover:border-default transition-colors" />
-                    {/* Tableau partagé de la table (spec_tableau.md §10.8) */}
-                    <BoardSessionToggle sessionId={activeSession.id}
-                                        className="w-full mt-1 text-[10px] font-mono uppercase tracking-wider border border-default/40 text-muted px-1.5 py-1 hover:border-default transition-colors" />
+                    <TableSessionTools sessionId={activeSession.id} className="w-full text-[10px] font-mono uppercase tracking-wider border border-default/40 text-muted px-1.5 py-1 hover:border-default transition-colors"
+                                       board={{ className: 'w-full mt-1 text-[10px] font-mono uppercase tracking-wider border border-default/40 text-muted px-1.5 py-1 hover:border-default transition-colors' }} />
                 </div>
 
                 {/* Liste agents */}

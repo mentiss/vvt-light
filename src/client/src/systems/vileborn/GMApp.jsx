@@ -31,7 +31,7 @@ import {
 import VilTopBar from './components/ui/VilTopBar.jsx';
 import VilDarkDieModal from './components/modals/VilDarkDieModal.jsx';
 import { D12Icon } from './components/ui/VilUi.jsx';
-import { useTableCharacters } from './hooks/useTableCharacters.js';
+import { useTableCharacters } from '@/features/table/hooks/useTableCharacters.js';
 import { useBoxSize } from './hooks/useBoxSize.js';
 import TabSession from './gm/tabs/TabSession.jsx';
 import TabChallenges from './gm/tabs/TabChallenges.jsx';

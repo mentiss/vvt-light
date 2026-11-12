@@ -33,7 +33,7 @@ import {
 
 import MlTopBar from './components/ui/MlTopBar.jsx';
 import { DiceIcon } from './components/ui/MlUi.jsx';
-import { useTableCharacters } from './hooks/useTableCharacters.js';
+import { useTableCharacters } from '@/features/table/hooks/useTableCharacters.js';
 import { useBoxSize } from './hooks/useBoxSize.js';
 import { usePatron } from './hooks/usePatron.js';
 import { useLivery } from './hooks/useLivery.js';

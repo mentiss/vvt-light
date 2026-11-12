@@ -32,7 +32,7 @@ Présente :
 - la logique des 5 hooks de dés ;
 - l'arborescence des composants et le découpage de la fiche (guide §5) ; onglets et ordre ;
 - le contenu des menus joueur et MJ (éléments prêts à l'emploi, éléments propres au slug, icônes ou aucune) et leur habillage ;
-- l'emplacement, dans l'onglet Session du MJ, de `AudioSessionToggle` et de `BoardSessionToggle` et leurs classes de bouton, et si le slug pose le tableau dans un onglet ;
+- l'emplacement, dans l'onglet Session du MJ, de `TableSessionTools` (musique, tableau) et ses classes de bouton, et si le slug pose le tableau dans un onglet ;
 - le choix du panneau d'historique des jets, et socket ou HTTP pour d'éventuelles ressources de session ;
 - le découpage en lots s'il y en a un (phase 1, étape 4).
 

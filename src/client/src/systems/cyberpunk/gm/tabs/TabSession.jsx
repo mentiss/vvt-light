@@ -8,17 +8,17 @@
 //   Droite  — fiche du personnage choisi : GMCharacterView, la même fiche que le
 //             joueur (SheetBody) en variante MJ
 //
-// Temps réel : character-full-update et character-update → fiche locale à jour.
-// Enregistrement : PUT de la fiche entière (le serveur diffuse aux tables).
+// Fiches de la table : useTableCharacters (spec_session_mj.md §3), temps réel par
+// characterUpdates, aucune écoute de socket ici. Enregistrement : fiche entière
+// par patchCharacter (le serveur diffuse aux tables).
 // ─────────────────────────────────────────────────────────────────────────────
 
 import React, { useState, useEffect, useCallback } from 'react';
 import useSystem from "@/app/hooks/useSystem.js";
 import { useFetch } from "@/app/hooks/useFetch.js";
-import { useSocket } from "@/app/context/SocketContext.jsx";
+import { useTableCharacters } from '@/features/table/hooks/useTableCharacters.js';
 import GMSendModal from "@/features/table/modals/GMSendModal.jsx";
-import AudioSessionToggle from '@/features/audio/AudioSessionToggle.jsx';
-import BoardSessionToggle from '@/features/board/BoardSessionToggle.jsx';
+import TableSessionTools from '@/features/table/TableSessionTools.jsx';
 import TableManagementButton from '@/features/table/TableManagementButton.jsx';
 import CpIcon from "../../components/ui/CpIcon.jsx";
 import GMCharacterView from '../GMCharacterView.jsx';
@@ -55,44 +55,17 @@ const AgentFeed = ({ c, isOnline, isActive, onSelect }) => (
     </button>
 );
 
-const TabSession = ({ activeSession, onlineCharacters, onSessionChange }) => {
+const TabSession = ({ activeSession, onlineCharacters, characterUpdates, onSessionChange }) => {
     const { apiBase }   = useSystem();
     const fetchWithAuth = useFetch();
-    const socket        = useSocket();
 
-    const [characters,   setCharacters]   = useState({});   // id → fiche complète
-    const [selectedId,   setSelectedId]   = useState(null);
-    const [loading,      setLoading]      = useState(false);
+    const { characters, order, loading, patchCharacter } = useTableCharacters(activeSession, characterUpdates);
+    const [pickedId,     setSelectedId]   = useState(null);
+    const selectedId = characters[pickedId] ? pickedId : (order[0] ?? null);   // premier agent par défaut
     const [allMoves,     setAllMoves]     = useState([]);
     const [showSendNote, setShowSendNote] = useState(false);
 
     const onlineIds = new Set((onlineCharacters ?? []).map(c => c.characterId));
-
-    // ── Fiches des personnages de la table ────────────────────────────────────
-    // fetchWithAuth hors des dépendances : référence instable (src/client/CLAUDE.md)
-    useEffect(() => {
-        if (!activeSession?.characters?.length) {
-            setCharacters({});
-            setSelectedId(null);
-            return;
-        }
-        setLoading(true);
-        const load = async () => {
-            const loaded = {};
-            await Promise.all((activeSession.characters ?? []).map(async c => {
-                try {
-                    const r = await fetchWithAuth(`${apiBase}/characters/${c.id}`);
-                    if (r.ok) loaded[c.id] = await r.json();
-                } catch (e) { console.error(`[TabSession/cyberpunk] ${c.id}:`, e); }
-            }));
-            setCharacters(loaded);
-            const firstId = activeSession.characters[0]?.id ?? null;
-            setSelectedId(prev => (prev && loaded[prev]) ? prev : firstId);
-            setLoading(false);
-        };
-        load();
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [activeSession?.id, activeSession?.characters?.length]);
 
     // ── Bibliothèque des manœuvres ────────────────────────────────────────────
     useEffect(() => {
@@ -104,54 +77,19 @@ const TabSession = ({ activeSession, onlineCharacters, onSessionChange }) => {
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [apiBase]);
 
-    // ── Temps réel ────────────────────────────────────────────────────────────
-    useEffect(() => {
-        if (!socket) return undefined;
-        const onFull = ({ characterId, character }) => {
-            setCharacters(prev => (prev[characterId] ? { ...prev, [characterId]: character } : prev));
-        };
-        const onPartial = ({ characterId, updates }) => {
-            setCharacters(prev => (prev[characterId] ? { ...prev, [characterId]: { ...prev[characterId], ...updates } } : prev));
-        };
-        socket.on('character-full-update', onFull);
-        socket.on('character-update', onPartial);
-        return () => {
-            socket.off('character-full-update', onFull);
-            socket.off('character-update', onPartial);
-        };
-    }, [socket]);
-
     // ── Enregistrement : optimiste, puis la fiche renvoyée par le serveur ─────
     const saveChar = useCallback(async (next) => {
-        if (!next?.id) return;
-        const previous = characters[next.id];
-        setCharacters(prev => ({ ...prev, [next.id]: next }));
-        try {
-            const r = await fetchWithAuth(`${apiBase}/characters/${next.id}`, { method: 'PUT', body: JSON.stringify(next) });
-            if (!r.ok) throw new Error(`HTTP ${r.status}`);
-            const updated = await r.json();
-            setCharacters(prev => ({ ...prev, [updated.id]: updated }));
-        } catch (e) {
-            if (previous) setCharacters(prev => ({ ...prev, [next.id]: previous }));
-            console.error('[TabSession/cyberpunk] saveChar:', e);
-        }
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [characters, apiBase]);
+        if (next?.id) await patchCharacter(next.id, next);   // retour arrière en cas d'échec : le hook
+    }, [patchCharacter]);
 
-    // ── Envoi d'un objet (route du slug) ──────────────────────────────────────
+    // ── Envoi d'un objet (route du slug, qui diffuse la fiche mise à jour) ────
     const sendItem = async (charId, form) => {
         try {
             const r = await fetchWithAuth(`${apiBase}/characters/${charId}/send-item`, {
                 method: 'POST',
                 body:   JSON.stringify({ ...form, sessionId: activeSession?.id }),
             });
-            if (!r.ok) return false;
-            const updated = await fetchWithAuth(`${apiBase}/characters/${charId}`);
-            if (updated.ok) {
-                const data = await updated.json();
-                setCharacters(prev => ({ ...prev, [charId]: data }));
-            }
-            return true;
+            return r.ok;
         } catch {
             return false;
         }
@@ -194,9 +132,7 @@ const TabSession = ({ activeSession, onlineCharacters, onSessionChange }) => {
             {/* ── Agents de la table : vignettes de flux ── */}
             <div className="cp-feeds-col cp-scroll">
                 <h3 className="cp-panel-title">Agents</h3>
-                {/* Musique et tableau de la table (briques plateforme : audio, tableau) */}
-                <AudioSessionToggle sessionId={activeSession.id} className="cp-btn is-sm w-full" />
-                <BoardSessionToggle sessionId={activeSession.id} className="cp-btn is-sm w-full" />
+                <TableSessionTools sessionId={activeSession.id} className="cp-btn is-sm w-full" />
                 {(activeSession.characters ?? []).map(sc => (
                     <AgentFeed key={sc.id} c={characters[sc.id]} isOnline={onlineIds.has(sc.id)}
                                isActive={selectedId === sc.id} onSelect={() => setSelectedId(sc.id)} />

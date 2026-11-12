@@ -3,9 +3,9 @@
 // Onglet Session GM — Achtung! Cthulhu
 //
 // Architecture socket :
-//   · GMPage → useGMSession → props { activeSession, onSessionChange, onlineCharacters }
-//   · Comme les autres slugs (Vikings, Dune, Tecumah, Cyberpunk, Noctis), ce composant
-//     écoute character-full-update pour répercuter les modifs faites côté joueur.
+//   · GMPage → useGMSession → props { activeSession, onSessionChange, onlineCharacters, characterUpdates }
+//   · Fiches de la table : useTableCharacters (spec_session_mj.md §3), aucune écoute
+//     de character-full-update ici ; le mode édition travaille sur un brouillon.
 //   · session-resources-gm-update reste géré séparément (donnée de session).
 //
 // Contrat GM standard (permanent, tous slugs) :
@@ -20,11 +20,11 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { useSocket }  from '@/app/context/SocketContext.jsx';
 import { useFetch }   from '@/app/hooks/useFetch.js';
 import { useSystem }  from '@/app/hooks/useSystem.js';
+import { useTableCharacters } from '@/features/table/hooks/useTableCharacters.js';
 
 import TableManagementButton from '@/features/table/TableManagementButton.jsx';
 import GMSendModal          from '@/features/table/modals/GMSendModal.jsx';
-import AudioSessionToggle   from '@/features/audio/AudioSessionToggle.jsx';
-import BoardSessionToggle   from '@/features/board/BoardSessionToggle.jsx';
+import TableSessionTools from '@/features/table/TableSessionTools.jsx';
 import CopyAccessButton     from '@/features/table/CopyAccessButton.jsx';
 
 import { ARCHETYPES } from '../../config.jsx';
@@ -171,56 +171,19 @@ const GMActionBar = ({ char, editMode, onToggleEdit, onSendNote, activeSessionId
 
 // ── Composant principal ───────────────────────────────────────────────────────
 
-const TabSession = ({ activeSession, onSessionChange, onlineCharacters }) => {
+const TabSession = ({ activeSession, onSessionChange, onlineCharacters, characterUpdates }) => {
     const { apiBase }   = useSystem();
     const fetchWithAuth = useFetch();
-    const socket = useSocket();
 
-    const [characters,    setCharacters]    = useState({});
-    const [selectedId,    setSelectedId]    = useState(null);
-    const [loading,       setLoading]       = useState(false);
+    const { characters, order, loading, patchCharacter } = useTableCharacters(activeSession, characterUpdates);
+    const [pickedId,      setSelectedId]    = useState(null);
+    const selectedId = characters[pickedId] ? pickedId : (order[0] ?? null);   // premier personnage par défaut
     const [editMode,      setEditMode]      = useState(false);
+    const [draft,         setDraft]         = useState(null);   // fiche en cours d'édition
     const [showSendModal, setShowSendModal] = useState(false);
     const [resources,     setResources]     = useState({ momentum: 0, threat: 0, complications: 0 });
 
     const onlineIds = new Set((onlineCharacters ?? []).map(c => c.characterId));
-
-    // ── Chargement des fiches ─────────────────────────────────────────────────
-    useEffect(() => {
-        if (!activeSession?.characters?.length) {
-            setCharacters({});
-            setSelectedId(null);
-            return;
-        }
-        setLoading(true);
-        const load = async () => {
-            const loaded = {};
-            await Promise.all(activeSession.characters.map(async c => {
-                try {
-                    const r = await fetchWithAuth(`${apiBase}/characters/${c.id}`);
-                    if (r.ok) loaded[c.id] = await r.json();
-                } catch (e) {
-                    console.error(`[TabSession/achtung] load ${c.id}:`, e);
-                }
-            }));
-            setCharacters(loaded);
-            setSelectedId(prev => (prev && loaded[prev]) ? prev : (activeSession.characters[0]?.id ?? null));
-            setLoading(false);
-        };
-        load();
-    }, [activeSession?.id, activeSession?.characters?.length]);
-
-    // ── Temps réel — réception des updates joueur ──────────────────────────────
-    useEffect(() => {
-        if (!socket) return;
-        const onFullUpdate = ({ characterId, character }) => {
-            setCharacters(prev => prev[characterId]
-                ? { ...prev, [characterId]: character }
-                : prev);
-        };
-        socket.on('character-full-update', onFullUpdate);
-        return () => socket.off('character-full-update', onFullUpdate);
-    }, [socket]);
 
     // ── Chargement des ressources de session ──────────────────────────────────
     // Route : GET /api/achtung/session-resources/:id
@@ -235,37 +198,17 @@ const TabSession = ({ activeSession, onSessionChange, onlineCharacters }) => {
     // ── Reset editMode quand on change de personnage ──────────────────────────
     useEffect(() => { setEditMode(false); }, [selectedId]);
 
-    // ── set local — identique à Sheet.jsx ────────────────────────────────────
+    // ── set local — modifie le brouillon du mode édition ─────────────────────
     const set = useCallback((field, value) => {
-        if (!selectedId) return;
-        setCharacters(prev => ({
-            ...prev,
-            [selectedId]: { ...prev[selectedId], [field]: value },
-        }));
-    }, [selectedId]);
+        setDraft(prev => (prev ? { ...prev, [field]: value } : prev));
+    }, []);
 
-    // ── patchImmediate — PATCH HTTP, identique à Sheet.jsx ───────────────────
-    const patchImmediate = useCallback(async (patch) => {
+    // ── patchImmediate — envoi partiel (useTableCharacters, retour arrière en cas d'échec)
+    const patchImmediate = useCallback((patch) => {
         if (!selectedId) return;
-        const current = characters[selectedId];
-        if (!current) return;
-        setCharacters(prev => ({ ...prev, [selectedId]: { ...prev[selectedId], ...patch } }));
-        try {
-            const r = await fetchWithAuth(`${apiBase}/characters/${selectedId}`, {
-                method:  'PATCH',
-                headers: { 'Content-Type': 'application/json' },
-                body:    JSON.stringify(patch),
-            });
-            if (r.ok) {
-                const updated = await r.json();
-                setCharacters(prev => ({ ...prev, [selectedId]: { ...prev[selectedId], ...updated } }));
-            } else {
-                setCharacters(prev => ({ ...prev, [selectedId]: current }));
-            }
-        } catch {
-            setCharacters(prev => ({ ...prev, [selectedId]: current }));
-        }
-    }, [selectedId, characters, apiBase, fetchWithAuth]);
+        setDraft(prev => (prev ? { ...prev, ...patch } : prev));   // le brouillon suit l'action de jeu
+        patchCharacter(selectedId, patch);
+    }, [selectedId, patchCharacter]);
 
     // ── handleDirectField — identique à Sheet.jsx ────────────────────────────
     const handleDirectField = useCallback((field, value) => {
@@ -273,37 +216,26 @@ const TabSession = ({ activeSession, onSessionChange, onlineCharacters }) => {
         else patchImmediate({ [field]: value });
     }, [editMode, set, patchImmediate]);
 
-    // ── Sauvegarde complète à la fin d'editMode (PUT) ─────────────────────────
+    // ── Sauvegarde complète à la fin d'editMode ───────────────────────────────
     const saveEdit = useCallback(async () => {
-        if (!selectedId || !characters[selectedId]) return;
-        try {
-            const r = await fetchWithAuth(`${apiBase}/characters/${selectedId}`, {
-                method:  'PUT',
-                headers: { 'Content-Type': 'application/json' },
-                body:    JSON.stringify(characters[selectedId]),
-            });
-            if (r.ok) {
-                const updated = await r.json();
-                setCharacters(prev => ({ ...prev, [selectedId]: { ...prev[selectedId], ...updated } }));
-            }
-        } catch (e) {
-            console.error('[TabSession/achtung] saveEdit:', e);
-        }
-    }, [selectedId, characters, apiBase, fetchWithAuth]);
+        if (selectedId && draft) await patchCharacter(selectedId, draft);
+    }, [selectedId, draft, patchCharacter]);
 
     // ── Toggle editMode ───────────────────────────────────────────────────────
     const handleToggleEdit = useCallback(async () => {
         if (editMode) {
             await saveEdit();
             setEditMode(false);
+            setDraft(null);
         } else {
+            setDraft({ ...characters[selectedId] });
             setEditMode(true);
         }
-    }, [editMode, saveEdit]);
+    }, [editMode, saveEdit, characters, selectedId]);
 
     // ── Données dérivées ──────────────────────────────────────────────────────
     const sessionCharacters    = activeSession?.characters ?? [];
-    const char                 = selectedId ? characters[selectedId] : null;
+    const char                 = selectedId ? (editMode && draft ? draft : characters[selectedId]) : null;
     const sessionCharsForModal = sessionCharacters.map(sc => ({
         id:   sc.id,
         name: characters[sc.id]
@@ -359,9 +291,7 @@ const TabSession = ({ activeSession, onSessionChange, onlineCharacters }) => {
                 {/* Musique de la table (brique audio, spec_audio.md §11.7) */}
                 {activeSession && (
                     <div className="p-2">
-                        <AudioSessionToggle sessionId={activeSession.id} className="ac-btn ac-btn-secondary w-full" />
-                        {/* Tableau partagé de la table (spec_tableau.md §10.8) */}
-                        <BoardSessionToggle sessionId={activeSession.id} className="ac-btn ac-btn-secondary w-full mt-2" />
+                        <TableSessionTools sessionId={activeSession.id} className="ac-btn ac-btn-secondary w-full" board={{ className: 'ac-btn ac-btn-secondary w-full mt-2' }} />
                     </div>
                 )}
             </aside>

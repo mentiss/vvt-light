@@ -31,7 +31,7 @@ import DuneIcon from './components/ui/DuneIcon.jsx';
 import DuneGMRollModal from './components/modals/DuneGMRollModal.jsx';
 import TabSession from './gm/tabs/TabSession.jsx';
 import TabHouse   from './gm/tabs/TabHouse.jsx';
-import { useTableCharacters }  from './hooks/useTableCharacters.js';
+import { useTableCharacters }  from '@/features/table/hooks/useTableCharacters.js';
 import { useSessionResources } from './hooks/useSessionResources.js';
 import { IMPULSION_MAX } from './config/rules/roll.js';
 import duneConfig from './config.jsx';

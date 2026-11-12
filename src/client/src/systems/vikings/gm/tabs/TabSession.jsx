@@ -7,17 +7,16 @@
 //   4. Note au journal, envoi d'objet, copie du lien et du code, avatar
 //   5. Jet de dés pour le personnage (même DiceModal que le joueur)
 //
-// ⚠️ Aucun listener socket ici : le temps réel arrive par characterUpdates
-// (useGMSession dans GMPage).
+// Fiches de la table : useTableCharacters (spec_session_mj.md §3), aucune écoute
+// de socket ici ; le temps réel arrive par characterUpdates (useGMSession).
 // ─────────────────────────────────────────────────────────────────────────────
 
 import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { useFetch }  from '@/app/hooks/useFetch.js';
-import { useSystem } from '@/app/hooks/useSystem.js';
+import { useTableCharacters } from '@/features/table/hooks/useTableCharacters.js';
 import GMSendModal    from '@/features/table/modals/GMSendModal.jsx';
 import AvatarUploader from '@/ui/image/AvatarUploader.jsx';
-import AudioSessionToggle from '@/features/audio/AudioSessionToggle.jsx';
-import BoardSessionToggle from '@/features/board/BoardSessionToggle.jsx';
+import TableSessionTools from '@/features/table/TableSessionTools.jsx';
 import CopyAccessButton from '@/features/table/CopyAccessButton.jsx';
 import TableManagementButton from '@/features/table/TableManagementButton.jsx';
 
@@ -47,12 +46,11 @@ const Empty = ({ icon, title, children, action }) => (
 // ── Onglet ───────────────────────────────────────────────────────────────────
 
 const TabSession = ({ activeSession, onlineCharacters = [], characterUpdates, onSessionChange }) => {
-    const { apiBase } = useSystem();
     const fetchWithAuth = useFetch();
 
-    const [characters, setCharacters] = useState({});   // { [id]: personnage complet }
-    const [selectedId, setSelectedId] = useState(null);
-    const [loading,    setLoading]    = useState(false);
+    const { characters, order, loading, patchCharacter } = useTableCharacters(activeSession, characterUpdates);
+    const [pickedId, setSelectedId] = useState(null);
+    const selectedId = characters[pickedId] ? pickedId : (order[0] ?? null);   // premier personnage par défaut
 
     const [editMode,     setEditMode]     = useState(false);
     const [editableChar, setEditableChar] = useState(null);
@@ -71,90 +69,24 @@ const TabSession = ({ activeSession, onlineCharacters = [], characterUpdates, on
 
     const sessionId = activeSession?.id ?? null;
 
-    // ── Chargement des fiches de la table ─────────────────────────────────
-    useEffect(() => {
-        const list = activeSession?.characters ?? [];
-        if (!list.length) { setCharacters({}); setSelectedId(null); return; }
-
-        let cancelled = false;
-        setLoading(true);
-        Promise.all(list.map(c =>
-            fetchWithAuth(`${apiBase}/characters/${c.id}`)
-                .then(r => (r.ok ? r.json() : null))
-                .catch(() => null)
-        )).then(results => {
-            if (cancelled) return;
-            const map = {};
-            for (const c of results) if (c?.id) map[c.id] = c;
-            setCharacters(map);
-            setSelectedId(prev => (prev && map[prev] ? prev : (list[0]?.id ?? null)));
-            setLoading(false);
-        });
-        return () => { cancelled = true; };
-    }, [sessionId, activeSession?.characters?.length, apiBase]);
-
-    // ── Temps réel — via characterUpdates (jamais de socket ici) ──────────
-    useEffect(() => {
-        if (!characterUpdates) return;
-        setCharacters(prev => {
-            let changed = false;
-            const next = { ...prev };
-            for (const [idStr, upd] of Object.entries(characterUpdates)) {
-                const id = Number(idStr);
-                if (!prev[id]) continue;   // pas dans cette table
-                next[id] = upd.type === 'full' ? upd.data : { ...prev[id], ...upd.data };
-                changed = true;
-            }
-            return changed ? next : prev;
-        });
-    }, [characterUpdates]);
-
     // Sortie du mode édition au changement de personnage
     useEffect(() => { setEditMode(false); }, [selectedId]);
 
     const char = selectedId ? (editMode ? editableChar : characters[selectedId]) : null;
 
-    // ── Action de jeu immédiate : appliquée au dernier état, PUT complet ──
+    // ── Action de jeu immédiate : appliquée au dernier état, fiche complète ──
     const update = useCallback(async (updater) => {
         const id   = selectedId;
         const prev = charactersRef.current[id];
         if (!prev) return;
         const next = withDerivedValues(resolve(updater, prev));   // valeurs de combat recalculées (L3-6)
         charactersRef.current = { ...charactersRef.current, [id]: next };
-        setCharacters(p => ({ ...p, [id]: next }));
         if (editMode) setEditableChar(b => (b ? resolve(updater, b) : b));
-        try {
-            const r = await fetchWithAuth(`${apiBase}/characters/${id}`, {
-                method:  'PUT',
-                headers: { 'Content-Type': 'application/json' },
-                body:    JSON.stringify(next),
-            });
-            if (r.ok) {
-                const saved = await r.json();
-                setCharacters(p => ({ ...p, [id]: saved }));
-            }
-        } catch (e) {
-            console.error('[TabSession/vikings] update:', e);
-        }
-    }, [selectedId, editMode, apiBase]);
+        await patchCharacter(id, next);
+    }, [selectedId, editMode, patchCharacter]);
 
-    // ── Actions de table : PATCH des seuls champs modifiés (§5.3) ─────────
-    // La route rediffuse character-full-update : joueurs et MJ se mettent à jour.
-    const patchCharacter = useCallback(async (id, patch) => {
-        try {
-            const r = await fetchWithAuth(`${apiBase}/characters/${id}`, {
-                method:  'PATCH',
-                headers: { 'Content-Type': 'application/json' },
-                body:    JSON.stringify(patch),
-            });
-            if (r.ok) {
-                const saved = await r.json();
-                setCharacters(p => ({ ...p, [id]: saved }));
-            }
-        } catch (e) {
-            console.error('[TabSession/vikings] patchCharacter:', e);
-        }
-    }, [apiBase]);
+    // Actions de table (halle, fin d'arc) : patchCharacter du hook, seuls les champs
+    // modifiés (§5.3) ; la route rediffuse character-full-update aux joueurs et au MJ.
 
     // ── Édition (buffer local, comme Sheet.jsx) ───────────────────────────
     const set = useCallback((field, value) => {
@@ -237,10 +169,7 @@ const TabSession = ({ activeSession, onlineCharacters = [], characterUpdates, on
                 <div className="flex items-center gap-2 flex-wrap mb-4">
                     <button type="button" onClick={() => setShowSendModal(true)} className="vk-btn vk-btn-sm"><VkIcon name="scroll" />Note</button>
                     <button type="button" onClick={() => setShowSendItemModal(true)} className="vk-btn vk-btn-sm"><VkIcon name="pouch" />Objet</button>
-                    {/* Musique de la table (brique audio, spec_audio.md §11.7) */}
-                    <AudioSessionToggle sessionId={activeSession.id} className="vk-btn vk-btn-sm" />
-                    {/* Tableau partagé de la table (spec_tableau.md §10.8) */}
-                    <BoardSessionToggle sessionId={activeSession.id} className="vk-btn vk-btn-sm" />
+                    <TableSessionTools sessionId={activeSession.id} className="vk-btn vk-btn-sm" />
                     <span className="flex-1" />
                     {!showArc && char && (
                         <>

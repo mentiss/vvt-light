@@ -2,14 +2,12 @@
 // Onglet Session GM — liste des personnages + actions GM + fiche lecture seule.
 // Actions : envoi note (GMSendModal), envoi item (send-item), blessure, PD, PP.
 // Fiche : calquée sur Sheet.jsx, mode lecture seule uniquement.
+// Fiches de la table : useTableCharacters (spec_session_mj.md §3), aucune écoute de socket ici.
 
-import React, { useState, useEffect, useCallback } from 'react';
-import { useSocket }  from '@/app/context/SocketContext.jsx';
-import { useFetch }   from '@/app/hooks/useFetch.js';
-import { useSystem }  from '@/app/hooks/useSystem.js';
+import React, { useState } from 'react';
+import { useTableCharacters } from '@/features/table/hooks/useTableCharacters.js';
 import GMSendModal    from '@/features/table/modals/GMSendModal.jsx';
-import AudioSessionToggle from '@/features/audio/AudioSessionToggle.jsx';
-import BoardSessionToggle from '@/features/board/BoardSessionToggle.jsx';
+import TableSessionTools from '@/features/table/TableSessionTools.jsx';
 
 import HealthDisplay  from '../../HealthDisplay.jsx';
 import ResourcesBar   from '../../ResourcesBar.jsx';
@@ -27,68 +25,16 @@ import TableManagementButton from '@/features/table/TableManagementButton.jsx';
 
 // ─────────────────────────────────────────────────────────────────────────────
 
-const TabSession = ({ activeSession, onlineCharacters, onSessionChange }) => {
-    const { apiBase }   = useSystem();
-    const fetchWithAuth = useFetch();
-    const socket        = useSocket();
-
-    const [characters,       setCharacters]       = useState({});
-    const [selectedId,       setSelectedId]       = useState(null);
-    const [loading,          setLoading]          = useState(false);
+const TabSession = ({ activeSession, onlineCharacters, characterUpdates, onSessionChange }) => {
+    // Mise à jour d'un personnage (blessure, PP, PD) : patchCharacter, envoi partiel
+    const { characters, order, loading, patchCharacter: updateCharacter } = useTableCharacters(activeSession, characterUpdates);
+    const [pickedId,         setSelectedId]       = useState(null);
+    const selectedId = characters[pickedId] ? pickedId : (order[0] ?? null);   // premier personnage par défaut
     const [showSendModal,    setShowSendModal]    = useState(false);
     const [sendPreSelected,  setSendPreSelected]  = useState(null);
     const [showSendItem,     setShowSendItem]     = useState(null); // charId | null
 
     const onlineIds = new Set((onlineCharacters ?? []).map(c => c.characterId));
-
-    // ── Chargement ────────────────────────────────────────────────────────
-    useEffect(() => {
-        if (!activeSession?.characters?.length) { setCharacters({}); setSelectedId(null); return; }
-        setLoading(true);
-        const load = async () => {
-            const loaded = {};
-            await Promise.all((activeSession.characters ?? []).map(async c => {
-                try {
-                    const r = await fetchWithAuth(`${apiBase}/characters/${c.id}`);
-                    if (r.ok) loaded[c.id] = await r.json();
-                } catch (e) { console.error(`[TabSession/tecumah] ${c.id}:`, e); }
-            }));
-            setCharacters(loaded);
-            if (!selectedId || !loaded[selectedId]) setSelectedId(activeSession.characters[0]?.id ?? null);
-            setLoading(false);
-        };
-        load();
-    }, [activeSession?.id, activeSession?.characters?.length]);
-
-    // ── Temps réel ────────────────────────────────────────────────────────
-    useEffect(() => {
-        if (!socket) return;
-        const onFull    = ({ characterId, character }) => setCharacters(p => p[characterId] ? { ...p, [characterId]: character } : p);
-        const onPartial = ({ characterId, updates })  => setCharacters(p => p[characterId] ? { ...p, [characterId]: { ...p[characterId], ...updates } } : p);
-        socket.on('character-full-update', onFull);
-        socket.on('character-update',      onPartial);
-        return () => { socket.off('character-full-update', onFull); socket.off('character-update', onPartial); };
-    }, [socket]);
-
-    // ── Mise à jour personnage (blessure, PP, PD) ─────────────────────────
-    const updateCharacter = useCallback(async (charId, patch) => {
-        const current = characters[charId];
-        if (!current) return;
-        setCharacters(p => ({ ...p, [charId]: { ...p[charId], ...patch } }));
-        try {
-            const r = await fetchWithAuth(`${apiBase}/characters/${charId}`, {
-                method: 'PUT', headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ ...current, ...patch }),
-            });
-            if (r.ok) {
-                const updated = await r.json();
-                setCharacters(p => ({ ...p, [charId]: updated }));
-            }
-        } catch (e) {
-            console.error('[TabSession/tecumah] update:', e);
-            setCharacters(p => ({ ...p, [charId]: current }));
-        }
-    }, [characters]);
 
     // ── Envoi note ────────────────────────────────────────────────────────
     // Destinataires de GMSendModal (qui envoie elle-même)
@@ -141,12 +87,8 @@ const TabSession = ({ activeSession, onlineCharacters, onSessionChange }) => {
                         </button>
                     );
                 })}
-                {/* Musique de la table (brique audio, spec_audio.md §11.7) */}
-                <AudioSessionToggle sessionId={activeSession.id}
-                                    className="ml-auto px-3 py-1.5 rounded text-xs font-semibold transition-colors hover:bg-surface-alt bg-surface border border-default text-default" />
-                {/* Tableau partagé de la table (spec_tableau.md §10.8) */}
-                <BoardSessionToggle sessionId={activeSession.id}
-                                    className="px-3 py-1.5 rounded text-xs font-semibold transition-colors hover:bg-surface-alt bg-surface border border-default text-default" />
+                <TableSessionTools sessionId={activeSession.id} className="px-3 py-1.5 rounded text-xs font-semibold transition-colors hover:bg-surface-alt bg-surface border border-default text-default"
+                                   audio={{ className: 'ml-auto px-3 py-1.5 rounded text-xs font-semibold transition-colors hover:bg-surface-alt bg-surface border border-default text-default' }} />
             </div>
 
             {selectedChar ? (

@@ -2,11 +2,12 @@ import React from 'react';
 import './theme.css';
 import GMView from './gm/GMView.jsx';
 
-const GMApp = ({ activeSession, onSessionChange, onlineCharacters, darkMode, onToggleDarkMode }) => (
+const GMApp = ({ activeSession, onSessionChange, onlineCharacters, characterUpdates, darkMode, onToggleDarkMode }) => (
     <GMView
         activeSession={activeSession}
         onSessionChange={onSessionChange}
         onlineCharacters={onlineCharacters}
+        characterUpdates={characterUpdates}
         darkMode={darkMode}
         onToggleDarkMode={onToggleDarkMode}
     />

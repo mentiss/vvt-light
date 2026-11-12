@@ -25,7 +25,7 @@ const GM_TABS = [
     { id: 'historique', label: '🎲 Historique'  },
 ];
 
-const GMView = ({ activeSession, onSessionChange, onlineCharacters, darkMode, onToggleDarkMode }) => {
+const GMView = ({ activeSession, onSessionChange, onlineCharacters, characterUpdates, darkMode, onToggleDarkMode }) => {
 
     const [activeTab,         setActiveTab]         = useState(() => {
         const hash = window.location.hash.replace('#', '');
@@ -121,6 +121,7 @@ const GMView = ({ activeSession, onSessionChange, onlineCharacters, darkMode, on
                         <TabSession
                             activeSession={activeSession}
                             onlineCharacters={onlineCharacters}
+                            characterUpdates={characterUpdates}
                             onSessionChange={onSessionChange}
                         />
                     )}

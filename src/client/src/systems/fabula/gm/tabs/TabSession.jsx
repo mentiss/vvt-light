@@ -9,17 +9,17 @@
 //   4. Envoyer une note (GMSendModal pré-sélectionné)
 //   5. Copier le code d'accès dans le presse-papier
 //
-// Socket : aucun listener character-full-update/character-update ici (règle
-// Achtung, retenue comme référence) — rechargement via HTTP après action.
+// Fiches de la table : useTableCharacters (spec_session_mj.md §3), aucune écoute
+// de socket ici ; l'enregistrement recalcule les stats dérivées avant l'envoi.
 // ─────────────────────────────────────────────────────────────────────────────
 
 import React, { useState, useEffect, useCallback } from 'react';
 import { useFetch }  from '@/app/hooks/useFetch.js';
 import { useSystem } from '@/app/hooks/useSystem.js';
+import { useTableCharacters } from '@/features/table/hooks/useTableCharacters.js';
 
 import GMSendModal from '@/features/table/modals/GMSendModal.jsx';
-import AudioSessionToggle from '@/features/audio/AudioSessionToggle.jsx';
-import BoardSessionToggle from '@/features/board/BoardSessionToggle.jsx';
+import TableSessionTools from '@/features/table/TableSessionTools.jsx';
 import AvatarUploader from '@/ui/image/AvatarUploader.jsx';
 import CopyAccessButton from '@/features/table/CopyAccessButton.jsx';
 import TableManagementButton from '@/features/table/TableManagementButton.jsx';
@@ -39,9 +39,9 @@ const TabSession = ({ activeSession, onlineCharacters, characterUpdates, onSessi
     const { apiBase }   = useSystem();
     const fetchWithAuth = useFetch();
 
-    const [characters, setCharacters] = useState({});
-    const [selectedId, setSelectedId] = useState(null);
-    const [loading, setLoading]       = useState(false);
+    const { characters, order, loading, patchCharacter } = useTableCharacters(activeSession, characterUpdates);
+    const [pickedId, setSelectedId] = useState(null);
+    const selectedId = characters[pickedId] ? pickedId : (order[0] ?? null);   // premier personnage par défaut
     const [editMode, setEditMode]     = useState(false);
     const [editableChar, setEditableChar] = useState(null);
     const [showSendModal, setShowSendModal] = useState(false);
@@ -56,36 +56,15 @@ const TabSession = ({ activeSession, onlineCharacters, characterUpdates, onSessi
 
     const onlineIds = new Set((onlineCharacters ?? []).map(c => c.characterId));
 
-    // ── Chargement des personnages de la session ─────────────────────────────
+    // ── Compteur PF dépensés — route dédiée (pf_depenses vit sur
+    // session_characters, hors du contrat générique de la fiche).
     useEffect(() => {
-        if (!activeSession?.characters?.length) {
-            setCharacters({});
-            setSelectedId(null);
-            return;
-        }
-        setLoading(true);
-        (async () => {
-            const loaded = {};
-            await Promise.all(activeSession.characters.map(async c => {
-                try {
-                    const r = await fetchWithAuth(`${apiBase}/characters/${c.id}`);
-                    if (r.ok) loaded[c.id] = await r.json();
-                } catch (e) {
-                    console.error(`[TabSession/fabula] load ${c.id}:`, e);
-                }
-            }));
-            setCharacters(loaded);
-            setSelectedId(prev => (prev && loaded[prev]) ? prev : (activeSession.characters[0]?.id ?? null));
-            setLoading(false);
-        })();
-
-        // Compteur PF dépensés — route dédiée (pf_depenses vit sur
-        // session_characters, hors du contrat générique de la fiche).
+        if (!activeSession?.characters?.length) return;
         fetchWithAuth(`${apiBase}/session-characters/${activeSession.id}`)
             .then(r => r.ok ? r.json() : {})
             .then(setPfDepenses)
             .catch(e => console.error('[TabSession/fabula] load pfDepenses:', e));
-    }, [activeSession, apiBase]);
+    }, [activeSession, apiBase, fetchWithAuth]);
 
     const adjustPfDepenses = useCallback(async (characterId, delta) => {
         try {
@@ -103,28 +82,6 @@ const TabSession = ({ activeSession, onlineCharacters, characterUpdates, onSessi
         }
     }, [activeSession, apiBase, fetchWithAuth]);
 
-    // ── Mises à jour temps réel (via useGMSession → characterUpdates) ────────
-    // Ne touche que les personnages déjà chargés dans cette session — évite de
-    // fusionner des données pour un personnage hors session.
-    useEffect(() => {
-        if (!characterUpdates) return;
-        setCharacters(prev => {
-            let changed = false;
-            const next = { ...prev };
-            for (const [idStr, update] of Object.entries(characterUpdates)) {
-                const id = Number(idStr);
-                if (!prev[id]) continue; // pas dans cette session
-                if (update.type === 'full') {
-                    next[id] = update.data;
-                } else {
-                    next[id] = { ...prev[id], ...update.data };
-                }
-                changed = true;
-            }
-            return changed ? next : prev;
-        });
-    }, [characterUpdates]);
-
     const char = selectedId ? (editMode ? editableChar : characters[selectedId]) : null;
 
     // ── Sauvegarde ────────────────────────────────────────────────────────────
@@ -132,23 +89,9 @@ const TabSession = ({ activeSession, onlineCharacters, characterUpdates, onSessi
     const saveEdit = useCallback(async () => {
         if (!selectedId || !editableChar) return;
         setSaving(true);
-        try {
-            const recomputed = computeDerivedStats(editableChar);
-            const r = await fetchWithAuth(`${apiBase}/characters/${selectedId}`, {
-                method: 'PUT',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ ...editableChar, ...recomputed }),
-            });
-            if (r.ok) {
-                const updated = await r.json();
-                setCharacters(prev => ({ ...prev, [selectedId]: updated }));
-            }
-        } catch (e) {
-            console.error('[TabSession/fabula] saveEdit:', e);
-        } finally {
-            setSaving(false);
-        }
-    }, [selectedId, editableChar, apiBase, fetchWithAuth]);
+        await patchCharacter(selectedId, { ...editableChar, ...computeDerivedStats(editableChar) });
+        setSaving(false);
+    }, [selectedId, editableChar, patchCharacter]);
 
     // Utilisé aussi par les actions "toujours actives" (steppers ressources,
     // altérations) hors mode édition — patch complet immédiat.
@@ -160,18 +103,9 @@ const TabSession = ({ activeSession, onlineCharacters, characterUpdates, onSessi
         if (!base) return;
         const merged     = { ...base, ...patch };
         const recomputed = computeDerivedStats(merged);
-        const full        = { ...merged, ...recomputed };
-        const r = await fetchWithAuth(`${apiBase}/characters/${selectedId}`, {
-            method: 'PUT',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(full),
-        });
-        if (r.ok) {
-            const updated = await r.json();
-            setCharacters(prev => ({ ...prev, [selectedId]: updated }));
-            if (editMode) setEditableChar(prev => ({ ...prev, ...patch, ...recomputed }));
-        }
-    }, [characters, selectedId, apiBase, fetchWithAuth, editMode]);
+        const updated    = await patchCharacter(selectedId, { ...merged, ...recomputed });
+        if (updated && editMode) setEditableChar(prev => ({ ...prev, ...patch, ...recomputed }));
+    }, [characters, selectedId, patchCharacter, editMode]);
 
     const toggleEditMode = async () => {
         if (editMode) {
@@ -232,10 +166,7 @@ const TabSession = ({ activeSession, onlineCharacters, characterUpdates, onSessi
                 <div className="px-3 py-2 border-b border-default">
                     <p className="fu-label">Personnages</p>
                     <p className="fu-title text-sm">{activeSession.name}</p>
-                    {/* Musique de la table (brique audio, spec_audio.md §11.7) */}
-                    <AudioSessionToggle sessionId={activeSession.id} className="vtt-btn vtt-btn-sm w-full mt-2" />
-                    {/* Tableau partagé de la table (spec_tableau.md §10.8) */}
-                    <BoardSessionToggle sessionId={activeSession.id} className="vtt-btn vtt-btn-sm w-full mt-2" />
+                    <TableSessionTools sessionId={activeSession.id} className="vtt-btn vtt-btn-sm w-full mt-2" />
                 </div>
 
                 {loading && <p className="p-3 text-xs text-muted italic">Chargement...</p>}

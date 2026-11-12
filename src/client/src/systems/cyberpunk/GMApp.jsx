@@ -54,7 +54,7 @@ const GM_TABS = [
 
 // ── GMApp principal ──────────────────────────────────────────────────────────
 
-const GMApp = ({ activeSession, onSessionChange, onlineCharacters, darkMode, onToggleDarkMode }) => {
+const GMApp = ({ activeSession, onSessionChange, onlineCharacters, characterUpdates, darkMode, onToggleDarkMode }) => {
     const fetchWithAuth = useFetch();
     const { apiBase }   = useSystem();
 
@@ -180,6 +180,7 @@ const GMApp = ({ activeSession, onSessionChange, onlineCharacters, darkMode, onT
                     <TabSession
                         activeSession={activeSession}
                         onlineCharacters={onlineCharacters}
+                        characterUpdates={characterUpdates}
                         onSessionChange={onSessionChange}
                     />
                 )}

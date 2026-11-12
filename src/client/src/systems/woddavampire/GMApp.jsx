@@ -30,7 +30,7 @@ import {
 import { wakeUp, endOfStory } from './config/rules/sheetRules.js';
 import { MENU_ICON, D10Icon } from './components/ui/VdaUi.jsx';
 import VdaTopBar from './components/ui/VdaTopBar.jsx';
-import { useTableCharacters } from './hooks/useTableCharacters.js';
+import { useTableCharacters } from '@/features/table/hooks/useTableCharacters.js';
 import TabSession from './gm/tabs/TabSession.jsx';
 import VdaTableActionModal from './components/modals/VdaTableActionModal.jsx';
 import VdaGmDiceModal from './components/modals/VdaGmDiceModal.jsx';

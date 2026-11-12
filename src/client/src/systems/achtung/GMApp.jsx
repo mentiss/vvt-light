@@ -47,7 +47,7 @@ const GM_TABS = [
 
 // ── GMApp ─────────────────────────────────────────────────────────────────────
 
-const GMApp = ({ activeSession, onSessionChange, onlineCharacters, darkMode, onToggleDarkMode }) => {
+const GMApp = ({ activeSession, onSessionChange, onlineCharacters, characterUpdates, darkMode, onToggleDarkMode }) => {
     const [activeTab,      setActiveTab]      = useState(() => {
         const hash = window.location.hash.replace('#', '');
         return GM_TABS.some(t => t.id === hash) ? hash : 'session';
@@ -154,6 +154,7 @@ const GMApp = ({ activeSession, onSessionChange, onlineCharacters, darkMode, onT
                         activeSession={activeSession}
                         onSessionChange={onSessionChange}
                         onlineCharacters={onlineCharacters}
+                        characterUpdates={characterUpdates}
                     />
                 )}
 

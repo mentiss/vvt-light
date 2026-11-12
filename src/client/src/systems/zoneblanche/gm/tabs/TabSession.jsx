@@ -8,20 +8,17 @@
 // Contrat props (depuis GMApp) :
 //   activeSession, onlineCharacters, characterUpdates, resources, onResourcesChange
 //
-// ⚠️ Aucun listener socket 'character-full-update' / 'character-update' n'est
-// déclaré ici : GMPage (via useGMSession) est la seule source, et transmet les
-// mises à jour par le prop characterUpdates.
+// Fiches de la table : useTableCharacters (spec_session_mj.md §3), aucune écoute
+// de socket ici ; le temps réel arrive par characterUpdates (useGMSession).
 // ─────────────────────────────────────────────────────────────────────────────
 
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 
-import { useSystem } from '@/app/hooks/useSystem.js';
-import { useFetch }  from '@/app/hooks/useFetch.js';
+import { useTableCharacters } from '@/features/table/hooks/useTableCharacters.js';
 
 import AvatarUploader from '@/ui/image/AvatarUploader.jsx';
 import GMSendModal    from '@/features/table/modals/GMSendModal.jsx';
-import AudioSessionToggle from '@/features/audio/AudioSessionToggle.jsx';
-import BoardSessionToggle from '@/features/board/BoardSessionToggle.jsx';
+import TableSessionTools from '@/features/table/TableSessionTools.jsx';
 import CopyAccessButton   from '@/features/table/CopyAccessButton.jsx';
 import TableManagementButton from '@/features/table/TableManagementButton.jsx';
 
@@ -56,12 +53,9 @@ const TabSession = ({
                         onResourcesChange,
                         onSessionChange,
                     }) => {
-    const { apiBase } = useSystem();
-    const fetchWithAuth = useFetch();
-
-    const [characters, setCharacters] = useState({});   // { [id]: character }
-    const [selectedId, setSelectedId] = useState(null);
-    const [loading, setLoading]       = useState(false);
+    const { characters, order, loading, patchCharacter } = useTableCharacters(activeSession, characterUpdates);
+    const [pickedId, setSelectedId] = useState(null);
+    const selectedId = characters[pickedId] ? pickedId : (order[0] ?? null);   // premier personnage par défaut
 
     const [editMode,     setEditMode]     = useState(false);
     const [editableChar, setEditableChar] = useState(null);
@@ -72,48 +66,6 @@ const TabSession = ({
     const [diceModalCtx,    setDiceModalCtx]    = useState(null);
 
     const sessionId = activeSession?.id ?? null;
-
-    // ── Chargement des personnages de la table ────────────────────────────
-    useEffect(() => {
-        const list = activeSession?.characters ?? [];
-        if (!list.length) { setCharacters({}); setSelectedId(null); return; }
-
-        let cancelled = false;
-        setLoading(true);
-
-        Promise.all(list.map(c =>
-            fetchWithAuth(`${apiBase}/characters/${c.id}`)
-                .then(r => (r.ok ? r.json() : null))
-                .catch(() => null)
-        )).then(results => {
-            if (cancelled) return;
-            const map = {};
-            for (const c of results) if (c?.id) map[c.id] = c;
-            setCharacters(map);
-            setSelectedId(prev => (prev && map[prev] ? prev : (list[0]?.id ?? null)));
-            setLoading(false);
-        });
-
-        return () => { cancelled = true; };
-    }, [sessionId, activeSession?.characters?.length, apiBase]);
-
-    // ── Temps réel — via characterUpdates (jamais de socket ici) ──────────
-    useEffect(() => {
-        if (!characterUpdates) return;
-        setCharacters(prev => {
-            let changed = false;
-            const next = { ...prev };
-            for (const [idStr, update] of Object.entries(characterUpdates)) {
-                const id = Number(idStr);
-                if (!prev[id]) continue;                 // pas dans cette table
-                next[id] = update.type === 'full'
-                    ? update.data
-                    : { ...prev[id], ...update.data };
-                changed = true;
-            }
-            return changed ? next : prev;
-        });
-    }, [characterUpdates]);
 
     // ── Sortie du mode édition au changement de personnage ────────────────
     useEffect(() => { setEditMode(false); }, [selectedId]);
@@ -134,23 +86,9 @@ const TabSession = ({
     const saveEdit = useCallback(async () => {
         if (!selectedId || !editableChar) return;
         setSaving(true);
-        try {
-            const r = await fetchWithAuth(`${apiBase}/characters/${selectedId}`, {
-                method:  'PUT',
-                headers: { 'Content-Type': 'application/json' },
-                body:    JSON.stringify(editableChar),
-            });
-            if (r.ok) {
-                const updated = await r.json();
-                setCharacters(prev => ({ ...prev, [selectedId]: updated }));
-                setEditMode(false);
-            }
-        } catch (e) {
-            console.error('[TabSession/zoneblanche] saveEdit:', e);
-        } finally {
-            setSaving(false);
-        }
-    }, [selectedId, editableChar, apiBase]);
+        if (await patchCharacter(selectedId, editableChar)) setEditMode(false);
+        setSaving(false);
+    }, [selectedId, editableChar, patchCharacter]);
 
     const cancelEdit = useCallback(() => {
         setEditableChar(characters[selectedId] ?? null);
@@ -158,27 +96,9 @@ const TabSession = ({
     }, [characters, selectedId]);
 
     // ── Patch immédiat — actions de jeu, hors mode édition ────────────────
-    const patchImmediate = useCallback(async (patch) => {
-        if (!selectedId) return;
-        const current = characters[selectedId];
-        if (!current) return;
-
-        setCharacters(prev => ({ ...prev, [selectedId]: { ...prev[selectedId], ...patch } }));
-        try {
-            const r = await fetchWithAuth(`${apiBase}/characters/${selectedId}`, {
-                method:  'PATCH',
-                headers: { 'Content-Type': 'application/json' },
-                body:    JSON.stringify(patch),
-            });
-            if (r.ok) {
-                const updated = await r.json();
-                setCharacters(prev => ({ ...prev, [selectedId]: updated }));
-            }
-        } catch (e) {
-            setCharacters(prev => ({ ...prev, [selectedId]: current }));   // rollback
-            console.error('[TabSession/zoneblanche] patchImmediate:', e);
-        }
-    }, [selectedId, characters, apiBase]);
+    const patchImmediate = useCallback((patch) => {
+        if (selectedId) patchCharacter(selectedId, patch);   // retour arrière en cas d'échec : le hook
+    }, [selectedId, patchCharacter]);
 
     const onlineIds = useMemo(
         () => new Set((onlineCharacters ?? []).map(c => c.characterId ?? c.id)),
@@ -233,10 +153,7 @@ const TabSession = ({
                         className="zb-btn-ghost w-full mt-4 px-4 py-2 rounded-sm text-sm">
                     Envoyer au journal
                 </button>
-                {/* Musique de la table (brique audio, spec_audio.md §11.7) */}
-                <AudioSessionToggle sessionId={activeSession.id} className="zb-btn-ghost w-full mt-2 px-4 py-2 rounded-sm text-sm" />
-                {/* Tableau partagé de la table (spec_tableau.md §10.8) */}
-                <BoardSessionToggle sessionId={activeSession.id} className="zb-btn-ghost w-full mt-2 px-4 py-2 rounded-sm text-sm" />
+                <TableSessionTools sessionId={activeSession.id} className="zb-btn-ghost w-full mt-2 px-4 py-2 rounded-sm text-sm" />
             </aside>
 
             {/* ── Fiche ────────────────────────────────────────────────────── */}

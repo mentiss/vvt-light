@@ -6,12 +6,11 @@
 // Actions du MJ au-dessus de la fiche : envoyer une note, envoyer un atout.
 // Les fiches viennent de useTableCharacters (GMApp) ; l'écoute de
 // character-full-update reste au générique (C-7).
-// Props : activeSession, onlineCharacters, characters, order, loading, patchCharacter, addRow
+// Props : activeSession, onlineCharacters, characters, order, loading, patchCharacter
 // ─────────────────────────────────────────────────────────────────────────────
 
 import React, { useState } from 'react';
-import AudioSessionToggle from '@/features/audio/AudioSessionToggle.jsx';
-import BoardSessionToggle from '@/features/board/BoardSessionToggle.jsx';
+import TableSessionTools from '@/features/table/TableSessionTools.jsx';
 import GMSendModal from '@/features/table/modals/GMSendModal.jsx';
 import CopyAccessButton from '@/features/table/CopyAccessButton.jsx';
 import TableManagementButton from '@/features/table/TableManagementButton.jsx';
@@ -31,7 +30,7 @@ const EmptyTable = ({ text, action }) => (
     </div>
 );
 
-const TabSession = ({ activeSession, onlineCharacters, characters, order, loading, patchCharacter, addRow, onSessionChange }) => {
+const TabSession = ({ activeSession, onlineCharacters, characters, order, loading, patchCharacter, onSessionChange }) => {
     const { apiBase } = useSystem();
     const fetchWithAuth = useFetch();
     const [selectedId, setSelectedId] = useState(null);
@@ -59,14 +58,19 @@ const TabSession = ({ activeSession, onlineCharacters, characters, order, loadin
         }).catch(err => console.error('[dune/gm] envoi d’atout :', err));
     };
 
+    // Ajout d'un atout ou d'un talent : la route diffuse la fiche, useTableCharacters la reçoit
+    const addRow = (field, row) => {
+        fetchWithAuth(`${apiBase}/characters/${currentId}/${field}`, {
+            method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(row),
+        }).catch(err => console.error(`[dune/gm] ajout ${field} :`, err));
+    };
+
     const sessionCharacters = order.map(id => ({ id, name: characterFullName(characters[id]), avatar: characters[id]?.avatar }));
 
     return (
         <div className="dn-gm-layout">
             <aside className="dn-gm-table">
-                <AudioSessionToggle sessionId={activeSession.id} className="vtt-btn vtt-btn-sm w-full" />
-                {/* Tableau partagé de la table (spec_tableau.md §10.8) */}
-                <BoardSessionToggle sessionId={activeSession.id} className="vtt-btn vtt-btn-sm w-full" />
+                <TableSessionTools sessionId={activeSession.id} className="vtt-btn vtt-btn-sm w-full" />
                 {loading && <p className="dn-gm-note">Chargement des fiches…</p>}
                 {!loading && order.length === 0 && <p className="dn-gm-note">Aucun personnage à cette table.</p>}
                 {order.map(id => (
@@ -106,7 +110,7 @@ const TabSession = ({ activeSession, onlineCharacters, characters, order, loadin
                     </div>
                     <DuneSheetBody character={current} draft={draft} setDraft={setDraft}
                                    onPatch={fields => patchCharacter(currentId, fields)}
-                                   onAddRow={(field, row) => addRow(currentId, field, row)} />
+                                   onAddRow={addRow} />
                 </div>
             ) : null}
 

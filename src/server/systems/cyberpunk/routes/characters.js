@@ -171,6 +171,8 @@ router.post('/:id/send-item', authenticate, requireGM, (req, res) => {
         const payload = { characterId: charId, item };
         if (sessionId) io?.to(`cyberpunk_session_${sessionId}`).emit('gm-item-received', payload);
         else emitToCharacterSessions(io, req.db, 'cyberpunk', charId, 'gm-item-received', payload);
+        // Fiche à jour pour la vue MJ (B-BROADCAST)
+        broadcastCharacterUpdate(io, req.db, SLUG, charId, loadFullCharacter(req.db, charId));
 
         res.status(201).json({ success: true, item });
     } catch (err) {
