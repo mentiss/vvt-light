@@ -182,7 +182,8 @@ const achtungConfig = {
     // PNJ (spec_pnj.md §10.4) : onglet PNJ de l'interface MJ, partie système components/npc/
     npc: {
         librarySide:  'left',
-        tagGroups:    [{ label: 'Rang', tags: Object.values(NPC_RANKS) }, { label: 'Camp', tags: ['Alliés', 'Axe', 'Mythe', 'Autres'] }],
+        // Rang posé par la fiche (spec_pnj.md §11), Camp libre
+        tagGroups:    [{ label: 'Rang', tags: Object.values(NPC_RANKS), of: sd => NPC_RANKS[sd.rank] }, { label: 'Camp', tags: ['Alliés', 'Axe', 'Mythe', 'Autres'] }],
         hiddenTags:   Object.values(NPC_RANKS),   // déjà dit par le résumé de chaque ligne
         defaults:     npcDefaults,
         summary:      (npc) => {

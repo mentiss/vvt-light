@@ -121,7 +121,7 @@ const maledictumConfig = {
     npc: {
         librarySide:  'left',
         tagGroups: [
-            { label: 'Rôle',    tags: Object.values(ROLE_LABELS) },
+            { label: 'Rôle',    tags: Object.values(ROLE_LABELS), of: p => ROLE_LABELS[p.role] },   // posé par la fiche (§11)
             { label: 'Faction', tags: NPC_FACTIONS },
         ],
         hiddenTags:   Object.values(ROLE_LABELS),   // déjà dit par le résumé de chaque ligne

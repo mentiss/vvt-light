@@ -7,6 +7,7 @@
 //
 // <NpcLibrary npcs summary={npc => …} canAdd onOpen onEdit onDelete onAdd(npc, qty)
 //             onNew onCollapse collapseIcon tagsOpen onToggleTags
+//             wide? onToggleWide? widenIcon?   (colonne élargie, §11 ; sans onToggleWide : pas de bouton)
 //             tagGroups={[{ label: 'Rang', tags: ['Mineur', 'Notable', 'Majeur'] }, …]}
 //             selectedTags onSelectedTagsChange(list)   (sélection gardée par l'appelant)
 //             hiddenTags={['Mineur', …]} />            (filtrables, mais pas affichées sur les lignes)
@@ -107,7 +108,7 @@ const NO_GROUPS = [];
 
 const NpcLibrary = ({ npcs, summary = null, canAdd = false, loading = false, onOpen, onEdit, onDelete, onAdd, onNew, onCollapse, collapseIcon,
                       tagsOpen = true, onToggleTags, tagGroups = NO_GROUPS, selectedTags: storedTags = NO_GROUPS, onSelectedTagsChange,
-                      hiddenTags = NO_GROUPS }) => {
+                      hiddenTags = NO_GROUPS, wide = false, onToggleWide = null, widenIcon = '»' }) => {
     const [search, setSearch] = useState('');
     const query = search.trim().toLowerCase();
     const matches = (n) => !query || `${npcName(n)} ${n.role ?? ''} ${(n.tags ?? []).join(' ')}`.toLowerCase().includes(query);
@@ -141,6 +142,10 @@ const NpcLibrary = ({ npcs, summary = null, canAdd = false, loading = false, onO
             <div className="vtt-npc-zone-head">
                 <h2 className="vtt-section-title">Bibliothèque · {shown.length < npcs.length ? `${shown.length} / ` : ''}{npcs.length}</h2>
                 <button type="button" className="vtt-btn vtt-btn-sm" onClick={onNew}>Nouvelle fiche</button>
+                {onToggleWide && (
+                    <button type="button" className="vtt-btn vtt-btn-sm vtt-btn-icon vtt-npc-icon-btn" onClick={onToggleWide} aria-pressed={wide}
+                            title={wide ? 'Rétrécir la colonne' : 'Élargir la colonne'} aria-label={wide ? 'Rétrécir la colonne' : 'Élargir la colonne'}>{widenIcon}</button>
+                )}
                 <button type="button" className="vtt-btn vtt-btn-sm vtt-btn-icon vtt-npc-icon-btn" onClick={onCollapse} title="Replier la bibliothèque" aria-label="Replier la bibliothèque">{collapseIcon}</button>
             </div>
             <input className="vtt-input vtt-catalog-search" type="search" value={search} placeholder="Rechercher un PNJ, une créature…"

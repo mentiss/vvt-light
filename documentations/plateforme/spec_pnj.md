@@ -545,3 +545,71 @@ La spec Fabula (`specifications_fonctionnelles_fabula_ultima.md` §4.2, §6) dé
 | F-4 | **PV et PM** : saisis tels que le livre les imprime, ou recalculés par l'app selon le rang ? | **Saisis tels quels** : le bestiaire imprime les valeurs finales ; l'app ne recalcule rien. Le seuil de Crise (moitié des PV) s'affiche à la table. | reco tel quel  |
 | F-5 | **Méchants** : suivre les Points Ultima à la table (5, 10 ou 15 selon le méchant) ? | **Oui**, un compteur sur la carte ; les usages (fuite, relance, récupération) restent à la table, comme le dit la spec. | oui            |
 | F-6 | **Bestiaire** : verser les profils du livre de base (une soixantaine) ? | **Oui**, transcrits du livre français avec la page ; ensuite des fiches comme les autres, que le MJ modifie. | oui            |
+
+## 11. Correctifs de la bibliothèque (2026-11-13, validé, implémenté)
+
+Retours du MJ sur Fabula, vrais pour tous les slugs à étiquettes.
+
+### 11.1 Diagnostic
+
+- **Étiquettes non posées** : le filtre et la recherche ne lisent que les étiquettes de la fiche. Le rang, l'espèce, la nature… choisis en pastilles dans la partie système vont dans `systemData` et rien ne les recopie en étiquettes. Seules les fiches versées par migration les ont (posées dans le SQL). Effet de bord : une fiche du catalogue passée de Soldat à Élite garde « Soldat ».
+- **Pas d'autocomplétion** : le champ Étiquettes est un texte libre ; il faut retaper exactement une étiquette existante.
+- **Onglet perdu au rechargement** (côté MJ) : Fabula et Zone Blanche gardent l'onglet en mémoire seulement (`useState('session')`). Les 11 autres interfaces MJ et les 13 fiches joueur le gardent déjà dans l'URL.
+- **Bibliothèque** : deux états (normale, rail replié), pas d'état élargi.
+
+### 11.2 Ce qui change
+
+**Étiquettes pilotées par la fiche.** Le bloc `npc` du `config.jsx` déclare, groupe par groupe, les étiquettes tirées de la partie système (`systemTags(systemData) → [...]`). Dans le formulaire, choisir une pastille (rang, espèce…) pose aussitôt l'étiquette correspondante et retire l'ancienne du même groupe ; les étiquettes libres ne bougent pas. Le calcul est une fonction pure de la plateforme, testée.
+
+| Slug | Étiquettes pilotées | Restent libres |
+|---|---|---|
+| Fabula | Rang (Soldat / Élite / Champion), Méchant, Espèce | |
+| Dune | Rang | Faction, Livre |
+| Achtung | Rang | Camp |
+| Vampire | Nature | |
+| Maledictum | Rôle | Faction (pas dans la fiche) |
+| Nimble | Sbire, Légendaire, Niveau | Famille (pas dans la fiche) |
+
+**Autocomplétion.** Sous le champ Étiquettes, les étiquettes déjà présentes dans la bibliothèque (hors celles de la fiche) en pastilles, filtrées par la saisie ; un clic l'ajoute, Entrée ajoute la saisie telle quelle.
+
+**Onglet dans l'URL.** Fabula et Zone Blanche passent à `useHashTab(TABS, 'session')`, comme Maledictum.
+
+**Colonne élargie.** Un troisième état de la colonne, gardé comme les deux autres : rail, normale, élargie. Il vaut pour la bibliothèque comme pour le formulaire de création et de modification (demande du MJ à l'implémentation).
+
+### 11.3 Questions
+
+| # | Question | Proposition | Réponse MJ |
+|---|---|---|---|
+| B-1 | Une étiquette pilotée (ex. « Élite ») peut-elle être retirée ou ajoutée à la main dans le champ Étiquettes ? | **Non** : elle s'affiche dans le champ, grisée, sans croix ; on la change par la pastille de la fiche. Sinon la fiche et l'étiquette peuvent se contredire, et c'est le bug d'aujourd'hui. | |
+| B-2 | Les fiches **déjà créées à la main** sans étiquettes : comment les rattraper ? | **À la lecture** : la bibliothèque calcule les étiquettes pilotées de chaque fiche avant de filtrer et de chercher, avec la même fonction. Les fiches existantes se retrouvent tout de suite, sans migration ni réenregistrement ; l'enregistrement suivant les écrit pour de bon. | |
+| B-3 | Fabula : étiquettes plus fines (« Méchant mineur », « Champion (2) ») ? | **Non** : on garde les groupes actuels (Soldat, Élite, Champion, Méchant), le résumé de la ligne donne le détail. | |
+| B-4 | Bibliothèque élargie : que devient la zone « À la table » ? | **Elle se réduit sans disparaître** : la bibliothèque prend les deux tiers environ, ses lignes passent sur deux colonnes ; la table reste une cible pour glisser une fiche. Bouton à côté de celui du rail (‹ / ›, ou une icône « agrandir »). | |
+| B-5 | Planche avant de coder l'état élargi ? | **Oui, une planche rapide** (trois états côte à côte), puisque c'est une nouvelle disposition. | Non, pas de planche (2026-11-13) |
+
+B-1 à B-4 : recos validées (2026-11-13).
+
+### 11.4 Implémentation (2026-11-13)
+
+- `features/npc/tools/npcTags.js` (`syncSystemTags`, `systemTagsOf`, `isSystemTag`) et son test : un groupe de `tagGroups` qui déclare `of(systemData)` est piloté ; `owns(tag)` facultatif dit quelles étiquettes le groupe reprend (défaut : sa liste ; Nimble : tout `Niv. …`).
+- `TabNpcs` : la bibliothèque est lue avec les étiquettes de la fiche (B-2), le brouillon se resynchronise à chaque modification, état `wide` gardé avec les préférences de la bibliothèque, classe `is-aside-wide`.
+- `NpcForm` : étiquettes pilotées verrouillées (B-1), suggestions des étiquettes de la bibliothèque (prop `suggestions`), bouton d'élargissement ; `NpcLibrary` : même bouton, liste sur deux colonnes en mode élargi.
+- Slugs : `of` posé sur les groupes du tableau du §11.2 ; Fabula et Zone Blanche passent à `useHashTab`.
+
+## 12. Fabula : sorts offensifs des PNJ (2026-11-13, validé, implémenté)
+
+Demande du MJ : préciser si un sort est offensif ou défensif, et lancer un sort offensif comme une attaque.
+
+**Constat** : les 28 sorts offensifs du bestiaire versé portent déjà `offensive: true`, mais le formulaire ne le montrait pas et la fiche n'avait pas de jet ; le test de magie et les dégâts ne sont que dans le texte (« Test de magie 【INT + VOL】+3. La cible subit【VH + 20】dégâts de ténèbres »).
+
+**Ce qui change**
+- Formulaire : pastilles Offensif / Défensif par sort ; un sort offensif montre les champs de jet d'une attaque : deux attributs, bonus au test de magie, dégâts « VH + » (vide : test sans dégâts), type.
+- Fiche : un sort offensif a son bouton de jet, sous les attaques ; il ouvre la fenêtre de jet du MJ préremplie (attributs, bonus, dégâts, type).
+- Bestiaire existant : sans champs de jet, ils sont lus dans le texte du sort (`spellRoll`, `fabula/config/npc.js`, testé). Les sorts versés ont leur bouton sans migration ; ouvrir la fiche dans le formulaire montre les valeurs lues, écrites en base dès qu'on modifie un sort de la liste (sinon la lecture du texte continue de servir, avec le même résultat).
+- Brique `NpcItemList` : champ conditionnel `when(item)`.
+
+| # | Question | Proposition | Réponse MJ |
+|---|---|---|---|
+| S-1 | Le jet vise la Défense magique, que la fenêtre ne connaît pas : ND facultatif comme pour les attaques ? | Oui. | Oui (2026-11-13) |
+| S-2 | Décompter le coût en PM de la carte au lancer ? | Non pour l'instant : le coût n'est pas toujours un nombre (« 5 × C PM »). | Oui à la reco (2026-11-13) |
+
+Données d'un sort : `{ name, cost, target, duration, offensive, attrs?: [a, b], magic?, damage?, type?, text }`.

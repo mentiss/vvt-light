@@ -2,7 +2,32 @@
 // PNJ de Fabula Ultima (spec_pnj.md §10.5, §10.7 ; livre p.295) : tours selon le rang, Crise,
 // états qui baissent le dé d'un attribut, Points Ultima d'un Méchant.
 import { describe, it, expect } from 'vitest';
-import { crisisOf, initialNpcState, inCrisis, isOut, npcDie, turnsPerRound } from '../../../../src/systems/fabula/config/npc.js';
+import { crisisOf, initialNpcState, inCrisis, isOut, npcDie, spellRoll, turnsPerRound } from '../../../../src/systems/fabula/config/npc.js';
+
+// Sorts offensifs (spec_pnj.md §12) : textes repris du bestiaire versé
+describe('Sort offensif', () => {
+    it('lit le test de magie et les dégâts dans le texte du bestiaire', () => {
+        expect(spellRoll({ offensive: true, text: 'Test de magie 【INT + VOL】+3. La cible subit【VH + 20】dégâts de ténèbres et Angela récupère…' }))
+            .toEqual({ attrs: ['int', 'vol'], bonus: 3, damage: 20, type: 'tenebres' });
+        expect(spellRoll({ offensive: true, text: 'Test de magie 【PUI + VOL】+2. La cible subit【VH + 30】dégâts de glace.' }))
+            .toEqual({ attrs: ['pui', 'vol'], bonus: 2, damage: 30, type: 'glace' });
+    });
+
+    it('sans dégâts dans le texte : test seul', () => {
+        expect(spellRoll({ offensive: true, text: 'Test de magie 【INT + VOL】. La cible subit l’état étourdi.' }))
+            .toEqual({ attrs: ['int', 'vol'], bonus: 0, damage: null, type: null });
+    });
+
+    it('les champs saisis priment sur le texte', () => {
+        expect(spellRoll({ offensive: true, attrs: ['vol', 'vol'], magic: 1, damage: 15, type: 'feu', text: 'Test de magie 【INT + VOL】+3.' }))
+            .toEqual({ attrs: ['vol', 'vol'], bonus: 1, damage: 15, type: 'feu' });
+    });
+
+    it('pas de jet pour un sort défensif ou sans test de magie', () => {
+        expect(spellRoll({ offensive: false, text: 'Test de magie 【INT + VOL】+3.' })).toBeNull();
+        expect(spellRoll({ offensive: true, text: 'Le hurleur blanc regagne 30 Points de Vie.' })).toBeNull();
+    });
+});
 
 const wolf = { rank: 'soldat', attributes: { dex: 10, int: 6, pui: 8, vol: 6 }, hp: 45, crisis: 22, mp: 40 };
 

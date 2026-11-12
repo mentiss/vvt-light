@@ -9,9 +9,14 @@
   .vtt-npc-tab.is-left.is-wide { grid-template-columns: minmax(420px, 560px) minmax(0, 1fr); }
   .vtt-npc-tab.is-collapsed { grid-template-columns: minmax(0, 1fr) 2.75rem; }
   .vtt-npc-tab.is-left.is-collapsed { grid-template-columns: 2.75rem minmax(0, 1fr); }
+  /* Colonne élargie (§11) : bibliothèque ou formulaire aux deux tiers, la table reste une cible */
+  .vtt-npc-tab.is-aside-wide { grid-template-columns: minmax(280px, 1fr) minmax(0, 2fr); }
+  .vtt-npc-tab.is-left.is-aside-wide { grid-template-columns: minmax(0, 2fr) minmax(280px, 1fr); }
+  .vtt-npc-tab.is-aside-wide .vtt-npc-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(340px, 1fr)); align-items: start; }
   @media (max-width: 900px) {
     .vtt-npc-tab, .vtt-npc-tab.is-left, .vtt-npc-tab.is-wide, .vtt-npc-tab.is-collapsed,
-    .vtt-npc-tab.is-left.is-wide, .vtt-npc-tab.is-left.is-collapsed { grid-template-columns: minmax(0, 1fr); }
+    .vtt-npc-tab.is-left.is-wide, .vtt-npc-tab.is-left.is-collapsed,
+    .vtt-npc-tab.is-aside-wide, .vtt-npc-tab.is-left.is-aside-wide { grid-template-columns: minmax(0, 1fr); }
   }
   .vtt-npc-zone { display: flex; flex-direction: column; gap: 0.75rem; padding: 1rem; min-width: 0; }
   .vtt-npc-aside { position: sticky; top: 1rem; max-height: calc(100vh - 2rem); overflow-y: auto; }
@@ -108,6 +113,10 @@
   .vtt-npc-avatar-choice { flex: 1; min-width: 0; }
   .vtt-npc-tags-field { display: flex; flex-wrap: wrap; align-items: center; gap: 0.3rem; }
   .vtt-npc-tags-field .vtt-input { width: 12rem; padding: 0.25rem 0.5rem; }
+  .vtt-npc-tags-edit { display: flex; flex-direction: column; gap: 0.4rem; }
+  .vtt-npc-tags-field .vtt-pill.is-locked { cursor: default; opacity: 0.75; }
+  .vtt-npc-tags-suggest { display: flex; flex-wrap: wrap; gap: 0.25rem; }
+  .vtt-npc-tags-suggest .vtt-pill { font-size: 0.75rem; padding: 0.15rem 0.5rem; }
 
   /* Jet composé (sélection sur la fiche, barre « Lancer ») et jets préparés */
   .vtt-npc-pickable { cursor: pointer; }

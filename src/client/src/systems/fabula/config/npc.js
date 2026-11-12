@@ -13,6 +13,7 @@
 // ─────────────────────────────────────────────────────────────────────────────
 
 import { effectiveAttrDie } from './utils.js';
+import { TYPES_DEGATS } from './equipment.js';
 
 export const SPECIES = ['Bête', 'Construct', 'Démon', 'Élémentaire', 'Humanoïde', 'Monstre', 'Mort-vivant', 'Plante'];
 export const RANKS = { soldat: 'Soldat', elite: 'Élite', champion: 'Champion' };
@@ -50,3 +51,37 @@ export const inCrisis = (sd, state) => state != null && Number(state.hp ?? 0) > 
 
 /** Vaincu à 0 PV (un Méchant peut encore fuir en dépensant un Point Ultima : à la table) */
 export const isOut = (state) => state != null && Number(state.hp ?? 0) <= 0;
+
+// ── Sorts offensifs (spec_pnj.md §12) ───────────────────────────────────────
+// Un sort offensif se lance comme une attaque : test de magie 【A + B】 + bonus, dégâts 【VH + N】 type.
+// Champs de la fiche : { offensive, attrs: [a, b], magic, damage, type }. Les sorts du bestiaire n'ont
+// que le texte (« Test de magie 【INT + VOL】+3. La cible subit【VH + 20】dégâts de feu ») : lu à défaut.
+
+const ATTR_BY_LABEL = { DEX: 'dex', INT: 'int', PUI: 'pui', VOL: 'vol' };
+// « ténèbres », « physiques » : sans accents, sans majuscules, sans s final
+const fold = (s) => String(s).normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().replace(/s$/, '');
+const TYPE_BY_WORD = Object.fromEntries(TYPES_DEGATS.map(t => [fold(t.label), t.key]));
+const TEST_RE = /【\s*(DEX|INT|PUI|VOL)\s*\+\s*(DEX|INT|PUI|VOL)\s*】\s*(?:([+-])\s*(\d+))?/;
+const DAMAGE_RE = /【\s*VH\s*\+\s*(\d+)\s*】\s*dégâts\s+(?:de\s+|d['’]\s*)?([\p{L}]+)/u;
+
+/**
+ * Jet d'un sort offensif, ou null (sort défensif, ou test de magie introuvable).
+ * Les champs de la fiche priment ; sans attributs saisis, tout est lu dans le texte.
+ * @returns {{ attrs: string[], bonus: number, damage: number|null, type: string|null }|null}
+ */
+export function spellRoll(spell) {
+    if (!spell?.offensive) return null;
+    if (Array.isArray(spell.attrs) && spell.attrs.length === 2) {
+        return { attrs: spell.attrs, bonus: Number(spell.magic ?? 0), damage: spell.damage ?? null, type: spell.type ?? null };
+    }
+    const text = String(spell.text ?? '');
+    const test = text.match(TEST_RE);
+    if (!test) return null;
+    const dmg = text.match(DAMAGE_RE);
+    return {
+        attrs: [ATTR_BY_LABEL[test[1]], ATTR_BY_LABEL[test[2]]],
+        bonus: test[4] ? Number(test[4]) * (test[3] === '-' ? -1 : 1) : 0,
+        damage: dmg ? Number(dmg[1]) : null,
+        type: dmg ? (TYPE_BY_WORD[fold(dmg[2])] ?? null) : null,
+    };
+}

@@ -19,6 +19,7 @@ import DiceHistoryPage    from '@/features/dice/history/DiceHistoryPage.jsx';
 import FreeDiceModal      from '@/features/dice/modals/FreeDiceModal.jsx';
 import { HamburgerMenu, HamburgerMenuItem, HamburgerMenuSeparator } from '@/ui/menu/HamburgerMenu.jsx';
 import TabNpcs            from '@/features/npc/TabNpcs.jsx';
+import { useHashTab }     from '@/ui/hooks/useHashTab.js';
 import {
     HamburgerMenuItemTableManagement, HamburgerMenuItemDiceConfig, HamburgerMenuItemLogout,
 } from '@/features/table/HamburgerMenuItems.jsx';
@@ -45,7 +46,7 @@ const TABS = [
 ];
 
 const GMApp = ({ activeSession, onSessionChange, onlineCharacters, characterUpdates, darkMode, onToggleDarkMode }) => {
-    const [activeTab, setActiveTab]       = useState('session');
+    const [activeTab, setActiveTab]       = useHashTab(TABS, 'session');   // onglet gardé au rafraîchissement
     // (modales du menu : dans ses éléments, spec_ui_menu.md)
     const [showFreeDice, setShowFreeDice] = useState(false);
     const [showGmDice, setShowGmDice]     = useState(false);

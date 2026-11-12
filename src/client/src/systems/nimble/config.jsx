@@ -128,9 +128,10 @@ const nimbleConfig = {
     npc: {
         librarySide:  'left',
         tagGroups: [
-            { label: 'Type',    tags: ['Sbire', 'Légendaire'] },
+            // Type et Niveau posés par la fiche (§11) ; un sbire n'a pas d'étiquette de niveau
+            { label: 'Type',    tags: ['Sbire', 'Légendaire'], of: m => [m.minion ? 'Sbire' : null, m.legendary ? 'Légendaire' : null] },
             { label: 'Famille', tags: FAMILIES.map(f => f.name) },
-            { label: 'Niveau',  tags: LEVEL_TAGS },
+            { label: 'Niveau',  tags: LEVEL_TAGS, of: m => (m.minion || !m.level ? null : `Niv. ${m.level}`), owns: t => t.startsWith('Niv. ') },
         ],
         hiddenTags:   ['Sbire', ...LEVEL_TAGS],   // déjà dits par le résumé de chaque ligne
         defaults:     () => ({ level: '1', size: 'medium', minion: false, legendary: false, hp: 10, hpPerHero: false, armor: null,

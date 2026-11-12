@@ -176,7 +176,11 @@ const fabulaConfig = {
     // PNJ (spec_pnj.md §10.5, §10.7) : onglet PNJ de l'interface MJ, partie système components/npc/
     npc: {
         librarySide:  'left',
-        tagGroups:    [{ label: 'Rang', tags: [...Object.values(RANKS), 'Méchant'] }, { label: 'Espèce', tags: SPECIES }],
+        // Rang, Méchant et Espèce posés par la fiche (spec_pnj.md §11)
+        tagGroups:    [
+            { label: 'Rang',   tags: [...Object.values(RANKS), 'Méchant'], of: sd => [RANKS[sd.rank], sd.villain ? 'Méchant' : null] },
+            { label: 'Espèce', tags: SPECIES, of: sd => sd.species },
+        ],
         hiddenTags:   [...Object.values(RANKS), ...SPECIES],   // déjà dits par le résumé de chaque ligne
         defaults:     npcDefaults,
         summary:      (npc) => {

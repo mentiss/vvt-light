@@ -57,8 +57,10 @@ npm run migrate 27022025_add_quoi.sql        # joue une migration précise (les 
 # Lint (front uniquement)
 cd src/client && npm run lint
 
-# Tests unitaires du front (Vitest)
+# Tests unitaires du front (Vitest), hors générateur de plans
 cd src/client && npm test
+# Tests du générateur de plans (outil à part, ~2 min) : seulement quand on touche features/genmap
+cd src/client && npm run test:genmap
 
 # Tests serveur : contrat des routes (Vitest, racine)
 npm test

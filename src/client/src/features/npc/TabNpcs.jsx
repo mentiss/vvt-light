@@ -13,8 +13,9 @@
 //
 // Bloc `npc` du config.jsx du slug, tout facultatif (sans bloc : fiche commune seule) :
 //   librarySide  : 'left' (défaut) | 'right'
-//   tagGroups    : [{ label, tags: [...] }] étiquettes mises en tête du filtre, groupe par groupe
-//                  (dans un groupe, elles s'additionnent : Mineur + Notable)
+//   tagGroups    : [{ label, tags: [...], of?, owns? }] étiquettes mises en tête du filtre, groupe par groupe
+//                  (dans un groupe, elles s'additionnent : Mineur + Notable) ; un groupe avec
+//                  of(systemData) est piloté par la fiche (rang, espèce…, tools/npcTags.js, §11)
 //   hiddenTags   : étiquettes qui servent au filtre mais ne s'affichent pas sur les lignes
 //                  (déjà dites par le résumé, ex. le rang de Dune)
 //   defaults()   : partie système d'une nouvelle fiche
@@ -26,7 +27,7 @@
 //   RollWindow : ({ request, hiddenRolls, sessionId, onClose }) => fenêtre de jet du slug
 // ─────────────────────────────────────────────────────────────────────────────
 
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import Modal from '@/ui/modal/Modal.jsx';
 import ConfirmModal from '@/ui/modal/ConfirmModal.jsx';
 import { useNpcs, NPC_ROLLS_OPTIONS } from './hooks/useNpcs.js';
@@ -38,20 +39,25 @@ import NpcCard from './NpcCard.jsx';
 import NpcForm from './NpcForm.jsx';
 import NpcSheet from './NpcSheet.jsx';
 import { npcName } from './NpcAvatar.jsx';
+import { syncSystemTags } from './tools/npcTags.js';
 
-// Bibliothèque : repliée ou non, bloc d'étiquettes ouvert, étiquettes choisies (gardées par slug)
+// Bibliothèque : repliée (rail) ou non, élargie ou non, bloc d'étiquettes ouvert, étiquettes choisies (gardées par slug)
 const LIBRARY_OPTIONS = {
-    defaults: { collapsed: false, tagsOpen: true, tags: [] },
+    defaults: { collapsed: false, wide: false, tagsOpen: true, tags: [] },
     validate: v => typeof v?.collapsed === 'boolean'
+        && (v.wide === undefined || typeof v.wide === 'boolean')
         && (v.tagsOpen === undefined || typeof v.tagsOpen === 'boolean')
         && (v.tags === undefined || (Array.isArray(v.tags) && v.tags.every(t => typeof t === 'string'))),
 };
 const ROLLS_OPTIONS   = NPC_ROLLS_OPTIONS;   // partagée avec la fiche ouverte depuis l'initiative
 
-const emptyNpc = (config) => ({
+// Fiche avec les étiquettes posées par sa partie système (rang, espèce…, §11)
+const withSystemTags = (npc, config) => ({ ...npc, tags: syncSystemTags(npc.tags, npc.systemData, config.tagGroups) });
+
+const emptyNpc = (config) => withSystemTags({
     prenom: '', nom: '', role: '', tags: [], description: '', gmNotes: '',
     avatar: null, icon: null, systemData: config.defaults?.() ?? {},
-});
+}, config);
 
 const TabNpcs = ({ sessionId = null, config = {}, context = null }) => {
     const { slug } = useSystem();
@@ -71,6 +77,12 @@ const TabNpcs = ({ sessionId = null, config = {}, context = null }) => {
     const side = config.librarySide === 'right' ? 'right' : 'left';
     const RollWindow = config.RollWindow;
     const collapsed = libraryPrefs.collapsed && !editing;
+    const asideWide = !!libraryPrefs.wide && !collapsed;   // colonne élargie : bibliothèque comme formulaire
+
+    // Bibliothèque lue avec les étiquettes de la fiche : les fiches créées avant le §11
+    // se filtrent sans réenregistrement ; l'enregistrement suivant les écrit
+    const library = useMemo(() => n.library.map(npc => withSystemTags(npc, config)), [n.library, config]);
+    const tagSuggestions = useMemo(() => [...new Set(library.flatMap(npc => npc.tags ?? []))].sort((a, b) => a.localeCompare(b, 'fr')), [library]);
 
     // Fiche jouée en groupe (config.isGroup, ex. sbires de Nimble) : une seule carte, la quantité va à l'état du slug
     const addToTable = (npc, quantity = 1) => {
@@ -78,7 +90,7 @@ const TabNpcs = ({ sessionId = null, config = {}, context = null }) => {
         const state = config.initialState?.(npc, { quantity: group ? quantity : 1, context }) ?? {};
         return n.addToTable(npc.id, group ? 1 : quantity, state);
     };
-    const openEdit = (npc) => { setReading(null); setEditing({ kind: 'edit', id: npc.id, draft: structuredClone(npc) }); };
+    const openEdit = (npc) => { setReading(null); setEditing({ kind: 'edit', id: npc.id, draft: withSystemTags(structuredClone(npc), config) }); };
     const duplicate = async (npc) => {
         const { id: _id, createdAt: _c, updatedAt: _u, ...rest } = npc;
         const copy = await n.saveNpc({ ...rest, nom: `${npc.nom} (copie)` });
@@ -107,12 +119,14 @@ const TabNpcs = ({ sessionId = null, config = {}, context = null }) => {
         if (!raw) return;
         e.preventDefault();
         const { id, quantity } = JSON.parse(raw);
-        const npc = n.library.find(x => x.id === id);
+        const npc = library.find(x => x.id === id);
         if (npc) addToTable(npc, quantity);
     };
 
     // ── Colonne : formulaire, barre repliée ou bibliothèque ─────────────────
     const collapseIcon = (side === 'left') === collapsed ? '›' : '‹';
+    const widen = { wide: asideWide, widenIcon: (side === 'left') !== asideWide ? '»' : '«',
+                    onToggleWide: () => setLibraryPrefs(p => ({ ...p, wide: !p.wide })) };
     let aside;
     if (editing) {
         aside = (
@@ -121,9 +135,9 @@ const TabNpcs = ({ sessionId = null, config = {}, context = null }) => {
                      config={config} draft={editing.draft} saving={saving} error={n.error} isNew={editing.kind === 'new'}
                      title={editing.kind === 'table' ? 'Modifier ce PNJ' : editing.kind === 'edit' ? 'Modifier la fiche' : 'Nouvelle fiche'}
                      subtitle={editing.kind === 'table' ? 'Copie à la table : la bibliothèque ne change pas' : 'Bibliothèque'}
-                     tableName={editing.tableName}
+                     tableName={editing.tableName} suggestions={tagSuggestions} {...widen}
                      onTableNameChange={editing.kind === 'table' ? (tableName => setEditing(ed => ({ ...ed, tableName }))) : null}
-                     onChange={patch => setEditing(ed => ({ ...ed, draft: { ...ed.draft, ...patch } }))}
+                     onChange={patch => setEditing(ed => ({ ...ed, draft: withSystemTags({ ...ed.draft, ...patch }, config) }))}
                      onSave={save} onCancel={() => setEditing(null)} />
         );
     } else if (collapsed) {
@@ -131,15 +145,16 @@ const TabNpcs = ({ sessionId = null, config = {}, context = null }) => {
             <aside className="vtt-panel vtt-npc-aside vtt-npc-rail">
                 <button type="button" className="vtt-btn vtt-btn-sm vtt-btn-icon vtt-npc-icon-btn" title="Déplier la bibliothèque" aria-label="Déplier la bibliothèque"
                         onClick={() => setLibraryPrefs(p => ({ ...p, collapsed: false }))}>{collapseIcon}</button>
-                <span className="vtt-npc-rail-label">Bibliothèque · {n.library.length}</span>
+                <span className="vtt-npc-rail-label">Bibliothèque · {library.length}</span>
             </aside>
         );
     } else {
         aside = (
-            <NpcLibrary npcs={n.library} summary={config.summary ?? null} canAdd={!!sessionId} loading={n.loading}
+            <NpcLibrary npcs={library} summary={config.summary ?? null} canAdd={!!sessionId} loading={n.loading}
                         onOpen={setReading} onEdit={openEdit} onDelete={setToDelete} onAdd={addToTable}
                         onNew={() => { setReading(null); setEditing({ kind: 'new', draft: emptyNpc(config) }); }}
                         onCollapse={() => setLibraryPrefs(p => ({ ...p, collapsed: true }))} collapseIcon={collapseIcon}
+                        {...widen}
                         tagsOpen={libraryPrefs.tagsOpen} onToggleTags={() => setLibraryPrefs(p => ({ ...p, tagsOpen: !p.tagsOpen }))}
                         tagGroups={config.tagGroups} hiddenTags={config.hiddenTags}
                         selectedTags={libraryPrefs.tags} onSelectedTagsChange={tags => setLibraryPrefs(p => ({ ...p, tags }))} />
@@ -179,7 +194,7 @@ const TabNpcs = ({ sessionId = null, config = {}, context = null }) => {
         </section>
     );
 
-    const layout = `vtt-npc-tab is-split${side === 'left' ? ' is-left' : ''}${editing ? ' is-wide' : ''}${collapsed ? ' is-collapsed' : ''}`;
+    const layout = `vtt-npc-tab is-split${side === 'left' ? ' is-left' : ''}${editing ? ' is-wide' : ''}${collapsed ? ' is-collapsed' : ''}${asideWide ? ' is-aside-wide' : ''}`;
 
     return (
         <div className={layout}>

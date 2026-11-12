@@ -106,7 +106,7 @@ const woddavampireConfig = {
     // PNJ du Conteur (spec_pnj.md §10.3) : onglet PNJ de l'interface MJ, partie système components/npc/
     npc: {
         librarySide:  'left',
-        tagGroups:    [{ label: 'Nature', tags: Object.values(NATURES) }],
+        tagGroups:    [{ label: 'Nature', tags: Object.values(NATURES), of: sd => NATURES[sd.nature ?? 'character'] }],   // posée par la fiche (§11)
         hiddenTags:   Object.values(NATURES),   // déjà dite par le résumé de chaque ligne
         defaults:     npcDefaults,
         summary:      (npc) => {

@@ -25,6 +25,7 @@ import ToastNotifications   from '@/features/table/ToastNotifications.jsx';
 import TabJournal           from '@/features/journal/TabJournal.jsx';
 import Board                from '@/features/board/Board.jsx';
 import DiceHistoryPage      from '@/features/dice/history/DiceHistoryPage.jsx';
+import { useHashTab }       from '@/ui/hooks/useHashTab.js';
 import { HamburgerMenu, HamburgerMenuSeparator } from '@/ui/menu/HamburgerMenu.jsx';
 import {
     HamburgerMenuItemTableManagement, HamburgerMenuItemFreeDice, HamburgerMenuItemDiceConfig,
@@ -158,7 +159,7 @@ const GMApp = ({
     const fetchWithAuth = useFetch();
     const timecode      = useTimecode();
 
-    const [activeTab, setActiveTab] = useState('session');
+    const [activeTab, setActiveTab] = useHashTab(TABS, 'session');   // onglet gardé au rafraîchissement
 
     // Modales du menu : dans ses éléments (spec_ui_menu.md)
     const [showGMDice,     setShowGMDice]     = useState(false);

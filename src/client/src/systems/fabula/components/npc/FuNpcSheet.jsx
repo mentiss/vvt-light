@@ -5,7 +5,7 @@
 //   - niveau, espèce, rang (tours par manche), Méchant ; traits ;
 //   - dés d'attributs (états appliqués), DEF, DEF M., initiative, affinités ;
 //   - à la table : PV (Crise), PM, Points Ultima d'un Méchant, états ;
-//   - « Test » et attaques : fenêtre de jet du MJ (FuGmDiceModal) préremplie ;
+//   - « Test », attaques et sorts offensifs (§12) : fenêtre de jet du MJ (FuGmDiceModal) préremplie ;
 //   - sorts et capacités repliés.
 // Règles : config/npc.js.
 // ─────────────────────────────────────────────────────────────────────────────
@@ -17,7 +17,7 @@ import Stepper from '../layout/Stepper.jsx';
 import FuGmDiceModal from '../modals/FuGmDiceModal.jsx';
 import { TYPES_DEGATS } from '../../config/equipment.js';
 import {
-    AFFINITIES, ATTR_KEYS, STATUSES, VILLAINS, crisisOf, inCrisis, isOut, npcDie, rankLabel, turnsPerRound, ultimaMax,
+    AFFINITIES, ATTR_KEYS, STATUSES, VILLAINS, crisisOf, inCrisis, isOut, npcDie, rankLabel, spellRoll, turnsPerRound, ultimaMax,
 } from '../../config/npc.js';
 
 const SHORT = { dex: 'DEX', int: 'INT', pui: 'PUI', vol: 'VOL' };
@@ -99,6 +99,27 @@ const FuNpcSheet = ({ npc, state, onStateChange, hiddenRolls, sessionId, name })
                     </span>
                 </div>
             ))}
+            {/* Sorts offensifs (§12) : test de magie préparé comme une attaque ; le coût en PM se décompte à la main */}
+            {(sd.spells ?? []).map((s, i) => {
+                const r = spellRoll(s);
+                if (!r) return null;
+                return (
+                    // relecture: F-KEY — sorts sans identifiant, liste figée de la fiche
+                    <div key={`spell-${s.name}-${i}`} className="fu-npc-line">
+                        <button type="button" className="fu-btn fu-btn-sm" disabled={down}
+                                onClick={() => setRoll({ label: `${name} · ${s.name}`, initial: {
+                                    mode: r.damage != null ? 'attaque' : 'test', attr1: r.attrs[0], attr2: r.attrs[1],
+                                    modifier: r.bonus, degatsBonus: Number(r.damage ?? 0), degatsType: r.type,
+                                } })}>
+                            <FuIcon name="bolt" className="fu-ico-sm" />{s.name}
+                        </button>
+                        <span className="fu-npc-muted">
+                            {' '}【{r.attrs.map(k => SHORT[k] ?? k).join(' + ')}】{r.bonus ? ` ${r.bonus > 0 ? '+' : ''}${r.bonus}` : ''}
+                            {r.damage != null ? ` · 【VH + ${r.damage}】 ${r.type ? typeLabel(r.type) : 'type au choix'}` : ''}{s.cost ? ` · ${s.cost}` : ''}
+                        </span>
+                    </div>
+                );
+            })}
             {((sd.spells ?? []).length > 0 || (sd.abilities ?? []).length > 0) && (
                 <details className="fu-npc-fold">
                     <summary className="fu-label">Sorts et capacités ({(sd.spells ?? []).length + (sd.abilities ?? []).length})</summary>

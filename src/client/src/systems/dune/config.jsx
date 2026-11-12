@@ -29,7 +29,7 @@ const duneConfig = {
         librarySide:  'left',
         // Étiquettes mises en tête du filtre de la bibliothèque (celles des fiches des livres)
         tagGroups: [
-            { label: 'Rang',    tags: ['Mineur', 'Notable', 'Majeur'] },
+            { label: 'Rang',    tags: ['Mineur', 'Notable', 'Majeur'], of: sd => rankLabel(sd.rank) },   // posé par la fiche (§11)
             { label: 'Faction', tags: ['Atréides', 'Harkonnen', 'Corrino', 'Fremen', 'Bene Gesserit', 'Guilde spatiale', 'Bene Tleilax',
                                        'CHOM', 'Imperium', 'Contrebandiers', "Maison d'Amaranth", 'Maison Wayku'] },
             { label: 'Livre',   tags: ['Archétype', 'Harvesters of Dune', 'Agents of Dune'] },

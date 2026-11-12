@@ -3,14 +3,14 @@
 // Formulaire de la partie système d'un PNJ de Fabula Ultima (spec_pnj.md §10.5), posé par la
 // brique NpcForm (props { value, onChange }) : niveau, espèce, rang (Champion : N choisi par le MJ,
 // F-3), Méchant, traits, dés d'attributs, PV, Crise, PM, initiative, DEF, DEF M. (saisis tels que le
-// livre les imprime, F-4), affinités, attaques, sorts, capacités.
+// livre les imprime, F-4), affinités, attaques, sorts (offensif : jet comme une attaque, §12), capacités.
 // ─────────────────────────────────────────────────────────────────────────────
 
 import React, { useState } from 'react';
 import NpcItemList from '@/features/npc/NpcItemList.jsx';
 import FuDie from '../ui/FuDie.jsx';
 import { TYPES_DEGATS } from '../../config/equipment.js';
-import { AFFINITIES, ATTR_KEYS, RANKS, SPECIES, VILLAINS } from '../../config/npc.js';
+import { AFFINITIES, ATTR_KEYS, RANKS, SPECIES, VILLAINS, spellRoll } from '../../config/npc.js';
 
 const SHORT = { dex: 'DEX', int: 'INT', pui: 'PUI', vol: 'VOL' };
 const SIZES = [6, 8, 10, 12];
@@ -36,6 +36,18 @@ const NumField = ({ label, value, onChange }) => (
 // Attaques : lignes { name, a1, a2, precision, damage, type, reach, text } ↔ { name, attrs, precision, damage, type, ranged, text }
 const toRows = (attacks) => (attacks ?? []).map(a => ({ ...a, a1: a.attrs?.[0] ?? 'dex', a2: a.attrs?.[1] ?? 'pui', reach: a.ranged ? 'ranged' : 'melee' }));
 const fromRows = (rows) => rows.map(({ a1, a2, reach, ...a }) => ({ ...a, attrs: [a1, a2].filter(Boolean), ranged: reach === 'ranged' }));
+
+// Sorts (spec_pnj.md §12) : lignes { …, kind: 'off'|'def', a1, a2, magic, damage, type } ↔ { …, offensive, attrs, magic, damage, type }.
+// Un sort du bestiaire sans champs de jet les reçoit lus dans son texte (spellRoll) ; un sort défensif n'en garde aucun.
+const toSpellRows = (spells) => (spells ?? []).map(s => {
+    const r = spellRoll(s);
+    return { ...s, kind: s.offensive ? 'off' : 'def', a1: r?.attrs[0] ?? 'int', a2: r?.attrs[1] ?? 'vol',
+             magic: r?.bonus ?? 0, damage: r ? r.damage : null, type: r?.type ?? null };
+});
+const fromSpellRows = (rows) => rows.map(({ kind, a1, a2, magic, damage, type, ...s }) => (kind === 'off'
+    ? { ...s, offensive: true, attrs: [a1 ?? 'int', a2 ?? 'vol'], magic: magic ?? 0, damage: damage ?? null, type: type ?? null }
+    : { ...s, offensive: false, attrs: undefined }));   // undefined : attributs d'un ancien jet retirés à l'enregistrement (JSON)
+const isOffensive = (row) => row.kind === 'off';
 
 const FuNpcForm = ({ value, onChange }) => {
     const sd = value;
@@ -110,10 +122,15 @@ const FuNpcForm = ({ value, onChange }) => {
                                   { key: 'a1', options: SHORT }, { key: 'a2', options: SHORT }, { key: 'reach', options: { melee: 'Contact', ranged: 'Distance' } },
                                   { key: 'type', options: TYPE_OPTIONS }, { key: 'text', placeholder: 'Effet', multiline: true }]} />
             <span className="vtt-field-label">Sorts</span>
-            <NpcItemList items={sd.spells ?? []} onChange={spells => set({ spells })} addLabel="+ Sort"
-                         newItem={() => ({ name: '', cost: '', target: '', duration: '', text: '' })}
+            <NpcItemList items={toSpellRows(sd.spells)} onChange={rows => set({ spells: fromSpellRows(rows) })} addLabel="+ Sort"
+                         newItem={() => ({ name: '', cost: '', target: '', duration: '', kind: 'def', a1: 'int', a2: 'vol', magic: 0, damage: null, type: null, text: '' })}
                          fields={[{ key: 'name', placeholder: 'Sort' }, { key: 'cost', placeholder: 'Coût', narrow: true }, { key: 'target', placeholder: 'Cible' },
-                                  { key: 'duration', placeholder: 'Durée' }, { key: 'text', placeholder: 'Effet', multiline: true }]} />
+                                  { key: 'duration', placeholder: 'Durée' },
+                                  { key: 'magic', placeholder: 'Bonus', type: 'number', narrow: true, emptyValue: 0, when: isOffensive },
+                                  { key: 'damage', placeholder: 'VH +', type: 'number', narrow: true, when: isOffensive },
+                                  { key: 'kind', options: { off: 'Offensif', def: 'Défensif' } },
+                                  { key: 'a1', options: SHORT, when: isOffensive }, { key: 'a2', options: SHORT, when: isOffensive },
+                                  { key: 'type', options: TYPE_OPTIONS, when: isOffensive }, { key: 'text', placeholder: 'Effet', multiline: true }]} />
             <span className="vtt-field-label">Capacités</span>
             <NpcItemList items={sd.abilities ?? []} onChange={abilities => set({ abilities })} addLabel="+ Capacité"
                          newItem={() => ({ name: '', text: '' })}

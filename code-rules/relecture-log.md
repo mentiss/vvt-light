@@ -30,6 +30,7 @@ Une ligne par relecture croisée (`/relecture`, `documentations/spec_relecture.m
 | 2026-11-11 | Initiative, lot 1 : socle + Delta Green (`spec_initiative.md` §10) ; seconde passe non relue (quota) | F-TOKENS (repli `#fff` des nouvelles classes) | — | 5 / 5 (camp vidé qui bloquait le mode camps, annulation appliquée à une autre table, réponses d'écritures hors d'ordre, `is-active` des segments, fenêtre de lancement fermée sur un refus) |
 | 2026-11-11 | Dune, fiche : infobulle habillée (nouvelle brique `Tooltip`) sur maximes et spécialisations, descriptions d'atouts et de talents en `ExpandableText` | non relu (quota) | — | — |
 | 2026-11-11 | Initiative, lots 2 et 3 + retours du MJ (`spec_initiative.md` §11, §12), relus ensemble après réinitialisation du quota ; seconde passe non lancée (relecture désormais sur accord du MJ : celle-ci a pris 30 % d'une session) | C-SPEC ×4 (PNJ sortis trop tôt sur Maledictum et Achtung, actif fantôme après vidage de la table, camp d'ouverture vide qui figeait le tour) | — | 2 / 2 (verrou de « garder la main » pendant le paiement et état le plus récent, erreurs affichées dans la fiche ouverte depuis la bande) |
+| 2026-11-13 | Bibliothèque PNJ (étiquettes pilotées, autocomplétion, colonne élargie, onglet dans l'URL, `spec_pnj.md` §11) et sorts offensifs de Fabula (§12) ; une passe | C-SPEC (champs de jet des sorts du bestiaire écrits seulement si la liste des sorts change : spec corrigée, le comportement est voulu) | — | 1 / 1 (suggestions d'étiquettes inaccessibles au clavier) |
 
 ## Décompte par identifiant
 
@@ -37,6 +38,6 @@ Une ligne par relecture croisée (`/relecture`, `documentations/spec_relecture.m
 |---|---|---|
 | C-TEST | 2 | 2026-11-08 |
 | B-LOG | 1 | 2026-11-08 |
-| C-SPEC | 18 | 2026-11-11 |
+| C-SPEC | 19 | 2026-11-13 |
 | F-TOKENS | 2 | 2026-11-11 |
 | B-COALESCE | 2 | 2026-11-10 |
