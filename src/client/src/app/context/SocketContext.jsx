@@ -12,7 +12,14 @@ export const SocketContextProvider = ({ children }) => {
 
     useEffect(() => {
         console.log('[SocketContextProvider] Mounting, creating socket...');
+        // Slug de la page dans la poignée de main (refaite à chaque reconnexion) : le serveur
+        // y place le socket dans la room du slug (tables actives, spec_tables.md §4.2).
+        // Une page = un slug : il ne change pas pendant la vie du socket. Premier segment de
+        // l'adresse tel quel (pas de slug par défaut : l'accueil n'entre dans aucune room ;
+        // le serveur ignore ce qui n'est pas un slug chargé).
+        const system = window.location.pathname.split('/').filter(Boolean)[0];
         const newSocket = io(socketUrl,{
+            ...(system ? { query: { system } } : {}),
             transports: ['websocket'],
             reconnection: true,
             reconnectionDelay: 1000

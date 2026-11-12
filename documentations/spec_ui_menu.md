@@ -107,6 +107,7 @@ Props communes à tous : `label` (libellé par défaut ci-dessous), `icon` (abse
 |---|---|---|---|---|---|
 | `HamburgerMenuItemCreateCharacter` | Créer un personnage | lien `/<slug>/creation` | — | ✓ | |
 | `HamburgerMenuItemSwitchCharacter` | Changer de personnage | `CharacterListModal`, puis `/<slug>/<accessUrl>` du personnage choisi | `currentCharId` | ✓ | |
+| `HamburgerMenuItemChangeTable` | Changer de table | rouvre la fenêtre de choix de table (`SessionContext`, `TableChoiceModal`) ; rendu seulement si le personnage est membre de plusieurs tables actives (`spec_tables.md` §3.2). Posé dans aucun slug pour l'instant | — | ✓ | |
 | `HamburgerMenuItemAvatar` | Changer l'avatar | `AvatarUploader` | `currentAvatar`, `onChange` (le slug enregistre) | ✓ | |
 | `HamburgerMenuItemAccessCode` | Code d'accès | `AccessCodeModal` | `character`, `onSuccess` | ✓ | |
 | `HamburgerMenuItemFreeDice` | Jet de dés libre | `FreeDiceModal` | `characterId`, `characterName`, `sessionId`, `isGM` | ✓ | ✓ |

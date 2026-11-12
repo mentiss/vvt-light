@@ -1,11 +1,13 @@
 // src/client/src/app/hooks/useGMSession.js
-// Hook générique qui gère toute la couche socket/session côté GM.
-// Extrait de GMView.jsx Vikings — aucune logique système dedans.
+// Hook générique qui gère toute la couche socket/session côté MJ (un « poste MJ »).
+// Aucune logique système dedans. Tables actives : documentations/spec_tables.md.
 //
 // Responsabilités :
-//   - Charger la session active mémorisée dans le navigateur au boot (vtt:<slug>:gm)
-//   - Émettre gm-set-active-session + join/leave session quand activeSession change
-//   - Écouter online-characters-update
+//   - Charger la table du poste mémorisée dans le navigateur au boot (vtt:<slug>:gm)
+//   - Ouvrir la table du poste (gm-set-active-session + join-session), la reprendre
+//     après une reconnexion ; ne la quitter (gm-clear-session) que sur un changement
+//     ou une désactivation voulus, jamais au démontage (rechargement : délai de grâce)
+//   - Présence en ligne du slug (useOnlineCharacters)
 //   - Écouter character-full-update / character-update et les exposer via
 //     characterUpdates (nouveau — corrige un bug de référence circulaire qui
 //     empêchait toute remontée temps réel côté GM, cf. onCharacterUpdate
@@ -15,9 +17,10 @@
 // characterUpdates est un ajout PUREMENT ADDITIF : les slugs qui ne le
 // consomment pas ne sont pas affectés, ils reçoivent juste un prop inutilisé.
 
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, useRef } from 'react';
 import { useSocket } from '../context/SocketContext.jsx';
 import { useFetch } from './useFetch.js';
+import { useOnlineCharacters } from './useOnlineCharacters.js';
 import { readStored, removeStored, storageKey, writeStored } from '../tools/browserStorage.js';
 
 /**
@@ -34,10 +37,15 @@ export function useGMSession({ apiBase }) {
     const fetchWithAuth = useFetch();
 
     const [activeSession,    setActiveSessionState] = useState(null);
-    const [onlineCharacters, setOnlineCharacters]   = useState([]);
     const [characterUpdates, setCharacterUpdates]   = useState({});
 
+    // Table ouverte par ce poste, lue par setActiveSession pour la quitter
+    const activeIdRef = useRef(null);
+    useEffect(() => { activeIdRef.current = activeSession?.id ?? null; }, [activeSession?.id]);
+
     const slug = apiBase.replace(/^\/api\//, '').replace(/\/$/, '');
+    // Présence en ligne (personnages de ce slug)
+    const onlineCharacters = useOnlineCharacters(slug);
     // Table active du MJ, mémorisée dans ce navigateur : vtt:<slug>:gm (spec_browser_storage.md §6)
     const gmKey = storageKey(slug, 'gm');
 
@@ -54,25 +62,6 @@ export function useGMSession({ apiBase }) {
                 removeStored(gmKey);
             });
     }, [apiBase]);
-
-    // ── Présence en ligne ───────────────────────────────────────────────────
-    useEffect(() => {
-        if (!socket) return;
-
-        // Présences de ce slug uniquement : un même id peut exister dans un autre slug
-        const ofThisSlug = (chars) => setOnlineCharacters((chars ?? []).filter(c => c.slug === slug));
-
-        // Charger l'état initial
-        fetch('/api/online-characters')
-            .then(r => r.json())
-            .then(ofThisSlug)
-            .catch(console.error);
-
-        const handleOnlineUpdate = ofThisSlug;
-        socket.on('online-characters-update', handleOnlineUpdate);
-
-        return () => socket.off('online-characters-update', handleOnlineUpdate);
-    }, [socket, slug]);
 
     // ── Mises à jour personnage temps réel (corrigé) ─────────────────────────
     useEffect(() => {
@@ -112,34 +101,39 @@ export function useGMSession({ apiBase }) {
         return () => socket.off('session-characters-update', onComposition);
     }, [socket, slug]);
 
-    // ── Broadcast session active + join/leave room ──────────────────────────
+    // ── Ouverture de la table du poste + room ───────────────────────────────
     useEffect(() => {
-        if (!socket) return;
+        if (!socket || !activeSession) return;
+        const sessionId = activeSession.id;
 
         const announce = () => {
-            socket.emit('gm-set-active-session', { sessionId: activeSession.id, system: slug });
-            socket.emit('join-session',           { sessionId: activeSession.id, system: slug });
+            socket.emit('gm-set-active-session', { sessionId, system: slug });
+            socket.emit('join-session',           { sessionId, system: slug });
         };
-        if (activeSession) {
-            announce();
-            // Reconnexion (serveur relancé, réseau coupé) : le serveur a oublié la room et la
-            // session active ; on les reprend. Pas au premier « connect » : les envois ci-dessus
-            // sont déjà mis en attente par socket.io jusqu'à la connexion.
-            socket.io.on('reconnect', announce);
-        }
+        announce();
+        // Reconnexion (serveur relancé, réseau coupé) : le serveur a oublié la room et le
+        // poste ; on les reprend. Pas au premier « connect » : les envois ci-dessus sont
+        // déjà mis en attente par socket.io jusqu'à la connexion.
+        socket.io.on('reconnect', announce);
 
         return () => {
             socket.io.off('reconnect', announce);
-            if (activeSession) {
-                // Désactivation explicite à la sortie (changement ou démontage)
-                socket.emit('gm-clear-session', { sessionId: activeSession.id, system: slug });
-                socket.emit('leave-session',    { sessionId: activeSession.id, system: slug });
-            }
+            // Sortie de la room seulement : la table n'est quittée que par setActiveSession
+            // (sortie volontaire) ; un démontage (rechargement, onglet fermé) passe par la
+            // déconnexion et le délai de grâce, sans rien changer pour les joueurs.
+            socket.emit('leave-session', { sessionId, system: slug });
         };
     }, [socket, activeSession?.id]);
 
     // ── setActiveSession, mémorisée dans le navigateur ──────────────────────
+    // Changer de table ou passer null (Désactiver, table supprimée) quitte volontairement
+    // la table du poste : si c'était le dernier poste, elle s'arrête pour les joueurs.
     const setActiveSession = useCallback(async (session) => {
+        const previousId = activeIdRef.current;
+        if (previousId && previousId !== session?.id) {
+            socket?.emit('gm-clear-session', { sessionId: previousId, system: slug });
+        }
+
         if (!session) {
             setActiveSessionState(null);
             removeStored(gmKey);
@@ -158,7 +152,7 @@ export function useGMSession({ apiBase }) {
             setActiveSessionState(session);
             writeStored(gmKey, { activeSessionId: session.id });
         }
-    }, [apiBase, fetchWithAuth]);
+    }, [apiBase, fetchWithAuth, socket, slug, gmKey]);
 
     return { activeSession, setActiveSession, onlineCharacters, characterUpdates };
 }

@@ -39,7 +39,7 @@ export function usePlayerSession({ character, onCharacterUpdate, onCharacterRelo
     const loadCharacterSessions = () => {
         fetchWithAuth(`${apiBase}/characters/${character.id}/sessions`)
             .then(r => r.json())
-            .then(sessions => updateCharacterSessions(sessions))
+            .then(sessions => updateCharacterSessions(sessions, character.id))
             .catch(err => console.error('[usePlayerSession] Error loading sessions:', err));
     };
 

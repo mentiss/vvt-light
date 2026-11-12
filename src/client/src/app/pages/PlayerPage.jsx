@@ -10,6 +10,7 @@ import { useFetch }         from '../hooks/useFetch.js';
 import { usePlayerSession } from '../hooks/usePlayerSession.js';
 import CharacterListModal   from '@/features/table/modals/CharacterListModal.jsx';
 import CodeModal            from '@/features/table/modals/CodeModal.jsx';
+import TableChoiceModal     from '@/features/table/modals/TableChoiceModal.jsx';
 import DiceAnimationOverlay from "@/features/dice/DiceAnimationOverlay.jsx";
 import LoadingScreen from "../components/LoadingScreen.jsx";
 import SlugPage             from '../components/SlugPage.jsx';
@@ -138,7 +139,7 @@ const PlayerPage = () => {
         apiBase,
     });
 
-    // Table active (diffusée par le MJ), pour la musique (spec_audio.md §11.7)
+    // Table du joueur (spec_tables.md §3.2), pour la musique, le tableau et l'initiative
     const { activeGMSession } = useSession();
 
     // ── Cinématique sélection → CodeModal → playing ──────────────────────────
@@ -259,6 +260,8 @@ const PlayerPage = () => {
             <BoardLayer role="player" sessionId={activeGMSession ?? null} />
             {/* Initiative de la table, si le slug l'a adoptée et que le MJ l'a lancée (spec_initiative.md §9.6) */}
             <InitiativeLayer role="player" sessionId={activeGMSession ?? null} />
+            {/* Choix de la table quand le personnage est membre de plusieurs tables actives (spec_tables.md §3.2) */}
+            <TableChoiceModal />
 
             {/* CodeModal disponible en mode playing aussi (changer de perso depuis Sheet) */}
             <CodeModal

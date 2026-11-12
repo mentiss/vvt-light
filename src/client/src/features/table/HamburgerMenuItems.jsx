@@ -15,6 +15,7 @@ import { HamburgerMenuIcon, HamburgerMenuItem } from '@/ui/menu/HamburgerMenu.js
 import { HostedModal } from '@/ui/modal/ModalHost.jsx';
 import { useSystem } from '@/app/hooks/useSystem.js';
 import { useAuth } from '@/app/context/AuthContext.jsx';
+import { useSession } from '@/app/context/SessionContext.jsx';
 import AvatarUploader       from '@/ui/image/AvatarUploader.jsx';
 import AccessCodeModal      from './modals/AccessCodeModal.jsx';
 import CharacterListModal   from './modals/CharacterListModal.jsx';
@@ -76,6 +77,16 @@ export const HamburgerMenuItemSwitchCharacter = ({ currentCharId, label = 'Chang
             </HostedModal>
         </>
     );
+};
+
+/**
+ * Joueur. Rouvre le choix de table (spec_tables.md §3.2) ; n'apparaît que si le
+ * personnage est membre de plusieurs tables actives (la fenêtre est montée par PlayerPage).
+ */
+export const HamburgerMenuItemChangeTable = ({ label = 'Changer de table', icon, className }) => {
+    const { canChangeTable, openTableChoice } = useSession();
+    if (!canChangeTable) return null;
+    return <HamburgerMenuItem onClick={openTableChoice} icon={pickIcon(icon, 'tables')} className={className}>{label}</HamburgerMenuItem>;
 };
 
 /** onChange(avatar) : le slug enregistre (patchImmediate, buffer d'édition…). */

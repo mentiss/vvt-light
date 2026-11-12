@@ -1,177 +1,98 @@
 /**
  * src/server/socket/platform/sessions.js
  *
- * Sessions MJ et rooms de la plateforme (repris de l'ancien socket/handlers.js).
+ * Tables actives et rooms de la plateforme (documentations/spec_tables.md §4).
  *
  * Handlers :
- *   Sessions   : gm-set-active-session, gm-clear-session
+ *   Tables     : gm-set-active-session (un poste MJ ouvre une table),
+ *                gm-clear-session (sortie volontaire du poste)
  *   Rooms      : join-session, leave-session
- *   Disconnect : timer de 5 min sur les sessions du MJ déconnecté
- */
-
-const SESSION_TIMEOUT_MS = 5 * 60 * 1000; // 5 minutes
-
-/* ── Helpers ────────────────────────────────────────────────────────────────── */
-
-/**
- * Retourne tous les sessionIds actifs pour un slug donné.
- * Parcourt toutes les entrées de activeSessions (toutes les connexions GM).
+ *   Disconnect : le poste quitte ses tables ; une table restée sans poste garde
+ *                son entrée pendant le délai de grâce, puis s'arrête
  *
- * @param {Map} activeSessions
- * @param {string} system
- * @returns {number[]}
+ * Toute variation de la liste (tables, nombre de postes) diffuse `active-tables`
+ * { system, tables: [{ id, posts }] } dans la room du slug `${slug}_all`, où chaque
+ * socket entre à sa connexion (socket/index.js).
  */
-function getActiveSessionsForSlug(activeSessions, system) {
-    const ids = new Set();
-    for (const sessions of activeSessions.values()) {
-        for (const entry of sessions) {
-            if (entry.system === system) ids.add(entry.sessionId);
-        }
-    }
-    return [...ids];
+
+const { getSystem } = require('../../systems/Loader');
+const { listActiveTables, openTable, leaveTable, dropPost, expireTable } = require('../../utils/activeTables');
+
+const GRACE_MS = 5 * 60 * 1000; // délai de grâce après la déconnexion du dernier poste
+
+/** Room de tous les sockets d'un slug (MJ et joueurs). */
+const slugRoom = (slug) => `${slug}_all`;
+
+/** Payload { sessionId, system } valide : slug chargé, identifiant entier positif (B-NUMBER). */
+const readTable = (payload) => {
+    const { sessionId, system } = payload ?? {};
+    if (typeof system !== 'string' || !getSystem(system)) return null;
+    if (typeof sessionId !== 'number' || !Number.isInteger(sessionId) || sessionId <= 0) return null;
+    return { sessionId, system };
+};
+
+/** Diffuse la liste des tables actives du slug à ses sockets. */
+function broadcastActiveTables(io, activeTables, system) {
+    io.to(slugRoom(system)).emit('active-tables', { system, tables: listActiveTables(activeTables, system) });
 }
-
-/**
- * Démarre un timer de nettoyage pour une session GM déconnectée.
- * Si le GM se reconnecte et réémet gm-set-active-session avant expiration,
- * le timer est annulé dans le handler correspondant.
- *
- * @param {import('socket.io').Server} io
- * @param {Map} activeSessions
- * @param {Map} sessionTimers
- * @param {string} system
- * @param {number} sessionId
- */
-function startSessionCleanupTimer(io, activeSessions, sessionTimers, system, sessionId) {
-    const key = `${system}_${sessionId}`;
-
-    // Annuler un éventuel timer existant pour cette session
-    if (sessionTimers.has(key)) {
-        clearTimeout(sessionTimers.get(key));
-    }
-
-    const timer = setTimeout(() => {
-        sessionTimers.delete(key);
-
-        // Vérifier qu'aucun autre GM n'a réactivé la session entretemps
-        const stillActive = getActiveSessionsForSlug(activeSessions, system)
-            .includes(sessionId);
-
-        if (!stillActive) {
-            console.log(`[socket] Session timeout: ${system}_${sessionId} — broadcast déactivation`);
-            io.emit('gm-session-active', { sessionId: null, system });
-        }
-    }, SESSION_TIMEOUT_MS);
-
-    sessionTimers.set(key, timer);
-}
-
-/* ── Enregistrement ─────────────────────────────────────────────────────────── */
 
 /**
  * @param {import('socket.io').Server} io
  * @param {import('socket.io').Socket} socket
- * @param {{ activeSessions: Map, sessionTimers: Map }} sharedState
+ * @param {{ activeTables: Map }} sharedState
  */
-function register(io, socket, { activeSessions, sessionTimers }) {
+function register(io, socket, { activeTables }) {
 
-    /* ════════════════════════════════════════════════════════════════════════
-       SESSIONS GM
-       ════════════════════════════════════════════════════════════════════════ */
+    /* ── Tables actives ──────────────────────────────────────────────────────── */
 
-    /**
-     * gm-set-active-session — émis par useGMSession quand le GM active/change de session.
-     *
-     * Actions :
-     *   1. Annule le timer de nettoyage éventuel pour cette session
-     *   2. Stocke { system, sessionId } dans activeSessions[socketId]
-     *   3. Broadcast gm-session-active { sessionId, system } à tous
-     */
-    socket.on('gm-set-active-session', ({ sessionId, system = 'vikings' } = {}) => {
-        if (!sessionId) return;
-
-        // Annuler le timer de nettoyage si le GM reprend une session
-        const key = `${system}_${sessionId}`;
-        if (sessionTimers.has(key)) {
-            clearTimeout(sessionTimers.get(key));
-            sessionTimers.delete(key);
-            console.log(`[socket] Timer annulé — GM reconnecté sur ${key}`);
+    // Un poste MJ ouvre une table (activation, reprise après rechargement ou reconnexion)
+    socket.on('gm-set-active-session', (payload) => {
+        const table = readTable(payload);
+        if (!table) return;
+        if (openTable(activeTables, table.system, table.sessionId, socket.id)) {
+            broadcastActiveTables(io, activeTables, table.system);
         }
-
-        // Stocker dans activeSessions
-        if (!activeSessions.has(socket.id)) {
-            activeSessions.set(socket.id, new Set());
-        }
-        activeSessions.get(socket.id).add({ system, sessionId });
-
-        io.emit('gm-session-active', { sessionId, system });
-        console.log(`[socket] Session activée: ${system}_${sessionId} (socket ${socket.id})`);
     });
 
-    /**
-     * gm-clear-session — émis par useGMSession quand le GM désactive explicitement.
-     *
-     * Actions :
-     *   1. Retire de activeSessions[socketId]
-     *   2. Broadcast gm-session-active { sessionId: null, system } immédiatement
-     *      (pas de timer — désactivation volontaire)
-     */
-    socket.on('gm-clear-session', ({ sessionId, system = 'vikings' } = {}) => {
-        if (!sessionId) return;
-
-        const sessions = activeSessions.get(socket.id);
-        if (sessions) {
-            for (const entry of sessions) {
-                if (entry.system === system && entry.sessionId === sessionId) {
-                    sessions.delete(entry);
-                    break;
-                }
-            }
-            if (sessions.size === 0) activeSessions.delete(socket.id);
+    // Sortie volontaire du poste (autre table choisie, Désactiver, table supprimée)
+    socket.on('gm-clear-session', (payload) => {
+        const table = readTable(payload);
+        if (!table) return;
+        if (leaveTable(activeTables, table.system, table.sessionId, socket.id)) {
+            broadcastActiveTables(io, activeTables, table.system);
         }
-
-        // Annuler le timer éventuel (cas de désactivation après déco/reco)
-        const key = `${system}_${sessionId}`;
-        if (sessionTimers.has(key)) {
-            clearTimeout(sessionTimers.get(key));
-            sessionTimers.delete(key);
-        }
-
-        io.emit('gm-session-active', { sessionId: null, system });
-        console.log(`[socket] Session désactivée: ${system}_${sessionId}`);
     });
 
-    /* ════════════════════════════════════════════════════════════════════════
-       ROOMS
-       ════════════════════════════════════════════════════════════════════════ */
+    /* ── Rooms ───────────────────────────────────────────────────────────────── */
 
-    socket.on('join-session', ({ sessionId, system = 'vikings' } = {}) => {
-        const room = `${system}_session_${sessionId}`;
-        socket.join(room);
-        console.log(`[socket ${socket.id}] Joined room: ${room}`);
+    socket.on('join-session', (payload) => {
+        const table = readTable(payload);
+        if (table) socket.join(`${table.system}_session_${table.sessionId}`);
     });
 
-    socket.on('leave-session', ({ sessionId, system = 'vikings' } = {}) => {
-        const room = `${system}_session_${sessionId}`;
-        socket.leave(room);
-        console.log(`[socket ${socket.id}] Left room: ${room}`);
+    socket.on('leave-session', (payload) => {
+        const table = readTable(payload);
+        if (table) socket.leave(`${table.system}_session_${table.sessionId}`);
     });
 
-    /* ════════════════════════════════════════════════════════════════════════
-       DISCONNECT — sessions GM (avec timer 5 min)
-       ════════════════════════════════════════════════════════════════════════ */
+    /* ── Déconnexion : délai de grâce des tables restées sans poste ──────────── */
 
     socket.on('disconnect', () => {
-        const sessions = activeSessions.get(socket.id);
-        if (sessions) {
-            for (const { system, sessionId } of sessions) {
-                startSessionCleanupTimer(io, activeSessions, sessionTimers, system, sessionId);
-            }
-            // On retire immédiatement de activeSessions — si le GM revient
-            // avant le timeout, gm-set-active-session le réinsère
-            activeSessions.delete(socket.id);
+        const changed = dropPost(activeTables, socket.id);
+        for (const { slug, sessionId, empty } of changed) {
+            if (!empty) continue;
+            const entry = activeTables.get(slug)?.get(sessionId);
+            if (!entry) continue;
+            entry.timer = setTimeout(() => {
+                entry.timer = null;
+                if (expireTable(activeTables, slug, sessionId)) {
+                    console.log(`[socket] Table arrêtée (délai de grâce écoulé) : ${slug}_${sessionId}`);
+                    broadcastActiveTables(io, activeTables, slug);
+                }
+            }, GRACE_MS);
         }
+        for (const slug of new Set(changed.map(c => c.slug))) broadcastActiveTables(io, activeTables, slug);
     });
 }
 
-module.exports = { register, getActiveSessionsForSlug };
+module.exports = { register, slugRoom };

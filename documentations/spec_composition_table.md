@@ -4,9 +4,9 @@
 
 **Validée par le MJ le 2026-10-18** (option complète retenue au diagnostic). Implémentée le 2026-10-18.
 
-Brique de plateforme, tous les slugs : ajout et retrait d'un personnage à une table (`TableCharactersModal`, générique).
+Brique de plateforme, tous les slugs : ajout et retrait d'un personnage à une table (`TableCharactersModal` à l'époque, fondue depuis le 2026-11-12 dans le détail de `TableManagementModal`, `spec_tables.md` §6.1).
 
-Hors périmètre : plusieurs tables actives sur un même slug, remplacement d'un personnage par un autre sans changement du nombre de personnages (voir §5).
+Hors périmètre : plusieurs tables actives sur un même slug (levé depuis par `spec_tables.md`, 2026-11-12), remplacement d'un personnage par un autre sans changement du nombre de personnages (voir §5).
 
 ---
 

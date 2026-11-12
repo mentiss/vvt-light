@@ -133,6 +133,7 @@ Testée sous Vitest avec des navigateurs simulés : chaque ancien format, ancien
 | `vtt:<slug>:dice` | configuration des dés du jeu | `<slug>_vtt-dice_config` | idem |
 | `vtt:<slug>:session-bar` | `{ mode }` | `<slug>_player_session_bar` (`1` → `hidden`, `0` → `panel`) | `SessionPlayersBar` |
 | `vtt:<slug>:gm` | `{ activeSessionId }` | `activeSessionId_<slug>` | `useGMSession`, `TableManagementModal` (bug corrigé) |
+| `vtt:<slug>:player-table` | `{ byCharacter: { <id>: tableId } }` : table choisie par le joueur quand son personnage est membre de plusieurs tables actives | — | `SessionContext` (`spec_tables.md` §3.2) |
 | `vtt:platform:audio` | volumes par type | — (jamais en prod) | brique audio |
 | `vtt:<slug>:audio` | réglages du son ouverts, détails dépliés, panneau MJ ouvert | — | brique audio |
 | `vtt:<slug>:<table>:audio` | dernière playlist consultée | — | brique audio |

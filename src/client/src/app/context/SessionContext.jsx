@@ -1,116 +1,136 @@
-// app/context/SessionContext.jsx - Gestion de la session active (broadcast par le GM)
-import React, { createContext, useContext, useState, useEffect } from 'react';
+// src/client/src/app/context/SessionContext.jsx
+// ─────────────────────────────────────────────────────────────────────────────
+// Table du joueur (documentations/spec_tables.md §3.2) : parmi les tables actives
+// du slug (useActiveTables, tenues par le serveur), celle dont son personnage est
+// membre. Plusieurs : celle où il est, sinon son choix mémorisé, sinon on lui demande
+// (fenêtre de choix, refermable sans choisir). Une table qui s'arrête est quittée ;
+// l'activation d'une table dont il n'est pas membre est sans effet pour lui.
+//
+// Contrat lu par les slugs et les briques : activeGMSession, activeSessionName,
+// updateCharacterSessions(sessions, characterId). En plus : tableChoice (fenêtre de
+// choix, montée par PlayerPage), canChangeTable / openTableChoice (Changer de table).
+// Sans personnage chargé (MJ, accueil), rien n'est lu ni rejoint.
+// ─────────────────────────────────────────────────────────────────────────────
+
+import React, { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
 import { useSocket } from './SocketContext';
-import {getSystemFromPath, useSystem} from '../hooks/useSystem.js';
-import {useFetch} from "../hooks/useFetch.js";
+import { getSystemFromPath } from '../hooks/useSystem.js';
+import { useActiveTables } from '../hooks/useActiveTables.js';
+import { pickPlayerTable } from '../tools/playerTable.js';
+import { readStored, storageKey, writeStored } from '../tools/browserStorage.js';
 
 const SessionContext = createContext();
 
+// Choix de table mémorisé, par personnage : vtt:<slug>:player-table (spec_browser_storage.md §6)
+const CHOICE_OPTIONS = { defaults: { byCharacter: {} } };
+
 export const SessionProvider = ({ children }) => {
-    const [activeGMSession, setActiveGMSession] = useState(null);
-    const [activeSessionName, setActiveSessionName] = useState(null);
-    const [characterSessions, setCharacterSessions] = useState(null); // Sessions du perso (null = pas encore chargées)
-    const [pendingSessionId, setPendingSessionId] = useState(null);
     const socket = useSocket();
-    const fetchWithAuth = useFetch();
-    const { system } = useSystem();
+    const system = getSystemFromPath();
+    const choiceKey = storageKey(system, 'player-table');
+
+    const [characterSessions, setCharacterSessions] = useState(null); // null = pas encore chargées
+    const [characterId, setCharacterId] = useState(null);
+    const [activeGMSession, setActiveGMSession] = useState(null);
+    const [choiceVersion, setChoiceVersion] = useState(0);           // relit le choix mémorisé
+    const [choiceRequested, setChoiceRequested] = useState(false);  // Changer de table
+    const [dismissedFor, setDismissedFor] = useState(null);         // candidats refusés (fenêtre fermée)
+
+    const activeTables = useActiveTables(characterSessions !== null);
+
+    // Choix mémorisé du personnage chargé
+    const remembered = useMemo(() => {
+        if (characterId == null) return null;
+        return readStored(choiceKey, CHOICE_OPTIONS).byCharacter?.[characterId] ?? null;
+    }, [characterId, choiceKey, choiceVersion]); // eslint-disable-line react-hooks/exhaustive-deps -- choiceVersion : relecture après un choix
+
+    const pick = useMemo(() => {
+        if (!activeTables || !characterSessions) return null;
+        return pickPlayerTable({
+            activeIds:  activeTables.map(t => t.id),
+            memberIds:  characterSessions.map(s => s.id),
+            current:    activeGMSession,
+            remembered,
+        });
+    }, [activeTables, characterSessions, activeGMSession, remembered]);
+
+    // Rejoindre la table retenue, quitter l'ancienne (la ref porte la room réellement rejointe)
+    const joinedRef = useRef(null);
+    const moveTo = useCallback((target) => {
+        const current = joinedRef.current;
+        if (current === target) return;
+        if (socket && current) socket.emit('leave-session', { sessionId: current, system });
+        if (socket && target)  socket.emit('join-session',  { sessionId: target,  system });
+        joinedRef.current = target;
+        setActiveGMSession(target);
+    }, [socket, system]);
 
     useEffect(() => {
-        if (!socket) return;
+        if (!pick) return;
+        moveTo(pick.tableId);
+    }, [pick, moveTo]);
 
-        const currentSystem = getSystemFromPath();
-
-        // Broadcast temps réel — une session change d'état
-        // Reçoit { sessionId, system } — filtre par slug courant
-        const handleGMSessionActive = ({ sessionId, system } = {}) => {
-            if (system !== currentSystem) return;
-            console.log('[SessionContext] GM session changed to:', sessionId, 'system:', system);
-            setPendingSessionId(sessionId); // null = quitter
-        };
-
-        // Réponse directe à character-loaded — sessions actives du slug
-        // Reçoit [sessionId, ...] — déjà filtré par le serveur
-        const handleGMSessionsActive = (ids = []) => {
-            if (!ids.length) return;
-            // On prend la première session active du slug
-            // (gestion multi-session même slug = évolution future)
-            setPendingSessionId(ids[0]);
-        };
-
-        socket.on('gm-session-active',  handleGMSessionActive);
-        socket.on('gm-sessions-active', handleGMSessionsActive);
-
-        return () => {
-            socket.off('gm-session-active',  handleGMSessionActive);
-            socket.off('gm-sessions-active', handleGMSessionsActive);
-        };
-    }, [socket]);
-
-    useEffect(() => {
-        if (!socket || !pendingSessionId) return;
-        // Attendre que les sessions soient chargées ; une liste vide (personnage retiré
-        // de sa seule table) doit, elle, faire quitter la table active
-        if (characterSessions === null) return;
-
-        const system   = getSystemFromPath();
-        const isGM     = characterSessions.some(s => s.id === -1);
-        const isMember = isGM || characterSessions.some(s => s.id === pendingSessionId);
-
-        if (!isMember) {
-            console.log('[SessionContext] Not a member of session:', pendingSessionId);
-            if (activeGMSession) {
-                socket.emit('leave-session', { sessionId: activeGMSession, system });
-                setActiveGMSession(null);
-            }
-            return;
-        }
-
-        if (activeGMSession && activeGMSession !== pendingSessionId) {
-            socket.emit('leave-session', { sessionId: activeGMSession, system });
-        }
-
-        socket.emit('join-session', { sessionId: pendingSessionId, system });
-        setActiveGMSession(pendingSessionId);
-    }, [socket, pendingSessionId, characterSessions]);
-
-    useEffect(() => {
-        return () => {
-            if (socket && activeGMSession) {
-                socket.emit('leave-session', { sessionId: activeGMSession, system });
-            }
-        };
-    }, [socket, activeGMSession]);
-
-    // Reconnexion (serveur relancé, réseau coupé, veille) : le serveur a oublié la room ;
-    // on la rejoint, sinon plus aucune diffusion de la table n'arrive jusqu'au rechargement
-    // (même principe que useGMSession côté MJ).
+    // Reconnexion (serveur relancé, réseau coupé, veille) : le serveur a oublié la room
     useEffect(() => {
         if (!socket || !activeGMSession) return;
-        const rejoin = () => socket.emit('join-session', { sessionId: activeGMSession, system: getSystemFromPath() });
+        const rejoin = () => socket.emit('join-session', { sessionId: activeGMSession, system });
         socket.io.on('reconnect', rejoin);
         return () => socket.io.off('reconnect', rejoin);
-    }, [socket, activeGMSession]);
+    }, [socket, activeGMSession, system]);
 
-    useEffect(() => {
-        if (!activeGMSession) { setActiveSessionName(null); return; }
-        const system = getSystemFromPath();
-        fetchWithAuth(`/api/${system}/sessions/${activeGMSession}`)
-            .then(r => r.ok ? r.json() : null)
-            .then(s => { if (s) setActiveSessionName(s.name); })
-            .catch(() => {});
-    }, [activeGMSession]);
+    // Sortie de la page : quitter la room
+    useEffect(() => () => {
+        if (socket && joinedRef.current) socket.emit('leave-session', { sessionId: joinedRef.current, system });
+    }, [socket, system]);
 
-    // Méthode pour enregistrer les sessions du personnage
-    const updateCharacterSessions = (sessions) => {
-        console.log('[SessionContext] Character sessions updated:', sessions);
-        setCharacterSessions(sessions);
-    };
+    // ── Fenêtre de choix ────────────────────────────────────────────────────
+    const candidatesKey = pick ? pick.candidates.join(',') : '';
+    const tableChoiceOpen = !!pick && (choiceRequested || (pick.needsChoice && dismissedFor !== candidatesKey));
+    const canChangeTable = !!pick && pick.candidates.length > 1;
+
+    const chooseTable = useCallback((sessionId) => {
+        if (characterId != null) {
+            const stored = readStored(choiceKey, CHOICE_OPTIONS);
+            writeStored(choiceKey, { byCharacter: { ...stored.byCharacter, [characterId]: sessionId } });
+        }
+        setChoiceVersion(v => v + 1);
+        setChoiceRequested(false);
+        moveTo(sessionId);
+    }, [characterId, choiceKey, moveTo]);
+
+    const dismissTableChoice = useCallback(() => {
+        setChoiceRequested(false);
+        setDismissedFor(candidatesKey);
+    }, [candidatesKey]);
+
+    const openTableChoice = useCallback(() => setChoiceRequested(true), []);
+
+    const tableChoice = useMemo(() => ({
+        open:     tableChoiceOpen,
+        tables:   (pick?.candidates ?? []).map(id => characterSessions?.find(s => s.id === id)).filter(Boolean),
+        currentId: activeGMSession,
+        characterId,
+        choose:   chooseTable,
+        dismiss:  dismissTableChoice,
+    }), [tableChoiceOpen, pick, characterSessions, activeGMSession, characterId, chooseTable, dismissTableChoice]);
+
+    const activeSessionName = characterSessions?.find(s => s.id === activeGMSession)?.name ?? null;
+
+    // Tables du personnage, chargées par usePlayerSession (et rechargées quand le MJ
+    // l'ajoute à une table ou l'en retire)
+    const updateCharacterSessions = useCallback((sessions, id = null) => {
+        setCharacterSessions(Array.isArray(sessions) ? sessions : []);
+        setCharacterId(id);
+    }, []);
 
     return (
         <SessionContext.Provider value={{
             activeGMSession,
             activeSessionName,
-            updateCharacterSessions
+            updateCharacterSessions,
+            tableChoice,
+            canChangeTable,
+            openTableChoice,
         }}>
             {children}
         </SessionContext.Provider>

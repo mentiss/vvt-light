@@ -14,6 +14,7 @@ const router = express.Router();
 const { authenticate, requireGM } = require('../middlewares/auth');
 const { ensureUniqueCode, getCharNameExpr} = require('../utils/characters');
 const { sharedState, presenceKey } = require('../socket/index');
+const { listActiveTables } = require('../utils/activeTables');
 
 // ─── Helper ─────────────────────────────────────────────────────────────────
 
@@ -86,7 +87,8 @@ function broadcastComposition(req, sessionId, characterId, session) {
 
 // ─── Routes ─────────────────────────────────────────────────────────────────
 
-// GET / — Liste toutes les sessions (GM)
+// GET / — Liste toutes les sessions (GM), avec leur composition résumée
+// (portraits de la gestion des tables, spec_tables.md §6.1)
 router.get('/', authenticate, requireGM, (req, res) => {
     try {
         const sessions = req.db.prepare(`
@@ -97,7 +99,26 @@ router.get('/', authenticate, requireGM, (req, res) => {
             ORDER BY s.updated_at DESC
         `).all();
 
+        const nameExpr = getCharNameExpr(req.db);
+        const members = req.db.prepare(`
+            SELECT sc.session_id, c.id, c.player_name, c.avatar, (${nameExpr}) AS char_display_name
+            FROM session_characters sc
+            JOIN characters c ON sc.character_id = c.id
+            ORDER BY sc.joined_at DESC
+        `).all();
+        const membersOf = new Map();
+        for (const m of members) {
+            if (!membersOf.has(m.session_id)) membersOf.set(m.session_id, []);
+            membersOf.get(m.session_id).push({
+                id:         m.id,
+                name:       m.char_display_name || m.player_name,
+                playerName: m.player_name,
+                avatar:     m.avatar,
+            });
+        }
+
         res.json(sessions.map(s => ({
+            characters:     membersOf.get(s.id) ?? [],
             id:             s.id,
             name:           s.name,
             accessCode:     s.access_code,
@@ -110,6 +131,17 @@ router.get('/', authenticate, requireGM, (req, res) => {
         })));
     } catch (error) {
         console.error('Error fetching sessions:', error);
+        res.status(500).json({ error: error.message });
+    }
+});
+
+// GET /active — Tables actives du slug, [{ id, posts }] (MJ et joueurs ; avant GET /:id).
+// Lecture initiale ; les changements arrivent ensuite par active-tables (spec_tables.md §4.3).
+router.get('/active', authenticate, (req, res) => {
+    try {
+        res.json(listActiveTables(sharedState.activeTables, req.system.slug));
+    } catch (error) {
+        console.error('Error listing active tables:', error);
         res.status(500).json({ error: error.message });
     }
 });
