@@ -65,7 +65,7 @@ Les règles du code (grilles avec identifiants) sont dans `code-rules/`, le cont
 │   ├── base.sql                       # Tables partagées
 │   ├── <slug>-schema.sql              # Schéma de chaque système
 │   └── migrations/                    # DDMMYYYY_description.sql (en-tête -- systems:)
-├── documentations/                    # Specs validées (spec_*.md)
+├── documentations/                    # Specs validées : index dans documentations/README.md
 ├── scripts/                           # migrate.js, release.js, install.sh…
 ├── tests/server/                      # Tests Vitest des routes (contrats, droits, schémas)
 ├── CLAUDE.md, AGENTS.md               # Consignes pour les agents (Claude Code, Codex)
@@ -135,7 +135,7 @@ Le frontend Vite démarre sur **http://localhost:5173** (proxy vers le backend).
 
 ### Build & déploiement production
 
-**Mise en production courante** : `npm run release` depuis le poste de dev (vérifications, version, build, archive, envoi par SSH, migrations, redémarrage pm2). Configuration dans `deploy.config.json` (modèle : `deploy.config.example.json`). Détails, rollback et renouvellement des certificats : `documentations/spec_release.md`.
+**Mise en production courante** : `npm run release` depuis le poste de dev (vérifications, version, build, archive, envoi par SSH, migrations, redémarrage pm2). Configuration dans `deploy.config.json` (modèle : `deploy.config.example.json`). Détails, rollback et renouvellement des certificats : `documentations/process/spec_release.md`.
 
 Installation initiale du serveur :
 
@@ -252,7 +252,7 @@ La commande `/new-slug` de Claude Code détaille la procédure.
 
 ## 🎲 Moteur de Dés
 
-Le moteur (`src/client/src/tools/diceEngine.js`) est générique. Chaque système déclare ses hooks (`buildNotation`, `beforeRoll`, `afterRoll`, `buildAnimationSequence`, `renderHistoryEntry`) dans son `config.jsx` ; l'animation est en 3D (`@3d-dice/dice-box-threejs`) ou en 2D selon le système. Spec : `documentations/spec_diceengine_v2.md`.
+Le moteur (`src/client/src/tools/diceEngine.js`) est générique. Chaque système déclare ses hooks (`buildNotation`, `beforeRoll`, `afterRoll`, `buildAnimationSequence`, `renderHistoryEntry`) dans son `config.jsx` ; l'animation est en 3D (`@3d-dice/dice-box-threejs`) ou en 2D selon le système. Spec : `documentations/plateforme/spec_diceengine_v2.md`.
 
 ---
 
@@ -274,7 +274,7 @@ Le moteur (`src/client/src/tools/diceEngine.js`) est générique. Chaque systèm
 | `npm start`                    | Lance le serveur en production           |
 | `npm test`                     | Tests serveur (contrats des routes, droits, schémas) |
 | `npm run migrate -- <fichier.sql> [--system=<slug>]` | Joue une migration sur les BDD |
-| `npm run release`              | Mise en production (`documentations/spec_release.md`) |
+| `npm run release`              | Mise en production (`documentations/process/spec_release.md`) |
 | `cd src/client && npm run lint` / `npm test` | Lint et tests du front |
 
 ---

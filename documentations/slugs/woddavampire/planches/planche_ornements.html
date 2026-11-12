@@ -1,0 +1,119 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Planche ornements — Vampire : l'Âge des Ténèbres</title>
+<!--
+  Comparaison des ornements générés (phase 2, lot 1) : A ferronnerie à épines,
+  C enluminure. Un seul coin généré, retourné en CSS pour les quatre angles.
+  Images : ornements/ (générées par Codex, recadrées, fond transparent d'origine).
+-->
+<link href="https://fonts.googleapis.com/css2?family=Sorts+Mill+Goudy:ital@0;1&display=swap" rel="stylesheet">
+<style>
+@font-face { font-family: 'DeRoos FR';    src: url('../../../../src/client/public/fonts/DeRoosCaps-FR.ttf'); }
+@font-face { font-family: 'Lombardic FR'; src: url('../../../../src/client/public/fonts/Lombardic-FR.ttf'); }
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; border: 0 solid; }
+button { font: inherit; color: inherit; background: none; }
+
+/* Tokens jour / nuit, portés par chaque cellule */
+.day {
+    --color-primary: #8E1018; --color-accent: #A67C1E; --color-bg: #E9DDC2; --color-surface: #F4EBD6;
+    --color-surface-alt: #E0CFA9; --color-text: #2A1810; --color-text-muted: #6E5440; --color-border: #6B3A24;
+    --vda-blood: #8E1018; --vda-blood-dark: #4A060B;
+}
+.night {
+    --color-primary: #B3141F; --color-accent: #C9A24A; --color-bg: #0C0708; --color-surface: #170F0F;
+    --color-surface-alt: #241615; --color-text: #E6D7BC; --color-text-muted: #A08C72; --color-border: #4E2A22;
+    --vda-blood: #B3141F; --vda-blood-dark: #5C0910;
+}
+.set-a { --corner: url('ornements/a1-ferronnerie-coin.png'); --sep: url('ornements/a2-ferronnerie-separateur.png'); --sep-h: 30px; }
+.set-c { --corner: url('ornements/c1-enluminure-coin.png');  --sep: url('ornements/c2-enluminure-separateur.png'); --sep-h: 20px; }
+/* Tour 2 */
+.set-acss { --corner: url('ornements/a1-ferronnerie-coin.png'); --sep: url('ornements/a2-ferronnerie-separateur.png'); --sep-h: 30px; }
+.set-l { --corner: url('ornements/l1-ferronnerie-claire-coin.png'); --sep: url('ornements/a2-ferronnerie-separateur.png'); --sep-h: 30px; }
+.set-r { --corner: url('ornements/r1-roses-enluminure-coin.png'); --sep: url('ornements/r2-roses-enluminure-separateur.png'); --sep-h: 30px; }
+.set-f { --corner: url('ornements/f1-fer-roses-coin.png'); --sep: url('ornements/f2-fer-roses-separateur.png'); --sep-h: 30px; }
+/* A éclairci en CSS pour la nuit (aucune génération) : fer plus clair + halo de sang discret */
+.night.set-acss .corner, .night.set-acss .sep { filter: brightness(2.1) contrast(1.1) drop-shadow(0 0 5px rgba(179,20,31,.45)) drop-shadow(0 2px 3px rgba(0,0,0,.8)); }
+/* Séparateur du fer clair : même penture, éclaircie de la même façon la nuit */
+.night.set-l .sep { filter: brightness(2.1) contrast(1.1) drop-shadow(0 2px 3px rgba(0,0,0,.8)); }
+
+body { background: #050303; color: #E6D7BC; font-family: 'Sorts Mill Goudy', Georgia, serif; font-variant-numeric: lining-nums; padding: 16px; }
+h1 { font-family: 'DeRoos FR', serif; font-weight: 400; font-size: 26px; color: #C9A24A; margin-bottom: 4px; }
+.note { font-size: 14px; color: #A08C72; max-width: 980px; margin-bottom: 14px; }
+.grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+.cell { background: var(--color-bg); color: var(--color-text); padding: 26px 22px; }
+.cell-head { font-family: 'DeRoos FR', serif; font-size: 18px; color: var(--color-text-muted); margin-bottom: 14px; }
+
+/* Feuille : quatre coins = la même image retournée */
+.sheet { position: relative; padding: 46px 52px 44px; background: var(--color-surface); border: 1px solid var(--color-border); }
+.corner { position: absolute; width: 150px; height: 150px; background: var(--corner) no-repeat top left / contain; pointer-events: none; }
+.corner.tl { top: -10px; left: -10px; }
+.corner.tr { top: -10px; right: -10px; transform: scaleX(-1); }
+.corner.bl { bottom: -10px; left: -10px; transform: scaleY(-1); }
+.corner.br { bottom: -10px; right: -10px; transform: scale(-1, -1); }
+.night .corner { filter: drop-shadow(0 2px 3px rgba(0,0,0,.8)); }
+.day .corner { filter: drop-shadow(0 2px 2px rgba(60,30,10,.35)); }
+
+.stitle { font-family: 'DeRoos FR', serif; font-size: 26px; text-align: center; line-height: 1; margin: 4px 0 10px; }
+.stitle .ini { font-family: 'Lombardic FR', 'DeRoos FR', serif; color: var(--color-primary); font-size: 1.3em; }
+.sep { height: var(--sep-h); margin: 14px 8%; background: var(--sep) no-repeat center / contain; }
+.three { display: grid; grid-template-columns: repeat(3, 1fr); gap: 2px 18px; font-size: 15px; }
+.ctitle { font-family: 'DeRoos FR', serif; text-align: center; font-size: 17px; margin-bottom: 2px; }
+.trait { display: flex; justify-content: space-between; border-bottom: 1px dotted color-mix(in srgb, var(--color-border) 55%, transparent); }
+.dots { font-size: 11px; letter-spacing: 1px; }
+
+/* Modale : coins légers (même image, plus petite) */
+.modal { position: relative; margin-top: 26px; max-width: 420px; background: var(--color-surface); border: 1px solid var(--color-border); box-shadow: 0 16px 40px rgba(0,0,0,.45); }
+.modal .corner { width: 70px; height: 70px; top: -6px; left: -6px; }
+.modal .corner.tr { left: auto; right: -6px; }
+.modal .corner.bl { top: auto; bottom: -6px; }
+.modal .corner.br { top: auto; left: auto; right: -6px; bottom: -6px; }
+.modal header { padding: 22px 26px 8px; text-align: center; }
+.modal h3 { font-family: 'DeRoos FR', serif; font-weight: 400; font-size: 24px; }
+.modal p.sub { font-style: italic; font-size: 14px; color: var(--color-text-muted); }
+.modal .body { padding: 4px 30px 8px; font-size: 16px; text-align: center; }
+.modal .sep { margin: 6px 14%; height: calc(var(--sep-h) * .7); }
+.modal .foot { display: flex; justify-content: center; gap: 10px; padding: 8px 20px 22px; }
+.mbtn { font-family: 'DeRoos FR', serif; font-size: 16px; padding: 4px 14px; border: 1px solid var(--color-border); background: var(--color-surface-alt); }
+.mbtn.primary { background: linear-gradient(180deg, var(--vda-blood), var(--vda-blood-dark)); color: #F3E6CC; border-color: var(--vda-blood-dark); }
+</style>
+</head>
+<body>
+<h1>Ornements — ferronnerie ou enluminure</h1>
+<p class="note"><b>Tour 2.</b> A′ : ferronnerie du tour 1 éclaircie en CSS la nuit. L : ferronnerie claire générée (séparateur du tour 1 éclairci). R : enluminure refaite en roses et ronces. F : fer forgé en tiges de roses à épines, roses d'émail. Tour 1 (lierre) écarté.<br>Images générées par Codex, sans retouche hormis le recadrage. Un seul coin par style, retourné en CSS pour les quatre angles : l'éclairage venu d'en haut à gauche se retrouve donc inversé dans les autres coins. À juger : lisibilité en jour et en nuit, ton (menace ou préciosité), taille des coins, intérêt du séparateur.</p>
+<div class="grid" id="grid"></div>
+<script>
+const corners = '<span class="corner tl"></span><span class="corner tr"></span><span class="corner bl"></span><span class="corner br"></span>';
+const content = `
+  <div class="sheet">${corners}
+    <h3 class="stitle"><span class="ini">A</span>ttributs</h3>
+    <div class="three">
+      <div><div class="ctitle">Physiques</div><div class="trait">Force <span class="dots">●●○○○</span></div><div class="trait">Dextérité <span class="dots">●●●○○</span></div><div class="trait">Vigueur <span class="dots">●●○○○</span></div></div>
+      <div><div class="ctitle">Sociaux</div><div class="trait">Charisme <span class="dots">●●●○○</span></div><div class="trait">Manipulation <span class="dots">●●●●○</span></div><div class="trait">Apparence <span class="dots">●●○○○</span></div></div>
+      <div><div class="ctitle">Mentaux</div><div class="trait">Perception <span class="dots">●●●○○</span></div><div class="trait">Intelligence <span class="dots">●●●○○</span></div><div class="trait">Astuce <span class="dots">●●○○○</span></div></div>
+    </div>
+    <div class="sep"></div>
+    <h3 class="stitle"><span class="ini">V</span>ertus</h3>
+    <div class="three">
+      <div class="trait">Conviction <span class="dots">●●●○○</span></div><div class="trait">Maîtrise <span class="dots">●●●○○</span></div><div class="trait">Courage <span class="dots">●●●●○</span></div>
+    </div>
+  </div>
+  <div class="modal">${corners}
+    <header><h3>Dextérité + Mêlée</h3><p class="sub">Attaque à l'épée longue</p></header>
+    <div class="sep"></div>
+    <div class="body">5 dés · difficulté 6</div>
+    <div class="foot"><button class="mbtn">Annuler</button><button class="mbtn primary">Lancer</button></div>
+  </div>`;
+// Tour 2 : une ligne par piste, nuit à gauche, jour à droite
+const cells = [
+  ['night set-acss', 'A′ — Ferronnerie éclaircie en CSS · nuit'], ['day set-acss', 'A′ — Ferronnerie (inchangée le jour) · jour'],
+  ['night set-l', 'L — Ferronnerie claire générée · nuit'],       ['day set-l', 'L — Ferronnerie claire générée · jour'],
+  ['night set-r', 'R — Enluminure roses et ronces · nuit'],       ['day set-r', 'R — Enluminure roses et ronces · jour'],
+  ['night set-f', 'F — Fer forgé en tiges de roses · nuit'],      ['day set-f', 'F — Fer forgé en tiges de roses · jour'],
+];
+document.getElementById('grid').innerHTML = cells.map(([c, t]) => `<div class="cell ${c}"><div class="cell-head">${t}</div>${content}</div>`).join('');
+</script>
+</body>
+</html>

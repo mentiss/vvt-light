@@ -1,0 +1,171 @@
+<!doctype html>
+<html lang="fr" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Planche polices — Vampire : l'Âge des Ténèbres</title>
+<!--
+  Comparaison des jeux de polices (phase 2, lot 1). Planche d'essai : les
+  polices sont lues à leur emplacement local (downloads/ du dépôt principal,
+  DeRoos complétée dans le dossier temporaire de la session).
+-->
+<link href="https://fonts.googleapis.com/css2?family=Sorts+Mill+Goudy:ital@0;1&family=EB+Garamond:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet">
+<style>
+@font-face { font-family: 'Cloister Black'; src: url("file:///X:/jdr/_tools/vtt/src/client/public/fonts/downloads/CloisterBlack.ttf"); }
+@font-face { font-family: 'Dreadthorn';     src: url("file:///X:/jdr/_tools/vtt/src/client/public/fonts/downloads/DreadthornPersonalUse-5y5PV.ttf"); }
+@font-face { font-family: 'Lombardic';      src: url("../../../../src/client/public/fonts/Lombardic-FR.ttf"); }
+@font-face { font-family: 'Cabaletta';      src: url("file:///X:/jdr/_tools/vtt/src/client/public/fonts/downloads/CABALETT.TTF"); }
+@font-face { font-family: 'DeRoos FR';      src: url("../../../../src/client/public/fonts/DeRoosCaps-FR.ttf"); }
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; border: 0 solid; }
+button { font: inherit; color: inherit; background: none; cursor: pointer; }
+
+:root {
+    --color-primary: #8E1018; --color-accent: #A67C1E; --color-danger: #B3121C;
+    --color-bg: #E9DDC2; --color-surface: #F4EBD6; --color-surface-alt: #E0CFA9;
+    --color-text: #2A1810; --color-text-muted: #6E5440; --color-border: #6B3A24;
+    --vda-blood: #8E1018; --vda-blood-dark: #4A060B; --vda-gold: #A67C1E;
+    --body: 'Sorts Mill Goudy', Georgia, serif;
+}
+[data-theme="dark"] {
+    --color-primary: #B3141F; --color-accent: #C9A24A; --color-danger: #E2402F;
+    --color-bg: #0C0708; --color-surface: #170F0F; --color-surface-alt: #241615;
+    --color-text: #E6D7BC; --color-text-muted: #A08C72; --color-border: #4E2A22;
+    --vda-blood: #B3141F; --vda-blood-dark: #5C0910; --vda-gold: #C9A24A;
+}
+body { background: var(--color-bg); color: var(--color-text); font-family: var(--body); font-size: 17px; line-height: 1.4; padding: 0 16px 60px; }
+.bar { position: sticky; top: 0; z-index: 5; display: flex; gap: 16px; align-items: center; padding: 10px 0; margin-bottom: 16px; background: var(--color-bg); border-bottom: 1px solid var(--color-border); font-size: 14px; }
+.bar strong { font-size: 18px; margin-right: auto; color: var(--color-accent); letter-spacing: .04em; }
+.btn { padding: 4px 12px; border: 1px solid var(--color-border); background: var(--color-surface-alt); }
+h2.row { font-size: 12px; letter-spacing: .14em; text-transform: uppercase; color: var(--color-text-muted); margin: 28px 0 10px; }
+.cols { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+.col-head { font-size: 14px; color: var(--color-text-muted); margin-bottom: 6px; }
+.col-head b { color: var(--color-text); font-size: 16px; }
+.note { font-size: 14px; color: var(--color-text-muted); max-width: 900px; }
+
+/* Chaque colonne fixe sa police de titres */
+.set-a { --title: 'DeRoos FR', Georgia, serif; --title-case: none; }
+.set-b { --title: 'Lombardic', 'DeRoos FR', Georgia, serif; --title-case: none; }
+.set-c { --title: 'Cabaletta', Georgia, serif; --title-case: uppercase; }
+.lettrine { font-family: 'Lombardic', 'DeRoos FR', Georgia, serif; }
+
+/* Extrait de feuille */
+.sheet { padding: 18px 20px; background: var(--color-surface); border: 1px solid var(--color-border);
+    box-shadow: inset 0 0 0 3px var(--color-surface), inset 0 0 0 4px color-mix(in srgb, var(--vda-blood) 55%, transparent); }
+.hdr { display: grid; grid-template-columns: 1fr 1fr; gap: 2px 14px; font-size: 15px; margin-bottom: 4px; }
+.hdr div { border-bottom: 1px solid color-mix(in srgb, var(--color-border) 45%, transparent); }
+.hdr b { font-family: var(--title); font-weight: 400; color: var(--color-text-muted); margin-right: 6px; text-transform: var(--title-case); font-size: 14px; }
+.stitle { display: flex; align-items: center; gap: 10px; font-family: var(--title); font-size: 25px; line-height: 1; margin: 14px 0 8px; text-transform: var(--title-case); }
+.stitle::before, .stitle::after { content: ''; flex: 1; height: 5px; border-top: 1px solid var(--color-primary); border-bottom: 2px solid var(--color-primary); }
+.stitle .lettrine { color: var(--color-primary); font-size: 1.3em; }
+.ctitle { font-family: var(--title); font-size: 18px; text-align: center; text-transform: var(--title-case); }
+.three { display: grid; grid-template-columns: repeat(3, 1fr); gap: 2px 12px; font-size: 15px; }
+.trait { display: flex; justify-content: space-between; border-bottom: 1px dotted color-mix(in srgb, var(--color-border) 55%, transparent); }
+.dots { letter-spacing: 1px; font-size: 11px; }
+
+/* Modale */
+.modal { background: var(--color-surface); border: 1px solid var(--color-border); }
+.modal header { padding: 12px 16px 8px; border-bottom: 1px solid color-mix(in srgb, var(--color-border) 60%, transparent); }
+.modal h3 { font-family: var(--title); font-weight: 400; font-size: 24px; line-height: 1.1; text-transform: var(--title-case); }
+.modal p.sub { font-style: italic; font-size: 14px; color: var(--color-text-muted); }
+.modal .body { padding: 10px 16px 14px; font-size: 16px; }
+.modal .foot { display: flex; justify-content: flex-end; gap: 8px; padding: 8px 16px 12px; }
+.mbtn { font-family: var(--title); font-size: 16px; padding: 4px 14px; border: 1px solid var(--color-border); background: var(--color-surface-alt); text-transform: var(--title-case); }
+.mbtn.primary { background: linear-gradient(180deg, var(--vda-blood), var(--vda-blood-dark)); color: #F3E6CC; border-color: var(--vda-blood-dark); }
+
+/* Jet et menu */
+.roll { padding: 8px 12px; background: var(--color-surface); border: 1px solid var(--color-border); border-left: 3px solid var(--vda-blood); }
+.roll .lbl { font-family: var(--title); font-size: 18px; text-transform: var(--title-case); }
+.roll .res { font-family: var(--title); font-size: 22px; color: var(--color-text); text-transform: var(--title-case); }
+.roll .res small { font-family: var(--body); font-size: 14px; color: var(--color-text-muted); text-transform: none; }
+.menu { background: var(--color-surface); border: 1px solid var(--color-border); padding: 4px 0; margin-top: 10px; }
+.menu div { padding: 4px 14px; font-size: 16px; }
+.menu div.t { font-family: var(--title); text-transform: var(--title-case); color: var(--color-accent); font-size: 15px; }
+
+/* Options de texte : la police du corps et celle des chiffres changent */
+.txt-a { --body: 'Sorts Mill Goudy', Georgia, serif; --num: 'EB Garamond', Georgia, serif; }
+.txt-b { --body: 'EB Garamond', Georgia, serif; --num: 'EB Garamond', Georgia, serif; }
+.txt-c { --body: 'Sorts Mill Goudy', Georgia, serif; --num: 'Sorts Mill Goudy', Georgia, serif; }
+.txt { font-family: var(--body); --title: 'DeRoos FR', Georgia, serif; --title-case: none; }
+.txt .sheet, .txt .modal { font-family: var(--body); }
+.num { font-family: var(--num); font-variant-numeric: lining-nums tabular-nums; font-weight: 600; }
+.txt p.prose { font-size: 16px; margin-top: 8px; }
+
+/* Marque */
+.brand { display: grid; justify-items: center; gap: 2px; padding: 22px 12px 16px; background: #120a0b; border: 1px solid #4e2a22; color: #E6D7BC; text-align: center; }
+.brand .logo { font-size: 64px; line-height: 1.05; text-shadow: 0 2px 0 #4a060b, 0 0 18px rgba(179,20,31,.6); }
+.brand .sub { color: #C9A24A; font-size: 19px; letter-spacing: .08em; }
+.logo-cloister { font-family: 'Cloister Black', serif; }
+.logo-dread { font-family: 'Dreadthorn', serif; font-size: 72px !important; }
+.logo-deroos { font-family: 'DeRoos FR', serif; letter-spacing: .04em; }
+</style>
+</head>
+<body>
+<div class="bar">
+  <strong>Polices — comparaison des jeux</strong>
+  <button class="btn" onclick="const h=document.documentElement; h.dataset.theme = h.dataset.theme==='dark'?'light':'dark'">Jour / nuit</button>
+</div>
+
+<p class="note">Même contenu, trois polices de titres. Le <b>texte</b> est partout en <b>Sorts Mill Goudy</b> (reprise libre de Goudy Old Style, la police du texte du livre) et les <b>lettrines</b> en <b>Lombardic</b>. A : DeRoos Caps, la police des titres du livre et de la fiche officielle, complétée de ses accents. B : Lombardic, libre. C : Cabaletta, usage personnel, en capitales seulement.</p>
+
+<h2 class="row">Feuille</h2>
+<div class="cols" id="sheets"></div>
+
+<h2 class="row">Fenêtre de jet, rendu d'un jet, menu</h2>
+<div class="cols" id="modals"></div>
+
+<h2 class="row">Texte et chiffres (titres en DeRoos Caps complétée)</h2>
+<div class="cols" id="texts"></div>
+
+<h2 class="row">Marque (carte d'accueil) — indépendante du jeu de titres</h2>
+<div class="cols">
+  <div><div class="col-head"><b>Cloister Black</b> · libre</div>
+    <div class="brand"><span class="logo logo-cloister">Vampire</span><span class="sub" style="font-family:'DeRoos FR'">L'Âge des Ténèbres</span></div></div>
+  <div><div class="col-head"><b>Dreadthorn</b> · usage personnel</div>
+    <div class="brand"><span class="logo logo-dread">Vampire</span><span class="sub" style="font-family:'DeRoos FR'">L'Âge des Ténèbres</span></div></div>
+  <div><div class="col-head"><b>DeRoos Caps</b> · comme les titres du livre</div>
+    <div class="brand"><span class="logo logo-deroos">VAMPIRE</span><span class="sub" style="font-family:'Lombardic'">L'Âge des Ténèbres</span></div></div>
+</div>
+<p class="note" style="margin-top:10px">La marque définitive sera sans doute un logo en image (sujet suivant) ; ces lignes servent à choisir la police qui le portera.</p>
+
+<script>
+const SETS = [['set-a', 'A — DeRoos Caps', 'complétée de ses accents'], ['set-b', 'B — Lombardic', 'libre'], ['set-c', 'C — Cabaletta', 'usage personnel, capitales']];
+const sheet = `
+  <div class="sheet">
+    <div class="hdr"><div><b>Nom</b> Aldric de Montfaucon</div><div><b>Clan</b> Lasombra</div>
+      <div><b>Nature</b> Fanatique</div><div><b>Génération</b> 11ᵉ</div></div>
+    <h3 class="stitle"><span><span class="lettrine">A</span>ttributs</span></h3>
+    <div class="three">
+      <div><div class="ctitle">Physiques</div><div class="trait">Force <span class="dots">●●○○○</span></div><div class="trait">Dextérité <span class="dots">●●●○○</span></div></div>
+      <div><div class="ctitle">Sociaux</div><div class="trait">Charisme <span class="dots">●●●○○</span></div><div class="trait">Apparence <span class="dots">●●○○○</span></div></div>
+      <div><div class="ctitle">Mentaux</div><div class="trait">Perception <span class="dots">●●●○○</span></div><div class="trait">Astuce <span class="dots">●●○○○</span></div></div>
+    </div>
+    <h3 class="stitle"><span><span class="lettrine">V</span>ertus et Volonté</span></h3>
+    <div class="three">
+      <div><div class="ctitle">Réserve de sang</div></div><div><div class="ctitle">Santé</div></div><div><div class="ctitle">Expérience</div></div>
+    </div>
+  </div>`;
+const modal = `
+  <div class="modal"><header><h3>Dextérité + Mêlée</h3><p class="sub">Attaque à l'épée longue · difficulté 6</p></header>
+    <div class="body">Réserve : Dextérité 3 + Mêlée 3 − blessure 1 = 5 dés. Spécialité : Épées.</div>
+    <div class="foot"><button class="mbtn">Annuler</button><button class="mbtn primary">Lancer</button></div></div>
+  <div class="roll" style="margin-top:10px"><div class="lbl">Aldric — Courage</div><div class="res">Échec critique <small>aucun succès, un 1</small></div></div>
+  <div class="menu"><div class="t">Menu</div><div>Créer un personnage</div><div>Jet de dés libre</div><div>Déconnexion</div></div>`;
+const TXT = [['txt-a', '(a) Sorts Mill Goudy + chiffres EB Garamond'], ['txt-b', '(b) EB Garamond partout'], ['txt-c', '(c) Sorts Mill Goudy seule']];
+const txt = `
+  <div class="sheet">
+    <div class="hdr"><div><b>Génération</b> <span class="num">11</span>ᵉ</div><div><b>Sang</b> <span class="num">7</span> / <span class="num">12</span> · <span class="num">1</span> par tour</div>
+      <div><b>Route</b> Rois <span class="num">6</span></div><div><b>Expérience</b> <span class="num">13</span> / <span class="num">41</span></div></div>
+    <h3 class="stitle"><span><span class="lettrine">S</span>anté</span></h3>
+    <div class="three">
+      <div class="trait">Blessé <span class="num">−1</span></div><div class="trait">Touché <span class="num">−1</span></div><div class="trait">Mutilé <span class="num">−2</span></div>
+      <div class="trait">Infirme <span class="num">−5</span></div><div class="trait">Initiative <span class="num">7</span></div><div class="trait">Absorption <span class="num">4</span></div>
+    </div>
+    <p class="prose">Réserve : Dextérité <span class="num">3</span> + Mêlée <span class="num">3</span> − blessure <span class="num">1</span> = <span class="num">5</span> dés, difficulté <span class="num">6</span>. De mon vivant, j'étais copiste à l'abbaye ; mon sire m'a choisi pour ma main sûre. <i>Désormais, je passe mes nuits à hanter les cœurs.</i></p>
+  </div>`;
+document.getElementById('texts').innerHTML = TXT.map(([c, n]) => `<div class="txt ${c}"><div class="col-head"><b>${n}</b></div>${txt}</div>`).join('');
+document.getElementById('sheets').innerHTML = SETS.map(([c, n, l]) => `<div class="${c}"><div class="col-head"><b>${n}</b> · ${l}</div>${sheet}</div>`).join('');
+document.getElementById('modals').innerHTML = SETS.map(([c, n]) => `<div class="${c}"><div class="col-head"><b>${n}</b></div>${modal}</div>`).join('');
+</script>
+</body>
+</html>

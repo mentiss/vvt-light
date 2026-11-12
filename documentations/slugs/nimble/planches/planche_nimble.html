@@ -1,0 +1,188 @@
+<!doctype html>
+<html lang="fr" data-theme="light">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Planche Nimble</title>
+<!-- Planche du slug nimble (spec_nimble.md §7) : charge le VRAI theme.css du slug.
+     ✦ = au-delà des conventions existantes. Bascule jour / nuit en haut à droite. -->
+<link rel="stylesheet" href="../../../../src/client/src/systems/nimble/theme.css">
+<style>
+    /* Équivalent du preflight Tailwind */
+    *, ::before, ::after { box-sizing: border-box; border: 0 solid; margin: 0; padding: 0; }
+    button, input { font: inherit; color: inherit; background: none; cursor: pointer; }
+    ul { list-style: none; }
+    body { background: var(--color-bg); color: var(--color-text); }
+    .pl { display: grid; gap: 28px; padding: 20px clamp(12px, 2vw, 28px) 60px; }
+    .pl h2 { font-family: var(--nb-font-label); font-weight: 800; letter-spacing: .14em; text-transform: uppercase; font-size: 13px; color: var(--color-text-muted); margin-bottom: 8px; }
+    .pl-row { display: flex; gap: 16px; flex-wrap: wrap; align-items: flex-start; }
+    .sw { width: 120px; border: 1px solid var(--nb-soft); font-size: 12px; font-family: var(--nb-font-label); }
+    .sw i { display: block; height: 46px; }
+    .sw span { display: block; padding: 4px 6px; }
+    .toggle-theme { position: fixed; top: 10px; right: 12px; z-index: 99; }
+    .static-modal .vtt-modal-panel { position: relative; width: 460px; max-width: 100%; }
+    .vtt-modal-header { display: flex; align-items: center; justify-content: space-between; padding: 10px 14px 10px 24px; }
+    .vtt-modal-body { padding: 14px 20px; }
+    .vtt-modal-footer { display: flex; justify-content: flex-end; gap: 8px; padding: 12px 20px; }
+    .vtt-catalog-item { display: flex; width: 100%; justify-content: space-between; padding: 10px 20px; text-align: left; }
+    .vtt-menu { position: relative; }
+    .vtt-session-bar { width: 230px; padding: 10px; }
+    .vtt-session-bar-player { display: flex; gap: 10px; align-items: center; padding: 6px; }
+    .vtt-session-bar-frame { width: 40px; height: 40px; display: grid; place-items: center; }
+</style>
+</head>
+<body>
+<button class="vtt-btn vtt-btn-sm toggle-theme" onclick="const h=document.documentElement; h.dataset.theme = h.dataset.theme==='dark'?'light':'dark'">Jour / nuit</button>
+<div class="nb-root">
+    <div class="nb-sticky-top">
+        <header class="nb-topbar">
+            <span class="nimble-brand is-title"><span class="nimble-brand-title">Nimble</span><span class="nimble-brand-sub">L'héroïsme au pas de course</span></span>
+            <span class="nb-topbar-tools"><button class="vtt-menu-button">☰</button></span>
+        </header>
+        <div class="nb-subbar">
+            <div class="nb-tabs"><button class="nb-tab is-active">Fiche</button><button class="nb-tab">Journal <span class="nb-tab-badge is-left">2</span></button><button class="nb-tab">Historique</button><button class="nb-tab">Aide de jeu</button></div>
+            <div class="nb-actions"><button class="nb-icon-btn">★ Niveau</button><button class="nb-icon-btn">♨ Repos</button><button class="nb-icon-btn">✎</button></div>
+        </div>
+    </div>
+
+    <div class="pl">
+        <section>
+            <h2>Tokens</h2>
+            <div class="pl-row">
+                <div class="sw"><i style="background:var(--color-bg)"></i><span>Vélin · bg</span></div>
+                <div class="sw"><i style="background:var(--nb-ink)"></i><span>Encre · bandes</span></div>
+                <div class="sw"><i style="background:var(--nb-red)"></i><span>Rouge héraldique · primary</span></div>
+                <div class="sw"><i style="background:var(--nb-gold)"></i><span>Or · accent</span></div>
+                <div class="sw"><i style="background:var(--nb-blue)"></i><span>Outremer · secondary</span></div>
+                <div class="sw"><i style="background:var(--color-success)"></i><span>Succès</span></div>
+            </div>
+            <p class="nb-note mt-2">Fraunces (titres, marque) · Sofia Sans Condensed (étiquettes) · Crimson Pro (texte).</p>
+        </section>
+
+        <section>
+            <h2>Marque (carte d'accueil)</h2>
+            <div style="width:300px;height:170px"><span class="nimble-brand"><span class="nimble-brand-mark">✦ ✦ ✦</span><span class="nimble-brand-title">Nimble</span><span class="nimble-brand-sub">L'héroïsme au pas de course</span></span></div>
+        </section>
+
+        <section>
+            <h2>✦ Bande des caractéristiques (bouts crantés de la fiche officielle)</h2>
+            <div class="nb-statband nb-notched">
+                <div class="nb-ident"><span class="nb-avatar">DM</span><div><div class="nb-charname">Dargoss Manfield</div><div class="nb-charline">Elfe · Chasseur 3</div></div></div>
+                <button class="nb-stat"><i class="nb-save is-top"></i><span class="nb-stat-val">−1</span><span class="nb-stat-lab">FOR</span><i class="nb-save is-bottom"></i></button>
+                <button class="nb-stat"><i class="nb-save is-top is-on"></i><span class="nb-stat-val">+2</span><span class="nb-stat-lab">DEX</span><i class="nb-save is-bottom"></i></button>
+                <button class="nb-stat"><i class="nb-save is-top"></i><span class="nb-stat-val">+0</span><span class="nb-stat-lab">INT</span><i class="nb-save is-bottom is-on"></i></button>
+                <button class="nb-stat"><i class="nb-save is-top"></i><span class="nb-stat-val">+2</span><span class="nb-stat-lab">VOL</span><i class="nb-save is-bottom"></i></button>
+                <button class="nb-shield is-bloodied"><span class="nb-shield-lab">♥ Points de vie</span><span class="nb-shield-val">9<small> / 23</small></span><span class="nb-shield-temp">+4 temp.</span></button>
+                <div class="nb-box"><span class="nb-box-lab">Armure</span><span class="nb-box-val">5</span></div>
+                <button class="nb-box"><span class="nb-box-lab">Initiative</span><span class="nb-box-val">+2<small> ▲</small></span></button>
+                <div class="nb-box"><span class="nb-box-lab">Vitesse</span><span class="nb-box-val">7</span></div>
+                <div class="nb-vitals">
+                    <div class="nb-vitals-row"><span class="nb-vitals-lab">Blessures</span><span class="nb-chain"><i class="nb-wound is-on"></i><i class="nb-wound is-on"></i><i class="nb-wound"></i><i class="nb-wound"></i><i class="nb-wound"></i><span class="nb-skull">☠</span></span></div>
+                    <div class="nb-vitals-row"><span class="nb-vitals-lab">Dés de vie</span><span class="nb-hd"><i class="is-on"></i><i class="is-on"></i><i></i></span><span class="nb-charline"><b>2</b>/3 d8</span></div>
+                </div>
+            </div>
+        </section>
+
+        <section>
+            <h2>Bande des compétences</h2>
+            <div class="nb-skillband nb-notched">
+                <button class="nb-skill"><span class="nb-skill-stat">INT</span><span class="nb-skill-val">+0</span><span class="nb-skill-lab">Arcanes</span></button>
+                <button class="nb-skill"><span class="nb-skill-stat">INT</span><span class="nb-skill-val">+0</span><span class="nb-skill-lab">Examen</span></button>
+                <button class="nb-skill"><span class="nb-skill-stat">DEX</span><span class="nb-skill-val">+2</span><span class="nb-skill-lab">Finesse</span></button>
+                <button class="nb-skill"><span class="nb-skill-stat">VOL</span><span class="nb-skill-val">+2</span><span class="nb-skill-lab">Influence</span></button>
+                <button class="nb-skill"><span class="nb-skill-stat">VOL</span><span class="nb-skill-val">+2</span><span class="nb-skill-lab">Intuition</span></button>
+                <button class="nb-skill"><span class="nb-skill-stat">INT</span><span class="nb-skill-val">+0</span><span class="nb-skill-lab">Savoir</span></button>
+                <button class="nb-skill"><span class="nb-skill-stat">FOR</span><span class="nb-skill-val">−1</span><span class="nb-skill-lab">Puissance</span></button>
+                <button class="nb-skill"><span class="nb-skill-stat">VOL</span><span class="nb-skill-val">+3</span><span class="nb-skill-lab">Nature</span></button>
+                <button class="nb-skill"><span class="nb-skill-stat">VOL</span><span class="nb-skill-val">+2</span><span class="nb-skill-lab">Perception</span></button>
+                <button class="nb-skill"><span class="nb-skill-stat">DEX</span><span class="nb-skill-val">+4</span><span class="nb-skill-lab">Discrétion</span></button>
+            </div>
+        </section>
+
+        <section class="nb-cols nb-paper" style="padding:16px">
+            <div class="nb-col">
+                <div class="nb-block">
+                    <div class="nb-block-title"><h3>Au combat</h3><span class="nb-block-extra"><button class="nb-add">Fin de rencontre</button></span></div>
+                    <div class="nb-actionbar"><span class="nb-label">Actions</span><span class="nb-pips"><i class="nb-pip is-on"></i><i class="nb-pip is-on"></i><i class="nb-pip"></i></span><span class="nb-line-meta">1 attaque ce tour</span></div>
+                    <div class="nb-line"><div class="nb-line-main"><span class="nb-line-name">Arc court</span> <span class="nb-dmg">1d6+2</span></div><div class="nb-line-side"><span class="nb-tag">Portée 12</span><button class="nb-roll-btn">Attaquer</button></div></div>
+                    <div class="nb-line"><div class="nb-line-main"><span class="nb-line-name">Mains nues</span> <span class="nb-dmg">1d4−1</span></div><div class="nb-line-side"><span class="nb-tag">Sans maîtrise</span><button class="nb-roll-btn">Attaquer</button></div></div>
+                </div>
+            </div>
+            <div class="nb-col">
+                <div class="nb-block">
+                    <div class="nb-block-title"><h3>Capacités</h3><span class="nb-block-extra">Chasseur</span></div>
+                    <div class="nb-sub-title">Classe</div>
+                    <div class="nb-line"><div class="nb-line-main"><span class="nb-line-name nb-link">Marque du chasseur</span> <span class="nb-line-meta">niv. 1</span></div><div class="nb-line-side"><span class="nb-tag">1 action</span></div></div>
+                    <div class="nb-line"><div class="nb-line-main"><span class="nb-line-name nb-link">Halfelin : Insaisissable</span></div><div class="nb-line-side"><span class="nb-pips"><i class="nb-pip is-sm is-gold is-on"></i></span><span class="nb-line-meta">/ repos sûr</span></div></div>
+                </div>
+            </div>
+            <div class="nb-col">
+                <div class="nb-block">
+                    <div class="nb-block-title"><h3>Ressources</h3></div>
+                    <div class="nb-line"><div class="nb-line-main"><span class="nb-line-name">Mana</span> <span class="nb-line-meta">8 / 11</span></div><div class="nb-line-side"><span class="nb-pips"><i class="nb-pip is-blue is-on"></i><i class="nb-pip is-blue is-on"></i><i class="nb-pip is-blue is-on"></i><i class="nb-pip is-blue"></i></span></div></div>
+                </div>
+                <div class="nb-block">
+                    <div class="nb-block-title"><h3>Paquetage</h3><span class="nb-block-extra">5 / 11 empl.</span></div>
+                    <div class="nb-meter"><i style="width:45%"></i></div>
+                    <div class="nb-line nb-item is-equipped"><div class="nb-line-main"><span class="nb-line-name">Arc court</span> <span class="nb-line-meta">1d6 · DEX</span></div><div class="nb-line-side"><button class="nb-equip is-on">Équipé</button></div></div>
+                </div>
+            </div>
+        </section>
+
+        <section class="pl-row">
+            <div>
+                <h2>✦ Rendu d'un jet (historique et notification)</h2>
+                <div class="pl-row">
+                    <div class="vtt-history-entry" style="width:330px"><div class="nb-roll is-crit"><div class="nb-roll-head"><b>Arc électrique</b><span>Ysolde Brisevent</span></div>
+                        <div class="nb-roll-body"><div class="nb-dice"><span class="nb-die is-primary is-crit">8</span><span class="nb-die">8</span><span class="nb-die">4</span><span class="nb-spark">✦</span><span class="nb-die is-chain">8</span><span class="nb-spark">✦</span><span class="nb-die is-chain">3</span></div>
+                        <div class="nb-roll-total">31<small>dégâts</small></div><div class="nb-verdict is-crit">Critique ×2</div><div class="nb-roll-sub">Foudre · d8 · foudre</div></div></div></div>
+                    <div class="vtt-history-entry" style="width:330px"><div class="nb-roll is-miss"><div class="nb-roll-head"><b>Grande hache</b><span>Brok</span></div>
+                        <div class="nb-roll-body"><div class="nb-dice"><span class="nb-die is-dropped">6</span><span class="nb-die is-primary is-miss">1</span><span class="nb-die">5</span></div>
+                        <div class="nb-roll-total">0<small>dégâts</small></div><div class="nb-verdict is-miss">Raté</div><div class="nb-roll-sub">désavantage 1 · mod. +3</div></div></div></div>
+                    <div class="vtt-history-entry" style="width:330px"><div class="nb-roll"><div class="nb-roll-head"><b>Discrétion</b><span>Dargoss Manfield</span></div>
+                        <div class="nb-roll-body"><div class="nb-dice"><span class="nb-die is-primary">17</span><span class="nb-die is-dropped">4</span></div>
+                        <div class="nb-roll-total">21<small>total</small></div><div class="nb-verdict is-success">Réussite</div><div class="nb-roll-sub">avantage 1 · mod. +4 · DD 15</div></div></div></div>
+                </div>
+            </div>
+        </section>
+
+        <section class="pl-row">
+            <div>
+                <h2>Boutons, pills, interrupteur, zone d'actions</h2>
+                <div class="pl-row">
+                    <button class="vtt-btn">Fermer</button><button class="vtt-btn vtt-btn-primary">Lancer 2d6</button><button class="vtt-btn vtt-btn-danger">Retirer</button>
+                    <button class="vtt-pill">Facile 8</button><button class="vtt-pill is-selected">Moyen 12</button>
+                    <button class="nb-toggle is-on"><i></i><span>Ouverture créée<small>Le dé primaire monte d'une face.</small></span></button>
+                    <span class="vtt-actions-bar pl-row"><button class="vtt-action-btn">♪</button><button class="vtt-action-btn is-active">⟲</button><button class="vtt-action-btn is-highlighted">▣</button></span>
+                </div>
+            </div>
+        </section>
+
+        <section class="pl-row">
+            <div class="static-modal">
+                <h2>✦ Modale (bande d'encre, sceaux d'or)</h2>
+                <div class="vtt-modal-panel"><span class="vtt-modal-deco"></span>
+                    <div class="vtt-modal-header"><div><div class="vtt-modal-title">Arc court</div><div class="vtt-modal-subtitle">1d6 +2 · Dargoss Manfield</div></div><button class="vtt-modal-close">✕</button></div>
+                    <div class="vtt-modal-body"><div class="nb-field-row"><b>Avantage</b><span class="nb-stepper"><button>−</button><span>Avantage 1</span><button>+</button></span></div></div>
+                    <div class="vtt-modal-footer"><button class="vtt-btn">Fermer</button><button class="vtt-btn vtt-btn-primary">Lancer 2d6</button></div>
+                </div>
+            </div>
+            <div>
+                <h2>Menu</h2>
+                <div class="vtt-menu"><button class="vtt-menu-item">Créer un personnage</button><button class="vtt-menu-item">Jet de dés libre</button><div class="vtt-menu-separator"></div><button class="vtt-menu-item is-danger">Déconnexion</button></div>
+            </div>
+            <div>
+                <h2>Barre de session</h2>
+                <div class="vtt-session-bar"><div class="vtt-session-bar-eyebrow">Table</div><div class="vtt-session-bar-title">La route de Merivale</div>
+                    <div class="vtt-session-bar-player" data-me><span class="vtt-session-bar-frame"><span class="vtt-session-bar-initials">DM</span></span><span><span class="vtt-session-bar-name">Dargoss</span><br><span class="vtt-session-bar-player-name">Mentiss</span></span></div></div>
+            </div>
+            <div style="width:380px">
+                <h2>Catalogue et aide de jeu</h2>
+                <div class="vtt-catalog-list"><div class="vtt-catalog-group">Armes</div><button class="vtt-catalog-item"><span><b>Dague</b> <span class="nb-tag">3 po</span><br><span class="nb-line-meta">1d4 · DEX</span></span><span class="vtt-catalog-add">+</span></button></div>
+                <div class="vtt-reference-section" style="margin-top:12px"><div class="vtt-reference-section-title">Combat</div><div class="vtt-reference-heading">Attaque</div><p class="vtt-reference-text">Un 1 sur le dé primaire rate ; son maximum critique et explose.</p></div>
+            </div>
+        </section>
+    </div>
+</div>
+</body>
+</html>

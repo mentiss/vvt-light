@@ -13,7 +13,7 @@ demandes sans redemander, mais annonce combien tu en lances.
 ## 1. Préparer les demandes
 
 - Une demande = un fichier de sortie. Si `$ARGUMENTS` est un fichier de demandes (ex.
-  `documentations/<slug>/demandes_images.md`), prends ses tableaux `| Fichier | Demande |` ; sinon
+  `documentations/slugs/<slug>/demandes_images.md`), prends ses tableaux `| Fichier | Demande |` ; sinon
   écris la demande toi-même et ajoute-la à ce fichier (il sert de trace et de reprise).
 - Prompt **en anglais**, précis : sujet, style, cadrage (format 1:1, 5:2…), fond, ce qui est interdit.
 - **Ornements** destinés à être teintés par le thème (masque CSS) : « flat pure black silhouette on a
@@ -25,7 +25,7 @@ demandes sans redemander, mais annonce combien tu en lances.
 ## 2. Lancer
 
 Dossier de sortie :
-- planche en cours (slug pas encore créé) : `documentations/<slug>/images/` ;
+- planche en cours (slug pas encore créé) : `documentations/slugs/<slug>/planches/images/` ;
 - slug existant : `src/client/src/systems/<slug>/assets/` (convention des slugs : `url('./assets/…')`).
 
 Commande, depuis le dossier de sortie (une par image) :

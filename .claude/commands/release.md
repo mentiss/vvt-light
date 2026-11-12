@@ -5,7 +5,7 @@ argument-hint: [minor|patch|major] [fast]
 
 Mise en production : **$ARGUMENTS** (par défaut : `minor`, vérifications complètes).
 
-Référence : `documentations/spec_release.md`. La commande technique est `npm run release` (`scripts/release.js`), qui exécute `scripts/install.sh` sur le VPS. **Ne lance jamais la release sans ma validation explicite dans la conversation.**
+Référence : `documentations/process/spec_release.md`. La commande technique est `npm run release` (`scripts/release.js`), qui exécute `scripts/install.sh` sur le VPS. **Ne lance jamais la release sans ma validation explicite dans la conversation.**
 
 ## 1. Préparation (aucune écriture sans accord)
 

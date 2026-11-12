@@ -1,0 +1,267 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Planche sang — Vampire : l'Âge des Ténèbres</title>
+<!--
+  Sang, tour 3 (phase 2, lot 1) : la page boit le sang.
+  - Imprégnation : depuis un coin ou un bord, le sang s'imbibe dans le papier
+    (contour irrégulier par bruit SVG, front humide plus sombre, fibres), lentement,
+    puis SÈCHE (bordeaux humide -> brun mat). Fenêtre de jet, échec critique.
+  - Taches séchées (images Codex, sang/) qui suivent les blessures sur la fiche :
+    chaque niveau de santé perdu fait s'imprégner une tache à une place fixe.
+  Coulures abandonnées.
+-->
+<link href="https://fonts.googleapis.com/css2?family=Sorts+Mill+Goudy:ital@0;1&display=swap" rel="stylesheet">
+<style>
+@font-face { font-family: 'DeRoos FR'; src: url('../../../../src/client/public/fonts/DeRoosCaps-FR.ttf'); }
+@font-face { font-family: 'Lombardic FR'; src: url('../../../../src/client/public/fonts/Lombardic-FR.ttf'); }
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; border: 0 solid; }
+button { font: inherit; color: inherit; background: none; cursor: pointer; }
+
+.day {
+    --color-primary: #8E1018; --color-danger: #B3121C; --color-bg: #E9DDC2; --color-surface: #F4EBD6;
+    --color-surface-alt: #E0CFA9; --color-text: #2A1810; --color-text-muted: #6E5440; --color-border: #6B3A24;
+    --vda-blood: #8E1018; --vda-blood-dark: #4A060B; --iron: drop-shadow(0 2px 2px rgba(60,30,10,.35));
+    --soak-blend: multiply; --soak-opacity: .9; --stain-opacity: .6; --stain-blend: multiply;
+}
+.night {
+    --color-primary: #B3141F; --color-danger: #E2402F; --color-bg: #0C0708; --color-surface: #170F0F;
+    --color-surface-alt: #241615; --color-text: #E6D7BC; --color-text-muted: #A08C72; --color-border: #4E2A22;
+    --vda-blood: #B3141F; --vda-blood-dark: #5C0910;
+    --iron: brightness(2.1) contrast(1.1) drop-shadow(0 0 5px rgba(179,20,31,.45)) drop-shadow(0 2px 3px rgba(0,0,0,.8));
+    --soak-blend: normal; --soak-opacity: .85; --stain-opacity: .7; --stain-blend: normal;
+}
+body { background: #050303; color: #E6D7BC; font-family: 'Sorts Mill Goudy', Georgia, serif; font-variant-numeric: lining-nums; padding: 16px; }
+.bar { display: flex; gap: 14px; align-items: center; margin-bottom: 10px; }
+h1 { font-family: 'DeRoos FR', serif; font-weight: 400; font-size: 26px; color: #C9A24A; margin-right: auto; }
+.btn { font-family: 'DeRoos FR', serif; padding: 5px 14px; border: 1px solid #C9A24A; color: #E6D7BC; background: #241615; }
+.note { font-size: 14px; color: #A08C72; max-width: 1080px; margin-bottom: 12px; }
+.grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+.cell { background: var(--color-bg); color: var(--color-text); padding: 26px 22px; display: grid; gap: 26px; align-content: start; }
+.cell-head { font-family: 'DeRoos FR', serif; font-size: 18px; color: var(--color-text-muted); }
+.cap { font-size: 13px; color: var(--color-text-muted); margin-top: 6px; }
+
+/* Coins de ferronnerie */
+.corner { position: absolute; width: 64px; height: 64px; background: url('ornements/a1-ferronnerie-coin.png') no-repeat top left / contain; filter: var(--iron); pointer-events: none; z-index: 4; }
+.corner.tl { top: -6px; left: -6px; } .corner.tr { top: -6px; right: -6px; transform: scaleX(-1); }
+.corner.bl { bottom: -6px; left: -6px; transform: scaleY(-1); } .corner.br { bottom: -6px; right: -6px; transform: scale(-1, -1); }
+
+/* Couche d'imprégnation : sous le texte, découpée aux bords de la page */
+.paper { position: relative; }
+.soak-clip { position: absolute; inset: 0; overflow: hidden; pointer-events: none; z-index: 1; }
+.soak { width: 100%; height: 100%; display: block; mix-blend-mode: var(--soak-blend); opacity: var(--soak-opacity); }
+
+/* Modale */
+.modal { background: var(--color-surface); border: 1px solid var(--color-border); box-shadow: 0 14px 34px rgba(0,0,0,.45); max-width: 520px; }
+.modal header { padding: 26px 24px 6px; text-align: center; position: relative; z-index: 2; }
+.modal h3 { font-family: 'DeRoos FR', serif; font-weight: 400; font-size: 23px; }
+.modal p.sub { font-style: italic; font-size: 14px; color: var(--color-text-muted); }
+.modal .body { padding: 6px 24px 10px; text-align: center; font-size: 16px; position: relative; z-index: 2; }
+.modal .foot { display: flex; justify-content: center; gap: 8px; padding: 6px 14px 22px; position: relative; z-index: 2; }
+.mbtn { font-family: 'DeRoos FR', serif; font-size: 15px; padding: 3px 12px; border: 1px solid var(--color-border); background: var(--color-surface-alt); }
+.mbtn.primary { background: linear-gradient(180deg, var(--vda-blood), var(--vda-blood-dark)); color: #F3E6CC; border-color: var(--vda-blood-dark); }
+
+/* Échec critique */
+.roll { padding: 12px 14px; background: var(--color-surface); border: 1px solid var(--color-border); border-left: 3px solid var(--vda-blood); max-width: 520px; }
+.roll .lbl { font-family: 'DeRoos FR', serif; font-size: 16px; position: relative; z-index: 2; }
+.roll .res { font-family: 'DeRoos FR', serif; font-size: 22px; color: var(--color-danger); position: relative; z-index: 2; }
+.roll .dice { display: flex; gap: 4px; margin: 6px 0; position: relative; z-index: 2; }
+.die { width: 24px; height: 24px; display: grid; place-items: center; font-weight: 700; font-size: 13px; clip-path: polygon(50% 0, 100% 38%, 82% 100%, 18% 100%, 0 38%); background: var(--color-surface-alt); color: var(--color-text-muted); }
+.die.one { background: #000; color: var(--color-danger); }
+
+/* Fiche : taches qui suivent les blessures */
+.sheet { padding: 30px 34px; background: var(--color-surface); border: 1px solid var(--color-border); }
+.sheet-grid { display: grid; grid-template-columns: 1.4fr 1fr; gap: 24px; position: relative; z-index: 2; }
+.stitle { font-family: 'DeRoos FR', serif; font-size: 20px; text-align: center; margin-bottom: 6px; }
+.stitle .ini { font-family: 'Lombardic FR', 'DeRoos FR', serif; color: var(--color-primary); font-size: 1.3em; }
+.trait { display: flex; justify-content: space-between; font-size: 14px; border-bottom: 1px dotted color-mix(in srgb, var(--color-border) 55%, transparent); }
+.dots { font-size: 10px; letter-spacing: 1px; }
+.health { width: 100%; border-collapse: collapse; font-size: 14px; }
+.health td { padding: 1px 3px; }
+.health td.pen { text-align: right; color: var(--color-text-muted); width: 26px; }
+.hbox { display: block; width: 18px; height: 18px; margin-left: auto; border: 1.5px solid var(--color-text); position: relative; cursor: pointer; }
+.hbox.is-lethal::before, .hbox.is-lethal::after { content: ''; position: absolute; left: 50%; top: 50%; width: 22px; height: 2px; background: var(--color-text); }
+.hbox.is-lethal::before { transform: translate(-50%, -50%) rotate(-45deg); }
+.hbox.is-lethal::after  { transform: translate(-50%, -50%) rotate(45deg); }
+.stain { position: absolute; pointer-events: none; z-index: 1; background: no-repeat center / contain;
+    mix-blend-mode: var(--stain-blend); opacity: 0; animation: stain-soak 4s ease-out forwards; }
+@keyframes stain-soak {
+    0%   { opacity: 0; filter: blur(6px) saturate(1.6) brightness(1.2); transform: var(--rot) scale(.7); }
+    40%  { opacity: var(--stain-opacity); filter: blur(2px) saturate(1.4) brightness(1.1); }
+    100% { opacity: var(--stain-opacity); filter: blur(0) saturate(1) brightness(1); transform: var(--rot) scale(1); }
+}
+@media (prefers-reduced-motion: reduce) { * { animation-duration: .01ms !important; } }
+</style>
+</head>
+<body>
+<div class="bar"><h1>Sang — la page boit le sang</h1><button class="btn" id="replay">Rejouer (nouveau tirage)</button></div>
+<p class="note"><b>Imprégnation</b> : depuis un coin ou un bord tiré au hasard, le sang s'imbibe dans la page comme dans un buvard (contour irrégulier, front humide plus sombre, fibres du papier), lentement, puis <b>sèche</b> : du bordeaux humide au brun mat. <b>Fiche</b> : clique sur les cases de santé ; chaque niveau perdu fait s'imprégner une tache séchée à une place fixe (elle ne bouge plus ensuite).</p>
+<div class="grid" id="grid"></div>
+<script>
+const pick = a => a[Math.floor(Math.random() * a.length)];
+const lerp = (a, b, t) => a + (b - a) * t;
+const corners = '<span class="corner tl"></span><span class="corner tr"></span><span class="corner bl"></span><span class="corner br"></span>';
+let uid = 0;
+
+// Couleurs : frais humide -> séché. Plus sombres la nuit (pas de rouge criard).
+const COLORS = {
+    // core : là où le sang arrive, le papier en a bu le plus (plus foncé le jour, plus intense la nuit).
+    // Jour : rouge sang tirant sur le brun, front humide plus sombre.
+    // Nuit : plus clair et plus opaque pour ressortir sur la crypte, front humide plus LUMINEUX.
+    day:   { core: [74, 8, 4],    wet: [128, 22, 12], front: [70, 8, 4],
+             dryCore: [78, 30, 18], dry: [116, 58, 38], dryFront: [92, 42, 28] },
+    night: { core: [176, 24, 30], wet: [138, 18, 24], front: [196, 44, 40],
+             dryCore: [150, 70, 50], dry: [116, 56, 40], dryFront: [132, 64, 46] },
+};
+// Origines possibles (unités du viewBox 0..100) et rayon final
+const ORIGINS = {
+    tl: [-2, -2, 60], tr: [102, -2, 60], bl: [-2, 102, 60], br: [102, 102, 60],
+    left: [-3, 50, 48], right: [103, 50, 48], bottom: [50, 106, 52],
+};
+
+// Construit la couche d'imprégnation et lance l'animation (croissance puis séchage)
+function soak(theme, where, grow = 7000, dry = 5000) {
+    const id = ++uid, seed = Math.floor(Math.random() * 999);
+    const [cx, cy, R] = ORIGINS[where];
+    // Le viewBox est recalé en pixels réels au lancement (animateSoaks) : bruit non étiré.
+    const svg = `<div class="soak-clip"><svg class="soak" viewBox="0 0 100 100" data-soak="${id}" data-theme="${theme}" data-cx="${cx}" data-cy="${cy}" data-r="${R}" data-grow="${grow}" data-dry="${dry}">
+      <defs>
+        <filter id="sf${id}" x="-20%" y="-20%" width="140%" height="140%">
+          <feTurbulence type="fractalNoise" baseFrequency="0.022" numOctaves="4" seed="${seed}" result="warp"/>
+          <feDisplacementMap in="SourceGraphic" in2="warp" scale="34" xChannelSelector="R" yChannelSelector="G" result="ragged"/>
+          <feTurbulence type="fractalNoise" baseFrequency="0.35" numOctaves="3" seed="${seed + 7}" result="fib"/>
+          <feColorMatrix in="fib" type="matrix" values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 -0.26 1.1" result="fibA"/>
+          <feComposite in="ragged" in2="fibA" operator="in"/>
+        </filter>
+        <!-- Dégradé : très chargé à l'origine, s'éclaircit en s'éloignant, front de séchage au bord -->
+        <radialGradient id="sg${id}" gradientUnits="userSpaceOnUse" cx="0" cy="0" r="0.1">
+          <stop offset="0"    stop-opacity=".96"/>
+          <stop offset=".35"  stop-opacity=".8"/>
+          <stop offset=".8"   stop-opacity=".5"/>
+          <stop offset=".93"  stop-opacity=".82"/>
+          <stop offset="1"    stop-opacity="0"/>
+        </radialGradient>
+      </defs>
+      <rect fill="url(#sg${id})" filter="url(#sf${id})"/>
+    </svg></div>`;
+    return svg;
+}
+function animateSoaks() {
+    document.querySelectorAll('svg[data-soak]').forEach(svg => {
+        const id = svg.dataset.soak, C = COLORS[svg.dataset.theme];
+        const grow = +svg.dataset.grow, dry = +svg.dataset.dry;
+        const g = svg.querySelector(`#sg${id}`), stops = g.querySelectorAll('stop');
+        // Recalage en pixels réels : origine en % de la page, rayon relatif au petit côté
+        const { width: w, height: h } = svg.getBoundingClientRect();
+        svg.setAttribute('viewBox', `0 0 ${w} ${h}`);
+        const rect = svg.querySelector('rect');
+        rect.setAttribute('x', -w * .2); rect.setAttribute('y', -h * .2);
+        rect.setAttribute('width', w * 1.4); rect.setAttribute('height', h * 1.4);
+        g.setAttribute('cx', +svg.dataset.cx / 100 * w); g.setAttribute('cy', +svg.dataset.cy / 100 * h);
+        const R = +svg.dataset.r / 100 * Math.min(w, h) * 1.15;   // taille réduite d'un tiers (retour MJ)
+        const t0 = performance.now();
+        const paint = (wet) => {   // wet : 1 = humide, 0 = sec ; chaque zone a sa teinte humide et sèche
+            const col = (k, dk) => `rgb(${C[k].map((v, i) => Math.round(lerp(C[dk][i], v, wet))).join(',')})`;
+            stops[0].setAttribute('stop-color', col('core', 'dryCore'));
+            stops[1].setAttribute('stop-color', col('wet', 'dry'));
+            stops[2].setAttribute('stop-color', col('wet', 'dry'));
+            stops[3].setAttribute('stop-color', col('front', 'dryFront'));
+            stops[4].setAttribute('stop-color', col('front', 'dryFront'));
+            stops[3].setAttribute('stop-opacity', lerp(.62, .82, wet).toFixed(2));   // le front humide s'estompe en séchant
+            stops[2].setAttribute('stop-opacity', lerp(.42, .5, wet).toFixed(2));    // la périphérie pâlit un peu plus que l'origine
+        };
+        paint(1);
+        // Contrôle visuel sans animation : #humide ou #sec dans l'adresse
+        if (location.hash === '#humide' || location.hash === '#sec') {
+            g.setAttribute('r', R); paint(location.hash === '#humide' ? 1 : 0); return;
+        }
+        const step = (now) => {
+            const t = now - t0;
+            if (t < grow) {
+                const k = 1 - Math.pow(1 - t / grow, 3);       // capillarité : rapide puis de plus en plus lent
+                g.setAttribute('r', (R * k).toFixed(2));
+                requestAnimationFrame(step);
+            } else if (t < grow + dry) {
+                g.setAttribute('r', R);
+                paint(1 - (t - grow) / dry);
+                requestAnimationFrame(step);
+            } else paint(0);
+        };
+        requestAnimationFrame(step);
+    });
+}
+
+// ── Taches qui suivent les blessures ──
+// [image, facteur de taille] : la tache ronde (seche-2) est écartée (retour MJ) ;
+// on garde éclaboussure, traînée, empreinte, projection fine et coulure séchée.
+const STAINS = [[1, 1], [3, .85], [4, .75], [5, .9], [6, .8]].map(([n, k]) => [`sang/seche-${n}.png`, k]);
+function makeSpots() {      // places fixes tirées une fois pour le personnage
+    return Array.from({ length: 7 }, (_, i) => {
+        const [src, k] = STAINS[i % STAINS.length];
+        return { src, x: 4 + Math.random() * 82, y: 6 + Math.random() * 74,
+                 size: (45 + Math.random() * 30) * k, rot: Math.floor(Math.random() * 360) };
+    });
+}
+const LEVELS = [['Contusionné', ''], ['Blessé', '−1'], ['Touché', '−1'], ['Blessé gravement', '−2'], ['Mutilé', '−2'], ['Infirme', '−5'], ['Neutralisé', '']];
+
+function cell(theme) {
+    const modalWhere = pick(['tl', 'tr', 'bl', 'br', 'bottom', 'left', 'right']);
+    const rollWhere = pick(['left', 'right', 'bottom', 'bl', 'br']);   // jamais par le haut (texte)
+    return `<div class="cell ${theme}" data-theme="${theme}">
+      <div class="cell-head">${theme === 'night' ? 'Nuit' : 'Jour'}</div>
+      <div><div class="paper modal">${soak(theme, modalWhere)}${corners}
+          <header><h3>Dextérité + Mêlée</h3><p class="sub">Attaque à l'épée longue</p></header>
+          <div class="body">Dextérité 3 + Mêlée 3 − blessure 1 = 5 dés · difficulté 6</div>
+          <div class="foot"><button class="mbtn">Annuler</button><button class="mbtn primary">Lancer</button></div></div>
+        <div class="cap">Fenêtre de jet : le sang s'imbibe depuis « ${modalWhere} », lentement, puis sèche.</div></div>
+      <div><div class="paper roll">${soak(theme, rollWhere, 5000, 5000)}<div class="lbl">Aldric — Courage (Rötschreck)</div>
+          <div class="dice"><span class="die">4</span><span class="die one">1</span><span class="die">3</span><span class="die">5</span></div>
+          <div class="res">Échec critique</div></div>
+        <div class="cap">Échec critique (historique et notification) : imprégnation depuis « ${rollWhere} » (bas ou côtés, jamais le haut).</div></div>
+      <div><div class="paper sheet" data-sheet>${corners}
+          <div class="sheet-grid">
+            <div><h3 class="stitle"><span class="ini">A</span>ttributs</h3>
+              <div class="trait">Force <span class="dots">●●○○○</span></div><div class="trait">Dextérité <span class="dots">●●●○○</span></div>
+              <div class="trait">Charisme <span class="dots">●●●○○</span></div><div class="trait">Manipulation <span class="dots">●●●●○</span></div>
+              <div class="trait">Perception <span class="dots">●●●○○</span></div><div class="trait">Astuce <span class="dots">●●○○○</span></div></div>
+            <div><h3 class="stitle">Santé</h3><table class="health">${LEVELS.map(([n, p], i) => `<tr><td>${n}</td><td class="pen">${p}</td><td><i class="hbox" data-i="${i}"></i></td></tr>`).join('')}</table></div>
+          </div></div>
+        <div class="cap">Fiche : clique sur les cases de santé, une tache par niveau perdu, à une place fixe.</div></div>
+    </div>`;
+}
+
+function wireSheets() {
+    document.querySelectorAll('[data-sheet]').forEach(sheet => {
+        const spots = makeSpots();
+        const boxes = [...sheet.querySelectorAll('.hbox')];
+        const sync = () => {
+            const n = boxes.filter(b => b.classList.contains('is-lethal')).length;
+            const shown = sheet.querySelectorAll('.stain');
+            // ajoute les taches manquantes (animation d'imprégnation), retire les surplus
+            for (let i = shown.length; i < n; i++) {
+                const s = spots[i];
+                sheet.insertAdjacentHTML('beforeend', `<span class="stain" style="left:${s.x}%;top:${s.y}%;width:${s.size}px;height:${s.size}px;background-image:url('${s.src}');--rot:rotate(${s.rot}deg);transform:rotate(${s.rot}deg)"></span>`);
+            }
+            [...shown].slice(n).forEach(el => el.remove());
+        };
+        sheet.addEventListener('click', e => {
+            const b = e.target.closest('.hbox'); if (!b) return;
+            const i = +b.dataset.i, filled = b.classList.contains('is-lethal');
+            boxes.forEach((x, j) => x.classList.toggle('is-lethal', filled ? j < i : j <= i));   // remplissage du haut vers le bas
+            sync();
+        });
+        // état de départ : deux niveaux perdus
+        boxes.slice(0, 2).forEach(b => b.classList.add('is-lethal')); sync();
+    });
+}
+function render() {
+    document.getElementById('grid').innerHTML = cell('night') + cell('day');
+    animateSoaks(); wireSheets();
+}
+render();
+document.getElementById('replay').onclick = render;
+</script>
+</body>
+</html>

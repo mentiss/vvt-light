@@ -19,7 +19,7 @@ Chaque règle a un identifiant (`F-STORAGE`, `B-AUTH-GM`…) : cite-le quand tu 
 
 ## Specs
 
-Les spécifications validées sont dans `documentations/` (`spec_<slug>.md`, `spec_<brique>.md`). Elles portent les choix fonctionnels et les règles de jeu. En cas d'écart technique entre une spec et le code, le code fait foi.
+Les spécifications validées sont dans `documentations/` (index : `documentations/README.md` ; `slugs/<slug>/spec_<slug>.md`, `plateforme/spec_<brique>.md`, `process/`). Elles portent les choix fonctionnels et les règles de jeu. En cas d'écart technique entre une spec et le code, le code fait foi.
 
 ## Consignes de base
 

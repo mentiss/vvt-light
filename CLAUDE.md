@@ -2,7 +2,7 @@
 
 Guide pour Claude Code sur ce dépôt. Le contexte propre au front et au back est dans `src/client/CLAUDE.md` et `src/server/CLAUDE.md` (chargés automatiquement quand tu travailles dans ces dossiers).
 
-**Les règles du code sont dans `code-rules/`** (grilles avec identifiants, partagées avec le relecteur Codex via `AGENTS.md`) : `common.md` ci-dessous, `front.md` et `back.md` importés par les `CLAUDE.md` des dossiers. Pour `database-template/` (schémas, migrations), lis `code-rules/back.md`. Spec : `documentations/spec_grilles_relecture.md`.
+**Les règles du code sont dans `code-rules/`** (grilles avec identifiants, partagées avec le relecteur Codex via `AGENTS.md`) : `common.md` ci-dessous, `front.md` et `back.md` importés par les `CLAUDE.md` des dossiers. Pour `database-template/` (schémas, migrations), lis `code-rules/back.md`. Spec : `documentations/process/spec_grilles_relecture.md`.
 
 @code-rules/common.md
 
@@ -18,7 +18,7 @@ Chaque ticket suit trois phases. Ne passe jamais à la suivante sans validation 
 
 1. **Brainstorming / diagnostic** : analyse, questions sur les cas d'usage, implications DB et sockets. **Aucun code.**
 2. **Spécification** : structure de données (schéma SQLite), événements socket, impact UI. Avantages et inconvénients exposés factuellement avant toute décision. Une spec fonctionnelle reste fonctionnelle (le quoi, pas le comment).
-3. **Implémentation** : code modulaire et commenté, liste des fichiers touchés. Une fois lint, tests et build verts, **relecture croisée par Codex** (`/relecture`, `documentations/spec_relecture.md`) **proposée à l'utilisateur, lancée seulement sur son accord** (elle coûte cher en quota : une relecture d'une trentaine de fichiers a pris 30 % d'une session) : corrections appliquées, suggestions présentées à l'utilisateur. Si le quota Codex est épuisé, la relecture est sautée, pas reportée : on continue comme avant.
+3. **Implémentation** : code modulaire et commenté, liste des fichiers touchés. Une fois lint, tests et build verts, **relecture croisée par Codex** (`/relecture`, `documentations/process/spec_relecture.md`) **proposée à l'utilisateur, lancée seulement sur son accord** (elle coûte cher en quota : une relecture d'une trentaine de fichiers a pris 30 % d'une session) : corrections appliquées, suggestions présentées à l'utilisateur. Si le quota Codex est épuisé, la relecture est sautée, pas reportée : on continue comme avant.
 
 La phase 1 commence toujours par la lecture de la spec existante dans `documentations/` (voir plus bas).
 
@@ -46,7 +46,7 @@ node src/client/scripts/copy-dice-assets.js  # obligatoire après chaque npm ins
 # Développement
 npm run dev        # backend (nodemon :3001) + frontend (vite :5173)
 
-# Production (voir documentations/spec_release.md, ou la commande /release)
+# Production (voir documentations/process/spec_release.md, ou la commande /release)
 npm run release    # vérifs + version + build + archive + envoi + migrations + redémarrage
 npm run build      # build front dans src/client/dist/
 npm start          # backend qui sert le front buildé (déployé via pm2)
@@ -80,7 +80,7 @@ Pas de campagne de rattrapage : on ajoute un test quand on touche une règle de 
 
 Fichiers d'un slug :
 - `src/server/systems/:slug/config.js` — `{ slug, label, dbPath, schemaPath, generateAccessUrl?, hidden?, characters? }` (`hidden: true` : absent de l'accueil, joignable par son adresse ; `characters: { listColumns, requiredOnCreate }` pour la route commune)
-- `src/server/systems/:slug/CharacterController.js` — `loadFullCharacter` / `saveFullCharacter` (obligatoire) ; la route `/characters` est commune (`src/server/routes/characters.js`, `documentations/spec_characters_route.md`)
+- `src/server/systems/:slug/CharacterController.js` — `loadFullCharacter` / `saveFullCharacter` (obligatoire) ; la route `/characters` est commune (`src/server/routes/characters.js`, `documentations/plateforme/spec_characters_route.md`)
 - `src/server/systems/:slug/routes/characters.js` — facultatif : routes personnage propres au slug (XP, objets…), montées avant la route commune
 - `database-template/:slug-schema.sql` — schéma SQLite (bâti sur `base.sql`)
 - `src/client/src/systems/:slug/config.jsx` — config front (hooks de dés, `diceConfigDefault`)
@@ -117,7 +117,7 @@ Tous sont des systèmes en usage réel, aucun n'est un brouillon :
 ### Base de données
 
 - Une base SQLite par slug, connexion paresseuse fermée après 5 min d'inactivité (`src/server/db/index.js`), créée depuis le schéma à la première ouverture.
-- **`database-template/base.sql` est le socle des schémas de slug**, pas un fichier exécuté : chaque `:slug-schema.sql` part d'une copie de son contenu (tables partagées `characters`, `game_sessions`, `session_characters`, `dice_history`, `character_journal`, `refresh_tokens`, et les PNJ `npcs`, `session_npcs`, présentes dans tous les slugs même sans onglet PNJ, `documentations/spec_pnj.md`), puis y ajoute ses colonnes et ses tables. `db/index.js` ne joue que le schéma du slug. Une table partagée garde la structure de `base.sql` (colonnes en plus permises).
+- **`database-template/base.sql` est le socle des schémas de slug**, pas un fichier exécuté : chaque `:slug-schema.sql` part d'une copie de son contenu (tables partagées `characters`, `game_sessions`, `session_characters`, `dice_history`, `character_journal`, `refresh_tokens`, et les PNJ `npcs`, `session_npcs`, présentes dans tous les slugs même sans onglet PNJ, `documentations/plateforme/spec_pnj.md`), puis y ajoute ses colonnes et ses tables. `db/index.js` ne joue que le schéma du slug. Une table partagée garde la structure de `base.sql` (colonnes en plus permises).
 - **Toute modification de structure** se fait à deux endroits : le schéma (`base.sql` ou `:slug-schema.sql`) pour les nouvelles bases, **et** une migration `database-template/migrations/DDMMYYYY_description.sql` pour les bases existantes.
 - Chaque nouvelle migration déclare ses slugs dans son en-tête de commentaires : `-- systems: vikings` (ou `vikings,achtung`, ou `all`). Sans cette ligne, `npm run release` refuse de partir. `migrations/released.txt` liste les migrations déjà en prod : ne l'édite pas à la main, la release le tient à jour.
 - **Bases de module** : un module de la plateforme peut avoir sa propre base hors des bases des slugs (ex. `database/audio.db`, `database/board.db`), déclarée seule dans `src/server/db/modules/<module>.js` et chargée par `getModuleConfig(nom)` (`src/server/db/moduleConfig.js`), schéma `database-template/<module>-schema.sql`. Ce n'est pas une base centrale de jeu : chaque ligne porte le slug (et la table, `session_id`) qu'elle concerne. Une migration la vise par son nom (`-- systems: audio`) ; `all` ne vise que les slugs.
@@ -135,13 +135,16 @@ Rooms Socket.io : `${slug}_session_${sessionId}`. L'état partagé (personnages 
 
 ## Documentation et spécifications (`documentations/`)
 
-La documentation du projet et les **spécifications validées** vivent en Markdown dans `documentations/` :
-- specs de slugs : `spec_<slug>.md` (ex. `spec_deltagreen.md`, `spec_achtung_cthulhu.md`) ;
-- specs de briques plateforme : `spec_pnj.md` (PNJ, refonte en cours), `spec_diceengine_v2.md` (moteur de dés), `spec_ui_menu.md` (menus joueur et MJ) ;
-- guides : `guide_new_slug_jdr.md` (réduit à un renvoi vers `/new-slug`).
+La documentation du projet et les **spécifications validées** vivent en Markdown dans `documentations/`. **Point d'entrée : `documentations/README.md`** (index de toutes les specs, avec leur statut). Rangement :
+- `backlog.md` (todo) et `backlog_fait.md` (archive des items en prod), à la racine ;
+- `slugs/<slug>/` : spec du slug (`spec_<slug>.md`, ex. `spec_deltagreen.md`), documents de règles, transcriptions, catalogues, et ses planches dans `planches/` ;
+- `plateforme/` : specs des briques (`spec_pnj.md`, `spec_diceengine_v2.md`, `spec_ui_menu.md`…), planches dans `plateforme/planches/` ;
+- `process/` : méthode et outillage (release, relecture, grilles, tests serveur, arborescence du client, guide de création d'un slug pour les humains) ;
+- `archives/` : documents dépassés, gardés pour l'historique.
 
 Règles :
 - **Avant de travailler sur un slug ou une brique plateforme, lis la spec correspondante.** Elle porte les choix fonctionnels et les règles du jeu validés avec le MJ : ne les contredis pas et n'invente pas de règle absente.
 - **En cas d'écart entre une spec et le code, le code fait foi** pour la technique (chemins, noms de colonnes, contrats de props). Certaines specs anciennes contiennent des détails dépassés (ex. `avatar_url` au lieu de `avatar`, cases à cocher). Signale l'écart plutôt que de « corriger » le code vers la spec.
-- Une spec produite en phase 2 se range dans `documentations/` au même format, après validation.
-- `guide_new_slug_jdr.md` n'est plus qu'un renvoi : la référence pour créer un slug est `/new-slug` et le code de `fabula`.
+- Une spec produite en phase 2 se range dans le dossier qui lui correspond (`slugs/<slug>/`, `plateforme/`, `process/`), au même format, après validation, et s'ajoute à l'index `documentations/README.md`. Un document qui n'est plus d'actualité part dans `archives/`.
+- **Les specs ont été rangées le 2026-11-12 sans être renommées** : un chemin complet `documentations/spec_x.md` resté dans un commentaire ou une autre spec est périmé, le nom suffit à la retrouver. Le chantier qui touche un fichier corrige ses chemins au passage ; les noms irréguliers (`spec_tecumah_gulch.md`, `spec_regles_zone_blanche.md`…) s'harmonisent avec le chantier du slug concerné, pas en campagne.
+- Créer un slug : `documentations/process/guide_new_slug.md` (le « quoi », pour les humains comme pour les agents) et la commande `/new-slug` (la méthode de l'agent).

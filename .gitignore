@@ -42,12 +42,12 @@ src/client/public/dice-assets/
 # images, les originaux générés, les polices téléchargées. Les assets utilisés
 # par l'app vivent dans src/client/src/systems/<slug>/assets/. Les anciennes
 # planches déjà suivies le restent.
-documentations/*/planche_*.html
-documentations/*/images/
-documentations/*/originaux/
+documentations/**/planche_*.html
+documentations/**/planches/images/
+documentations/**/planches/originaux/
 src/client/public/fonts/downloads/
 # Audit de code local (décrit des défauts)
-documentations/audit_code_*.md
+documentations/**/audit_code_*.md
 
 # Mise en production (scripts/release.js)
 deploy.config.json

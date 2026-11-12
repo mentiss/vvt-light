@@ -1,6 +1,6 @@
 # Grille commune
 
-Règles du code qui valent partout, front comme back. Elles sont lues par celui qui écrit le code (Claude, via `CLAUDE.md`) et par celui qui le relit (Codex, via `AGENTS.md`). Spec : `documentations/spec_grilles_relecture.md`.
+Règles du code qui valent partout, front comme back. Elles sont lues par celui qui écrit le code (Claude, via `CLAUDE.md`) et par celui qui le relit (Codex, via `AGENTS.md`). Spec : `documentations/process/spec_grilles_relecture.md`.
 
 ## Mode d'emploi
 

@@ -16,7 +16,7 @@ import { fileURLToPath } from 'node:url';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
 const SLUG = join(ROOT, 'src', 'client', 'src', 'systems', 'woddavampire');
-const ANNEX = join(ROOT, 'documentations', 'annexe_woddavampire');
+const ANNEX = join(ROOT, 'documentations', 'slugs', 'woddavampire', 'annexe');
 
 const { parseRollText, parseCost, powerKey } = await import(pathToUrl(join(SLUG, 'config', 'rules', 'powerRoll.js')));
 const { DISCIPLINES } = await import(pathToUrl(join(SLUG, 'config', 'disciplines.js')));
@@ -165,7 +165,7 @@ const dump = (value, depth = 0) => {
     }
     return JSON.stringify(value);
 };
-const banner = (what) => `// ${what}\n// FICHIER GÉNÉRÉ par scripts/woddavampire/generate-powers.mjs depuis les annexes\n// (documentations/annexe_woddavampire/) : ne pas modifier à la main.\n\n`;
+const banner = (what) => `// ${what}\n// FICHIER GÉNÉRÉ par scripts/woddavampire/generate-powers.mjs depuis les annexes\n// (documentations/slugs/woddavampire/annexe/) : ne pas modifier à la main.\n\n`;
 writeFileSync(join(OUT, 'disciplines.js'),
     banner('Pouvoirs des Disciplines (annexe vda20-catalogue-disciplines.md)')
     + `export const DISCIPLINE_POWERS = ${dump(disciplinePowers)};\n`);
