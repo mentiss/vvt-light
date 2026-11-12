@@ -3,7 +3,7 @@
 Ce guide décrit **ce qu'il faut produire** pour ajouter un système de jeu à la plateforme : fichiers, contrats, organisation du code, standards d'interface et checklist. Il s'adresse aux humains comme aux agents. La **méthode de travail** d'un agent (phases, validations, questions au MJ) est dans la commande Claude Code `/new-slug` (`.claude/commands/new-slug.md`), qui s'appuie sur ce guide.
 
 Références à garder sous la main :
-- le slug de référence **`fabula`** (config, routes, schéma, `Sheet.jsx`, `GMApp.jsx`, `Brand.jsx`) pour les patterns de code ; sa sauvegarde (`CharacterController.js` : `FLAT_COLUMNS` en COALESCE, sous-tables par `syncSubTable` de `utils/characters.js`) suit la checklist ;
+- les **slugs existants**, pour voir un pattern appliqué : il n'y a **pas de slug de référence**, les slugs sont dans des états différents et aucun ne fait foi ; ce guide et les grilles `code-rules/` disent ce qui est attendu, un slug n'est qu'un exemple (à vérifier contre la checklist avant de le recopier) ;
 - les **`CLAUDE.md`** (racine, `src/client`, `src/server`) et les grilles **`code-rules/`** pour l'architecture et les règles du code ;
 - l'index des specs : `documentations/README.md`.
 
@@ -28,7 +28,7 @@ Toutes les specs citées sont dans `documentations/plateforme/`.
 | Musique de la table | `spec_audio.md` (§11.7, §11.17 à §11.20, §12) |
 | Tableau partagé | `spec_tableau.md` (§10.8) |
 | Marque du slug, slug masqué | `spec_plateforme_accueil.md` (§5, §7) |
-| PNJ : onglet de la plateforme (`features/npc/TabNpcs.jsx`), le slug ne fournit que son bloc `npc` dans `config.jsx` (référence Dune) ; tables `npcs` et `session_npcs` de `base.sql` | `spec_pnj.md` §6.4 |
+| PNJ : onglet de la plateforme (`features/npc/TabNpcs.jsx`), le slug ne fournit que son bloc `npc` dans `config.jsx` (exemple : Dune) ; tables `npcs` et `session_npcs` de `base.sql` | `spec_pnj.md` §6.4 |
 | Initiative : bloc `initiative` du `config.jsx` | `spec_initiative.md` §9 |
 
 **Briques à réutiliser avant d'écrire un composant** : `Modal` et `ConfirmModal` (`spec_ui_modales.md`), `CatalogModal` (`spec_ui_catalogue.md` : tout ajout depuis un catalogue, inventaire compris ; textes et ordre de l'en-tête réglables par le slug, D-19), `AvatarUploader`, `HamburgerMenu*`, `ActionZone`, `FloatingPanel` / `HostedModal` (`spec_ui_panneaux.md`), `SessionPlayersBar` (`spec_session_bar.md`), `DiceHistoryPanel`, `ReferenceGuide` (`spec_ui_reference.md` : aide de jeu en Markdown, visibilité MJ / joueur), `usePersistedState` (`spec_browser_storage.md`), `useHashTab` (onglet gardé dans l'URL).
@@ -107,7 +107,7 @@ systems/<slug>/
 - [ ] `config.jsx` : bloc `diceConfigDefault` aux couleurs du slug.
 - [ ] `config.jsx` : les 5 hooks (`buildNotation`, `beforeRoll`, `afterRoll`, `buildAnimationSequence`, `renderHistoryEntry`).
 - [ ] `roll()` exploité comme renvoyant le résultat d'`afterRoll()` ; `buildNotation` appelé dans le composant.
-- [ ] Menus de `Sheet.jsx` et `GMApp.jsx` en briques `HamburgerMenu` / `HamburgerMenuSeparator` (`ui/menu/HamburgerMenu.jsx`) et éléments `HamburgerMenuItemXXX` (`features/table/HamburgerMenuItems.jsx`), libellés par défaut ; aucune surcouche ni état de modale de la plateforme dans la fiche. Contenu minimal, celui de Fabula : joueur (création, changer de personnage, jet libre, code d'accès, configuration des dés, interface MJ, déconnexion), MJ (gestion des tables, configuration des dés, déconnexion).
+- [ ] Menus de `Sheet.jsx` et `GMApp.jsx` en briques `HamburgerMenu` / `HamburgerMenuSeparator` (`ui/menu/HamburgerMenu.jsx`) et éléments `HamburgerMenuItemXXX` (`features/table/HamburgerMenuItems.jsx`), libellés par défaut ; aucune surcouche ni état de modale de la plateforme dans la fiche. Contenu minimal : joueur (création, changer de personnage, jet libre, code d'accès, configuration des dés, interface MJ, déconnexion), MJ (gestion des tables, configuration des dés, déconnexion).
 - [ ] Code d'accès : `HamburgerMenuItemAccessCode` dans le menu joueur, `saveFullCharacter` mappe `accessCode → access_code`. Copie des accès (message Discord : jeu, nom, lien, code) par `CopyAccessButton` (`features/table/CopyAccessButton.jsx`) dans le `TabSession` (PJ sélectionné), et en `codeOnly` (code seul) sur l'écran de fin de création ; jamais de copie maison.
 - [ ] Déconnexion par `HamburgerMenuItemLogout` (retour à l'accueil) ; `onLogout` de `PlayerPage` n'est pas utilisé.
 - [ ] Habillage du menu : classes `vtt-menu*` surchargées dans le `theme.css` du slug, hors couche. Une classe racine qui porte la police du slug cible aussi `.vtt-modal-host`.

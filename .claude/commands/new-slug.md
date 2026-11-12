@@ -20,7 +20,7 @@ Respecte la méthode en trois phases du CLAUDE.md racine. **N'écris aucun fichi
     - les règles de référence (lore, livre de base) si je peux te les fournir : n'invente rien qui les contredise ; les tables qu'on ne trouve que dans un PDF se transcrivent (agent) puis se relisent avec moi.
 
    Pour chaque fonction, pose-toi la question « **table ou app ?** » (guide §1).
-3. Lis le slug de référence `fabula` pour calquer les patterns, et les specs de la plateforme listées au §2 du guide ; réutilise ses briques avant d'écrire un composant.
+3. Lis les specs de la plateforme listées au §2 du guide et réutilise ses briques avant d'écrire un composant. Il n'y a **pas de slug de référence** : un slug existant peut montrer un pattern appliqué, mais il ne fait pas foi ; vérifie-le contre le guide et `code-rules/` avant de t'en inspirer.
 4. Si la spec ou les règles sont volumineuses, propose un **découpage en lots** (ordre au §1 du guide). La phase 2 détaille le premier lot et fixe dès maintenant les structures de données des suivants. Chaque lot repasse par cadrage, spécification et validation.
 5. Demande-moi tôt le code d'accès d'un personnage de dev, pour vérifier la fiche à l'écran ; le code MJ de dev est `GMCODE`. Ne lance jamais ton propre serveur sur le port 3001 sans me prévenir, et dis-moi quand relancer `npm run dev` (fichier serveur nouveau, migration).
 

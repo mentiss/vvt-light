@@ -100,7 +100,7 @@ Tous sont des systèmes en usage réel, aucun n'est un brouillon :
 
 | Slug | Système | Remarque |
 |---|---|---|
-| `fabula` | Fabula Ultima | Implémentation récente la plus complète : **référence à suivre** |
+| `fabula` | Fabula Ultima | Refondu (`spec_fabula.md`) : « Cristal & Commandes », arcanes, fiche de groupe |
 | `zoneblanche` | Zone Blanche (2D20) | Récent |
 | `vikings` | Pure Vikings | Le plus ancien, refondu deux fois : habillage « pierre peinte » ou « bois et or » au choix du joueur, ciels vivants, plateau de jet, halle du MJ, assistant de création en trois zones (`spec_vikings_pierre_peinte.md`) |
 | `achtung` | Achtung! Cthulhu | |
@@ -109,7 +109,7 @@ Tous sont des systèmes en usage réel, aucun n'est un brouillon :
 | `dune` | Dune (2D20) | Refondu (`spec_dune.md`) : bande partagée joueur / MJ, fiche partagée, catalogues d'atouts et de talents tirés du livre |
 | `noctis` | Noctis Solis (Vermine 2047) | Intégration `accessCode` en attente ; masqué de l'accueil (`hidden`) |
 | `tecumah` | Tecumah Gulch (D6) | |
-| `woddavampire` | Vampire : l'Âge des Ténèbres (V20 Dark Ages) | Organisation du code de référence (`config/rules/`, sections partagées joueur / MJ, hooks), aide de jeu en Markdown, coterie |
+| `woddavampire` | Vampire : l'Âge des Ténèbres (V20 Dark Ages) | Premier slug organisé comme le décrit le guide (`config/rules/`, sections partagées joueur / MJ, hooks), aide de jeu en Markdown, coterie |
 | `vileborn` | Vileborn (kit d'initiation) | Création déduite des prétirés, fiche calquée sur la page 1 des prétirés, mode Édition partagé joueur / MJ ; défis côté MJ (bibliothèque en base, `spec_vileborn_defis.md`) |
 | `maledictum` | Imperium Maledictum (Warhammer 40 000, setup Inquisition) | Le plus récent (`spec_maledictum.md`) : Patron du groupe, thème selon le rôle de faction du personnage, tables automatisées, aide de jeu |
 | `nimble` | Nimble 3.x (hack allégé de D&D 5e) | Créé en autonomie (`spec_nimble.md`) : catalogues transcrits et traduits (11 classes, sorts, bestiaire), critique explosif du dé primaire, montée de niveau guidée, onglet Rencontre côté MJ |
