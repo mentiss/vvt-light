@@ -440,6 +440,18 @@ button.vtt-list-item:hover { border-color: var(--fu-win-edge); }
 .vtt-journal-title { font-family: 'Antonio', sans-serif; text-transform: uppercase; letter-spacing: .04em; color: var(--fu-win-text); }
 .vtt-journal-editor { background: var(--fu-win-field); border-color: rgba(238, 240, 250, .35); color: var(--fu-win-text); }
 .vtt-journal-list-toggle { background: rgba(255,255,255,.06); color: var(--fu-win-muted); border-color: rgba(238, 240, 250, .22); }
+/* Journal refondu (spec_journal.md §13.4) : petites fenêtres (calendrier, liste du « @ », menu de mise
+   en forme) en fenêtres JRPG, couleurs du thème redéfinies dedans comme dans .vtt-modal-panel */
+.vtt-date-pop, .rich-editor-mention-menu, .rich-editor-bubble {
+    --color-text: var(--fu-win-text); --color-text-muted: var(--fu-win-muted); --color-primary: var(--fu-win-gold);
+    --color-border: rgba(238, 240, 250, .3); --color-surface: var(--fu-win-bottom); --color-surface-alt: rgba(255,255,255,.12);
+    border-radius: 10px; border: 2px solid var(--fu-win-edge); color: var(--fu-win-text);
+    background: linear-gradient(180deg, var(--fu-win-top), var(--fu-win-bottom));
+    box-shadow: 0 0 0 1px var(--fu-win-shadow), inset 0 0 0 1px var(--fu-win-shadow), 0 14px 32px rgba(0,0,0,.45);
+}
+:is(.vtt-journal-group, .vtt-journal-more-label, .vtt-date-slot-label, .vtt-date-month, .vtt-journal-mini-title) { font-family: 'Antonio', 'Arial Narrow', sans-serif; letter-spacing: .06em; }
+.vtt-date-day.is-start, .vtt-date-day.is-end { color: #2b1d00; }
+.rich-editor-mention { color: var(--fu-win-gold); background: rgba(242, 210, 122, .15); border-radius: 999px; }
 .vtt-scroll { scrollbar-color: var(--fu-win-muted) transparent; }
 
 /* ── Menu hamburger (ui/menu/HamburgerMenu.jsx, spec_ui_menu.md §7) ────

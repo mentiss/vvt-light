@@ -58,7 +58,8 @@ const GMSendModal = ({ onClose, onSend, sessionCharacters = [], preSelectedCharI
     const loadGMNotes = async () => {
         setNotesLoading(true);
         try {
-            const response = await fetchWithAuth(`${apiBase}/journal/-1?type=note`);
+            // full=1 : la liste du journal est légère par défaut (sans corps), il faut ici la note complète
+            const response = await fetchWithAuth(`${apiBase}/journal/-1?type=note&full=1`);
             if (response.ok) setGmNotes(await response.json());
         } catch (error) {
             console.error('[GMSendModal] Error loading GM notes:', error);

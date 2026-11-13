@@ -867,6 +867,13 @@
 .vtt-journal-title { font-family: var(--zb-font-display); text-transform: uppercase; letter-spacing: .04em; }
 .vtt-journal-editor { border-radius: 2px; }
 .vtt-journal-list-toggle { font-family: var(--zb-font-mono); letter-spacing: .1em; text-transform: uppercase; }
+/* Journal refondu (spec_journal.md §13.4) : found footage, mono et sélection verte du slug */
+:is(.vtt-journal-group, .vtt-journal-more-label, .vtt-date-slot-label, .vtt-date-wd) { font-family: var(--zb-font-mono); letter-spacing: .1em; }
+:is(.vtt-journal-mini-title, .vtt-date-month) { font-family: var(--zb-font-display); text-transform: uppercase; letter-spacing: .04em; }
+:is(.vtt-date-pop, .rich-editor-mention-menu, .rich-editor-bubble) { border-radius: 2px; border-left: 4px solid var(--color-primary); }
+:is(.vtt-date-day, .vtt-date-slot, .vtt-date-nav, .rich-editor-mention-item) { border-radius: 2px; }
+.vtt-date-day.is-start, .vtt-date-day.is-end { background: var(--zb-select-bg); color: var(--zb-select-text); }
+.rich-editor-mention { border-radius: 2px; font-family: var(--zb-font-mono); font-size: .9em; }
 
 /* ── Zone d'actions : boutons (features/table/ActionZone.jsx, spec_ui_actions.md §6.2) ── */
 /* ✦ Boîtier de caméscope : angles quasi droits, bord gauche accent ; voyant d'enregistrement quand ça joue */

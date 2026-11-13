@@ -495,6 +495,14 @@ button.vtt-list-item:hover { border-left-color: var(--dn-gold); }
 .vtt-journal-title { font-family: var(--dn-font-title); font-weight: 600; letter-spacing: .22em; text-transform: uppercase; color: var(--color-text); }
 .vtt-journal-editor { border-radius: 0; border: 1px solid var(--dn-gold-soft); background: var(--color-surface); }
 .vtt-journal-list-toggle { background: transparent; border-bottom-color: var(--dn-gold-soft); font-family: var(--dn-font-tech); letter-spacing: .18em; text-transform: uppercase; }
+/* Journal refondu (spec_journal.md §13.4) : angles vifs, or et épice, polices techniques */
+:is(.vtt-journal-group, .vtt-journal-more-label, .vtt-date-slot-label) { font-family: var(--dn-font-tech); letter-spacing: .2em; }
+:is(.vtt-journal-mini-title, .vtt-date-month) { font-family: var(--dn-font-title); font-weight: 600; letter-spacing: .16em; text-transform: uppercase; }
+:is(.vtt-date-pop, .rich-editor-mention-menu, .rich-editor-bubble) { border-radius: 0; border: 1px solid var(--dn-gold); background: var(--color-surface); box-shadow: 0 20px 50px rgba(0,0,0,.5); }
+:is(.vtt-date-day, .vtt-date-slot, .vtt-date-nav, .rich-editor-mention-item, .vtt-journal-item) { border-radius: 0; }
+.vtt-date-day.is-start, .vtt-date-day.is-end { background: var(--dn-spice); color: var(--dn-on-spice); }
+.vtt-date-slot.is-active { border-color: var(--dn-spice); box-shadow: none; }
+.rich-editor-mention { border-radius: 0; border-left: 2px solid var(--dn-spice); color: var(--color-text); background: color-mix(in srgb, var(--dn-spice) 12%, transparent); }
 
 /* ── Menu (ui/menu/HamburgerMenu.jsx, spec_ui_menu.md §7) : pont de vaisseau, filet d'épice ── */
 .vtt-menu-button {

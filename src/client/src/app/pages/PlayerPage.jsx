@@ -23,6 +23,13 @@ import { useSession }       from '../context/SessionContext.jsx';
 import AudioLayer           from '@/features/audio/AudioLayer.jsx';
 import BoardLayer           from '@/features/board/BoardLayer.jsx';
 import InitiativeLayer      from '@/features/initiative/InitiativeLayer.jsx';
+import JournalProvider, { JournalUnread } from '@/features/journal/JournalProvider.jsx';
+import { characterDisplayName } from '@/features/journal/tools/journalPeople.js';
+
+// Contrat des fiches (onJournalRead, appelé à l'ouverture d'une entrée non lue ou au passage
+// sur l'onglet) : le compteur suit désormais seul la lecture des entrées (JournalProvider)
+const JOURNAL_READ = () => {};
+import JournalLayer         from '@/features/journal/JournalLayer.jsx';
 
 const SHEETS    = import.meta.glob('../../systems/*/Sheet.jsx');
 const THEMES    = import.meta.glob('../../systems/*/theme.css');
@@ -132,7 +139,7 @@ const PlayerPage = () => {
     };
 
     // ── Sockets génériques ───────────────────────────────────────────────────
-    const { journalUnread, markJournalRead } = usePlayerSession({
+    usePlayerSession({
         character:          appState === 'playing' ? character : null,
         onCharacterUpdate:      handleCharacterUpdate,
         onCharacterReload:      handleCharacterReload,
@@ -241,16 +248,23 @@ const PlayerPage = () => {
     return (
         <ModalHostProvider>
         <ActionZoneProvider>
+        {/* Journal du personnage et de sa table : une seule source pour l'onglet, la fenêtre
+            flottante et le compteur de l'onglet de la fiche (spec_journal.md §13.1-13.2) */}
+        <JournalProvider characterId={character.id} sessionId={activeGMSession ?? null} userName={characterDisplayName(character)}>
             <Suspense fallback={<LoadingScreen />}>
-                <SystemSheet
-                    character={character}
-                    onCharacterUpdate={handleCharacterUpdate}
-                    onLogout={handleLogout}
-                    journalUnread={journalUnread}
-                    onJournalRead={markJournalRead}
-                    darkMode={darkMode}
-                    onToggleDarkMode={onToggleDarkMode}
-                />
+                <JournalUnread>
+                    {(journalUnread) => (
+                        <SystemSheet
+                            character={character}
+                            onCharacterUpdate={handleCharacterUpdate}
+                            onLogout={handleLogout}
+                            journalUnread={journalUnread}
+                            onJournalRead={JOURNAL_READ}
+                            darkMode={darkMode}
+                            onToggleDarkMode={onToggleDarkMode}
+                        />
+                    )}
+                </JournalUnread>
                 <DiceAnimationOverlay />
             </Suspense>
 
@@ -260,6 +274,8 @@ const PlayerPage = () => {
             <BoardLayer role="player" sessionId={activeGMSession ?? null} />
             {/* Initiative de la table, si le slug l'a adoptée et que le MJ l'a lancée (spec_initiative.md §9.6) */}
             <InitiativeLayer role="player" sessionId={activeGMSession ?? null} />
+            {/* Journal en fenêtre flottante, pour noter sans quitter la fiche (spec_journal.md R-2, R-14) */}
+            <JournalLayer characterId={character.id} />
             {/* Choix de la table quand le personnage est membre de plusieurs tables actives (spec_tables.md §3.2) */}
             <TableChoiceModal />
 
@@ -276,6 +292,7 @@ const PlayerPage = () => {
                 onClose={() => setShowCharacterList(false)}
                 onSelect={handleCharacterListSelect}
             />
+        </JournalProvider>
         </ActionZoneProvider>
         </ModalHostProvider>
     );

@@ -62,7 +62,7 @@ Conventions :
 | `spec_diceengine_v2.md` | Moteur de dés, historique des jets | en prod |
 | `spec_genmap.md` | Générateur de plans de bâtiments (`/tools/plans`) | prototype, en cours |
 | `spec_initiative.md` | Initiative : tours et actions | en prod (v5.25.0) |
-| `spec_journal.md` | Journal (notes, messages, objets du MJ) | en prod |
+| `spec_journal.md` | Journal (notes, messages, objets du MJ) | en prod ; refonte (Privé / Partagé) codée, à tester par le MJ (parties II et III) |
 | `spec_plateforme_accueil.md` | Pages communes et marques des slugs | en prod |
 | `spec_pnj.md` | PNJ de la plateforme | en prod (v5.23.0) ; Cyberpunk, Delta Green, Tecumah à venir |
 | `spec_session_bar.md` | Barre de session des joueurs | en prod |

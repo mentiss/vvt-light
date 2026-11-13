@@ -19,6 +19,8 @@ import { ActionZoneProvider } from '@/features/table/ActionZone.jsx';
 import AudioLayer    from '@/features/audio/AudioLayer.jsx';
 import BoardLayer    from '@/features/board/BoardLayer.jsx';
 import InitiativeLayer from '@/features/initiative/InitiativeLayer.jsx';
+import JournalProvider from '@/features/journal/JournalProvider.jsx';
+import JournalLayer    from '@/features/journal/JournalLayer.jsx';
 
 const SYSTEM_GM_APPS = import.meta.glob('../../systems/*/GMApp.jsx');
 const THEMES    = import.meta.glob('../../systems/*/theme.css');
@@ -82,6 +84,8 @@ const GMPage = () => {
         return (
             <ModalHostProvider>
             <ActionZoneProvider>
+            {/* Journal du MJ (personnage -1) : une seule source pour l'onglet et la fenêtre flottante (spec_journal.md §13.1) */}
+            <JournalProvider characterId={-1} sessionId={activeSession?.id ?? null}>
                 <Suspense fallback={<LoadingScreen />}>
                     {/* eslint-disable-next-line react-hooks/static-components */}
                     <SystemGMApp
@@ -100,6 +104,9 @@ const GMPage = () => {
                 <BoardLayer role="gm" sessionId={activeSession?.id ?? null} />
                 {/* Initiative de la table active, si le slug l'a adoptée (spec_initiative.md §9.6) */}
                 <InitiativeLayer role="gm" sessionId={activeSession?.id ?? null} characters={activeSession?.characters} />
+                {/* Journal en fenêtre flottante (spec_journal.md R-2, R-14) */}
+                <JournalLayer characterId={-1} />
+            </JournalProvider>
             </ActionZoneProvider>
             </ModalHostProvider>
         );

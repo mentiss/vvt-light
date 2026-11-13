@@ -10,6 +10,7 @@
  *   sessions.js : gm-set-active-session, gm-clear-session, join-session, leave-session
  *   audio.js    : audio-ping
  *   board.js    : board-ping, board-drag (relais éphémère du tableau, sans écriture)
+ *   journal.js  : journal-doc-* (écriture à plusieurs dans le journal partagé, Yjs, spec_journal.md §12)
  * Puis les handlers des slugs, découverts par le Loader (systems/:slug/socket/*.js).
  *
  * Structures :
@@ -20,6 +21,7 @@
  *   audioStates      : Map<`${system}_${sessionId}`, état de lecture audio, quatre pistes> (routes/audio.js, spec_audio.md §11.3)
  *   initiativeStates : Map<`${system}_${sessionId}`, { state, avatars }> : initiative de la table,
  *                      écrite par le MJ (routes/initiative.js, spec_initiative.md §9.4)
+ *   journalDocs      : Map<`${slug}:${entryId}`, document Yjs ouvert d'une entrée du journal partagé>
  */
 
 const { getAllSystems, getSystem, getSystemSocketHandlers } = require('../systems/Loader');
@@ -27,6 +29,7 @@ const presence = require('./platform/presence');
 const sessions = require('./platform/sessions');
 const audio    = require('./platform/audio');
 const board    = require('./platform/board');
+const journal  = require('./platform/journal');
 
 const { presenceKey } = presence;
 
@@ -35,8 +38,9 @@ const onlineCharacters = new Map(); // presenceKey → données présence
 const activeTables     = new Map(); // slug        → Map<sessionId, { posts, timer }>
 const audioStates      = new Map(); // `${system}_${sessionId}` → état de lecture audio
 const initiativeStates = new Map(); // `${system}_${sessionId}` → { state, avatars } de l'initiative
+const journalDocs      = new Map(); // `${slug}:${entryId}` → document Yjs ouvert (journal partagé)
 
-const sharedState = { onlineCharacters, activeTables, audioStates, initiativeStates };
+const sharedState = { onlineCharacters, activeTables, audioStates, initiativeStates, journalDocs };
 
 /* ── Init ────────────────────────────────────────────────────────────────────── */
 function initSocket(io) {
@@ -54,6 +58,7 @@ function initSocket(io) {
         sessions.register(io, socket, sharedState);
         audio.register(io, socket, sharedState);
         board.register(io, socket, sharedState);
+        journal.register(io, socket, sharedState);
 
         // Slugs : handlers découverts par le Loader
         for (const [slug] of getAllSystems()) {

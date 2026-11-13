@@ -617,11 +617,10 @@ const Sheet = ({
 
                 {/* ── Journal ───────────────────────────────────────────────── */}
                 {activeTab === 'journal' && (
-                    <div className="max-w-4xl mx-auto px-4 py-6">
+                    <div className="flex-1 min-w-0 px-4 py-6">
                         <JournalTab
                             characterId={character.id}
                             onRead={onJournalRead}
-                            sessionId={activeGMSession}
                         />
                     </div>
                 )}

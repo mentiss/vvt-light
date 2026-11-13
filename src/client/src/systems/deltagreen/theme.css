@@ -707,6 +707,12 @@ button.vtt-list-item:hover { border-color: var(--dg-field-border); background: v
 .vtt-journal-title { font-family: var(--dg-font-stamp); font-weight: 400; text-transform: uppercase; letter-spacing: .06em; }
 .vtt-journal-editor { border-radius: 0; background: var(--dg-field-bg); border-color: var(--dg-field-border); }
 .vtt-journal-list-toggle { font-family: var(--dg-font-body); letter-spacing: .1em; text-transform: uppercase; }
+/* Journal refondu (spec_journal.md §13.4) : formulaire tamponné, angles droits, liens « @ » au surligneur */
+:is(.vtt-journal-group, .vtt-journal-more-label, .vtt-date-slot-label) { font-family: var(--dg-font-body); letter-spacing: .14em; text-transform: uppercase; }
+:is(.vtt-journal-mini-title, .vtt-date-month) { font-family: var(--dg-font-stamp); font-weight: 400; letter-spacing: .06em; text-transform: uppercase; }
+:is(.vtt-date-pop, .rich-editor-mention-menu, .rich-editor-bubble) { border-radius: 0; border: 1px solid var(--dg-field-border); background: var(--color-bg); box-shadow: 3px 3px 0 rgba(0,0,0,.18), 0 12px 28px rgba(0,0,0,.3); }
+:is(.vtt-date-day, .vtt-date-slot, .vtt-date-nav, .rich-editor-mention-item) { border-radius: 0; }
+.rich-editor-mention { border-radius: 0; color: var(--color-text); background: transparent; box-shadow: inset 0 -.5em 0 color-mix(in srgb, var(--color-primary) 30%, transparent); }
 .vtt-scroll { scrollbar-color: var(--dg-field-border) transparent; }
 /* Catalogue (CatalogModal, spec_ui_catalogue.md) : tableau de formulaire à filets tiretés,
    ✦ ligne ajoutée passée au surligneur */

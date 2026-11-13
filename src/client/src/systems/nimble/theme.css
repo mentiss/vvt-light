@@ -602,3 +602,16 @@ button.nb-pip:hover { box-shadow: 0 0 0 3px var(--nb-wash); }
     box-shadow: 5px 5px 0 -1px var(--nb-gold-soft), 0 14px 30px rgba(0,0,0,.28); font-family: var(--nb-font-body);
 }
 .vtt-initiative-menu-title, .vtt-initiative-card-title { font-family: var(--nb-font-title); font-weight: 800; font-style: italic; }
+
+/* ── Journal refondu (spec_journal.md §13.4) : papier, encre épaisse, ombre d'or décalée ── */
+:is(.vtt-journal-side, .vtt-journal-detail) { border-radius: 0; }
+.vtt-journal-title { font-family: var(--nb-font-title); font-weight: 800; font-style: italic; }
+.vtt-journal-editor { border-radius: 0; border-color: var(--nb-ink); }
+:is(.vtt-journal-list-toggle, .vtt-journal-group, .vtt-journal-more-label, .vtt-date-slot-label) { font-family: var(--nb-font-label); letter-spacing: .06em; text-transform: uppercase; }
+:is(.vtt-journal-mini-title, .vtt-date-month) { font-family: var(--nb-font-title); font-weight: 800; font-style: italic; }
+:is(.vtt-date-pop, .rich-editor-mention-menu, .rich-editor-bubble) {
+    border-radius: 0; border: 2px solid var(--nb-ink); background: var(--nb-paper);
+    box-shadow: 5px 5px 0 -1px var(--nb-gold-soft), 0 14px 30px rgba(0,0,0,.28);
+}
+:is(.vtt-date-day, .vtt-date-slot, .vtt-date-nav, .rich-editor-mention-item, .vtt-journal-item) { border-radius: 0; }
+.rich-editor-mention { border-radius: 0; color: var(--color-text); background: var(--nb-gold-soft); }

@@ -156,6 +156,9 @@ CREATE TABLE IF NOT EXISTS character_journal (
     title        TEXT,
     body         TEXT,
     metadata     TEXT,
+    category     TEXT,
+    pinned       INTEGER  DEFAULT 0,
+    body_text    TEXT,
     is_read      BOOLEAN DEFAULT 0,
     created_at   DATETIME DEFAULT CURRENT_TIMESTAMP,
     updated_at   DATETIME DEFAULT CURRENT_TIMESTAMP
@@ -502,3 +505,40 @@ INSERT INTO npcs (prenom, nom, role, description, tags, source, page, system_dat
 SELECT NULL, 'Le Farceur masqué', 'Fantôme', 'Protecteur d''un village reculé, qui y protège les anciens cultes en échange d''un peu de culte. Les valeurs après la barre s''appliquent quand il est pleinement manifesté.', '["Fantôme"]', 'Livre de base', 403, '{"nature":"ghost","attributes":{"strength":0,"dexterity":3,"stamina":4,"charisma":3,"manipulation":4,"appearance":1,"perception":2,"intelligence":3,"wits":4},"abilities":[{"key":"alertness","rating":3},{"key":"athletics","rating":3},{"key":"brawl","rating":4},{"key":"empathy","rating":3},{"key":"linguistics","rating":2},{"key":"intimidation","rating":3},{"key":"investigation","rating":2},{"key":"leadership","rating":2},{"key":"medicine","rating":1},{"key":"melee","rating":2},{"key":"occult","rating":3},{"key":"subterfuge","rating":3},{"key":"stealth","rating":2},{"key":"survival","rating":2}],"disciplines":[{"key":"chimerstry","rating":4},{"key":"dementation","rating":4},{"key":"obtenebration","rating":3},{"key":"thaumaturgy","rating":3}],"willpower":8,"blood":10,"health":null,"attacks":[],"traits":[{"name":"Manifestation","text":"Force 3 quand il est pleinement manifesté (0 sinon)."},{"name":"Disciplines","text":"Chimérie 4, Démence 4, Obténébration 3, Thaumaturgie 3 (Creatio Ignis 3, Potestas Motus 3)"},{"name":"Route","text":"Humanité 4"},{"name":"Nature","text":"En général incorporels et invisibles ; les vivants ne les voient que s''ils font l''effort d''être visibles (ou par certaines Disciplines). Les plus anciens peuvent posséder un humain ou se manifester physiquement. Difficile pour eux d''affecter directement un vampire"},{"name":"Passions","text":"Liens émotionnels qui les retiennent : comptent comme des points de sang pour activer leurs capacités surnaturelles"},{"name":"Manifestation","text":"1 point de Passion = se manifester pour agir sur le monde physique pendant un tour. Leurs pouvoirs (représentés par des Disciplines) agissent à travers le Linceul sans manifestation préalable"},{"name":"Vision de la mort","text":"Voient la main de la mort sur toute chose (fissures d''un bâtiment neuf, condamné déjà pendu, pestiféré déjà cadavre) ; la précision dépend des succès du jet"},{"name":"Vision de la vie","text":"Perçoivent les âmes comme avec Augure"},{"name":"Trait","text":"Valeur"},{"name":"---|---"},{"name":"Attributs","text":"Force 0/3, Dextérité 3, Vigueur 4, Charisme 3, Manipulation 4, Apparence 1, Perception 2, Intelligence 3, Astuce 4"},{"name":"Capacités","text":"Vigilance 3, Athlétisme 3, Bagarre 4, Empathie 3, Linguistique 2, Intimidation 3, Investigation 2, Commandement 2, Médecine 1, Mêlée 2, Occultisme 3, Subterfuge 3, Furtivité 2, Survie 2"},{"name":"Disciplines équivalentes","text":"Chimérie 4, Démence 4, Obténébration 3, Thaumaturgie 3 (Creatio Ignis 3, Potestas Motus 3)"},{"name":"Route, Volonté, Passion","text":"Humanité 4 · Volonté 8 · réserve de Passion 10"}]}'
 WHERE NOT EXISTS (SELECT 1 FROM npcs WHERE nom = 'Le Farceur masqué' AND COALESCE(prenom, '') = '' AND COALESCE(source, '') = 'Livre de base');
 -- ── fin des PNJ du livre ──
+
+-- ── Journal partagé de la table (documentations/plateforme/spec_journal.md, partie III §10.2) ──
+-- table_journal : entrées écrites par la table (joueurs et MJ), une table = un journal.
+-- table_journal_reads : dernière ouverture d'une entrée par chacun (nouveautés).
+-- Auteur et dernier modificateur : personnage (-1 = MJ) et nom figé, sans clé : l'auteur peut partir.
+create table if not exists table_journal
+(
+    id          INTEGER
+        primary key autoincrement,
+    session_id  INTEGER not null
+        references game_sessions
+            on delete cascade,
+    title       TEXT,
+    body        TEXT,
+    body_text   TEXT,
+    ydoc        BLOB,
+    pinned      INTEGER  default 0,
+    author_id   INTEGER,
+    author_name TEXT,
+    editor_id   INTEGER,
+    editor_name TEXT,
+    created_at  DATETIME default CURRENT_TIMESTAMP,
+    updated_at  DATETIME default CURRENT_TIMESTAMP
+);
+
+create index if not exists idx_table_journal_session_id
+    on table_journal (session_id);
+
+create table if not exists table_journal_reads
+(
+    entry_id     INTEGER not null
+        references table_journal
+            on delete cascade,
+    character_id INTEGER not null,
+    seen_at      DATETIME default CURRENT_TIMESTAMP,
+    primary key (entry_id, character_id)
+);

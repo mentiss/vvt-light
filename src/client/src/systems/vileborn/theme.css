@@ -605,3 +605,15 @@ button.vil-ch-effect:hover em { color: inherit; }
 .vil-ch-add { justify-self: start; font-family: var(--vil-font-label); font-size: 12px; letter-spacing: .05em; text-transform: uppercase; color: var(--vil-blood); }
 .vil-ch-effect-pills { display: flex; flex-wrap: wrap; gap: 3px; }
 .vil-ch-effect-pills .vtt-pill { font-size: 11px; padding: 2px 7px; }
+
+/* ── Journal refondu (spec_journal.md §13.4) : papier réglé, encre, angles droits ── */
+:is(.vtt-journal-side, .vtt-journal-detail) { border-radius: 0; }
+.vtt-journal-title { font-family: var(--vil-font-title); font-weight: 400; }
+.vtt-journal-editor { border-radius: 0; border-color: var(--vil-ink); }
+:is(.vtt-journal-list-toggle, .vtt-journal-group, .vtt-journal-more-label, .vtt-date-slot-label) { font-family: var(--vil-font-label); letter-spacing: .06em; text-transform: uppercase; }
+:is(.vtt-journal-mini-title, .vtt-date-month) { font-family: var(--vil-font-title); font-weight: 400; }
+:is(.vtt-date-pop, .rich-editor-mention-menu, .rich-editor-bubble) {
+    border-radius: 0; border: 1px solid var(--vil-ink); background: var(--vil-paper); box-shadow: 0 14px 32px -10px rgba(0, 0, 0, .45);
+}
+:is(.vtt-date-day, .vtt-date-slot, .vtt-date-nav, .rich-editor-mention-item, .vtt-journal-item) { border-radius: 0; }
+.rich-editor-mention { border-radius: 0; color: var(--color-text); background: transparent; border-bottom: 1px solid var(--vil-ink); }

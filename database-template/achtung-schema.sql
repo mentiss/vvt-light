@@ -269,6 +269,9 @@ CREATE TABLE IF NOT EXISTS character_journal (
                                                  title           TEXT,
                                                  body            TEXT,
                                                  metadata        TEXT,
+                                                 category     TEXT,
+                                                 pinned       INTEGER  DEFAULT 0,
+                                                 body_text    TEXT,
                                                  is_read         BOOLEAN  DEFAULT 0,
                                                  created_at      DATETIME DEFAULT CURRENT_TIMESTAMP,
                                                  updated_at      DATETIME DEFAULT CURRENT_TIMESTAMP
@@ -845,3 +848,40 @@ INSERT INTO npcs (prenom, nom, role, description, tags, source, page, system_dat
 SELECT NULL, 'Yog-Sothoth', 'La Porte et la Clé, Dieu extérieur', 'La Voie, la Porte et la Clé : Yog-Sothoth maintient le temps et l''espace et permet d''en briser les lois, présent à la fois en tous lieux et en tous univers. Une part de son être a été emprisonnée dans le soleil noir par les Hyperboréens, et le Soleil noir de Reinhard Weissler cherche à la libérer ; il se manifeste pourtant par des bulles, des anneaux lumineux ou un vide d''ébène, et implante son savoir impie dans l''esprit de ceux qui l''appellent.', '["Némésis","Mythe"]', 'Gamemaster Guide', 263, '{"rank":"nemesis","truths":["La Voie, la Porte et la Clé","Existe en tous temps, lieux et dimensions, et au-delà"],"attributes":{"agility":14,"brawn":null,"coordination":14,"insight":15,"reason":15,"will":18},"skills":[{"key":"fighting","rank":4,"focuses":["Exotique"]},{"key":"observation","rank":5,"focuses":["Perception"]},{"key":"resilience","rank":5,"focuses":["Discipline"]}],"stress":23,"injuries":5,"armour":10,"courage":11,"attacks":[{"name":"Sphères","focus":"Exotique","range":null,"damage":6,"salvo":null,"qualities":"Vidange, Intense ; Débilitant","escalation":false},{"name":"Trait d''argent","focus":"Exotique","range":"long","damage":8,"salvo":null,"qualities":"Zone, Vicieux","escalation":false},{"name":"Forme impossible","focus":"Attaque mentale","range":null,"damage":8,"salvo":null,"qualities":"Perforant 3, Étourdissant","escalation":false}],"abilities":[{"name":"Effroyable 3","text":"Yog-Sothoth inspire la terreur. Peut faire des attaques mentales, avec +3 et l''effet Perforant 3 (inclus ci-dessus). De plus, la première fois qu''un personnage voit cette créature, il doit aussitôt réussir un test de Volonté + Résilience de difficulté 1 ou subir un stress mental comme s''il était victime de cette attaque mentale."},{"name":"Vol","text":"Yog-Sothoth vole, et même à vitesse supersonique : il peut atteindre n''importe quelle zone dans ou au-dessus d''un environnement par une action mineure."},{"name":"Immunité (froid, peur, poison, douleur, maladie, vide)","text":"Immunisé contre le stress, les vérités et autres effets causés par : froid, peur, poison, douleur, maladie, vide."},{"name":"Incorporel 10","text":"Présent partout et en tout temps, il se manifeste de façon impossible et intangible : 10 Armure (incluse ci-dessus), déplacement libre en terrain difficile ; pour 1 Menace, il franchit une barrière solide (mur, porte). Il perd cette Armure contre toute attaque ou danger magique."},{"name":"Invulnérable","text":"Ne peut subir de blessure d''aucune attaque physique ou mentale, hormis les attaques magiques ou les armes à la qualité Fléau. Si une attaque contre laquelle il est immunisé devait lui infliger une blessure, 2 points sont aussitôt ajoutés à la Menace. Vaincu, il est seulement banni."},{"name":"Menaçant","text":"Sa seule présence est de mauvais augure : quand la créature apparaît pour la première fois dans une scène, générez 1 Menace."},{"name":"Vision nocturne","text":"Voit dans l''obscurité : ignore toute hausse de difficulté ou de plage de complication due au manque de lumière, et peut tenter des tests normalement impossibles dans le noir."},{"name":"Taille","text":"Yog-Sothoth a la taille qu''il veut et peut en changer une fois par tour ; le MJ détermine les effets des très grandes tailles (zones occupées, contact, portée courte). Pour les dégâts, il est toujours traité comme de Taille 10 : il subit une blessure après 15 stress (après réductions) d''une seule attaque."},{"name":"Inquiétant 15","text":"Quand la créature apparaît pour la première fois dans une scène, elle génère 15 Menace qu''elle seule peut utiliser."},{"name":"Translocation","text":"À chaque round, Yog-Sothoth peut choisir un personnage à son contact et le transporter instantanément en tout point de l''espace ou du temps. Un personnage réticent peut tenter un test de Volonté + Résilience de difficulté 4 pour rester où et quand il est."},{"name":"Coriace 2","text":"Peut encaisser 2 blessures supplémentaires (incluses ci-dessus). Peut aussi dépenser 3 Menace pour ignorer une blessure."},{"name":"Sorts et rituels","text":"Puissance 8. Lance ses sorts avec la Volonté et connaît tous les sorts que le MJ choisit. Il peut toujours utiliser Observation pour lancer un sort, quelle que soit la compétence normalement requise."}],"threatSpends":[]}'
 WHERE NOT EXISTS (SELECT 1 FROM npcs WHERE nom = 'Yog-Sothoth' AND COALESCE(prenom, '') = '' AND COALESCE(source, '') = 'Gamemaster Guide');
 -- ── fin des PNJ du livre ──
+
+-- ── Journal partagé de la table (documentations/plateforme/spec_journal.md, partie III §10.2) ──
+-- table_journal : entrées écrites par la table (joueurs et MJ), une table = un journal.
+-- table_journal_reads : dernière ouverture d'une entrée par chacun (nouveautés).
+-- Auteur et dernier modificateur : personnage (-1 = MJ) et nom figé, sans clé : l'auteur peut partir.
+create table if not exists table_journal
+(
+    id          INTEGER
+        primary key autoincrement,
+    session_id  INTEGER not null
+        references game_sessions
+            on delete cascade,
+    title       TEXT,
+    body        TEXT,
+    body_text   TEXT,
+    ydoc        BLOB,
+    pinned      INTEGER  default 0,
+    author_id   INTEGER,
+    author_name TEXT,
+    editor_id   INTEGER,
+    editor_name TEXT,
+    created_at  DATETIME default CURRENT_TIMESTAMP,
+    updated_at  DATETIME default CURRENT_TIMESTAMP
+);
+
+create index if not exists idx_table_journal_session_id
+    on table_journal (session_id);
+
+create table if not exists table_journal_reads
+(
+    entry_id     INTEGER not null
+        references table_journal
+            on delete cascade,
+    character_id INTEGER not null,
+    seen_at      DATETIME default CURRENT_TIMESTAMP,
+    primary key (entry_id, character_id)
+);

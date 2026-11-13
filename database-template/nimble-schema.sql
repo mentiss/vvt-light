@@ -131,6 +131,9 @@ CREATE TABLE IF NOT EXISTS character_journal (
     title        TEXT,
     body         TEXT,
     metadata     TEXT,
+    category     TEXT,
+    pinned       INTEGER  DEFAULT 0,
+    body_text    TEXT,
     is_read      BOOLEAN DEFAULT 0,
     created_at   DATETIME DEFAULT CURRENT_TIMESTAMP,
     updated_at   DATETIME DEFAULT CURRENT_TIMESTAMP
@@ -585,3 +588,40 @@ INSERT INTO npcs (prenom, nom, role, description, tags, source, page, system_dat
 SELECT NULL, 'Pouce-Vert, liche naissante', 'Aventures · Moyenne', 'Magicien botaniste légendaire (Le Repaire de Pouce-Vert, chapitre 3). Sorcier grenouillin.', '["Aventures","Légendaire","Niv. 3"]', 'GM''s Guide', NULL, '{"level":"3","size":"medium","minion":false,"legendary":true,"hp":40,"hpPerHero":true,"armor":null,"speed":null,"saves":"INT+, VOL+","abilities":[{"name":"Ronçomancie","text":"Déplacement de 4. Invoque 1 sbire plante par héros (chacun se déplace et attaque pour 1d4 dégâts à la fin de chaque round)."}],"attacks":[{"name":"Tir d''épines","dice":"2d4","bonus":8,"noCrit":false,"text":"Déplacement de 4. (Portée 8)."},{"name":"Racines épineuses","dice":"2d4","bonus":0,"noCrit":true,"text":"En sang uniquement. Tous les héros : jet de sauvegarde de DEX DD 11 ou dégâts et immobilisé ; moitié des dégâts en cas de réussite."}],"sections":[{"title":"Légendaire","text":"Après le tour de chaque héros, choisissez une option (alterner recommandé) : Ronçomancie ou Tir d''épines."},{"title":"En sang : Racines épineuses","text":"Tous les héros font un jet de sauvegarde de DEX DD 11 ou subissent 2d4 dégâts et sont immobilisés ; moitié des dégâts en cas de réussite (évasion : FOR ou DEX DD 11, ou tout dégât tranchant ou radiant)."},{"title":"Baroud d''honneur : Peau d''écorce","text":"Pouce-Vert regagne 10 PV par héros et une armure lourde. Être touché dégrade l''armure (lourde » moyenne » aucune). Il peut aussi choisir deux fois par tour."}]}'
 WHERE NOT EXISTS (SELECT 1 FROM npcs WHERE nom = 'Pouce-Vert, liche naissante' AND COALESCE(prenom, '') = '' AND COALESCE(source, '') = 'GM''s Guide');
 -- ── fin des PNJ du livre ──
+
+-- ── Journal partagé de la table (documentations/plateforme/spec_journal.md, partie III §10.2) ──
+-- table_journal : entrées écrites par la table (joueurs et MJ), une table = un journal.
+-- table_journal_reads : dernière ouverture d'une entrée par chacun (nouveautés).
+-- Auteur et dernier modificateur : personnage (-1 = MJ) et nom figé, sans clé : l'auteur peut partir.
+create table if not exists table_journal
+(
+    id          INTEGER
+        primary key autoincrement,
+    session_id  INTEGER not null
+        references game_sessions
+            on delete cascade,
+    title       TEXT,
+    body        TEXT,
+    body_text   TEXT,
+    ydoc        BLOB,
+    pinned      INTEGER  default 0,
+    author_id   INTEGER,
+    author_name TEXT,
+    editor_id   INTEGER,
+    editor_name TEXT,
+    created_at  DATETIME default CURRENT_TIMESTAMP,
+    updated_at  DATETIME default CURRENT_TIMESTAMP
+);
+
+create index if not exists idx_table_journal_session_id
+    on table_journal (session_id);
+
+create table if not exists table_journal_reads
+(
+    entry_id     INTEGER not null
+        references table_journal
+            on delete cascade,
+    character_id INTEGER not null,
+    seen_at      DATETIME default CURRENT_TIMESTAMP,
+    primary key (entry_id, character_id)
+);

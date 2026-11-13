@@ -1,0 +1,135 @@
+@layer components {
+  /* ── Journal (features/journal, spec_journal.md partie III §13.4, planche v8) ──────────
+     Style par défaut sur les variables --color-* seulement. Chaque slug surcharge dans son
+     theme.css ; un nouveau conteneur suit ses mécanismes d'habillage (ex. dalles de Vikings).
+     Pas de position / display / margin à reprendre dans un slug sur .vtt-journal-* : la mise
+     en page est ici. */
+  .vtt-journal { display: flex; gap: 0.75rem; min-height: 22.5rem; width: 100%; }
+
+  /* Colonne de gauche, repliable */
+  .vtt-journal-side { width: 20rem; flex-shrink: 0; display: flex; flex-direction: column; min-height: 0; overflow: hidden; }
+  .vtt-journal-side.is-collapsed { width: 2.75rem; }
+  .vtt-journal-list-toggle {
+    display: flex; align-items: center; gap: 0.5rem; flex-shrink: 0; padding: 0.5rem 0.75rem;
+    font-size: 0.75rem; font-weight: 600; color: var(--color-text-muted);
+    background: var(--color-surface-alt); border-bottom: 1px solid var(--color-border);
+  }
+  .vtt-journal-list-toggle:hover { color: var(--color-text); }
+  .vtt-journal-side.is-collapsed .vtt-journal-list-toggle { justify-content: center; padding: 0.6rem 0; }
+  .vtt-journal-rail { display: grid; justify-items: center; gap: 0.6rem; padding: 0.7rem 0; }
+  .vtt-journal-side-head { display: grid; gap: 0.55rem; padding: 0.75rem; border-bottom: 1px solid var(--color-border); }
+  .vtt-journal-side-head > * { min-width: 0; }
+  .vtt-journal-search-row { display: flex; gap: 0.4rem; min-width: 0; }
+  .vtt-journal-search-row .vtt-input { flex: 1; min-width: 0; }
+  .vtt-journal-search-row .vtt-btn { flex-shrink: 0; }
+  .vtt-journal-more { display: grid; gap: 0.45rem; padding: 0.55rem 0.6rem; border-radius: 0.5rem; background: var(--color-surface-alt); border: 1px solid var(--color-border); }
+  .vtt-journal-more-label { font-size: 0.68rem; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--color-text-muted); }
+  .vtt-journal-filters { display: flex; flex-wrap: wrap; gap: 0.3rem; }
+  .vtt-journal-filters .vtt-pill { padding: 0.15rem 0.6rem; font-size: 0.74rem; }
+  .vtt-journal-filter-sep { width: 1px; align-self: stretch; margin: 0 0.15rem; background: var(--color-border); }
+  .vtt-journal-list { flex: 1; min-height: 0; overflow-y: auto; padding: 0.5rem; display: grid; gap: 0.35rem; align-content: start; }
+  .vtt-journal-group { padding: 0.4rem 0.3rem 0.1rem; font-size: 0.65rem; font-weight: 600; letter-spacing: 0.12em; text-transform: uppercase; color: var(--color-text-muted); }
+  .vtt-journal-side-foot { display: flex; gap: 0.4rem; padding: 0.6rem 0.75rem; border-top: 1px solid var(--color-border); }
+  .vtt-journal-side-foot .vtt-btn { flex: 1; }
+  .vtt-journal-side-foot .vtt-journal-export { flex: 0 0 auto; padding-left: 0.65rem; padding-right: 0.65rem; }
+  .vtt-journal-empty { padding: 2rem 1rem; text-align: center; font-size: 0.85rem; color: var(--color-text-muted); }
+
+  /* Bascule Privé / Partagé (vtt-segmented de la plateforme) : libellé coupé avant le compteur */
+  .vtt-journal-scope .vtt-segment { min-width: 0; white-space: nowrap; }
+  .vtt-journal-scope-label { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+  .vtt-journal-scope .vtt-journal-count { flex-shrink: 0; }
+  .vtt-journal-hint { font-size: 0.72rem; color: var(--color-text-muted); }
+
+  /* Compteur (non lus) ; sur un fond actif, couleurs inversées, toujours lisible */
+  .vtt-journal-count {
+    display: inline-flex; align-items: center; justify-content: center; min-width: 1.15rem; height: 1.15rem; padding: 0 0.3rem;
+    border-radius: 999px; font-size: 0.65rem; font-weight: 700; letter-spacing: 0; background: var(--color-danger); color: #fff;
+  }
+  :is(.is-active, .is-selected) > .vtt-journal-count { background: var(--color-on-primary, #fff); color: var(--color-primary); }
+
+  /* Carte d'une entrée (role="button") et ses actions */
+  .vtt-journal-item { position: relative; flex-direction: column; align-items: stretch; gap: 0.2rem; padding: 0.55rem 0.7rem; cursor: pointer; }
+  .vtt-journal-item:hover { border-color: var(--color-primary); }
+  .vtt-journal-item:focus-visible { outline: 2px solid var(--color-primary); outline-offset: -2px; }
+  .vtt-journal-item-head { display: flex; align-items: center; gap: 0.4rem; min-width: 0; }
+  .vtt-journal-item-title { flex: 1; min-width: 0; font-size: 0.875rem; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .vtt-journal-item.is-unread .vtt-journal-item-title { font-weight: 800; }
+  .vtt-journal-item-meta { display: flex; align-items: center; gap: 0.4rem; min-width: 0; font-size: 0.7rem; color: var(--color-text-muted); }
+  .vtt-journal-item-meta > span { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .vtt-journal-item-preview { font-size: 0.72rem; color: var(--color-text-muted); display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+  .vtt-journal-item-actions { display: flex; flex-shrink: 0; gap: 0.05rem; margin: -0.3rem -0.45rem -0.3rem 0; }
+  .vtt-journal-item-actions .vtt-journal-tool { width: 1.6rem; height: 1.6rem; opacity: 0; }
+  .vtt-journal-item-actions svg { width: 0.85rem; height: 0.85rem; }
+  .vtt-journal-item:is(:hover, :focus-within) .vtt-journal-item-actions .vtt-journal-tool,
+  .vtt-journal-item-actions .vtt-journal-tool.is-active { opacity: 1; }
+
+  /* Boutons-icônes */
+  .vtt-journal-tool { display: inline-flex; align-items: center; justify-content: center; width: 2rem; height: 2rem; flex-shrink: 0; border-radius: 0.5rem; color: var(--color-text-muted); }
+  .vtt-journal-tool:hover:not(:disabled) { color: var(--color-text); background: var(--color-surface-alt); }
+  .vtt-journal-tool.is-active { color: var(--color-primary); }
+  .vtt-journal-tool.is-danger:hover:not(:disabled) { color: var(--color-danger); }
+  .vtt-journal-tool:disabled { opacity: 0.35; }
+
+  /* Détail */
+  .vtt-journal-detail { flex: 1; min-width: 0; display: flex; flex-direction: column; overflow: hidden; }
+  .vtt-journal-placeholder { align-items: center; justify-content: center; }
+  .vtt-journal-detail-head { display: grid; gap: 0.45rem; padding: 0.85rem 1.1rem 0.7rem; border-bottom: 1px solid var(--color-border); }
+  .vtt-journal-row { display: flex; align-items: center; gap: 0.5rem; min-width: 0; }
+  .vtt-journal-row > .vtt-journal-title { flex: 1; min-width: 0; }
+  .vtt-journal-title {
+    display: block; width: 100%; padding: 0.25rem 0; font-size: 1.25rem; font-weight: 700;
+    color: var(--color-text); background: transparent; border: 0; border-bottom: 2px solid transparent; outline: none;
+  }
+  input.vtt-journal-title:focus { border-bottom-color: var(--color-primary); }
+  .vtt-journal-save { display: inline-flex; align-items: center; gap: 0.35rem; font-size: 0.72rem; color: var(--color-text-muted); white-space: nowrap; }
+  .vtt-journal-save::before { content: ''; width: 0.45rem; height: 0.45rem; border-radius: 999px; background: var(--color-success); }
+  .vtt-journal-save[data-state="saving"]::before { background: var(--color-primary); animation: vtt-journal-blink 1s infinite; }
+  .vtt-journal-save[data-state="error"] { color: var(--color-danger); }
+  .vtt-journal-save[data-state="error"]::before { background: var(--color-danger); }
+  @keyframes vtt-journal-blink { 50% { opacity: 0.25; } }
+  .vtt-journal-cats { display: flex; flex-wrap: wrap; gap: 0.3rem; }
+  .vtt-journal-cats .vtt-pill { padding: 0.1rem 0.55rem; font-size: 0.72rem; }
+  .vtt-journal-meta { display: flex; flex-wrap: wrap; align-items: center; gap: 0.35rem 0.6rem; font-size: 0.75rem; color: var(--color-text-muted); }
+  .vtt-journal-attach { font-size: 0.72rem; padding: 0.1rem 0.55rem; }
+  .vtt-journal-attach-menu { display: flex; flex-wrap: wrap; align-items: center; gap: 0.3rem; }
+  .vtt-journal-body { flex: 1; min-height: 0; display: flex; flex-direction: column; gap: 0.6rem; padding: 0.75rem 1.1rem 1rem; }
+  .vtt-journal-body > .vtt-journal-editor { flex: 1; min-height: 0; }
+  .vtt-journal-editor { border: 1px solid var(--color-border); border-radius: 0.5rem; background: var(--color-bg); }
+  .vtt-journal-body > .vtt-journal-attachment { flex: 0 0 auto; max-height: 14rem; overflow-y: auto; padding: 0.5rem; }
+  .vtt-journal-attachment img { max-width: 100%; border-radius: 0.5rem; cursor: zoom-in; }
+  .vtt-journal-foot { display: flex; align-items: center; gap: 0.5rem; padding: 0.6rem 1.1rem; border-top: 1px solid var(--color-border); }
+  .vtt-journal-spacer { flex: 1; }
+
+  /* Écriture à plusieurs : présence (pastilles à la couleur de chacun), attente de connexion */
+  .vtt-journal-presence { display: inline-flex; align-items: center; gap: 0.4rem; padding-left: 0.35rem; }
+  .vtt-journal-avatar {
+    display: inline-grid; place-items: center; width: 1.45rem; height: 1.45rem; margin-left: -0.35rem; border-radius: 999px;
+    font-size: 0.62rem; font-weight: 700; color: #fff; background: var(--vtt-journal-person, var(--color-secondary));
+    border: 2px solid var(--color-surface);
+  }
+  .vtt-journal-writing { font-style: italic; }
+  .vtt-journal-live-wait { flex: 1; display: flex; align-items: center; justify-content: center; padding: 1rem; font-size: 0.85rem; color: var(--color-text-muted); }
+
+  /* ── Fenêtre flottante compacte (JournalMini, R-14) : liste ou note, une à la fois ── */
+  .vtt-journal-mini .vtt-modal-header { padding: 0.4rem 0.5rem 0.4rem 0.8rem; }
+  .vtt-journal-mini-body { flex: 1; min-height: 0; display: flex; flex-direction: column; }
+  .vtt-journal-mini-bar { display: flex; align-items: center; gap: 0.3rem; flex-shrink: 0; padding: 0.4rem 0.45rem; border-bottom: 1px solid var(--color-border); }
+  .vtt-journal-mini-bar .vtt-input { flex: 1; min-width: 0; padding: 0.3rem 0.55rem; font-size: 0.8rem; }
+  .vtt-journal-mini-bar .vtt-journal-scope { flex-shrink: 0; padding: 0.15rem; gap: 0.15rem; }
+  .vtt-journal-mini-bar .vtt-segment { padding: 0.2rem 0.45rem; font-size: 0.66rem; gap: 0.25rem; }
+  .vtt-journal-mini .vtt-journal-tool { width: 1.75rem; height: 1.75rem; }
+  .vtt-journal-mini-title {
+    flex: 1; min-width: 0; padding: 0.15rem 0.2rem; font-size: 0.9rem; font-weight: 700; color: var(--color-text);
+    background: transparent; border: 0; border-bottom: 1px solid transparent; outline: none;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+  input.vtt-journal-mini-title:focus { border-bottom-color: var(--color-primary); }
+  .vtt-journal-save.is-compact { font-size: 0; gap: 0; padding: 0.3rem; }
+  .vtt-journal-mini .vtt-journal-list { padding: 0.35rem; gap: 0.25rem; }
+  .vtt-journal-mini-presence { flex-shrink: 0; padding: 0.2rem 0.6rem; font-size: 0.68rem; color: var(--color-text-muted); border-bottom: 1px solid var(--color-border); }
+  .vtt-journal-mini .vtt-journal-item { padding: 0.35rem 0.5rem; gap: 0.05rem; }
+  .vtt-journal-mini .vtt-journal-item-title { font-size: 0.8rem; }
+  .vtt-journal-mini .vtt-journal-group { padding: 0.25rem 0.25rem 0; }
+  /* Éditeur : toute la place, sans cadre (toolbar 'selection' : pas de barre, menu de sélection seul) */
+  .vtt-journal-mini-body > .vtt-journal-editor { flex: 1; min-height: 0; border: 0; border-radius: 0; }
+}

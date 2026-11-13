@@ -1605,6 +1605,12 @@ button.vtt-list-item:hover { border-color: var(--ac-ink); background: rgba(var(-
 .vtt-journal-title { font-family: var(--ac-font-title); font-weight: 400; color: var(--ac-ink); border-bottom: 1px solid var(--ac-ink); }
 .vtt-journal-editor { border-radius: 0; border-color: rgba(var(--ac-ink-rgb), .3); background: var(--ac-sheet-overlay); color: var(--ac-ink); }
 .vtt-journal-list-toggle { background: transparent; color: var(--ac-ink-soft); border-bottom-color: rgba(var(--ac-ink-rgb), .35); font-family: var(--ac-font-heading); letter-spacing: .1em; text-transform: uppercase; }
+/* Journal refondu (spec_journal.md §13.4) : papiers, encre, angles droits ; liens « @ » soulignés à l'encre */
+:is(.vtt-journal-group, .vtt-journal-more-label, .vtt-date-slot-label) { font-family: var(--ac-font-heading); color: var(--ac-ink-soft); letter-spacing: .12em; }
+:is(.vtt-journal-mini-title, .vtt-date-month) { font-family: var(--ac-font-title); font-weight: 400; color: var(--ac-ink); }
+:is(.vtt-date-pop, .rich-editor-mention-menu, .rich-editor-bubble) { border-radius: 0; border: 1px solid rgba(var(--ac-ink-rgb), .45); background: var(--color-surface); box-shadow: 2px 3px 0 rgba(var(--ac-ink-rgb), .2), 0 12px 28px rgba(0,0,0,.3); }
+:is(.vtt-date-day, .vtt-date-slot, .vtt-date-nav, .rich-editor-mention-item) { border-radius: 0; }
+.rich-editor-mention { border-radius: 0; color: var(--ac-ink); background: transparent; border-bottom: 1px dashed var(--ac-ink); }
 .vtt-scroll { scrollbar-color: rgba(var(--ac-ink-rgb), .4) transparent; }
 
 /* ── Zone d'actions : boutons (features/table/ActionZone.jsx, spec_ui_actions.md §6.2) ── */

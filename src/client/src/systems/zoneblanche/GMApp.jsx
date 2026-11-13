@@ -319,12 +319,8 @@ const GMApp = ({
                     </>
                 )}
 
-                {activeTab === 'journal' && (
-                    <div className="max-w-4xl mx-auto">
-                        {/* TabJournal force characterId={-1} en interne — aucune prop à passer */}
-                        <TabJournal />
-                    </div>
-                )}
+                {/* Journal : toute la largeur (spec_journal.md) */}
+                {activeTab === 'journal' && <TabJournal />}
 
                 {/* Tableau partagé (brique plateforme, spec_tableau.md §10.8) */}
                 {activeTab === 'tableau' && (

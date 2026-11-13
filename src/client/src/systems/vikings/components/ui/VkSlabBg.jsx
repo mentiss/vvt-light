@@ -63,8 +63,10 @@ const draw = (svg, id, seed) => {
 // à chaque cadre (SLAB_TARGETS) qui apparaît, un <svg class="vk-slab-bg"> est ajouté
 // en dernier enfant et redessiné à sa taille. Hors pierre peinte, le thème le masque.
 // Renvoie la fonction d'arrêt.
-// Initiative (spec_initiative.md §12) : la bande, son menu, sa carte et son bandeau aussi
-const SLAB_TARGETS = '.vtt-modal-panel, .vtt-history-card, .vtt-toast, .vtt-initiative, .vtt-initiative-menu, .vtt-initiative-card, .vtt-initiative-resume';
+// Initiative (spec_initiative.md §12) : la bande, son menu, sa carte et son bandeau aussi.
+// Journal (spec_journal.md §13.4) : calendrier de la période, liste du « @ », menu de mise en forme.
+const SLAB_TARGETS = '.vtt-modal-panel, .vtt-history-card, .vtt-toast, .vtt-initiative, .vtt-initiative-menu, .vtt-initiative-card, .vtt-initiative-resume, '
+    + '.vtt-date-pop, .rich-editor-mention-menu, .rich-editor-bubble';
 let slabCount = 0;
 const decoratePanel = (panel) => {
     if (panel.querySelector(':scope > .vk-slab-bg')) return;

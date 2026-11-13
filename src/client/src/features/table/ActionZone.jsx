@@ -134,24 +134,26 @@ export const ActionZoneProvider = ({ children }) => {
  * @param {number}   [props.order=0]     place dans la zone, fixée par la plateforme
  * @param {boolean}  [props.active]      sa fenêtre ou son volet est ouvert
  * @param {boolean}  [props.highlighted] quelque chose tourne (ex. musique en lecture)
+ * @param {number}   [props.badge]       compteur affiché sur le bouton (ex. non lus du journal), rien à 0
  * @param {Function} props.onSelect
  * @param {React.ReactNode} [props.children] volet, affiché au-dessus de la zone quand `active`
  */
-export const ZoneAction = ({ id, icon, label, order = 0, active = false, highlighted = false, onSelect, children }) => {
+export const ZoneAction = ({ id, icon, label, order = 0, active = false, highlighted = false, badge = 0, onSelect, children }) => {
     const zone = useContext(ActionZoneContext);
     if (!zone) return null;
 
     const shownIcon = zone.icons?.[id] ?? icon;
     const states = `${active ? ' is-active' : ''}${highlighted ? ' is-highlighted' : ''}`;
+    const count = badge > 0 ? <span className="vtt-action-badge">{badge}</span> : null;
     const button = zone.mini ? (
         <button type="button" className={`vtt-menu-item vtt-action-item${states}`} style={{ order }} data-action={id}
                 aria-pressed={active} onClick={() => { zone.closeList(); onSelect?.(); }}>
-            <span className="vtt-menu-icon">{shownIcon}</span>{label}
+            <span className="vtt-menu-icon">{shownIcon}</span>{label}{count}
         </button>
     ) : (
         <button type="button" className={`vtt-action-btn${states}`} style={{ order }} data-action={id}
-                title={label} aria-label={label} aria-pressed={active} onClick={onSelect}>
-            {shownIcon}
+                title={label} aria-label={badge > 0 ? `${label} (${badge})` : label} aria-pressed={active} onClick={onSelect}>
+            {shownIcon}{count}
         </button>
     );
 

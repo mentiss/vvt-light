@@ -1061,3 +1061,15 @@ button.im-char { font: inherit; color: inherit; }
     color: var(--color-text); font-family: var(--im-font-body);
 }
 .vtt-initiative-menu-title, .vtt-initiative-card-title { font-family: var(--im-font-title); font-weight: 500; font-size: 18px; }
+
+/* ── Journal refondu (spec_journal.md §13.4) : métal du rôle de faction, angles droits, capitales ── */
+.vtt-journal-title { font-family: var(--im-font-title); }
+:is(.vtt-journal-side, .vtt-journal-detail, .vtt-journal-editor, .vtt-journal-item, .vtt-date-day, .vtt-date-slot, .vtt-date-nav, .rich-editor-mention-item, .rich-editor-mention) { border-radius: 0; }
+:is(.vtt-journal-list-toggle, .vtt-journal-group, .vtt-journal-more-label, .vtt-date-slot-label, .vtt-date-wd) { font-family: var(--im-font-label); letter-spacing: .1em; text-transform: uppercase; }
+:is(.vtt-journal-mini-title, .vtt-date-month) { font-family: var(--im-font-title); }
+:is(.vtt-date-pop, .rich-editor-mention-menu, .rich-editor-bubble) {
+    border-radius: 0; border: 1px solid var(--im-metal);
+    background-color: var(--color-bg); background-image: linear-gradient(var(--color-surface), var(--color-surface));
+    box-shadow: 0 12px 32px -10px rgba(0, 0, 0, .5);
+}
+.rich-editor-mention { color: var(--color-text); background: transparent; border-bottom: 1px solid var(--im-metal); }

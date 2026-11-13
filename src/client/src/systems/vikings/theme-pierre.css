@@ -388,6 +388,13 @@ html[data-vk-skin="pierre"] :is(.vtt-journal-title, .vtt-reference-section-title
     font-family: var(--vk-font-title); text-shadow: none;
 }
 html[data-vk-skin="pierre"] :is(.vtt-journal-editor, .vtt-reference-search, .vtt-reference-nav-item, .vtt-reference-badge) { border-radius: 8px; }
+/* Journal refondu : calendrier, liste du « @ », menu de mise en forme en dalle taillée (SLAB_TARGETS de VkSlabBg) */
+html[data-vk-skin="pierre"] :is(.vtt-date-pop, .rich-editor-mention-menu, .rich-editor-bubble) {
+    isolation: isolate; background: transparent; border: none; border-radius: 0; box-shadow: none;
+    --vk-slab-fill: var(--vk-surface-solid);
+}
+html[data-vk-skin="pierre"] :is(.vtt-date-day, .vtt-date-slot, .vtt-date-nav, .rich-editor-mention-item, .rich-editor-mention) { border-radius: 6px; }
+html[data-vk-skin="pierre"] :is(.vtt-journal-group, .vtt-journal-more-label, .vtt-date-slot-label) { font-family: var(--vk-font-label); }
 html[data-vk-skin="pierre"] .vtt-reference-heading { font-family: var(--vk-font-label); }
 html[data-vk-skin="pierre"] .vtt-reference-table th { font-family: var(--vk-font-label); }
 

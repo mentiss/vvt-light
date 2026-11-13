@@ -230,6 +230,9 @@ create table character_journal
     title        TEXT,
     body         TEXT,
     metadata     TEXT,
+    category     TEXT,
+    pinned       INTEGER  DEFAULT 0,
+    body_text    TEXT,
     is_read      BOOLEAN  default 0,
     created_at   DATETIME default CURRENT_TIMESTAMP,
     updated_at   DATETIME default CURRENT_TIMESTAMP
@@ -610,3 +613,40 @@ INSERT INTO npcs (prenom, nom, role, description, tags, source, page, system_dat
 SELECT NULL, 'Contrebandiers (troupes harkonnen déguisées)', 'Soldats harkonnen se faisant passer pour des contrebandiers', 'Troupes harkonnen déguisées en contrebandiers, armées de lasers de fabrication ixienne.', '["Mineur", "Agents of Dune", "Harkonnen"]', 'Agents of Dune', 108, '{"rank":"minor","competences":[{"key":"analyse","rang":4,"specialisations":[]},{"key":"combat","rang":6,"specialisations":["Bagarre"]},{"key":"discipline","rang":5,"specialisations":[]},{"key":"mobilite","rang":5,"specialisations":[]},{"key":"rhetorique","rang":5,"specialisations":[]}],"principes":[{"key":"devoir","rang":4,"maxime":""},{"key":"domination","rang":4,"maxime":""},{"key":"foi","rang":4,"maxime":""},{"key":"justice","rang":4,"maxime":""},{"key":"verite","rang":4,"maxime":""}],"drive":4,"traits":["Soldat"],"talents":[],"atouts":[{"name":"Entraînement militaire","quality":null},{"name":"Laser ixien","quality":null},{"name":"Kindjal","quality":null}],"rolls":[]}'
 WHERE NOT EXISTS (SELECT 1 FROM npcs WHERE nom = 'Contrebandiers (troupes harkonnen déguisées)' AND COALESCE(prenom, '') = '' AND COALESCE(source, '') = 'Agents of Dune');
 -- ── fin des PNJ du livre ──
+
+-- ── Journal partagé de la table (documentations/plateforme/spec_journal.md, partie III §10.2) ──
+-- table_journal : entrées écrites par la table (joueurs et MJ), une table = un journal.
+-- table_journal_reads : dernière ouverture d'une entrée par chacun (nouveautés).
+-- Auteur et dernier modificateur : personnage (-1 = MJ) et nom figé, sans clé : l'auteur peut partir.
+create table if not exists table_journal
+(
+    id          INTEGER
+        primary key autoincrement,
+    session_id  INTEGER not null
+        references game_sessions
+            on delete cascade,
+    title       TEXT,
+    body        TEXT,
+    body_text   TEXT,
+    ydoc        BLOB,
+    pinned      INTEGER  default 0,
+    author_id   INTEGER,
+    author_name TEXT,
+    editor_id   INTEGER,
+    editor_name TEXT,
+    created_at  DATETIME default CURRENT_TIMESTAMP,
+    updated_at  DATETIME default CURRENT_TIMESTAMP
+);
+
+create index if not exists idx_table_journal_session_id
+    on table_journal (session_id);
+
+create table if not exists table_journal_reads
+(
+    entry_id     INTEGER not null
+        references table_journal
+            on delete cascade,
+    character_id INTEGER not null,
+    seen_at      DATETIME default CURRENT_TIMESTAMP,
+    primary key (entry_id, character_id)
+);

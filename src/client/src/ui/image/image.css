@@ -1,0 +1,23 @@
+@layer components {
+  /* ── Agrandissement d'une image (ImageLightbox, spec_journal.md partie IV, I-3) ──
+     Fond sombre fixe, au-dessus des modales ; le slug peut habiller les boutons. */
+  .vtt-lightbox { position: fixed; inset: 0; z-index: var(--vtt-z-alert, 9999); display: flex; flex-direction: column; background: rgba(8, 8, 10, 0.88); color: #fff; }
+  .vtt-lightbox-top { display: flex; align-items: center; gap: 0.5rem; padding: 0.6rem 0.9rem; font-size: 0.85rem; }
+  .vtt-lightbox-count { opacity: 0.75; }
+  .vtt-lightbox-spacer { flex: 1; }
+  .vtt-lightbox-btn {
+    display: inline-flex; align-items: center; justify-content: center; min-width: 2.2rem; height: 2.2rem; padding: 0 0.5rem;
+    border-radius: 0.5rem; font-size: 0.85rem; color: #fff; background: rgba(255, 255, 255, 0.1);
+  }
+  .vtt-lightbox-btn:hover { background: rgba(255, 255, 255, 0.2); }
+  .vtt-lightbox-stage { position: relative; flex: 1; min-height: 0; display: flex; align-items: center; justify-content: center; overflow: hidden; cursor: zoom-out; }
+  .vtt-lightbox-stage img { max-width: 92%; max-height: 92%; object-fit: contain; border-radius: 0.4rem; transition: transform 0.12s; cursor: default; user-select: none; }
+  .vtt-lightbox-nav {
+    position: absolute; top: 50%; transform: translateY(-50%); width: 3rem; height: 3rem; border-radius: 999px;
+    font-size: 1.4rem; color: #fff; background: rgba(255, 255, 255, 0.12);
+  }
+  .vtt-lightbox-nav:hover { background: rgba(255, 255, 255, 0.24); }
+  .vtt-lightbox-nav.is-prev { left: 1rem; }
+  .vtt-lightbox-nav.is-next { right: 1rem; }
+  .vtt-lightbox-caption { min-height: 2.4rem; padding: 0.6rem 1rem 1rem; text-align: center; font-size: 0.9rem; font-style: italic; opacity: 0.85; }
+}

@@ -37,7 +37,9 @@ if (process.env.NODE_ENV !== 'production') {
     }, app);
 }
 
-const io = new Server(server, { cors: { origin: '*', methods: ['GET', 'POST'] } });
+// maxHttpBufferSize : une image collée dans le journal partagé part dans une mise à jour Yjs
+// (jusqu'à 1600 px, GIF jusqu'à 5 Mo) ; le défaut de Socket.io (1 Mo) la refuserait (spec_journal.md §12)
+const io = new Server(server, { cors: { origin: '*', methods: ['GET', 'POST'] }, maxHttpBufferSize: 8 * 1024 * 1024 });
 const PORT = process.env.PORT || 3001;
 
 // ─── Middlewares globaux ─────────────────────────────────────────────────────
@@ -91,6 +93,7 @@ for (const [slug] of getAllSystems()) {
     app.use(`${prefix}/audio`,      resolver, getSharedRoute('audio'));
     app.use(`${prefix}/board`,      resolver, getSharedRoute('board'));
     app.use(`${prefix}/initiative`, resolver, getSharedRoute('initiative'));
+    app.use(`${prefix}/table-journal`, resolver, getSharedRoute('table-journal'));
 
     // ── Routes extra slug-spécifiques (auto-scan de systems/:slug/routes/) ───
     // Tout fichier .js autre que characters.js est monté ici.

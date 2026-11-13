@@ -1,10 +1,8 @@
-// components/GMView/tabs/TabJournal.jsx - Onglet Journal MJ
-// Réutilise directement le composant JournalTab joueur avec characterId=-1
+// features/journal/TabJournal.jsx — Onglet Journal du MJ
+// Aucune prop : le journal du MJ est celui du personnage -1 (brique Journal, spec_journal.md §13.1).
 import React from 'react';
-import JournalTab from './JournalTab.jsx';
+import Journal from './Journal.jsx';
 
-const TabJournal = () => {
-    return <JournalTab characterId={-1} />;
-};
+const TabJournal = () => <Journal characterId={-1} />;
 
 export default TabJournal;

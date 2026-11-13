@@ -125,6 +125,9 @@ CREATE TABLE IF NOT EXISTS character_journal (
                                                  title        TEXT,
                                                  body         TEXT,
                                                  metadata     TEXT,
+                                                 category     TEXT,
+                                                 pinned       INTEGER  DEFAULT 0,
+                                                 body_text    TEXT,
                                                  is_read      BOOLEAN DEFAULT 0,
                                                  created_at   DATETIME DEFAULT CURRENT_TIMESTAMP,
                                                  updated_at   DATETIME DEFAULT CURRENT_TIMESTAMP
@@ -589,3 +592,40 @@ INSERT INTO npcs (prenom, nom, role, description, tags, source, page, system_dat
 SELECT NULL, 'Gobe-dragon', 'Plante', 'Cette plante colossale porte bien son nom : sa mâchoire est assez immense pour avaler les pattes d''un dragon adulte. Cela dit, elle lui sert plus souvent pour capturer et digérer des animaux et des humanoïdes. La seule bonne nouvelle concernant ces monstruosités, c''est qu''elles sont profondément enracinées : vous pouvez les fuir, à condition d''échapper à leurs meurtriers tentacules végétaux.', '["Plante","Soldat"]', 'Livre de base', 353, '{"level":20,"species":"Plante","rank":"soldat","champion":null,"traits":["colossal","affamé","patient","enraciné"],"attributes":{"dex":8,"int":8,"pui":10,"vol":8},"hp":90,"crisis":45,"mp":60,"init":8,"def":8,"mdef":8,"affinities":{"air":"RE","foudre":"VU","terre":"VU","feu":"RE","lumiere":"RE","poison":"VU"},"attacks":[{"name":"Mange-dragon","ranged":false,"attrs":["pui","pui"],"precision":5,"damage":10,"type":"physique","text":"Si une cible touchée par cette attaque est affaiblie, le gobe-dragon l''avale. Une créature avalée subit des dégâts physiques mineurs (20) au début de chacun des tours du gobe-dragon et ne peut effectuer aucune action excepté l''action Objectif (dans le but de se libérer). Libérer une cible avalée correspond à un Cadran à quatre sections. Un gobe-dragon de rang soldat ne peut conserver qu''une créature avalée à la fois, mais un gobe-dragon d''élite ou champion peut en garder jusqu''à deux. Si toutes les gueules du monstre sont occupées et s''il avale une créature, il doit en recracher une autre avalée précédemment."},{"name":"Moulinet de tentacule","ranged":true,"attrs":["dex","pui"],"precision":5,"damage":15,"type":"air","text":"La cible subit l''état affaibli."}],"spells":[{"name":"Gaz engourdissant","cost":"10 × C PM","target":"Jusqu''à 3 créatures","duration":"Instantanée","offensive":true,"text":"Test de magie : 【PUI + VOL】+2. Chaque cible perd la moitié de ses Points de Magie."},{"name":"Prédigestion","cost":"10 PM","target":"Une créature","duration":"Scène","offensive":true,"text":"Test de magie : 【PUI + VOL】+2. Jusqu''à ce que l''effet de ce sort s''achève, la cible subit 10 dégâts de plus de la part de toutes les sources infligeant des dégâts physiques."}],"abilities":[{"name":"Plante","text":"Le gobe-dragon est immunisé contre les états étourdi, enragé et traumatisé."}],"villain":null}'
 WHERE NOT EXISTS (SELECT 1 FROM npcs WHERE nom = 'Gobe-dragon' AND COALESCE(prenom, '') = '' AND COALESCE(source, '') = 'Livre de base');
 -- ── fin des PNJ du livre ──
+
+-- ── Journal partagé de la table (documentations/plateforme/spec_journal.md, partie III §10.2) ──
+-- table_journal : entrées écrites par la table (joueurs et MJ), une table = un journal.
+-- table_journal_reads : dernière ouverture d'une entrée par chacun (nouveautés).
+-- Auteur et dernier modificateur : personnage (-1 = MJ) et nom figé, sans clé : l'auteur peut partir.
+create table if not exists table_journal
+(
+    id          INTEGER
+        primary key autoincrement,
+    session_id  INTEGER not null
+        references game_sessions
+            on delete cascade,
+    title       TEXT,
+    body        TEXT,
+    body_text   TEXT,
+    ydoc        BLOB,
+    pinned      INTEGER  default 0,
+    author_id   INTEGER,
+    author_name TEXT,
+    editor_id   INTEGER,
+    editor_name TEXT,
+    created_at  DATETIME default CURRENT_TIMESTAMP,
+    updated_at  DATETIME default CURRENT_TIMESTAMP
+);
+
+create index if not exists idx_table_journal_session_id
+    on table_journal (session_id);
+
+create table if not exists table_journal_reads
+(
+    entry_id     INTEGER not null
+        references table_journal
+            on delete cascade,
+    character_id INTEGER not null,
+    seen_at      DATETIME default CURRENT_TIMESTAMP,
+    primary key (entry_id, character_id)
+);

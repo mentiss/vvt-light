@@ -119,12 +119,8 @@ const GMApp = ({ activeSession, onSessionChange, onlineCharacters, characterUpda
                         <Board sessionId={sessionId} role="gm" />
                     </div>
                 )}
-                {activeTab === 'journal' && (
-                    <div className="max-w-4xl mx-auto">
-                        {/* TabJournal force characterId={-1} en interne */}
-                        <TabJournal />
-                    </div>
-                )}
+                {/* Journal : toute la largeur (spec_journal.md) */}
+                {activeTab === 'journal' && <TabJournal />}
                 {activeTab === 'historique' && (
                     <div className="max-w-4xl mx-auto">
                         <DiceHistoryPage sessionId={sessionId} />

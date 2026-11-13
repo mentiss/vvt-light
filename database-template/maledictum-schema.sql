@@ -136,6 +136,9 @@ CREATE TABLE IF NOT EXISTS character_journal (
     title        TEXT,
     body         TEXT,
     metadata     TEXT,
+    category     TEXT,
+    pinned       INTEGER  DEFAULT 0,
+    body_text    TEXT,
     is_read      BOOLEAN DEFAULT 0,
     created_at   DATETIME DEFAULT CURRENT_TIMESTAMP,
     updated_at   DATETIME DEFAULT CURRENT_TIMESTAMP
@@ -440,3 +443,40 @@ INSERT INTO npcs (prenom, nom, role, description, tags, source, page, system_dat
 SELECT NULL, 'Horreur soufrée', 'Démon (Tzeentch)', NULL, '["Élite","Démon"]', 'Livre de base', 354, '{"labelEn":"Brimstone Horror","size":"small","role":"elite","chars":{"ws":20,"bs":20,"str":10,"tgh":10,"ag":10,"int":30,"per":10,"wil":30,"fel":10},"armour":"1d5","wounds":6,"criticalWounds":0,"initiative":2,"speed":"normal","resolve":1,"warpThreshold":null,"skills":{"awareness":20,"intuition":20,"linguistics":40,"lore":40,"psychic_mastery":40,"ranged":30},"traits":[{"label":"Contrer la sorcière","labelEn":"Deny the Witch","summary":"Réaction quand un psyker à Portée moyenne manifeste un pouvoir : Test de Force Mentale de même Difficulté que le pouvoir ; en cas de réussite, ses DR sont soustraits à ceux du psyker, ce qui peut faire échouer le pouvoir."},{"label":"Forme éphémère","labelEn":"Ephemeral Form","summary":"Immunisée aux traits d''arme Perforante et Déchirante."},{"label":"Démon mineur","labelEn":"Lesser Daemon","summary":"Armure tirée à chaque attaque subie : 1d5."},{"label":"Psyker","labelEn":"Psyker","summary":"Connaît le pouvoir Smite ; en tant que démon, n''a pas de Seuil Warp."},{"label":"Source de corruption","labelEn":"Source of Corruption","summary":"Le voir : Exposition mineure, Test Exigeant (+0) de Discipline (Psychique) contre 1 point de Corruption. Le toucher : Exposition modérée, Test Exigeant (+0) de Robustesse contre 2 points. Chaque DR réduit les points gagnés de 1."}],"attacks":[{"label":"Flammes chatoyantes","labelEn":"Coruscating Flames","skill":"ranged.thrown","value":30,"damage":"6 + DR","range":"medium","traits":"Inflige (En feu)"},{"label":"Griffes démoniaques","labelEn":"Daemonic Claws","skill":"melee.brawling","value":20,"damage":"1 + écart de DR","range":null,"traits":""},{"label":"Châtiment","labelEn":"Smite","skill":"psychic_mastery","value":40,"warpRating":3,"damage":"8 + DR","range":"medium","traits":"Ignore l''Armure"}],"powers":["smite"],"possessions":"Aucune."}'
 WHERE NOT EXISTS (SELECT 1 FROM npcs WHERE nom = 'Horreur soufrée' AND COALESCE(prenom, '') = '' AND COALESCE(source, '') = 'Livre de base');
 -- ── fin des PNJ du livre ──
+
+-- ── Journal partagé de la table (documentations/plateforme/spec_journal.md, partie III §10.2) ──
+-- table_journal : entrées écrites par la table (joueurs et MJ), une table = un journal.
+-- table_journal_reads : dernière ouverture d'une entrée par chacun (nouveautés).
+-- Auteur et dernier modificateur : personnage (-1 = MJ) et nom figé, sans clé : l'auteur peut partir.
+create table if not exists table_journal
+(
+    id          INTEGER
+        primary key autoincrement,
+    session_id  INTEGER not null
+        references game_sessions
+            on delete cascade,
+    title       TEXT,
+    body        TEXT,
+    body_text   TEXT,
+    ydoc        BLOB,
+    pinned      INTEGER  default 0,
+    author_id   INTEGER,
+    author_name TEXT,
+    editor_id   INTEGER,
+    editor_name TEXT,
+    created_at  DATETIME default CURRENT_TIMESTAMP,
+    updated_at  DATETIME default CURRENT_TIMESTAMP
+);
+
+create index if not exists idx_table_journal_session_id
+    on table_journal (session_id);
+
+create table if not exists table_journal_reads
+(
+    entry_id     INTEGER not null
+        references table_journal
+            on delete cascade,
+    character_id INTEGER not null,
+    seen_at      DATETIME default CURRENT_TIMESTAMP,
+    primary key (entry_id, character_id)
+);

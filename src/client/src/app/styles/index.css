@@ -11,6 +11,9 @@
 @import '../../ui/modal/modal.css';
 @import '../../ui/panel/panel.css';
 @import '../../ui/catalog/catalog.css';
+@import '../../ui/date/date.css';
+@import '../../ui/image/image.css';
+@import '../../features/journal/journal.css';
 @import '../../features/dice/history/history.css';
 @import '../../ui/menu/menu.css';
 @import '../../features/table/session-bar.css';
