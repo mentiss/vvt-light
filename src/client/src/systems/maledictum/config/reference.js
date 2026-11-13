@@ -47,6 +47,7 @@ const setupSection = () => {
                 ['Caractéristiques achetées', `${points.total} points sur une base de ${base}, de ${points.min} à ${points.max} par caractéristique`],
                 ['Tirages au hasard de l\'assistant', SETUP.creation.randomDraws ? 'Proposés' : 'Non proposés'],
                 ['XP de création', typeof xp === 'object' ? `${xp.fixed} XP pour chaque acolyte, les tirages au hasard n'en rapportent pas` : 'Celle des tirages au hasard (livre)'],
+                ['Endurance à l\'armure (règle maison)', SETUP.houseRules?.toughnessArmour ? 'BE − 2 (jamais moins de 0) ajouté à l\'armure de chaque localisation ; pas doublé par une arme Inefficace, ignoré avec l\'armure' : 'Non (règle du livre)'],
             ]),
         ],
     };

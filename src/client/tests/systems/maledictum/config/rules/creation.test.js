@@ -125,6 +125,9 @@ describe('actions de la fiche', () => {
         expect(over).toMatchObject({ wounds: 10, excess: 4, critical: true, patch: { wounds: 14 } });
         expect(A.takeDamage(c, { damage: 3, armour: 0, criticalHit: true }).critical).toBe(true);
     });
+    it('dégâts : Endurance à l\'armure (règle maison §14.1) ajoutée à l\'armure', () => {
+        expect(A.takeDamage(c, { damage: 7, armour: 2, toughness: 2 })).toMatchObject({ wounds: 3, patch: { wounds: 11 } });
+    });
     it('Destin : dépenser, brûler (le maximum baisse)', () => {
         expect(A.spendFate(c)).toEqual({ fate: 2 });
         expect(A.burnFate(c)).toEqual({ fateMax: 2, fate: 2 });
@@ -135,13 +138,13 @@ describe('actions de la fiche', () => {
         expect(A.addTalent(c, 'ever_vigilant')).toMatchObject({ talents: [{ key: 'ever_vigilant', count: 1 }], xpSpent: 100 });
         expect(A.advanceChar({ ...c, xpTotal: 10 }, 'str')).toBeNull();
     });
-    it('États : mineur → majeur → retiré', () => {
-        let x = { conditions: {} };
-        x = { ...x, ...A.cycleCondition(x, 'stunned') };
-        expect(x.conditions).toEqual({ stunned: 'minor' });
-        x = { ...x, ...A.cycleCondition(x, 'stunned') };
-        expect(x.conditions).toEqual({ stunned: 'major' });
-        expect(A.cycleCondition(x, 'stunned').conditions).toEqual({});
+    it('États : posé, changé de niveau, retiré, sans toucher aux autres', () => {
+        let x = { conditions: { prone: 'minor' } };
+        x = { ...x, ...A.setCondition(x, 'stunned', 'minor') };
+        expect(x.conditions).toEqual({ prone: 'minor', stunned: 'minor' });
+        x = { ...x, ...A.setCondition(x, 'stunned', 'major') };
+        expect(x.conditions).toEqual({ prone: 'minor', stunned: 'major' });
+        expect(A.setCondition(x, 'stunned', null).conditions).toEqual({ prone: 'minor' });
     });
     it('Influence bornée de −5 à +5', () => {
         expect(A.setInfluence({ influence: {} }, 'inquisition', 9)).toEqual({ influence: { inquisition: 5 } });

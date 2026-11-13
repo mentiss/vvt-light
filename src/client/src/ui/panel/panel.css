@@ -1,4 +1,9 @@
 @layer components {
+  /* ── Élément ancré (Popover.jsx) : position posée par la brique, au-dessus des modales ──
+     Habillage (fond, bordure, police) par le slug, via la classe qu'il passe. */
+  .vtt-popover { position: fixed; z-index: 200; color: var(--color-text); }
+  .vtt-popover.is-tip { pointer-events: none; }
+
   /* ── Fenêtres flottantes (FloatingPanel, spec_ui_panneaux.md) ──────────────── */
   /* Fond, bordure, en-tête, titre, boutons : classes de la modale ci-dessus (habillage des slugs).
      Ici, ce qui fait une fenêtre flottante : position et taille portées par style, ordre au premier

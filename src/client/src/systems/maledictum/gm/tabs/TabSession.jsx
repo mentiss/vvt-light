@@ -19,7 +19,7 @@ import ConfirmModal from '@/ui/modal/ConfirmModal.jsx';
 import MlSheet from '../../components/layout/MlSheet.jsx';
 import MlEditForm from '../../components/layout/MlEditForm.jsx';
 import SuperiorityControl from '../../components/ui/SuperiorityControl.jsx';
-import { EditIcon, Orn } from '../../components/ui/MlUi.jsx';
+import { EditIcon, Orn, Tip } from '../../components/ui/MlUi.jsx';
 import { displayName, derived } from '../../config/rules/character.js';
 import { themeFor } from '../../config/rules/themes.js';
 import { refillFate, isDying } from '../../config/rules/actions.js';
@@ -32,16 +32,18 @@ const FeedRow = ({ c, online, selected, onSelect }) => {
     const d = derived(c);
     const dying = isDying(c);
     return (
-        <button type="button" className={`im-feed${selected ? ' is-selected' : ''}${online ? ' is-online' : ''}${dying ? ' is-dying' : ''}`}
-                onClick={onSelect} title={online ? 'En ligne' : 'Hors ligne'}>
-            <span className="im-feed-led" aria-hidden="true" />
-            <span className="im-feed-glass" data-livery={themeFor(c)}>{c.avatar ? <img src={c.avatar} alt="" /> : <Orn name="sigil" />}</span>
-            <span className="min-w-0">
-                <b>{displayName(c)}</b>
-                <i>{FACTION_BY_KEY[c.factionKey]?.label ?? 'Sans faction'}{c.playerName ? ` · ${c.playerName}` : ''}</i>
-                <em>{dying ? 'À L\'AGONIE' : `BLS ${c.wounds ?? 0}/${d.woundsMax} · DST ${c.fate ?? 0} · COR ${c.corruption ?? 0}`}</em>
-            </span>
-        </button>
+        <Tip text={online ? 'En ligne' : 'Hors ligne'}>
+            <button type="button" className={`im-feed${selected ? ' is-selected' : ''}${online ? ' is-online' : ''}${dying ? ' is-dying' : ''}`}
+                    onClick={onSelect}>
+                <span className="im-feed-led" aria-hidden="true" />
+                <span className="im-feed-glass" data-livery={themeFor(c)}>{c.avatar ? <img src={c.avatar} alt="" /> : <Orn name="sigil" />}</span>
+                <span className="min-w-0">
+                    <b>{displayName(c)}</b>
+                    <i>{FACTION_BY_KEY[c.factionKey]?.label ?? 'Sans faction'}{c.playerName ? ` · ${c.playerName}` : ''}</i>
+                    <em>{dying ? 'À L\'AGONIE' : `BLS ${c.wounds ?? 0}/${d.woundsMax} · DST ${c.fate ?? 0} · COR ${c.corruption ?? 0}`}</em>
+                </span>
+            </button>
+        </Tip>
     );
 };
 
@@ -111,7 +113,7 @@ const TabSession = ({ activeSession, onlineCharacters, patron, patronState, char
                             ) : (
                                 <>
                                     <CopyAccessButton character={current} className="im-pict-btn" />
-                                    <button type="button" className="im-pict-btn" onClick={() => setDraft({ ...current })} title="Mode Édition"><EditIcon /> Édition</button>
+                                    <Tip text="Mode Édition"><button type="button" className="im-pict-btn" onClick={() => setDraft({ ...current })}><EditIcon /> Édition</button></Tip>
                                 </>
                             )}>
                     {draft

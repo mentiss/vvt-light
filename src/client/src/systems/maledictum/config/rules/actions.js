@@ -20,10 +20,11 @@ export const setWounds = (c, value) => ({ wounds: clamp(Math.trunc(value), 0, de
  * Dégâts subis (livre p.214) : − Armure de la localisation ; les Blessures ne
  * dépassent pas le maximum ; au-delà, l'excès part dans le jet de gravité de la
  * Blessure critique (1d10 + excès) ; un Critique en inflige une même sous le maximum.
+ * armour : armure des pièces ; toughness : bonus de la règle maison (toughnessArmourBonus), non doublé.
  * @returns {{ patch, wounds, excess, critical }}  critical : true s'il faut tirer une Blessure critique
  */
-export const takeDamage = (c, { damage, armour = 0, ineffective = false, criticalHit = false }) => {
-    const dealt = woundsAfterArmour(Number(damage) || 0, armour, { ineffective });
+export const takeDamage = (c, { damage, armour = 0, toughness = 0, ineffective = false, criticalHit = false }) => {
+    const dealt = woundsAfterArmour(Number(damage) || 0, armour, { ineffective, toughness });
     const max = derived(c).woundsMax;
     const current = Number(c.wounds) || 0;
     const total = current + dealt;
@@ -49,12 +50,13 @@ export const removeCritical = (c, id) => ({ criticals: (c.criticals ?? []).filte
 /** Mourant : Blessures critiques non soignées au-delà de BE (livre p.215) */
 export const isDying = (c) => (c.criticals ?? []).filter(k => !k.treated).length > derived(c).criticalsMax;
 
-/** États : aucun → mineur → majeur → aucun (États à un seul niveau : aucun ↔ actif) */
-export const cycleCondition = (c, key, twoLevels = true) => {
-    const cur = c.conditions?.[key];
-    const next = !cur ? 'minor' : cur === 'minor' && twoLevels ? 'major' : null;
+/**
+ * États (spec §15) : pose ou change le niveau d'un État ('minor' | 'major'), null le retire.
+ * Un État à un seul niveau est rangé en 'minor'.
+ */
+export const setCondition = (c, key, level) => {
     const conditions = { ...(c.conditions ?? {}) };
-    if (next) conditions[key] = next; else delete conditions[key];
+    if (level === 'minor' || level === 'major') conditions[key] = level; else delete conditions[key];
     return { conditions };
 };
 

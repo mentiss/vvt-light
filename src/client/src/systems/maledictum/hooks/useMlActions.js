@@ -21,7 +21,7 @@ export const useMlActions = ({ character, patch, ask }) => useMemo(() => {
     return {
         run, patch, ask: ask ?? (() => {}),
         setWounds: (v) => run(A.setWounds, v),
-        cycleCondition: (key, two) => run(A.cycleCondition, key, two),
+        setCondition: (key, level) => run(A.setCondition, key, level),
         spendFate: () => run(A.spendFate),
         burnFate: () => run(A.burnFate),
         setCorruption: (v) => run(A.setCorruption, v),

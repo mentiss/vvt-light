@@ -26,6 +26,7 @@ import {
 import { itemFromLabel, KIND_LABELS } from '../../config/rules/items.js';
 import { SETUP, available, hasBook, isAvailable } from '../../config/setup.js';
 import { Pill, Pills, Stepper, Toggle, Field, Block } from '../ui/MlUi.jsx';
+import Tooltip from '@/ui/text/Tooltip.jsx';
 
 const SKILL_BY_KEY = Object.fromEntries(SKILLS.map(s => [s.key, s]));
 const TALENT_BY_KEY = Object.fromEntries(TALENTS.map(t => [t.key, t]));
@@ -229,8 +230,11 @@ export const FactionTab = ({ ws, setWs, help }) => {
         <div className="im-fields">
             {RANDOM && (
                 <Pills>
-                    <button type="button" className="vtt-btn vtt-btn-sm" disabled={needsOrigin && !ws.originKey} title={needsOrigin && !ws.originKey ? 'La table dépend de l\'origine : choisissez-la d\'abord' : undefined}
-                            onClick={() => pick(factionForRoll(d100(), ws.originKey), true)}>Laisser le destin décider{xpLabel(XP_RANDOM.faction)}</button>
+                    {/* Bouton désactivé : sans survol, la bulle se pose sur une enveloppe (brique Tooltip) */}
+                    <Tooltip text={needsOrigin && !ws.originKey ? 'La table dépend de l\'origine : choisissez-la d\'abord' : ''}>
+                        <button type="button" className="vtt-btn vtt-btn-sm" disabled={needsOrigin && !ws.originKey}
+                                onClick={() => pick(factionForRoll(d100(), ws.originKey), true)}>Laisser le destin décider{xpLabel(XP_RANDOM.faction)}</button>
+                    </Tooltip>
                 </Pills>
             )}
             <div className="im-card-grid">

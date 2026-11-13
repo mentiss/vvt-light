@@ -6,6 +6,17 @@
 // ─────────────────────────────────────────────────────────────────────────────
 
 import React from 'react';
+import { useTooltip } from '@/ui/text/Tooltip.jsx';
+
+/**
+ * Infobulle habillée (brique useTooltip, spec §14.2) posée sur l'élément enfant lui-même, sans
+ * conteneur ajouté (la disposition ne bouge pas). L'enfant ne doit avoir ni ref ni onMouseEnter /
+ * onMouseLeave. Un bouton désactivé ne reçoit pas le survol : l'envelopper (brique Tooltip).
+ */
+export const Tip = ({ text, children }) => {
+    const { bind, bubble } = useTooltip(text);
+    return <>{React.cloneElement(children, bind)}{bubble}</>;
+};
 
 /** Ornement : silhouette générée, teintée par currentColor (theme.css, .im-orn.is-…) */
 export const Orn = ({ name, className = '', style }) => <span className={`im-orn is-${name} ${className}`.trim()} style={style} aria-hidden="true" />;
@@ -37,7 +48,7 @@ export const MlTabs = ({ tabs, active, onSelect, className = '' }) => (
 );
 
 export const Pill = ({ on, onClick, disabled, children, title }) => (
-    <button type="button" className={`vtt-pill${on ? ' is-selected' : ''}`} onClick={onClick} disabled={disabled} title={title}>{children}</button>
+    <Tip text={title}><button type="button" className={`vtt-pill${on ? ' is-selected' : ''}`} onClick={onClick} disabled={disabled}>{children}</button></Tip>
 );
 
 export const Pills = ({ children, className = '' }) => <div className={`im-row ${className}`.trim()}>{children}</div>;
@@ -112,9 +123,11 @@ export const Portrait = ({ avatar, onClick }) => (
     <div className="im-portrait">
         <span className="im-candles is-left"><Orn name="candles" /></span>
         <span className="im-candles is-right"><Orn name="candles" /></span>
-        <button type="button" className="im-portrait-frame" onClick={onClick} title={onClick ? 'Changer le portrait' : undefined} disabled={!onClick}>
-            {avatar ? <img src={avatar} alt="" /> : SIL}
-        </button>
+        <Tip text={onClick ? 'Changer le portrait' : ''}>
+            <button type="button" className="im-portrait-frame" onClick={onClick} disabled={!onClick}>
+                {avatar ? <img src={avatar} alt="" /> : SIL}
+            </button>
+        </Tip>
         <span className="im-portrait-arch"><Orn name="arch" /></span>
         <span className="im-portrait-sign is-top"><Orn name="sigil" /></span>
     </div>

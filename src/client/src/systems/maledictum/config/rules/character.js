@@ -12,6 +12,7 @@
 // ─────────────────────────────────────────────────────────────────────────────
 
 import { SKILLS } from '../skills.js';
+import { SETUP } from '../setup.js';
 
 export const CHAR_KEYS = ['ws', 'bs', 'str', 'tgh', 'ag', 'int', 'per', 'wil', 'fel'];
 export const CHAR_SHORT = { ws: 'CC', bs: 'CT', str: 'F', tgh: 'E', ag: 'Ag', int: 'Int', per: 'Per', wil: 'FM', fel: 'Soc' };
@@ -84,6 +85,9 @@ export const armourByLocation = (items) => {
     for (const l of LOCATIONS) out[l] += best[l];
     return out;
 };
+
+/** Règle maison Endurance à l'armure (spec §14.1) : BE − 2, jamais moins de 0, sur chaque localisation ; 0 si le setup la coupe */
+export const toughnessArmourBonus = (c, setup = SETUP) => (setup.houseRules?.toughnessArmour ? Math.max(0, charBonus(c, 'tgh') - 2) : 0);
 
 /** Encombrement porté : armures et vêtements portés comptent 1 de moins (livre p.122) */
 export const encumbrance = (items) => (items ?? []).reduce((sum, it) => {

@@ -9,12 +9,12 @@
 //     onChangeVariant : tags en lecture seule.
 //   <Tag tag />  un tag seul (lecture)
 //
-// Fenêtre et menu passent par CpFloating (portail) : jamais rognés par un panneau.
+// Fenêtre et menu passent par Popover (brique de la plateforme, portail) : jamais rognés par un panneau.
 // ─────────────────────────────────────────────────────────────────────────────
 
 import React, { createContext, useContext, useMemo, useRef, useState } from 'react';
 import { TAG_SUGGESTIONS_BY_TYPE } from '../../config.jsx';
-import CpFloating from '../ui/CpFloating.jsx';
+import Popover from '@/ui/panel/Popover.jsx';
 import CpIcon from '../ui/CpIcon.jsx';
 
 const VARIANTS = [
@@ -43,7 +43,7 @@ export const Tag = ({ tag, onClick, active = false }) => {
 
 // ── Menu d'un tag : changer de type, retirer ─────────────────────────────────
 const TagMenu = ({ anchor, tag, onChangeVariant, onRemove, onClose }) => (
-    <CpFloating anchor={anchor} onClose={onClose} className="cp-menu">
+    <Popover anchor={anchor} onClose={onClose} className="cp-menu">
         {onChangeVariant && VARIANTS.map(v => (
             <button key={v.id} type="button" className={`cp-menu-item ${tag.tag_variant === v.id ? 'is-current' : ''}`}
                     onClick={() => { onChangeVariant(v.id); onClose(); }}>
@@ -56,7 +56,7 @@ const TagMenu = ({ anchor, tag, onChangeVariant, onRemove, onClose }) => (
                 <CpIcon name="close" size="sm" />Retirer le tag
             </button>
         )}
-    </CpFloating>
+    </Popover>
 );
 
 // ── Fenêtre d'ajout ─────────────────────────────────────────────────────────
@@ -80,7 +80,7 @@ const TagAddPopover = ({ anchor, entityType, existing, onAdd, onClose }) => {
     const submit = () => add(withPrefix(text.trim(), prefix), variant);
 
     return (
-        <CpFloating anchor={anchor} onClose={onClose} className="cp-pop">
+        <Popover anchor={anchor} onClose={onClose} className="cp-pop">
             <div className="cp-pop-head">
                 <CpIcon name="tag" size="sm" />Nouveau tag <span>· {ENTITY_LABEL[entityType] ?? 'personnage'}</span>
             </div>
@@ -120,7 +120,7 @@ const TagAddPopover = ({ anchor, entityType, existing, onAdd, onClose }) => {
                     <button type="button" className="cp-btn is-primary is-sm" onClick={submit} disabled={!text.trim()}>Ajouter</button>
                 </div>
             </div>
-        </CpFloating>
+        </Popover>
     );
 };
 

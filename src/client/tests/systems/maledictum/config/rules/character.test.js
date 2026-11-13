@@ -2,8 +2,9 @@
 // Dérivés d'un personnage (livre de base p.50, 88-92, 122-124) et coûts d'XP (p.90).
 import { describe, it, expect } from 'vitest';
 import {
-    charValue, skillValue, specValue, derived, armourByLocation, encumbrance, weaponDamage,
+    charValue, skillValue, specValue, derived, armourByLocation, toughnessArmourBonus, encumbrance, weaponDamage,
 } from '../../../../../src/systems/maledictum/config/rules/character.js';
+import { BOOK_SETUP } from '../../../../../src/systems/maledictum/config/setup.js';
 import { charAdvanceCost, skillAdvanceCost, skillAdvancesCost } from '../../../../../src/systems/maledictum/config/rules/xp.js';
 
 const severine = {
@@ -47,6 +48,13 @@ describe('inventaire', () => {
     ];
     it('armure : meilleure pièce non Discrète + pièces Discrètes, portées seulement', () => {
         expect(armourByLocation(items)).toEqual({ head: 1, left_arm: 3, right_arm: 3, body: 3, left_leg: 3, right_leg: 3 });
+    });
+    it('Endurance à l\'armure (règle maison §14.1) : BE − 2, jamais moins de 0, coupée par le setup', () => {
+        const tgh = (v) => ({ charsBase: { tgh: v } });
+        expect(toughnessArmourBonus(tgh(43), { houseRules: { toughnessArmour: true } })).toBe(2);
+        expect(toughnessArmourBonus(tgh(29), { houseRules: { toughnessArmour: true } })).toBe(0);
+        expect(toughnessArmourBonus(tgh(15), { houseRules: { toughnessArmour: true } })).toBe(0);
+        expect(toughnessArmourBonus(tgh(43), BOOK_SETUP)).toBe(0);
     });
     it('encombrement : armures portées −1', () => {
         expect(encumbrance(items)).toBe(1 + 0 + 1 + 3);

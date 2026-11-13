@@ -10,6 +10,7 @@
 //   chars.points: achat de points (total, minimum et maximum par caractéristique)
 //   creation.randomDraws : boutons « au hasard » de l'assistant (origine, faction, rôle)
 //   creation.xp : 'book' = XP des tirages du livre ; { fixed: n } = n XP pour tout personnage
+//   houseRules.toughnessArmour : règle maison, BE − 2 (min 0) ajouté à l'armure de chaque localisation (§14.1)
 // ─────────────────────────────────────────────────────────────────────────────
 
 export const BOOKS = [
@@ -23,6 +24,7 @@ export const BOOK_SETUP = {
     books: { core: true, ipg: true, igmg: true },
     chars: { base: 20, points: { total: 90, min: 4, max: 18 } },
     creation: { randomDraws: true, xp: 'book' },
+    houseRules: { toughnessArmour: false },
 };
 
 /** Réglages de la table (choix du MJ, 2026-11-06) */
@@ -30,6 +32,7 @@ export const SETUP = {
     books: { core: true, ipg: false, igmg: false },
     chars: { base: 25, points: { total: 90, min: 0, max: 20 } },
     creation: { randomDraws: false, xp: { fixed: 50 } },
+    houseRules: { toughnessArmour: true },
 };
 
 /** Une entrée de catalogue est-elle disponible (livre activé) ? Sans `source` : livre de base. */

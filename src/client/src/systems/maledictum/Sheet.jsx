@@ -35,7 +35,7 @@ import { useHashTab } from '@/ui/hooks/useHashTab.js';
 import MlTopBar from './components/ui/MlTopBar.jsx';
 import MlSheet from './components/layout/MlSheet.jsx';
 import MlEditForm from './components/layout/MlEditForm.jsx';
-import { EditIcon, Orn } from './components/ui/MlUi.jsx';
+import { EditIcon, Orn, Tip } from './components/ui/MlUi.jsx';
 import { useBoxSize } from './hooks/useBoxSize.js';
 import { usePlayerPatch } from './hooks/usePlayerPatch.js';
 import { usePatron } from './hooks/usePatron.js';
@@ -80,8 +80,8 @@ const Sheet = ({ character, onCharacterUpdate, journalUnread, onJournalRead, dar
         </>
     ) : (
         <>
-            {patron?.superiorityEnabled !== false && <span className="im-chip" title="Supériorité du groupe, réglée par le MJ"><Orn name="laurel" />Supériorité <b>{patron?.superiority ?? 0}</b></span>}
-            <button type="button" className="im-icon-btn" onClick={() => setDraft({ ...character })} title="Mode Édition" aria-label="Mode Édition"><EditIcon /></button>
+            {patron?.superiorityEnabled !== false && <Tip text="Supériorité du groupe, réglée par le MJ"><span className="im-chip"><Orn name="laurel" />Supériorité <b>{patron?.superiority ?? 0}</b></span></Tip>}
+            <Tip text="Mode Édition"><button type="button" className="im-icon-btn" onClick={() => setDraft({ ...character })} aria-label="Mode Édition"><EditIcon /></button></Tip>
         </>
     ));
 

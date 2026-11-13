@@ -16,7 +16,7 @@ import React, { useState } from 'react';
 import {
     INQUISITORS, PHILOSOPHIES, DEMEANOURS, PAYMENT_GRADES, BOONS, LIABILITIES, PATRON_FACTIONS, SUBTLETY_LEVELS, SUBTLETY_RULES,
 } from '../../config/patron.js';
-import { Block, Pill, Pills, Stepper, Toggle, Field } from '../../components/ui/MlUi.jsx';
+import { Block, Pill, Pills, Stepper, Toggle, Field, Tip } from '../../components/ui/MlUi.jsx';
 import SuperiorityControl from '../../components/ui/SuperiorityControl.jsx';
 import { signed } from '../../config/rules/dice.js';
 import { available, hasBook } from '../../config/setup.js';
@@ -45,11 +45,13 @@ const fromInquisitor = (q) => {
 const Picker = ({ items, selected, onToggle, query }) => {
     const q = query.trim().toLowerCase();
     return (
-        <div className="im-pick-list">
+        <div className="im-pick-list vtt-scroll">
             {items.filter(i => !q || `${i.label} ${i.labelEn}`.toLowerCase().includes(q) || selected.includes(i.key)).map(i => (
-                <button key={i.key} type="button" className={`im-pick${selected.includes(i.key) ? ' is-on' : ''}`} onClick={() => onToggle(i.key)} title={i.summary ?? ''}>
-                    <b>{i.label}</b><small>{i.summary ?? ''}</small>
-                </button>
+                <Tip key={i.key} text={i.summary ?? ''}>
+                    <button type="button" className={`im-pick${selected.includes(i.key) ? ' is-on' : ''}`} onClick={() => onToggle(i.key)}>
+                        <b>{i.label}</b><small>{i.summary ?? ''}</small>
+                    </button>
+                </Tip>
             ))}
         </div>
     );

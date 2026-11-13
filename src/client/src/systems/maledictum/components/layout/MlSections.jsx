@@ -9,24 +9,27 @@
 
 import React from 'react';
 import { SKILLS } from '../../config/skills.js';
+import { CHARACTERISTICS } from '../../config/characteristics.js';
 import { TALENTS } from '../../config/talents.js';
 import { POWERS } from '../../config/powers.js';
-import { CONDITIONS } from '../../config/tables.js';
 import { BOONS } from '../../config/patron.js';
 import { FACTION_BY_KEY, ROLE_BY_KEY, ORIGIN_BY_KEY } from '../../config/rules/creation.js';
 import {
-    CHAR_KEYS, CHAR_SHORT, charValue, charBonus, skillValue, specValue, specsBySkill, armourByLocation, encumbrance,
+    CHAR_KEYS, CHAR_SHORT, charValue, charBonus, skillValue, specValue, specsBySkill, armourByLocation, toughnessArmourBonus, encumbrance,
     weaponDamage, weaponSkillValue, displayName, xpAvailable, LOCATIONS,
 } from '../../config/rules/character.js';
 import { LOCATION_LABELS, signed } from '../../config/rules/dice.js';
 import { sortedItems } from '../../config/rules/items.js';
 import { isDying } from '../../config/rules/actions.js';
-import { Block, Orn, Rule, Gauge, Portrait, PlusIcon, MinusIcon, TrashIcon, FlameIcon } from '../ui/MlUi.jsx';
+import { SETUP } from '../../config/setup.js';
+import { ConditionList } from './MlConditions.jsx';
+import { Block, Orn, Rule, Gauge, Portrait, Tip, PlusIcon, MinusIcon, TrashIcon, FlameIcon } from '../ui/MlUi.jsx';
 
 const TALENT_BY_KEY = Object.fromEntries(TALENTS.map(t => [t.key, t]));
 const POWER_BY_KEY = Object.fromEntries(POWERS.map(p => [p.key, p]));
 const BOON_BY_KEY = Object.fromEntries((BOONS ?? []).map(b => [b.key, b]));
-const SKILLS_SORTED = [...SKILLS].sort((a, b) => a.label.localeCompare(b.label, 'fr'));
+const CHAR_LABEL = Object.fromEntries(CHARACTERISTICS.map(ch => [ch.key, ch.label]));   // nom complet (Capacité de Combat…)
+const SKILLS_SORTED =[...SKILLS].sort((a, b) => a.label.localeCompare(b.label, 'fr'));
 const LOC_SHORT = { head: 'Tête', left_arm: 'Bras G', right_arm: 'Bras D', body: 'Corps', left_leg: 'Jambe G', right_leg: 'Jambe D' };
 const LOC_ROLL = { head: '1', left_arm: '2', right_arm: '3', body: '6-0', left_leg: '4', right_leg: '5' };
 export const RANGE_LABELS = { immediate: 'Contact', short: 'Courte', medium: 'Moyenne', long: 'Longue', extreme: 'Extrême' };
@@ -37,7 +40,7 @@ export const factionLabel = (key) => (key === 'inquisition' ? 'Inquisition' : FA
 
 const Adv = ({ n }) => <span className="im-adv">{[0, 1, 2, 3].map(i => <i key={i} className={i < n ? 'on' : ''} />)}</span>;
 const MiniBtn = ({ onClick, title, children, disabled }) => (
-    <button type="button" className="im-mini-btn" onClick={onClick} title={title} aria-label={title} disabled={disabled}>{children}</button>
+    <Tip text={title}><button type="button" className="im-mini-btn" onClick={onClick} aria-label={title} disabled={disabled}>{children}</button></Tip>
 );
 
 // ── Identité ─────────────────────────────────────────────────────────────────
@@ -75,7 +78,7 @@ export const PatronSection = ({ patron }) => {
                     {(p.boons ?? []).length > 0 && (
                         <>
                             <div className="im-sub">Faveurs</div>
-                            {p.boons.map(k => <div key={k} className="im-line" title={BOON_BY_KEY[k]?.summary ?? ''}>{BOON_BY_KEY[k]?.label ?? k}</div>)}
+                            {p.boons.map(k => <Tip key={k} text={BOON_BY_KEY[k]?.summary ?? ''}><div className="im-line">{BOON_BY_KEY[k]?.label ?? k}</div></Tip>)}
                         </>
                     )}
                     {known.map(([f, v]) => (
@@ -96,11 +99,13 @@ export const WoundsSection = ({ c, d, act }) => {
     return (
         <Block title="Blessures">
             <div className="im-res">
-                <div className="im-res-row is-click" onClick={() => act.ask('damage')} role="button" tabIndex={0} title="Subir des dégâts">
-                    <b>Blessures</b>
-                    <span>{c.wounds ?? 0} <small>/ {d.woundsMax}</small></span>
-                    <Gauge value={c.wounds ?? 0} max={d.woundsMax} warn={(c.wounds ?? 0) >= d.woundsMax} />
-                </div>
+                <Tip text="Subir des dégâts">
+                    <div className="im-res-row is-click" onClick={() => act.ask('damage')} role="button" tabIndex={0}>
+                        <b>Blessures</b>
+                        <span>{c.wounds ?? 0} <small>/ {d.woundsMax}</small></span>
+                        <Gauge value={c.wounds ?? 0} max={d.woundsMax} warn={(c.wounds ?? 0) >= d.woundsMax} />
+                    </div>
+                </Tip>
                 <div className="im-res-tools">
                     <MiniBtn title="Soigner 1 Blessure" onClick={() => act.setWounds((c.wounds ?? 0) - 1)}><MinusIcon /></MiniBtn>
                     <MiniBtn title="1 Blessure de plus" onClick={() => act.setWounds((c.wounds ?? 0) + 1)}><PlusIcon /></MiniBtn>
@@ -139,7 +144,6 @@ export const ResourcesSection = ({ c, d, act }) => {
     const enc = encumbrance(c.items);
     const fate = Number(c.fate) || 0;
     const fateMax = Number(c.fateMax) || 0;
-    const conditions = Object.entries(c.conditions ?? {});
     return (
         <Block title="Ressources">
             <div className="im-res">
@@ -147,19 +151,23 @@ export const ResourcesSection = ({ c, d, act }) => {
                     <b>Destin</b>
                     <span className="im-pips">
                         {Array.from({ length: Math.max(fateMax, fate) }, (_, i) => (
-                            <button key={i} type="button" className={`im-pip${i >= fate ? ' is-spent' : ''}`} title={i < fate ? 'Dépenser 1 Destin' : 'Destin dépensé'}
-                                    onClick={() => (i < fate ? act.spendFate() : act.run(() => ({ fate: Math.min(fateMax, fate + 1) })))}>
-                                <Orn name="sigil" />
-                            </button>
+                            <Tip key={i} text={i < fate ? 'Dépenser 1 Destin' : 'Destin dépensé'}>
+                                <button type="button" className={`im-pip${i >= fate ? ' is-spent' : ''}`}
+                                        onClick={() => (i < fate ? act.spendFate() : act.run(() => ({ fate: Math.min(fateMax, fate + 1) })))}>
+                                    <Orn name="sigil" />
+                                </button>
+                            </Tip>
                         ))}
                     </span>
                 </div>
                 <div className="im-res-tools">
                     <button type="button" className="vtt-btn vtt-btn-sm" onClick={() => act.ask('fate')}>Destin…</button>
                 </div>
-                <div className="im-res-row is-click" onClick={() => act.ask('solars')} role="button" tabIndex={0} title="Modifier les Solars">
-                    <b>Solars</b><span>{c.solars ?? 0}</span>
-                </div>
+                <Tip text="Modifier les Solars">
+                    <div className="im-res-row is-click" onClick={() => act.ask('solars')} role="button" tabIndex={0}>
+                        <b>Solars</b><span>{c.solars ?? 0}</span>
+                    </div>
+                </Tip>
             </div>
             <div className="im-derived">
                 <div><b>Initiative</b><span>{d.initiative}</span></div>
@@ -167,19 +175,7 @@ export const ResourcesSection = ({ c, d, act }) => {
                 <div className={enc > d.encumbranceMax ? 'is-danger' : ''}><b>Encombr.</b><span>{enc} / {d.encumbranceMax}</span></div>
             </div>
             <Rule />
-            <div className="im-states">
-                {conditions.map(([key, level]) => {
-                    const cond = CONDITIONS.find(x => x.key === key);
-                    return (
-                        <button key={key} type="button" className={`im-state${level === 'major' ? ' is-major' : ''}`}
-                                title={`${level === 'major' ? cond?.major ?? '' : cond?.minor ?? cond?.summary ?? ''} (clic : niveau suivant)`}
-                                onClick={() => act.cycleCondition(key, !!cond?.major)}>
-                            {cond?.label ?? key}{cond?.major ? ` (${level === 'major' ? 'majeur' : 'mineur'})` : ''}
-                        </button>
-                    );
-                })}
-                <button type="button" className="im-state is-add" onClick={() => act.ask('conditions')}>+ État</button>
-            </div>
+            <ConditionList c={c} act={act} />
         </Block>
     );
 };
@@ -190,10 +186,12 @@ export const CharacteristicsSection = ({ c, act }) => (
     <Block title="Caractéristiques" skulls extra={<span className="im-block-seal"><span className="im-purity" /></span>}>
         <div className="im-chars">
             {CHAR_KEYS.map(k => (
-                <button key={k} type="button" className="im-char" title={`Test de ${CHAR_SHORT[k]}`}
-                        onClick={() => act.ask('roll', { mode: 'test', label: CHAR_SHORT[k], base: charValue(c, k), char: k })}>
-                    <b>{CHAR_SHORT[k]}</b><span>{charValue(c, k)}</span><small>B{charBonus(c, k)}</small>
-                </button>
+                <Tip key={k} text={`Test de ${CHAR_LABEL[k] ?? CHAR_SHORT[k]}`}>
+                    <button type="button" className="im-char"
+                            onClick={() => act.ask('roll', { mode: 'test', label: CHAR_SHORT[k], base: charValue(c, k), char: k })}>
+                        <b>{CHAR_SHORT[k]}</b><span>{charValue(c, k)}</span><small>B{charBonus(c, k)}</small>
+                    </button>
+                </Tip>
             ))}
         </div>
     </Block>
@@ -244,14 +242,16 @@ export const WeaponsSection = ({ c, act, traitLabel }) => {
                         {weapons.map(w => {
                             const ranged = !!w.data?.range;
                             return (
-                                <tr key={w.id} className="is-roll" onClick={() => act.ask('roll', {
-                                    mode: 'attack', label: w.name, base: weaponSkillValue(c, w), damage: weaponDamage(c, w), ranged, weapon: w.name, item: w,
-                                })} title={`Attaquer avec ${w.name}`}>
-                                    <td><b>{w.name}</b><small>{[w.data?.spec ? specName(w.data.spec) : null, traitLabel(w.data?.traits)].filter(Boolean).join(' · ')}</small></td>
-                                    <td className="num" title={w.data?.damageBonus === 'sb' ? `${w.data?.damage ?? 0} + BF, puis + DR` : undefined}>{w.data?.damage == null && w.data?.damageBonus !== 'sb' ? '—' : `${weaponDamage(c, w)} + DR`}</td>
-                                    <td>{RANGE_LABELS[w.data?.range] ?? (ranged ? w.data.range : '—')}</td>
-                                    <td className="num">{w.data?.mag ?? '—'}</td>
-                                </tr>
+                                <Tip key={w.id} text={`Attaquer avec ${w.name}${w.data?.damageBonus === 'sb' ? `\nDégâts : ${w.data?.damage ?? 0} + BF, puis + DR` : ''}`}>
+                                    <tr className="is-roll" onClick={() => act.ask('roll', {
+                                        mode: 'attack', label: w.name, base: weaponSkillValue(c, w), damage: weaponDamage(c, w), ranged, weapon: w.name, item: w,
+                                    })}>
+                                        <td><b>{w.name}</b><small>{[w.data?.spec ? specName(w.data.spec) : null, traitLabel(w.data?.traits)].filter(Boolean).join(' · ')}</small></td>
+                                        <td className="num">{w.data?.damage == null && w.data?.damageBonus !== 'sb' ? '—' : `${weaponDamage(c, w)} + DR`}</td>
+                                        <td>{RANGE_LABELS[w.data?.range] ?? (ranged ? w.data.range : '—')}</td>
+                                        <td className="num">{w.data?.mag ?? '—'}</td>
+                                    </tr>
+                                </Tip>
                             );
                         })}
                     </tbody>
@@ -277,13 +277,22 @@ export const specName = (path) => {
 
 export const ArmourSection = ({ c }) => {
     const armour = armourByLocation(c.items);
+    const toughness = toughnessArmourBonus(c);   // règle maison (§14.1) : comprise dans l'armure affichée
     const worn = (c.items ?? []).filter(it => it.kind === 'armour' && it.equipped).map(it => it.name);
     return (
         <Block title="Armure">
             <div className="im-armour-name">{worn.join(' · ') || 'Aucune armure portée'}</div>
             <div className="im-locs">
-                {LOCATIONS.map(l => <div key={l} className="im-loc"><b>{LOC_SHORT[l]}</b><span>{armour[l]}</span><small>{LOC_ROLL[l]}</small></div>)}
+                {LOCATIONS.map(l => <div key={l} className="im-loc"><b>{LOC_SHORT[l]}</b><span>{armour[l] + toughness}</span><small>{LOC_ROLL[l]}</small></div>)}
             </div>
+            {SETUP.houseRules?.toughnessArmour && (
+                <div className="im-armour-tough">
+                    <b>Endurance</b>
+                    {toughness > 0
+                        ? <span>+{toughness} à chaque localisation (BE {charBonus(c, 'tgh')} − 2)</span>
+                        : <span>BE {charBonus(c, 'tgh')} : rien à ajouter (BE − 2)</span>}
+                </div>
+            )}
         </Block>
     );
 };
@@ -299,15 +308,17 @@ export const InventorySection = ({ c, d, act }) => {
             {items.length === 0 && <p className="im-empty">Inventaire vide.</p>}
             {items.map(it => (
                 <div key={it.id} className={`im-gear${it.equipped ? ' is-equipped' : ''}`}>
-                    <button type="button" className="im-gear-name" onClick={() => act.ask('item', { item: it })} title="Détail">
+                    <button type="button" className="im-gear-name" onClick={() => act.ask('item', { item: it })}>
                         {it.name}{it.notes ? <em> · {it.notes}</em> : null}
                     </button>
                     <span className="q">{it.quantity > 1 ? `×${it.quantity}` : ''}</span>
                     <span className="e">{it.data?.enc ?? '—'}</span>
                     <span className="im-gear-tools">
                         {(it.kind === 'armour' || it.kind === 'weapon' || it.data?.category === 'clothing') && (
-                            <button type="button" className={`im-mini-btn${it.equipped ? ' is-on' : ''}`} onClick={() => act.toggleEquipped(it.id)}
-                                    title={it.equipped ? 'Retirer (porté)' : 'Porter / équiper'}>{it.equipped ? '●' : '○'}</button>
+                            <Tip text={it.equipped ? 'Retirer (porté)' : 'Porter / équiper'}>
+                                <button type="button" className={`im-mini-btn${it.equipped ? ' is-on' : ''}`} onClick={() => act.toggleEquipped(it.id)}
+                                        aria-label={it.equipped ? 'Retirer (porté)' : 'Porter / équiper'}>{it.equipped ? '●' : '○'}</button>
+                            </Tip>
                         )}
                         <MiniBtn title="Retirer de l'inventaire" onClick={() => act.ask('removeItem', { item: it })}><TrashIcon /></MiniBtn>
                     </span>

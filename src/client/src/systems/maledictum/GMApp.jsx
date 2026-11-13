@@ -75,7 +75,7 @@ const GMApp = ({ activeSession, onSessionChange, onlineCharacters, characterUpda
                           <HamburgerMenuSeparator />
                           <HamburgerMenuItemLogout />
                       </>}
-                      actions={<button type="button" className="im-icon-btn is-wide" onClick={() => setFreeOpen(true)} title="Jet libre"><DiceIcon /> Jet libre</button>} />
+                      actions={<button type="button" className="im-icon-btn is-wide" onClick={() => setFreeOpen(true)}><DiceIcon /> Jet libre</button>} />
 
             <main className="im-sheet-body is-gm">
                 {activeTab === 'session' && (

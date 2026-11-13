@@ -101,6 +101,10 @@ describe('Attaques (livre p.211-214)', () => {
         expect(woundsAfterArmour(3, 5)).toBe(1);
         expect(woundsAfterArmour(6, 3, { ineffective: true })).toBe(0);
     });
+    it('Endurance à l\'armure (règle maison §14.1) : ajoutée, pas doublée par une arme Inefficace', () => {
+        expect(woundsAfterArmour(8, 2, { toughness: 2 })).toBe(4);
+        expect(woundsAfterArmour(10, 3, { ineffective: true, toughness: 2 })).toBe(2);   // 3 × 2 + 2
+    });
 });
 
 describe('Pouvoirs psychiques (livre p.161-163)', () => {

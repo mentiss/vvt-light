@@ -769,9 +769,8 @@ html:has(.cp-root), body:has(.cp-root) { background: var(--color-bg); }
 .cp-tag-add { font-family: var(--cp-font-mono); font-size: 12px; padding: 1px 7px; color: var(--color-text-muted); background: none; border: 1px dashed var(--color-border); cursor: pointer; }
 .cp-tag-add:hover { color: var(--color-primary); border-color: var(--color-primary); }
 
-/* ── Éléments flottants (CpFloating, rendus dans l'emplacement à modales) ── */
-.cp-floating { position: fixed; z-index: 200; font-family: var(--cp-font-ui); color: var(--color-text); }
-.cp-floating.is-tip { pointer-events: none; }
+/* ── Éléments flottants (brique Popover, rendus dans l'emplacement à modales ; position par la plateforme) ── */
+.vtt-popover { font-family: var(--cp-font-ui); }
 .cp-tip { width: 300px; padding: 8px 10px; font-size: 13px; line-height: 1.4;
     background: var(--color-bg); border: 1px solid var(--sc, var(--color-primary)); box-shadow: 0 6px 18px rgba(0, 0, 0, .6); }
 .cp-tip b { display: block; margin-bottom: 3px; font-weight: 700; font-size: 12px; letter-spacing: .08em; text-transform: uppercase; color: var(--sc, var(--color-primary)); }

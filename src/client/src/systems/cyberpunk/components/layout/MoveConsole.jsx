@@ -13,7 +13,7 @@
 import React, { useState } from 'react';
 import { STAT_LABELS, canDropOn, CONSOLE_ROWS } from '../../config.jsx';
 import { Card } from './Card.jsx';
-import CpFloating from '../ui/CpFloating.jsx';
+import Popover from '@/ui/panel/Popover.jsx';
 import CpIcon from '../ui/CpIcon.jsx';
 
 const sign = (v) => (v > 0 ? `+${v}` : v < 0 ? `−${Math.abs(v)}` : '±0');
@@ -44,10 +44,10 @@ const Chip = ({ move, row, onRoll, onUnpin, onDragStart, onDragEnd, readOnly }) 
                 )}
             </button>
             {tip && (
-                <CpFloating anchor={tip.anchor} onClose={tip.pinned ? () => setTip(null) : undefined} className={`cp-tip st-${row}`}>
+                <Popover anchor={tip.anchor} onClose={tip.pinned ? () => setTip(null) : undefined} className={`cp-tip st-${row}`}>
                     <b>{move.name}{move.playbook ? ` · ${move.playbook}` : ''}</b>
                     {move.description}
-                </CpFloating>
+                </Popover>
             )}
         </>
     );

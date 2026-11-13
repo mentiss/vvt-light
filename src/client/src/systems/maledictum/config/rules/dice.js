@@ -163,9 +163,12 @@ export const resolveAttack = ({ roll, target, edge = 0, damage = 0, opposedSl = 
     };
 };
 
-/** Blessures infligées après armure ; une touche réussie inflige au moins 1 Blessure (sauf arme Inefficace) */
-export const woundsAfterArmour = (damage, armour, { ineffective = false } = {}) => {
-    const a = Number(armour) * (ineffective ? 2 : 1);
+/**
+ * Blessures infligées après armure ; une touche réussie inflige au moins 1 Blessure (sauf arme Inefficace).
+ * toughness : bonus de la règle maison Endurance à l'armure (§14.1), ajouté sans être doublé par Inefficace.
+ */
+export const woundsAfterArmour = (damage, armour, { ineffective = false, toughness = 0 } = {}) => {
+    const a = Number(armour) * (ineffective ? 2 : 1) + (Number(toughness) || 0);
     const w = Math.max(0, Number(damage) - a);
     return damage > 0 && !ineffective ? Math.max(1, w) : w;
 };

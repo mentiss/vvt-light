@@ -448,3 +448,69 @@ côte à côte.
   « Thoughtmark » laissé en VO.
 - Faction Inquisition : l'Exorciste et le Sage reçoivent tous deux un Auspex et aucune Fonction
   l'Enregistreur picto du choix des Avantages, tel qu'imprimé.
+
+## 14. Infobulles et Endurance à l'armure (2026-11-13)
+
+### 14.1 Règle maison : l'Endurance s'ajoute à l'armure
+
+Pour mieux encaisser selon la carrure, le **bonus d'Endurance − 2** (BE − 2, jamais moins de 0)
+s'ajoute à l'armure de **chaque localisation** quand le personnage subit des dégâts.
+Exemple : Endurance 43, BE 4 : +2 d'armure partout ; BE 2 ou moins : rien.
+
+- **Réglage du setup** (`config/setup.js`, comme les livres et la création) :
+  `houseRules.toughnessArmour`, **activé** à cette table, désactivé dans `BOOK_SETUP` (livre).
+  Désactivé, rien ne change par rapport au livre.
+- **Arme Inefficace** (armure doublée) : seule l'armure des pièces est doublée, **pas le bonus**
+  (pour l'instant).
+- **Ignore l'armure** (Hémorragie, En feu…) : le bonus saute aussi (pour l'instant).
+- **Fiche, bloc Armure** : les localisations affichent l'armure totale (pièces + bonus) ; un encart
+  sous les localisations dit « Endurance : +N à chaque localisation (BE x − 2) ». BE ≤ 2 : l'encart
+  dit que la règle ne donne rien. Règle désactivée : ni encart ni bonus.
+- **Fenêtre « Subir des dégâts »** : l'armure de chaque localisation inclut le bonus.
+- **PNJ** : hors périmètre (leurs dégâts ne sont pas appliqués par l'app).
+- **Aide de jeu** : une ligne dans « Réglages de la table » (« Endurance à l'armure : BE − 2 ajouté
+  à chaque localisation » ou « Non »).
+- **Test** : le calcul du bonus (BE 1, 2, 4), l'armure avec et sans la règle, Inefficace (bonus non
+  doublé), Ignore l'armure.
+
+### 14.2 Infobulles habillées
+
+Les 24 infobulles natives (`title` sur une balise) passent par la brique `Tooltip` / `useTooltip`
+de la plateforme, habillée par `.vtt-tooltip` dans le `theme.css` (jour et nuit) :
+
+- à la source dans `Pill` (pilules : difficultés, Philosophie, Attitude…) et `MiniBtn` (− / + /
+  corbeille) ;
+- puis une par une : portrait, ligne Blessures, Solars, pastilles de Destin, États, caractéristiques,
+  Attaquer avec…, dégâts d'arme, Détail et Porter dans l'inventaire, Faveurs du Patron, puce
+  Supériorité, Mode Édition (fiche et MJ), Jet libre, En ligne / Hors ligne, choix de Faveurs et
+  de Handicaps, bouton de table grisé de la création ;
+- un bouton désactivé ne reçoit pas le survol : la bulle se pose sur un élément qui l'enveloppe ;
+- les boutons à icône seule gardent leur `aria-label`.
+
+### 14.3 Fait (2026-11-13)
+
+- Règle : `toughnessArmourBonus(c, setup)` (`config/rules/character.js`), paramètre `toughness` de
+  `woundsAfterArmour` et `takeDamage` ; testés.
+- Infobulles : `Tip` (`components/ui/MlUi.jsx`) pose `useTooltip` sur l'élément lui-même, sans
+  conteneur ; la brique `Tooltip` enveloppe le seul bouton désactivé (création). Écarts à la liste :
+  « Jet libre » et le nom d'un objet de l'inventaire (« Détail ») n'ont plus d'infobulle (elle
+  n'apprenait rien : libellé répété, clic évident) ; le détail des dégâts
+  d'arme (« X + BF, puis + DR ») passe dans la bulle de la ligne, sous « Attaquer avec… ».
+- Écart signalé : Q-12 (dégâts appliqués aux PNJ depuis le jet d'attaque) n'est pas dans le code.
+
+## 15. États en pastilles (2026-11-13)
+
+La fenêtre « États » plein écran disparaît, sur le modèle des tags de Cyberpunk (brique `Popover`
+de la plateforme, tirée de l'ancien `CpFloating` de Cyberpunk) :
+
+- **« + État »** : petite fenêtre collée au bouton. Recherche sur le nom et les effets (sans accents
+  ni casse), États en pastilles (« 2 niveaux » pour ceux qui en ont deux), déjà posés grisés, aperçu
+  de l'effet au survol en pied de fenêtre. Un clic pose l'État **en mineur** ; la fenêtre reste
+  ouverte. Entrée pose le premier État disponible de la recherche.
+- **Clic sur un État posé** : menu collé à la pastille : description, Mineur / Majeur (États à
+  deux niveaux, avec l'effet de chaque niveau, le niveau en cours marqué), Retirer. Plus de boucle
+  mineur → majeur → retiré : un clic de trop ne retire plus rien.
+- **Survol d'un État posé** : infobulle avec l'effet du niveau en cours.
+- Échap, clic à côté, défilement : fermeture.
+- Code : `components/layout/MlConditions.jsx`, action `setCondition(c, key, level | null)` (testée),
+  qui remplace `cycleCondition`.

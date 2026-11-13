@@ -7,7 +7,8 @@
 //   d10         jet d'un d10 sur une table (Maladresse)
 //   fate        Destin : dépenser, brûler, recharger (début de séance)
 //   solars      saisir les Solars ;  gainXp  XP gagnée
-//   conditions  ajouter un État ;  items  catalogue d'objets (CatalogModal) ;  item  détail d'un objet
+//   items       catalogue d'objets (CatalogModal) ;  item  détail d'un objet
+//               (les États ne passent plus par une fenêtre : MlConditions.jsx, menu et ajout ancrés)
 //   removeItem  retirer un objet ;  talent  détail d'un talent
 //   contact     ajouter / modifier un contact ;  influence  ajouter une faction d'Influence
 //   text        ajouter une ligne (séquelle…) ;  xp  dépenser l'XP
@@ -21,11 +22,10 @@ import CatalogModal from '@/ui/catalog/CatalogModal.jsx';
 import { SKILLS } from '../../config/skills.js';
 import { TALENTS } from '../../config/talents.js';
 import { POWERS } from '../../config/powers.js';
-import { CONDITIONS } from '../../config/tables.js';
 import { WEAPON_TRAITS, ARMOUR_TRAITS } from '../../config/traits.js';
 import { FACTIONS } from '../../config/factions.js';
 import {
-    CHAR_KEYS, CHAR_SHORT, CHAR_CAP, charValue, derived, displayName, armourByLocation, LOCATIONS, xpAvailable, skillAdvances,
+    CHAR_KEYS, CHAR_SHORT, CHAR_CAP, charValue, derived, displayName, armourByLocation, toughnessArmourBonus, LOCATIONS, xpAvailable, skillAdvances,
 } from '../../config/rules/character.js';
 import { LOCATION_LABELS, signed } from '../../config/rules/dice.js';
 import { CATALOG, KIND_LABELS, itemFromEntry, customItem } from '../../config/rules/items.js';
@@ -72,6 +72,7 @@ const CriticalRoller = ({ c, act, sessionId, theme, location, excess, onDone }) 
 
 const DamageForm = ({ c, act, sessionId, theme, onClose }) => {
     const armour = armourByLocation(c.items);
+    const toughness = toughnessArmourBonus(c);   // règle maison (§14.1), 0 si coupée
     const [damage, setDamage] = useState(0);
     const [location, setLocation] = useState('body');
     const [criticalHit, setCriticalHit] = useState(false);
@@ -79,7 +80,7 @@ const DamageForm = ({ c, act, sessionId, theme, onClose }) => {
     const [ignoreArmour, setIgnoreArmour] = useState(false);
     const [applied, setApplied] = useState(null);
     const apply = () => {
-        const r = A.takeDamage(c, { damage, armour: ignoreArmour ? 0 : armour[location], ineffective, criticalHit });
+        const r = A.takeDamage(c, { damage, armour: ignoreArmour ? 0 : armour[location], toughness: ignoreArmour ? 0 : toughness, ineffective, criticalHit });
         act.patch(r.patch);
         setApplied(r);
     };
@@ -90,7 +91,8 @@ const DamageForm = ({ c, act, sessionId, theme, onClose }) => {
                 <div className="im-roll-form">
                     <Field label="Dégâts"><Stepper value={damage} onChange={setDamage} min={0} max={60} editable unit="dégâts" /></Field>
                     <Field label="Localisation">
-                        <Pills>{LOCATIONS.map(l => <Pill key={l} on={location === l} onClick={() => setLocation(l)}>{LOCATION_LABELS[l]} (armure {armour[l]})</Pill>)}</Pills>
+                        <Pills>{LOCATIONS.map(l => <Pill key={l} on={location === l} onClick={() => setLocation(l)}>{LOCATION_LABELS[l]} (armure {armour[l] + toughness})</Pill>)}</Pills>
+                        {toughness > 0 && <small className="im-note">Dont +{toughness} d'Endurance (règle maison, BE − 2), non doublé par une arme Inefficace.</small>}
                     </Field>
                     <Field label="Cas particuliers">
                         <Toggle on={criticalHit} onChange={setCriticalHit}>Coup critique (double, attaque cachée) : Blessure critique même sous le maximum</Toggle>
@@ -174,23 +176,6 @@ const NumberForm = ({ title, value, onSave, onClose, label }) => {
         </Modal>
     );
 };
-
-const ConditionsForm = ({ c, act, onClose }) => (
-    <Modal title="États" subtitle="Clic : mineur, puis majeur, puis retiré" onClose={onClose} size="md"
-           footer={<button type="button" className="vtt-btn vtt-btn-primary" onClick={onClose}>Fermer</button>}>
-        <div className="im-cond-list">
-            {CONDITIONS.map(k => {
-                const level = c.conditions?.[k.key];
-                return (
-                    <button key={k.key} type="button" className={`im-cond${level ? ' is-on' : ''}${level === 'major' ? ' is-major' : ''}`} onClick={() => act.cycleCondition(k.key, !!k.major)}>
-                        <b>{k.label}{level ? ` · ${level === 'major' ? 'majeur' : 'mineur'}` : ''}</b>
-                        <small>{level === 'major' ? k.major : k.minor ?? k.summary}</small>
-                    </button>
-                );
-            })}
-        </div>
-    </Modal>
-);
 
 // ── Catalogue d'objets, détail, retrait ──────────────────────────────────────
 
@@ -320,7 +305,7 @@ const XpForm = ({ c, act, onClose }) => {
                footer={<button type="button" className="vtt-btn vtt-btn-primary" onClick={onClose}>Fermer</button>}>
             <MlTabs tabs={XP_TABS} active={tab} onSelect={setTab} className="im-mini-tabs" />
             {(tab === 'talents' || tab === 'powers' || tab === 'specs') && <input className="vtt-input im-search" placeholder="Rechercher…" value={query} onChange={e => setQuery(e.target.value)} />}
-            <div className="im-buy-list">
+            <div className="im-buy-list vtt-scroll">
                 {tab === 'chars' && CHAR_KEYS.map(k => (
                     <Buy key={k} label={`${CHAR_SHORT[k]} ${charValue(c, k)} → ${charValue(c, k) + 1}`} detail={charValue(c, k) >= CHAR_CAP ? `plafond ${CHAR_CAP}` : null}
                          offer={A.charAdvanceOffer(c, k)} onBuy={() => buy(A.advanceChar, k)} />
@@ -372,7 +357,6 @@ const MlSheetModals = ({ asked, c, act, patron, sessionId, theme, onClose }) => 
     case 'fate':       return <FateForm c={c} act={act} onClose={onClose} />;
     case 'solars':     return <NumberForm title="Solars" label="Solars" value={c.solars} onSave={v => act.patch({ solars: Math.max(0, v) })} onClose={onClose} />;
     case 'gainXp':     return <NumberForm title="Gagner de l'expérience" label="XP gagnée (30 à 50 par séance, +50 / +500 pour un objectif)" value={0} onSave={v => act.run(A.gainXp, v)} onClose={onClose} />;
-    case 'conditions': return <ConditionsForm c={c} act={act} onClose={onClose} />;
     case 'items':
         return (
             <CatalogModal title="Inventaire" subtitle="Catalogue · livre de base et Inquisition" labels={ITEM_LABELS} layout={ITEM_LAYOUT} tabsAs="pill"
