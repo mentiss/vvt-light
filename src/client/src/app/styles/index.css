@@ -6,7 +6,7 @@
    classes vtt-*. Uniquement les variables --color-*.
    Une feuille ne s'importe qu'ici, jamais depuis un composant (spec_arborescence_client.md §4). */
 @import "tailwindcss";
-@import './generated-css-utils.css';
+@import './tokens.css';
 @import './base.css';
 @import '../../ui/modal/modal.css';
 @import '../../ui/panel/panel.css';

@@ -1,0 +1,65 @@
+/* Couleurs de la plateforme pour Tailwind (spec_performance.md §3, règle F-TOKENS).
+   Les classes (bg-primary, hover:text-accent, border-default/40, glow-primary-xs…) sont produites
+   à la demande par Tailwind, seulement si le code les utilise ; états et opacités compris.
+
+   « reference » : déclaré à Tailwind sans rien écrire dans :root. La classe pointe la variable
+   (var(--color-primary, #000)) et la vraie valeur vient du theme.css du slug, jour comme nuit ;
+   #000 n'est qu'un repère. Une couleur sans valeur (initial) ne produirait aucune classe.
+
+   Correspondances :
+   - primary … surface-alt : même variable pour fond, texte et bordure ;
+   - default / base : --color-bg (fond), --color-text (texte), --color-border (bordure, divide, outline) ;
+   - muted : texte seulement (bg-muted et border-muted n'existent pas). */
+@theme reference {
+  --color-primary:     #000;
+  --color-secondary:   #000;
+  --color-accent:      #000;
+  --color-danger:      #000;
+  --color-success:     #000;
+  --color-surface:     #000;
+  --color-surface-alt: #000;
+
+  /* Noms dont la variable change selon la propriété */
+  --background-color-default: var(--color-bg);
+  --background-color-base:    var(--color-bg);
+  --text-color-default:       var(--color-text);
+  --text-color-muted:         var(--color-text-muted);
+  --border-color-default:     var(--color-border);
+  --border-color-base:        var(--color-border);
+}
+
+/* text-base est aussi la taille de police de Tailwind : déclaré dans @theme, la couleur la
+   remplacerait. En @utility, les deux règles coexistent (taille 1rem + couleur). */
+@utility text-base { color: var(--color-text); }
+
+/* glow-{couleur} (4px) et glow-{couleur}-{taille} : drop-shadow coloré.
+   Une règle par couleur, les tailles une seule fois ici (valeurs inscrites dans la classe). */
+@theme inline reference {
+  --glow-size-3xs: 0.5px;
+  --glow-size-2xs: 1px;
+  --glow-size-xs:  2px;
+  --glow-size-sm:  3px;
+  --glow-size-md:  4px;
+  --glow-size-lg:  6px;
+  --glow-size-xl:  8px;
+  --glow-size-2xl: 12px;
+  --glow-size-3xl: 16px;
+  --glow-size-4xl: 20px;
+  --glow-size-5xl: 24px;
+  --glow-size-6xl: 32px;
+  --glow-size-7xl: 40px;
+}
+
+@utility glow-*      { filter: drop-shadow(0 0 4px --value(--color-*)); }
+@utility glow-default { filter: drop-shadow(0 0 4px var(--color-bg)); }
+@utility glow-base    { filter: drop-shadow(0 0 4px var(--color-bg)); }
+
+@utility glow-primary-*     { filter: drop-shadow(0 0 --value(--glow-size-*) var(--color-primary)); }
+@utility glow-secondary-*   { filter: drop-shadow(0 0 --value(--glow-size-*) var(--color-secondary)); }
+@utility glow-accent-*      { filter: drop-shadow(0 0 --value(--glow-size-*) var(--color-accent)); }
+@utility glow-danger-*      { filter: drop-shadow(0 0 --value(--glow-size-*) var(--color-danger)); }
+@utility glow-success-*     { filter: drop-shadow(0 0 --value(--glow-size-*) var(--color-success)); }
+@utility glow-surface-*     { filter: drop-shadow(0 0 --value(--glow-size-*) var(--color-surface)); }
+@utility glow-surface-alt-* { filter: drop-shadow(0 0 --value(--glow-size-*) var(--color-surface-alt)); }
+@utility glow-default-*     { filter: drop-shadow(0 0 --value(--glow-size-*) var(--color-bg)); }
+@utility glow-base-*        { filter: drop-shadow(0 0 --value(--glow-size-*) var(--color-bg)); }

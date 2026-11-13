@@ -28,10 +28,10 @@ Pour qu'il ne se périme pas entre deux bilans :
 - Session MJ générique, **périmètre réduit par le MJ le 2026-11-12** : pas de `TabSession` générique (le commun est mince, la disposition et le contenu varient trop d'un slug à l'autre ; chaque slug garde son `TabSession`), pas de brique pour l'écran « Aucune table active ». Retenu : 1. `useTableCharacters`, recopié dans plusieurs slugs (envoi partiel PATCH, ou PUT complet pour Dune), sorti en hook de la plateforme dans `features/table/hooks/` ; 2. une brique qui regroupe les outils de table (musique, tableau et les suivants) que le slug pose où il veut, pour qu'une nouvelle brique ne touche plus chaque `TabSession`. **Fait le 2026-11-12, hors prod** (`spec_session_mj.md`, lots 1 et 2) : `useTableCharacters` et `TableSessionTools` dans tous les slugs sauf Noctis ; à passer dans `backlog_fait.md` à la release.
 
 **Performance du chargement (relevé Lighthouse du 2026-11-12, prod, `/vikings/gm`)** : chantier décidé par le MJ, diagnostic détaillé avant tout code. Premier affichage 0,9 s, page remplie vers 3 à 3,5 s.
-- CSS commune : `app/styles/generated-css-utils.css` génère d'avance toutes les variantes (couleurs × états × opacités) ; la feuille commune bâtie pèse plus de 2 Mo décompressée, sur toutes les pages. Levier principal (lecture de la feuille et recalculs de style) : ne produire que les classes utilisées.
+- CSS commune : **fait hors prod le 2026-11-13** (`spec_performance.md`, lot 1) : générateur remplacé par `app/styles/tokens.css`, feuille commune de 2,28 Mo à 145 Ko (gzip 128 → 24 Ko). Après la release : relevé Lighthouse sur `/vikings/gm` à comparer.
 - Chargement à la demande (`React.lazy`, F-LAZY) de ce qui n'est pas affiché à l'ouverture : onglet Historique et bibliothèque de dés (`DiceHistoryPage`), aide de jeu des slugs, pages importées directement par `AppRouter` (générateur de plans en tête).
 - Cascade de chargements en série au démarrage (`auth/refresh` → `auth/me` → session → `GMApp` → fiches) : voir ce qui peut partir en parallèle.
-- `preconnect` vers les polices Google (environ 200 ms).
+- `preconnect` vers les polices Google (environ 200 ms) : **fait hors prod le 2026-11-13** (`spec_performance.md`, lot 3).
 - HTTP/1.1 : le MJ ne veut pas de proxy (nginx, Caddy) devant Node ; HTTP/2 hors de ce chantier.
 
 **À étudier / analyser (audit du 2026-10-23)**

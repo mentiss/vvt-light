@@ -56,7 +56,7 @@ src/
     context/      AuthContext, SessionContext, SocketContext, SystemsContext
     hooks/        useFetch, useSystem, useSlugConfig, useSlugGuard, useGMSession, usePlayerSession, usePersistedState
     tools/        browserStorage, browserStorageMigration, utils
-    styles/       index.css, base.css, platform.css, placements.css, generated-css-utils.css
+    styles/       index.css, base.css, platform.css, placements.css, tokens.css (generated-css-utils.css jusqu'au 2026-11-13, spec_performance.md)
   ui/
     modal/        Modal, ModalHost, AlertModal, ConfirmModal, modal.css
     panel/        FloatingPanel, panel.css

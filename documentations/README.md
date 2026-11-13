@@ -67,6 +67,7 @@ Conventions :
 | `spec_pnj.md` | PNJ de la plateforme | en prod (v5.23.0) ; Cyberpunk, Delta Green, Tecumah à venir |
 | `spec_session_bar.md` | Barre de session des joueurs | en prod |
 | `spec_session_mj.md` | Session MJ : hook des personnages de la table, outils de table | validée ; lots 1 et 2 faits, pas encore en prod |
+| `spec_performance.md` | Performance du chargement : couleurs par Tailwind (`tokens.css`, fin du générateur), `preconnect` des polices | validée ; lots 1 et 3 faits, pas encore en prod |
 | `spec_tableau.md` | Tableau partagé | v1 et v2 (lots A à C) en prod ; lot D à venir |
 | `spec_tables.md` | Tables actives (plusieurs tables par slug) | en prod (v5.25.0) |
 | `spec_ui_actions.md` | Zone d'actions, panneau d'historique | en prod |

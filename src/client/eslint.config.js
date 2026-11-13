@@ -107,7 +107,7 @@ export default defineConfig([
     },
   },
   {
-    // Scripts Node exécutés hors navigateur (copy-dice-assets, generate-css-utils…)
+    // Scripts Node exécutés hors navigateur (copy-dice-assets, genmap-bench…)
     files: ['scripts/**/*.js'],
     languageOptions: { globals: globals.node },
   },

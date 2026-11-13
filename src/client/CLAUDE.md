@@ -85,7 +85,7 @@ Tout passe par `usePersistedState` / `readStored` / `writeStored` (F-STORAGE). P
 
 ## CSS / style
 
-- Classes générées par `generate-css-utils.js` (`app/styles/generated-css-utils.css`) : variantes `bg`/`text`/`border`/`ring`/`glow`/`placeholder`, états hover/focus/active/disabled/group-hover, opacités comme `bg-primary/10`. S'il manque une classe, on l'ajoute dans `theme.css`.
+- Couleurs de la plateforme déclarées à Tailwind dans `app/styles/tokens.css` (`documentations/plateforme/spec_performance.md` §3) : `bg`/`text`/`border`/`divide`/`outline`/`ring`/`placeholder`… sur `primary`, `secondary`, `accent`, `danger`, `success`, `surface`, `surface-alt`, `default` (fond `--color-bg`, texte `--color-text`, bordure `--color-border`), `muted` (texte seulement), plus `glow-{couleur}[-{taille}]`. Tailwind ne produit que les classes trouvées dans le code, avec tous les états (`hover:`, `group-hover:`…) et opacités (`bg-primary/10`). Une couleur d'un seul slug va dans son `theme.css`.
 - Mode sombre : `data-theme` posé sur `<html>` par la plateforme (`applyTheme`).
 - Style par défaut de la plateforme : une feuille par brique (`ui/modal/modal.css`, `features/audio/audio.css`…), importées dans l'ordre par `app/styles/index.css`.
 - `theme.css` est chargé au niveau page (`import.meta.glob` dans `PlayerPage`/`GMPage`). Les `import './theme.css'` restés dans d'anciens slugs sont en trop mais sans effet (exceptions du lint).
