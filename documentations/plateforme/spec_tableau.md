@@ -337,7 +337,7 @@ Proposition : **aucun plafond qui bloque**.
 - **Verrouillage** : action du MJ uniquement, objet par objet ; un objet verrouillé ne bouge, ne se redimensionne ni ne s'efface plus (Q-41).
 - **Jeton et icône** se distinguent par l'apparence : le **jeton** est un cercle avec l'avatar ou les initiales ; l'**icône** de la bibliothèque est posée nue, sans cercle ni contour, dans une couleur de la palette fixe. Pour le reste (déplacement selon le réglage de la diapositive, verrou), même comportement (Q-42).
 - **Grille** : réglages en cascade plateforme → slug (`config.jsx`) → session → diapositive, chaque niveau reprenant le précédent tant qu'il n'est pas modifié (Q-43).
-- **Bibliothèque** : choisir une icône se fait par **recherche** et par **catégories** (Q-44). Sélection à valider sur la page de prévisualisation `documentations/tableau/icones_preview.html` : 162 icônes candidates en 8 catégories, recherche en français et en anglais, palette fixe de 8 couleurs, mise en situation jetons / icônes sur un plan.
+- **Bibliothèque** : choisir une icône se fait par **recherche** et par **catégories** (Q-44). Sélection validée sur une page de prévisualisation (`icones_preview.html`, supprimée le 2026-11-12 une fois la bibliothèque en prod) : 162 icônes candidates en 8 catégories, recherche en français et en anglais, palette fixe de 8 couleurs, mise en situation jetons / icônes sur un plan.
 
 **Bibliothèque et licence (MJ, 2026-10-28, après la prévisualisation)**
 - On intègre **toute la bibliothèque game-icons.net** (4 239 icônes au dépôt `game-icons/icons`), **sauf la collection « badges »** (59 icônes, inutiles en v1) : environ 4 180 icônes, livrées avec l'application.
