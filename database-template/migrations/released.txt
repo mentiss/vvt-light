@@ -53,3 +53,5 @@
 10112026_npcs_nimble.sql
 10112026_npcs_woddavampire.sql
 10112026_audio_track_source.sql
+13112026_journal_partage.sql
+13112026_journal_refonte.sql
