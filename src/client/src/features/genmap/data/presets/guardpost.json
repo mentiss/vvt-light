@@ -1,0 +1,25 @@
+{
+  "id": "guardpost",
+  "label": "Poste de garde",
+  "params": { "width": 14, "length": 12, "floors": 1, "basement": false, "density": "balanced" },
+  "context": { "era": { "from": "early_middle_ages", "to": "industrial", "default": "middle_ages" }, "traits": { "accepted": [], "default": [] }, "rank": null },
+  "rooms": [
+    { "type": "entrance",   "quantity": 1 },
+    { "type": "courtyard",  "quantity": 1 },
+    { "type": "guard_room", "quantity": 1 },
+    { "type": "cell",       "quantity": 2, "floor": "ground" },
+    { "type": "armory",     "quantity": 1, "floor": "ground" },
+    { "type": "office",     "quantity": 1, "floor": "upper", "label": "Bureau du capitaine" }
+  ],
+  "optionalRooms": [
+    { "type": "dormitory", "quantity": [0, 1], "floor": "upper" },
+    { "type": "storeroom", "quantity": [0, 1] },
+    { "type": "cell",      "quantity": [0, 1], "floor": "ground" },
+    { "family": "bath",    "quantity": [0, 1] }
+  ],
+  "stairs": [
+    { "cages": [
+      { "label": "Escalier", "from": "ground", "to": "top", "kind": "straight", "size": 6 }
+    ] }
+  ]
+}

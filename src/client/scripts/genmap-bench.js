@@ -37,7 +37,7 @@ const readJson = (file) => JSON.parse(readFileSync(path.join(ROOT, file), 'utf8'
 const { generate, resolvePreset, SHAPES } = await import('../src/features/genmap/tools/generate.js');
 const roomTypes = readJson('data/roomTypes.json');
 const engine    = readJson('data/engine.json');
-const PRESET_IDS = ['inn', 'manor', 'temple', 'warehouse', 'house', 'tower'];
+const PRESET_IDS = ['inn', 'manor', 'temple', 'warehouse', 'house', 'tower', 'guardpost', 'hovel', 'policestation', 'magetower'];
 
 // ── Options ──────────────────────────────────────────────────────────────────
 

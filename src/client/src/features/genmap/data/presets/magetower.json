@@ -1,0 +1,24 @@
+{
+  "id": "magetower",
+  "label": "Tour de mage",
+  "layout": { "schemes": ["enfilade"] },
+  "params": { "width": 8, "length": 8, "floors": 3, "basement": true, "density": "dense", "outline": "shape", "shape": "circle" },
+  "context": { "era": { "from": "early_middle_ages", "to": "industrial", "default": "middle_ages" }, "traits": { "accepted": ["magic"], "default": ["magic"] }, "rank": null },
+  "rooms": [
+    { "type": "entrance",       "quantity": 1 },
+    { "type": "library",        "quantity": 1, "floor": "ground" },
+    { "type": "alchemy_lab",    "quantity": 1, "floor": "1" },
+    { "type": "bedroom",        "quantity": 1, "floor": "2", "label": "Chambre du mage" },
+    { "type": "observatory",    "quantity": 1, "floor": "top" },
+    { "type": "summoning_room", "quantity": 1, "floor": "basement" }
+  ],
+  "optionalRooms": [
+    { "type": "storeroom", "quantity": [0, 2], "label": "Réserve d'ingrédients" },
+    { "type": "study",     "quantity": [0, 1], "floor": "upper" }
+  ],
+  "stairs": [
+    { "cages": [
+      { "label": "Escalier à vis", "from": "basement", "to": "top", "kind": "spiral", "size": 4 }
+    ] }
+  ]
+}

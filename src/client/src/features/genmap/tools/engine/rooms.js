@@ -91,6 +91,12 @@ export const placeRooms = (g, rooms, before, isNetwork, rnd, servedOnly = false,
                             score += touching.has(r.id) ? 8 : -distance(centre(rect), centre(r.rect)) * 0.3;
                         }
                         if ((room.cannotBeAdjacentTo.includes(r.typeId) || r.cannotBeAdjacentTo.includes(room.typeId)) && touching.has(r.id)) score -= 20;
+                        // Préférences de voisinage du type (§43) : se regrouper avec ses semblables
+                        // (cellules), chercher (`near`) ou éviter (`avoid`) certains types ; jamais obligatoires
+                        if (!touching.has(r.id)) continue;
+                        if (room.grouped && r.typeId === room.typeId) score += 12;
+                        if (room.near?.includes(r.typeId)) score += 8;
+                        if (room.avoid?.includes(r.typeId)) score -= 15;
                     }
                     if (!best || score > best.score) best = { score, rect, cells };
                 }

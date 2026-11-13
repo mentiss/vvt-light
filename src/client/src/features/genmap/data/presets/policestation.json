@@ -1,0 +1,27 @@
+{
+  "id": "policestation",
+  "label": "Commissariat",
+  "layout": { "schemes": ["spine"], "width": 2 },
+  "params": { "width": 14, "length": 10, "floors": 1, "basement": false, "density": "balanced" },
+  "context": { "era": { "from": "modern", "to": "future", "default": "modern" }, "traits": { "accepted": [], "default": [] }, "rank": null },
+  "rooms": [
+    { "type": "entrance",           "quantity": 1, "label": "Accueil" },
+    { "type": "guard_room",         "quantity": 1, "label": "Salle des agents" },
+    { "type": "cell",               "quantity": [2, 3], "floor": "ground" },
+    { "type": "interrogation_room", "quantity": 1, "floor": "ground" },
+    { "type": "office",             "quantity": [2, 4], "floor": "upper" },
+    { "type": "study",              "quantity": 1, "floor": "upper", "label": "Bureau du commissaire" },
+    { "type": "archives",           "quantity": 1, "floor": "upper" }
+  ],
+  "optionalRooms": [
+    { "type": "armory",      "quantity": [0, 1] },
+    { "type": "locker_room", "quantity": [0, 1] },
+    { "family": "bath",      "quantity": [0, 2] },
+    { "type": "storeroom",   "quantity": [0, 1] }
+  ],
+  "stairs": [
+    { "cages": [
+      { "label": "Escalier", "from": "ground", "to": "top", "kind": "straight", "size": 6 }
+    ] }
+  ]
+}

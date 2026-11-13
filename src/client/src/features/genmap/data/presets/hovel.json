@@ -1,0 +1,21 @@
+{
+  "id": "hovel",
+  "label": "Habitation modeste",
+  "params": { "width": 9, "length": 7, "floors": 0, "basement": false, "density": "dense" },
+  "context": { "era": { "from": "early_middle_ages", "to": "industrial", "default": "middle_ages" }, "traits": { "accepted": [], "default": [] }, "rank": "modest" },
+  "rooms": [
+    { "type": "entrance", "quantity": 1 },
+    { "type": "living",   "quantity": 1, "label": "Pièce principale" },
+    { "type": "kitchen",  "quantity": 1 },
+    { "type": "bedroom",  "quantity": [1, 2], "floor": "ground" },
+    { "type": "cave",     "quantity": 1 }
+  ],
+  "optionalRooms": [
+    { "type": "storeroom", "quantity": [0, 1] }
+  ],
+  "stairs": [
+    { "cages": [
+      { "label": "Trappe de cave", "from": "basement", "to": "ground", "kind": "trap", "size": 2 }
+    ] }
+  ]
+}

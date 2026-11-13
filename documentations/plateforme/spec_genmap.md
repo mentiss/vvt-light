@@ -372,7 +372,7 @@ Les éléments suivants sont explicitement hors scope pour la première version 
 | `src/client/src/features/genmap/data/roomTypes.json` | Bibliothèque des types de pièces |
 | `src/client/src/features/genmap/data/presets/inn.json` | Preset Auberge |
 | `src/client/src/app/pages/GenMapPage.jsx` | Page `/tools/plans`, styles de la plateforme comme l'accueil |
-| `src/client/tests/genmap/generate.test.js` | Tests du moteur |
+| `src/client/tests/features/genmap/tools/generate.test.js` | Tests du moteur : hors de `npm test` (le générateur est un outil à part), lancés par `npm run test:genmap` depuis `src/client` |
 
 ### 11.3 Contrat du moteur
 
@@ -1800,3 +1800,80 @@ Diagnostic du manoir 1000 : ce n'était pas l'escalier qui ouvrait du mauvais c�
 - **Tour de garde** (CE-5) : gabarit cercle par défaut, **diamètre 8** et non 9 : à 9, son programme ne remplit plus le disque (refus « trop grand ») ; à 7, l'entrée ne trouve plus de mur assez droit. Le carré (contour Rectangle) reste au choix. Une ou deux pièces par niveau autour de l'escalier à vis (CE-4).
 - **Tests** : la tour ronde suit le gabarit (RDC non rectangulaire, étages dedans, entrée sur le mur) ; chaque pièce est dans le disque et forme un rectangle ou un L avec ses cases rognées ; le test général des formes lit les cases rognées ; plage de dimensions de la tour : diamètre 8 seulement.
 - **Banc** (40 graines) : tour ronde 40 / 40 dans toutes ses variantes de densité, de schéma et de couloir ; lieu de culte et maison en cercle (enveloppe × 1,25) 40 / 40 ; auberge 16, manoir 2, entrepôt 0 (pièce maîtresse et hall de stockage, rectangles trop grands pour un disque). **La tour carrée ne tient plus en 8 × 8** (trop grande pour son programme) : en contour Rectangle, il faut revenir à 7 × 7. 2 444 / 3 040 plans aboutis sur les 76 configurations du banc.
+
+---
+
+## 41. M6 Composition des presets — version fonctionnelle (12/11/2026)
+
+> Consigne du MJ : pas de planche, pas de travail d'ergonomie ni de présentation à ce stade ; on fait fonctionnel, on teste, on itère, l'aspect viendra après. Décisions reprises : S-6, S-7, P-1, P-2 (§35.5, §36.5), stockage navigateur + fichier (S-3).
+
+**Presets personnels** (P-1) : gardés dans ce navigateur (`usePersonalPresets`, stockage de la plateforme, clé `vtt:platform:genmap-presets`), listés à la suite des presets fournis avec la mention « perso ». Un preset fourni ne se modifie pas : « Copier pour modifier » en fait une copie personnelle. « Nouveau » part d'un petit programme qui se génère tel quel (entrée, séjour, cuisine, chambre). « Supprimer » pour un preset personnel.
+
+**Éditeur** (`features/genmap/PresetEditor.jsx`, S-6), sous la liste des presets, pour un preset personnel :
+- nom ; contexte (plage d'époque, époque de référence, rang) ;
+- réglages par défaut : repris de la page (« Reprendre les réglages de la page » : dimensions, étages, sous-sol, densité, contour et gabarit) ;
+- pièces obligatoires et de complément : type (liste par catégorie, pièces hors de l'époque choisie masquées sauf case « toutes les pièces », §36.8) ou famille, quantité minimale et maximale, étage, **nom libre** (pièce libre : un type existant sert de modèle sous un autre nom, S-7, libellé surchargé T-2) ; pour le complément, « annexe de chaque » pièce du programme (`per`) ;
+- escaliers : dispositions et cages (nom, plage de niveaux, genre, taille).
+- Pas encore éditables : le schéma de circulation et la pièce maîtresse (`layout`, `layoutByLevel`, repris tels quels d'une copie), les traits, les surcharges autres que le nom.
+
+**Fichiers JSON** (`tools/presetFile.js`, P-2) : « Exporter le preset » ; « Exporter la recette du plan » (preset, réglages, graine, époque, pièces gardées : refait exactement le même plan) ; « Importer » un preset ou une recette, qui devient un preset personnel (nouvel identifiant, jamais de remplacement) ; une recette règle aussi la page et régénère le plan. Fichier refusé avec un message lisible : JSON invalide, format inconnu, preset sans nom, dimensions ou pièce, type de pièce inconnu.
+
+**Choix techniques** : listes déroulantes natives dans l'éditeur (45 types par catégorie ; F-CONTROLS, préférence, exception commentée) ; résolution du preset à chaque rendu de la page.
+
+**Tests** (`presetFile.test.js`) : copie sans toucher l'original, identifiant libre, nouveau preset qui se génère, preset exporté puis relu identique, **recette exportée puis relue qui redonne exactement le même plan**, refus des fichiers qui ne conviennent pas. Vérifié dans Edge (copie du manoir, ajout d'une pièce et d'une famille, génération) : aucune erreur dans la console. 1 397 tests verts, lint et build verts.
+
+---
+
+## 42. M7 Presets et pièces du lot (13/11/2026)
+
+> Décisions reprises : P-3, T-5 (poste de garde, habitation modeste, un preset moderne, une tour de mage), §39 (latrine, pièces modernes et magiques à ajouter avec leurs presets).
+
+**Nouveaux types de pièces** (classés selon le §39) :
+
+| Type | Taille | Classement |
+|---|---|---|
+| Latrine | 1 à 4 | Eau et hygiène, famille « Salle d'eau », haut Moyen Âge → Renaissance, aisé et plus, **fenêtre obligatoire** (le conduit donne dehors) |
+| Cellule | 4 à 9 | Défense et détention, antiquité →, intérieure, on ne la traverse pas |
+| Salle d'interrogatoire | 6 à 12 | Défense et détention, XIXᵉ →, intérieure |
+| Archives | 6 à 20 | Stockage, Moyen Âge →, intérieure |
+| Cour intérieure | 16 à 48 | Structure, extérieur : structurante, ouverte, à ciel ouvert (vide à l'étage) |
+| Laboratoire d'alchimie | 9 à 20 | Travail, **magie**, avec fenêtre |
+| Salle d'invocation | 9 à 25 | Culte, **magie**, intérieure |
+| Observatoire | 9 à 45 | Travail, dernier étage, fenêtre obligatoire |
+
+**Classement corrigé** : le Bureau existe dès le Moyen Âge (au lieu de la Renaissance), pour le bureau du capitaine d'un poste de garde médiéval.
+
+**Nouveaux presets** (tous à 40 / 40 avec leurs réglages) :
+- **Poste de garde** : 14 × 12, RDC + 1, densité équilibrée (en enfilade, cellules et armurerie qu'on ne traverse pas bloquaient les portes : 17 / 40) ; entrée, cour intérieure, salle de garde, deux cellules, armurerie au RDC ; bureau du capitaine à l'étage ; complément : dortoir, réserve, troisième cellule, salle d'eau (une latrine au Moyen Âge). Haut Moyen Âge → XIXᵉ, Moyen Âge par défaut.
+- **Habitation modeste** : 9 × 7 (8 × 6 ne tenait pas avec deux chambres), RDC seul ; entrée, pièce principale (Séjour renommé), cuisine, une ou deux chambres, cave si sous-sol (trappe). Rang modeste.
+- **Commissariat** (preset moderne) : 14 × 10 (16 × 12 trop grand pour son RDC), RDC + 1, couloir traversant ; accueil, salle des agents, deux ou trois cellules, salle d'interrogatoire au RDC ; bureaux, bureau du commissaire, archives à l'étage ; complément : armurerie, vestiaire, salles d'eau, réserve. Moderne → futur.
+- **Tour de mage** : ronde, diamètre 8, sous-sol + 3 étages, colimaçon du sous-sol au sommet ; salle d'invocation au sous-sol, entrée et bibliothèque au RDC, laboratoire d'alchimie à l'étage 1, chambre du mage à l'étage 2, observatoire au sommet ; complément : réserves d'ingrédients, étude. Accepte la **magie**, active par défaut ; sans elle, le laboratoire et la salle d'invocation sont retirés (« Garder quand même » possible).
+
+**Page** : section « Univers » pour les traits que le preset accepte (la magie de la tour de mage), active ou non ; la recette exportée garde les traits actifs.
+
+**Correctifs du moteur révélés par ces presets** :
+- la règle du grand reste respecte l'**exposition obligatoire** (une latrine naissait au milieu du bâtiment) ;
+- une pièce de complément posée dans un reste ne dépasse plus la **quantité maximale** de son entrée (un poste de garde avait quatre latrines) ; la réserve générique, dernier recours, n'est pas concernée.
+
+**Tests** : les quatre presets aboutissent et ne retirent rien à leur époque de référence ; pièces magiques présentes avec la magie, retirées sans elle ; latrine contre un mur extérieur et pas plus d'une. Vérifié dans Edge (tour de mage, section Univers, cinq niveaux). Tests du générateur (`npm run test:genmap`, 678) et autres tests (735) verts, lint et build verts.
+
+---
+
+## 43. Cellules : placement et règles (13/11/2026)
+
+> Retour du MJ : une cellule ne devrait jamais recevoir de pièce adjointe (débarras, réserve) ; les cellules devraient se trouver ensemble, si possible derrière une autre pièce ou une autre porte, jamais dans l'accueil. Plan proposé et accepté (« oui pourquoi pas »).
+
+**Nouvelles propriétés de type** (générales, réutilisables pour d'autres pièces) :
+
+| Propriété | Sens | Où le moteur la lit |
+|---|---|---|
+| `noAnnex` | La pièce ne reçoit aucune annexe | Débarras d'un petit reste, réserve rattachée d'un grand reste |
+| `grouped` | La pièce cherche le contact avec ses semblables (préférence forte, + 12) | Placement |
+| `near` | Types dont la pièce cherche le contact (+ 8) | Placement |
+| `avoid` | Types dont la pièce évite le contact (− 15) | Placement |
+
+**Classement** : cellule `noAnnex`, `grouped`, `near` salle de garde, `avoid` entrée, grand hall, salle commune ; portes interdites vers ces trois types et, entre pièces fermées, permises seulement vers la salle de garde (le couloir reste permis). Salle d'interrogatoire `noAnnex`, `near` salle de garde et cellule, `avoid` entrée. Armurerie `noAnnex`.
+
+**Mesure** (40 graines) : poste de garde et commissariat restent à 40 / 40 ; aucune annexe de cellule, aucune porte de cellule vers l'accueil ; cellules toutes groupées dans 34 / 40 plans (poste de garde) et 30 / 40 (commissariat) ; contre la salle de garde dans 19 / 40 et 3 / 40. Au commissariat, le couloir traversant sépare le plus souvent les cellules de la salle des agents : une préférence plus forte n'y change rien (3 / 40) et défait des regroupements ; le vrai remède est le **quartier cellulaire** (couloir propre fermé par une porte), chantier à part, plus tard.
+
+**Tests** : jamais d'annexe de cellule ni de porte de cellule vers l'accueil, le hall ou la salle commune ; cellules groupées dans au moins 60 % des plans. 680 tests du générateur verts, build vert.

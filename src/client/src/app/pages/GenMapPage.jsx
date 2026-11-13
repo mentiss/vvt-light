@@ -17,12 +17,28 @@ import temple from '@/features/genmap/data/presets/temple.json';
 import warehouse from '@/features/genmap/data/presets/warehouse.json';
 import house from '@/features/genmap/data/presets/house.json';
 import tower from '@/features/genmap/data/presets/tower.json';
+import guardpost from '@/features/genmap/data/presets/guardpost.json';
+import hovel from '@/features/genmap/data/presets/hovel.json';
+import policestation from '@/features/genmap/data/presets/policestation.json';
+import magetower from '@/features/genmap/data/presets/magetower.json';
 import engine from '@/features/genmap/data/engine.json';
 import library from '@/features/genmap/data/library.json';
+import PresetEditor from '@/features/genmap/PresetEditor.jsx';
+import { usePersonalPresets } from '@/features/genmap/hooks/usePersonalPresets.js';
+import { copyPreset, emptyPreset, exportPreset, exportRecipe, readGenmapFile } from '@/features/genmap/tools/presetFile.js';
+
+// Téléchargement d'un fichier texte (export JSON, §41)
+const download = (name, text) => {
+    const url = URL.createObjectURL(new Blob([text], { type: 'application/json' }));
+    const a = Object.assign(document.createElement('a'), { href: url, download: name });
+    a.click();
+    URL.revokeObjectURL(url);
+};
+const fileName = (label) => `${label.toLowerCase().replace(/[^a-z0-9à-ÿ]+/g, '-').replace(/^-|-$/g, '') || 'preset'}.json`;
 
 // Presets disponibles (§5, §14.3) : le programme est résolu selon le contexte choisi (§39), ici
 // seulement les réglages par défaut et le contexte déclaré
-const RAW_PRESETS = [inn, manor, temple, warehouse, house, tower];
+const RAW_PRESETS = [inn, manor, temple, warehouse, house, tower, guardpost, hovel, policestation, magetower];
 const PRESETS = RAW_PRESETS.map(preset => ({ id: preset.id, label: preset.label, raw: preset, ...resolvePreset(preset, roomTypes) }));
 
 // Époques proposées par un preset (§36.7a) : celles de sa plage, dans l'ordre de la bibliothèque
@@ -128,13 +144,21 @@ const Icon = ({ d, children }) => (
 
 const GenMapPage = ({ darkMode, onToggleDarkMode }) => {
     const mustReload = useSlugGuard();
+    // Presets fournis et presets personnels de ce navigateur (§41, P-1)
+    const personal = usePersonalPresets();
+    const allPresets = [...PRESETS, ...personal.presets.map(p => ({ id: p.id, label: p.label, raw: p, personal: true, ...resolvePreset(p, roomTypes) }))];
     const [presetId,  setPresetId]  = useState(PRESETS[0].id);
-    const { label: presetLabel, raw, params: defaults, context } = PRESETS.find(p => p.id === presetId);
+    const current = allPresets.find(p => p.id === presetId) ?? PRESETS[0];
+    const { label: presetLabel, raw, params: defaults, context } = current;
+    const [editing,   setEditing]   = useState(false);
+    const [fileError, setFileError] = useState(null);
     // Contexte (§36.7a, §36.8) : époque choisie, pièces gardées hors de leur époque
     const [era,       setEra]       = useState(PRESETS[0].context.era?.default ?? null);
     const [keep,      setKeep]      = useState([]);
+    // Traits d'univers actifs (§36.6b) : parmi ceux que le preset accepte (la magie de la tour de mage)
+    const [traits,    setTraits]    = useState(PRESETS[0].context.traits.default ?? []);
     // Résolution à chaque rendu : quelques dizaines d'entrées, rien à mémoriser
-    const { program, removed } = resolvePreset(raw, roomTypes, { era }, keep);
+    const { program, removed } = resolvePreset(raw, roomTypes, { era, traits }, keep);
     const [width,     setWidth]     = useState(defaults.width);
     const [length,    setLength]    = useState(defaults.length);
     const [density,   setDensity]   = useState(defaults.density);
@@ -160,7 +184,8 @@ const GenMapPage = ({ darkMode, onToggleDarkMode }) => {
         };
         setWidth(params.width);
         setLength(params.length);
-        setResult({ ...generate(program, params), seed });
+        // Réglages gardés avec le plan : la recette exportée refait exactement ce plan (P-2)
+        setResult({ ...generate(program, params), seed, params });
         // Le niveau affiché est conservé s'il existe encore, sinon retour au RDC
         if (level > params.floors || (level < 0 && !params.basement)) setLevel(0);
     };
@@ -175,11 +200,13 @@ const GenMapPage = ({ darkMode, onToggleDarkMode }) => {
         run(randomSeed());
     };
 
-    // Changer de preset reprend ses dimensions et sa densité, et efface le plan affiché
-    const selectPreset = (id) => {
-        const { params, context: next } = PRESETS.find(p => p.id === id);
+    // Changer de preset reprend ses dimensions et sa densité, et efface le plan affiché. `entry` :
+    // preset qui vient d'être enregistré, pas encore relu du stockage
+    const selectPreset = (id, entry = null) => {
+        const { params, context: next, program: nextProgram } = entry ?? allPresets.find(p => p.id === id);
         setPresetId(id);
         setEra(next.era?.default ?? null);
+        setTraits(next.traits?.default ?? []);
         setKeep([]);
         setWidth(params.width);
         setLength(params.length);
@@ -190,9 +217,48 @@ const GenMapPage = ({ darkMode, onToggleDarkMode }) => {
         setOutline(params.outline ?? 'rect');
         if (params.shape) setShape(params.shape);
         // Un schéma imposé que le nouveau preset ne déclare pas revient à celui du preset
-        if (!schemeOffered(PRESETS.find(p => p.id === id).program, scheme)) setScheme('preset');
+        if (!schemeOffered(nextProgram, scheme)) setScheme('preset');
         setLevel(0);
         setResult(null);
+    };
+
+    // Presets personnels (§41) : un preset fourni se copie pour être modifié (P-1)
+    const takenIds = allPresets.map(p => p.id);
+    const savePreset = (preset, select = false) => {
+        personal.save(preset);
+        if (select) selectPreset(preset.id, { ...resolvePreset(preset, roomTypes), id: preset.id });
+    };
+    const onCopy = () => { savePreset(copyPreset(raw, takenIds), true); setEditing(true); };
+    const onNew = () => { savePreset(emptyPreset(takenIds), true); setEditing(true); };
+    const onDelete = () => { personal.remove(raw.id); setEditing(false); selectPreset(PRESETS[0].id); };
+    const onTakeParams = () => savePreset({ ...raw, params: { ...raw.params, width: clampSide(width), length: clampSide(length), floors, basement, density, outline, shape } });
+
+    // Fichiers JSON (§41, P-2) : preset seul, ou recette (preset + réglages + graine + époque) qui
+    // refait le même plan ; un fichier importé devient un preset personnel
+    const onImport = async (event) => {
+        const file = event.target.files?.[0];
+        event.target.value = '';
+        if (!file) return;
+        try {
+            const data = readGenmapFile(await file.text(), roomTypes);
+            // Toujours un nouvel identifiant : un import ne remplace jamais un preset existant
+            const preset = copyPreset(data.preset, takenIds, data.preset.label);
+            savePreset(preset, true);
+            setFileError(null);
+            if (data.kind === 'recipe') {
+                const p = data.params;
+                setEra(data.era); setKeep(data.keep);
+                setWidth(p.width); setLength(p.length); setFloors(p.floors); setBasement(p.basement); setDensity(p.density);
+                setOutline(p.outline ?? 'rect'); if (p.shape) setShape(p.shape); setScheme(p.scheme ?? 'preset');
+                if (p.corridorMaxWidth) setMaxWidth(p.corridorMaxWidth);
+                setSeedInput(String(data.seed));
+                if (data.traits) setTraits(data.traits);
+                const { program: recipeProgram } = resolvePreset(preset, roomTypes, { era: data.era, traits: data.traits ?? undefined }, data.keep);
+                setResult({ ...generate(recipeProgram, { ...p, seed: data.seed }), seed: data.seed, params: p });
+            }
+        } catch (error) {
+            setFileError(error.message);
+        }
     };
 
     // Niveau affiché (§4.3, §20, E2-10) : un onglet par niveau du plan
@@ -236,12 +302,38 @@ const GenMapPage = ({ darkMode, onToggleDarkMode }) => {
                     <section>
                         <h2 className="vtt-section-title">Preset</h2>
                         <div className="flex flex-wrap gap-2">
-                            {PRESETS.map(p => (
-                                <button key={p.id} type="button" className={`vtt-pill${presetId === p.id ? ' is-selected' : ''}`} onClick={() => selectPreset(p.id)}>
-                                    {p.label}
+                            {allPresets.map(p => (
+                                <button key={p.id} type="button" className={`vtt-pill${presetId === p.id ? ' is-selected' : ''}`} onClick={() => { selectPreset(p.id); setEditing(false); }}>
+                                    {p.label}{p.personal && ' · perso'}
                                 </button>
                             ))}
                         </div>
+                        {/* Presets personnels et fichiers (§41) : version fonctionnelle, présentation à revoir */}
+                        <div className="flex flex-wrap gap-2 mt-2">
+                            {current.personal ? (
+                                <>
+                                    <button type="button" className="vtt-btn vtt-btn-sm" onClick={() => setEditing(!editing)}>{editing ? 'Fermer l\'éditeur' : 'Modifier'}</button>
+                                    <button type="button" className="vtt-btn vtt-btn-sm" onClick={onDelete}>Supprimer</button>
+                                </>
+                            ) : (
+                                <button type="button" className="vtt-btn vtt-btn-sm" onClick={onCopy}>Copier pour modifier</button>
+                            )}
+                            <button type="button" className="vtt-btn vtt-btn-sm" onClick={onNew}>Nouveau</button>
+                            <button type="button" className="vtt-btn vtt-btn-sm" onClick={() => download(fileName(raw.label), exportPreset(raw))}>Exporter le preset</button>
+                            {result?.ok && (
+                                <button type="button" className="vtt-btn vtt-btn-sm" onClick={() => download(fileName(`${raw.label}-${result.seed}`), exportRecipe({ preset: raw, params: result.params, seed: result.seed, era, traits, keep }))}>Exporter la recette du plan</button>
+                            )}
+                            <label className="vtt-btn vtt-btn-sm cursor-pointer">
+                                Importer
+                                <input type="file" accept=".json,application/json" className="hidden" onChange={onImport} />
+                            </label>
+                        </div>
+                        {fileError && <p className="text-sm text-danger mt-1">{fileError}</p>}
+                        {current.personal && editing && (
+                            <div className="mt-3">
+                                <PresetEditor preset={raw} onChange={next => savePreset(next)} roomTypes={roomTypes} era={era} onTakeParams={onTakeParams} />
+                            </div>
+                        )}
                     </section>
 
                     {/* Époque (§36.7a) : dans la plage du preset ; une pièce obligatoire qui n'existe pas à
@@ -266,6 +358,21 @@ const GenMapPage = ({ darkMode, onToggleDarkMode }) => {
                                     ))}
                                 </ul>
                             )}
+                        </section>
+                    )}
+
+                    {/* Traits d'univers (§36.6b) : ceux que le preset accepte, actifs ou non pour cette table */}
+                    {context.traits.accepted.length > 0 && (
+                        <section>
+                            <h2 className="vtt-section-title">Univers</h2>
+                            <div className="flex flex-wrap gap-2">
+                                {library.traits.filter(t => context.traits.accepted.includes(t.id)).map(t => (
+                                    <button key={t.id} type="button" className={`vtt-pill${traits.includes(t.id) ? ' is-selected' : ''}`}
+                                        onClick={() => setTraits(traits.includes(t.id) ? traits.filter(x => x !== t.id) : [...traits, t.id])}>
+                                        {t.label}
+                                    </button>
+                                ))}
+                            </div>
                         </section>
                     )}
 
@@ -363,13 +470,14 @@ const GenMapPage = ({ darkMode, onToggleDarkMode }) => {
                     <details className="vtt-panel p-3">
                         <summary className="vtt-section-title cursor-pointer mb-0">Programme : {presetLabel}</summary>
                         <ul className="mt-3 space-y-1 text-sm">
-                            {program.rooms.map(room => <ProgramRoom key={room.id} room={room} />)}
+                            {/* Un preset personnel peut lister deux fois le même type : la position fait la clé */}
+                            {program.rooms.map((room, i) => <ProgramRoom key={`${i}:${room.id}`} room={room} />)}
                         </ul>
                         {program.optionalRooms.length > 0 && (
                             <>
                                 <p className="mt-3 text-xs font-semibold text-muted">Complément, selon la place</p>
                                 <ul className="mt-1 space-y-1 text-sm">
-                                    {program.optionalRooms.map(room => <ProgramRoom key={`${room.id}:${room.per ?? room.floor}`} room={room} />)}
+                                    {program.optionalRooms.map((room, i) => <ProgramRoom key={`${i}:${room.id}`} room={room} />)}
                                 </ul>
                             </>
                         )}

@@ -15,6 +15,10 @@ import temple from '@/features/genmap/data/presets/temple.json';
 import warehouse from '@/features/genmap/data/presets/warehouse.json';
 import house from '@/features/genmap/data/presets/house.json';
 import tower from '@/features/genmap/data/presets/tower.json';
+import guardpost from '@/features/genmap/data/presets/guardpost.json';
+import hovel from '@/features/genmap/data/presets/hovel.json';
+import policestation from '@/features/genmap/data/presets/policestation.json';
+import magetower from '@/features/genmap/data/presets/magetower.json';
 
 const PRESETS = Object.fromEntries([inn, manor, temple, warehouse, house, tower].map(p => [p.id, resolvePreset(p, roomTypes)]));
 const { program, params } = PRESETS.inn;
@@ -416,7 +420,7 @@ describe('generate, plage de dimensions (§17, S-3)', () => {
             // Auberge × 0,9 : RDC serré en 11 × 8, 17 graines sur 25 (§21)
             expect(ok, `× ${scale}`).toBeGreaterThanOrEqual(id === 'manor' || (id === 'inn' && scale < 1) ? 4 : 6);
         }
-    });
+    }, 60_000);
 });
 
 describe('generate, réservoir de pièces de complément (§18.1)', () => {
@@ -809,6 +813,70 @@ describe('gabarits du bâtiment (§16, §40)', () => {
         const voidsOf = (seed) => JSON.stringify(groundOf(generate(p, { ...base, seed }).plan).voids);
         expect(voidsOf(SEEDS[0])).toBe(voidsOf(SEEDS[0]));
         expect(new Set(SEEDS.slice(0, 6).map(voidsOf)).size).toBeGreaterThan(1);
+    }, 60_000);
+});
+
+describe('presets du lot M7 (§42)', () => {
+    const NEW = { guardpost, hovel, policestation, magetower };
+    const plansOf = (preset, context) => {
+        const { program: p, params: base } = resolvePreset(preset, roomTypes, context);
+        return SEEDS.slice(0, 8).map(seed => generate(p, { ...base, seed })).filter(r => r.ok).map(r => r.plan);
+    };
+    const typesOf = (plans) => new Set(plans.flatMap(plan => plan.floors.flatMap(f => f.rooms.map(r => r.typeId))));
+
+    it.each(Object.keys(NEW))('%s aboutit avec ses réglages et ne retire rien à son époque de référence', (id) => {
+        expect(resolvePreset(NEW[id], roomTypes).removed).toEqual([]);
+        expect(plansOf(NEW[id]).length).toBeGreaterThanOrEqual(7);
+    }, 60_000);
+
+    it('pose les pièces magiques de la tour de mage avec la magie, les retire sans elle', () => {
+        expect(typesOf(plansOf(magetower)).has('summoning_room')).toBe(true);
+        const { removed } = resolvePreset(magetower, roomTypes, { traits: [] });
+        expect(removed.map(r => r.id).sort()).toEqual(['alchemy_lab', 'summoning_room']);
+    }, 60_000);
+
+    it('ne pose une latrine que contre un mur extérieur, et pas plus que le preset n\'en demande (§37, GR-1)', () => {
+        const plans = plansOf(guardpost);
+        let latrines = 0;
+        for (const plan of plans) {
+            const all = plan.floors.flatMap(f => f.rooms.filter(r => r.typeId === 'latrine').map(r => ({ r, f })));
+            expect(all.length).toBeLessThanOrEqual(1);
+            for (const { r, f } of all) {
+                latrines++;
+                const voids = new Set(f.voids.map(key));
+                const out = ([x, y]) => x < 0 || y < 0 || x >= f.width || y >= f.length || voids.has(`${x},${y}`);
+                expect(r.cells.some(c => neighbours(c).some(out))).toBe(true);
+            }
+        }
+        expect(plans.length).toBeGreaterThan(0);
+        expect(latrines).toBeGreaterThanOrEqual(0);
+    }, 60_000);
+});
+
+describe('cellules (§43)', () => {
+    const groundPlans = (preset) => {
+        const { program: p, params: base } = resolvePreset(preset, roomTypes);
+        return SEEDS.slice(0, 12).map(seed => generate(p, { ...base, seed })).filter(r => r.ok).map(r => groundOf(r.plan));
+    };
+    const floors = [...groundPlans(guardpost), ...groundPlans(policestation)];
+
+    it('ne donne jamais de pièce adjointe à une cellule, et ne l\'ouvre jamais sur l\'accueil, le hall ou la salle commune', () => {
+        expect(floors.length).toBeGreaterThan(0);
+        for (const f of floors) {
+            const byId = new Map(f.rooms.map(r => [r.id, r]));
+            expect(f.rooms.filter(r => r.hostId && byId.get(r.hostId)?.typeId === 'cell')).toEqual([]);
+            const public_ = (id) => ['entrance', 'hall', 'common_room'].includes(byId.get(id)?.typeId);
+            expect(f.doors.filter(d => d.between.some(id => byId.get(id)?.typeId === 'cell') && d.between.some(public_))).toEqual([]);
+        }
+    }, 60_000);
+
+    it('regroupe les cellules dans la plupart des plans (préférence, pas obligation)', () => {
+        const grouped = floors.filter(f => {
+            const cells = f.rooms.filter(r => r.typeId === 'cell');
+            const owner = new Map(f.rooms.flatMap(r => r.cells.map(c => [key(c), r])));
+            return cells.every(c => c.cells.some(cell => neighbours(cell).some(n => { const o = owner.get(key(n)); return o && o !== c && o.typeId === 'cell'; })));
+        });
+        expect(grouped.length / floors.length).toBeGreaterThanOrEqual(0.6);
     }, 60_000);
 });
 

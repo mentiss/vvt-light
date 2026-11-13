@@ -26,7 +26,7 @@ import { shapeMask } from './engine/shapes.js';
 // Contrat public du moteur (§11.3) : la page, le rendu et les tests importent depuis ce fichier
 export { OUTSIDE, CORRIDOR, isCorridor, shapeKind } from './engine/grid.js';
 export { mulberry32 } from './engine/random.js';
-export { resolvePreset } from './engine/program.js';
+export { resolvePreset, fitsContext } from './engine/program.js';
 export { SHAPES } from './engine/shapes.js';
 
 // ── Génération ───────────────────────────────────────────────────────────────
@@ -516,20 +516,27 @@ const attemptLevel = (rooms, { level, params, density, scheme, width, maxWidth, 
         const near = new Set(region.flatMap(([x, y]) => around(x, y).map(n => ownerAt(g, n.x, n.y))));
         const nearRooms = rooms.filter(r => near.has(r.id));
         const onNetwork = [...near].some(id => isCorridor(id) || circulation.has(id));
-        const shapes = (t, overflow = 0) => region.length >= t.sizeMin && region.length <= Math.floor(t.sizeMax * (1 + overflow))
+        // Exposition obligatoire (§39) : une latrine ou un observatoire ne naît pas au milieu du bâtiment
+        const touchesOut = region.some(c => touchesOutside(g, ...c));
+        const exposureOk = (t) => !t.exposureRequired || (t.exposure === 'window' ? touchesOut : t.exposure !== 'interior' || !touchesOut);
+        const shapes = (t, overflow = 0) => exposureOk(t) && region.length >= t.sizeMin && region.length <= Math.floor(t.sizeMax * (1 + overflow))
             && ratioOf(box.w, box.h) <= Math.max(t.ratioMax, 1 / t.ratioMin) && shapeKind(withClip(g, region)) !== null
             && !nearRooms.some(r => t.cannotBeAdjacentTo.includes(r.typeId) || r.cannotBeAdjacentTo.includes(t.id))
             && t.mustBeAdjacentTo.every(id => nearRooms.some(r => r.typeId === id));
         // Hors densité dense, une pièce fermée donne sur le réseau ; en dense, une voisine suffit
         const served = (t) => onNetwork || (levelWidth === 0 && density.corridorWidth === 0 && t.circulationAccess !== 'required' && nearRooms.length > 0);
-        const options = reservoir.filter(t => onLevel(t.floor) && !t.structural && !t.outdoor && !t.circulation
+        // Une pièce de complément ne dépasse pas la quantité maximale de son entrée (une famille compte
+        // toutes ses variantes), pièces déjà tirées et pièces posées dans un reste comprises
+        const ids = (t) => new Set(t.variants ? t.variants.map(v => v.id) : [t.id]);
+        const below = (t) => [...typesTaken, ...rooms.filter(r => r.fromSpace).map(r => r.typeId)].filter(id => ids(t).has(id)).length < quantityRange(t)[1];
+        const options = reservoir.filter(t => below(t) && onLevel(t.floor) && !t.structural && !t.outdoor && !t.circulation
             && t.role !== 'annex' && t.outsideAccess !== 'required' && shapes(t) && served(t));
         let type = options.length ? rnd.pick(options) : null;
         // Réserve : sur le réseau, sinon rattachée à une pièce voisine qui accepte d'ouvrir sur une
         // réserve (§23 ; on y entre par elle, comme une annexe)
         let host = null;
         if (!type && storeType && leftoverSize > engine.closetMaxSize && shapes(storeType, engine.leftoverOverflow)) {
-            const hosts = served(storeType) ? null : nearRooms.filter(r => !r.outdoor && !r.hostId && r.role !== 'annex'
+            const hosts = served(storeType) ? null : nearRooms.filter(r => !r.outdoor && !r.hostId && !r.noAnnex && r.role !== 'annex'
                 && !r.access.forbidden.includes(storeType.id) && (!r.access.optional.length || r.access.optional.includes(storeType.id)));
             if (!hosts) type = storeType;
             else if (hosts.length) { type = storeType; host = rnd.pick(hosts); }
@@ -638,7 +645,7 @@ const attemptLevel = (rooms, { level, params, density, scheme, width, maxWidth, 
                 && ratioOf(box.w, box.h) <= Math.max(type.ratioMax, 1 / type.ratioMin) && shapeKind(withClip(g, cells), 1) !== null;
             const hosts = [...new Set(cells.flatMap(([x, y]) => around(x, y).map(n => ownerAt(g, n.x, n.y))))]
                 .map(o => rooms.find(r => r.id === o))
-                .filter(r => r && !r.outdoor && r.role !== 'annex' && !r.hostId);
+                .filter(r => r && !r.outdoor && r.role !== 'annex' && !r.hostId && !r.noAnnex);
             // Ordre de préférence : l'annexe qui manque telle quelle, puis complétée par des cases
             // de l'hôte (§32) ; à défaut un débarras tel quel, puis complété
             const missing = (host) => spaceAnnexTypes.filter(type => type.access.required.includes(host.typeId) && accepts(host, type) && !hasAnnex(host, type));
