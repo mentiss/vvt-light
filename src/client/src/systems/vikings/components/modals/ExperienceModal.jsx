@@ -214,7 +214,7 @@ const ExperienceModal = ({ character, onClose, onUpdate }) => {
                             </span>
                             <div className="space-y-1.5 max-h-96 overflow-y-auto pr-1">
                                 {TRAITS
-                                    .filter(t => !character.traits.some(ct => ct.name === t.name))
+                                    .filter(t => !t.restricted && !character.traits.some(ct => ct.name === t.name))
                                     .filter(t => {
                                         const search = traitSearch.toLowerCase();
                                         return !search || t.name.toLowerCase().includes(search) || t.description.toLowerCase().includes(search);

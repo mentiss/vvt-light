@@ -313,6 +313,16 @@ const getTraitBonuses = (character, rollType, rollTarget) => {
             if (isCaracRoll && rollType === 'chance') bonuses.auto += 1;
             if (isCaracRoll && rollType === 'charisme') bonuses.auto -= 1;
         }
+
+        // Pion de Loki : Charisme (-1) carac pure, sauf pour mentir (le conditionnel annule le malus)
+        if (trait.name === 'Pion de Loki' && isCaracRoll && rollType === 'charisme') {
+            bonuses.auto -= 1;
+            bonuses.conditional.push({
+                name: 'Pion de Loki',
+                bonus: 1,
+                condition: 'Vous mentez'
+            });
+        }
     });
     
     return bonuses;

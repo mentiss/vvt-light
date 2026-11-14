@@ -27,6 +27,7 @@ const StepTraits = ({ character, set }) => {
         else if (!state.unavailable) set('traits', [...chosen, trait]);
     };
     const shown = TRAITS
+        .filter(trait => !trait.restricted)   // accordés par le MJ : mode Édition seulement
         .map(trait => ({ trait, state: getTraitState(character, trait) }))
         .filter(({ trait, state }) => state.selected
             || matchesSearch(search, trait.name, trait.description, effectsText(trait.effects), effectsShort(trait.effects)))

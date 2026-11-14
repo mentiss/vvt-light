@@ -4,6 +4,8 @@
 // Conditions : requirements (carac min), maxCarac (carac max), requiresSkill (compétence
 // min), requiresSaga (SAGA totale min), requiresAny (au moins une des alternatives).
 // Vérifiées par checkTraitConditions (rules.js). Incompatibilités réciproques.
+// restricted : trait accordé par le MJ, absent de la création et de l'achat par XP,
+// ajouté seulement en mode Édition (spec_vikings.md §3.5).
 // ─────────────────────────────────────────────────────────────────────────────
 
 export const TRAITS = [
@@ -482,5 +484,13 @@ export const TRAITS = [
         effects: { description: "Charisme (-1 suc auto), Survie (+1 suc auto). Motivation narrative: remboursement" },
         requirements: {},
         incompatible: ["Noble lignée"]
+    },
+    {
+        name: "Pion de Loki",
+        description: "Loki ne se contente pas de vous regarder : il a des projets pour vous, et il a besoin de vous vivant pour les mener à bien. Les coups qui devraient vous tuer glissent, dévient, frappent ailleurs. Ceux qui se tiennent près de vous paient souvent à votre place. Réflexes, chance pure ou main d'un dieu ?",
+        effects: { description: "Une fois par combat, quand vous subissez des blessures (après l'armure), vous pouvez faire un jet de Chance normal, avec tous ses modificateurs. Chaque succès annule 1 point de blessure. Ricochet : chaque 1 obtenu sur ce jet inflige 1 point de blessure à l'allié le plus proche (l'armure ne compte pas). Si aucun allié n'est à portée, vous subissez une complication au choix du MJ : vous perdez votre arme, vous tombez au sol (+1 succès pour vos adversaires), quelque chose casse. Charisme (-1 suc auto), sauf pour mentir." },
+        requirements: {},
+        incompatible: [],
+        restricted: true   // accordé par le MJ à un seul personnage
     }
 ];

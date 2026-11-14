@@ -37,7 +37,7 @@ const AddTraitModal = ({ character, onClose, onUpdate }) => {
         const check = traitCheck(character, trait);
         return (
             <div className={`text-sm ${check.can ? '' : 'opacity-50'}`}>
-                <div className="font-bold">{trait.name}</div>
+                <div className="font-bold">{trait.name}{trait.restricted && <span className="text-xs text-muted font-normal italic ml-2">Accordé par le MJ</span>}</div>
                 <div className="text-muted">{trait.description}</div>
                 {trait.effects && effectsText(trait.effects) && <div className="text-xs text-success mt-0.5">{effectsText(trait.effects)}</div>}
                 {!check.can && <div className="text-xs text-danger mt-0.5">{check.reason}</div>}
