@@ -1335,9 +1335,9 @@ npm run board-map -- "X:/jdr/vikings/Carte Trondelagv2.png" --name trondelag [--
 3. `npm run board-map -- --name trondelag --send` (carte déjà découpée : envoi seul) : la carte arrive sur le VPS.
 4. Dans l'app : « + » → « Diapositive carte… » → Trøndelag.
 
-**État au 2026-11-15** : implémenté, non commité ; lint, tests et build verts. Précisions :
+**État au 2026-11-15** : en prod (v5.28.0, e7a605d et 083a7d4) ; carte du Trøndelag envoyée sur le VPS (`storage/maps/trondelag`, 213 tuiles, 6,3 Mo). Précisions :
 - Carte du Trøndelag découpée en local (`storage/maps/trondelag/`) : 213 tuiles, **5,9 Mo** au total pour un original de 55 Mo, en ~1 min.
-- `--send` seul envoie une carte déjà découpée ; image et `--send` ensemble découpent puis envoient. Clé facultative `mapsDir` dans `deploy.config.json` si le dossier des cartes du VPS n'est pas `<appDir>/storage/maps`.
+- `--send` seul envoie une carte déjà découpée ; image et `--send` ensemble découpent puis envoient. L'archive est créée à côté de la carte, en chemin relatif : le `tar` de Git Bash lit « C: » comme un hôte distant. Clé facultative `mapsDir` dans `deploy.config.json` si le dossier des cartes du VPS n'est pas `<appDir>/storage/maps`.
 - Recouvrement d'un demi-pixel d'écran entre deux tuiles, pour éviter un liseré.
 - Correctif Q-T14 : un PNG de plus de 1 Mo est réencodé en WebP même quand il n'a pas besoin d'être réduit.
 - Nouveaux fichiers : `scripts/board-map.js`, `scripts/lib/remote.js`, `src/server/utils/boardMaps.js`, `BoardMapLayer.jsx`, `tools/boardTiles.js`, leurs tests, migration `15112026_board_map_slides.sql`.
