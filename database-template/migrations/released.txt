@@ -55,3 +55,4 @@
 10112026_audio_track_source.sql
 13112026_journal_partage.sql
 13112026_journal_refonte.sql
+15112026_audio_buttons_slots.sql
