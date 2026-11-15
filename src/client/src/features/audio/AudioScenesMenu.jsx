@@ -1,12 +1,13 @@
 // src/client/src/features/audio/AudioScenesMenu.jsx
 // ─────────────────────────────────────────────────────────────────────────────
-// Menu des boutons préréglés (documentations/spec_audio.md §12.5, §12.6), le même
-// partout : panneau ouvert (« Scènes ▾ »), barre du panneau réduit, onglet Session
-// (bascule « Musique ▾ » d'AudioSessionToggle).
+// Menu des boutons préréglés (documentations/plateforme/spec_audio.md §12.5, §15.7),
+// le même partout : panneau ouvert (« Scènes ▾ »), barre du panneau réduit, onglet
+// Session (bascule « Musique ▾ » d'AudioSessionToggle).
 // Contenu : les boutons (dernière scène lancée cochée, en erreur grisés), STOP,
-// « Enregistrer ce qui joue… », « Modifier les scènes… », puis les éléments propres
-// à l'appelant (`extraItems`). Menu générique (.vtt-menu, habillé par le slug),
-// rendu dans l'emplacement à modales (RowMenu).
+// « Nouveau bouton… », « Enregistrer ce qui joue… », « Modifier les scènes… », puis
+// les éléments propres à l'appelant (`extraItems`). Création et modification passent
+// par la fenêtre d'édition (ButtonEditor). Menu générique (.vtt-menu, habillé par le
+// slug), rendu dans l'emplacement à modales (RowMenu).
 //
 //   <AudioScenesMenu scenes={useAudioButtons(id)} audio={useAudioSession(id)}
 //                    trigger={(props) => <button {...props}>Scènes ▾</button>} />
@@ -14,8 +15,9 @@
 
 import React, { useCallback, useState } from 'react';
 import { RowMenu, MenuItem, MenuLabel, MenuSeparator } from './panel/RowMenu.jsx';
-import { SceneNameDialog, ScenesDialog, buttonSummary } from './panel/ScenesDialog.jsx';
+import { ButtonEditor, ScenesDialog } from './panel/ScenesDialog.jsx';
 import { MAX_AUDIO_BUTTONS } from './hooks/useAudioButtons.js';
+import { buttonSummary, draftFromActions, draftFromState, emptyDraft } from './tools/audioButtons.js';
 
 /**
  * @param {object}   props
@@ -26,16 +28,21 @@ import { MAX_AUDIO_BUTTONS } from './hooks/useAudioButtons.js';
  */
 const AudioScenesMenu = ({ scenes, audio, trigger, extraItems }) => {
     const [anchor, setAnchor] = useState(null);
-    const [dialog, setDialog] = useState(null);   // 'name' | 'edit' | null
+    const [listOpen, setListOpen] = useState(false);
+    const [editor, setEditor] = useState(null);   // { button?: bouton modifié, initial } | null
     const close = useCallback(() => setAnchor(null), []);
 
     const slots = Object.values(audio.state?.slots ?? {});
     const playing = slots.some(s => s.trackId);
     const lastId = audio.state?.lastButtonId ?? null;
     const full = scenes.buttons.length >= MAX_AUDIO_BUTTONS;
+    const fullHint = full ? `${MAX_AUDIO_BUTTONS} au plus` : undefined;
 
-    const saveScene = async (label) => { if (await scenes.saveScene(label)) setDialog(null); };
-    const openDialog = (name) => { close(); scenes.clearError(); setDialog(name); };
+    const openEditor = (next) => { close(); scenes.clearError(); setEditor(next); };
+    const save = async (button) => {
+        const ok = editor.button ? await scenes.update(editor.button.id, button) : await scenes.create(button);
+        if (ok) setEditor(null);
+    };
 
     return (
         <>
@@ -48,10 +55,10 @@ const AudioScenesMenu = ({ scenes, audio, trigger, extraItems }) => {
                 <RowMenu anchor={anchor} onClose={close}>
                     {!audio.enabled && <MenuLabel>Musique désactivée</MenuLabel>}
                     {scenes.error && <MenuLabel>{scenes.error}</MenuLabel>}
-                    {scenes.buttons.length === 0 && <MenuLabel>Aucune scène : montez un mélange, puis « Enregistrer ce qui joue ».</MenuLabel>}
+                    {scenes.buttons.length === 0 && <MenuLabel>Aucune scène : « Nouveau bouton… », « Enregistrer ce qui joue… », ou « Créer un bouton… » sur un titre de la bibliothèque.</MenuLabel>}
                     {scenes.buttons.map(b => (
                         <MenuItem key={b.id} checked={lastId === b.id} disabled={b.broken || !audio.enabled}
-                                  hint={b.mode === 'scene' ? undefined : buttonSummary(b)}
+                                  hint={buttonSummary(b.actions)}
                                   title={b.broken ? 'Playlist vide' : undefined}
                                   onSelect={() => { close(); scenes.run(b.id); }}>
                             {b.broken ? `⚠ ${b.label}` : b.label}
@@ -62,18 +69,27 @@ const AudioScenesMenu = ({ scenes, audio, trigger, extraItems }) => {
                         STOP (tout arrêter)
                     </MenuItem>
                     <MenuSeparator />
-                    <MenuItem disabled={!playing || full} hint={full ? `${MAX_AUDIO_BUTTONS} au plus` : undefined}
-                              title={!playing ? 'Rien ne joue' : undefined} onSelect={() => openDialog('name')}>
+                    <MenuItem disabled={full} hint={fullHint}
+                              onSelect={() => openEditor({ initial: { label: `Scène ${scenes.buttons.length + 1}`, fade: false, draft: emptyDraft() } })}>
+                        Nouveau bouton…
+                    </MenuItem>
+                    <MenuItem disabled={!playing || full} hint={fullHint} title={!playing ? 'Rien ne joue' : undefined}
+                              onSelect={() => openEditor({ initial: { label: `Scène ${scenes.buttons.length + 1}`, fade: false, draft: draftFromState(audio.state?.slots) } })}>
                         Enregistrer ce qui joue…
                     </MenuItem>
-                    <MenuItem disabled={scenes.buttons.length === 0} onSelect={() => openDialog('edit')}>Modifier les scènes…</MenuItem>
+                    <MenuItem disabled={scenes.buttons.length === 0} onSelect={() => { close(); scenes.clearError(); setListOpen(true); }}>Modifier les scènes…</MenuItem>
                     {extraItems?.(close)}
                 </RowMenu>
             )}
-            {dialog === 'name' && (
-                <SceneNameDialog count={scenes.buttons.length} error={scenes.error} onSave={saveScene} onClose={() => setDialog(null)} />
+            {listOpen && (
+                <ScenesDialog scenes={scenes} onClose={() => setListOpen(false)}
+                              onEdit={button => openEditor({ button, initial: { label: button.label, fade: !!button.actions?.fade, draft: draftFromActions(button.actions) } })} />
             )}
-            {dialog === 'edit' && <ScenesDialog scenes={scenes} canCapture={playing} onClose={() => setDialog(null)} />}
+            {editor && (
+                <ButtonEditor sessionId={scenes.sessionId} title={editor.button ? `Modifier « ${editor.button.label} »` : 'Nouveau bouton'}
+                              submitLabel={editor.button ? 'Enregistrer' : 'Créer'} initial={editor.initial} audioState={audio.state}
+                              error={scenes.error} onSave={save} onClose={() => setEditor(null)} />
+            )}
         </>
     );
 };

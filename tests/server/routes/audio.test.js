@@ -1,9 +1,8 @@
 // tests/server/routes/audio.test.js
 // ─────────────────────────────────────────────────────────────────────────────
-// Route de la musique (documentations/spec_audio.md §14.2) : timecode des boutons.
-// Bouton ciblé sur un titre lancé depuis son timecode, timecode refusé ou ramené
-// à 0, scène enregistrée sans position puis départ réglé à la main, boucle qui
-// repart du timecode. La base du slug est en mémoire (slugApp) ; la base du module
+// Route de la musique (documentations/spec_audio.md §14, §15) : sources hors
+// YouTube, timecode des boutons, boutons piste par piste (Lancer / Arrêter / Ne pas
+// toucher, mode, limite, ménage) et fondu d'un bouton. La base du slug est en mémoire (slugApp) ; la base du module
 // pointe vers un fichier temporaire, jamais vers database/audio.db.
 // ─────────────────────────────────────────────────────────────────────────────
 
@@ -59,7 +58,10 @@ afterAll(async () => {
     for (const suffix of ['', '-wal', '-shm']) fs.rmSync(`${audioConfig.dbPath}${suffix}`, { force: true });
 });
 
-const createTarget = (body) => app.request('POST', url('/buttons'), { body: { label: 'Combat', mode: 'target', slot: 'music', ...body }, token: gm });
+const state = async () => (await app.request('GET', url(), { token: gm })).body.state;
+const createButton = (slots, extra = {}) => app.request('POST', url('/buttons'), { body: { label: 'Combat', slots, ...extra }, token: gm });
+const update = (id, body) => app.request('PUT', url(`/buttons/${id}`), { body, token: gm });
+const run = (id) => app.request('POST', url(`/buttons/${id}/run`), { token: gm });
 const removeAll = async () => {
     const { body } = await app.request('GET', url('/buttons'), { token: gm });
     for (const b of body) await app.request('DELETE', url(`/buttons/${b.id}`), { token: gm });
@@ -113,13 +115,13 @@ describe('Musique : sources hors YouTube (§14.3, sans réseau)', () => {
 });
 
 describe('Musique : timecode des boutons', () => {
-    it('un bouton ciblé sur un titre se lance depuis son timecode', async () => {
-        const res = await createTarget({ trackId, start: 83 });
+    it('un bouton sur un titre se lance depuis son timecode', async () => {
+        const res = await createButton({ music: { trackId, start: 83 } });
         expect(res.status).toBe(201);
         const button = res.body.at(-1);
-        expect(button.actions).toEqual({ slot: 'music', trackId, start: 83 });
+        expect(button.actions).toEqual({ slots: { music: { trackId, playlistId, start: 83 } } });
 
-        expect((await app.request('POST', url(`/buttons/${button.id}/run`), { token: gm })).status).toBe(200);
+        expect((await run(button.id)).status).toBe(200);
         const slot = await music();
         expect(slot.trackId).toBe(trackId);
         expect(slot.start).toBe(83);
@@ -127,35 +129,34 @@ describe('Musique : timecode des boutons', () => {
         await removeAll();
     });
 
-    it('refuse un timecode illisible, ou sur une playlist ; au-delà de la durée, depuis le début', async () => {
-        expect((await createTarget({ trackId, start: 'abc' })).status).toBe(400);
-        expect((await createTarget({ trackId, start: -4 })).status).toBe(400);
-        expect((await createTarget({ trackId, start: true })).status).toBe(400);
-        expect((await createTarget({ trackId, start: [83] })).status).toBe(400);
-        expect((await createTarget({ trackId, start: '83' })).status).toBe(400);
-        expect((await createTarget({ playlistId, start: 30 })).status).toBe(400);
+    it('refuse un timecode illisible, ou sur une playlist, ou au hasard ; au-delà de la durée, depuis le début', async () => {
+        for (const start of ['abc', -4, true, [83], '83']) {
+            expect((await createButton({ music: { trackId, start } })).status).toBe(400);
+        }
+        expect((await createButton({ music: { playlistId, start: 30 } })).status).toBe(400);
+        expect((await createButton({ music: { trackId, mode: 'shuffle', start: 30 } })).status).toBe(400);
 
-        const res = await createTarget({ trackId, start: 400 });
+        const res = await createButton({ music: { trackId, start: 400 } });
         expect(res.status).toBe(201);
-        expect(res.body.at(-1).actions).toEqual({ slot: 'music', trackId });
+        expect(res.body.at(-1).actions.slots.music).toEqual({ trackId, playlistId });
         // Arrondi avant la comparaison : 299,8 s sur 300 s tomberait pile à la fin
-        expect((await createTarget({ trackId, start: 299.8 })).body.at(-1).actions).toEqual({ slot: 'music', trackId });
+        expect((await createButton({ music: { trackId, start: 299.8 } })).body.at(-1).actions.slots.music).toEqual({ trackId, playlistId });
         await removeAll();
     });
 
     it('un départ au-delà d\'une durée connue après coup repart du début', async () => {
         // Durée inconnue à la création : le départ est gardé
-        const id = (await createTarget({ trackId: newId, start: 400 })).body.at(-1).id;
+        const id = (await createButton({ music: { trackId: newId, start: 400 } })).body.at(-1).id;
         // Durée connue au lancement : depuis le début
         getDbForSystem(audioConfig).prepare('UPDATE audio_tracks SET duration = 200 WHERE id = ?').run(newId);
-        await app.request('POST', url(`/buttons/${id}/run`), { token: gm });
+        await run(id);
         expect(await music()).toMatchObject({ trackId: newId, position: 0, start: 0 });
         await removeAll();
     });
 
     it('une durée remontée plus courte que le départ remet le départ à 0', async () => {
-        const id = (await createTarget({ trackId: shortId, start: 100 })).body.at(-1).id;
-        await app.request('POST', url(`/buttons/${id}/run`), { token: gm });
+        const id = (await createButton({ music: { trackId: shortId, start: 100 } })).body.at(-1).id;
+        await run(id);
         await command({ slot: 'music', action: 'duration', trackId: shortId, duration: 50 });
         expect((await music()).start).toBe(0);
         await command({ slot: 'music', action: 'stop' });
@@ -163,41 +164,21 @@ describe('Musique : timecode des boutons', () => {
         await removeAll();
     });
 
-    it('le timecode d\'un bouton ciblé se change et se vide', async () => {
-        const id = (await createTarget({ trackId })).body.at(-1).id;
-        let res = await app.request('PUT', url(`/buttons/${id}`), { body: { start: 42 }, token: gm });
-        expect(res.body.find(b => b.id === id).actions.start).toBe(42);
-        res = await app.request('PUT', url(`/buttons/${id}`), { body: { start: null }, token: gm });
-        expect(res.body.find(b => b.id === id).actions).not.toHaveProperty('start');
-        expect((await app.request('PUT', url(`/buttons/${id}`), { body: { start: 'x' }, token: gm })).status).toBe(400);
-        await removeAll();
-    });
-
-    it('une scène s\'enregistre sans position, son départ se règle à la main', async () => {
-        await command({ slot: 'music', action: 'play', trackId, position: 120 });
-        const created = await app.request('POST', url('/buttons'), { body: { label: 'Taverne', mode: 'scene' }, token: gm });
-        const scene = created.body.at(-1);
-        expect(scene.actions.slots.music).toEqual({ trackId, playlistId, mode: 'playlist' });
-
-        let res = await app.request('PUT', url(`/buttons/${scene.id}`), { body: { starts: { music: 30 } }, token: gm });
-        expect(res.body.find(b => b.id === scene.id).actions.slots.music.start).toBe(30);
-        // Piste vide ou inconnue : refusé
-        expect((await app.request('PUT', url(`/buttons/${scene.id}`), { body: { starts: { ambience1: 10 } }, token: gm })).status).toBe(400);
-        expect((await app.request('PUT', url(`/buttons/${scene.id}`), { body: { starts: { nope: 10 } }, token: gm })).status).toBe(400);
-
-        await command({ slot: 'music', action: 'stop' });
-        await app.request('POST', url(`/buttons/${scene.id}/run`), { token: gm });
-        expect((await music()).position).toBe(30);
-
-        res = await app.request('PUT', url(`/buttons/${scene.id}`), { body: { starts: { music: null } }, token: gm });
-        expect(res.body.find(b => b.id === scene.id).actions.slots.music).not.toHaveProperty('start');
+    it('le timecode se change et se vide en modifiant les pistes du bouton', async () => {
+        const id = (await createButton({ music: { trackId } })).body.at(-1).id;
+        let res = await update(id, { slots: { music: { trackId, start: 42 } } });
+        expect(res.body.find(b => b.id === id).actions.slots.music.start).toBe(42);
+        res = await update(id, { slots: { music: { trackId } } });
+        expect(res.body.find(b => b.id === id).actions.slots.music).not.toHaveProperty('start');
+        expect((await update(id, { slots: { music: { trackId, start: 'x' } } })).status).toBe(400);
         await removeAll();
     });
 
     it('en boucle, le morceau repart de son timecode', async () => {
         await command({ slot: 'music', action: 'mode', mode: 'loop' });
-        const id = (await createTarget({ trackId: shortId, start: 60 })).body.at(-1).id;
-        await app.request('POST', url(`/buttons/${id}/run`), { token: gm });
+        // Mode absent : la piste garde la Boucle
+        const id = (await createButton({ music: { trackId: shortId, start: 60 } })).body.at(-1).id;
+        await run(id);
         // Durée remontée par le lecteur du MJ : fin dans 0,2 s (+ 1 s de marge du serveur)
         await command({ slot: 'music', action: 'duration', trackId: shortId, duration: 60.2 });
         const before = (await music()).refTime;
@@ -205,9 +186,124 @@ describe('Musique : timecode des boutons', () => {
 
         const slot = await music();
         expect(slot.trackId).toBe(shortId);
+        expect(slot.mode).toBe('loop');
         expect(slot.refTime).toBeGreaterThan(before);
         expect(slot.position).toBe(60);
         await command({ slot: 'music', action: 'stop' });
+        await command({ slot: 'music', action: 'mode', mode: 'playlist' });
+        await removeAll();
+    });
+});
+
+describe('Musique : boutons piste par piste (§15)', () => {
+    it('Lancer, Arrêter, Ne pas toucher', async () => {
+        await command({ slot: 'ambience1', action: 'play', trackId: shortId });
+        await command({ slot: 'ambience2', action: 'play', trackId: newId });
+        const id = (await createButton({ music: { trackId }, ambience2: null })).body.at(-1).id;
+        await run(id);
+
+        const { slots } = await state();
+        expect(slots.music).toMatchObject({ status: 'playing', trackId });
+        expect(slots.ambience1).toMatchObject({ status: 'playing', trackId: shortId });   // pas touchée
+        expect(slots.ambience2.status).toBe('stopped');                                    // arrêtée
+        await command({ action: 'stopAll' });
+        await removeAll();
+    });
+
+    it('le mode fixé par le bouton s\'applique, absent il est gardé', async () => {
+        await command({ slot: 'music', action: 'mode', mode: 'loop' });
+        const keep = (await createButton({ music: { trackId } })).body.at(-1).id;
+        const set = (await createButton({ music: { playlistId, mode: 'shuffle' } })).body.at(-1).id;
+        await run(keep);
+        expect((await music()).mode).toBe('loop');
+        await run(set);
+        expect((await music()).mode).toBe('shuffle');
+        expect((await music()).playlistId).toBe(playlistId);
+        await command({ slot: 'music', action: 'stop' });
+        await command({ slot: 'music', action: 'mode', mode: 'playlist' });
+        await removeAll();
+    });
+
+    it('refuse un bouton mal formé', async () => {
+        const refused = [
+            {},                                                   // aucune piste
+            { music: null, ambience1: null },                     // rien à lancer
+            { nope: { trackId } },                                // piste inconnue
+            { music: 'x' },                                       // entrée illisible
+            { music: {} },                                        // ni titre ni playlist
+            { music: { trackId: '12' } },                         // identifiant en texte
+            { music: { trackId: 999999 } },                       // titre absent de la table
+            { effect: { playlistId } },                           // playlist sur l'effet
+            { ambience1: { playlistId, mode: 'shuffle' } },       // mode non permis sur la piste
+        ];
+        for (const slots of refused) expect((await createButton(slots)).status).toBe(400);
+        expect((await createButton({ music: { trackId } }, { fade: 'oui' })).status).toBe(400);
+        expect((await app.request('POST', url('/buttons'), { body: { label: 'X', slots: [] }, token: gm })).status).toBe(400);
+    });
+
+    it('le nom et le fondu se changent sans toucher aux pistes', async () => {
+        const id = (await createButton({ music: { trackId } })).body.at(-1).id;
+        const res = await update(id, { label: 'Présent', fade: true });
+        expect(res.body.find(b => b.id === id)).toMatchObject({ label: 'Présent', actions: { fade: true, slots: { music: { trackId, playlistId } } } });
+        expect((await update(id, { label: ' ' })).status).toBe(400);
+        await removeAll();
+    });
+
+    it('12 boutons au plus', async () => {
+        for (let i = 0; i < 12; i += 1) expect((await createButton({ music: { trackId } })).status).toBe(201);
+        expect((await createButton({ music: { trackId } })).status).toBe(409);
+        await removeAll();
+    });
+
+    it('ménage : la piste au contenu supprimé passe à Arrêter, un bouton qui ne lance plus rien disparaît', async () => {
+        const db = getDbForSystem(audioConfig);
+        const insert = db.prepare('INSERT INTO audio_tracks (playlist_id, media_id, title, position) VALUES (?, ?, ?, ?)');
+        const gone = Number(insert.run(playlistId, 'ddddddddddd', 'Éphémère', 20).lastInsertRowid);
+        const both = (await createButton({ music: { trackId }, ambience1: { trackId: gone } })).body.at(-1).id;
+        const alone = (await createButton({ ambience2: { trackId: gone } })).body.at(-1).id;
+
+        await app.request('DELETE', url(`/tracks/${gone}`), { token: gm });
+        const buttons = (await app.request('GET', url('/buttons'), { token: gm })).body;
+        expect(buttons.find(b => b.id === both).actions.slots).toEqual({ music: { trackId, playlistId }, ambience1: null });
+        expect(buttons.find(b => b.id === alone)).toBeUndefined();
+        await removeAll();
+    });
+});
+
+describe('Musique : fondu d\'un bouton (§15.5)', () => {
+    it('le morceau qui jouait est gardé pour le lecteur sortant, la piste change de lecteur', async () => {
+        await command({ slot: 'music', action: 'play', trackId: shortId, position: 10 });
+        await command({ slot: 'ambience1', action: 'play', trackId: newId });
+        const lane = (await music()).lane;
+        const id = (await createButton({ music: { trackId } }, { fade: true })).body.at(-1).id;
+        await run(id);
+
+        const { slots } = await state();
+        expect(slots.music).toMatchObject({ trackId, lane: lane + 1 });
+        expect(slots.music.fade).toMatchObject({ duration: 3000, from: { mediaId: 'bbbbbbbbbbb', source: 'youtube', lane } });
+        expect(slots.music.fade.from.position).toBeGreaterThanOrEqual(10);
+        // Piste non citée : ni changée ni en fondu
+        expect(slots.ambience1).toMatchObject({ trackId: newId, fade: null });
+
+        // Un changement ordinaire efface le fondu, sans changer de lecteur
+        await command({ slot: 'music', action: 'play', trackId: shortId });
+        expect(await music()).toMatchObject({ fade: null, lane: lane + 1 });
+        await command({ action: 'stopAll' });
+        await removeAll();
+    });
+
+    it('Arrêter en fondu : le son descend jusqu\'au silence ; rien ne jouait : pas de fondu ; l\'effet reste sec', async () => {
+        await command({ slot: 'music', action: 'play', trackId });
+        await command({ slot: 'effect', action: 'play', trackId: shortId });
+        const id = (await createButton({ music: null, ambience1: null, effect: { trackId: newId } }, { fade: true })).body.at(-1).id;
+        await run(id);
+
+        const { slots } = await state();
+        expect(slots.music.status).toBe('stopped');
+        expect(slots.music.fade.from.mediaId).toBe('aaaaaaaaaaa');
+        expect(slots.ambience1.fade).toBeNull();
+        expect(slots.effect).toMatchObject({ trackId: newId, fade: null });
+        await command({ action: 'stopAll' });
         await removeAll();
     });
 });

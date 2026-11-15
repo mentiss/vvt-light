@@ -175,7 +175,7 @@ Hors chantier, à garder en tête pour que la v1 ne les rende pas difficiles :
 - Soundboard : effets ponctuels joués par-dessus la musique (Q-9, Q-27).
 - Élément du menu hamburger MJ pour activer la musique, en plus de l'onglet Session (Q-31).
 - Extrait d'une vidéo (début et fin) : effets tirés d'une compilation, introduction coupée d'une ambiance (S-8, évolution éventuelle, pas visée).
-- Fondu entre deux pistes ou deux morceaux (Q-7, S-14).
+- Fondu entre deux pistes ou deux morceaux (Q-7, S-14) : **repris au §15** pour les boutons qui le demandent ; partout ailleurs, la coupure sèche reste la règle.
 - Troisième piste ambiance, si le besoin se fait sentir (S-5).
 - Écoute d'essai d'un contenu public depuis le catalogue, sans le copier (P2-5) : **à prévoir dans une mise à jour**.
 - Extension aux autres slugs après le pilote Vikings (Noctis après sa refonte).
@@ -1165,3 +1165,134 @@ Rien dans les slugs.
 | # | Point | Proposition | Réponse MJ |
 |---|---|---|---|
 | W-3 bis | Que garde « Enregistrer ce qui joue » ? (1) la position de chaque piste, boucles comprises (règle V-6 telle quelle) ; (2) la position de la **musique** seulement, les ambiances et l'effet repartant de 0 ; (3) aucune position : la scène part de 0, le timecode se saisit à la main dans « Modifier les scènes… » quand il est voulu | **(3)** : un timecode n'est jamais pris par hasard, il est choisi ; la règle V-6 (boucle au timecode) s'applique alors à un départ voulu | **(3)**, remplace W-2 |
+
+---
+
+## 15. Boutons modifiables piste par piste, et fondu (2026-11-15)
+
+### 15.1 Besoin (phase 1)
+
+- **Fondu narratif** : le MJ prépare un prologue. Il narre le présent sur une musique en boucle, passe sur une autre musique en boucle pendant un flashback, puis **revient à la première en fondu**. Le fondu n'est voulu qu'à ces moments choisis : la coupure sèche (Q-7, S-14) reste la règle partout ailleurs.
+- **Modifier un bouton** : aujourd'hui, un bouton se renomme, se remplace en bloc par « ce qui joue » (scène) ou se supprime. On ne peut ni retirer une piste d'un bouton, ni en ajouter une. Une scène ne sait pas non plus dire « lance les ambiances et laisse la musique tranquille » : toute piste vide à l'enregistrement est arrêtée au lancement.
+- **Limite** : 5 boutons (T-3) devient trop juste dès qu'on prépare des transitions.
+
+### 15.2 Décisions (2026-11-15)
+
+- **Le fondu est une option du bouton** (« en fondu »), cochée à la création ou à la modification. Il ne joue qu'au lancement de ce bouton. Pas de réglage par piste, pas d'action « Lancer en fondu » dans la bibliothèque (gardée en évolution, §15.9).
+- **Fondu enchaîné de 3 secondes, fixe** : ce qui jouait descend pendant que le nouveau morceau monte, sans silence entre les deux.
+- **Le morceau relancé part du début**, ou de son timecode s'il en a un (§14.2), comme aujourd'hui. Pas de reprise « là où il en était ».
+- **Fenêtre d'édition d'un bouton, piste par piste** : pour chacune des quatre pistes, **Lancer** (un contenu choisi), **Arrêter** ou **Ne pas toucher**.
+- **Plus de distinction entre « scène » et « ciblé »** : un bouton ciblé est un bouton qui lance une piste et ne touche pas aux autres. Les boutons existants sont repris tels quels.
+- **12 boutons au plus** par table (la proposition d'origine de S-9), plus STOP.
+- La fenêtre d'édition est une nouvelle disposition : **planche HTML interactive validée avant le code**.
+
+Exemple du prologue : piste Musique en Boucle ; flashback lancé d'un clic dans la bibliothèque (coupure sèche, voulue) ; bouton « Présent » : Musique → Lancer la musique du présent, en Boucle ; Ambiances et Effet → Ne pas toucher ; « en fondu » coché.
+
+### 15.3 Ce que fait un bouton
+
+Pour chaque piste :
+
+| Choix | Au lancement | Avec « en fondu » |
+|---|---|---|
+| **Lancer** | Mode de la piste rétabli (s'il est fixé, §15.4), puis le contenu part du début ou de son timecode ; une playlist en mode Aléatoire part d'un morceau au hasard | Ce qui jouait sur la piste descend en 3 s pendant que le nouveau morceau monte |
+| **Arrêter** | La piste s'arrête | Ce qui jouait descend en 3 s jusqu'au silence |
+| **Ne pas toucher** | Rien ne change sur la piste | Rien |
+
+- **Effet** : Lancer (un titre seulement, joué une fois), Arrêter ou Ne pas toucher ; **jamais de fondu** sur l'effet, un bruitage part tout de suite.
+- **Contenus permis** (inchangés, §12.6) : un titre sur n'importe quelle piste ; une playlist sur la Musique ou une Ambiance, jamais sur l'Effet ; Aléatoire sur la Musique seulement ; pas de timecode sur une playlist ni en Aléatoire.
+- Un bouton doit **lancer au moins une piste**.
+- « Dernière scène lancée » (`lastButtonId`), STOP, bouton en erreur : inchangés.
+
+### 15.4 Données (`audio_buttons.actions`, JSON)
+
+Une seule forme pour tous les boutons, celle des scènes, prolongée :
+
+```json
+{
+  "fade": true,
+  "slots": {
+    "music":     { "trackId": 12, "playlistId": 3, "mode": "loop", "start": 83 },
+    "ambience1": null
+  }
+}
+```
+
+- Piste **présente avec un contenu** = Lancer ; **`null`** = Arrêter ; **absente** = Ne pas toucher.
+- Les **scènes existantes ne changent pas** : leurs quatre pistes sont présentes, `null` voulant déjà dire « arrêtée ». `fade` absent = pas de fondu.
+- **`mode` facultatif** dans une entrée : absent, la piste garde le mode qu'elle a au moment du clic. C'est le comportement actuel des boutons ciblés sur un titre ; dans la fenêtre, il s'affiche « Mode en cours » (Y-2).
+- **Reprise des boutons ciblés** par une migration de données de `audio.db` (`-- systems: audio`), sans changement de structure :
+  - `{ slot, trackId, start? }` → `{ slots: { <slot>: { trackId, playlistId, start? } } }` (`playlistId` lu dans `audio_tracks` par sous-SELECT, `mode` absent) ;
+  - `{ slot, playlistId, shuffle }` → `{ slots: { <slot>: { playlistId, mode: 'shuffle' | 'playlist' } } }` ;
+  - colonne `mode` passée à `'scene'` pour tous ; elle n'est plus lue (gardée : une colonne ne se retire pas pour si peu en SQLite).
+- **Ménage après une suppression de contenu** (§12.7), règle unique : la piste dont le contenu a disparu passe à **Arrêter** ; le bouton est supprimé s'il ne lance plus aucune piste. Pour un ancien bouton ciblé, le résultat est le même qu'aujourd'hui (supprimé).
+
+### 15.5 Fondu : état de lecture
+
+L'état d'une piste (§11.3) gagne deux champs :
+
+- `lane` : numéro du lecteur, qui augmente à chaque changement **en fondu** ; un changement sec le garde (le lecteur est réutilisé, comme aujourd'hui) ;
+- `fade` : `{ from: { source, mediaId, gain, position, lane }, at, duration } | null` : ce qui jouait au moment du clic (position calculée à cet instant), l'heure du serveur du clic, `duration` = 3000 ms (constante du serveur, diffusée : le client n'a pas de durée en dur).
+
+- Rempli par le lancement d'un bouton « en fondu », pour chaque piste Lancer ou Arrêter (hors effet) qui **jouait** au clic. Une piste en pause ou arrêtée n'a rien à faire descendre : le nouveau morceau monte seul.
+- Remis à `null` par toute autre commande sur la piste (`play`, `next`, `stop`…). Un `fade` dont la durée est écoulée est ignoré par les clients ; le serveur n'a pas de minuteur de plus.
+- Un même titre relancé en fondu (le présent repart du début alors qu'il jouait déjà) marche aussi : deux lecteurs distincts le temps du fondu.
+
+### 15.6 Fondu : client
+
+- **Deux lecteurs le temps du fondu** : `AudioLayer` donne à chaque `SlotPlayer` la clé `piste:source:lane`. Au changement en fondu, le lecteur de l'ancienne `lane` **reste monté** (même instance, sans rechargement : le son continue) et reçoit un état reconstitué depuis `fade.from` ; le nouveau morceau se charge dans un nouveau lecteur. Le lecteur sortant est démonté à la fin du fondu.
+- **Volumes** : un coefficient multiplie le volume de la piste (`slotVolume`, réglage de chacun) :
+  - sortant : descend de 1 à 0, calé sur l'heure du serveur (`fade.at`), donc au même moment chez tous ;
+  - entrant : monte de 0 à 1 **à partir du moment où il joue vraiment** dans ce navigateur (un titre YouTube met une à trois secondes à se charger : calé sur `fade.at`, sa montée serait déjà finie à son arrivée).
+  - Courbe à puissance constante (cosinus), pour éviter le creux de volume au milieu d'un fondu linéaire.
+- Fonction pure, testée : `features/audio/tools/audioFade.js` (`fadeLevel(elapsed, duration, direction)`, fin de fondu).
+- Qui arrive pendant un fondu : le lecteur sortant se charge et termine sa descente, ou rien si elle est finie. Sans effet notable sur 3 secondes.
+
+### 15.7 Fenêtre d'édition et menu
+
+- **« Modifier les scènes… »** : la liste reste (ordre, supprimer) ; un bouton **Modifier** ouvre la fenêtre d'édition du bouton, où se fait aussi le renommage.
+- **Fenêtre d'édition** (planche à valider) : nom ; « en fondu » ; une ligne par piste avec Lancer / Arrêter / Ne pas toucher et, pour Lancer, le contenu (choisi dans la bibliothèque de la table : titre ou playlist), le mode (permis par la piste, plus « Mode en cours ») et le timecode (titre seulement). Raccourci par piste : « Prendre ce qui joue ».
+- **Création** : « Enregistrer ce qui joue… » (inchangé : les pistes vides sont « Arrêter », sans fondu) et « Créer un bouton… » du menu ⋯ de la bibliothèque (la piste choisie en Lancer, les autres en Ne pas toucher) ouvrent tous deux la fenêtre d'édition préremplie. Nouveau dans le menu des scènes : **« Nouveau bouton… »**, fenêtre vide (toutes les pistes en Ne pas toucher).
+- `TargetButtonDialog`, `SceneNameDialog` et les champs de timecode de `SceneRow` sont remplacés par la fenêtre d'édition ; « Remplacer par ce qui joue » est remplacé par « Prendre ce qui joue » piste par piste.
+- **Résumé d'un bouton** dans le menu et la liste : les pistes lancées (« Musique, Ambiance 1 »), « en fondu » le cas échéant.
+- Limite affichée : « 12 boutons au plus ».
+
+### 15.8 Serveur (`routes/audio.js`)
+
+| Route | Changement |
+|---|---|
+| `POST /buttons` `{ label, fade?, slots }` | Crée un bouton complet (remplace `mode: 'scene'` et `mode: 'target'`). « Enregistrer ce qui joue » préremplit la fenêtre d'après l'état de lecture déjà connu du client, puis passe par cette même route : plus de capture côté serveur |
+| `PUT /buttons/:id` `{ label?, fade?, slots? }` | `slots` remplace **toutes** les pistes du bouton ; `capture`, `start` et `starts` disparaissent (l'édition envoie le bouton entier) |
+| `POST /buttons/:id/run` | Lance selon §15.3 ; fondu selon §15.5 |
+
+- Vérification de `slots` : clés parmi les quatre pistes ; entrée `null` ou objet ; contenu à la table (titre ou playlist) et permis sur la piste (§15.3) ; `mode` parmi ceux de la piste ; `start` comme au §14.2 ; au moins une piste lancée ; `fade` booléen. Sinon 400.
+- `MAX_BUTTONS` = 12.
+- `routes/audio.js` fait déjà 1 100 lignes (C-SIZE) : la logique des boutons (forme, vérification, lecture, ménage) part dans `src/server/utils/audioButtons.js` ; les pistes (`SLOTS`) et la lecture d'un contenu de la table (`own`, `OWN_TRACK`, `OWN_PLAYLIST`, `playlistIds`), partagées par les deux, dans `src/server/utils/audioTable.js`. Le lancement d'un bouton (`runButton`, fondu) reste dans la route, avec l'état de lecture (Y-4). La route passe à 960 lignes : le prochain découpage naturel serait l'état de lecture (`getState`, `playTrack`, `advance`, commandes).
+
+**Livré le 2026-11-15** (lots A et B ensemble), avec la migration `15112026_audio_buttons_slots.sql`.
+
+### 15.9 Évolution gardée de côté
+
+- Action « Lancer en fondu » dans le menu ⋯ d'un titre de la bibliothèque, pour un fondu improvisé sans bouton (si les fondus se multiplient).
+
+### 15.10 Tests, documentation, fichiers
+
+- **Serveur** (`tests/server/routes/audio.test.js`) : création et modification par `slots` (Lancer / Arrêter / Ne pas toucher, refus d'un contenu non permis, d'un bouton sans piste lancée), limite de 12, lancement (pistes non citées intactes, `null` arrêtée, `mode` absent qui garde le mode), `fade` et `lane` dans l'état, ménage après suppression d'un titre.
+- **Front** : `tests/features/audio/tools/audioFade.test.js`, `tests/features/audio/tools/audioButtons.test.js` (fiche d'édition ↔ actions).
+- **Doc** : ce §15 ; `src/server/CLAUDE.md` (route audio, `utils/audioButtons.js`) ; index de la documentation.
+
+| Côté | Fichiers |
+|---|---|
+| Base | `database-template/migrations/15112026_audio_buttons_slots.sql` (`-- systems: audio`, données seulement) |
+| Serveur | `src/server/routes/audio.js`, `src/server/utils/audioButtons.js`, `src/server/utils/audioTable.js` (nouveaux), `tests/server/routes/audio.test.js` |
+| Client | `features/audio/AudioLayer.jsx`, `SlotPlayer.jsx` (volume du fondu), `tools/audioFade.js`, `tools/audioButtons.js` (nouveaux, fiche d'édition), `hooks/useAudioButtons.js`, `panel/ScenesDialog.jsx` (fenêtre d'édition `ButtonEditor`), `AudioScenesMenu.jsx`, `AudioGMPanel.jsx`, `panel/LibraryRows.jsx`, `audio.css`, tests `audioFade` et `audioButtons` |
+
+Rien dans les slugs : la fenêtre reprend `.vtt-modal-*`, `.vtt-pill`, `.vtt-btn*`, `.vtt-input`, déjà habillés.
+
+### 15.11 Points à valider
+
+| # | Point | Proposition | Réponse MJ |
+|---|---|---|---|
+| Y-1 | Ordre de livraison : (A) boutons modifiables piste par piste et limite de 12, planche d'abord ; (B) fondu. A sert tout de suite, B s'appuie sur A | Oui | Oui, **sans planche** : la fenêtre se fait directement |
+| Y-2 | « Mode en cours » (le bouton ne change pas le mode de la piste) garde sa place dans la fenêtre, à côté de Playlist / Boucle / Aléatoire ? C'est ce que font tes boutons ciblés sur un titre aujourd'hui, et ça permet un même bouton qui joue en Boucle ou en Playlist selon le moment | Oui | Oui |
+| Y-3 | Fondu sur les Ambiances aussi (pas seulement la Musique), l'Effet restant toujours sec ? | Oui : c'est là que S-14 notait que la coupure s'entend | Oui |
+| Y-4 | Sortir la logique des boutons de `routes/audio.js` dans `utils/audioButtons.js`, puisqu'on la réécrit de toute façon ? | Oui | Oui |

@@ -7,8 +7,11 @@
 //
 // Un lecteur par source (YouTube, Vimeo, SoundCloud), tous avec l'interface du
 // lecteur YouTube. AudioLayer donne à chaque
-// SlotPlayer une clé faite de la piste et de la source : la source d'une instance
-// ne change jamais, donc le hook appelé non plus.
+// SlotPlayer une clé faite de la piste, de la source et du numéro de lecteur : la
+// source d'une instance ne change jamais, donc le hook appelé non plus.
+//
+// Fondu d'un bouton (§15.6) : le lecteur sortant descend, calé sur l'heure du
+// serveur ; le lecteur entrant monte à partir du moment où il joue vraiment.
 // ─────────────────────────────────────────────────────────────────────────────
 
 import React, { useCallback, useEffect, useRef } from 'react';
@@ -16,6 +19,7 @@ import { useYouTubePlayer, PLAYER_STATES } from './hooks/useYouTubePlayer.js';
 import { useVimeoPlayer } from './hooks/useVimeoPlayer.js';
 import { useSoundCloudPlayer } from './hooks/useSoundCloudPlayer.js';
 import { planSync } from './tools/audioSync.js';
+import { fadeLevel } from './tools/audioFade.js';
 
 const PLAYER_HOOKS = {
     youtube: useYouTubePlayer,
@@ -26,6 +30,7 @@ const PLAYER_SIZE = { width: 1, height: 1 };
 
 const SYNC_INTERVAL_MS = 1000;   // contrôle de l'écart
 const COOLDOWN_MS = 3000;        // pas de nouveau recalage juste après un chargement ou un saut
+const FADE_STEP_MS = 50;         // pas du volume pendant un fondu
 
 /**
  * @param {object}   props
@@ -36,8 +41,10 @@ const COOLDOWN_MS = 3000;        // pas de nouveau recalage juste après un char
  * @param {boolean}  props.unlocked      son activé par un clic de l'utilisateur
  * @param {number}   props.volume        volume du lecteur, 0 à 100
  * @param {Function} [props.onReport]    MJ seulement : (action, payload) pour duration / error
+ * @param {object}   [props.fade]        fondu de la piste ({ at, duration }, état du serveur), ou null
+ * @param {'in'|'out'} [props.fadeDirection] ce lecteur monte (nouveau morceau) ou descend (ancien)
  */
-const SlotPlayer = ({ slot, slotState, getServerNow, tolerance, unlocked, volume, onReport }) => {
+const SlotPlayer = ({ slot, slotState, getServerNow, tolerance, unlocked, volume, onReport, fade = null, fadeDirection = 'in' }) => {
     // Hook fixé par la source, constante pour cette instance (clé de AudioLayer)
     const usePlayer = PLAYER_HOOKS[slotState.source] ?? useYouTubePlayer;
     const { containerRef, player, error } = usePlayer(PLAYER_SIZE);
@@ -108,7 +115,37 @@ const SlotPlayer = ({ slot, slotState, getServerNow, tolerance, unlocked, volume
         return () => clearInterval(id);
     }, [runSync]);
 
-    useEffect(() => { player?.setVolume?.(volume); }, [player, volume]);
+    // Volume réglé × coefficient du fondu. Renvoie true quand le fondu est fini (ou absent)
+    const volumeRef = useRef(volume);
+    const fadeRef = useRef({ fade, fadeDirection });
+    const fadeInStartRef = useRef(null);   // heure locale où le lecteur entrant s'est mis à jouer
+    useEffect(() => { volumeRef.current = volume; fadeRef.current = { fade, fadeDirection }; });
+    const applyVolume = useCallback(() => {
+        if (!player) return false;
+        const { fade: f, fadeDirection: direction } = fadeRef.current;
+        let level = 1;
+        let done = true;
+        if (f && direction === 'out') {
+            const elapsed = getServerNow() - f.at;
+            level = fadeLevel(elapsed, f.duration, 'out');
+            done = elapsed >= f.duration;
+        } else if (f) {
+            if (fadeInStartRef.current === null && PLAYER_STATES[player.getPlayerState?.()] === 'playing') fadeInStartRef.current = Date.now();
+            const elapsed = fadeInStartRef.current === null ? 0 : Date.now() - fadeInStartRef.current;
+            level = fadeInStartRef.current === null ? 0 : fadeLevel(elapsed, f.duration, 'in');
+            done = fadeInStartRef.current !== null && elapsed >= f.duration;
+        }
+        player.setVolume?.(Math.round(volumeRef.current * level));
+        return done;
+    }, [player, getServerNow]);
+
+    useEffect(() => { applyVolume(); }, [applyVolume, volume, fade, fadeDirection]);
+    // Pendant un fondu, le volume suit la courbe, puis le pas s'arrête
+    useEffect(() => {
+        if (!fade) return undefined;
+        const id = setInterval(() => { if (applyVolume()) clearInterval(id); }, FADE_STEP_MS);
+        return () => clearInterval(id);
+    }, [fade, applyVolume]);
 
     // Vidéo illisible : signalée une fois par morceau (MJ seulement)
     useEffect(() => {

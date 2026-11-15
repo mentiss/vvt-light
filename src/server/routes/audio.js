@@ -11,6 +11,8 @@
 // - Quatre pistes fixes par table (music, ambience1, ambience2, effect). L'état de
 //   lecture vit en mémoire (sharedState.audioStates), seule source de vérité :
 //   chaque commande du MJ le modifie puis le diffuse à la room de la table.
+// - Boutons préréglés : forme, vérification et ménage dans utils/audioButtons.js ;
+//   leur lancement (fondu compris, §15.5) est ici, avec l'état de lecture.
 //
 // Les clés étrangères ne sont pas activées sur les connexions : les suppressions
 // effacent explicitement les lignes filles, en transaction.
@@ -24,20 +26,17 @@ const { getDbForSystem } = require('../db');
 const { getModuleConfig } = require('../db/moduleConfig');
 const { getConfigForSystem } = require('../systems/Loader');
 const { parseLink, resolveLink, LinkError } = require('../utils/audioSources');
+const { SLOTS, OWN_PLAYLIST, OWN_TRACK, own, playlistIds } = require('../utils/audioTable');
+const {
+    MAX_BUTTONS, OWN_BUTTON, parseActions, usesPlaylist, buttonBroken, loadButtons, checkButton, pruneButtons, buttonLabel,
+} = require('../utils/audioButtons');
 
 const YOUTUBE_ID = /^[A-Za-z0-9_-]{11}$/;
 const OEMBED_URL = 'https://www.youtube.com/oembed?format=json&url=';
 const OEMBED_BATCH = 8;          // requêtes oEmbed simultanées à l'import d'une playlist
 const END_MARGIN_MS = 1000;      // marge avant de passer au morceau suivant
+const FADE_MS = 3000;            // fondu enchaîné d'un bouton « en fondu » (§15.2)
 const VISIBILITIES = ['private', 'slug', 'platform'];
-
-// Pistes fixes et modes permis (S-5, S-7)
-const SLOTS = {
-    music:     { modes: ['playlist', 'loop', 'shuffle'], mode: 'playlist' },
-    ambience1: { modes: ['loop', 'playlist'],            mode: 'loop' },
-    ambience2: { modes: ['loop', 'playlist'],            mode: 'loop' },
-    effect:    { modes: ['once'],                        mode: 'once' },
-};
 
 // Tolérance de recalage des clients, en secondes (P2-3), réglable dans le .env
 const syncTolerance = () => {
@@ -127,19 +126,12 @@ function loadCatalog(ctx) {
 
 // ─── Bibliothèque : propriété et lecture permise ────────────────────────────
 
+// OWN_PLAYLIST, OWN_TRACK et own() : utils/audioTable.js (partagés avec les boutons)
 const OWN_COLLECTION = 'SELECT * FROM audio_collections WHERE id = ? AND slug = ? AND session_id = ?';
-const OWN_PLAYLIST = `
-    SELECT p.* FROM audio_playlists p JOIN audio_collections c ON c.id = p.collection_id
-    WHERE p.id = ? AND c.slug = ? AND c.session_id = ?`;
-const OWN_TRACK = `
-    SELECT t.* FROM audio_tracks t
-    JOIN audio_playlists p ON p.id = t.playlist_id JOIN audio_collections c ON c.id = p.collection_id
-    WHERE t.id = ? AND c.slug = ? AND c.session_id = ?`;
 
 // Lisible : à la table, ou public pour elle
 const READABLE = `((c.slug = ? AND c.session_id = ?) OR (c.visibility = 'slug' AND c.slug = ?) OR c.visibility = 'platform')`;
 
-const own = (ctx, sql, id) => ctx.db.prepare(sql).get(id, ctx.slug, ctx.sessionId);
 const readable = (ctx, sql, id) => ctx.db.prepare(sql).get(id, ctx.slug, ctx.sessionId, ctx.slug);
 
 const READABLE_COLLECTION = `SELECT c.* FROM audio_collections c WHERE c.id = ? AND ${READABLE}`;
@@ -310,6 +302,8 @@ const emptySlot = (slot, mode = SLOTS[slot].mode) => ({
     status: 'stopped', trackId: null, source: null, mediaId: null, title: null, gain: 100,
     playlistId: null, mode, position: 0, refTime: 0, duration: null,
     start: 0,   // point d'entrée du morceau en cours (timecode d'un bouton, §14.2) : la boucle repart de là
+    lane: 0,    // numéro du lecteur côté client : augmente à chaque changement en fondu (§15.5)
+    fade: null, // { from, at, duration } : fondu en cours, posé par un bouton « en fondu »
 });
 
 function getState(ctx) {
@@ -389,19 +383,18 @@ function playTrack(ctx, slot, trackId, position = 0) {
         refTime: Date.now(),
         duration: null,
         start,
+        fade: null,   // un changement sec ; le bouton « en fondu » le repose ensuite
     });
     clearEndTimer(ctx, slot);
     return true;
 }
 
+/** Arrête une piste ; son numéro de lecteur est gardé (deux lecteurs d'un fondu ne partagent jamais le même). */
 function stopSlot(ctx, slot) {
     clearEndTimer(ctx, slot);
     const current = getState(ctx).slots[slot];
-    Object.assign(current, emptySlot(slot, current.mode));
+    Object.assign(current, emptySlot(slot, current.mode), { lane: current.lane ?? 0 });
 }
-
-const playlistIds = (ctx, playlistId) =>
-    ctx.db.prepare('SELECT id FROM audio_tracks WHERE playlist_id = ? ORDER BY position, id').all(playlistId).map(r => r.id);
 
 /** Un morceau au hasard de la liste, autre que `exclude` quand c'est possible. */
 function pickRandom(ids, exclude) {
@@ -520,159 +513,66 @@ function stopAll(ctx) {
     for (const slot of Object.keys(SLOTS)) stopSlot(ctx, slot);
 }
 
-// ─── Boutons préréglés (lot 2, spec_audio.md §12.6) ─────────────────────────
+// ─── Boutons préréglés (spec_audio.md §12.6, §15) ───────────────────────────
 
-const MAX_BUTTONS = 5;
-const LABEL_MAX = 40;
-const OWN_BUTTON = 'SELECT * FROM audio_buttons WHERE id = ? AND slug = ? AND session_id = ?';
 // Commandes qui changent le contenu : la dernière scène lancée n'est plus en cours
 const CLEARS_LAST_BUTTON = new Set(['play', 'playPlaylist', 'next', 'previous', 'stop', 'stopAll']);
 
-const parseActions = (row) => {
-    try { return JSON.parse(row.actions); } catch { return null; }
-};
-
-/** Une entrée (piste d'une scène, ou bouton ciblé) dont le contenu est encore à la table ? */
-function entryAvailable(ctx, entry) {
-    if (entry.playlistId && (entry.mode === 'shuffle' || entry.shuffle || !entry.trackId)) {
-        return !!own(ctx, OWN_PLAYLIST, entry.playlistId) && playlistIds(ctx, entry.playlistId).length > 0;
-    }
-    return !!own(ctx, OWN_TRACK, entry.trackId);
-}
-
-/** Bouton en erreur : contenu supprimé de la bibliothèque de la table. */
-function buttonBroken(ctx, row) {
-    const actions = parseActions(row);
-    if (!actions) return true;
-    if (row.mode === 'scene') return Object.values(actions.slots ?? {}).some(entry => entry && !entryAvailable(ctx, entry));
-    return !entryAvailable(ctx, actions);
-}
-
-/** Boutons de la table, dans l'ordre (réponse de toutes les routes de boutons). */
-function loadButtons(ctx) {
-    return ctx.db.prepare('SELECT * FROM audio_buttons WHERE slug = ? AND session_id = ? ORDER BY position, id')
-        .all(ctx.slug, ctx.sessionId)
-        .map(row => ({ id: row.id, label: row.label, mode: row.mode, actions: parseActions(row), broken: buttonBroken(ctx, row) }));
-}
-
-/** Ce qui joue (en lecture ou en pause), pour une scène ; null si rien. */
-function captureScene(ctx) {
-    const slots = {};
-    let any = false;
-    for (const [slot, state] of Object.entries(getState(ctx).slots)) {
-        slots[slot] = state.trackId ? { trackId: state.trackId, playlistId: state.playlistId, mode: state.mode } : null;
-        any = any || !!state.trackId;
-    }
-    return any ? { slots } : null;
-}
-
 /**
- * Timecode d'un bouton sur un titre (§14.2), en secondes entières : undefined si absent
- * (depuis le début), NaN si illisible ; au-delà de la durée connue du titre, ramené à 0.
- */
-function parseStart(track, value) {
-    if (value === undefined || value === null || value === '') return undefined;
-    // Un nombre seulement : true ou [83] ne passent pas par Number()
-    if (typeof value !== 'number' || !Number.isFinite(value) || value < 0) return NaN;
-    // Arrondi avant la comparaison : 299,8 s sur un titre de 300 s ne tombe pas pile à la fin
-    const seconds = Math.round(value);
-    return track.duration && seconds >= track.duration ? 0 : seconds;
-}
-
-/** Actions d'un bouton ciblé, vérifiées (§12.6) ; { error } si refusé. */
-function targetActions(ctx, { slot, trackId, playlistId, shuffle, start }) {
-    if (!SLOTS[slot]) return { error: `Unknown slot: ${slot}` };
-    if (trackId) {
-        const track = own(ctx, OWN_TRACK, trackId);
-        if (!track) return { error: 'Track not found in this table library' };
-        const seconds = parseStart(track, start);
-        if (Number.isNaN(seconds)) return { error: 'Invalid start' };
-        return seconds ? { slot, trackId: Number(trackId), start: seconds } : { slot, trackId: Number(trackId) };
-    }
-    if (start !== undefined && start !== null && start !== '') return { error: 'A playlist button has no start' };
-    if (!own(ctx, OWN_PLAYLIST, playlistId)) return { error: 'Playlist not found in this table library' };
-    if (slot === 'effect') return { error: 'A playlist cannot target the effect slot' };
-    if (shuffle && slot !== 'music') return { error: 'Shuffle is only available on the music slot' };
-    return { slot, playlistId: Number(playlistId), shuffle: !!shuffle };
-}
-
-/**
- * Lance une piste d'après une entrée : mode rétabli, depuis son timecode (`start`, 0 sinon) ;
- * au hasard en mode shuffle, toujours depuis le début.
+ * Lance une piste d'après une entrée de bouton : mode fixé par l'entrée (sinon celui de la
+ * piste est gardé), depuis son timecode (`start`, 0 sinon) ; au hasard en mode shuffle.
  */
 function runEntry(ctx, slot, entry) {
-    const mode = entry.shuffle ? 'shuffle' : entry.mode ?? (entry.playlistId && !entry.trackId ? 'playlist' : null);
-    if (mode && SLOTS[slot].modes.includes(mode)) getState(ctx).slots[slot].mode = mode;
-    const fromPlaylist = entry.playlistId && (mode === 'shuffle' || !entry.trackId);
-    const ok = fromPlaylist
+    if (entry.mode && SLOTS[slot].modes.includes(entry.mode)) getState(ctx).slots[slot].mode = entry.mode;
+    const ok = usesPlaylist(entry)
         ? !SLOT_COMMANDS.playPlaylist(ctx, slot, { playlistId: entry.playlistId })
         : playTrack(ctx, slot, entry.trackId, entry.start ?? 0);
     if (!ok) stopSlot(ctx, slot);
 }
 
-/** Exécute un bouton : scène (toutes les pistes) ou ciblé (sa piste seulement). */
-function runButton(ctx, row) {
-    const actions = parseActions(row);
-    if (row.mode === 'scene') {
-        for (const slot of Object.keys(SLOTS)) {
-            const entry = actions.slots?.[slot];
-            if (entry) runEntry(ctx, slot, entry);
-            else stopSlot(ctx, slot);
-        }
-    } else {
-        runEntry(ctx, actions.slot, actions);
-    }
-    getState(ctx).lastButtonId = row.id;
-}
-
-/** Le contenu visé par une entrée existe-t-il encore à la table (sans regarder si une playlist est vide) ? */
-function entryExists(ctx, entry) {
-    if (!entry) return false;
-    const usesPlaylist = entry.playlistId && (entry.mode === 'shuffle' || entry.shuffle || !entry.trackId);
-    return usesPlaylist ? !!own(ctx, OWN_PLAYLIST, entry.playlistId) : !!own(ctx, OWN_TRACK, entry.trackId);
+/** Ce qui joue sur une piste au moment d'un fondu, pour le lecteur sortant ; null si rien ne joue. */
+function fadeSource(slotState) {
+    if (slotState.status !== 'playing' || !slotState.mediaId) return null;
+    const { source, mediaId, gain, lane } = slotState;
+    return { source, mediaId, gain, position: currentPosition(slotState), lane: lane ?? 0 };
 }
 
 /**
- * Ménage après une suppression de titre, de playlist ou de collection (§12.7) :
- * bouton ciblé dont le contenu a disparu → supprimé ; scène → la piste disparue est
- * retirée (elle sera arrêtée au lancement), la scène supprimée s'il ne lui reste rien.
- * Signale le changement aux clients du MJ s'il y en a un.
+ * Exécute un bouton (§15.3) : piste citée avec une entrée → lancée ; `null` → arrêtée ;
+ * absente → intacte. « En fondu » : chaque piste changée (hors effet) passe sur un
+ * nouveau lecteur, l'ancien son descend pendant que le nouveau monte (§15.5).
  */
-function pruneButtons(ctx) {
-    const rows = ctx.db.prepare('SELECT * FROM audio_buttons WHERE slug = ? AND session_id = ?').all(ctx.slug, ctx.sessionId);
-    const remove = ctx.db.prepare('DELETE FROM audio_buttons WHERE id = ?');
-    const update = ctx.db.prepare('UPDATE audio_buttons SET actions = ? WHERE id = ?');
-    let changed = false;
+function runButton(ctx, row) {
+    const actions = parseActions(row);
+    for (const slot of Object.keys(SLOTS)) {
+        if (!(slot in actions.slots)) continue;
+        const current = getState(ctx).slots[slot];
+        const faded = actions.fade && slot !== 'effect';
+        const from = faded ? fadeSource(current) : null;
 
-    ctx.db.transaction(() => {
-        for (const row of rows) {
-            const actions = parseActions(row);
-            if (!actions) continue;
-            if (row.mode === 'target') {
-                if (!entryExists(ctx, actions)) { remove.run(row.id); changed = true; }
-                continue;
-            }
-            const slots = { ...actions.slots };
-            let dropped = false;
-            for (const [slot, entry] of Object.entries(slots)) {
-                if (entry && !entryExists(ctx, entry)) { slots[slot] = null; dropped = true; }
-            }
-            if (!dropped) continue;
-            if (Object.values(slots).some(Boolean)) update.run(JSON.stringify({ ...actions, slots }), row.id);
-            else remove.run(row.id);
-            changed = true;
+        const entry = actions.slots[slot];
+        if (entry) runEntry(ctx, slot, entry);
+        else stopSlot(ctx, slot);
+
+        // Rien ne descend ni ne monte (piste arrêtée qui ne jouait pas) : pas de fondu
+        if (faded && (from || current.mediaId)) {
+            Object.assign(current, { lane: (current.lane ?? 0) + 1, fade: { from, at: Date.now(), duration: FADE_MS } });
         }
-    })();
-
-    if (!changed) return;
-    const state = getState(ctx);
-    if (state.lastButtonId && !ctx.db.prepare(OWN_BUTTON).get(state.lastButtonId, ctx.slug, ctx.sessionId)) state.lastButtonId = null;
-    notifyButtons(ctx);
+    }
+    getState(ctx).lastButtonId = row.id;
 }
 
 /** Les boutons ont changé : les clients du MJ relisent la liste (les noms ne partent pas dans la room). */
 function notifyButtons(ctx) {
     ctx.io?.to(`${ctx.slug}_session_${ctx.sessionId}`).emit('audio-buttons-changed', { system: ctx.slug, sessionId: ctx.sessionId });
+}
+
+/** Ménage des boutons après une suppression de contenu (§12.7, §15.4), puis signal aux clients du MJ. */
+function pruneAndNotify(ctx) {
+    if (!pruneButtons(ctx)) return;
+    const state = getState(ctx);
+    if (state.lastButtonId && !ctx.db.prepare(OWN_BUTTON).get(state.lastButtonId, ctx.slug, ctx.sessionId)) state.lastButtonId = null;
+    notifyButtons(ctx);
 }
 
 // ─── Table de la requête ────────────────────────────────────────────────────
@@ -823,7 +723,7 @@ router.put('/sessions/:sid/collections/:id', ...gm, libraryRoute('update collect
 router.delete('/sessions/:sid/collections/:id', ...gm, libraryRoute('delete collection', (ctx, _body, { id }) => {
     if (!own(ctx, OWN_COLLECTION, id)) return notFound('Collection');
     ctx.db.transaction(() => deleteCollections(ctx.db, 'id = ?', [id]))();
-    pruneButtons(ctx);
+    pruneAndNotify(ctx);
 }));
 
 // Copie d'une collection (publique ou à moi) dans ma table, en privé (T-1)
@@ -899,7 +799,7 @@ router.delete('/sessions/:sid/playlists/:id', ...gm, libraryRoute('delete playli
         ctx.db.prepare('DELETE FROM audio_tracks WHERE playlist_id = ?').run(id);
         ctx.db.prepare('DELETE FROM audio_playlists WHERE id = ?').run(id);
     })();
-    pruneButtons(ctx);
+    pruneAndNotify(ctx);
 }));
 
 // Copie d'une playlist (publique ou à moi) dans une de mes collections (S-3)
@@ -976,7 +876,7 @@ router.post('/sessions/:sid/tracks/:id/copy', ...gm, libraryRoute('copy track', 
 router.delete('/sessions/:sid/tracks/:id', ...gm, libraryRoute('delete track', (ctx, _body, { id }) => {
     if (!own(ctx, OWN_TRACK, id)) return notFound('Track');
     ctx.db.prepare('DELETE FROM audio_tracks WHERE id = ?').run(id);
-    pruneButtons(ctx);
+    pruneAndNotify(ctx);
 }));
 
 // ─── Routes : boutons préréglés (MJ, lot 2, §12.6) ──────────────────────────
@@ -994,30 +894,20 @@ const buttonsRoute = (label, handler, { write = true } = {}) => async (req, res)
     }
 };
 
-const buttonLabel = (label) => (isText(label) ? label.trim().slice(0, LABEL_MAX) : null);
-
 router.get('/sessions/:sid/buttons', ...gm, buttonsRoute('load buttons', () => null, { write: false }));
 
-// Créer : scène (ce qui joue, lu dans l'état du serveur) ou ciblé ; 5 au plus
-router.post('/sessions/:sid/buttons', ...gm, buttonsRoute('create button', (ctx, { label, mode, ...target }) => {
+// Créer un bouton complet (§15.8) : { label, fade?, slots } ; 12 au plus
+router.post('/sessions/:sid/buttons', ...gm, buttonsRoute('create button', (ctx, { label, fade, slots }) => {
     const name = buttonLabel(label);
     if (!name) return invalid('Label required');
     const count = ctx.db.prepare('SELECT COUNT(*) AS n FROM audio_buttons WHERE slug = ? AND session_id = ?').get(ctx.slug, ctx.sessionId).n;
     if (count >= MAX_BUTTONS) return { status: 409, error: `${MAX_BUTTONS} buttons at most` };
+    const checked = checkButton(ctx, { fade, slots });
+    if (checked.error) return invalid(checked.error);
 
-    let actions;
-    if (mode === 'scene') {
-        actions = captureScene(ctx);
-        if (!actions) return invalid('Nothing is playing');
-    } else if (mode === 'target') {
-        actions = targetActions(ctx, target);
-        if (actions.error) return invalid(actions.error);
-    } else {
-        return invalid(`Unknown mode: ${mode}`);
-    }
-
+    // La colonne mode ne distingue plus rien (§15.4) : toujours 'scene'
     ctx.db.prepare('INSERT INTO audio_buttons (slug, session_id, label, position, mode, actions) VALUES (?, ?, ?, ?, ?, ?)')
-        .run(ctx.slug, ctx.sessionId, name, nextPosition(ctx.db, 'audio_buttons', 'slug = ? AND session_id = ?', [ctx.slug, ctx.sessionId]), mode, JSON.stringify(actions));
+        .run(ctx.slug, ctx.sessionId, name, nextPosition(ctx.db, 'audio_buttons', 'slug = ? AND session_id = ?', [ctx.slug, ctx.sessionId]), 'scene', JSON.stringify(checked.actions));
     return { created: true };
 }));
 
@@ -1026,60 +916,20 @@ router.put('/sessions/:sid/buttons/order', ...gm, buttonsRoute('reorder buttons'
     if (!reorder(ctx.db, 'audio_buttons', ids, 'slug = ? AND session_id = ?', [ctx.slug, ctx.sessionId])) return invalid('ids must be an array');
 }));
 
-/**
- * Timecodes modifiés d'un bouton (§14.2) : `start` pour un bouton ciblé sur un titre,
- * `starts` ({ piste: secondes | null }) pour une scène ; null ou vide = depuis le début.
- * Renvoie les actions à jour, ou { error }.
- */
-function withStarts(ctx, row, { start, starts }) {
-    const actions = parseActions(row);
-    if (!actions) return { error: 'Invalid button' };
-    const setStart = (entry, value) => {
-        if (!entry?.trackId || entry.mode === 'shuffle' || entry.shuffle) return 'Only a track can have a start';
-        const track = own(ctx, OWN_TRACK, entry.trackId);
-        if (!track) return 'Track not found in this table library';
-        const seconds = parseStart(track, value);
-        if (Number.isNaN(seconds)) return 'Invalid start';
-        if (seconds) entry.start = seconds;
-        else delete entry.start;
-        return null;
-    };
-
-    if (row.mode === 'target') {
-        if (start === undefined) return { actions };
-        const error = setStart(actions, start);
-        return error ? { error } : { actions };
-    }
-    if (starts === undefined) return { actions };
-    if (!starts || typeof starts !== 'object' || Array.isArray(starts)) return { error: 'starts must be an object' };
-    for (const [slot, value] of Object.entries(starts)) {
-        if (!SLOTS[slot]) return { error: `Unknown slot: ${slot}` };
-        const error = setStart(actions.slots?.[slot], value);
-        if (error) return { error };
-    }
-    return { actions };
-}
-
-// Renommer ; capture : remplacer une scène par ce qui joue ; start / starts : timecodes (§14.2)
-router.put('/sessions/:sid/buttons/:id', ...gm, buttonsRoute('update button', (ctx, { label, capture, start, starts }, { id }) => {
+// Modifier : nom, fondu, et pistes (`slots` remplace toutes les pistes du bouton)
+router.put('/sessions/:sid/buttons/:id', ...gm, buttonsRoute('update button', (ctx, { label, fade, slots }, { id }) => {
     const row = own(ctx, OWN_BUTTON, id);
     if (!row) return notFound('Button');
-    if (start !== undefined || starts !== undefined) {
-        const timed = withStarts(ctx, row, { start, starts });
-        if (timed.error) return invalid(timed.error);
-        ctx.db.prepare('UPDATE audio_buttons SET actions = ? WHERE id = ?').run(JSON.stringify(timed.actions), id);
+    const name = label === undefined ? row.label : buttonLabel(label);
+    if (!name) return invalid('Label required');
+
+    let actions = parseActions(row);
+    if (fade !== undefined || slots !== undefined) {
+        const checked = checkButton(ctx, { fade: fade ?? !!actions?.fade, slots: slots ?? actions?.slots });
+        if (checked.error) return invalid(checked.error);
+        actions = checked.actions;
     }
-    if (label !== undefined) {
-        const name = buttonLabel(label);
-        if (!name) return invalid('Label required');
-        ctx.db.prepare('UPDATE audio_buttons SET label = ? WHERE id = ?').run(name, id);
-    }
-    if (capture) {
-        if (row.mode !== 'scene') return invalid('Only a scene can be replaced by what is playing');
-        const actions = captureScene(ctx);
-        if (!actions) return invalid('Nothing is playing');
-        ctx.db.prepare('UPDATE audio_buttons SET actions = ? WHERE id = ?').run(JSON.stringify(actions), id);
-    }
+    ctx.db.prepare('UPDATE audio_buttons SET label = ?, actions = ? WHERE id = ?').run(name, JSON.stringify(actions), row.id);
 }));
 
 router.delete('/sessions/:sid/buttons/:id', ...gm, buttonsRoute('delete button', (ctx, _body, { id }) => {

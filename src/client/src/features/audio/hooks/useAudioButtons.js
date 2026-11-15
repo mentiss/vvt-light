@@ -1,9 +1,9 @@
 // src/client/src/features/audio/hooks/useAudioButtons.js
 // ─────────────────────────────────────────────────────────────────────────────
-// Boutons préréglés de la table, côté MJ (documentations/spec_audio.md §12.6) :
-// liste relue à chaque audio-buttons-changed (modification ailleurs : panneau,
-// onglet Session, autre onglet du MJ), lancement, création (scène = ce qui joue,
-// ou ciblé), renommage, remplacement par ce qui joue, ordre, suppression.
+// Boutons préréglés de la table, côté MJ (documentations/plateforme/spec_audio.md
+// §12.6, §15) : liste relue à chaque audio-buttons-changed (modification ailleurs :
+// panneau, onglet Session, autre onglet du MJ), lancement, création et modification
+// d'un bouton complet (nom, fondu, pistes), ordre, suppression.
 // Chaque écriture renvoie la liste à jour, qui remplace la précédente.
 // ─────────────────────────────────────────────────────────────────────────────
 
@@ -12,20 +12,21 @@ import { useSocket } from '@/app/context/SocketContext.jsx';
 import { useFetch } from '@/app/hooks/useFetch.js';
 import { getSystemFromPath } from '@/app/hooks/useSystem.js';
 
-export const MAX_AUDIO_BUTTONS = 5;
+export const MAX_AUDIO_BUTTONS = 12;
 
 // Messages du serveur traduits pour l'interface
 const MESSAGES = {
-    'Nothing is playing': 'Rien ne joue : lancez d\'abord la musique ou une ambiance.',
     [`${MAX_AUDIO_BUTTONS} buttons at most`]: `${MAX_AUDIO_BUTTONS} boutons au plus.`,
     'Audio is disabled for this session': 'Musique désactivée pour cette table.',
     'Button content was deleted': 'Playlist vide : ce bouton ne peut rien lancer.',
+    'A button must play at least one slot': 'Le bouton doit lancer au moins une piste.',
+    'Label required': 'Donnez un nom au bouton.',
 };
 
 /**
  * @param {number|null} sessionId table active
- * @returns {{ buttons: object[], error: string|null, clearError: Function, run: Function, saveScene: Function,
- *             createTarget: Function, rename: Function, capture: Function, reorder: Function, remove: Function }}
+ * @returns {{ sessionId: number|null, buttons: object[], error: string|null, clearError: Function, run: Function,
+ *             create: Function, update: Function, reorder: Function, remove: Function }}
  */
 export function useAudioButtons(sessionId) {
     const socket = useSocket();
@@ -86,17 +87,16 @@ export function useAudioButtons(sessionId) {
     const buttons = data.sessionId === sessionId ? data.buttons : [];
 
     return {
+        sessionId,
         buttons,
         error,
         clearError: () => setError(null),
         /** Lance un bouton ; l'état de lecture arrive par audio-state. */
         run: (id) => request('POST', `/${id}/run`),
-        saveScene: (label) => write('POST', '', { label, mode: 'scene' }),
-        createTarget: ({ label, slot, trackId, playlistId, shuffle, start }) => write('POST', '', { label, mode: 'target', slot, trackId, playlistId, shuffle, start }),
-        rename: (id, label) => write('PUT', `/${id}`, { label }),
-        /** Timecodes (§14.2) : { start } pour un bouton ciblé, { starts: { piste: secondes | null } } pour une scène. */
-        setStart: (id, timecodes) => write('PUT', `/${id}`, timecodes),
-        capture: (id) => write('PUT', `/${id}`, { capture: true }),
+        /** Bouton complet : { label, fade, slots } (slots : voir tools/audioButtons.js). */
+        create: (button) => write('POST', '', button),
+        /** Modification : { label?, fade?, slots? } ; slots remplace toutes les pistes. */
+        update: (id, changes) => write('PUT', `/${id}`, changes),
         reorder: (ids) => write('PUT', '/order', { ids }),
         remove: (id) => write('DELETE', `/${id}`),
     };

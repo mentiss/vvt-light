@@ -1,12 +1,12 @@
 // src/client/src/features/audio/panel/ScenesDialog.jsx
 // ─────────────────────────────────────────────────────────────────────────────
-// Fenêtres des boutons préréglés (documentations/spec_audio.md §12.6), sur la Modal
-// générique, dans l'emplacement à modales de la page :
-// - SceneNameDialog : nom d'une scène enregistrée depuis ce qui joue ;
-// - TargetButtonDialog : bouton ciblé créé depuis un titre ou une playlist ;
-// - ScenesDialog : « Modifier les scènes… » (renommer, ordre, timecodes des titres
-//   (§14.2), remplacer par ce qui joue, supprimer). La gestion ne vit qu'ici, pas
-//   dans le panneau.
+// Fenêtres des boutons préréglés (documentations/plateforme/spec_audio.md §12.6, §15.7),
+// sur la Modal générique, dans l'emplacement à modales de la page :
+// - ButtonEditor : création et modification d'un bouton, piste par piste (Lancer /
+//   Arrêter / Ne pas toucher, contenu choisi dans la bibliothèque, mode, timecode),
+//   nom et option « en fondu » ;
+// - ScenesDialog : « Modifier les scènes… » (ordre, Modifier, supprimer). La gestion
+//   ne vit qu'ici, pas dans le panneau.
 // ─────────────────────────────────────────────────────────────────────────────
 
 import React, { useState } from 'react';
@@ -14,180 +14,235 @@ import Modal from '@/ui/modal/Modal.jsx';
 import { HostedModal } from '@/ui/modal/ModalHost.jsx';
 import useConfirm from '@/ui/hooks/useConfirm.jsx';
 import { useDragOrder } from '@/ui/hooks/useDragOrder.js';
-import { SLOT_LABEL } from '../tools/audioSlots.js';
-import { formatTime } from '../tools/audioLibrary.js';
-import { parseTimecode } from '../tools/timecode.js';
+import { useAudioLibrary } from '../hooks/useAudioLibrary.js';
+import { SLOTS, SLOT_MODES, MODE_LABELS } from '../tools/audioSlots.js';
+import { findPlaylist, normalizeQuery, titleMatches } from '../tools/audioLibrary.js';
+import { SLOT_OPS, slotsFromDraft, buttonSummary } from '../tools/audioButtons.js';
+
+/** Titre de la bibliothèque et sa playlist, ou null. */
+const findTrack = (library, id) => {
+    for (const c of library) {
+        for (const p of c.playlists) {
+            const track = p.tracks.find(t => t.id === id);
+            if (track) return { track, playlist: p };
+        }
+    }
+    return null;
+};
+
+/** Choix pill par pill (Lancer / Arrêter / Ne pas toucher, modes). */
+const Pills = ({ options, value, onChange, label }) => (
+    <div className="vtt-audio-editor-pills" role="group" aria-label={label}>
+        {options.map(o => (
+            <button key={o.id ?? 'none'} type="button" className={`vtt-pill${value === o.id ? ' is-selected' : ''}`}
+                    aria-pressed={value === o.id} onClick={() => onChange(o.id)}>
+                {o.label}
+            </button>
+        ))}
+    </div>
+);
 
 /**
- * Champ « à partir de » d'un titre (§14.2) : enregistré en quittant le champ ou par Entrée ;
- * vide = depuis le début ; un timecode illisible est signalé et rien ne part.
+ * Choix d'un contenu dans la bibliothèque de la table : recherche d'un titre, ou
+ * playlist dépliée (toute la playlist, si la piste l'accepte, ou un de ses titres).
  */
-const StartField = ({ label, seconds, onCommit }) => {
-    const shown = seconds ? formatTime(seconds) : '';
-    // null : le champ montre la valeur du serveur ; un texte : saisie en cours
-    const [text, setText] = useState(null);
-    const [invalid, setInvalid] = useState(false);
-    const commit = async () => {
-        if (text === null) return;
-        const value = parseTimecode(text);
-        setInvalid(value === null);
-        if (value === null) return;
-        if (value !== (seconds ?? 0)) await onCommit(value || null);
-        // Retour à la valeur enregistrée : le serveur a pu la ramener au début (au-delà de la durée)
-        setText(null);
-    };
+const ContentPicker = ({ library, loading, allowPlaylist, onPick }) => {
+    const [search, setSearch] = useState('');
+    const [openId, setOpenId] = useState(null);
+    const query = normalizeQuery(search);
+    const found = query ? library.flatMap(c => c.playlists.flatMap(p => p.tracks.filter(t => titleMatches(t.title, query)).map(t => ({ t, p })))) : [];
+
     return (
-        <label className="vtt-audio-scene-start">
-            <span>{label} à partir de</span>
-            <input className="vtt-input" value={text ?? shown} placeholder="0:00" inputMode="numeric" aria-invalid={invalid || undefined}
-                   title={invalid ? 'Timecode illisible : 1:23, 1:02:03 ou des secondes' : undefined}
-                   onChange={e => { setText(e.target.value); setInvalid(false); }} onBlur={commit}
-                   onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); commit(); } if (e.key === 'Escape') { e.stopPropagation(); setText(null); setInvalid(false); } }} />
-        </label>
+        <div className="vtt-audio-editor-picker">
+            <input type="search" className="vtt-input" value={search} placeholder="Rechercher un titre" autoComplete="off"
+                   aria-label="Rechercher un titre dans la bibliothèque" onChange={e => setSearch(e.target.value)}
+                   onKeyDown={e => { if (e.key === 'Escape' && search) { e.stopPropagation(); setSearch(''); } }} />
+            <ul className="vtt-audio-editor-picker-list">
+                {loading && library.length === 0 && <li className="text-sm text-muted">Chargement de la bibliothèque…</li>}
+                {!loading && library.length === 0 && <li className="text-sm text-muted">Bibliothèque vide.</li>}
+                {query
+                    ? found.map(({ t, p }) => (
+                        <li key={t.id}>
+                            <button type="button" className="vtt-audio-pick" onClick={() => onPick({ trackId: t.id })}>
+                                {t.title} <span className="vtt-audio-row-meta">· {p.name}</span>
+                            </button>
+                        </li>
+                    ))
+                    : library.map(c => (
+                        <li key={c.id}>
+                            <div className="vtt-field-label">{c.name}</div>
+                            <ul>
+                                {c.playlists.map(p => (
+                                    <li key={p.id}>
+                                        <button type="button" className="vtt-audio-pick" aria-expanded={openId === p.id}
+                                                onClick={() => setOpenId(openId === p.id ? null : p.id)}>
+                                            {openId === p.id ? '▾' : '▸'} {p.name} <span className="vtt-audio-row-meta">· {p.tracks.length} titre(s)</span>
+                                        </button>
+                                        {openId === p.id && (
+                                            <ul className="vtt-audio-editor-picker-tracks">
+                                                {allowPlaylist && p.tracks.length > 0 && (
+                                                    <li><button type="button" className="vtt-audio-pick" onClick={() => onPick({ playlistId: p.id })}>Toute la playlist</button></li>
+                                                )}
+                                                {p.tracks.map(t => (
+                                                    <li key={t.id}><button type="button" className="vtt-audio-pick" onClick={() => onPick({ trackId: t.id })}>{t.title}</button></li>
+                                                ))}
+                                            </ul>
+                                        )}
+                                    </li>
+                                ))}
+                            </ul>
+                        </li>
+                    ))}
+            </ul>
+        </div>
     );
 };
 
-/** Titres d'un bouton qui acceptent un timecode : [piste, entrée] (pas une playlist ni le hasard). */
-const timedEntries = (button) => {
-    const actions = button.actions ?? {};
-    if (button.mode === 'target') return actions.trackId ? [[actions.slot, actions]] : [];
-    return Object.entries(actions.slots ?? {}).filter(([, e]) => e?.trackId && e.mode !== 'shuffle');
+/** Ce que lance une ligne, en clair. */
+const contentLabel = (line, library) => {
+    if (line.trackId) {
+        const found = findTrack(library, line.trackId);
+        return found ? `${found.track.title} · ${found.playlist.name}` : 'Titre introuvable';
+    }
+    if (line.playlistId) {
+        const found = findPlaylist(library, line.playlistId);
+        return found ? `Playlist « ${found.playlist.name} »` : 'Playlist introuvable';
+    }
+    return 'Aucun contenu choisi';
 };
 
-/** Résumé d'un bouton : « Scène » ou la piste visée. */
-export const buttonSummary = (button) => (button.mode === 'scene'
-    ? 'Scène'
-    : `${SLOT_LABEL[button.actions?.slot] ?? 'Piste'}${button.actions?.shuffle ? ', au hasard' : ''}`);
+/** Une piste du bouton. */
+const SlotLine = ({ slot, label, line, onChange, library, loading, playing }) => {
+    const [picking, setPicking] = useState(false);
+    const isEffect = slot === 'effect';
+    const modes = [{ id: null, label: 'Mode en cours' }, ...SLOT_MODES[slot].map(m => ({ id: m, label: MODE_LABELS[m] }))];
+    const timed = line.trackId && line.mode !== 'shuffle';
 
-/** Champ de nom et pied « Annuler / Valider », partagés par les deux fenêtres de création. */
-const NameForm = ({ title, initial, submitLabel, onSubmit, onClose, error, children }) => {
-    const [name, setName] = useState(initial);
-    const submit = (e) => { e.preventDefault(); if (name.trim()) onSubmit(name.trim()); };
+    return (
+        <li className="vtt-audio-editor-slot">
+            <div className="vtt-audio-editor-slot-head">
+                <span className="vtt-audio-editor-slot-name">{label}</span>
+                <Pills label={`${label} : action`} options={SLOT_OPS} value={line.op} onChange={op => onChange({ op })} />
+            </div>
+            {line.op === 'play' && (
+                <div className="vtt-audio-editor-slot-body">
+                    <div className="vtt-audio-editor-content">
+                        <span className={line.trackId || line.playlistId ? '' : 'text-muted'}>{loading && library.length === 0 ? '…' : contentLabel(line, library)}</span>
+                        <button type="button" className="vtt-btn vtt-btn-sm" aria-expanded={picking} onClick={() => setPicking(!picking)}>
+                            {picking ? 'Fermer' : 'Choisir…'}
+                        </button>
+                        <button type="button" className="vtt-btn vtt-btn-sm" disabled={!playing?.trackId}
+                                title={playing?.trackId ? `Reprendre « ${playing.title} »` : 'Rien ne joue sur cette piste'}
+                                onClick={() => onChange({ trackId: playing.trackId, playlistId: null, mode: isEffect ? null : playing.mode })}>
+                            Prendre ce qui joue
+                        </button>
+                    </div>
+                    {picking && (
+                        <ContentPicker library={library} loading={loading} allowPlaylist={!isEffect}
+                                       onPick={content => { setPicking(false); onChange({ trackId: null, playlistId: null, ...content }); }} />
+                    )}
+                    {!isEffect && <Pills label={`${label} : mode`} options={modes} value={line.mode} onChange={mode => onChange({ mode })} />}
+                    {line.trackId && line.mode === 'shuffle' && <p className="text-sm text-muted">Aléatoire : un titre au hasard de sa playlist.</p>}
+                    {timed && (
+                        <label className="vtt-audio-scene-start">
+                            <span>À partir de</span>
+                            <input className="vtt-input" value={line.startText} placeholder="0:00" inputMode="numeric"
+                                   onChange={e => onChange({ startText: e.target.value })} />
+                        </label>
+                    )}
+                </div>
+            )}
+        </li>
+    );
+};
+
+/**
+ * Création ou modification d'un bouton (§15.7).
+ * @param {object}   props
+ * @param {number}   props.sessionId   table active (bibliothèque chargée par la fenêtre)
+ * @param {string}   props.title
+ * @param {string}   props.submitLabel
+ * @param {{ label: string, fade: boolean, draft: object }} props.initial  fiche de départ (tools/audioButtons.js)
+ * @param {object}   [props.audioState] état de lecture, pour « Prendre ce qui joue »
+ * @param {string|null} [props.error]  erreur du serveur
+ * @param {(button: { label: string, fade: boolean, slots: object }) => void} props.onSave
+ * @param {Function} props.onClose
+ */
+export const ButtonEditor = ({ sessionId, title, submitLabel, initial, audioState, error, onSave, onClose }) => {
+    const lib = useAudioLibrary(sessionId, true);
+    const [name, setName] = useState(initial.label);
+    const [fade, setFade] = useState(!!initial.fade);
+    const [draft, setDraft] = useState(initial.draft);
+    const [localError, setLocalError] = useState(null);
+
+    const setLine = (slot, patch) => {
+        setDraft(prev => ({ ...prev, [slot]: { ...prev[slot], ...patch } }));
+        setLocalError(null);
+    };
+    const submit = (e) => {
+        e.preventDefault();
+        if (!name.trim()) return;
+        const result = slotsFromDraft(draft);
+        if (result.error) { setLocalError(result.error); return; }
+        onSave({ label: name.trim(), fade, slots: result.slots });
+    };
+
     return (
         <HostedModal>
-            <Modal title={title} size="sm" onClose={onClose} className="vtt-audio-scene-dialog"
+            <Modal title={title} subtitle="Les joueurs ne voient jamais ce nom" size="lg" onClose={onClose} closeOnBackdrop={false}
+                   className="vtt-audio-scene-dialog vtt-audio-button-editor"
                    footer={(
                        <>
                            <button type="button" className="vtt-btn vtt-btn-sm" onClick={onClose}>Annuler</button>
-                           <button type="submit" form="vtt-audio-scene-form" className="vtt-btn vtt-btn-primary vtt-btn-sm" disabled={!name.trim()}>{submitLabel}</button>
+                           <button type="submit" form="vtt-audio-button-form" className="vtt-btn vtt-btn-primary vtt-btn-sm" disabled={!name.trim()}>{submitLabel}</button>
                        </>
                    )}>
-                <form id="vtt-audio-scene-form" onSubmit={submit} className="space-y-3">
-                    <label className="block space-y-1">
-                        <span className="vtt-field-label">Nom du bouton</span>
-                        <input className="vtt-input" value={name} maxLength={40} autoFocus onChange={e => setName(e.target.value)} />
-                    </label>
-                    {children}
-                    {error && <p className="vtt-callout vtt-callout-danger text-sm">{error}</p>}
+                <form id="vtt-audio-button-form" onSubmit={submit} className="space-y-3">
+                    <div className="vtt-audio-editor-top">
+                        <label className="block space-y-1 flex-1">
+                            <span className="vtt-field-label">Nom du bouton</span>
+                            <input className="vtt-input" value={name} maxLength={40} autoFocus onChange={e => setName(e.target.value)} />
+                        </label>
+                        <Pills label="Transition" value={fade} onChange={setFade}
+                               options={[{ id: false, label: 'Coupure sèche' }, { id: true, label: 'En fondu (3 s)' }]} />
+                    </div>
+                    {fade && <p className="text-sm text-muted">Ce qui jouait descend pendant que le nouveau morceau monte, sur la musique et les ambiances ; l'effet part tout de suite.</p>}
+                    <ul className="vtt-audio-editor-slots">
+                        {SLOTS.map(s => (
+                            <SlotLine key={s.id} slot={s.id} label={s.label} line={draft[s.id]} onChange={patch => setLine(s.id, patch)}
+                                      library={lib.library} loading={lib.busy} playing={audioState?.slots?.[s.id]} />
+                        ))}
+                    </ul>
+                    {(localError ?? error) && <p className="vtt-callout vtt-callout-danger text-sm">{localError ?? error}</p>}
                 </form>
             </Modal>
         </HostedModal>
     );
 };
 
-/** « Enregistrer ce qui joue » : le serveur lit lui-même ce qui joue, seul le nom part. */
-export const SceneNameDialog = ({ count, error, onSave, onClose }) => (
-    <NameForm title="Enregistrer ce qui joue" initial={`Scène ${count + 1}`} submitLabel="Enregistrer"
-              onSubmit={onSave} onClose={onClose} error={error}>
-        <p className="text-sm text-muted">Le bouton relancera la musique, les ambiances et l'effet en cours, chacun avec son mode, depuis le début (un départ se règle ensuite dans « Modifier les scènes… ») ; les pistes vides seront arrêtées.</p>
-    </NameForm>
+/** Ligne d'un bouton dans « Modifier les scènes ». */
+const SceneRow = ({ button, onEdit, onRemove, dragProps }) => (
+    <li className="vtt-list-item vtt-audio-scene-row" {...dragProps}>
+        <span className="vtt-audio-scene-grip" aria-hidden="true">⋮⋮</span>
+        <span className="vtt-audio-scene-name">
+            <span>{button.broken && <span title="Playlist vide" aria-label="Playlist vide">⚠ </span>}{button.label}</span>
+            <span className="vtt-audio-row-meta">{buttonSummary(button.actions)}{button.broken ? ' · playlist vide' : ''}</span>
+        </span>
+        <span className="vtt-audio-scene-actions">
+            <button type="button" className="vtt-btn vtt-btn-sm" onClick={() => onEdit(button)}>Modifier</button>
+            <button type="button" className="vtt-btn vtt-btn-sm vtt-btn-danger" onClick={() => onRemove(button)}>Supprimer</button>
+        </span>
+    </li>
 );
 
-/**
- * Bouton ciblé, depuis un titre ({ kind: 'track', trackId }) ou une playlist ({ kind: 'playlist', playlistId }) :
- * un titre va sur n'importe quelle piste ; une playlist sur la musique ou une ambiance, « au hasard » en musique seulement.
- */
-export const TargetButtonDialog = ({ target, error, onCreate, onClose }) => {
-    const slots = target.kind === 'track' ? ['music', 'ambience1', 'ambience2', 'effect'] : ['music', 'ambience1', 'ambience2'];
-    const [slot, setSlot] = useState(slots.includes(target.slot) ? target.slot : 'music');
-    const [shuffle, setShuffle] = useState(false);
-    const [startText, setStartText] = useState('');
-    const [startError, setStartError] = useState(null);
-    const create = (label) => {
-        const start = target.kind === 'track' ? parseTimecode(startText) : 0;
-        if (start === null) { setStartError('Timecode illisible : 1:23, 1:02:03 ou des secondes'); return; }
-        onCreate({
-            label, slot,
-            ...(target.kind === 'track' ? { trackId: target.trackId, start: start || undefined } : { playlistId: target.playlistId, shuffle: slot === 'music' && shuffle }),
-        });
-    };
-    return (
-        <NameForm title="Créer un bouton" initial={target.name} submitLabel="Créer" onSubmit={create} onClose={onClose} error={startError ?? error}>
-            <div className="space-y-1">
-                <span className="vtt-field-label">Piste</span>
-                <div className="flex flex-wrap gap-2">
-                    {slots.map(s => (
-                        <button key={s} type="button" className={`vtt-pill${slot === s ? ' is-selected' : ''}`} aria-pressed={slot === s} onClick={() => setSlot(s)}>
-                            {SLOT_LABEL[s]}
-                        </button>
-                    ))}
-                </div>
-            </div>
-            {target.kind === 'playlist' && slot === 'music' && (
-                <div className="flex flex-wrap gap-2">
-                    <button type="button" className={`vtt-pill${!shuffle ? ' is-selected' : ''}`} aria-pressed={!shuffle} onClick={() => setShuffle(false)}>Dans l'ordre</button>
-                    <button type="button" className={`vtt-pill${shuffle ? ' is-selected' : ''}`} aria-pressed={shuffle} onClick={() => setShuffle(true)}>Au hasard</button>
-                </div>
-            )}
-            {target.kind === 'track' && (
-                <label className="block space-y-1">
-                    <span className="vtt-field-label">À partir de</span>
-                    <input className="vtt-input" value={startText} placeholder="0:00" inputMode="numeric" aria-invalid={!!startError || undefined}
-                           onChange={e => { setStartText(e.target.value); setStartError(null); }} />
-                </label>
-            )}
-            <p className="text-sm text-muted">Le bouton ne change que cette piste ; les autres continuent.</p>
-        </NameForm>
-    );
-};
-
-/** Ligne d'un bouton dans « Modifier les scènes ». */
-const SceneRow = ({ button, canCapture, scenes, confirm, dragProps }) => {
-    const [editing, setEditing] = useState(false);
-    const [name, setName] = useState(button.label);
-    const timed = timedEntries(button);
-    const save = () => { setEditing(false); if (name.trim() && name.trim() !== button.label) scenes.rename(button.id, name.trim()); };
-    const remove = async () => {
-        if (await confirm({ title: 'Supprimer le bouton', message: `Supprimer « ${button.label} » ?`, confirmText: 'Supprimer', danger: true })) scenes.remove(button.id);
-    };
-    return (
-        <li className="vtt-list-item vtt-audio-scene-row" {...dragProps}>
-            <span className="vtt-audio-scene-grip" aria-hidden="true">⋮⋮</span>
-            {editing ? (
-                <input className="vtt-input" value={name} maxLength={40} autoFocus aria-label="Nom du bouton"
-                       onChange={e => setName(e.target.value)} onBlur={save}
-                       onKeyDown={e => { if (e.key === 'Enter') save(); if (e.key === 'Escape') { e.stopPropagation(); setName(button.label); setEditing(false); } }} />
-            ) : (
-                <span className="vtt-audio-scene-name">
-                    <span>{button.broken && <span title="Playlist vide" aria-label="Playlist vide">⚠ </span>}{button.label}</span>
-                    <span className="vtt-audio-row-meta">{buttonSummary(button)}{button.broken ? ' · playlist vide' : ''}</span>
-                </span>
-            )}
-            {timed.length > 0 && (
-                <span className="vtt-audio-scene-starts">
-                    {timed.map(([slot, entry]) => (
-                        <StartField key={`${slot}:${entry.trackId}`} label={SLOT_LABEL[slot]} seconds={entry.start}
-                                    onCommit={value => scenes.setStart(button.id, button.mode === 'target' ? { start: value } : { starts: { [slot]: value } })} />
-                    ))}
-                </span>
-            )}
-            <span className="vtt-audio-scene-actions">
-                <button type="button" className="vtt-btn vtt-btn-sm" onClick={() => setEditing(true)}>Renommer</button>
-                {button.mode === 'scene' && (
-                    <button type="button" className="vtt-btn vtt-btn-sm" disabled={!canCapture} onClick={() => scenes.capture(button.id)}
-                            title={canCapture ? 'Le bouton relancera ce qui joue maintenant' : 'Rien ne joue'}>Remplacer par ce qui joue</button>
-                )}
-                <button type="button" className="vtt-btn vtt-btn-sm vtt-btn-danger" onClick={remove}>Supprimer</button>
-            </span>
-        </li>
-    );
-};
-
-/** « Modifier les scènes… » */
-export const ScenesDialog = ({ scenes, canCapture, onClose }) => {
+/** « Modifier les scènes… » : ordre, modification (onEdit ouvre ButtonEditor), suppression. */
+export const ScenesDialog = ({ scenes, onEdit, onClose }) => {
     const { confirm, confirmEl } = useConfirm();
     const ids = scenes.buttons.map(b => b.id);
     const drag = useDragOrder(ids, order => scenes.reorder(order));
+    const remove = async (button) => {
+        if (await confirm({ title: 'Supprimer le bouton', message: `Supprimer « ${button.label} » ?`, confirmText: 'Supprimer', danger: true })) scenes.remove(button.id);
+    };
     return (
         <HostedModal>
             <Modal title="Scènes de la table" subtitle="Glisser pour réordonner ; les joueurs ne voient jamais ces noms" size="md" onClose={onClose}
@@ -197,7 +252,7 @@ export const ScenesDialog = ({ scenes, canCapture, onClose }) => {
                     ? <p className="text-sm text-muted">Aucun bouton pour cette table.</p>
                     : (
                         <ul className="vtt-audio-scenes">
-                            {scenes.buttons.map(b => <SceneRow key={b.id} button={b} canCapture={canCapture} scenes={scenes} confirm={confirm} dragProps={drag(b.id)} />)}
+                            {scenes.buttons.map(b => <SceneRow key={b.id} button={b} onEdit={onEdit} onRemove={remove} dragProps={drag(b.id)} />)}
                         </ul>
                     )}
                 {scenes.error && <p className="vtt-callout vtt-callout-danger text-sm mt-3">{scenes.error}</p>}

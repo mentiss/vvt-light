@@ -7,13 +7,17 @@
 //   bouton des réglages du son.
 // - MJ : le bouton du panneau est toujours là quand une table est active, même
 //   musique désactivée (préparer sa bibliothèque, activer depuis le panneau).
+// - Fondu d'un bouton (§15.6) : le temps du fondu, l'ancien lecteur de la piste reste
+//   monté (même clé, même instance : le son continue) et descend, pendant que le
+//   nouveau morceau se charge dans un lecteur neuf et monte.
 // Les slugs n'ont rien à faire : ni prop nouvelle, ni import.
 // ─────────────────────────────────────────────────────────────────────────────
 
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { useAudioSession } from './hooks/useAudioSession.js';
 import { usePersistedState } from '@/app/hooks/usePersistedState.js';
 import { DEFAULT_VOLUMES, normalizeVolumes, slotVolume } from './tools/audioVolume.js';
+import { fadeOutActive } from './tools/audioFade.js';
 import { PLATFORM_SCOPE } from '@/app/tools/browserStorage.js';
 import { getSystemFromPath } from '@/app/hooks/useSystem.js';
 import SlotPlayer from './SlotPlayer.jsx';
@@ -26,6 +30,30 @@ import AudioGMPanel from './AudioGMPanel.jsx';
 // La position du panneau MJ, elle, est à FloatingPanel (par slug aussi)
 const VOLUME_DEFAULTS = { volumes: DEFAULT_VOLUMES };
 const LAYOUT_DEFAULTS = { widgetOpen: false, widgetDetails: false, panelOpen: false };
+
+const playerKey = (slot, source, lane) => `${slot}:${source ?? 'youtube'}:${lane ?? 0}`;
+
+/** État du lecteur sortant d'un fondu : ce qui jouait au clic, qui continue depuis fade.at. */
+const fadingState = ({ from, at }) => ({
+    status: 'playing', trackId: null, source: from.source, mediaId: from.mediaId, title: null, gain: from.gain,
+    position: from.position, refTime: at, duration: null,
+});
+
+/**
+ * Lecteurs à monter, dans une seule liste : un lecteur garde son instance d'une liste à
+ * l'autre (clé piste:source:lane), y compris quand il devient le lecteur sortant d'un fondu.
+ */
+function slotPlayers(slots, serverNow) {
+    const players = [];
+    for (const [slot, s] of Object.entries(slots)) {
+        if (fadeOutActive(s.fade, serverNow)) {
+            const { from } = s.fade;
+            players.push({ key: playerKey(slot, from.source, from.lane), slot, state: fadingState(s.fade), gain: from.gain, fade: s.fade, direction: 'out' });
+        }
+        if (s.mediaId) players.push({ key: playerKey(slot, s.source, s.lane), slot, state: s, gain: s.gain, fade: s.fade, direction: 'in', main: true });
+    }
+    return players;
+}
 
 /**
  * @param {object} props
@@ -53,6 +81,17 @@ const AudioLayer = ({ role, sessionId }) => {
     // Remontées du lecteur du MJ : durée connue, vidéo illisible (§11.3)
     const report = useCallback((action, payload) => { sendCommand({ action, ...payload }); }, [sendCommand]);
 
+    // Fin du dernier fondu en cours (heure du serveur) : un rendu à ce moment démonte le lecteur sortant
+    const { getServerNow } = audio;
+    const [, setFadeTick] = useState(0);
+    const fadeEnd = Math.max(0, ...Object.values(audio.state?.slots ?? {}).map(s => (s.fade?.from ? s.fade.at + s.fade.duration : 0)));
+    useEffect(() => {
+        const remaining = fadeEnd - getServerNow();
+        if (!fadeEnd || remaining <= 0) return undefined;
+        const id = setTimeout(() => setFadeTick(t => t + 1), remaining + 50);
+        return () => clearTimeout(id);
+    }, [fadeEnd, getServerNow]);
+
     if (!sessionId || !audio.loaded) return null;
     if (!audio.enabled && !isGM) return null;
 
@@ -64,17 +103,19 @@ const AudioLayer = ({ role, sessionId }) => {
 
     return (
         <>
-            {Object.entries(slots).map(([slot, slotState]) => slotState.mediaId && (
+            {slotPlayers(slots, getServerNow()).map(p => (
                 <SlotPlayer
-                    // Changer de source remonte le lecteur (un lecteur par source, §14.3)
-                    key={`${slot}:${slotState.source ?? 'youtube'}`}
-                    slot={slot}
-                    slotState={slotState}
-                    getServerNow={audio.getServerNow}
+                    // Changer de source ou passer un fondu remonte le lecteur (§14.3, §15.6)
+                    key={p.key}
+                    slot={p.slot}
+                    slotState={p.state}
+                    getServerNow={getServerNow}
                     tolerance={audio.tolerance}
                     unlocked={unlocked}
-                    volume={slotVolume(slot, slotState.gain, volumes)}
-                    onReport={isGM ? report : undefined}
+                    volume={slotVolume(p.slot, p.gain, volumes)}
+                    onReport={isGM && p.main ? report : undefined}
+                    fade={p.fade}
+                    fadeDirection={p.direction}
                 />
             ))}
 

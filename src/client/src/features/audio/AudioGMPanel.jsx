@@ -23,7 +23,8 @@ import useConfirm from '@/ui/hooks/useConfirm.jsx';
 import { useAudioLibrary } from './hooks/useAudioLibrary.js';
 import { useAudioButtons, MAX_AUDIO_BUTTONS } from './hooks/useAudioButtons.js';
 import AudioScenesMenu from './AudioScenesMenu.jsx';
-import { TargetButtonDialog } from './panel/ScenesDialog.jsx';
+import { ButtonEditor } from './panel/ScenesDialog.jsx';
+import { draftFromTarget } from './tools/audioButtons.js';
 import { usePersistedState } from '@/app/hooks/usePersistedState.js';
 import { getSystemFromPath } from '@/app/hooks/useSystem.js';
 import { parseMediaLink } from './tools/mediaLinks.js';
@@ -60,7 +61,7 @@ const AudioGMPanel = ({ sessionId, audio, onClose, focusOnOpen = true }) => {
     const lib = useAudioLibrary(sessionId, true);
     // Boutons préréglés (lot 2, §12.6) : un seul jeu pour le panneau ouvert et sa barre réduite
     const scenes = useAudioButtons(sessionId);
-    const [buttonTarget, setButtonTarget] = useState(null);   // bouton ciblé en cours de création
+    const [buttonTarget, setButtonTarget] = useState(null);   // bouton en cours de création depuis la bibliothèque
     const { confirm, confirmEl } = useConfirm();
     const { write } = lib;
 
@@ -147,9 +148,10 @@ const AudioGMPanel = ({ sessionId, audio, onClose, focusOnOpen = true }) => {
         onWrite: write,
         onPick: setPicker,
         confirm,
-        // « Créer un bouton… » des menus ⋯ (§12.6) : 5 boutons au plus
+        // « Créer un bouton… » des menus ⋯ (§12.6, §15.7) : la fenêtre d'édition, préremplie
         onCreateButton: (target) => { scenes.clearError(); setButtonTarget(target); },
         canCreateButton: scenes.buttons.length < MAX_AUDIO_BUTTONS,
+        maxButtonsHint: `${MAX_AUDIO_BUTTONS} au plus`,
         open: (playlistId) => setView({ collectionId: validView.collectionId, playlistId }),
         openCollection: (collectionId) => setView({ collectionId, playlistId: null }),
     };
@@ -216,8 +218,10 @@ const AudioGMPanel = ({ sessionId, audio, onClose, focusOnOpen = true }) => {
             {missingDurations.length > 0 && <DurationProbe tracks={missingDurations} onFound={onDurationFound} />}
             {picker && <TargetPicker {...picker} library={library} onPick={pick} onClose={() => setPicker(null)} />}
             {buttonTarget && (
-                <TargetButtonDialog target={buttonTarget} error={scenes.error} onClose={() => setButtonTarget(null)}
-                                    onCreate={async (body) => { if (await scenes.createTarget(body)) { setButtonTarget(null); flash(`Bouton « ${body.label} » créé`); } }} />
+                <ButtonEditor sessionId={sessionId} title="Créer un bouton" submitLabel="Créer" audioState={audio.state} error={scenes.error}
+                              initial={{ label: buttonTarget.name, fade: false, draft: draftFromTarget(buttonTarget) }}
+                              onClose={() => setButtonTarget(null)}
+                              onSave={async (body) => { if (await scenes.create(body)) { setButtonTarget(null); flash(`Bouton « ${body.label} » créé`); } }} />
             )}
             {catalogOpen && <CatalogModal lib={lib} onPick={setPicker} onClose={() => setCatalogOpen(false)} />}
             {confirmEl && <HostedModal>{confirmEl}</HostedModal>}
