@@ -56,3 +56,4 @@
 13112026_journal_partage.sql
 13112026_journal_refonte.sql
 15112026_audio_buttons_slots.sql
+15112026_board_map_slides.sql
