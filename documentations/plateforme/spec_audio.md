@@ -1268,7 +1268,7 @@ L'état d'une piste (§11.3) gagne deux champs :
 - `MAX_BUTTONS` = 12.
 - `routes/audio.js` fait déjà 1 100 lignes (C-SIZE) : la logique des boutons (forme, vérification, lecture, ménage) part dans `src/server/utils/audioButtons.js` ; les pistes (`SLOTS`) et la lecture d'un contenu de la table (`own`, `OWN_TRACK`, `OWN_PLAYLIST`, `playlistIds`), partagées par les deux, dans `src/server/utils/audioTable.js`. Le lancement d'un bouton (`runButton`, fondu) reste dans la route, avec l'état de lecture (Y-4). La route passe à 960 lignes : le prochain découpage naturel serait l'état de lecture (`getState`, `playTrack`, `advance`, commandes).
 
-**Livré le 2026-11-15** (lots A et B ensemble), avec la migration `15112026_audio_buttons_slots.sql`.
+**En prod le 2026-11-15** (v5.27.2, lots A et B ensemble), avec la migration `15112026_audio_buttons_slots.sql`.
 
 ### 15.9 Évolution gardée de côté
 

@@ -54,7 +54,7 @@ Conventions :
 
 | Spec | Sujet | État |
 |---|---|---|
-| `spec_audio.md` | Musique de la table (façon Watch2Gether) | en prod ; §15 (boutons piste par piste, fondu) livré en dev |
+| `spec_audio.md` | Musique de la table (façon Watch2Gether) | en prod (§15, boutons piste par piste et fondu : v5.27.2) ; évolutions notées |
 | `spec_browser_storage.md` | Stockage navigateur (`usePersistedState`) | en prod |
 | `spec_characters_route.md` | Route `/characters` commune | en prod |
 | `spec_composition_table.md` | Composition d'une table en temps réel | en prod |
