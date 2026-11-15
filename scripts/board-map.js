@@ -18,7 +18,6 @@
 
 require('dotenv').config();
 const fs   = require('fs');
-const os   = require('os');
 const path = require('path');
 const { spawnSync } = require('child_process');
 const { mapsDir, isMapName } = require('../src/server/utils/boardMaps');
@@ -99,8 +98,10 @@ const folderSize = (dir) => fs.readdirSync(dir, { withFileTypes: true })
 async function sendMap(mapDir) {
     const config = readDeployConfig(['host', 'user', 'appDir']);
     const remoteDir = config.mapsDir || `${config.appDir}/storage/maps`;
-    const archive = path.join(os.tmpdir(), `board-map-${name}.tar.gz`);
-    const tar = spawnSync('tar', ['-czf', archive, name], { cwd: path.dirname(mapDir), stdio: 'inherit' });
+    // Archive à côté de la carte, nommée en relatif : le tar de Git Bash lit « C: » comme un hôte distant
+    const archiveName = `.board-map-${name}.tar.gz`;
+    const archive = path.join(path.dirname(mapDir), archiveName);
+    const tar = spawnSync('tar', ['-czf', archiveName, name], { cwd: path.dirname(mapDir), stdio: 'inherit' });
     if (tar.status !== 0) throw new Error('Échec de l\'archive');
     console.log(`   archive : ${(fs.statSync(archive).size / 1024 / 1024).toFixed(1)} Mo`);
 
