@@ -394,6 +394,50 @@ describe('Tableau : brouillard au pinceau (§15)', () => {
     });
 });
 
+describe('Tableau : diapositive carte en tuiles (§17)', () => {
+    const mapsDir = path.join(os.tmpdir(), `vtt-board-maps-test-${process.pid}`);
+    const previous = process.env.BOARD_MAPS_DIR;
+
+    beforeAll(() => {
+        process.env.BOARD_MAPS_DIR = mapsDir;
+        fs.mkdirSync(path.join(mapsDir, 'region'), { recursive: true });
+        fs.writeFileSync(path.join(mapsDir, 'region', 'map.json'),
+            JSON.stringify({ label: 'Région', width: 2000, height: 1000, tileSize: 512, levels: 3, version: '1' }));
+    });
+    afterAll(() => {
+        fs.rmSync(mapsDir, { recursive: true, force: true });
+        if (previous === undefined) delete process.env.BOARD_MAPS_DIR;
+        else process.env.BOARD_MAPS_DIR = previous;
+    });
+
+    it('liste des cartes réservée au MJ', async () => {
+        const res = await app.request('GET', '/maps', { token: gm });
+        expect(res.body).toEqual([{ name: 'region', label: 'Région', width: 2000, height: 1000 }]);
+        expect((await app.request('GET', '/maps', { token: player })).status).toBe(403);
+    });
+
+    it('diapositive carte : grille activée, brouillard non, carte complète ; carte inconnue refusée ; pas de copie', async () => {
+        const res = await app.request('POST', `${tableUrl()}/slides`, { body: { map: 'region' }, token: gm });
+        expect(res.status).toBe(201);
+        expect(res.body).toMatchObject({ name: 'Région', gridEnabled: true, gridSize: 100, fogEnabled: false });
+        expect(res.body.map).toMatchObject({ name: 'region', width: 2000, height: 1000, levels: 3 });
+        expect((await app.request('POST', `${tableUrl()}/slides`, { body: { map: 'inconnue' }, token: gm })).status).toBe(400);
+        expect((await app.request('POST', `${tableUrl()}/slides`, { body: { map: '../x' }, token: gm })).status).toBe(400);
+        expect((await app.request('POST', `${tableUrl()}/slides/${res.body.id}/duplicate`, { token: gm })).status).toBe(400);
+        // Diapositive libre : pas de carte
+        expect((await createSlide()).map).toBeNull();
+    });
+
+    it('carte retirée du dossier : la diapositive la signale absente ; unité km acceptée', async () => {
+        const slide = (await app.request('POST', `${tableUrl()}/slides`, { body: { map: 'region' }, token: gm })).body;
+        fs.rmSync(path.join(mapsDir, 'region', 'map.json'));
+        const loaded = await app.request('GET', `${tableUrl()}/slides/${slide.id}`, { token: gm });
+        expect(loaded.body.slide.map).toEqual({ name: 'region', missing: true });
+        expect((await setSlide(slide.id, { gridUnit: 'km' })).body.gridUnit).toBe('km');
+        expect((await app.request('PUT', tableUrl(), { body: { gridUnit: 'km' }, token: gm })).status).toBe(200);
+    });
+});
+
 describe('Tableau : purge et ménage (§10.6)', () => {
     const age = (sid, days) => boardDb.prepare(`
         UPDATE board_sessions SET last_used_at = datetime('now', ?) WHERE slug = ? AND session_id = ?

@@ -23,6 +23,7 @@ const { authenticate, requireGM } = require('../middlewares/auth');
 const { getDbForSystem } = require('../db');
 const { getModuleConfig } = require('../db/moduleConfig');
 const { readFog, cleanFogShape, addFogShape, FOG_OPS } = require('../utils/boardFog');
+const { isMapName, readMap, listMaps, slideMap } = require('../utils/boardMaps');
 
 const KINDS = ['image', 'icon', 'token', 'stroke', 'rect', 'ellipse', 'line', 'halo', 'text'];
 // ce qu'un joueur dessine et efface (P-4, §13.1, PB-6)
@@ -32,7 +33,8 @@ const ROTATABLE_KINDS = ['image', 'icon', 'text', 'rect', 'ellipse'];   // Q-52
 const POINT_KINDS = ['stroke', 'line'];            // tracés en coordonnées absolues : boîte calculée
 const FILTER_PRESETS = ['normal', 'night', 'dark', 'sepia', 'faded'];  // Q-49
 const MAX_TEXT_LENGTH = 500;
-const GRID_UNITS = ['m', 'ft'];
+const GRID_UNITS = ['m', 'ft', 'km'];               // km : cartes de région (Q-T13)
+const MAP_GRID_SIZE = 100;                         // case de départ d'une diapositive carte, en pixels de la carte (Q-T18)
 const IMAGE_MIMES = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
 const MAX_IMAGE_BYTES = 5 * 1024 * 1024;           // garde-fou technique, pas un quota (Q-28)
 const MAX_STROKE_COORDS = 8000;                    // 4 000 points après simplification
@@ -66,6 +68,7 @@ const toSlide = (row) => ({
     gridSize: row.grid_size,
     gridValue: row.grid_value,
     gridUnit: row.grid_unit,
+    map: slideMap(row.map),            // diapositive carte (§17.3) : null pour une diapositive libre
     updatedAt: isoDate(row.updated_at),
 });
 
@@ -350,6 +353,11 @@ const invalid = (error) => ({ status: 400, error });
 const forbidden = () => ({ status: 403, error: 'Unauthorized' });
 const lockedError = () => ({ status: 409, error: 'Item locked' });
 
+// ─── Cartes en tuiles (§17.3) ───────────────────────────────────────────────
+
+// Cartes présentes dans le dossier des cartes du serveur, pour créer une diapositive carte
+router.get('/maps', ...gm, handle('list maps', () => listMaps().map(({ name, label, width, height }) => ({ name, label, width, height }))));
+
 // ─── Table ──────────────────────────────────────────────────────────────────
 
 // Réglages de la table et diapositives ; pour le MJ, purge, ménage et prolongation
@@ -419,17 +427,25 @@ router.get('/sessions/:sid/npcs', authenticate, handle('load npcs', (ctx, body, 
 
 // ─── Diapositives ───────────────────────────────────────────────────────────
 
+// Diapositive libre, ou diapositive carte avec `map` (§17.3) : la carte doit être sur le
+// serveur ; grille activée d'office (Q-T9, Q-T18), brouillard laissé au choix du MJ
 router.post('/sessions/:sid/slides', ...gm, handle('create slide', (ctx, body) => {
     if (body.name !== undefined && !isText(body.name, 100)) return invalid('Invalid name');
+    const map = body.map === undefined ? null : (isMapName(body.map) ? readMap(body.map) : null);
+    if (body.map !== undefined && !map) return invalid('Unknown map');
     touch(ctx);
     const { count, position } = ctx.db.prepare(`
         SELECT COUNT(*) AS count, COALESCE(MAX(position), -1) + 1 AS position
         FROM board_slides WHERE slug = ? AND session_id = ?
     `).get(ctx.slug, ctx.sessionId);
-    const name = body.name?.trim() || `Diapositive ${count + 1}`;
-    const { lastInsertRowid } = ctx.db.prepare(`
-        INSERT INTO board_slides (slug, session_id, name, position) VALUES (?, ?, ?, ?)
-    `).run(ctx.slug, ctx.sessionId, name, position);
+    const name = body.name?.trim() || map?.label || `Diapositive ${count + 1}`;
+    const { lastInsertRowid } = map
+        ? ctx.db.prepare(`
+            INSERT INTO board_slides (slug, session_id, name, position, map, grid_enabled, grid_size) VALUES (?, ?, ?, ?, ?, 1, ?)
+        `).run(ctx.slug, ctx.sessionId, name, position, map.name, MAP_GRID_SIZE)
+        : ctx.db.prepare(`
+            INSERT INTO board_slides (slug, session_id, name, position) VALUES (?, ?, ?, ?)
+        `).run(ctx.slug, ctx.sessionId, name, position);
     emitSlides(ctx);
     return { status: 201, body: toSlide(ownSlide(ctx, lastInsertRowid)) };
 }));
@@ -474,10 +490,11 @@ router.put('/sessions/:sid/slides/:id', ...gm, handle('update slide', (ctx, body
     return toSlide(ownSlide(ctx, slide.id));
 }));
 
-// Copie complète, images comprises (Q-24, Q-32)
+// Copie complète, images comprises (Q-24, Q-32) ; pas de copie d'une diapositive carte (Q-T8)
 router.post('/sessions/:sid/slides/:id/duplicate', ...gm, handle('duplicate slide', (ctx, body, req) => {
     const slide = ownSlide(ctx, req.params.id);
     if (!slide) return notFound('Slide');
+    if (slide.map) return invalid('Map slides cannot be duplicated');
     let copyId;
     ctx.db.transaction(() => {
         const { position } = ctx.db.prepare(`

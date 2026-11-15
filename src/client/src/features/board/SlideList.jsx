@@ -3,13 +3,17 @@
 // Diapositives de la table, côté MJ (documentations/spec_tableau.md §10.8, §12.5) :
 // ordre par glisser-déposer (poignée ⠿, rail compris), renommage (✎ ou double clic),
 // œil « Montrer / Cacher aux joueurs » (l'activation du tableau est dans l'en-tête de la vue),
-// réglages (dessin et déplacement des joueurs), copie, suppression ; en tête,
+// réglages (dessin et déplacement des joueurs), copie, suppression ; « + » : diapositive
+// libre ou diapositive carte, choisie parmi les cartes en tuiles du serveur (§17.4) ; en tête,
 // poids des images, prolongation (P-5) et « À conserver » (Q-25).
 // Trois modes, comme la barre de session, mémorisés par slug (vtt:<slug>:board-slides) :
 // panneau, rail (numéros seuls), masquée (un bouton pour rouvrir).
 // ─────────────────────────────────────────────────────────────────────────────
 
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
+import Modal from '@/ui/modal/Modal.jsx';
+import { HostedModal } from '@/ui/modal/ModalHost.jsx';
+import { RowMenu, MenuItem } from '@/features/audio/panel/RowMenu.jsx';
 import { useDragOrder } from '@/ui/hooks/useDragOrder.js';
 import { usePersistedState } from '@/app/hooks/usePersistedState.js';
 import { getSystemFromPath } from '@/app/hooks/useSystem.js';
@@ -26,6 +30,7 @@ const ICONS = {
     reopen: 'M9 5l7 7-7 7',
     rename: 'M4 20l4-1 11-11-3-3L5 16l-1 4zM14 6l3 3',
     shown:  'M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12zM12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6z',
+    map:    'M3 6l6-3 6 3 6-3v15l-6 3-6-3-6 3zM9 3v15M15 6v15',
 };
 
 const Icon = ({ name }) => (
@@ -91,6 +96,45 @@ const GridValue = ({ label, value, unit, inherited, onChange }) => (
 );
 
 /**
+ * Choix d'une carte en tuiles du serveur pour créer une diapositive carte (spec_tableau.md §17.4).
+ * @param {Function} props.loadMaps  () => promesse de [{ name, label, width, height }] ou null
+ * @param {Function} props.onPick    nom de la carte choisie
+ */
+const MapPicker = ({ loadMaps, onPick, onClose }) => {
+    const [maps, setMaps] = useState(undefined);   // undefined : chargement ; null : échec
+    useEffect(() => {
+        let alive = true;
+        loadMaps().then(list => { if (alive) setMaps(list); });
+        return () => { alive = false; };
+    }, [loadMaps]);
+    return (
+        <HostedModal>
+            <Modal title="Diapositive carte" size="sm" onClose={onClose}
+                   footer={<button type="button" className="vtt-btn" onClick={onClose}>Annuler</button>}>
+                {maps === undefined && <p className="vtt-board-empty">Chargement…</p>}
+                {maps === null && <p className="vtt-board-empty">Impossible de lire les cartes du serveur.</p>}
+                {maps?.length === 0 && (
+                    <p className="vtt-board-empty">Aucune carte sur le serveur. Découpe-la avec <code>npm run board-map</code>.</p>
+                )}
+                {maps?.length > 0 && (
+                    <ul className="vtt-board-map-list">
+                        {maps.map(m => (
+                            <li key={m.name}>
+                                <button type="button" className="vtt-board-map-choice" onClick={() => onPick(m.name)}>
+                                    <Icon name="map" />
+                                    <span className="vtt-board-map-label">{m.label}</span>
+                                    <span className="vtt-board-map-size">{m.width} × {m.height} px</span>
+                                </button>
+                            </li>
+                        ))}
+                    </ul>
+                )}
+            </Modal>
+        </HostedModal>
+    );
+};
+
+/**
  * @param {object} props
  * @param {object} props.board       retour de useBoardSession
  * @param {number|null} props.selectedId diapositive éditée par le MJ
@@ -108,10 +152,27 @@ const SlideList = ({ board, selectedId, onSelect, confirm, slugGrid, tableGrid }
 
     const setMode = (mode) => setPrefs(prev => ({ mode, lastVisible: mode === 'hidden' ? prev.lastVisible : mode }));
 
-    const create = async () => {
-        const slide = await board.createSlide();
+    // « + » : diapositive libre ou diapositive carte (§17.4)
+    const [addAnchor, setAddAnchor] = useState(null);
+    const [pickingMap, setPickingMap] = useState(false);
+    const create = async (options) => {
+        setAddAnchor(null);
+        setPickingMap(false);
+        const slide = await board.createSlide(options);
         if (slide) onSelect(slide.id);
     };
+    const openAdd = (e) => setAddAnchor(addAnchor ? null : e.currentTarget);
+    const addMenu = (
+        <>
+            {addAnchor && (
+                <RowMenu anchor={addAnchor} onClose={() => setAddAnchor(null)}>
+                    <MenuItem onSelect={() => create()}>Diapositive libre</MenuItem>
+                    <MenuItem onSelect={() => { setAddAnchor(null); setPickingMap(true); }} hint="grande carte en tuiles">Diapositive carte…</MenuItem>
+                </RowMenu>
+            )}
+            {pickingMap && <MapPicker loadMaps={board.listMaps} onPick={map => create({ map })} onClose={() => setPickingMap(false)} />}
+        </>
+    );
     const duplicate = async (id) => {
         const slide = await board.duplicateSlide(id);
         if (slide) onSelect(slide.id);
@@ -169,7 +230,9 @@ const SlideList = ({ board, selectedId, onSelect, confirm, slugGrid, tableGrid }
                         </li>
                     ))}
                 </ol>
-                <button type="button" className="vtt-board-rail-slide is-add" onClick={create} title="Nouvelle diapositive" aria-label="Nouvelle diapositive">+</button>
+                <button type="button" className="vtt-board-rail-slide is-add" onClick={openAdd} title="Nouvelle diapositive" aria-label="Nouvelle diapositive"
+                        aria-haspopup="menu" aria-expanded={!!addAnchor}>+</button>
+                {addMenu}
             </aside>
         );
     }
@@ -185,7 +248,9 @@ const SlideList = ({ board, selectedId, onSelect, confirm, slugGrid, tableGrid }
                 </div>
             </div>
             <div className="vtt-board-slides-head">
-                <button type="button" className="vtt-btn vtt-btn-sm vtt-btn-primary" onClick={create}>+ Diapositive</button>
+                <button type="button" className="vtt-btn vtt-btn-sm vtt-btn-primary" onClick={openAdd}
+                        aria-haspopup="menu" aria-expanded={!!addAnchor}>+ Diapositive</button>
+                {addMenu}
                 <button type="button" className={`vtt-pill${board.keep ? ' is-selected' : ''}`} aria-pressed={board.keep}
                         onClick={() => board.setKeep(!board.keep)} title="Jamais supprimé automatiquement">À conserver</button>
             </div>
@@ -205,6 +270,7 @@ const SlideList = ({ board, selectedId, onSelect, confirm, slugGrid, tableGrid }
                                  onKeyDown={e => { if (e.key === 'Enter' && e.target === e.currentTarget) onSelect(slide.id); }}
                                  aria-current={slide.id === selectedId ? 'true' : undefined}>
                                 <span className="vtt-board-slide-grip" aria-hidden="true" title="Glisser pour réordonner">⠿</span>
+                                {slide.map && <span className="vtt-board-slide-kind" title="Diapositive carte"><Icon name="map" /></span>}
                                 {renaming
                                     ? <RenameField name={slide.name} onDone={name => rename(slide, name)} />
                                     : <span className="vtt-board-slide-name" onDoubleClick={() => setRenamingId(slide.id)}>{slide.name}</span>}
@@ -217,7 +283,8 @@ const SlideList = ({ board, selectedId, onSelect, confirm, slugGrid, tableGrid }
                                     <Icon name={shown ? 'shown' : 'hidden'} />
                                 </button>
                                 <button type="button" className="vtt-board-icon-btn" onClick={() => setRenamingId(slide.id)} aria-label="Renommer" title="Renommer"><Icon name="rename" /></button>
-                                <button type="button" className="vtt-board-icon-btn" onClick={() => duplicate(slide.id)} aria-label="Dupliquer" title="Dupliquer">⧉</button>
+                                {/* Pas de copie d'une diapositive carte (Q-T8) */}
+                                {!slide.map && <button type="button" className="vtt-board-icon-btn" onClick={() => duplicate(slide.id)} aria-label="Dupliquer" title="Dupliquer">⧉</button>}
                                 <button type="button" className="vtt-board-icon-btn is-danger" onClick={() => remove(slide)} aria-label="Supprimer" title="Supprimer">✕</button>
                             </div>
                         </li>

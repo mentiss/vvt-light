@@ -26,7 +26,8 @@ create table board_slides
     grid_enabled INTEGER not null default 0,
     grid_size    REAL    not null default 50,    -- côté d'une case, en unités du tableau
     grid_value   REAL,                           -- null : valeur de la table
-    grid_unit    TEXT,                           -- 'm' | 'ft' ; null : unité de la table
+    grid_unit    TEXT,                           -- 'm' | 'ft' | 'km' ; null : unité de la table
+    map          TEXT,                           -- diapositive carte : nom de la carte en tuiles (spec_tableau.md §17) ; null : diapositive libre
     created_at   DATETIME default CURRENT_TIMESTAMP,
     updated_at   DATETIME default CURRENT_TIMESTAMP
 );
@@ -45,7 +46,7 @@ create table board_sessions
             on delete set null,
     keep           INTEGER not null default 0,   -- « à conserver » : jamais purgé
     grid_value     REAL,                         -- null : défaut du slug
-    grid_unit      TEXT,                         -- 'm' | 'ft' ; null : défaut du slug
+    grid_unit      TEXT,                         -- 'm' | 'ft' | 'km' ; null : défaut du slug
     last_used_at   DATETIME default CURRENT_TIMESTAMP,  -- base de la purge à 3 mois
     primary key (slug, session_id)
 );

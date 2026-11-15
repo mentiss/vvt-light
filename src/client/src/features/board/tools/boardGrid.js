@@ -6,7 +6,7 @@
 // est propre à la diapositive.
 // ─────────────────────────────────────────────────────────────────────────────
 
-export const GRID_UNITS = [{ id: 'm', label: 'm' }, { id: 'ft', label: 'ft' }];
+export const GRID_UNITS = [{ id: 'm', label: 'm' }, { id: 'ft', label: 'ft' }, { id: 'km', label: 'km' }];   // km : cartes de région (§17)
 export const PLATFORM_GRID = { value: 1.5, unit: 'm' };
 
 const pick = (level, key) => (level && level[key] !== null && level[key] !== undefined ? level[key] : undefined);

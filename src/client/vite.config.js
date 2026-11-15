@@ -35,7 +35,9 @@ export default defineConfig({
         target: 'http://localhost:3001',
         ws: true
       },
-      '/api': 'http://localhost:3001'
+      '/api': 'http://localhost:3001',
+      // Tuiles des diapositives carte, servies sans connexion (spec_tableau.md §17.3)
+      '/board-maps': 'http://localhost:3001'
     }
   }
 })

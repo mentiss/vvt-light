@@ -54,6 +54,9 @@ npm start          # backend qui sert le front buildé (déployé via pm2)
 # Base de données
 npm run migrate 27022025_add_quoi.sql        # joue une migration précise (les bases se créent seules à la première ouverture)
 
+# Tableau : grande carte en tuiles pour une diapositive carte (spec_tableau.md §17), sur le poste
+npm run board-map -- "<image>" --name <nom> [--label "<libellé>"] [--send]   # --send : envoi sur le VPS, jamais sans accord
+
 # Lint (front uniquement)
 cd src/client && npm run lint
 

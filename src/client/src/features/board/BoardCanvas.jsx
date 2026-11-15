@@ -21,6 +21,7 @@
 // sauf rectangle et ellipse), poignée de rotation au-dessus (Maj : pas de 15°) ;
 // dépôt d'une image par glisser-déposer (le collage est géré par Board).
 // Halos (PB-8) : dessinés juste sous le plus bas des jetons et icônes, quel que soit leur ordre.
+// Diapositive carte (§17) : carte en tuiles sous les objets (BoardMapLayer), cadrage sur la carte.
 // Brouillard (Q-33) : opaque pour les joueurs quand il est affiché ; en transparence
 // pour le MJ, toujours, pour qu'il voie ce qu'il dévoile.
 // Zoom +, −, recadrer dans le coin haut droit (§12.3) ; Board les commande aussi au
@@ -34,6 +35,7 @@ import {
 } from './tools/boardGeometry.js';
 import { Glyph } from './BoardToolbar.jsx';
 import BoardTextInput, { TEXT_LINE_HEIGHT } from './BoardTextInput.jsx';
+import BoardMapLayer from './BoardMapLayer.jsx';
 import { POINT_KINDS, ROTATABLE_KINDS, canDelete, canDraw, canMove, canRotate, isVisible } from './tools/boardRights.js';
 import { expandGroups, toggleInSelection } from './tools/boardSelection.js';
 import { filterCss } from './tools/boardFilters.js';
@@ -275,7 +277,9 @@ const BoardCanvas = ({
     const fitKey = `${slide.id}:${fitRequest}`;
     if (loaded && size.width > 0 && fitted !== fitKey) {
         setFitted(fitKey);
-        setView(fitView(itemsBox(items) ?? { x: 0, y: 0, w: 1600, h: 900 }, size.width, size.height));
+        // Diapositive carte (§17.4) : cadrée sur la carte, pas sur les objets
+        const mapBox = slide.map && !slide.map.missing ? { x: 0, y: 0, w: slide.map.width, h: slide.map.height } : null;
+        setView(fitView(mapBox ?? itemsBox(items) ?? { x: 0, y: 0, w: 1600, h: 900 }, size.width, size.height));
     }
 
     // ── Zoom à la molette (écouteur non passif, pour bloquer le défilement) ──
@@ -720,6 +724,8 @@ const BoardCanvas = ({
              onPointerLeave={() => setBrushHover(null)}
              onDoubleClick={onDoubleClick} onDragOver={onDragOver} onDrop={onDrop} onContextMenu={onContextMenuEvent}
              role="img" aria-label={`Tableau : ${slide.name}`}>
+            {/* Diapositive carte (§17.4) : la carte en tuiles, sous tous les objets */}
+            {slide.map && <BoardMapLayer map={slide.map} view={view} size={size} />}
             {layered.map(item => {
                 const node = (
                     <BoardItem key={item.id} item={item} geometry={geometryOf(item)} getImage={getImage} getIcon={getIcon} characters={characters} npcs={npcs}

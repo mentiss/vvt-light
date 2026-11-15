@@ -20,6 +20,7 @@ const { cookieName }       = require('./utils/auth');
 const { checkRefreshToken } = require('./utils/jwt');
 const { getCharNameExpr }   = require('./utils/characters');
 const {initSocket} = require("./socket/index");
+const { mapsDir }   = require('./utils/boardMaps');
 
 // ─── App & Server ────────────────────────────────────────────────────────────
 
@@ -146,6 +147,11 @@ app.get('/api/resume', (req, res) => {
 app.get('/api/health', (req, res) => {
     res.json({ status: 'ok', systems: [...getAllSystems().keys()], timestamp: new Date().toISOString() });
 });
+
+// ─── Cartes en tuiles du tableau ─────────────────────────────────────────────
+// Tuiles servies sans connexion (spec_tableau.md §17.3, Q-T15), hors de /api pour
+// ne pas croiser /api/:slug ; l'adresse porte la version de la carte : cache d'un an.
+app.use('/board-maps', express.static(mapsDir(), { immutable: true, maxAge: '365d', index: false, dotfiles: 'ignore' }));
 
 // ─── Static / SPA ────────────────────────────────────────────────────────────
 

@@ -7,6 +7,9 @@ yarn.lock
 
 # Database
 database/
+
+# Cartes en tuiles du tableau (scripts/board-map.js, spec_tableau.md §17) : hors Git
+storage/
 *.db
 *.db-shm
 *.db-wal

@@ -1112,8 +1112,232 @@ Les groupes alternent toujours (jamais deux groupes successifs du même type). L
 - Serveur, `tests/server/utils/boardFog.test.js` : lecture de l'ancien format, regroupement du même type, alternance, retrait d'une forme contenue dans un rectangle suivant (et pas d'une forme qui dépasse), voisins rejoints après un groupe vidé, garde-fou.
 - Serveur, `tests/server/routes/board.test.js` : coup de pinceau accepté et diffusé, pinceau invalide refusé (coordonnées impaires, rayon nul ou trop grand, trop de points), refus `fog-full`.
 
-**État au 2026-11-15** : implémenté, non commité, lint, tests et build verts ; à essayer en dev. Précisions :
+**État au 2026-11-15** : en prod (v5.27.3). Précisions :
 - Le coup de pinceau envoyé reste dessiné chez le MJ jusqu'à la réponse du serveur, pour que la zone ne clignote pas entre le lâcher et la mise à jour.
 - Le message « Brouillard trop détaillé » passe par la confirmation générique (boutons Compris / Fermer, sans autre effet).
 - Le cercle de taille suit la souris seulement (pas de survol au doigt).
 - Nouveau fichier : `src/server/utils/boardFog.js` (et `tests/server/utils/boardFog.test.js`).
+
+---
+
+## 16. Grandes cartes en tuiles — phase 1, brainstorming (2026-11-15)
+
+### 16.1 Besoin
+
+Le MJ veut poser sur une diapositive une **grande carte** (carte du Trøndelag pour Vikings : `Carte Trondelagv2.png`, **6953 × 5291 px**, 55 Mo) **sans perte de qualité** : on doit pouvoir zoomer dans les détails. Tout le reste du tableau doit continuer de marcher dessus : brouillard, jetons, grille et règle, dessin, ping.
+
+Aujourd'hui une image déposée est réduite à **1 920 px** de côté dans le navigateur et refusée par le serveur au-delà de **5 Mo**. Défaut constaté au passage : un PNG reste un PNG après réduction (pas de recompression), donc une carte en PNG de 2 000 px est refusée, alors que Q-28 voulait une limite « silencieuse, jamais bloquante » (Q-T14).
+
+Pistes écartées en phase 1 :
+- **Fichier posé à la main sur le VPS, affiché par « Lien d'image »** : simple, mais le navigateur garde toute l'image en mémoire (37 Mpx, ~150 Mo une fois décodée).
+- **Leaflet** : il a sa propre vue (zoom, déplacement) et ses propres calques, alors que le tableau a déjà la sienne en SVG, avec brouillard, jetons, règle et sélection. Il faudrait synchroniser deux moteurs, ou reconstruire le tableau autour de Leaflet.
+
+Direction retenue par le MJ : **un système de tuiles propre au tableau**, sous la forme d'un **type de diapositive** (« diapositive carte »), pas d'un objet qu'on ajoute (MJ, 2026-11-15).
+
+### 16.2 Principe proposé
+
+- **Deux types de diapositive** : la diapositive **libre** (celle d'aujourd'hui) et la diapositive **carte**, créée à partir d'une grande image. Sur une diapositive carte, la carte est le **support** : elle est toujours dessous, ne se sélectionne pas, ne bouge pas et ne s'efface pas. On ne peut donc pas la déplacer par erreur en jouant.
+- **Tout le reste marche par-dessus, sans changement** : objets (jetons, icônes, images, dessins, textes), brouillard, grille et règle, ping. Ce sont déjà des calques du tableau.
+- **Cadrage** : « Recadrer » et l'ouverture de la diapositive cadrent sur la carte. La vue pourra être bornée à la carte (Q-T6).
+- **Pyramide de tuiles** : l'original est découpé en carrés de 512 px à pleine résolution, puis en niveaux réduits de moitié en moitié jusqu'à tenir dans une tuile. Pour la carte du Trøndelag : environ 210 tuiles en tout.
+- **Affichage** : selon le zoom, la vue choisit le niveau dont la résolution suffit et ne dessine que les tuiles visibles. Le niveau le plus réduit sert de fond en attendant, pour ne jamais voir de trou. Une tuile chargée reste gardée pour la séance, et dans le cache du navigateur ensuite.
+- **Les joueurs** ne téléchargent que ce qu'ils regardent.
+- **Dans la liste des diapositives**, une diapositive carte se distingue d'un coup d'œil (petit pictogramme de carte).
+
+### 16.3 Ce que ça implique
+
+- **Base du module** (`board.db`) :
+  - une table des cartes (dimensions de l'original, nombre de niveaux, table de jeu) et une table des tuiles (niveau, colonne, ligne, WebP en BLOB) ;
+  - sur `board_slides`, une colonne vers la carte (vide pour une diapositive libre) ;
+  - schéma + migration (`-- systems: board`).
+- **Routes** : créer une diapositive carte, envoyer ses tuiles par paquets, servir une tuile (cache long, comme les images). Les tuiles ne changent jamais.
+- **Ménage** : une carte disparaît quand plus aucune diapositive ne l'utilise (suppression de la diapositive, purge à 3 mois de la table, §10.6).
+- **Client** : découpe (si dans le navigateur, Q-T1), affichage des tuiles visibles dans `BoardCanvas` sous les objets, création depuis la liste des diapositives, progression de l'envoi.
+- **Grille en km** (demande du MJ, même chantier) : troisième unité à côté de `m` et `ft`, pour la diapositive et la table. Pas de migration (colonne texte).
+- **Tests** : serveur (création, paquets de tuiles, droits, ménage) ; front (choix du niveau et des tuiles visibles selon la vue, fonctions pures).
+
+### 16.4 Questions
+
+| # | Question | Reco | Réponse |
+|---|---|---|---|
+| Q-T1 | **Où découper** la carte ? (a) Dans le navigateur du MJ, qui envoie les tuiles déjà prêtes ; (b) sur le serveur, après envoi de l'original (bibliothèque d'images native à installer sur le VPS) ; (c) par un script sur ton PC, puis copie sur le VPS | (a) : rien à installer, pas d'envoi de 55 Mo d'un bloc, tout se fait depuis l'app. Limite : le navigateur ouvre une image jusqu'à ~16 000 px de côté (largement assez ici) | Un script ici qui fait le découpage : on lui donne l'image de base, il fait la découpe |
+| Q-T2 | **Où stocker** les tuiles ? (a) Dans `board.db`, comme les images ; (b) en fichiers dans `database/board-files/` | (a) : même rangement, même ménage et même purge que les images ; `board.db` grossit de la taille de la carte (une dizaine de Mo en WebP) | Stockage physique spécial sur le VPS, hors release et hors `database/` (pas sa place). Le format des tuiles : comme tu veux |
+| Q-T3 | **Comment créer une diapositive carte** : le « + » de la liste propose « Diapositive libre » / « Diapositive carte… » ; la seconde demande l'image, puis la découpe et l'envoi se lancent. En plus, au dépôt d'une image de plus de 1 920 px sur une diapositive libre, proposer « En faire une diapositive carte » ? | Oui pour le « + » ; oui pour la proposition au dépôt, pour ne pas réduire une carte par erreur (« Image réduite » reste le choix par défaut) | (sans réponse ; revue en §16.5 : la carte se choisit parmi celles du serveur) |
+| Q-T4 | **Échelle** : (a) la carte mesure 1 920 unités de large, comme une image en fond sur une diapositive libre (jetons, grille et règle à l'échelle habituelle ; la pleine résolution se voit en zoomant, jusqu'à ×3,6 ici, sous le zoom maximal ×8) ; (b) un pixel de l'original = une unité (jetons minuscules à côté) | (a), avec le zoom maximal relevé sur une diapositive carte si l'original le demande (une carte de 16 000 px voudrait ×8,5) | Non : la carte fait ~8 000 px de large ; quitte à passer en tuiles, on prend la plus grosse carte (~60 Mo), celle qui perd le moins de qualité |
+| Q-T5 | **Qui** crée une diapositive carte ? | Le MJ seul, comme toute diapositive | (sans réponse, reco retenue) |
+| Q-T6 | **Vue bornée** : sur une diapositive carte, empêcher de dézoomer ou de s'éloigner bien au-delà de la carte ? | Oui, avec une marge (la moitié de l'écran) : on ne se perd pas dans le vide. La diapositive libre ne change pas | Ça recentre, osef sinon (pas de vue bornée) |
+| Q-T7 | **Changer la carte** d'une diapositive carte (nouvelle version de l'image) en gardant jetons, dessins et brouillard ? | Oui, par « Remplacer la carte… » dans ses réglages, si la nouvelle image a les mêmes proportions (sinon, nouvelle diapositive). Utile quand le MJ retouche sa carte | À voir, pas la question pour maintenant |
+| Q-T8 | **Dupliquer** une diapositive carte (même carte, un autre brouillard pour un autre groupe) | La copie **partage** les tuiles sans les recopier : la carte appartient à la table, pas à la diapositive | Non, pas de duplication |
+| Q-T9 | **Réglages par défaut** d'une diapositive carte : brouillard et grille activés d'office ? | Non : mêmes réglages que la diapositive libre, activables ensuite. Une carte de région ne veut pas forcément de brouillard | Oui pour la grille, non pour le brouillard : c'est un choix du MJ |
+| Q-T10 | **Transformer** une diapositive libre en carte, ou l'inverse ? | Non : le type se choisit à la création. Remplacer la carte (Q-T7) couvre le besoin de mise à jour | Pas de conversion |
+| Q-T11 | **Pendant la préparation** (découpe et envoi : de quelques secondes à une minute) : barre de progression, la carte apparaît une fois complète, bouton Annuler | Oui | Question pas comprise (devenue sans objet, §16.5) |
+| Q-T12 | **Plafond** : refuser une carte au-delà d'une taille ? | Pas de plafond en Mo. Une seule limite, technique : le côté maximal que le navigateur sait ouvrir. Message clair si l'image ne s'ouvre pas | Pas de plafond du tout, puisque stockage sur le VPS |
+| Q-T13 | **Grille en km** : ajouter seulement `km`, ou aussi `mi` (miles) ? | `km` seul, tant qu'aucun jeu n'en demande d'autre | Oui |
+| Q-T14 | **Correctif au passage** : une image déposée trop lourde après réduction (PNG) est convertie en WebP au lieu d'être refusée. Vaut aussi pour le journal, qui partage la réduction | Oui : c'est le comportement validé en Q-28 | Ok |
+
+### 16.5 Après les réponses (2026-11-15)
+
+Ce que les réponses changent :
+
+- **Découpe hors de l'app (Q-T1)** : un script du dépôt, lancé sur le PC du MJ.
+  - Il prend l'original (ici `Carte Trondelagv2.png`, 6953 × 5291 px, 55 Mo) et un nom, et produit un dossier de tuiles WebP de 512 px par niveau, plus un manifeste `map.json` (`width`, `height`, `tileSize`, `levels`).
+  - La bibliothèque d'images (`sharp`) n'est qu'une dépendance de développement : la release installe le serveur sans elle (`npm ci --omit=dev`).
+- **Stockage à part (Q-T2)** : un dossier de cartes sur le VPS, ni dans la release ni dans `database/` (§16.6, Q-T17).
+  - Une diapositive carte ne garde que le **nom** de sa carte.
+  - Le serveur liste les cartes présentes et sert leurs tuiles.
+  - Supprimer une diapositive ne supprime jamais de fichier : les cartes se gèrent à la main.
+- **Création (Q-T3 revue)** : « + » → « Diapositive carte… » → choix parmi les cartes présentes sur le serveur. Plus de découpe dans l'app, donc plus de proposition au dépôt d'une grosse image ; Q-T11 (progression dans l'app) est sans objet.
+- **Échelle (Q-T4)** : **un pixel de l'original = une unité du tableau**.
+  - Précision : la qualité est la même dans les deux options proposées, puisque l'original entier est découpé dans tous les cas ; ce choix ne règle que les proportions.
+  - Conséquence acceptée : un jeton (60 unités) paraît petit à côté d'une carte de 6 953 unités en vue d'ensemble (environ 15 px à l'écran), et retrouve sa taille habituelle quand on zoome sur la zone de jeu. Le zoom maximal actuel (×8) suffit.
+- **Vue (Q-T6)** : cadrée sur la carte à l'ouverture et par « Recadrer », sans vue bornée.
+- **Pas de duplication (Q-T8)** : le bouton Dupliquer n'apparaît pas sur une diapositive carte.
+- **Réglages de départ (Q-T9)** : grille activée, brouillard désactivé (choix du MJ ensuite).
+- **Pas de plafond (Q-T12)**.
+- **Carte absente** (dossier supprimé ou pas encore envoyé) : la diapositive affiche « Carte introuvable : <nom> », les objets restent.
+- **Remplacer la carte (Q-T7)** : plus tard. Le nom étant la clé, renvoyer un dossier sous le même nom remplacera la carte de fait, sans rien changer dans l'app.
+
+### 16.6 Questions, second tour
+
+| # | Question | Reco | Réponse |
+|---|---|---|---|
+| Q-T15 | **Accès aux tuiles** : (a) servies **sans connexion**, par une adresse directe que l'affichage charge tel quel ; (b) avec connexion, chaque tuile chargée par le code avec le jeton (comme les images déposées aujourd'hui) | (a) : plus simple et plus rapide (le navigateur charge et met en cache tout seul). Un joueur curieux pourrait voir la carte entière en ouvrant les adresses des tuiles, sous le brouillard compris : c'est la règle de la plateforme (la visibilité des infos du MJ se filtre côté client) | |
+| Q-T16 | **Envoi sur le VPS** : (a) le script s'en charge à la demande (option d'envoi, mêmes accès SSH que la release) ; (b) à la main (`scp` du dossier) | (a) : une commande pour découper et envoyer ; l'envoi reste une option, jamais automatique | |
+| Q-T17 | **Emplacement du dossier** sur le VPS : (a) `storage/maps/` à la racine de l'app, à côté de `database/` mais distinct, que la release ne touche pas (elle ne remplace que `src/server`, `scripts`, `database-template`, `src/client/dist`) ; (b) un chemin libre réglé dans `.env` | (a) par défaut, avec (b) possible par une variable `.env` facultative. En dev, le même dossier en local, ignoré par Git | |
+| Q-T18 | **Grille de départ** d'une diapositive carte : taille de case et valeur | Case de 100 unités (100 px de la carte), valeur et unité de la table (§10.3), réglables ensuite (ex. 1 case = 2 km) | |
+
+Réponse du MJ (2026-11-15) : « oui », les quatre recos.
+
+---
+
+## 17. Diapositive carte en tuiles : spécification technique (phase 2, 2026-11-15)
+
+Reprend §16.5 et les recos Q-T15 à Q-T18.
+
+### 17.1 Format d'une carte
+
+Une carte est un dossier `<nom>/` du dossier des cartes. Le nom fait de 1 à 64 caractères parmi `a-z`, `0-9` et `-` (ex. `trondelag`) ; c'est la clé de la carte.
+
+```
+trondelag/
+  map.json          { name, label, width, height, tileSize: 512, levels, version }
+  0/0_0.webp        niveau 0 : toute la carte dans une tuile
+  …
+  4/13_10.webp      niveau `levels - 1` : pleine résolution, tuile colonne 13, ligne 10
+```
+
+- **Niveaux** : `levels = ceil(log2(max(width, height) / tileSize)) + 1`. Au niveau `z`, l'image est réduite d'un facteur `2^(levels - 1 - z)`. Les tuiles du bord sont plus petites (pas de remplissage).
+  - Carte du Trøndelag (6953 × 5291) : 5 niveaux et 213 tuiles (154 à pleine résolution).
+- **WebP**, qualité 85.
+- **`version`** : date de découpe, ajoutée à l'adresse des tuiles (`?v=`). Renvoyer une carte sous le même nom (Q-T7, plus tard) n'est donc jamais masqué par le cache.
+- **`label`** : nom affiché dans l'app (« Trøndelag 810 »), par défaut le nom du dossier.
+
+### 17.2 Script de découpe : `scripts/board-map.js`
+
+```
+npm run board-map -- "X:/jdr/vikings/Carte Trondelagv2.png" --name trondelag [--label "Trøndelag 810"] [--send]
+```
+
+- **Découpe** avec `sharp`, en dépendance de développement à la racine. La release installe le serveur par `npm ci --omit=dev`, donc `sharp` n'arrive jamais sur le VPS.
+- Écrit la carte dans le dossier des cartes **local** (`storage/maps/<nom>/`) : elle est aussitôt utilisable en dev. Un dossier existant du même nom est remplacé.
+- **`--send`** (Q-T16) : envoie la carte sur le VPS.
+  - Il reprend les accès de la release (`deploy.config.json`), passe par une archive envoyée par SSH, extraite dans un dossier temporaire, puis met ce dossier en place à la place de l'ancien (pas de carte à moitié copiée).
+  - Pour partager le code SSH avec `release.js`, la connexion (`ssh`, `quote`, lecture de la configuration) part dans `scripts/lib/remote.js`, que les deux scripts importent.
+  - L'envoi n'est jamais automatique. Quand c'est moi qui lance le script, je demande ton accord avant `--send`.
+
+### 17.3 Serveur
+
+- **Dossier des cartes** (Q-T17) : `BOARD_MAPS_DIR` dans `.env` (facultatif), sinon `storage/maps/` à la racine de l'app. La release ne le touche pas (`install.sh` ne remplace que `src/server`, `scripts`, `database-template`, `src/client/dist`). `storage/` est ajouté au `.gitignore`.
+- **Tuiles servies sans connexion** (Q-T15) : `GET /board-maps/<nom>/<z>/<x>_<y>.webp`.
+  - C'est un `express.static` sur le dossier des cartes, monté dans `server.js` avant le renvoi vers l'appli.
+  - Cache d'un an (`immutable`, l'adresse change avec `version`), pas de liste de dossier.
+  - En dev, Vite relaie `/board-maps` vers le serveur comme il le fait pour `/api`.
+  - Hors de `/api` pour ne pas croiser `/api/:slug` (un slug « maps » est peu probable, mais rien ne l'interdit).
+- **`src/server/utils/boardMaps.js`** : chemin du dossier, lecture et vérification de `map.json` (gardé en mémoire tant que le fichier ne change pas), liste des cartes.
+- **Base** (`board-schema.sql` et migration `15112026_board_map_slides.sql`, `-- systems: board`) :
+  ```sql
+  alter table board_slides add column map TEXT;   -- nom de la carte (diapositive carte) ; null : diapositive libre
+  ```
+- **Routes** (`routes/board.js`) :
+
+| Route | Qui | Rôle |
+|---|---|---|
+| `GET /maps` | MJ | Cartes présentes : `[{ name, label, width, height }]`, triées par libellé |
+| `POST /sessions/:sid/slides` `{ name?, map? }` | MJ | Avec `map` : la carte doit exister (sinon 400). Diapositive carte avec grille activée, case de 100 unités (Q-T9, Q-T18), brouillard désactivé ; nom par défaut : le libellé de la carte |
+| `POST /sessions/:sid/slides/:id/duplicate` | MJ | Refusée sur une diapositive carte (400, Q-T8) |
+| `PUT /sessions/:sid/slides/:id` | MJ | `gridUnit` accepte `km` (Q-T13) ; de même pour la table |
+
+- **Diapositive envoyée au client** : en plus des champs actuels, `map` vaut :
+  - `null` pour une diapositive libre ;
+  - `{ name, label, width, height, tileSize, levels, version }` pour une diapositive carte ;
+  - `{ name, missing: true }` si le dossier n'est pas (ou plus) sur le serveur.
+- **Ménage** : supprimer une diapositive carte ou purger sa table ne touche jamais au dossier des cartes.
+
+### 17.4 Client
+
+- **Création** (`SlideList.jsx`) : le « + » ouvre un petit menu (`RowMenu`, déjà utilisé par le tableau) : « Diapositive libre », « Diapositive carte… ».
+  - Le second ouvre une fenêtre (`Modal`) qui liste les cartes du serveur : libellé et dimensions, un clic crée la diapositive.
+  - Sans carte : « Aucune carte sur le serveur. Découpe-la avec `npm run board-map`. »
+- **Liste des diapositives** : pictogramme de carte devant le nom d'une diapositive carte ; pas de bouton Dupliquer.
+- **Affichage** : `BoardMapLayer.jsx` (nouveau, dessiné sous tous les objets dans `BoardCanvas`).
+  - Le niveau 0 sert toujours de fond, étiré sur toute la carte, pour ne jamais voir de trou pendant le chargement.
+  - Par-dessus, les tuiles du niveau adapté au zoom et seulement celles qui touchent la vue, en `<image>` SVG à adresse directe : le navigateur charge et met en cache tout seul.
+  - Carte absente : un cadre et le texte « Carte introuvable : <nom> », les objets restent.
+- **Calcul des tuiles** (`features/board/tools/boardTiles.js`, fonctions pures) :
+  - `mapLevel(map, scale)` : niveau le plus petit dont la résolution couvre `scale × devicePixelRatio`, borné à `levels - 1` ;
+  - `visibleTiles(map, level, view, viewport)` : tuiles qui touchent la vue, avec leur boîte en unités du tableau ;
+  - `tileUrl(map, level, x, y)`.
+- **Cadrage** : sur une diapositive carte, l'ouverture et « Recadrer » cadrent sur la carte (`0, 0, width, height`), pas sur les objets. Pas de vue bornée (Q-T6).
+- **Grille en km** : `GRID_UNITS` gagne `km`, dans la diapositive comme dans la table.
+- **Correctif Q-T14** (`ui/tools/imageResize.js`) : après réduction, un PNG de plus de 1 Mo est réencodé en WebP (qualité 0,85). Il n'est plus refusé par le serveur. Vaut pour le tableau et le journal.
+
+### 17.5 Tests
+
+- Serveur, `tests/server/routes/board.test.js` :
+  - dossier de cartes temporaire (`BOARD_MAPS_DIR`) avec une carte factice ;
+  - liste des cartes réservée au MJ ;
+  - diapositive carte créée avec grille activée et `map` complet ;
+  - carte inconnue ou nom invalide refusés ;
+  - duplication refusée ;
+  - carte retirée du dossier → `missing` ;
+  - `km` accepté.
+- Serveur, `tests/server/utils/boardMaps.test.js` : `map.json` invalide ignoré, nom refusé s'il sort du motif (pas de `..`).
+- Front, `tests/features/board/tools/boardTiles.test.js` : niveau selon le zoom (et l'écran haute densité), tuiles visibles (bords, tuile du bord plus petite), adresse avec version.
+- Le script de découpe n'a pas de test : c'est un outil, vérifié sur la carte réelle.
+
+### 17.6 Fichiers touchés
+
+| Fichier | Changement |
+|---|---|
+| `scripts/board-map.js` | Nouveau : découpe, envoi facultatif |
+| `scripts/lib/remote.js` | Nouveau : SSH et configuration, partagés avec `release.js` |
+| `scripts/release.js` | Importe `lib/remote.js` (rien d'autre ne change) |
+| `package.json`, `package-lock.json` | `sharp` en dépendance de développement, script `board-map` |
+| `.gitignore` | `storage/` |
+| `src/server/server.js` | `/board-maps` statique |
+| `src/server/utils/boardMaps.js` | Nouveau |
+| `src/server/routes/board.js` | `GET /maps`, création avec `map`, duplication refusée, `km`, `map` dans la diapositive |
+| `database-template/board-schema.sql`, `migrations/15112026_board_map_slides.sql` | Colonne `map` |
+| `src/client/vite.config.js` | Relais `/board-maps` |
+| `src/client/src/features/board/BoardMapLayer.jsx` | Nouveau |
+| `src/client/src/features/board/tools/boardTiles.js` | Nouveau |
+| `src/client/src/features/board/BoardCanvas.jsx` | Couche de la carte, cadrage sur la carte. Le fichier dépasse déjà 800 lignes (C-SIZE) : la carte vit dans son propre composant, rien de plus n'y entre |
+| `src/client/src/features/board/SlideList.jsx`, `hooks/useBoardSession.js` | Menu du « + », fenêtre de choix, pictogramme, Dupliquer masqué ; `createSlide` accepte `map`, chargement de la liste des cartes |
+| `src/client/src/features/board/tools/boardGrid.js` | `km` |
+| `src/client/src/ui/tools/imageResize.js` | PNG lourd → WebP |
+| `src/client/src/features/board/board.css` | Pictogramme, fenêtre de choix, carte introuvable |
+| Doc | Cette spec, `src/server/CLAUDE.md` (dossier des cartes), `CLAUDE.md` racine (commande `board-map`), `spec_release.md` (le dossier `storage/` n'est pas touché par la release) |
+
+### 17.7 Mise en place pour la carte du Trøndelag
+
+1. `npm run board-map -- "X:/jdr/vikings/Carte Trondelagv2.png" --name trondelag --label "Trøndelag"` : essai en dev.
+2. Release du chantier (migration `board` jouée).
+3. `npm run board-map -- --name trondelag --send` (carte déjà découpée : envoi seul) : la carte arrive sur le VPS.
+4. Dans l'app : « + » → « Diapositive carte… » → Trøndelag.
+
+**État au 2026-11-15** : implémenté, non commité ; lint, tests et build verts. Précisions :
+- Carte du Trøndelag découpée en local (`storage/maps/trondelag/`) : 213 tuiles, **5,9 Mo** au total pour un original de 55 Mo, en ~1 min.
+- `--send` seul envoie une carte déjà découpée ; image et `--send` ensemble découpent puis envoient. Clé facultative `mapsDir` dans `deploy.config.json` si le dossier des cartes du VPS n'est pas `<appDir>/storage/maps`.
+- Recouvrement d'un demi-pixel d'écran entre deux tuiles, pour éviter un liseré.
+- Correctif Q-T14 : un PNG de plus de 1 Mo est réencodé en WebP même quand il n'a pas besoin d'être réduit.
+- Nouveaux fichiers : `scripts/board-map.js`, `scripts/lib/remote.js`, `src/server/utils/boardMaps.js`, `BoardMapLayer.jsx`, `tools/boardTiles.js`, leurs tests, migration `15112026_board_map_slides.sql`.

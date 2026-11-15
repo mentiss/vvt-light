@@ -64,7 +64,7 @@ En cas d'échec à l'étape 7, rien n'est commité et la version de `package.jso
 | `release.json` | version, date, migrations à jouer avec leurs slugs |
 | `install.sh` | installation sur le VPS (§5) |
 
-Ne partent pas : `src/client/src`, `src/client/node_modules`, `documentations/`, tests, `database/`, `.env`.
+Ne partent pas : `src/client/src`, `src/client/node_modules`, `documentations/`, tests, `database/`, `storage/`, `.env`.
 
 ---
 
@@ -102,7 +102,7 @@ Une nouvelle migration sans cette ligne **bloque la release** (pas de valeur par
 6. Démarrage ou redémarrage du serveur (pm2), puis contrôle qu'il répond.
 7. Archive rangée dans `releases/`, purge selon la rétention (Q-2).
 
-Jamais touchés : `database/` (hors migrations), `.env`, `node_modules/` (hors étape 4), `logs/`.
+Jamais touchés : `database/` (hors migrations), `storage/` (cartes en tuiles du tableau, envoyées à part par `npm run board-map -- … --send`, `spec_tableau.md` §17), `.env`, `node_modules/` (hors étape 4), `logs/`.
 
 ---
 

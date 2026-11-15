@@ -4,7 +4,8 @@
 // - chargement des réglages et des diapositives à l'entrée et à chaque reconnexion
 //   du socket ;
 // - écoute de board-session / board-slides, filtrée sur le slug et la table ;
-// - actions du MJ (activation, diapositive montrée, gestion des diapositives).
+// - actions du MJ (activation, diapositive montrée, gestion des diapositives, cartes
+//   en tuiles du serveur pour créer une diapositive carte, §17).
 // Le serveur diffuse après chaque écriture : la réponse sert seulement à aller plus vite.
 // ─────────────────────────────────────────────────────────────────────────────
 
@@ -110,11 +111,23 @@ export function useBoardSession(sessionId) {
         });
     }, []);
 
-    const createSlide = useCallback(async (name) => {
-        const slide = await request('POST', '/slides', name ? { name } : {});
+    /** Diapositive libre, ou diapositive carte avec `map` (nom d'une carte du serveur, spec_tableau.md §17) */
+    const createSlide = useCallback(async ({ name, map } = {}) => {
+        const slide = await request('POST', '/slides', { ...(name ? { name } : {}), ...(map ? { map } : {}) });
         upsertSlide(slide);
         return slide;
     }, [request, upsertSlide]);
+
+    /** Cartes en tuiles présentes sur le serveur (MJ) : [{ name, label, width, height }], null si échec */
+    const listMaps = useCallback(async () => {
+        try {
+            const res = await fetchRef.current('/api/board/maps');
+            return res.ok ? await res.json() : null;
+        } catch (err) {
+            console.error('[useBoardSession] GET /maps failed:', err);
+            return null;
+        }
+    }, []);
 
     const updateSlide = useCallback(async (id, patch) => {
         setBoard(prev => ({ ...prev, slides: prev.slides.map(s => (s.id === id ? { ...s, ...patch } : s)) }));
@@ -157,6 +170,6 @@ export function useBoardSession(sessionId) {
         setEnabled: (enabled) => updateTable({ enabled }),
         setKeep: (keep) => updateTable({ keep }),
         setGrid: (patch) => updateTable(patch),   // { gridValue?, gridUnit? } ; null : défaut du slug
-        show, createSlide, updateSlide, duplicateSlide, deleteSlide, orderSlides,
+        show, createSlide, updateSlide, duplicateSlide, deleteSlide, orderSlides, listMaps,
     };
 }

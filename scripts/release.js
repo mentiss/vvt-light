@@ -16,7 +16,7 @@
 const fs           = require('fs');
 const path         = require('path');
 const readline     = require('readline');
-const { spawn, spawnSync } = require('child_process');
+const { spawnSync } = require('child_process');
 
 const ROOT           = path.join(__dirname, '..');
 const CLIENT_DIR     = path.join(ROOT, 'src/client');
@@ -24,7 +24,7 @@ const MIGRATIONS_DIR = path.join(ROOT, 'database-template/migrations');
 const RELEASED_FILE  = path.join(MIGRATIONS_DIR, 'released.txt');
 const SYSTEMS_DIR    = path.join(ROOT, 'src/server/systems');
 const { getModuleConfig } = require('../src/server/db/moduleConfig');   // bases de module (« -- systems: audio »)
-const CONFIG_FILE    = path.join(ROOT, 'deploy.config.json');
+const { readDeployConfig, quote, ssh } = require('./lib/remote');           // accès au VPS, partagés avec board-map.js
 const TMP_DIR        = path.join(ROOT, 'release-tmp');
 
 // Chemins qui partent dans l'archive (src/client/src compte pour les non-commités : il part via dist/)
@@ -76,14 +76,11 @@ async function confirm(question) {
 }
 
 function loadConfig() {
-    if (!fs.existsSync(CONFIG_FILE)) {
-        fail('deploy.config.json introuvable : copie deploy.config.example.json et renseigne-le.');
+    try {
+        return readDeployConfig(['host', 'user', 'appDir', 'pm2Name', 'healthUrl']);
+    } catch (error) {
+        return fail(error.message);
     }
-    const config = JSON.parse(fs.readFileSync(CONFIG_FILE, 'utf8'));
-    for (const key of ['host', 'user', 'appDir', 'pm2Name', 'healthUrl']) {
-        if (!config[key]) fail(`deploy.config.json : clé « ${key} » manquante.`);
-    }
-    return config;
 }
 
 function bumpVersion(version, bump) {
@@ -198,27 +195,7 @@ function buildArchive(version, migrations) {
     return archive;
 }
 
-// ─── SSH ─────────────────────────────────────────────────────────────────────
-
-const quote = value => `'${String(value).replace(/'/g, `'\\''`)}'`;
-
-/** Lance une commande distante ; si `inputFile` est fourni, il est envoyé sur l'entrée standard. */
-function ssh(config, remoteCommand, inputFile = null) {
-    const sshArgs = ['-p', String(config.port || 22)];
-    if (config.identityFile) sshArgs.push('-i', config.identityFile);
-    sshArgs.push(`${config.user}@${config.host}`, remoteCommand);
-
-    return new Promise((resolve, reject) => {
-        const child = spawn('ssh', sshArgs, { stdio: [inputFile ? 'pipe' : 'inherit', 'inherit', 'inherit'] });
-        if (inputFile) {
-            // SSH peut fermer avant la fin de l'envoi (connexion refusée…) : c'est « close » qui conclut
-            child.stdin.on('error', () => {});
-            fs.createReadStream(inputFile).pipe(child.stdin);
-        }
-        child.on('error', reject);
-        child.on('close', code => (code === 0 ? resolve() : reject(new Error(`SSH terminé avec le code ${code}`))));
-    });
-}
+// ─── SSH (scripts/lib/remote.js) ─────────────────────────────────────────────
 
 function installArgs(config) {
     return [config.appDir, config.pm2Name, config.healthUrl].map(quote).join(' ');

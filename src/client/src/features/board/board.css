@@ -114,6 +114,19 @@
   /* En-tête de la vue (MJ) : « Les joueurs voient : … » ; liste : poignée, rail glissable, bascule */
   .vtt-board-view-shown { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 0.78rem; opacity: 0.75; }
   .vtt-board-slide-grip { color: var(--color-text-muted); cursor: grab; line-height: 1; }
+
+  /* Diapositive carte (spec_tableau.md §17.4) : pictogramme, choix de la carte, carte absente */
+  .vtt-board-slide-kind { display: inline-flex; color: var(--color-text-muted); }
+  .vtt-board-map-list { display: flex; flex-direction: column; gap: 0.4rem; margin: 0; padding: 0; list-style: none; }
+  .vtt-board-map-choice {
+    display: flex; align-items: center; gap: 0.6rem; width: 100%; padding: 0.5rem 0.7rem; text-align: left;
+    border: 1px solid var(--color-border); border-radius: 0.5rem; background: var(--color-surface); color: inherit; cursor: pointer;
+  }
+  .vtt-board-map-choice:hover, .vtt-board-map-choice:focus-visible { border-color: var(--color-primary); }
+  .vtt-board-map-label { flex: 1; min-width: 0; font-weight: 600; }
+  .vtt-board-map-size { font-size: 0.78rem; color: var(--color-text-muted); }
+  .vtt-board-map-missing rect { fill: color-mix(in srgb, var(--color-text-muted) 12%, transparent); stroke: var(--color-border); stroke-width: 2; vector-effect: non-scaling-stroke; }
+  .vtt-board-map-missing text { fill: var(--color-text-muted); }
   .vtt-board-rail-item[data-dragging] { opacity: 0.5; }
   .vtt-board-icon-btn.is-on { color: var(--color-primary); }
   .vtt-board-form-error { margin: 0; font-size: 0.8rem; color: var(--color-danger); }
