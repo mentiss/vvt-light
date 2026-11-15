@@ -22,6 +22,7 @@ const router = express.Router();
 const { authenticate, requireGM } = require('../middlewares/auth');
 const { getDbForSystem } = require('../db');
 const { getModuleConfig } = require('../db/moduleConfig');
+const { readFog, cleanFogShape, addFogShape, FOG_OPS } = require('../utils/boardFog');
 
 const KINDS = ['image', 'icon', 'token', 'stroke', 'rect', 'ellipse', 'line', 'halo', 'text'];
 // ce qu'un joueur dessine et efface (P-4, §13.1, PB-6)
@@ -35,7 +36,6 @@ const GRID_UNITS = ['m', 'ft'];
 const IMAGE_MIMES = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
 const MAX_IMAGE_BYTES = 5 * 1024 * 1024;           // garde-fou technique, pas un quota (Q-28)
 const MAX_STROKE_COORDS = 8000;                    // 4 000 points après simplification
-const MAX_FOG_OPS = 500;
 const PURGE_DAYS = 90;                             // Q-26
 const WARN_DAYS = 14;                              // prolongation à l'ouverture (P-5)
 const SIZE_ALERT_BYTES = 1024 * 1024 * 1024;       // alerte dans les journaux (Q-28)
@@ -61,7 +61,7 @@ const toSlide = (row) => ({
     playersMove: !!row.players_move,
     fogEnabled: !!row.fog_enabled,
     fogShown: !!row.fog_shown,
-    fog: parseJson(row.fog, []),
+    fog: readFog(row.fog),             // ancien format converti (spec_tableau.md §15.3)
     gridEnabled: !!row.grid_enabled,
     gridSize: row.grid_size,
     gridValue: row.grid_value,
@@ -939,17 +939,19 @@ router.post('/sessions/:sid/slides/:id/pc-tokens', ...gm, handle('place pc token
 
 // ─── Brouillard ─────────────────────────────────────────────────────────────
 
-// Dévoiler / recouvrir une zone, ou tout (reset) ; liste vide = tout recouvert
+// Dévoiler / recouvrir une zone (rectangle ou coup de pinceau, §15), ou tout (reset) ;
+// liste vide = tout recouvert. Fusion et garde-fou de taille : utils/boardFog.js
 router.put('/sessions/:sid/slides/:id/fog', ...gm, handle('update fog', (ctx, body, req) => {
     const slide = ownSlide(ctx, req.params.id);
     if (!slide) return notFound('Slide');
     let fog;
     if (body.reset === 'cover') fog = [];
-    else if (body.reset === 'reveal') fog = [{ op: 'reveal', x: -1e6, y: -1e6, w: 2e6, h: 2e6 }];
+    else if (body.reset === 'reveal') fog = [{ op: 'reveal', shapes: [{ x: -1e6, y: -1e6, w: 2e6, h: 2e6 }] }];
     else {
-        const { op, x, y, w, h } = body;
-        if (!['reveal', 'cover'].includes(op) || ![x, y, w, h].every(isNum) || w <= 0 || h <= 0) return invalid('Invalid fog operation');
-        fog = [...parseJson(slide.fog, []), { op, x, y, w, h }].slice(-MAX_FOG_OPS);
+        const shape = cleanFogShape(body);
+        if (!FOG_OPS.includes(body.op) || !shape) return invalid('Invalid fog operation');
+        fog = addFogShape(slide.fog, body.op, shape);
+        if (!fog) return { status: 400, body: { error: 'Fog too detailed', code: 'fog-full' } };
     }
     ctx.db.prepare('UPDATE board_slides SET fog = ? WHERE id = ?').run(JSON.stringify(fog), slide.id);
     touch(ctx, slide.id);

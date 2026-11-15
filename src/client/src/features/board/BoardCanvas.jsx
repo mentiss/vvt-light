@@ -14,7 +14,8 @@
 //   text   : clic, champ de saisie à l'endroit (BoardTextInput) ; MJ : double-clic pour modifier
 //   eraser : efface ce qu'on touche, si permis
 //   ruler  : mesure, avec la grille seulement, visible de celui qui mesure (P-12)
-//   fog-reveal, fog-cover : MJ, dévoile ou recouvre un rectangle de brouillard
+//   fog-reveal, fog-cover : MJ, dévoile ou recouvre un rectangle de brouillard, ou au
+//            pinceau rond (options.fogShape, §15) : visible en direct chez le MJ, envoyé au lâcher
 // Ping : Alt + clic, ou appui long sur écran tactile (Q-40), avec tous les outils.
 // MJ : poignée de redimensionnement sur l'objet sélectionné (proportions gardées,
 // sauf rectangle et ellipse), poignée de rotation au-dessus (Maj : pas de 15°) ;
@@ -56,6 +57,23 @@ function arrowHead(x1, y1, x2, y2, width) {
     const p = (da) => `${x2 - size * Math.cos(a + da)},${y2 - size * Math.sin(a + da)}`;
     return `${x2},${y2} ${p(0.45)} ${p(-0.45)}`;
 }
+
+/**
+ * Formes d'un groupe de brouillard dans le masque (§15.3) : noir = dévoilé, blanc = recouvert.
+ * Rectangle { x, y, w, h } ; pinceau { points, r } : trait d'épaisseur 2r aux bouts ronds,
+ * un rond pour un simple clic.
+ */
+const FogShapes = ({ op, shapes }) => {
+    const fill = op === 'reveal' ? 'black' : 'white';
+    return shapes.map((s, index) => {
+        if (!s.points) return <rect key={index} x={s.x} y={s.y} width={s.w} height={s.h} fill={fill} />;
+        if (s.points.length === 2) return <circle key={index} cx={s.points[0]} cy={s.points[1]} r={s.r} fill={fill} />;
+        return (
+            <polyline key={index} points={s.points.join(' ')} fill="none" stroke={fill} strokeWidth={2 * s.r}
+                      strokeLinecap="round" strokeLinejoin="round" />
+        );
+    });
+};
 
 /** Dessin d'un objet (sous-composant de module, pas défini dans le rendu) */
 const BoardItem = ({ item, geometry, getImage, getIcon, characters, npcs = {}, filterPreview }) => {
@@ -201,16 +219,17 @@ function hitsItem(item, x, y, radius) {
  * @param {object} [props.ref]       reçoit { zoomBy(factor), fit(), cancel() → geste annulé ? }
  * @param {string} props.color       couleur de dessin
  * @param {number} props.thickness   épaisseur de trait, en pixels d'écran
- * @param {{ filled: boolean, arrow: boolean, background: boolean }} props.options options contextuelles (§13.1)
+ * @param {{ filled: boolean, arrow: boolean, background: boolean, fogShape: 'rect'|'brush', fogSize: number }} props.options
+ *                                   options contextuelles (§13.1) ; brouillard : forme et diamètre du pinceau en pixels d'écran (§15.1)
  * @param {{ id: number, filter: object }|null} [props.filterPreview] filtre d'image en cours de réglage (MJ)
  * @param {number[]} props.selectedIds objets sélectionnés par le MJ (§14.1), groupes entiers
  * @param {Function} props.onSelect  nouvelle sélection (liste d'identifiants, vide pour aucune)
  * @param {Function} [props.onContextMenu] clic droit : { x, y (écran), point (tableau), item (touché ou null) }
  * @param {Function} props.onPatchMany, props.onDragMany plusieurs objets d'un coup (sélection, groupe)
- * @param {object[]} props.fog       opérations de brouillard de la diapositive
+ * @param {object[]} props.fog       brouillard de la diapositive : [{ op, shapes: [{ x, y, w, h } | { points, r }] }] (§15.3)
  * @param {{ value: number, unit: string }} props.grid valeur d'une case (cascade résolue)
  * @param {Function} [props.getIcon] id d'icône → contenu SVG ou null
- * @param {Function} props.onFog     opération de brouillard (MJ)
+ * @param {Function} props.onFog     opération de brouillard (MJ) : { op, x, y, w, h } ou { op, points, r } ; promesse
  */
 const BoardCanvas = ({
     ref, slide, items, loaded, drags, pings, characters, npcs, getImage, getIcon, isGM, tool, panOverride = false, color, thickness,
@@ -230,6 +249,10 @@ const BoardCanvas = ({
     const [view, setView] = useState({ x: 0, y: 0, scale: 1 });
     const [draft, setDraft] = useState(null);          // { kind: 'stroke', points } | { kind: 'rect', from, to }
     const [moving, setMoving] = useState(null);         // { [id]: géométrie } objets déplacés par moi
+    const [brushHover, setBrushHover] = useState(null); // pinceau du brouillard : point sous le curseur (cercle de taille)
+    const [pendingFog, setPendingFog] = useState([]);   // coups de pinceau envoyés, montrés jusqu'à la réponse du serveur
+    const brushActive = isGM && slide.fogEnabled && !panOverride && options.fogShape === 'brush'
+        && (tool === 'fog-reveal' || tool === 'fog-cover');
     const gestureRef = useRef(null);
     const pointersRef = useRef(new Map());
     const longPressRef = useRef(null);
@@ -382,6 +405,11 @@ const BoardCanvas = ({
         } else if (tool === 'ruler' && slide.gridEnabled) {
             gestureRef.current = { type: 'ruler', start };
             setRuler({ from: point, to: point });
+        } else if (fogTool && options.fogShape === 'brush') {
+            // Pinceau (§15.1) : rayon en unités du tableau, fixé au début du coup
+            const op = tool === 'fog-reveal' ? 'reveal' : 'cover';
+            gestureRef.current = { type: 'fog-brush', start, op };
+            setDraft({ kind: 'fog-brush', op, r: options.fogSize / 2 / view.scale, points: [point.x, point.y] });
         } else if (fogTool) {
             gestureRef.current = { type: 'fog', start, op: tool === 'fog-reveal' ? 'reveal' : 'cover' };
             setDraft({ kind: 'fog', from: point, to: point });
@@ -423,6 +451,7 @@ const BoardCanvas = ({
     };
 
     const onPointerMove = (e) => {
+        if (brushActive && e.pointerType === 'mouse') setBrushHover(boardPoint(e));
         if (!pointersRef.current.has(e.pointerId)) return;
         const local = localPoint(e);
         pointersRef.current.set(e.pointerId, local);
@@ -439,6 +468,7 @@ const BoardCanvas = ({
         const point = boardPoint(e);
         switch (gesture.type) {
             case 'pen':
+            case 'fog-brush':
                 setDraft(d => (d ? { ...d, points: [...d.points, point.x, point.y] } : d));
                 break;
             case 'rect':
@@ -547,6 +577,14 @@ const BoardCanvas = ({
         } else if (gesture.type === 'fog' && draft?.kind === 'fog') {
             const box = rectBetween(draft.from, draft.to);
             if (box.w * view.scale > 3 && box.h * view.scale > 3) onFog({ op: gesture.op, ...box });
+        } else if (gesture.type === 'fog-brush' && draft?.kind === 'fog-brush') {
+            // Simplifié au quart du rayon (un pinceau large demande peu de points), gardé
+            // à l'écran jusqu'à la réponse du serveur pour que la zone ne clignote pas
+            const r = Math.round(Math.min(5000, draft.r) * 10) / 10;
+            const points = simplifyPoints(draft.points, draft.r / 4).map(v => Math.round(v * 10) / 10);
+            const operation = { op: draft.op, points, r };
+            setPendingFog(list => [...list, operation]);
+            Promise.resolve(onFog(operation)).finally(() => setPendingFog(list => list.filter(o => o !== operation)));
         } else if (gesture.type === 'ruler') {
             setRuler(null);
         } else if (gesture.type === 'resize') {
@@ -679,6 +717,7 @@ const BoardCanvas = ({
         <>
         <svg ref={svgRef} className={`vtt-board-canvas is-tool-${effectiveTool}`} viewBox={viewBox}
              onPointerDown={onPointerDown} onPointerMove={onPointerMove} onPointerUp={onPointerUp} onPointerCancel={onPointerUp}
+             onPointerLeave={() => setBrushHover(null)}
              onDoubleClick={onDoubleClick} onDragOver={onDragOver} onDrop={onDrop} onContextMenu={onContextMenuEvent}
              role="img" aria-label={`Tableau : ${slide.name}`}>
             {layered.map(item => {
@@ -718,15 +757,18 @@ const BoardCanvas = ({
                 </>
             )}
 
-            {/* Brouillard : tout couvert, puis les opérations dans l'ordre (dévoiler = trou) */}
+            {/* Brouillard : tout couvert, puis les groupes dans l'ordre (dévoiler = trou), puis
+                chez le MJ les coups de pinceau envoyés et celui en cours (§15) */}
             {showFog && (
                 <g className={`vtt-board-fog${isGM ? ' is-gm' : ''}${slide.fogShown ? '' : ' is-hidden'}`} pointerEvents="none">
                     <mask id={`${uid}-fog`} maskUnits="userSpaceOnUse" x={-1e6} y={-1e6} width={2e6} height={2e6}>
                         <rect x={-1e6} y={-1e6} width={2e6} height={2e6} fill="white" />
-                        {fog.map((f, index) => (
-                            // Opérations sans identifiant, jamais réordonnées : l'indice suffit
-                            <rect key={index} x={f.x} y={f.y} width={f.w} height={f.h} fill={f.op === 'reveal' ? 'black' : 'white'} />
+                        {fog.map((group, index) => (
+                            // Groupes et formes sans identifiant, jamais réordonnés : l'indice suffit
+                            <FogShapes key={index} op={group.op} shapes={group.shapes} />
                         ))}
+                        {pendingFog.map((o, index) => <FogShapes key={`pending-${index}`} op={o.op} shapes={[o]} />)}
+                        {draft?.kind === 'fog-brush' && <FogShapes op={draft.op} shapes={[draft]} />}
                     </mask>
                     <rect x={view.x} y={view.y} width={viewWidth} height={viewHeight} mask={`url(#${uid}-fog)`} className="vtt-board-fog-cover" />
                 </g>
@@ -734,6 +776,10 @@ const BoardCanvas = ({
             {fogDraft && (
                 <rect x={fogDraft.x} y={fogDraft.y} width={fogDraft.w} height={fogDraft.h} className="vtt-board-fog-draft"
                       strokeDasharray={`${6 / view.scale} ${4 / view.scale}`} />
+            )}
+            {/* Taille du pinceau sous le curseur (§15.1) */}
+            {brushActive && brushHover && (
+                <circle cx={brushHover.x} cy={brushHover.y} r={options.fogSize / 2 / view.scale} className="vtt-board-fog-brush" />
             )}
 
             {draft?.kind === 'stroke' && draft.points.length >= 2 && (

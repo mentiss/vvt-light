@@ -35,7 +35,7 @@ import { useBoardIcons } from './hooks/useBoardIcons.js';
 import useSlugConfig from '@/app/hooks/useSlugConfig.js';
 import { HostedModal } from '@/ui/modal/ModalHost.jsx';
 import BoardCanvas, { ZOOM_STEP } from './BoardCanvas.jsx';
-import BoardToolbar, { ImageLinkModal, NpcTokenModal, Palette, THICKNESSES, TOOLS, toolState } from './BoardToolbar.jsx';
+import BoardToolbar, { FOG_BRUSH_SIZES, ImageLinkModal, NpcTokenModal, Palette, THICKNESSES, TOOLS, toolState } from './BoardToolbar.jsx';
 import BoardContextMenu from './BoardContextMenu.jsx';
 import BoardHelp from './BoardHelp.jsx';
 import SlideList from './SlideList.jsx';
@@ -54,7 +54,8 @@ const KIND_LABELS = {
     image: 'Image', icon: 'Icône', token: 'Jeton', stroke: 'Trait', rect: 'Rectangle',
     ellipse: 'Ellipse', line: 'Ligne', halo: 'Halo', text: 'Texte',
 };
-const DRAW_OPTIONS = { filled: true, arrow: false, background: false };   // options contextuelles par défaut (§13.1)
+// Options contextuelles par défaut (§13.1) ; brouillard : forme 'rect' | 'brush' et diamètre du pinceau (§15.1)
+const DRAW_OPTIONS = { filled: true, arrow: false, background: false, fogShape: 'rect', fogSize: FOG_BRUSH_SIZES[1].value };
 
 /** Activation du tableau pour la table (Q-61 : sans confirmation), libellé selon l'état */
 const EnableToggle = ({ board }) => (
@@ -206,6 +207,16 @@ const SlideView = ({ sessionId, slide, isGM, board, compact, myId, confirm, tabl
         if (ok) { content.clearItems(); select([]); }
     };
 
+    // Brouillard : le serveur refuse au-delà de son garde-fou de taille (§15.2), on le dit au MJ
+    const updateFog = async (operation) => {
+        if (await content.updateFog(operation) !== 'fog-full') return;
+        await confirm({
+            title: 'Brouillard trop détaillé',
+            message: 'Ce brouillard compte trop de zones pour en ajouter. « Tout couvrir » ou « Tout dévoiler » pour repartir de zéro.',
+            confirmText: 'Compris', cancelText: 'Fermer',
+        });
+    };
+
     const gmActions = isGM ? {
         onImage: (file, background) => content.uploadImage(file, { background }),
         onImageUrl: (image) => addImageUrl(image),
@@ -316,7 +327,7 @@ const SlideView = ({ sessionId, slide, isGM, board, compact, myId, confirm, tabl
                 <BoardCanvas ref={canvasRef} slide={slide} items={content.items} drags={content.drags} pings={content.pings}
                              selectedIds={selectedItems.map(i => i.id)} onSelect={select} onContextMenu={openMenu}
                              characters={content.characters} npcs={content.npcs} getImage={getImage} getIcon={getIcon} isGM={isGM}
-                             fog={content.fog} grid={grid} onFog={content.updateFog}
+                             fog={content.fog} grid={grid} onFog={updateFog}
                              tool={tool} panOverride={spacePan} color={color} thickness={thickness} loaded={content.loaded}
                              options={options} filterPreview={filterPreview}
                              onAdd={content.addItem} onPatch={content.patchItem} onPatchMany={content.patchItems} onDelete={content.deleteItem}

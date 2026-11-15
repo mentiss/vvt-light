@@ -364,6 +364,36 @@ describe('Tableau : sélection, groupes, objets cachés (lot C, §14)', () => {
     });
 });
 
+describe('Tableau : brouillard au pinceau (§15)', () => {
+    const fogUrl = (id) => `${tableUrl()}/slides/${id}/fog`;
+
+    it('coup de pinceau accepté, regroupé et diffusé ; ancien format relu ; réservé au MJ', async () => {
+        const slide = await createSlide();
+        await setSlide(slide.id, { fogEnabled: true });
+        // Brouillard enregistré à l'ancien format : relu en groupes
+        boardDb.prepare('UPDATE board_slides SET fog = ? WHERE id = ?')
+            .run(JSON.stringify([{ op: 'reveal', x: 500, y: 500, w: 10, h: 10 }]), slide.id);
+        const res = await app.request('PUT', fogUrl(slide.id), { body: { op: 'reveal', points: [0, 0, 10, 10], r: 5 }, token: gm });
+        expect(res.status).toBe(200);
+        expect(res.body.fog).toEqual([{ op: 'reveal', shapes: [{ x: 500, y: 500, w: 10, h: 10 }, { points: [0, 0, 10, 10], r: 5 }] }]);
+        expect(app.emits.at(-1)).toMatchObject({ event: 'board-fog', payload: { slideId: slide.id, fog: res.body.fog } });
+        expect((await app.request('PUT', fogUrl(slide.id), { body: { op: 'reveal', points: [0, 0], r: 5 }, token: player })).status).toBe(403);
+    });
+
+    it('pinceau invalide refusé ; brouillard trop détaillé refusé avec son code', async () => {
+        const slide = await createSlide();
+        for (const body of [{ op: 'reveal', points: [1, 2, 3], r: 5 }, { op: 'reveal', points: [1, 2], r: 0 }, { op: 'hide', points: [1, 2], r: 5 }]) {
+            expect((await app.request('PUT', fogUrl(slide.id), { body, token: gm })).status).toBe(400);
+        }
+        const big = new Array(8000).fill(0).map((_, i) => i);
+        boardDb.prepare('UPDATE board_slides SET fog = ? WHERE id = ?')
+            .run(JSON.stringify([{ op: 'reveal', shapes: new Array(12).fill({ points: big, r: 1 }) }]), slide.id);
+        const full = await app.request('PUT', fogUrl(slide.id), { body: { op: 'reveal', points: big, r: 1 }, token: gm });
+        expect(full.status).toBe(400);
+        expect(full.body.code).toBe('fog-full');
+    });
+});
+
 describe('Tableau : purge et ménage (§10.6)', () => {
     const age = (sid, days) => boardDb.prepare(`
         UPDATE board_sessions SET last_used_at = datetime('now', ?) WHERE slug = ? AND session_id = ?

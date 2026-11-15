@@ -227,11 +227,22 @@ export function useBoardSlide(sessionId, slideId) {
         if (data?.items?.length) update(prev => ({ ...prev, items: merge(prev.items, data.items) }));
     }, [request, slideId, update]);
 
-    /** Brouillard (MJ) : { op: 'reveal'|'cover', x, y, w, h } ou { reset: 'cover'|'reveal' } */
+    /**
+     * Brouillard (MJ) : { op: 'reveal'|'cover', x, y, w, h }, { op, points, r } (pinceau, spec_tableau.md §15)
+     * ou { reset: 'cover'|'reveal' }. Renvoie le code d'erreur du serveur ('fog-full' : brouillard
+     * trop détaillé) ou null.
+     */
     const updateFog = useCallback(async (operation) => {
-        const data = await request('PUT', `/slides/${slideId}/fog`, operation);
-        if (data) update(prev => ({ ...prev, fog: data.fog }));
-    }, [request, slideId, update]);
+        try {
+            const res = await fetchRef.current(`${base}/slides/${slideId}/fog`, { method: 'PUT', body: JSON.stringify(operation) });
+            const data = await res.json().catch(() => null);
+            if (res.ok && data) { update(prev => ({ ...prev, fog: data.fog })); return null; }
+            return data?.code ?? 'error';
+        } catch (err) {
+            console.error('[useBoardSlide] PUT fog failed:', err);
+            return 'error';
+        }
+    }, [base, slideId, update]);
 
     /** Image déposée ou collée : réduite ici, puis envoyée (MJ) */
     const uploadImage = useCallback(async (file, { x, y, background = false } = {}) => {

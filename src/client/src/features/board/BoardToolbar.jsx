@@ -2,8 +2,8 @@
 // ─────────────────────────────────────────────────────────────────────────────
 // Barre d'outils du tableau (documentations/spec_tableau.md §10.8, §12.1) :
 // - outils : sélection, main, trait, rectangle, gomme, règle (avec la grille) ;
-// - contextuels : palette et épaisseur avec un outil de dessin, « Tout couvrir /
-//   Tout dévoiler » avec un outil de brouillard ;
+// - contextuels : palette et épaisseur avec un outil de dessin ; avec un outil de
+//   brouillard, Rectangle / Pinceau, taille du pinceau (§15), « Tout couvrir / Tout dévoiler » ;
 // - MJ : brouillard (diapositive avec brouillard), menu « Ajouter ▾ » (image, fond,
 //   lien d'image, icône, jeton de PNJ) et « Jetons des PJ » juste après les outils,
 //   tout effacer en bout de barre.
@@ -19,6 +19,8 @@ import { RowMenu, MenuItem, MenuSeparator } from '@/features/audio/panel/RowMenu
 import { BOARD_PALETTE, canDraw } from './tools/boardRights.js';
 
 export const THICKNESSES = [{ label: 'Fin', value: 3 }, { label: 'Épais', value: 8 }];
+// Pinceau du brouillard (spec_tableau.md §15.1) : diamètre en pixels d'écran
+export const FOG_BRUSH_SIZES = [{ label: 'Petit', value: 20 }, { label: 'Moyen', value: 50 }, { label: 'Grand', value: 100 }];
 
 const PATHS = {
     select: 'M5 3l13 8-6 1.5L9 19z',
@@ -270,6 +272,16 @@ const BoardToolbar = ({ isGM, slide, tool, onTool, color, onColor, thickness, on
                     </button>
                     {fogTool && (
                         <>
+                            {/* Forme (Rectangle / Pinceau) et taille du pinceau, pour les deux outils (§15.1) */}
+                            <button type="button" className="vtt-pill is-selected"
+                                    onClick={() => onOption('fogShape', options.fogShape === 'brush' ? 'rect' : 'brush')}
+                                    title="Dévoiler ou recouvrir au rectangle ou au pinceau">
+                                {options.fogShape === 'brush' ? 'Pinceau' : 'Rectangle'}
+                            </button>
+                            {options.fogShape === 'brush' && FOG_BRUSH_SIZES.map(s => (
+                                <button key={s.value} type="button" className={`vtt-pill${options.fogSize === s.value ? ' is-selected' : ''}`}
+                                        onClick={() => onOption('fogSize', s.value)}>{s.label}</button>
+                            ))}
                             <button type="button" className="vtt-pill" onClick={() => gm.onFogReset('cover')}>Tout couvrir</button>
                             <button type="button" className="vtt-pill" onClick={() => gm.onFogReset('reveal')}>Tout dévoiler</button>
                         </>

@@ -131,6 +131,7 @@
   .vtt-board-fog-cover { fill: var(--vtt-board-fog, #15130f); }
   .vtt-board-fog.is-gm .vtt-board-fog-cover { opacity: 0.45; }
   .vtt-board-fog.is-gm.is-hidden .vtt-board-fog-cover { opacity: 0.2; }
+  .vtt-board-fog-brush { fill: none; stroke: var(--color-primary); stroke-width: 1.5; vector-effect: non-scaling-stroke; pointer-events: none; }
   .vtt-board-fog-draft { fill: var(--color-primary); fill-opacity: 0.15; stroke: var(--color-primary); stroke-width: 2; vector-effect: non-scaling-stroke; pointer-events: none; }
   .vtt-board-ruler line { stroke: var(--color-primary); stroke-width: 2; vector-effect: non-scaling-stroke; }
   .vtt-board-ruler circle { fill: var(--color-primary); }

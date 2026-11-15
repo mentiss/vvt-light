@@ -1043,3 +1043,77 @@ alter table board_items add column group_id INTEGER;                      -- gro
 - PC-5 : la réponse du MJ (« + grouper, premier plan / arrière-plan, ajouter ici ») est lue comme le contenu du menu du MJ, déjà prévu ; le menu du joueur reste Ping ici, Recadrer, Effacer (confirmé par le MJ le 2026-11-08, « pour l'instant »).
 - Essai à l'écran (2026-11-08) : rectangle de sélection, grouper et déplacer le groupe, cacher (transparence et pastille), menus sur un objet et dans le vide, « Ajouter ici ▸ Texte », couleur sur une sélection. Pastille d'un objet rond (halo, jeton) placée sur le cercle plutôt qu'au coin de sa boîte, loin de la lueur.
 - Nouveaux fichiers : `BoardContextMenu.jsx`, `features/board/tools/boardSelection.js` (et son test) ; migration `07112026_board_hidden_groups.sql`.
+
+---
+
+## 15. Brouillard au pinceau (2026-11-15)
+
+Demande de l'utilisateur : en plus du rectangle, un **pinceau rond** pour dévoiler (et recouvrir) le brouillard. Revient sur Q-19, qui avait gardé le rectangle seul pour la v1. Phase 1 validée le 2026-11-15 : toutes les recos, avec la **fusion des opérations** à la place d'une limite relevée ; pas de planche.
+
+### 15.1 Fonctionnel
+
+- **Forme** : avec Dévoiler ou Recouvrir actif, la barre contextuelle du brouillard propose **Rectangle / Pinceau**. La forme vaut pour les deux outils : on recouvre au pinceau pour rattraper un débordement. Rectangle par défaut.
+- **Taille** du pinceau, avec Pinceau choisi : **Petit / Moyen / Grand** (diamètre à l'écran : 20, 50, 100 px). La taille est convertie en unités du tableau au moment du coup, comme l'épaisseur d'un trait : un coup donné au zoom fort reste petit sur la carte.
+- Forme et taille sont gardées le temps de la séance, comme la couleur et l'épaisseur du dessin.
+- **Geste** : on peint en glissant ; un **cercle** de la taille du pinceau suit le curseur sur la diapositive. Chez le MJ, la zone se dévoile (ou se recouvre) **en direct** pendant qu'il peint ; les joueurs la voient **au relâché**, en une fois.
+- Tout couvrir / Tout dévoiler, « Brouillard affiché » : inchangés.
+
+Barre contextuelle du brouillard (complète §12.1) :
+
+| Groupe | Contenu | Visible |
+|---|---|---|
+| Brouillard | Dévoiler, Recouvrir, « Brouillard affiché » | MJ, diapositive avec brouillard (inchangé) |
+| Brouillard (contextuel) | Rectangle / Pinceau, Petit / Moyen / Grand, Tout couvrir, Tout dévoiler | Avec Dévoiler ou Recouvrir actif ; les tailles avec Pinceau seulement |
+
+### 15.2 Fusion des opérations
+
+Aujourd'hui le brouillard est une liste d'opérations rejouées dans l'ordre, plafonnée à 500 : au-delà, les plus anciennes partent sans prévenir et du brouillard peut **réapparaître**. Le pinceau multiplie les opérations ; plutôt que relever la limite, on les fusionne.
+
+1. **Regrouper les opérations successives du même type.** L'ordre ne compte qu'entre un dévoilement et un recouvrement : dix dévoilements d'affilée forment un seul **groupe**. Une opération du même type que le dernier groupe s'y ajoute. La limite compte les groupes, c'est-à-dire les alternances dévoiler / recouvrir.
+2. **Écarter ce qui est entièrement recouvert.** Une forme posée avant un rectangle (de n'importe quel type) qui la contient entièrement n'a plus d'effet : elle est retirée. Le test porte sur la boîte englobante de la forme (pinceau : ses points, élargis du rayon), donc il ne retire jamais une forme qui compte encore. Un groupe vidé disparaît, et ses deux voisins, s'ils sont du même type, se rejoignent.
+3. **Garde-fou de taille, plus de suppression silencieuse.** Au-delà d'un volume total de points (ou de 500 groupes), le serveur **refuse** l'opération, et le MJ voit : « Brouillard trop détaillé : Tout couvrir ou Tout dévoiler pour repartir de zéro. » Avec la simplification des tracés, le cas reste théorique.
+
+Les **brouillards déjà en base** (format à plat) sont convertis à la lecture et réenregistrés au nouveau format à la prochaine opération : **pas de migration**.
+
+### 15.3 Serveur
+
+**Format** de `board_slides.fog` (JSON, colonne inchangée) :
+
+```
+[{ op: 'reveal'|'cover', shapes: [ { x, y, w, h } | { points: [x1, y1, x2, y2, …], r } ] }, …]
+```
+
+Les groupes alternent toujours (jamais deux groupes successifs du même type). L'ancien format `[{ op, x, y, w, h }]` est lu comme des groupes d'un rectangle chacun, puis regroupé.
+
+**Route** `PUT /sessions/:sid/slides/:id/fog` (MJ) :
+
+| Corps | Effet |
+|---|---|
+| `{ op, x, y, w, h }` | Rectangle (inchangé) |
+| `{ op, points, r }` | Coup de pinceau : nombre pair de coordonnées (2 au moins, un simple clic fait un rond), au plus 8 000 ; `r` > 0, au plus 5 000 |
+| `{ reset: 'cover' \| 'reveal' }` | Inchangé ; « Tout dévoiler » devient un groupe d'un seul rectangle géant |
+
+- Réponse `{ fog }` au nouveau format ; `400` avec `{ error: 'Fog too detailed', code: 'fog-full' }` au-delà du garde-fou (§15.2, 3) : 500 groupes ou 100 000 coordonnées au total.
+- La fusion (lecture de l'ancien format, regroupement, retrait des formes recouvertes, garde-fou) est une fonction pure dans `src/server/utils/boardFog.js`, appelée par la route. `MAX_FOG_OPS` disparaît.
+- `board-fog` : même charge, `fog` au nouveau format. Dupliquer une diapositive copie le brouillard tel quel (inchangé).
+
+### 15.4 Client
+
+| Fichier | Changement |
+|---|---|
+| `features/board/BoardToolbar.jsx` | Rectangle / Pinceau et Petit / Moyen / Grand dans le groupe contextuel du brouillard |
+| `features/board/Board.jsx` | État de la forme et de la taille (comme couleur et épaisseur), passé à la barre et à la vue ; message « Brouillard trop détaillé » (`useConfirm`, déjà branché) quand le serveur refuse |
+| `features/board/BoardCanvas.jsx` | Geste pinceau (points comme le trait, simplifiés au relâché avec une tolérance d'un quart du rayon) ; masque : par groupe, rectangles et tracés (trait d'épaisseur `2r`, bouts et angles ronds), noir pour dévoiler, blanc pour recouvrir ; coup en cours ajouté au masque chez le MJ ; cercle de taille sous le curseur |
+| `features/board/hooks/useBoardSlide.js` | `updateFog` rend le code d'erreur du serveur pour que `Board` affiche le message |
+| `features/board/board.css` | Cercle du pinceau ; curseur |
+
+### 15.5 Tests
+
+- Serveur, `tests/server/utils/boardFog.test.js` : lecture de l'ancien format, regroupement du même type, alternance, retrait d'une forme contenue dans un rectangle suivant (et pas d'une forme qui dépasse), voisins rejoints après un groupe vidé, garde-fou.
+- Serveur, `tests/server/routes/board.test.js` : coup de pinceau accepté et diffusé, pinceau invalide refusé (coordonnées impaires, rayon nul ou trop grand, trop de points), refus `fog-full`.
+
+**État au 2026-11-15** : implémenté, non commité, lint, tests et build verts ; à essayer en dev. Précisions :
+- Le coup de pinceau envoyé reste dessiné chez le MJ jusqu'à la réponse du serveur, pour que la zone ne clignote pas entre le lâcher et la mise à jour.
+- Le message « Brouillard trop détaillé » passe par la confirmation générique (boutons Compris / Fermer, sans autre effet).
+- Le cercle de taille suit la souris seulement (pas de survol au doigt).
+- Nouveau fichier : `src/server/utils/boardFog.js` (et `tests/server/utils/boardFog.test.js`).

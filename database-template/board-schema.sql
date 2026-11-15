@@ -22,7 +22,7 @@ create table board_slides
     players_move INTEGER not null default 0,     -- les joueurs déplacent jetons et icônes
     fog_enabled  INTEGER not null default 0,     -- diapositive avec brouillard
     fog_shown    INTEGER not null default 1,     -- interrupteur du MJ, sans toucher à l'état
-    fog          TEXT    not null default '[]',  -- JSON : [{ op: 'reveal'|'cover', x, y, w, h }], dans l'ordre
+    fog          TEXT    not null default '[]',  -- JSON : [{ op: 'reveal'|'cover', shapes: [{ x, y, w, h } | { points, r }] }], dans l'ordre (spec_tableau.md §15)
     grid_enabled INTEGER not null default 0,
     grid_size    REAL    not null default 50,    -- côté d'une case, en unités du tableau
     grid_value   REAL,                           -- null : valeur de la table
