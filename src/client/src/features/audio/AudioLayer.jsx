@@ -8,8 +8,9 @@
 // - MJ : le bouton du panneau est toujours là quand une table est active, même
 //   musique désactivée (préparer sa bibliothèque, activer depuis le panneau).
 // - Fondu d'un bouton (§15.6) : le temps du fondu, l'ancien lecteur de la piste reste
-//   monté (même clé, même instance : le son continue) et descend, pendant que le
-//   nouveau morceau se charge dans un lecteur neuf et monte.
+//   monté (même clé, même instance : le son continue) pendant que le nouveau morceau
+//   se charge dans un lecteur neuf ; les deux partagent une horloge (temps de lecture
+//   réelle du nouveau), et l'ancien est démonté une fois descendu à 0.
 // Les slugs n'ont rien à faire : ni prop nouvelle, ni import.
 // ─────────────────────────────────────────────────────────────────────────────
 
@@ -17,7 +18,7 @@ import React, { useCallback, useEffect, useState } from 'react';
 import { useAudioSession } from './hooks/useAudioSession.js';
 import { usePersistedState } from '@/app/hooks/usePersistedState.js';
 import { DEFAULT_VOLUMES, normalizeVolumes, slotVolume } from './tools/audioVolume.js';
-import { fadeOutActive } from './tools/audioFade.js';
+import { FADE_WAIT_MS, fadeOutActive } from './tools/audioFade.js';
 import { PLATFORM_SCOPE } from '@/app/tools/browserStorage.js';
 import { getSystemFromPath } from '@/app/hooks/useSystem.js';
 import SlotPlayer from './SlotPlayer.jsx';
@@ -39,18 +40,23 @@ const fadingState = ({ from, at }) => ({
     position: from.position, refTime: at, duration: null,
 });
 
+/** Identifiant d'un fondu (piste, lecteur entrant, instant) : horloge partagée et fin de la descente. */
+const fadeId = (slot, slotState) => `${slot}:${slotState.lane ?? 0}@${slotState.fade?.at}`;
+
 /**
  * Lecteurs à monter, dans une seule liste : un lecteur garde son instance d'une liste à
  * l'autre (clé piste:source:lane), y compris quand il devient le lecteur sortant d'un fondu.
+ * Un lecteur sortant disparaît quand il a fini de descendre (`ended`), ou à la borne de sécurité.
  */
-function slotPlayers(slots, serverNow) {
+function slotPlayers(slots, serverNow, ended) {
     const players = [];
     for (const [slot, s] of Object.entries(slots)) {
-        if (fadeOutActive(s.fade, serverNow)) {
+        const id = s.fade ? fadeId(slot, s) : null;
+        if (fadeOutActive(s.fade, serverNow) && !ended.has(id)) {
             const { from } = s.fade;
-            players.push({ key: playerKey(slot, from.source, from.lane), slot, state: fadingState(s.fade), gain: from.gain, fade: s.fade, direction: 'out' });
+            players.push({ key: playerKey(slot, from.source, from.lane), slot, state: fadingState(s.fade), gain: from.gain, fade: s.fade, fadeId: id, direction: 'out' });
         }
-        if (s.mediaId) players.push({ key: playerKey(slot, s.source, s.lane), slot, state: s, gain: s.gain, fade: s.fade, direction: 'in', main: true });
+        if (s.mediaId) players.push({ key: playerKey(slot, s.source, s.lane), slot, state: s, gain: s.gain, fade: s.fade, fadeId: id, direction: 'in', main: true });
     }
     return players;
 }
@@ -81,16 +87,25 @@ const AudioLayer = ({ role, sessionId }) => {
     // Remontées du lecteur du MJ : durée connue, vidéo illisible (§11.3)
     const report = useCallback((action, payload) => { sendCommand({ action, ...payload }); }, [sendCommand]);
 
-    // Fin du dernier fondu en cours (heure du serveur) : un rendu à ce moment démonte le lecteur sortant
+    // Fondus : horloges partagées par les deux lecteurs d'un fondu, et descentes terminées
     const { getServerNow } = audio;
+    const [fadeClocks] = useState(() => new Map());
+    const [endedFades, setEndedFades] = useState(() => new Set());
+    const endFade = useCallback((id) => setEndedFades(prev => (prev.has(id) ? prev : new Set(prev).add(id))), []);
+    const clockFor = (id) => {
+        if (!id) return null;
+        if (!fadeClocks.has(id)) fadeClocks.set(id, { played: 0 });
+        return fadeClocks.get(id);
+    };
+    // Borne de sécurité d'un fondu (heure du serveur) : un rendu à ce moment démonte le lecteur sortant
     const [, setFadeTick] = useState(0);
-    const fadeEnd = Math.max(0, ...Object.values(audio.state?.slots ?? {}).map(s => (s.fade?.from ? s.fade.at + s.fade.duration : 0)));
+    const fadeLimit = Math.max(0, ...Object.values(audio.state?.slots ?? {}).map(s => (s.fade?.from ? s.fade.at + FADE_WAIT_MS + s.fade.duration + 1000 : 0)));
     useEffect(() => {
-        const remaining = fadeEnd - getServerNow();
-        if (!fadeEnd || remaining <= 0) return undefined;
+        const remaining = fadeLimit - getServerNow();
+        if (!fadeLimit || remaining <= 0) return undefined;
         const id = setTimeout(() => setFadeTick(t => t + 1), remaining + 50);
         return () => clearTimeout(id);
-    }, [fadeEnd, getServerNow]);
+    }, [fadeLimit, getServerNow]);
 
     if (!sessionId || !audio.loaded) return null;
     if (!audio.enabled && !isGM) return null;
@@ -103,7 +118,7 @@ const AudioLayer = ({ role, sessionId }) => {
 
     return (
         <>
-            {slotPlayers(slots, getServerNow()).map(p => (
+            {slotPlayers(slots, getServerNow(), endedFades).map(p => (
                 <SlotPlayer
                     // Changer de source ou passer un fondu remonte le lecteur (§14.3, §15.6)
                     key={p.key}
@@ -116,6 +131,8 @@ const AudioLayer = ({ role, sessionId }) => {
                     onReport={isGM && p.main ? report : undefined}
                     fade={p.fade}
                     fadeDirection={p.direction}
+                    fadeClock={clockFor(p.fadeId)}
+                    onFadeOutEnd={p.direction === 'out' ? () => endFade(p.fadeId) : undefined}
                 />
             ))}
 

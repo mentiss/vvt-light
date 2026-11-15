@@ -1247,6 +1247,14 @@ L'état d'une piste (§11.3) gagne deux champs :
 - Fonction pure, testée : `features/audio/tools/audioFade.js` (`fadeLevel(elapsed, duration, direction)`, fin de fondu).
 - Qui arrive pendant un fondu : le lecteur sortant se charge et termine sa descente, ou rien si elle est finie. Sans effet notable sur 3 secondes.
 
+**Correctif après la mise en prod (2026-11-15, retour du MJ sous Opera)** : le nouveau morceau restait muet, puis arrivait d'un coup. Avec le bloqueur de pub d'Opera (indispensable au MJ), un lecteur YouTube neuf reste longtemps en chargement (`state: 3`) après avoir brièvement annoncé « en lecture » : la montée se déroulait dans le vide, et l'ancien morceau, calé sur l'heure du serveur, s'était déjà tu. Désormais le fondu suit le nouveau lecteur, dans chaque navigateur :
+- la montée ne compte que le **temps de lecture réelle** du nouveau morceau (elle s'arrête pendant un chargement) ;
+- l'ancien morceau garde son volume tant que le nouveau ne joue pas, puis descend **au même rythme** (horloge partagée par les deux lecteurs, `AudioLayer`) ; s'il tarde plus de 8 s (`FADE_WAIT_MS`), l'ancien descend quand même ;
+- l'ancien lecteur est démonté une fois descendu à 0 (borne de sécurité : `fade.at` + attente + durée + 1 s) ;
+- conséquence assumée : le fondu n'est plus simultané chez tous, chacun entend un enchaînement sans trou.
+- Vérifié dans Edge sans interface, avec un chargement simulé (nouveau lecteur mis en pause dès son départ) : ancien à 49 et nouveau à 10 pendant l'arrêt, puis croisement en 3 s.
+- **Essai du MJ sous Opera : même constat**, le nouveau morceau reste muet. Correctif gardé (plus juste quand un chargement est lent), fondu laissé de côté par le MJ (« je ferai sans »). Piste restante, non essayée : faire le fondu dans le lecteur en place (descente, chargement du nouveau morceau dans le même lecteur, remontée), au prix d'un court silence ; sous Opera, c'est la création d'un lecteur YouTube neuf qui bloque, pas le changement de morceau.
+
 ### 15.7 Fenêtre d'édition et menu
 
 - **« Modifier les scènes… »** : la liste reste (ordre, supprimer) ; un bouton **Modifier** ouvre la fenêtre d'édition du bouton, où se fait aussi le renommage.

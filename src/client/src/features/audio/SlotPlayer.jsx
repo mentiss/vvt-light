@@ -10,8 +10,10 @@
 // SlotPlayer une clé faite de la piste, de la source et du numéro de lecteur : la
 // source d'une instance ne change jamais, donc le hook appelé non plus.
 //
-// Fondu d'un bouton (§15.6) : le lecteur sortant descend, calé sur l'heure du
-// serveur ; le lecteur entrant monte à partir du moment où il joue vraiment.
+// Fondu d'un bouton (§15.6) : le lecteur entrant monte au fil de sa lecture réelle
+// (la montée s'arrête pendant un chargement) et note ce temps dans l'horloge du
+// fondu ; le lecteur sortant la lit et descend au même rythme, au plus tard après
+// FADE_WAIT_MS, puis le signale (onFadeOutEnd) pour être démonté.
 // ─────────────────────────────────────────────────────────────────────────────
 
 import React, { useCallback, useEffect, useRef } from 'react';
@@ -19,7 +21,7 @@ import { useYouTubePlayer, PLAYER_STATES } from './hooks/useYouTubePlayer.js';
 import { useVimeoPlayer } from './hooks/useVimeoPlayer.js';
 import { useSoundCloudPlayer } from './hooks/useSoundCloudPlayer.js';
 import { planSync } from './tools/audioSync.js';
-import { fadeLevel } from './tools/audioFade.js';
+import { fadeLevel, fadeOutElapsed } from './tools/audioFade.js';
 
 const PLAYER_HOOKS = {
     youtube: useYouTubePlayer,
@@ -43,8 +45,13 @@ const FADE_STEP_MS = 50;         // pas du volume pendant un fondu
  * @param {Function} [props.onReport]    MJ seulement : (action, payload) pour duration / error
  * @param {object}   [props.fade]        fondu de la piste ({ at, duration }, état du serveur), ou null
  * @param {'in'|'out'} [props.fadeDirection] ce lecteur monte (nouveau morceau) ou descend (ancien)
+ * @param {{ played: number }} [props.fadeClock] temps de lecture réelle du nouveau morceau (ms), partagé par les deux lecteurs
+ * @param {Function} [props.onFadeOutEnd]  lecteur sortant : appelé quand il est descendu à 0
  */
-const SlotPlayer = ({ slot, slotState, getServerNow, tolerance, unlocked, volume, onReport, fade = null, fadeDirection = 'in' }) => {
+const SlotPlayer = ({
+    slot, slotState, getServerNow, tolerance, unlocked, volume, onReport,
+    fade = null, fadeDirection = 'in', fadeClock = null, onFadeOutEnd,
+}) => {
     // Hook fixé par la source, constante pour cette instance (clé de AudioLayer)
     const usePlayer = PLAYER_HOOKS[slotState.source] ?? useYouTubePlayer;
     const { containerRef, player, error } = usePlayer(PLAYER_SIZE);
@@ -117,27 +124,33 @@ const SlotPlayer = ({ slot, slotState, getServerNow, tolerance, unlocked, volume
 
     // Volume réglé × coefficient du fondu. Renvoie true quand le fondu est fini (ou absent)
     const volumeRef = useRef(volume);
-    const fadeRef = useRef({ fade, fadeDirection });
-    const fadeInStartRef = useRef(null);   // heure locale où le lecteur entrant s'est mis à jouer
-    useEffect(() => { volumeRef.current = volume; fadeRef.current = { fade, fadeDirection }; });
+    const fadeRef = useRef({ fade, fadeDirection, fadeClock, onFadeOutEnd });
+    const lastTickRef = useRef(null);       // lecteur entrant : dernier pas compté
+    const outStartRef = useRef(null);       // lecteur sortant : début du fondu dans ce navigateur
+    useEffect(() => { volumeRef.current = volume; fadeRef.current = { fade, fadeDirection, fadeClock, onFadeOutEnd }; });
     const applyVolume = useCallback(() => {
         if (!player) return false;
-        const { fade: f, fadeDirection: direction } = fadeRef.current;
+        const { fade: f, fadeDirection: direction, fadeClock: clock, onFadeOutEnd: onEnd } = fadeRef.current;
+        const now = Date.now();
         let level = 1;
         let done = true;
         if (f && direction === 'out') {
-            const elapsed = getServerNow() - f.at;
+            if (outStartRef.current === null) outStartRef.current = now;
+            const elapsed = fadeOutElapsed(clock?.played ?? 0, now - outStartRef.current);
             level = fadeLevel(elapsed, f.duration, 'out');
             done = elapsed >= f.duration;
-        } else if (f) {
-            if (fadeInStartRef.current === null && PLAYER_STATES[player.getPlayerState?.()] === 'playing') fadeInStartRef.current = Date.now();
-            const elapsed = fadeInStartRef.current === null ? 0 : Date.now() - fadeInStartRef.current;
-            level = fadeInStartRef.current === null ? 0 : fadeLevel(elapsed, f.duration, 'in');
-            done = fadeInStartRef.current !== null && elapsed >= f.duration;
+            if (done) onEnd?.();
+        } else if (f && clock) {
+            // Seul le temps de lecture réelle compte : la montée s'arrête pendant un chargement
+            const playing = PLAYER_STATES[player.getPlayerState?.()] === 'playing';
+            if (playing && lastTickRef.current !== null) clock.played += Math.min(now - lastTickRef.current, 250);
+            lastTickRef.current = playing ? now : null;
+            level = fadeLevel(clock.played, f.duration, 'in');
+            done = clock.played >= f.duration;
         }
         player.setVolume?.(Math.round(volumeRef.current * level));
         return done;
-    }, [player, getServerNow]);
+    }, [player]);
 
     useEffect(() => { applyVolume(); }, [applyVolume, volume, fade, fadeDirection]);
     // Pendant un fondu, le volume suit la courbe, puis le pas s'arrête
